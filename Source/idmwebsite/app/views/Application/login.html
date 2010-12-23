@@ -1,0 +1,65 @@
+#{extends 'main.html' /}
+#{set title:'Rackspace Control Panel Login' /}
+
+<div style="height: 340px;">
+
+    <h3>Login to the Control Panel</h3>
+
+    <form name="loginform" method="post" action="@{Application.loginSubmitted()}" onsubmit="submitForm()">
+        <div>
+            <label>Username</label><br/>
+            <input name="username" type="text" size="30" />
+        </div>
+        <div>
+            <label>Password</label><br/>
+            <input type="password" name="password" type="text" size="30" />
+        </div>
+        
+        <table cellspacing="0" cellpadding="0" border="0" style="margin-top: 10px;">
+            <tr>
+                <td><input type="checkbox" id="cbox_rememberme" name="rememberme"></td>
+                <td style="padding: 0 0 3px 5px;">
+                    <label for="cbox_rememberme" style="cursor: pointer;">Remember my username</label>
+                </td>
+            </tr>
+        </table>
+
+        <div style="margin-top: 20px;">
+            <input class="button" type="submit" value="Log In" /> Or <a href="/forgotPassword">Forgot Password</a>
+        </div>
+    </form>
+</div>
+
+<script type="text/javascript">
+
+var REMEMBERME_COOKIE_NAME = "rememberuser";
+
+$(document).ready(function() {
+
+    var rememberMeCookie = $.cookie(REMEMBERME_COOKIE_NAME);
+    if (rememberMeCookie != null && rememberMeCookie != "") {
+        document.loginform.username.value = rememberMeCookie;
+        document.loginform.rememberme.checked = true;
+        document.loginform.password.focus();
+    }
+    else {
+        document.loginform.rememberme.checked = false;
+        document.loginform.username.focus();
+    }
+});
+
+function submitForm() {
+
+    var remembermeChecked = document.loginform.rememberme.checked;
+
+    if (remembermeChecked) {
+        var options = { path: '/', expires: 14 };
+        var username = document.loginform.username.value;
+        $.cookie(REMEMBERME_COOKIE_NAME, username, options);
+    }
+    else {
+        $.cookie(REMEMBERME_COOKIE_NAME, null, options);
+    }
+    document.loginform.submit();
+}
+</script>

@@ -1,0 +1,454 @@
+#{extends 'main.html' /}
+#{set title:'Signup - Create Account' /}
+
+<style type="text/css">
+    input.signup_field {
+        width: 180px;
+    }
+
+    .field_checkmark {
+        padding-left: 3px;
+    }
+
+    .requirement_bullet_gray {
+        margin-left: 10px;
+        color: #999;
+
+        list-style: none;
+        background: url("@{'/public/images/bullet-red.png'}") no-repeat;
+        background-position: 0px 7px;
+        padding-left: 14px;
+    }
+
+    .requirement_bullet_green {
+        margin-left: 10px;
+        color: #339900;
+
+        list-style: none;
+        background: url("@{'/public/images/checkmark-green.png'}'") no-repeat;
+        background-position: 0px 4px;
+        padding-left: 14px;
+    }
+
+    .requirements_box {
+        
+        padding: 5px 15px 15px 10px;
+        margin: 10px 15px 15px 10px;
+        border: 1px solid #ccc;
+        width: 280px;
+        position: relative;
+    }
+
+    .label_top_pad {
+        padding-top: 10px;
+    }
+
+    ul li {
+        margin-top: 10px;
+    }
+
+    .your_cloud {
+        float: right;
+        background: transparent url("@{'/public/images/your-cloud/your-cloud-bg.png'}") no-repeat;
+
+        width: 260px;
+        height: 500px;
+        margin: 20px 10px 0 0;
+    }
+
+    .your_cloud_cloudservers
+    {
+        position:absolute;
+        left:690px;
+        top:140px;
+    }
+
+    .your_cloud_cloudsites {
+        position:absolute;
+        left:795px;
+        top:145px;
+    }
+
+    .your_cloud_cloudfiles {
+        position:absolute;
+        left:740px;
+        top:140px;
+    }
+
+    .your_cloud_exchange {
+        position:absolute;
+        left:815px;
+        top:240px;
+    }
+
+    .your_cloud_rsemail {
+        position:absolute;
+        left:820px;
+        top:196px;
+    }
+
+    .your_cloud_clouddrive {
+        position:absolute;
+        left:645px;
+        top:185px;
+    }
+
+    .your_cloud_serverbackup {
+        position:absolute;
+        left:638px;
+        top:230px;
+    }
+
+    .your_cloud_summarytext {
+        position:absolute;
+        left:638px;
+        top:280px;
+    }
+</style>
+
+<form name="signupform" action="@{Signup.stepCreateAccountSubmitted()}" method="post">
+    <input type="hidden" name="selectedServices" value="${selectedServices}" />
+
+    <div style="float: left;">
+        <div style="float: left;">
+            <img src="@{'/public/images/step1-inactive.png'}" width="95" height="28" alt="step 1" />
+        </div>
+        <div style="float: left; margin-left: 20px;">
+            <img src="@{'/public/images/step2-active.png'}" width="120" height="28" alt="step 2" />
+        </div>
+    </div>
+    <div style="clear: both;"></div>
+
+    <div style="margin-top: 20px;">
+        Create your control panel login to manage your services.
+    </div>
+
+    <!-- right side -->
+    <div class="your_cloud">
+       <img id="your_cloud_cloud_servers" src="@{'/public/images/your-cloud/cloud_servers.png'}" class="your_cloud_cloudservers" alt="cloud servers" />
+        <img id="your_cloud_cloud_sites" src="@{'/public/images/your-cloud/cloud_sites.png'}" class="your_cloud_cloudsites" alt="cloud sites" />
+        <img id="your_cloud_cloud_files" src="@{'/public/images/your-cloud/cloud_files.png'}" class="your_cloud_cloudfiles" alt="cloud files" />
+        <img id="your_cloud_hosted_exchange" src="@{'/public/images/your-cloud/hosted_exchange.png'}" class="your_cloud_exchange" alt="hosted exchange" />
+        <img id="your_cloud_email_hosting" src="@{'/public/images/your-cloud/email_hosting.png'}" class="your_cloud_rsemail" alt="email hosting" />
+        <img id="your_cloud_cloud_drive" src="@{'/public/images/your-cloud/cloud_drive.png'}" class="your_cloud_clouddrive" alt="cloud drive" />
+        <img id="your_cloud_server_backup" src="@{'/public/images/your-cloud/server_backup.png'}" class="your_cloud_serverbackup" alt="server backup" />
+    </div>
+
+    <!-- left side -->
+    <div class="configure-title" style="margin-top: 20px; float: left;">
+        Enter your information
+    </div>
+    <div class="configure-body" style="height: 550px; float: left;">
+        <table>
+            <tr>
+                <td valign="top">
+                    <table>
+
+                        <!-- user info -->
+
+                        <tr>
+                            <td class="label_top_pad">
+                                <label>Your Name</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td><input name="fullname" type="text" class="signup_field" onkeyup="validateFullName()" onfocus="toggleRequirements(this)" maxlength="100" /></td>
+                                        <td class="field_checkmark"><img id="fullname_validated" src="@{'/public/images/check_icon.png'}" alt="full name validated" style="width: 14px;" /></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="label_top_pad">
+                                <label>Username</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td><input name="username" type="text" class="signup_field" onkeyup="validateUsername()" onfocus="toggleRequirements(this)" maxlength="100" /></td>
+                                        <td class="field_checkmark"><img id="username_validated" src="@{'/public/images/check_icon.png'}" alt="id name validated" style="width: 14px;" /></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="label_top_pad">
+                                <label>Password</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td><input type="password" name="password" type="text" class="signup_field" onkeyup="validatePassword()" onfocus="toggleRequirements(this)" maxlength="100" /></td>
+                                        <td class="field_checkmark"><img id="password_validated" src="@{'/public/images/check_icon.png'}" alt="password validated" style="width: 14px;" /></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="label_top_pad">
+                                <label>Confirm Password</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td><input type="password" name="confirmPassword" type="text" class="signup_field" onkeyup="validatePasswordMatches()" onfocus="toggleRequirements(this)" maxlength="100" /></td>
+                                        <td class="field_checkmark"><img id="confirmPassword_validated" src="@{'/public/images/check_icon.png'}" alt="confirm password validated" style="width: 14px;" /></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="label_top_pad">
+                                <label>Email</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td><input name="email" type="text" class="signup_field" onkeyup="validateEmail()" onfocus="toggleRequirements(this)" maxlength="100" /></td>
+                                        <td class="field_checkmark"><img id="email_validated" src="@{'/public/images/check_icon.png'}" alt="email validated" style="width: 14px;" /></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <!-- company info -->
+
+                        <tr>
+                            <td style="padding: 10px 0 10px 0;">
+                                <hr style="border: 0; color: #ccc; background-color: #ccc; height: 1px;" />
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <label>Your Company</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td><input name="oname" type="text" class="signup_field" onkeyup="validateOrganizationName()" onfocus="toggleRequirements(this)" maxlength="100" /></td>
+                                        <td class="field_checkmark"><img id="oname_validated" src="@{'/public/images/check_icon.png'}" alt="organization name validated" style="width: 14px;" /></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="label_top_pad">
+                                <label>Street Address</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td><input name="street" type="text" class="signup_field" onkeyup="validateStreet()" onfocus="toggleRequirements(this)" maxlength="100" /></td>
+                                        <td class="field_checkmark"><img id="street_validated" src="@{'/public/images/check_icon.png'}" alt="street address validated" style="width: 14px;" /></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="label_top_pad">
+                                <label>City</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td><input name="city" type="text" class="signup_field" onkeyup="validateCity()" onfocus="toggleRequirements(this)" maxlength="100" /></td>
+                                        <td class="field_checkmark"><img id="city_validated" src="@{'/public/images/check_icon.png'}" alt="city validated" style="width: 14px;" /></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="label_top_pad">
+                                <label>State</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td><input name="state" type="text" class="signup_field" onkeyup="validateState()" onfocus="toggleRequirements(this)" maxlength="100" /></td>
+                                        <td class="field_checkmark"><img id="state_validated" src="@{'/public/images/check_icon.png'}" alt="state validated" style="width: 14px;" /></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="label_top_pad">
+                                <label>Zip Code</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td><input name="zip" type="text" class="signup_field" onkeyup="validateZip()" onfocus="toggleRequirements(this)" maxlength="100" /></td>
+                                        <td class="field_checkmark"><img id="zip_validated" src="@{'/public/images/check_icon.png'}" alt="zip validated" style="width: 14px;" /></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+
+                <td style="padding-left: 20px;">
+                    &nbsp;
+                </td>
+
+                <td valign="top">
+                    <div style="margin: 10px 0 0 10px;"><label>Requirements:</label></div>
+
+                    <div id="fullname_requirements" class="requirements_box" style="display: none;">
+                        <ul style="margin: 0; padding: 0;">
+                            <li id="req_fullnamelength" class="requirement_bullet_gray">Full Name is at least 2 characters long</li>
+                        </ul>
+                    </div>
+
+                    <div id="uname_requirements" class="requirements_box" style="display: none;">
+                        <ul style="margin: 0; padding: 0;">
+                            <li id="req_idvalidchar" class="requirement_bullet_gray">Only Alphanumeric characters and periods ("."), hyphens ("-"), and underscores ("_") in the Username</li>
+                            <li id="req_idlength" class="requirement_bullet_gray">Username is at least 3 characters long</li>
+                            <li id="req_idnottaken" class="requirement_bullet_gray">Username is not taken</li>
+                        </ul>
+                    </div>
+
+                    <div id="pwd_requirements" class="requirements_box" style="display: none;">
+                        <ul style="margin: 0; padding: 0;">
+                            <li id="req_pwdvalidchar" class="requirement_bullet_gray">Password contains an upper case letter, a lower case letter, a number, and a symbol</li>
+                            <li id="req_pwdlength" class="requirement_bullet_gray">Password is at least 7 characters long</li>
+                            <li id="req_pwdnosequence" class="requirement_bullet_gray">Password must not contain a sequence of numbers of 3 or more</li>
+                            <li id="req_pwdvalidword" class="requirement_bullet_gray">Password isn't a forbidden word</li>
+                            <li id="req_pwdnoname" class="requirement_bullet_gray">Password doesn't contain the Username</li>
+                        </ul>
+                    </div>
+
+                    <div id="pwd_matches" class="requirements_box" style="display: none;">
+                        <ul style="margin: 0; padding: 0;">
+                            <li id="req_pwdmatches" class="requirement_bullet_gray">Password matches</li>
+                        </ul>
+                    </div>
+
+                    <div id="email_requirements" class="requirements_box" style="display: none;">
+                        <ul style="margin: 0; padding: 0;">
+                            <li id="req_emailvalid" class="requirement_bullet_gray">Email is in valid format</li>
+                        </ul>
+                    </div>
+
+                    <div id="oname_requirements" class="requirements_box" style="display: none;">
+                        <ul style="margin: 0; padding: 0;">
+                            <li id="req_onamelength" class="requirement_bullet_gray">Company Name is at least 2 characters long</li>
+                        </ul>
+                    </div>
+
+                    <div id="street_requirements" class="requirements_box" style="display: none;">
+                        <ul style="margin: 0; padding: 0;">
+                            <li id="req_streetlength" class="requirement_bullet_gray">Street Address is not blank</li>
+                        </ul>
+                    </div>
+
+                    <div id="city_requirements" class="requirements_box" style="display: none;">
+                        <ul style="margin: 0; padding: 0;">
+                            <li id="req_citylength" class="requirement_bullet_gray">City is not blank</li>
+                        </ul>
+                    </div>
+
+                    <div id="state_requirements" class="requirements_box" style="display: none;">
+                        <ul style="margin: 0; padding: 0;">
+                            <li id="req_statelength" class="requirement_bullet_gray">State is not blank</li>
+                        </ul>
+                    </div>
+
+                    <div id="zip_requirements" class="requirements_box" style="display: none;">
+                        <ul style="margin: 0; padding: 0;">
+                            <li id="req_ziplength" class="requirement_bullet_gray">Zip Code is not blank</li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+        </table>    
+    </div>
+
+    <div style="margin-left: 460px; float: left;">
+        <img id="btn_nextstep" src="@{'/public/images/button-create-account.png'}" width="120" height="22" alt="create account" style="cursor: pointer;" onclick="submitForm()"/>
+    </div>
+
+</form>
+<div style="clear: both;"></div>
+
+<script type="text/javascript" src="@{'/public/javascripts/createAccount.js'}"></script>
+<script type="text/javascript">
+
+var cloudOptions = new Array("cloud_servers", "cloud_files", "cloud_sites", "email_hosting", "hosted_exchange", "cloud_drive", "server_backup");
+
+$(document).ready(function() {
+
+    $('#fullname_validated').fadeTo('fast', 0.2);
+    $('#username_validated').fadeTo('fast', 0.2);
+    $('#password_validated').fadeTo('fast', 0.2);
+    $('#confirm_validated').fadeTo('fast', 0.2);
+    $('#email_validated').fadeTo('fast', 0.2);
+
+    $('#oname_validated').fadeTo('fast', 0.2);
+    $('#street_validated').fadeTo('fast', 0.2);
+    $('#city_validated').fadeTo('fast', 0.2);
+    $('#state_validated').fadeTo('fast', 0.2);
+    $('#zip_validated').fadeTo('fast', 0.2);
+
+    $('#btn_nextstep').fadeTo('fast', 0.5);
+
+    document.signupform.fullname.focus();
+
+    validateFullName();
+    validateUsername();
+    validatePassword();
+    validatePasswordMatches();
+    validateEmail();
+
+    validateOrganizationName();
+    validateStreet();
+    validateCity();
+    validateState();
+    validateZip();
+
+    for(var i=0; i<cloudOptions.length; i++)
+    {
+        $('#your_cloud_' + cloudOptions[i]).hide();
+    }
+
+    var selectedServices = document.signupform.selectedServices.value;
+    selectedServices = selectedServices.split(',');
+
+    for (var i=0; i<selectedServices.length; i++) {
+        if (selectedServices[i] != "") {
+            $('#your_cloud_' + selectedServices[i]).show();
+        }
+    }
+
+});
+
+</script>

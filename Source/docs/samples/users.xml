@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<users xmlns="http://docs.rackspacecloud.com/idm/api/v1.0" limit="10"
+	offset="0" totalRecords="2">
+	<user softDeleted="false" locked="false" status="ACTIVE" region="America/Chicago"
+		iname="@Example.Smith*John" inum="@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111"
+		prefLanguage="US_en" displayName="John Smith" lastName="Smith"
+		middleName="Quincy" firstName="John" personId="RPN-111-111-111" email="john.smith@example.org"
+		customerInum="@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE" customerId="RCN-000-000-000"
+		username="jqsmith">
+		<secret secretAnswer="sicnarF"
+			secretQuestion="What is the middle name of your best fried, spelled backward?" />
+		<password password="C@n+f001me!" />
+		<apiKey apiKey="10388a8497547f8w77e" />
+		<roles>
+			<role type="RackspaceDefined" customerInum="@FFFF.FFFF.FFFF.FFFF!2398.1FCB"
+				customerId="RCN-234-592-018" name="Admin">
+				<permissions />
+			</role>
+		</roles>
+		<permissions>
+			<permission value="POST /users" clientId="IDM" id="addUser" />
+			<permission />
+		</permissions>
+	</user>
+	<user softDeleted="false" locked="false" status="ACTIVE" region="America/Chicago"
+		iname="@Example.Anderson*Bob" inum="@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!2222"
+		prefLanguage="US_en" displayName="Bob Anderson" lastName="Anderson"
+		middleName="Mark" firstName="Bob" personId="RPN-111-111-222" email="bob.anderson@example.org"
+		customerInum="@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE" customerId="RCN-000-000-000"
+		username="bmanderson">
+		<secret secretAnswer="Definitely"
+			secretQuestion="Should a secret question be more rigorous than this?" />
+		<password password="thispasswordisnogood" />
+		<apiKey apiKey="02398452835b0qe9rc0w934a" />
+	</user>
+</users>

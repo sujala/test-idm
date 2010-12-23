@@ -1,0 +1,50 @@
+body {
+    margin: 0px;
+    padding: 0px;
+
+    background: #D1D1D1;
+    
+    font-size: 13pt;
+    color: #505050;
+}
+
+hr {
+    color: #cccccc;
+}
+
+a {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+#content-wrapper {
+    float: left;
+
+    width: 906px;
+    background: #ffffff;
+    padding-bottom: 20px;
+    margin-left: 50px;
+
+    border-left: 1px solid #999;
+    border-right: 1px solid #999;
+}
+
+.textinput {
+	width: 200px;
+}
+
+textarea {
+    width: 400px;
+}
+
+#getTokenContainer .token_field {
+	width: 485px;
+}
+
+#getTokenErrorMsg {
+    color: #990000;
+    margin-bottom: 10px;
+}

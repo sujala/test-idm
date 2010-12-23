@@ -1,0 +1,11 @@
+[
+#{list items:accounts, as:'account'}
+        {
+        id: ${account.id},
+        name: ${account.name},
+        phone: ${account.phone},
+        address: ${account.mailing_address},
+        primary_contact_id: ${account.primary_contact_id}
+        }
+#{/list}
+]

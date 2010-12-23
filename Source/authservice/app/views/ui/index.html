@@ -1,0 +1,65 @@
+#{extends 'ui-main.html' /}
+#{set title:'RsIDM - Home' /}
+
+<h1>Home</h1>
+<p>
+    This is a demo of the Rackspace Identity Management system.  We are trying
+    to come up with a safe and innovative way to determine a user's identity
+    without the use of physical attributes such as fingerprinting or retina scanning.
+</p>
+
+<h1>Login</h1>
+<form name="loginform" method="post" action="@{Ui.login()}" onsubmit="submitForm()">
+    <div style="padding: 15px;">
+        <label>Username</label>
+        <input name="username" type="text" size="30" />
+        <label>Password</label>
+        <input type="password" name="password" type="text" size="30" />
+        <br />
+        <table cellspacing="0" cellpadding="0" border="0">
+            <tr>
+                <td><input type="checkbox" id="cbox_rememberme" name="rememberme"></td>
+                <td style="padding: 0 0 3px 5px;"><label for="cbox_rememberme">Remember me</label></td>
+            </tr>
+        </table>
+        <ul style="margin-top: 1px;">
+            <li><a href="/ui/forgotPassword">I forgot my password</a></li>
+            <li><a href="/ui/createAccount">Create new Identity</a></li>
+        </ul>
+        <input class="button" type="submit" value="Submit" />
+    </div>
+</form>
+
+<script type="text/javascript">
+    
+var REMEMBERME_COOKIE_NAME = "rememberuser";
+
+$(document).ready(function() {
+
+    var rememberMeCookie = $.cookie(REMEMBERME_COOKIE_NAME);
+    if (rememberMeCookie != null && rememberMeCookie != "") {
+        document.loginform.username.value = rememberMeCookie;
+        document.loginform.rememberme.checked = true;
+        document.loginform.password.focus();
+    }
+    else {
+        document.loginform.rememberme.checked = false;
+        document.loginform.username.focus();
+    }
+});
+
+function submitForm() {
+
+    var remembermeChecked = document.loginform.rememberme.checked;
+
+    if (remembermeChecked) {
+        var options = { path: '/', expires: 14 };
+        var username = document.loginform.username.value;
+        $.cookie(REMEMBERME_COOKIE_NAME, username, options);
+    }
+    else {
+        $.cookie(REMEMBERME_COOKIE_NAME, null, options);
+    }
+    document.loginform.submit();
+}
+</script>

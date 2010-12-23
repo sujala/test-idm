@@ -1,0 +1,18 @@
+#{extends 'main.html' /}
+#{set title:'RsIdm - Test OAuth API call' /}
+
+<form name="testform" action="" method="post">
+    <div style="margin: 10px 5px 10px 15px;">
+        
+        Case 1:
+        API 1 already has an accessToken for user and is making call to API 2
+
+        <div style="border: 1px solid gray;">
+        API 1 Calls API 2 with:
+        GET http://api2/someresources?access_token=xxx&otherparams=blah
+        </div>
+        Case 2:
+        API 1 has user's username/password and is making call to API 2
+    </div>
+</form>
+

@@ -1,0 +1,194 @@
+#{extends 'cloudsignup-main.html' /}
+#{set title:'Signup - Configure' /}
+
+<style type="text/css">
+    .rightpad {
+        padding-right: 5px;
+    }
+
+    .textfield {
+        width: 220px;
+    }
+</style>
+
+<form name="signupform" method="post" action="@{CloudSignup.stepInfoSubmitted()}">
+<input type="hidden" name="selectedServices" value="${selectedServices}" />
+<input type="hidden" name="username" value="${username}" />
+<input type="hidden" name="useremail" value="${useremail}" />
+<input type="hidden" name="password" value="${password}" />
+<div>
+    <img src="@{'/public/images/cloudsignup/cloud-hosting-step2.gif'}" alt="step 2" />
+</div>
+
+
+<div id="content-frame">
+
+    <h2 style="margin-top: 20px;">Your Billing Information</h2>
+    <hr size="1" />
+
+    <table cellspacing="0" cellpadding="0" border="0" style="margin-top: 30px;">
+        <tr>
+            <td style="border-right: 1px solid #cccccc; width: 690px; padding-right: 30px;">
+
+                <div class="section-header">
+                    Please Enter Your Information
+                </div>
+                <hr size="1" />
+
+                <table>
+                    <tr>
+                        <td></td>
+                        <td>Organization/Company</td>
+                        <td style="width: 120px;">&nbsp;</td>
+                        <td></td>
+                        <td>Street</td>
+                    </tr>
+
+                    <tr>
+                        <td class="rightpad"><img src="@{'/public/images/cloudsignup/field_arrow.png'}" alt="field arrow" /></td>
+                        <td><input type="text" name="organization" class="textfield" maxlength="100" tabindex="1" /></td>
+                        <td></td>
+                        <td class="rightpad"><img src="@{'/public/images/cloudsignup/field_arrow.png'}" alt="field arrow" /></td>
+                        <td><input type="text" name="street" class="textfield" maxlength="100" tabindex="6" /></td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="5">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td></td>
+                        <td>Firstname</td>
+                        <td>&nbsp;</td>
+                        <td></td>
+                        <td>City</td>
+                    </tr>
+
+                    <tr>
+                        <td class="rightpad"><img src="@{'/public/images/cloudsignup/field_arrow.png'}" alt="field arrow" /></td>
+                        <td><input type="text" name="firstname" class="textfield" maxlength="100" tabindex="2" /></td>
+                        <td></td>
+                        <td class="rightpad"><img src="@{'/public/images/cloudsignup/field_arrow.png'}" alt="field arrow" /></td>
+                        <td><input type="text" name="city" class="textfield" maxlength="100" tabindex="7" /></td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="5">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td></td>
+                        <td>Lastname</td>
+                        <td>&nbsp;</td>
+                        <td></td>
+                        <td>State</td>
+                    </tr>
+
+                    <tr>
+                        <td class="rightpad"><img src="@{'/public/images/cloudsignup/field_arrow.png'}" alt="field arrow" /></td>
+                        <td><input type="text" name="lastname" class="textfield" maxlength="100" tabindex="3" /></td>
+                        <td></td>
+                        <td class="rightpad"><img src="@{'/public/images/cloudsignup/field_arrow.png'}" alt="field arrow" /></td>
+                        <td><input type="text" name="state" class="textfield" maxlength="100" tabindex="8" /></td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="5">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td></td>
+                        <td>Email</td>
+                        <td>&nbsp;</td>
+                        <td></td>
+                        <td>Zip/Postal Code</td>
+                    </tr>
+
+                    <tr>
+                        <td class="rightpad"><img src="@{'/public/images/cloudsignup/field_arrow.png'}" alt="field arrow" /></td>
+                        <td><input type="text" name="email" class="textfield" maxlength="100" tabindex="4" /></td>
+                        <td></td>
+                        <td class="rightpad"><img src="@{'/public/images/cloudsignup/field_arrow.png'}" alt="field arrow" /></td>
+                        <td><input type="text" name="zip" class="textfield" maxlength="10" tabindex="9" /></td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="5">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td></td>
+                        <td>Phone</td>
+                        <td>&nbsp;</td>
+                        <td></td>
+                        <td>Country</td>
+                    </tr>
+
+                    <tr>
+                        <td class="rightpad"><img src="@{'/public/images/cloudsignup/field_arrow.png'}" alt="field arrow" /></td>
+                        <td><input type="text" name="phone" class="textfield" maxlength="100" tabindex="5" /></td>
+                        <td></td>
+                        <td class="rightpad"><img src="@{'/public/images/cloudsignup/field_arrow.png'}" alt="field arrow" /></td>
+                        <td><input type="text" name="country" class="textfield" maxlength="100" tabindex="9" /></td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="5">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td><input type="checkbox" id="addbilling" name="addbilling" tabindex="10" /></td>
+                        <td colspan="4"><label for="addbilling" style="font-weight: bold">Click Here to Setup a Different Billing Account.</label></td>
+                    </tr>
+                </table>
+
+                <table style="margin-top: 20px; width: 100%;">
+                    <tr>
+                        <td colspan="2" align="right" style="padding-bottom: 10px;">
+                            <div style="width: 300px; font-size: 10.5pt; text-align: left; padding: 10px; border: 1px solid green;">
+                                "This information will be used to activate your account and must match the data on file with your
+                                credit card company. You will not be able to deploy cloud resources until your account is verified;
+                                <b>We will call you by telephone</b> within 15 minutes or less of your order. We apologize for this
+                                inconvenience."
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div style="cursor: pointer;">
+                                <img src="@{'/public/images/cloudsignup/cloud-hosting-back.gif'}" alt="go back" onclick="goBack()" />
+                            </div>
+                        </td>
+                        <td align="right">
+                            <div style="cursor: pointer;">
+                                <img src="@{'/public/images/cloudsignup/cloud-hosting-next.gif'}" alt="next step" onclick="submitForm()" />
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                <br />
+                <br />
+            </td>
+            <td valign="top" style="padding-left: 10px;">
+                <div>Questions?</div>
+                <hr size="1" />
+                <div style="font-size: 12pt;">
+                    If you have any questions about our Cloud Products, Please <a href="#">Live Chat</a> with us now!
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+</form>
+
+<script type="text/javascript">
+
+    function goBack() {
+        window.history.back();
+    }
+
+    function submitForm()
+    {
+        document.signupform.submit();
+    }
+</script>

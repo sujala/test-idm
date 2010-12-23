@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="schema.xslt"?>
+
+	<!-- (C) 2010 Rackspace Hosting, All Rights Reserved -->
+
+<schema elementFormDefault="qualified" attributeFormDefault="unqualified"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:idm="http://docs.rackspacecloud.com/idm/api/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+	xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" jaxb:version="2.1"
+	xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+	jaxb:extensionBindingPrefixes="xjc"
+	targetNamespace="http://docs.rackspacecloud.com/idm/api/v1.0">
+	<annotation>
+		<xsd:appinfo xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+			<xsdxt:title>Idm API Schema Types</xsdxt:title>
+			<xsdxt:link rev="index" href="fault.xsd" />   
+			<!--     
+				JAXB vendor extension to avoid having to use JAXBElement wrapper
+			-->
+			<jaxb:globalBindings>
+				<xjc:simple />
+			</jaxb:globalBindings>
+		</xsd:appinfo>
+		<xsd:documentation xml:lang="EN"
+			xmlns="http://www.w3.org/1999/xhtml">
+			<p>
+				Used only for JAXB generation.
+			</p>
+		</xsd:documentation>
+	</annotation>
+    <include schemaLocation="fault.xsd">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>All fault types.</p>
+			</xsd:documentation>
+		</annotation>
+	</include>
+</schema>

@@ -1,0 +1,509 @@
+#{extends 'main.html' /}
+
+<style type="text/css">
+    label
+    {
+        font-weight: bold;
+    }
+</style>
+
+<h2>IDM API Test Client</h2>
+
+<form name="testform" action="#">
+
+    <div>
+        <label>Auth Headers</label><br/>
+        <table>
+            <tr>
+                <td>User-Agent:</td>
+                <td><input type="text" name="useragent" /></td>
+            </tr>
+            <tr>
+                <td>apikey:</td>
+                <td><input type="text" name="apikey" /></td>
+            </tr>
+            <tr>
+                <td>secretkey:</td>
+                <td><input type="text" name="secretkey" /></td>
+            </tr>
+        </table>
+    </div>
+
+    <hr>
+
+    <div>
+        <label>Add Account</label><br/>
+        <table cellspacing="1" cellpadding="3" border="0">
+            <tr>
+                <td>Organization Name: </td>
+                <td><input type="text" name="c_acctname" /></td>
+            </tr>
+            <tr>
+                <td valign="top">Mailing Address: </td>
+                <td><textarea name="c_mailingaddress" cols="20" rows="4"></textarea></td>
+            </tr>
+            <tr>
+                <td>Phone: </td>
+                <td><input type="text" name="c_phone" /></td>
+            </tr>
+            <tr>
+                <td colspan="2"><label>Primary Contact</label></td>
+            </tr>
+            <tr>
+                <td>username: </td>
+                <td><input type="text" name="p_username" /></td>
+            </tr>
+            <tr>
+                <td>password: </td>
+                <td><input type="password" name="p_password" /></td>
+            </tr>
+            <tr>
+                <td>firstname: </td>
+                <td><input type="text" name="p_firstname" /></td>
+            </tr>
+            <tr>
+                <td>lastname: </td>
+                <td><input type="text" name="p_lastname" /></td>
+            </tr>
+            <tr>
+                <td>middlename: </td>
+                <td><input type="text" name="p_middlename" /></td>
+            </tr>
+            <tr>
+                <td>email: </td>
+                <td><input type="text" name="p_email" /></td>
+            </tr>
+            <tr>
+                <td>phone: </td>
+                <td><input type="text" name="p_phone" /></td>
+            </tr>
+        </table>
+        <input type="button" id="addAccountBtn" value="Add Account" onclick="addAccount()" />
+    </div>
+
+    <hr>
+
+    <div>
+        <label>Add User</label><br/>
+        <table cellspacing="1" cellpadding="3" border="0">
+            <tr>
+                <td>AccountId: </td>
+                <td><input type="text" name="accountId" /></td>
+            </tr>
+            <tr>
+                <td>username: </td>
+                <td><input type="text" name="username" /></td>
+            </tr>
+            <tr>
+                <td>password: </td>
+                <td><input type="password" name="password" /></td>
+            </tr>
+            <tr>
+                <td>firstname: </td>
+                <td><input type="text" name="firstname" /></td>
+            </tr>
+            <tr>
+                <td>lastname: </td>
+                <td><input type="text" name="lastname" /></td>
+            </tr>
+            <tr>
+                <td>middlename: </td>
+                <td><input type="text" name="middlename" /></td>
+            </tr>
+            <tr>
+                <td>email: </td>
+                <td><input type="text" name="email" /></td>
+            </tr>
+            <tr>
+                <td>phone: </td>
+                <td><input type="text" name="phone" /></td>
+            </tr>
+        </table>
+        <input type="button" id="addUserBtn" value="Add User" onclick="addUser()" />
+    </div>
+
+    <hr>
+
+    <div>
+        <label>Authenticate User</label><br/>
+        <table cellspacing="1" cellpadding="3" border="0">
+            <tr>
+                <td>Username: </td>
+                <td><input type="text" name="auth_username" /></td>
+            </tr>
+            <tr>
+                <td>Password: </td>
+                <td><input type="password" name="auth_password" /></td>
+            </tr>
+        </table>
+        <input type="button" id="authUserBtn" value="Authenticate" onclick="authUser()" />
+        <br/>
+
+        <div id="authUserResult" style="float: left; width: 500px; border: 1px solid gray; padding: 15px; margin-top: 10px;">
+            Token:
+        </div>
+    </div>
+
+    <div style="clear: both"></div>
+
+    <hr>
+
+    <div>
+        <label>Validate Token</label><br/>
+        <table cellspacing="1" cellpadding="3" border="0">
+            <tr>
+                <td>Username: </td>
+                <td><input type="text" name="vtoken_username" /></td>
+            </tr>
+            <tr>
+                <td>Token </td>
+                <td><input type="text" name="vtoken_token" /></td>
+            </tr>
+        </table>
+        <input type="button" id="vTokenBtn" value="Validate" onclick="validateToken()" />
+        <br/>
+
+        <div id="vtokenResult" style="float: left; width: 500px; border: 1px solid gray; padding: 15px; margin-top: 10px;">
+            Valid:
+        </div>
+    </div>
+
+    <div style="clear: both"></div>
+
+    <hr>
+
+      <div>
+        <label>Edit Account</label><br/>
+        <table cellspacing="1" cellpadding="3" border="0">
+            <tr>
+                <td>Account Id: </td>
+                <td><input type="text" name="edit_acctid" /></td>
+            </tr>
+            <tr>
+                <td>Organization Name: </td>
+                <td><input type="text" name="edit_acctname" /></td>
+            </tr>
+            <tr>
+                <td valign="top">Mailing Address: </td>
+                <td><textarea name="edit_mailingaddress" cols="20" rows="4"></textarea></td>
+            </tr>
+            <tr>
+                <td>Phone: </td>
+                <td><input type="text" name="edit_phone" /></td>
+            </tr>
+        </table>
+        <input type="button" id="editAccountBtn" value="Edit Account" onclick="editAccount()" />
+    </div>
+
+        <hr>
+
+    <div>
+        <label>Edit User</label><br/>
+        <table cellspacing="1" cellpadding="3" border="0">
+            <tr>
+                <td>AccountId: </td>
+                <td><input type="text" name="eu_accountId" /></td>
+            </tr>
+            <tr>
+                <td>username: </td>
+                <td><input type="text" name="eu_username" /></td>
+            </tr>
+            <tr>
+                <td>password: </td>
+                <td><input type="password" name="eu_password" /></td>
+            </tr>
+            <tr>
+                <td>firstname: </td>
+                <td><input type="text" name="eu_firstname" /></td>
+            </tr>
+            <tr>
+                <td>lastname: </td>
+                <td><input type="text" name="eu_lastname" /></td>
+            </tr>
+            <tr>
+                <td>middlename: </td>
+                <td><input type="text" name="eu_middlename" /></td>
+            </tr>
+            <tr>
+                <td>email: </td>
+                <td><input type="text" name="eu_email" /></td>
+            </tr>
+            <tr>
+                <td>phone: </td>
+                <td><input type="text" name="eu_phone" /></td>
+            </tr>
+        </table>
+        <input type="button" id="editUserBtn" value="Edit User" onclick="editUser()" />
+    </div>
+</form>
+
+<script type="text/javascript">
+
+function ajaxSetup()
+{
+    var useragent = document.testform.useragent.value;
+    var apikey = document.testform.apikey.value;
+    var secretkey = document.testform.secretkey.value;
+
+    var d = new Date();
+    var apitimestamp = d.getFullYear().toString() + 
+        (d.getMonth() + 1).toString() +
+        d.getDate() + d.getHours() + d.getMinutes() + d.getSeconds();
+
+    // <User Key><User Agent><Timestamp><Secret Key>
+    var signature = $.ajax(
+                    {
+                        url: "/testclient/base64sha1hash",
+                        async: false,
+                        data: "input=" + $.URLEncode(apikey + useragent + apitimestamp + secretkey)
+                    }).responseText;
+
+    $.ajaxSetup({
+	'beforeSend': function(xhr) {
+            xhr.setRequestHeader("X-User-Agent", useragent);
+            xhr.setRequestHeader("X-Api-Signature", apikey + ":" + apitimestamp + ":" + signature);
+        }
+    });
+}
+
+
+function editUser()
+{
+    var accountId = jQuery.trim(document.testform.eu_accountId.value);
+    var username = jQuery.trim(document.testform.eu_username.value);
+    var password = document.testform.eu_password.value;
+    var firstname = document.testform.eu_firstname.value;
+    var lastname = document.testform.eu_lastname.value;
+    var middlename = document.testform.eu_middlename.value;
+    var email = document.testform.eu_email.value;
+    var phone = document.testform.eu_phone.value;
+
+    if (username == "") {
+        alert("Please enter a username");
+        return;
+    }
+
+    if (password == "") {
+        alert("Please enter a password");
+        return;
+    }
+
+    ajaxSetup();
+
+    var url = "/users/" + $.URLEncode(username);
+    $.ajax({
+         url: url,
+         type: "PUT",
+         dataType: "json",
+         data: {
+            accountId: $.URLEncode(accountId),
+            password: $.URLEncode(password),
+            firstname: $.URLEncode(firstname),
+            lastname: $.URLEncode(lastname),
+            middlename: $.URLEncode(middlename),
+            email: $.URLEncode(email),
+            phone: $.URLEncode(phone)
+        },
+         success: function(result, statusCode){
+             var uri = result.uri;
+             alert(statusCode + ": uri=" + uri);
+         },
+         error: function(xhr) {
+            alert('Error!  Status = ' + xhr.status + ": " + xhr.responseText);
+         }
+     });
+}
+
+function editAccount()
+{
+    var acctid = document.testform.edit_acctid.value;
+    var acctname = jQuery.trim(document.testform.edit_acctname.value);
+    var mailingaddress = document.testform.edit_mailingaddress.value;
+    var acctphone = document.testform.edit_phone.value;
+
+    ajaxSetup();
+
+        var url = "/accounts/" + acctid;
+    $.ajax({
+         url: url,
+         type: "PUT",
+         dataType: "json",
+         data: {
+            accountName: $.URLEncode(acctname),
+            accountMailingAddress: $.URLEncode(mailingaddress),
+            accountphone: $.URLEncode(acctphone)
+         },
+         success: function(result, statusCode){
+             var uri = result.uri;
+             alert(statusCode + ": uri=" + uri);
+         },
+         error: function(xhr) {
+            alert('Error!  Status = ' + xhr.status + ": " + xhr.responseText);
+         }
+     });
+}
+
+function addAccount()
+{
+    var acctname = jQuery.trim(document.testform.c_acctname.value);
+    var mailingaddress = document.testform.c_mailingaddress.value;
+    var acctphone = document.testform.c_phone.value;
+
+    var username = jQuery.trim(document.testform.p_username.value);
+    var password = document.testform.p_password.value;
+    var firstname = document.testform.p_firstname.value;
+    var lastname = document.testform.p_lastname.value;
+    var middlename = document.testform.p_middlename.value;
+    var email = document.testform.p_email.value;
+    var phone = document.testform.p_phone.value;
+
+    if (username == "") {
+        alert("Please enter a username");
+        return;
+    }
+
+    if (password == "") {
+        alert("Please enter a password");
+        return;
+    }
+
+    ajaxSetup();
+
+    var url = "/accounts";
+    $.ajax({
+         url: url,
+         type: "POST",
+         dataType: "json",
+         data: {
+            accountName: $.URLEncode(acctname),
+            accountMailingAddress: $.URLEncode(mailingaddress),
+            accountphone: $.URLEncode(acctphone),
+            username: $.URLEncode(username),
+            password: $.URLEncode(password),
+            firstname: $.URLEncode(firstname),
+            lastname: $.URLEncode(lastname),
+            middlename: $.URLEncode(middlename),
+            email: $.URLEncode(email),
+            phone: $.URLEncode(phone)
+         },
+         success: function(result, statusCode){
+             var uri = result.uri;
+             alert(statusCode + ": uri=" + uri);
+         },
+         error: function(xhr) {
+            alert('Error!  Status = ' + xhr.status + ": " + xhr.responseText);
+         }
+     });
+}
+
+function addUser()
+{
+    var accountId = jQuery.trim(document.testform.accountId.value);
+    var username = jQuery.trim(document.testform.username.value);
+    var password = document.testform.password.value;
+    var firstname = document.testform.firstname.value;
+    var lastname = document.testform.lastname.value;
+    var middlename = document.testform.middlename.value;
+    var email = document.testform.email.value;
+    var phone = document.testform.phone.value;
+
+    if (username == "") {
+        alert("Please enter a username");
+        return;
+    }
+
+    if (password == "") {
+        alert("Please enter a password");
+        return;
+    }
+
+    ajaxSetup();
+
+    var url = "/users";
+    $.ajax({
+         url: url,
+         type: "POST",
+         dataType: "json",
+         data: {
+            accountId: $.URLEncode(accountId),
+            username: $.URLEncode(username),
+            password: $.URLEncode(password),
+            firstname: $.URLEncode(firstname),
+            lastname: $.URLEncode(lastname),
+            middlename: $.URLEncode(middlename),
+            email: $.URLEncode(email),
+            phone: $.URLEncode(phone)
+        },
+         success: function(result, statusCode){
+             var uri = result.uri;
+             alert(statusCode + ": uri=" + uri);
+         },
+         error: function(xhr) {
+            alert('Error!  Status = ' + xhr.status + ": " + xhr.responseText);
+         }
+     });
+}
+
+function authUser()
+{
+    var username = jQuery.trim(document.testform.auth_username.value);
+    var password = document.testform.auth_password.value;
+
+    if (username == "") {
+        alert("Please enter a username");
+        return;
+    }
+
+    if (password == "") {
+        alert("Please enter a password");
+        return;
+    }
+
+    ajaxSetup();
+
+    var url = "/users/" + username + "/token";
+    $.ajax({
+         url: url,
+         type: "GET",
+         data: "password=" + $.URLEncode(password),
+         success: function(result){
+            document.getElementById("authUserResult").innerHTML = "Token: " + result;
+        },
+        error: function(xhr) {
+            alert('Error!  Status = ' + xhr.status + ": " + xhr.responseText);
+         }
+     });
+}
+
+function validateToken()
+{
+    var username = jQuery.trim(document.testform.vtoken_username.value);
+    var token = document.testform.vtoken_token.value;
+
+    if (username == "") {
+        alert("Please enter a username");
+        return;
+    }
+
+    if (token == "") {
+        alert("Please enter a password");
+        return;
+    }
+
+    ajaxSetup();
+
+    var url = "/tokens/" + token;
+    $.ajax({
+         url: url,
+         type: "GET",
+         data: "username=" + $.URLEncode(username),
+         success: function(result){
+            document.getElementById("vtokenResult").innerHTML = "Result: success";
+        },
+        error: function(xhr) {
+            document.getElementById("vtokenResult").innerHTML = 
+                "Result: failed (" + xhr.status + ": " + xhr.responseText + ")";
+         }
+     });
+}
+</script>

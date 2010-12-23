@@ -1,0 +1,24 @@
+#{extends 'ui-main.html' /}
+#{set title:'RsIdm - Consumer Registered' /}
+
+<h1>Consumer Registered</h1>
+<p>
+    Thank you for your submission!  You are now registered as a consumer to the provider <b>${providername}</b>,
+    please save the following information:
+</p>
+
+<div style="float: left; margin: 10px 5px 10px 15px;">
+    <table>
+        <tr>
+            <td>Consumer Key:</td>
+            <td>${consumerKey}</td>
+        </tr>
+        <tr>
+            <td>Consumer Secret:</td>
+            <td>${consumerSecret}</td>
+        </tr>
+    </table>
+    <br/>
+    Note: should you need to retrieve this information again, simply <a href="/">login</a> to the account that is connected to
+    this consumer registration and go to the "Consumers" section of the site.
+</div>

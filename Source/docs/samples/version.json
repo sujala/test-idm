@@ -1,0 +1,6 @@
+{"version": {
+  "id": "v1.0",
+  "status": "CURRENT",
+  "docURL": "http://docs.rackspacecloud.com/idm/api/v1.0/idm-devguide-20101015.pdf",
+  "wadl": "http://docs.rackspacecloud.com/idm/api/v1.0/application.wadl"
+}}

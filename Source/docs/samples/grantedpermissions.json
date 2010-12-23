@@ -1,0 +1,20 @@
+{"permissions": {
+  "granted": {
+    "permissions": [
+      {
+        "value": "POST /customers",
+        "permissionId": "addCustomer",
+        "customerId": "RCN-000-000-000",
+        "clientId": "IDM",
+        "type": "application/text"
+      },
+      {
+        "value": "GET /customers",
+        "permissionId": "getCustomer",
+        "customerId": "RCN-000-000-000",
+        "clientId": "IDM",
+        "type": "application/text"
+      }
+    ]
+  }
+}}

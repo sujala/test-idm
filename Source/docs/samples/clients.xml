@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<clients xmlns="http://docs.rackspacecloud.com/idm/api/v1.0">
+	<client softDeleted="false" locked="false" status="ACTIVE"
+		iname="@Rackspace*Rackspace*ControlPanel" inum="@FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!0001"
+		name="Test Application2" customerId="RCN-000-000-000" clientId="ab4820dhcb39347">
+		<credentials clientSecret="3af738fbeiwu23" />
+		<permissions>
+			<permission name="addUser" description="POST /users" />
+		</permissions>
+	</client>
+	<client softDeleted="false" locked="false" status="ACTIVE"
+		iname="@Rackspace*Rackspace*CloudServers" inum="@FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!0002"
+		name="Test Application2" customerId="RCN-000-000-000" clientId="632h389cv902bde">
+		<credentials clientSecret="78ndefuy823gvi" />
+		<permissions>
+			<permission name="addUser" description="POST /users" />
+		</permissions>
+	</client>
+</clients>

@@ -1,0 +1,6 @@
+{
+  "wadl": "http://docs.rackspacecloud.com/idm/api/v1.0/application.wadl",
+  "docURL": "http://docs.rackspacecloud.com/idm/api/v1.0/idm-devguide.pdf",
+  "status": "CURRENT",
+  "id": "v1.0"
+}

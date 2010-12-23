@@ -1,0 +1,135 @@
+#{extends 'ui-main.html' /}
+#{set title:'RsIdm - Create Account' /}
+
+<h1>Create New Account</h1>
+
+<p>
+    Welcome to the Rackspace Identity Management system.  Here you can create a single signon
+    for all your Rackspace services without the need for multiple logins.  Please fill out the
+    form below to get started.
+</p>
+
+<h1>Enter your information</h1>
+<form name="createform" action="@{Ui.createAccountSubmitted()}" style="float: left; width: 480px;">
+    <div style="float: left; margin: 10px 5px 10px 15px;">
+        <table>
+            <tr>
+                <td>
+                    <label>Organization Name</label>
+                    <input name="oname" type="text" onkeyup="validateOrganizationName()" onfocus="toggleRequirements(this)" maxlength="100" style="width: 170px;" />
+                </td>
+                <td valign="bottom">
+                    <img id="oname_validated" src="/public/images/check_icon.png" alt="organization name validated" style="width: 14px;" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>Username</label>
+                    <input name="idname" type="text" onkeyup="validateIdentityName()" onfocus="toggleRequirements(this)" maxlength="100" style="width: 170px;" />
+                </td>
+                <td valign="bottom">
+                    <img id="idname_validated" src="/public/images/check_icon.png" alt="id name validated" style="width: 14px;" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>Password</label>
+                    <input type="password" name="password" type="text" onkeyup="validatePassword()" onfocus="toggleRequirements(this)" maxlength="100" style="width: 170px;" />
+                </td>
+                <td valign="bottom">
+                    <img id="password_validated" src="/public/images/check_icon.png" alt="password validated" style="width: 14px;" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>Confirm Password</label>
+                    <input type="password" name="confirmPassword" type="text" onkeyup="validatePasswordMatches()" onfocus="toggleRequirements(this)" maxlength="100" style="width: 170px;" />
+                </td>
+                <td valign="bottom">
+                    <img id="confirm_validated" src="/public/images/check_icon.png" alt="confirm password validated" style="width: 14px;" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>Password Hint</label>
+                    <input name="passwordHint" type="text" onkeyup="validatePasswordHint()" onfocus="toggleRequirements(this)" maxlength="100" style="width: 170px;" />
+                </td>
+                <td valign="bottom">
+                    <img id="hint_validated" src="/public/images/check_icon.png" alt="password hint validated" style="width: 14px;" />
+                </td>
+            </tr>
+        </table>
+
+        <br />
+        <input id="btn_nextstep" class="button" type="button" value="Create" onclick="submitForm()" disabled="true" />
+        <br/>
+        <br/>
+        &nbsp;
+    </div>
+    <div style="float: right; width: 220px; padding-top: 10px;">
+
+            <div style="float: left;"><label>Requirements:</label></div>
+
+            <div id="oname_requirements" class="requirements_box" style="display: none;">
+                <ul style="margin: 0; padding: 0;">
+                    <li id="req_onamelength" class="requirement_bullet_gray">Organization Name is at least 2 characters long</li>
+                </ul>
+            </div>
+
+            <div id="uname_requirements" class="requirements_box" style="display: none;">
+                <ul style="margin: 0; padding: 0;">
+                    <li id="req_idvalidchar" class="requirement_bullet_gray">Only Alphanumeric characters in the Identity Name</li>
+                    <li id="req_idlength" class="requirement_bullet_gray">Identity Name is at least 3 characters long</li>
+                    <li id="req_idnottaken" class="requirement_bullet_gray">Identity Name is not taken</li>
+                </ul>
+            </div>
+
+            <div id="pwd_requirements" class="requirements_box" style="display: none;">
+                <ul style="margin: 0; padding: 0;">
+                    <li id="req_pwdvalidchar" class="requirement_bullet_gray">Password contains an upper case letter, a lower case letter, a number, and a symbol</li>
+                    <li id="req_pwdlength" class="requirement_bullet_gray">Password is at least 7 characters long</li>
+                    <li id="req_pwdnosequence" class="requirement_bullet_gray">Password must not contain a sequence of numbers of 3 or more</li>
+                    <li id="req_pwdvalidword" class="requirement_bullet_gray">Password isn't a forbidden word</li>
+                    <li id="req_pwdnoname" class="requirement_bullet_gray">Password doesn't contain the Username</li>
+                </ul>
+            </div>
+
+            <div id="pwd_matches" class="requirements_box" style="display: none;">
+                <ul style="margin: 0; padding: 0;">
+                    <li id="req_pwdmatches" class="requirement_bullet_gray">Password matches</li>
+                </ul>
+            </div>
+
+            <div id="hint_requirements" class="requirements_box" style="display: none;">
+                <ul style="margin: 0; padding: 0;">
+                    <li id="req_hintsequence" class="requirement_bullet_gray">The Password Hint does not contain part of the password</li>
+                    <li id="req_hintfirstlast" class="requirement_bullet_gray">The first and last character of the Password Hint is not the same as the Password's</li>
+                    <li id="req_hintreverse" class="requirement_bullet_gray">The Password Hint is not part of the password in reverse.</li>
+                    <li id="req_hintreplaced" class="requirement_bullet_gray">The Password Hint is not part of the password with obvious symbols replaced.</li>
+                </ul>
+            </div>
+    </div>
+</form>
+
+<script type="text/javascript" src="/public/javascripts/createAccount.js"></script>
+<script type="text/javascript">
+
+$(document).ready(function() {
+
+   document.createform.oname.focus();
+   
+   validateOrganizationName();
+   validateIdentityName();
+   validatePassword();
+   validatePasswordMatches();
+   validatePasswordHint();
+
+   $('#oname_validated').fadeTo('fast', 0.2);
+   $('#idname_validated').fadeTo('fast', 0.2);
+   $('#password_validated').fadeTo('fast', 0.2);
+   $('#confirm_validated').fadeTo('fast', 0.2);
+   $('#hint_validated').fadeTo('fast', 0.2);
+   $('#btn_nextstep').fadeTo('fast', 0.5);
+   
+ });
+</script>

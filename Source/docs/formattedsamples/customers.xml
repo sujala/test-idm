@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<customers xmlns="http://docs.rackspacecloud.com/idm/api/v1.0">
+	<customer isSoftDeleted="false" 
+	   isLocked="false" 
+	   iname="@Rackspace*Customer"
+	   inum="@FFFF.FFFF.FFFF.FFFF!0ABE.34EC" 
+	   customerId="RCN-123-549-034" />
+	<customer isSoftDeleted="false" 
+	   isLocked="false"
+	   iname="@Rackspace*AnotherCustomer" 
+	   inum="@FFFF.FFFF.FFFF.FFFF!428B.0A49"
+	   customerId="RCN-123-549-034" />
+</customers>

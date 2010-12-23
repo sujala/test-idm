@@ -1,0 +1,127 @@
+#{extends 'ui-main.html' /}
+#{set title:'RsIdm - Dashboard' /}
+
+<h1>Main Dashboard</h1>
+
+<p>
+    Welcome to the Rackspace Identity Management System.
+</p>
+
+<h1>What would you like to do?</h1>
+
+<form name="dashboardform" method="post" action="@{Ui.cloudCredentialsSubmitted()}">
+<input type="hidden" name="username" value="${username}" />
+<input type="hidden" name="cloudusername" />
+<input type="hidden" name="cloudpassword" />
+
+<div style="margin: 10px 5px 10px 15px;">
+    <ul>
+        <li><a href="#">Manage account</a></li>
+        <li id="li_cplinknomapped" style="display: none;"><a href="#" id="cloudcploginlink" rel="cloud_map_dialog">Login to Cloud Control Panel</a></li>
+        <li id="li_cplinkmapped" style="display: none;"><a href="javascript:loginCloudCp()">Login to Cloud Control Panel</a></li>
+        <li><a href="#" id="jdcploginlink" rel="not_implemented_dialog">Login to JungleDisk Control Panel</a></li>
+        <li><a href="#" id="emailcploginlink" rel="not_implemented_dialog">Login to Email and Apps Control Panel</a></li>
+        <li style="display: none;"><a href="#" id="securityquestionlink" rel="security_question_dialog">Manage Security Questions</a></li>
+        <li><a href="/ui/testMossoLogin" target="_blank">Test OAuth Login</a></li>
+        <li><a href="javascript:logout()">log out</a></li>
+    </ul>
+
+    <!-- cloud mapping dialog -->
+    <div id="cloud_map_dialog" style="display:none;">
+        <div style="width: 320px; padding: 10px; border: 1px solid gray;">
+          <h3>Enter your Cloud Login</h3>
+          <p>To link your Cloud Control Panel to this account, enter your login credentials one time.</p>
+          <table>
+              <tr>
+                  <td>Cloud Username: </td>
+                  <td><input type="text" id="cloudusername" /></td>
+              </tr>
+              <tr>
+                  <td>Cloud Password: </td>
+                  <td><input type="password" id="cloudpassword" /></td>
+              </tr>
+          </table>
+          <a href="javascript:submitCloudCredentials()">submit</a> | <a href="#" class="close">cancel</a>
+        </div>
+    </div>
+
+    <!-- not implemented dialog -->
+    <div id="not_implemented_dialog" style="display:none;">
+        <div style="padding: 10px; border: 1px solid gray;">
+          <h3>Not Implemented</h3>
+          <p>This feature has not been implemented.</p>
+          <a href="#" class="close">close</a>
+        </div>
+    </div>
+
+    <!-- security question dialog -->
+    <div id="security_question_dialog" style="display:none;">
+        <div style="width: 400px; padding: 10px; border: 1px solid gray;">
+          <h3>You have not entered a security question</h3>
+          <p>
+              If you forget your password you won't be able to retrieve it.
+              Would you like to enter your questions now?
+          </p>
+          <a href="javascript:goSecurityQuestion()">Yes plz</a> | <a href="#" class="close">Not now</a>
+        </div>
+    </div>
+</div>
+</form>
+
+<script type="text/javascript">
+var cloudcpmapped = "${cloudcpmapped}";
+var hasSecurityQuestion = "${hasSecurityQuestion}";
+
+function logout()
+{
+    window.location = "/";
+}
+
+function loginCloudCp()
+{
+    var cloudCpUrl = "/ui/mossoLogin?username=${username}";
+    window.open(cloudCpUrl);
+}
+
+function loginEmailCp()
+{
+    
+}
+
+function loginJungleDisk()
+{
+    
+}
+
+function submitCloudCredentials()
+{
+    document.dashboardform.cloudusername.value = document.getElementById("cloudusername").value;
+    document.dashboardform.cloudpassword.value = document.getElementById("cloudpassword").value;
+    document.dashboardform.submit();
+}
+
+function goSecurityQuestion()
+{
+    window.location = "/ui/securityQuestions?username=${username}";
+}
+
+$(document).ready(function () {
+
+    $('#cloudcploginlink').simpleDialog({ showCloseLabel: false });
+    $('#emailcploginlink').simpleDialog({ showCloseLabel: false });
+    $('#jdcploginlink').simpleDialog({ showCloseLabel: false});
+    $('#securityquestionlink').simpleDialog({showCloseLabel: false});
+
+    if (cloudcpmapped == "true")
+    {
+        document.getElementById('li_cplinkmapped').style.display = "";
+    }
+    else {
+        document.getElementById('li_cplinknomapped').style.display = "";
+    }
+
+    if (hasSecurityQuestion == "false") {
+        $("#securityquestionlink").click();
+    }
+});
+</script>
