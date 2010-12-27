@@ -39,7 +39,7 @@ public class PropertyFileConfiguration {
 
         logger.debug(String.format(
             "No config file found at %s. Loding from the classpath",
-            CONFIG_FILE_NAME));
+            EXTERNAL_CONFIG_FILE_PATH));
         return readConfigFile(CONFIG_FILE_NAME);
     }
 
