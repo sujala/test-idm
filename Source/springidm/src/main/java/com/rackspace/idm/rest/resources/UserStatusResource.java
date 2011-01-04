@@ -25,6 +25,10 @@ import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
 
+/**
+ * A user status
+ *
+ */
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
@@ -46,6 +50,8 @@ public class UserStatusResource {
     }
 
     /**
+     * Sets a users status
+     * 
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -54,6 +60,11 @@ public class UserStatusResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username username
+     * @param inputUser The user status flag
      */
     @PUT
     @Path("{username}/status")

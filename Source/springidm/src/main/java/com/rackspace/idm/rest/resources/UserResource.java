@@ -31,6 +31,10 @@ import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
 import com.rackspace.idm.validation.InputValidator;
 
+/**
+ * A User.
+ *
+ */
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
@@ -74,6 +78,8 @@ public class UserResource {
     }
 
     /**
+     * Gets a user.
+     * 
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -81,6 +87,10 @@ public class UserResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username username
      */
     @GET
     public Response getUser(@Context Request request, @Context UriInfo uriInfo,
@@ -112,6 +122,8 @@ public class UserResource {
     }
 
     /**
+     * Updates a user.
+     * 
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -120,6 +132,10 @@ public class UserResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username username
      */
     @PUT
     public Response updateUser(@Context Request request,
@@ -167,6 +183,8 @@ public class UserResource {
     }
 
     /**
+     * Deletes a user.
+     * 
      * @response.representation.204.doc Successful request
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -174,6 +192,10 @@ public class UserResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username username
      */
     @DELETE
     public Response deleteUser(@Context Request request,

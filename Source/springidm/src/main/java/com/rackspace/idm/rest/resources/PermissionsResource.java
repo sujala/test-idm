@@ -26,6 +26,10 @@ import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 
+/**
+ * Client permissions
+ *
+ */
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
@@ -53,6 +57,7 @@ public class PermissionsResource {
     }
 
     /**
+     * Gets a list of defined and granted permissions for a client.
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}permissions
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -60,6 +65,10 @@ public class PermissionsResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param clientId Client application ID
      */
     @GET
     public Response getClientPermissions(@Context Request request,

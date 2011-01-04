@@ -53,7 +53,7 @@ public class ApiKeyResource {
     }
 
     /**
-     * Gets an user API key.
+     * Gets an user's API key.
      * 
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userApiKey
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -63,10 +63,9 @@ public class ApiKeyResource {
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      * 
-     * @param authHeader HTTP Authorization header for authenticating the calling client.
+     * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
      * @param username
-     * @return The response with an userApiKey representation.
      */
     @GET
     public Response getApiKey(@Context Request request,
@@ -105,7 +104,7 @@ public class ApiKeyResource {
     }
 
     /**
-     * Resets the user API key.
+     * Resets a user's API key.
      * 
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userApiKey
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -115,10 +114,9 @@ public class ApiKeyResource {
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      * 
-     * @param authHeader HTTP Authorization header for authenticating the calling client.
+     * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
      * @param username
-     * @return The response with a new userApiKey representation.
      */
     @POST
     public Response resetApiKey(@Context Request request,

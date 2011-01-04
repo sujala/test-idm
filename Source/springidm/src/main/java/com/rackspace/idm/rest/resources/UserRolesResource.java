@@ -28,6 +28,10 @@ import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.RoleService;
 import com.rackspace.idm.services.UserService;
 
+/**
+ * A users roles.
+ *
+ */
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
@@ -54,6 +58,8 @@ public class UserRolesResource {
     }
 
     /**
+     * Gets a list of the roles a user has.
+     * 
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}roles
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -61,6 +67,10 @@ public class UserRolesResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username username
      */
     @GET
     public Response getRoles(@Context Request request,

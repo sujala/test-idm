@@ -27,6 +27,10 @@ import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.RoleService;
 import com.rackspace.idm.services.UserService;
 
+/**
+ * A user role.
+ *
+ */
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
@@ -46,6 +50,8 @@ public class UserRoleResource {
     }
 
     /**
+     * Set a user's Role.
+     * 
      * @response.representation.204.doc Successful request
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -53,6 +59,11 @@ public class UserRoleResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username username
+     * @param roleName Role to add to user
      */
     @PUT
     public Response setRole(@Context Request request, @Context UriInfo uriInfo,
@@ -104,6 +115,7 @@ public class UserRoleResource {
     }
 
     /**
+     * Delete a user's role
      * @response.representation.204.doc Successful request
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -111,6 +123,11 @@ public class UserRoleResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username username
+     * @param roleName Role to delete from a user
      */
     @DELETE
     public Response deleteRole(@Context Request request,

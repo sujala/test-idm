@@ -35,6 +35,10 @@ import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.validation.InputValidator;
 
+/**
+ * Client defined permissions.
+ *
+ */
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
@@ -62,6 +66,8 @@ public class DefinedPermissionsResource {
     }
 
     /**
+     * Gets a list of Client defined permissions.
+     * 
      * @response.representation.200.qname http://docs.rackspacecloud.com/idm/api/v1.0}permission
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -69,6 +75,10 @@ public class DefinedPermissionsResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param clientId Client application ID
      */
     @GET
     public Response getClientDefinedPermissions(@Context Request request,
@@ -103,6 +113,8 @@ public class DefinedPermissionsResource {
     }
 
     /**
+     * Adds a client defined permission.
+     * 
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}permission
      * @response.representation.200.qname http://docs.rackspacecloud.com/idm/api/v1.0}permission
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -111,6 +123,11 @@ public class DefinedPermissionsResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param clientId Client application ID
+     * @param permission New permission
      */
     @POST
     public Response addClientPermission(@Context Request request,

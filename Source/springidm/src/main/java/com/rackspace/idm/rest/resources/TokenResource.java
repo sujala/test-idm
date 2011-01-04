@@ -103,7 +103,6 @@ public class TokenResource {
      * 
      * @param authHeader HTTP Authorization header for authenticating the calling client.
      * @param creds AuthCredentials for authenticating the token request.
-     * @return The response with an auth representation that contains access and refresh token, along with their TTLs.
      */
     @POST
     public Response getAccessToken(
@@ -165,7 +164,7 @@ public class TokenResource {
     }
 
     /**
-     * Validates token and then, if valid, returns the access token, a refresh token, and their TTLs.
+     * Validates token and then, if valid, returns the access token and its ttl.
      * 
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}authCredentials
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}auth
@@ -180,7 +179,6 @@ public class TokenResource {
      *  
      * @param authHeader HTTP Authorization header for authenticating the calling client.
      * @param tokenString Token to be validated.
-     * @return The response with an authData representation that contains access and refresh token, along with their TTLs.
      */
     @GET
     @Path("{tokenString}")
@@ -238,7 +236,6 @@ public class TokenResource {
      *  
      * @param authHeader HTTP Authorization header for authenticating the calling client.
      * @param tokenString Token to be revoked.
-     * @return The response with an authData representation that contains access and refresh token, along with their TTLs. 
      */
     @DELETE
     @Path("{tokenString}")

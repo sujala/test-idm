@@ -42,6 +42,10 @@ import com.rackspace.idm.services.RoleService;
 import com.rackspace.idm.services.UserService;
 import com.rackspace.idm.validation.InputValidator;
 
+/**
+ * First user for a customer
+ *
+ */
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
@@ -73,6 +77,8 @@ public class FirstUserResource {
     }
 
     /**
+     * Creates customer and adds first user.
+     * 
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -83,6 +89,9 @@ public class FirstUserResource {
      * @response.representation.409.qname {http://docs.rackspacecloud.com/idm/api/v1.0}usernameConflict
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}idmFault
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param user New User
      */
     @POST
     public Response addFirstUser(@Context Request request,

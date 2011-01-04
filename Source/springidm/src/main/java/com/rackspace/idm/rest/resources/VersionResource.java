@@ -12,6 +12,10 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.GlobalConstants;
 
+/**
+ * API Version
+ * 
+ */
 @Path("/")
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -32,8 +36,10 @@ public class VersionResource {
         this.passwordRulesResource = passwordRulesResource;
         this.tokenResource = tokenResource;
     }
-
+    
     /**
+     * Gets the API Version info.
+     *
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}version
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized

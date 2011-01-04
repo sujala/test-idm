@@ -42,6 +42,10 @@ import com.rackspace.idm.services.PasswordComplexityService;
 import com.rackspace.idm.services.UserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 
+/**
+ * User Password.
+ *
+ */
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
@@ -75,6 +79,8 @@ public class UserPasswordResource {
     }
 
     /**
+     * Gets the user's password.
+     * 
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userPassword
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -82,6 +88,10 @@ public class UserPasswordResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username username
      */
     @GET
     public Response getUserPassword(@Context Request request,
@@ -113,6 +123,8 @@ public class UserPasswordResource {
     }
 
     /**
+     * Resets a user's password.
+     * 
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userPassword
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -120,6 +132,10 @@ public class UserPasswordResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username username
      */
     @POST
     public Response resetUserPassword(@Context Request request,
@@ -154,6 +170,8 @@ public class UserPasswordResource {
     }
 
     /**
+     * Sets a user's password.
+     * 
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userCredentials
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userCredentials
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -162,6 +180,11 @@ public class UserPasswordResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username username
+     * @param userCredentials The user's current password and new password.
      */
     @PUT
     public Response setUserPassword(@Context Request request,
@@ -280,6 +303,8 @@ public class UserPasswordResource {
     }
 
     /**
+     * Gets a token restricted to resetting a user's password.
+     * 
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}token
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -287,6 +312,10 @@ public class UserPasswordResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}severError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username username
      */
     @POST
     @Path("recoverytoken")
@@ -336,6 +365,8 @@ public class UserPasswordResource {
     }
 
     /**
+     * Sends an email to a user to allow the user to reset their password.
+     * 
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}passwordRecovery
      * @response.representation.204.doc Successful request
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -344,6 +375,11 @@ public class UserPasswordResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username username
+     * @param recoveryParam Password recovery email parameters
      */
     @POST
     @Path("recoveryemail")

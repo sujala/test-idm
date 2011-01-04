@@ -42,6 +42,10 @@ import com.rackspace.idm.services.PasswordComplexityService;
 import com.rackspace.idm.services.UserService;
 import com.rackspace.idm.validation.InputValidator;
 
+/**
+ * A customers users.
+ *
+ */
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
@@ -73,6 +77,8 @@ public class UsersResource {
     }
 
     /**
+     * Gets a list of users for a customer
+     * 
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}users
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -81,6 +87,9 @@ public class UsersResource {
      * @response.representation.409.qname {http://docs.rackspacecloud.com/idm/api/v1.0}usernameConflict
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
      */
     @GET
     public Response getUsers(@Context Request request,
@@ -120,6 +129,8 @@ public class UsersResource {
     }
 
     /**
+     * Adds a user to a customer
+     * 
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -128,6 +139,10 @@ public class UsersResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param user New User
      */
     @POST
     public Response addUser(@Context Request request, @Context UriInfo uriInfo,

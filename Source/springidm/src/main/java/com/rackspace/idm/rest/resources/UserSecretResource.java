@@ -26,6 +26,10 @@ import com.rackspace.idm.jaxb.UserSecret;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
 
+/**
+ * A users secret question and answer
+ *
+ */
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
@@ -44,6 +48,8 @@ public class UserSecretResource {
     }
 
     /**
+     * Gets a users secret question and answer
+     * 
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userSecret
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -51,6 +57,10 @@ public class UserSecretResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username username
      */
     @GET
     public Response getUserSecret(@Context Request request,
@@ -86,6 +96,8 @@ public class UserSecretResource {
     }
 
     /**
+     * Sets a users secret question and answer
+     * 
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userSecret
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userSecret
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -94,6 +106,10 @@ public class UserSecretResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username username
      */
     @PUT
     public Response setUserSecret(@Context Request request,

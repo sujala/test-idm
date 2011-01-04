@@ -62,10 +62,9 @@ public class ClientResource {
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      * 
-     * @param authHeader HTTP Authorization header for authenticating the customer.
+     * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
      * @param clientId Client application ID
-     * @return Client data
      */
     @GET
     public Response getClient(@Context Request request,

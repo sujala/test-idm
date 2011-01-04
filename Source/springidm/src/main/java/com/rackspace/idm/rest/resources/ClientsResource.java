@@ -70,7 +70,7 @@ public class ClientsResource {
     }
 
     /**
-     * Gets a list of clients for the customer.
+     * Gets a list of client applications for a customer.
      * 
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}clients
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -80,9 +80,8 @@ public class ClientsResource {
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      * 
-     * @param authHeader HTTP Authorization header for authenticating the calling client.
+     * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
-     * @return Clients that belong to the customer.
      */
     @GET
     public Response getClients(@Context Request request,
@@ -134,10 +133,9 @@ public class ClientsResource {
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      * 
-     * @param authHeader HTTP Authorization header for authenticating the calling client.
+     * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
      * @param client New Client.
-     * @return Client that was added.
      */
     @POST
     public Response addClient(@Context Request request,

@@ -20,6 +20,10 @@ import com.rackspace.idm.entities.passwordcomplexity.PasswordComplexityResult;
 import com.rackspace.idm.entities.passwordcomplexity.PasswordRule;
 import com.rackspace.idm.services.PasswordComplexityService;
 
+/**
+ * Password Complexity Rules
+ *
+ */
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
@@ -40,6 +44,8 @@ public class PasswordRulesResource {
     }
 
     /**
+     * Gets a list of password complexity rules
+     * 
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}passwordRules
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -47,6 +53,8 @@ public class PasswordRulesResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
      */
     @GET
     public Response getRules() {
@@ -58,6 +66,8 @@ public class PasswordRulesResource {
     }
 
     /**
+     * Validates a password against the password complexity rules
+     * 
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}passwordValidation
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -65,6 +75,9 @@ public class PasswordRulesResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param password The password to validate.
      */
     @GET
     @Path("/validation/{password}")
