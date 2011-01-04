@@ -48,9 +48,6 @@ public class RefreshTokenServiceTests {
             refreshToken.getOwner(), refreshToken.getRequestor());
         
         Assert.assertNotNull(returnToken);
-        
-        String tokenPrefix = returnToken.getTokenString().substring(0, 3);
-        Assert.assertTrue(tokenPrefix.equals(dataCenterPrefix));
     }
     
     @Test
