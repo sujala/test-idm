@@ -8,22 +8,26 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.authorizationService.IDMAuthorizationHelper;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.UserConverter;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.errors.ApiError;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.DuplicateException;
+import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.oauth.OAuthService;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
 import com.rackspace.idm.validation.InputValidator;
 
@@ -42,8 +46,7 @@ public class UserResource {
     private UserService userService;
     private UserConverter userConverter;
     private InputValidator inputValidator;
-    private IDMAuthorizationHelper authorizationHelper;
-    private OAuthService oauthService;
+    private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
@@ -55,8 +58,7 @@ public class UserResource {
         UserSoftDeleteResource userSoftDeleteResource,
         UserStatusResource userStatusResource, UserService userService,
         UserConverter userConverter, InputValidator inputValidator,
-        IDMAuthorizationHelper authorizationHelper, OAuthService oauthService,
-        LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.apiKeyResource = apiKeyResource;
         this.userLockResource = userLockResource;
         this.userPasswordResource = userPasswordResource;
@@ -67,8 +69,7 @@ public class UserResource {
         this.userService = userService;
         this.userConverter = userConverter;
         this.inputValidator = inputValidator;
-        this.authorizationHelper = authorizationHelper;
-        this.oauthService = oauthService;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -82,20 +83,29 @@ public class UserResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @GET
-    public Response getUser(
+    public Response getUser(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
+        // Racker's, Specific Clients, Admins and User's are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId)
+            || authorizationService.authorizeUser(authHeader, customerId,
+                username);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
         logger.debug("Getting User: {}", username);
         User user = checkAndGetUser(customerId, username);
-
-        if (!checkUserOrAdminAuthorization(authHeader, user, "getUser")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
-        }
 
         logger.debug("Got User :{}", user);
         return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
@@ -112,24 +122,34 @@ public class UserResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @PUT
-    public Response updateUser(
+    public Response updateUser(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username,
         com.rackspace.idm.jaxb.User inputUser) {
+
+        // Racker's, Specific Clients, Admins and User's are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId)
+            || authorizationService.authorizeUser(authHeader, customerId,
+                username);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         User updatedUser = userConverter.toUserDO(inputUser);
 
         logger.info("Updating User: {}", username);
 
         User user = checkAndGetUser(customerId, username);
-
-        if (!checkUserOrAdminAuthorization(authHeader, user, "udpateUser")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
-        }
 
         user.copyChanges(updatedUser);
         validateParam(user);
@@ -156,25 +176,32 @@ public class UserResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @DELETE
-    public Response deleteUser(
+    public Response deleteUser(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
         logger.info("Deleting User :{}", username);
-        User user = checkAndGetUser(customerId, username);
 
-        if (!authorizeDeleteUser(authHeader, user, "deleteUser")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(authHeader,
+            request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
         }
+
+        User user = checkAndGetUser(customerId, username);
 
         this.userService.deleteUser(username);
 
         logger.info("Deleted User: {}", user);
-        
+
         return Response.noContent().build();
     }
 
@@ -233,54 +260,5 @@ public class UserResource {
         if (err != null) {
             throw new BadRequestException(err.getMessage());
         }
-    }
-
-    private boolean authorizeDeleteUser(String authHeader, User user,
-        String methodName) {
-        String subjectUsername = oauthService
-            .getUsernameFromAuthHeaderToken(authHeader);
-
-        String companyId = user.getCustomerId();
-
-        if (subjectUsername == null) {
-            return false;
-        }
-
-        // Condition 1: Admin can delete user.
-        if (authorizationHelper.checkAdminAuthorizationForUser(subjectUsername,
-            companyId, methodName)) {
-
-            // Condition 2: Admin cannot delete himself/herself.
-            if (!subjectUsername.equalsIgnoreCase(user.getUsername())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean checkUserOrAdminAuthorization(String authHeader, User user,
-        String methodName) {
-
-        String userName = user.getUsername();
-        String companyId = user.getCustomerId();
-
-        String subjectUsername = oauthService
-            .getUsernameFromAuthHeaderToken(authHeader);
-
-        if (subjectUsername == null) {
-            return false;
-        }
-
-        // Condition 1: User can do stuff.
-        if (!authorizationHelper.checkUserAuthorization(subjectUsername,
-            userName, methodName)) {
-
-            // Condition 2: An Admin can do stuff.
-            if (!authorizationHelper.checkAdminAuthorizationForUser(
-                subjectUsername, companyId, methodName)) {
-                return false;
-            }
-        }
-        return true;
     }
 }

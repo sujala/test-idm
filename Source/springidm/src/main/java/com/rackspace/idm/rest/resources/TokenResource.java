@@ -12,8 +12,11 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -23,7 +26,6 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.ErrorMsg;
 import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.authorizationService.IDMAuthorizationHelper;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.AuthConverter;
 import com.rackspace.idm.entities.AccessToken;
@@ -36,6 +38,7 @@ import com.rackspace.idm.errors.ApiError;
 import com.rackspace.idm.exceptions.ApiException;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ClientDisabledException;
+import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.exceptions.NotAuthorizedException;
 import com.rackspace.idm.exceptions.NotFoundException;
@@ -45,6 +48,7 @@ import com.rackspace.idm.oauth.AuthCredentials;
 import com.rackspace.idm.oauth.OAuthGrantType;
 import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.AccessTokenService;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.services.UserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
@@ -63,30 +67,25 @@ import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
 public class TokenResource {
     private AccessTokenService tokenService;
     private OAuthService oauthService;
-    private UserService userService;
-    private ClientService clientService;
     private AuthHeaderHelper authHeaderHelper;
-    private IDMAuthorizationHelper authorizationHelper;
     private InputValidator inputValidator;
     private AuthConverter authConverter;
+    private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired(required = true)
     public TokenResource(AccessTokenService tokenService,
-        UserService userService, ClientService clientService,
         OAuthService oauthService, AuthHeaderHelper authHeaderHelper,
-        IDMAuthorizationHelper idmAuthHelper, InputValidator inputValidator,
-        AuthConverter authConverter, LoggerFactoryWrapper logger) {
+        InputValidator inputValidator, AuthConverter authConverter,
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
 
         this.tokenService = tokenService;
         this.oauthService = oauthService;
-        this.userService = userService;
-        this.clientService = clientService;
         this.oauthService = oauthService;
         this.authHeaderHelper = authHeaderHelper;
-        this.authorizationHelper = idmAuthHelper;
         this.inputValidator = inputValidator;
         this.authConverter = authConverter;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -185,11 +184,25 @@ public class TokenResource {
      */
     @GET
     @Path("{tokenString}")
-    public Response validateAccessToken(
+    public Response validateAccessToken(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("tokenString") String tokenString) {
 
         logger.debug("Validating Access Token: {}", tokenString);
+
+        // Only Rcker's and Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         AuthData auth = new AuthData();
 
@@ -203,75 +216,8 @@ public class TokenResource {
         }
 
         auth.setAccessToken(token);
-
-        // Validate Client exists and is valid
-        String clientId = this.tokenService
-            .getClientIdByTokenString(tokenString);
-
-        if (StringUtils.isBlank(clientId)) {
-            String errorMsg = String.format("ClientId not found for token: %s",
-                tokenString);
-            logger.error(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-
-        Client client = this.clientService.getById(clientId);
-        if (client == null) {
-            String errorMsg = String.format(
-                "Client \"%s\" does not exist for token %s", clientId,
-                tokenString);
-            logger.error(errorMsg);
-            throw new NotFoundException(errorMsg);
-        } else if (client.getStatus() != ClientStatus.ACTIVE
-            || client.getSoftDeleted()) {
-            String errorMsg = String.format(
-                "Client \"%s\" does not have a valid status", clientId,
-                tokenString);
-            logger.error(errorMsg);
-            throw new ClientDisabledException(errorMsg);
-        }
-
-        auth.setClient(client);
-
-        // If token is for a User and not just a client
-        if (token.getOwner() != token.getRequestor()) {
-
-            // Validate User exists and is valid
-            String username = this.tokenService
-                .getUsernameByTokenString(tokenString);
-
-            if (StringUtils.isBlank(username)) {
-                String errorMsg = String.format(
-                    "Username not found for token: %s", tokenString);
-                logger.error(errorMsg);
-                throw new NotFoundException(errorMsg);
-            }
-
-            User tokenOwner = null;
-            if (token.getIsTrusted()) {
-                tokenOwner = new User.Builder().setUsername(token.getOwner())
-                    .setEmail(GlobalConstants.NO_REPLY_EMAIL)
-                    .setCisIds(GlobalConstants.RACKSPACE_CUSTOMER_ID,
-                        token.getOwner()).build();
-            } else {
-                tokenOwner = this.userService.getUser(username);
-                if (tokenOwner == null) {
-                    String errorMsg = String.format(
-                        "User \"%s\" does not exist for token %s", username,
-                        tokenString);
-                    logger.error(errorMsg);
-                    throw new NotFoundException(errorMsg);
-                } else if (tokenOwner.getStatus() != UserStatus.ACTIVE
-                    || tokenOwner.getSoftDeleted()) {
-                    String errorMsg = String.format(
-                        "User \"%s\" does not have a valid status", username,
-                        tokenString);
-                    logger.error(errorMsg);
-                    throw new UserDisabledException(errorMsg);
-                }
-            }
-            auth.setUser(tokenOwner);
-        }
+        auth.setUser(token.getTokenUser());
+        auth.setClient(token.getTokenClient());
 
         logger.debug("Validated Access Token: {}", tokenString);
 
@@ -296,17 +242,23 @@ public class TokenResource {
      */
     @DELETE
     @Path("{tokenString}")
-    public Response revokeAccessToken(
+    public Response revokeAccessToken(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("tokenString") String tokenString) {
 
         logger.debug("Revoking Token: {}", tokenString);
 
-        if (!authorizeRevokeToken(authHeader, tokenString, "revokeAccessToken")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(authHeader,
+            request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
         }
 
         try {
@@ -335,31 +287,13 @@ public class TokenResource {
                 ErrorMsg.BAD_REQUEST, errorMsg);
 
         }
-        
+
         return Response.noContent().build();
     }
 
     // private funcs
     protected DateTime getCurrentTime() {
         return new DateTime();
-    }
-
-    private boolean authorizeRevokeToken(String authHeader,
-        String tokenToRevoke, String methodName) {
-
-        String subjectUsername = oauthService
-            .getUsernameFromAuthHeaderToken(authHeader);
-        String username = tokenService.getUsernameByTokenString(tokenToRevoke);
-
-        if (subjectUsername == null) {
-            // Condition 1: RACKSPACE Company can revoke token.
-            return authorizationHelper.checkRackspaceClientAuthorization(
-                authHeader, methodName);
-        } else {
-            // Condition 2: User can revoke his/her own token.
-            return authorizationHelper.checkUserAuthorization(subjectUsername,
-                username, methodName);
-        }
     }
 
     private OAuthGrantType getGrantType(String grantTypeStrVal) {

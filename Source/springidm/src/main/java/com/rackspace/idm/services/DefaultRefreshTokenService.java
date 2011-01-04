@@ -1,6 +1,7 @@
 package com.rackspace.idm.services;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -15,7 +16,6 @@ public class DefaultRefreshTokenService implements RefreshTokenService {
     private RefreshTokenDao refreshTokenDao;
     private Logger logger;
     private int expirationSeconds;
-    private String dataCenterPrefix;
     
     public DefaultRefreshTokenService(
         RefreshTokenDefaultAttributes defaultAttributes,
@@ -26,14 +26,13 @@ public class DefaultRefreshTokenService implements RefreshTokenService {
         this.logger = logger;
         
         this.expirationSeconds = defaultAttributes.getExpirationSeconds();
-        this.dataCenterPrefix = defaultAttributes.getDataCenterPrefix();
     }
     
     public RefreshToken createRefreshTokenForUser(String username, String clientId) {
         
         logger.debug("Creating Refresh Token For User: {}", username);
         
-        String tokenString = generateTokenWithDcPrefix();
+        String tokenString = generateToken();
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setTokenString(tokenString);
         refreshToken.setExpiration(expirationSeconds);
@@ -86,15 +85,7 @@ public class DefaultRefreshTokenService implements RefreshTokenService {
     }
     
     // private
-    private String generateTokenWithDcPrefix() {
-        try {
-            String tokenString = String.format("%s-%s", 
-                this.dataCenterPrefix, HashHelper.getRandomSha1());
-            return tokenString;
-        } catch (NoSuchAlgorithmException e) {
-            String error = "Unsupported hashing alogrithm in create Token for User";
-            logger.error(error, e);
-            throw new IllegalStateException(error, e);
-        }
+    private String generateToken() {
+        return UUID.randomUUID().toString().replace("-", "");
     }
 }

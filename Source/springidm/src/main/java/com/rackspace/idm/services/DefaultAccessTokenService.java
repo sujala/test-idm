@@ -4,6 +4,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -15,8 +16,10 @@ import com.rackspace.idm.dao.RefreshTokenDao;
 import com.rackspace.idm.dao.UserDao;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Client;
+import com.rackspace.idm.entities.BaseClient;
 import com.rackspace.idm.entities.TokenDefaultAttributes;
 import com.rackspace.idm.entities.TokenStatusCode;
+import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.oauthAuthentication.Token;
@@ -27,8 +30,8 @@ public class DefaultAccessTokenService implements AccessTokenService {
     private AccessTokenDao tokenDao;
     private RefreshTokenDao refreshTokenDao;
     private ClientDao clientDao;
-    private UserDao userDao;
     private Logger logger;
+    private UserService userService;
 
     private int defaultTokenExpirationSeconds;
     private int maxTokenExpirationSeconds;
@@ -41,13 +44,13 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
     public DefaultAccessTokenService(TokenDefaultAttributes defaultAttributes,
         AccessTokenDao tokenDao, RefreshTokenDao refreshTokenDao,
-        ClientDao clientDao, UserDao userDao, Map<String, String> dcLocations,
+        ClientDao clientDao, UserService userService, Map<String, String> dcLocations,
         Logger logger) {
 
         this.tokenDao = tokenDao;
         this.refreshTokenDao = refreshTokenDao;
         this.clientDao = clientDao;
-        this.userDao = userDao;
+        this.userService = userService;
         this.dcLocations = dcLocations;
         this.logger = logger;
 
@@ -78,9 +81,9 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
         tokenString = generateTokenWithDcPrefix();
 
-        String owner = clientDao.findByClientId(clientId).getClientId();
+        Client owner = clientDao.findByClientId(clientId);
         AccessToken accessToken = new AccessToken(tokenString, new DateTime()
-            .plusSeconds(expirationTimeInSeconds), owner, owner, IDM_SCOPE.FULL);
+            .plusSeconds(expirationTimeInSeconds), null, owner.getBaseClient(), IDM_SCOPE.FULL);
         tokenDao.save(accessToken);
         logger.debug("Created Access Token For Client: {} : {}", clientId,
             accessToken);
@@ -112,7 +115,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
         String owner = username;
         if (!isTrustedServer) {
-            User tokenOwner = userDao.findByUsername(username);
+            User tokenOwner = userService.getUser(username);
             if (tokenOwner == null) {
                 String error = "No entry found for username " + username;
                 logger.debug(error);
@@ -136,13 +139,19 @@ public class DefaultAccessTokenService implements AccessTokenService {
         String requestor, int expirationTimeInSeconds) {
 
         String tokenString = generateTokenWithDcPrefix();
+        
+        BaseUser user = new BaseUser();
+        BaseClient client = clientDao.findByClientId(requestor).getBaseClient();
 
         if (isTrustedServer) {
-            owner = username;
+            user.setUsername(username);
+        }
+        else {
+            user = userService.getUser(username).getBaseUser(); 
         }
 
         AccessToken accessToken = new AccessToken(tokenString, new DateTime()
-            .plusSeconds(expirationTimeInSeconds), owner, requestor,
+            .plusSeconds(expirationTimeInSeconds), user, client,
             IDM_SCOPE.FULL, isTrustedServer);
 
         tokenDao.save(accessToken);
@@ -167,7 +176,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
         String tokenString = generateTokenWithDcPrefix();
 
-        User tokenOwner = userDao.findByUsername(username);
+        User tokenOwner = userService.getUser(username);
         if (tokenOwner == null) {
             String error = "No entry found for username " + username;
             logger.debug(error);
@@ -193,8 +202,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
         }
 
         AccessToken accessToken = new AccessToken(tokenString, new DateTime()
-            .plusSeconds(expirationTimeInSeconds), owner, tokenRequestor
-            .getClientId(), IDM_SCOPE.SET_PASSWORD);
+            .plusSeconds(expirationTimeInSeconds), tokenOwner.getBaseUser(), tokenRequestor.getBaseClient(), IDM_SCOPE.SET_PASSWORD);
         tokenDao.save(accessToken);
         logger.debug("Created Password Reset Access Token For User: {} : {}",
             username, accessToken);
@@ -226,7 +234,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
             return ownerUsername;
         }
 
-        User user = userDao.findByUsername(ownerUsername);
+        User user = userService.getUser(ownerUsername);
 
         if (user != null) {
             String username = user.getUsername();
@@ -301,7 +309,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
             return token;
         }
 
-        User user = userDao.findByUsername(username);
+        User user = userService.getUser(username);
         if (user == null) {
             String error = "No entry found for username " + username;
             logger.debug(error);
@@ -410,7 +418,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
         String username = StringUtils.EMPTY;
         String clientId = StringUtils.EMPTY;
 
-        User tokenUser = userDao.findByUsername(accessToken.getOwner());
+        User tokenUser = userService.getUser(accessToken.getOwner());
         if (tokenUser != null) {
             username = tokenUser.getUsername();
         }
@@ -427,15 +435,10 @@ public class DefaultAccessTokenService implements AccessTokenService {
     }
 
     private String generateTokenWithDcPrefix() {
-        try {
+            String token = UUID.randomUUID().toString().replace("-", "");
             String tokenString = String.format("%s-%s", this.dataCenterPrefix,
-                HashHelper.getRandomSha1());
+                token);
             return tokenString;
-        } catch (NoSuchAlgorithmException e) {
-            String error = "Unsupported hashing alogrithm in create Token for User";
-            logger.error(error, e);
-            throw new IllegalStateException(error, e);
-        }
     }
 
     private String getIDMLocationForDC(String tokenString) {

@@ -7,18 +7,22 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.authorizationService.IDMAuthorizationHelper;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.CustomerConverter;
 import com.rackspace.idm.entities.Customer;
+import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.CustomerService;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -32,22 +36,22 @@ public class CustomerResource {
     private UsersResource usersResource;
     private CustomerService customerService;
     private CustomerConverter customerConverter;
-    private IDMAuthorizationHelper authorizationHelper;
+    private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
     public CustomerResource(ClientsResource clientsResource,
         CustomerLockResource customerLockResource, RolesResource rolesResource,
         UsersResource usersResource, CustomerService customerService,
-        CustomerConverter customerConverter,
-        IDMAuthorizationHelper authorizationHelper, LoggerFactoryWrapper logger) {
+        CustomerConverter customerConverter, AuthorizationService authorizationService,
+        LoggerFactoryWrapper logger) {
         this.clientsResource = clientsResource;
         this.customerLockResource = customerLockResource;
         this.rolesResource = rolesResource;
         this.usersResource = usersResource;
         this.customerService = customerService;
         this.customerConverter = customerConverter;
-        this.authorizationHelper = authorizationHelper;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -61,17 +65,24 @@ public class CustomerResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @GET
-    public Response getCustomer(
+    public Response getCustomer(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId) {
 
         logger.debug("Getting Customer: {}", customerId);
+        
+        // Racker's and Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath());
 
-        if (!authorizeCustomerAddDeleteViewLock(authHeader, "getCustomer")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
         }
 
         Customer customer = this.customerService.getCustomer(customerId);
@@ -99,11 +110,24 @@ public class CustomerResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @DELETE
-    public Response deleteCustomer(
+    public Response deleteCustomer(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId) {
 
         logger.info("Deleting Customer :{}", customerId);
+        
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         Customer customer = this.customerService.getCustomer(customerId);
 
@@ -112,13 +136,6 @@ public class CustomerResource {
                 customerId);
             logger.error(errorMsg);
             throw new NotFoundException(errorMsg);
-        }
-
-        if (!authorizeCustomerAddDeleteViewLock(authHeader, "deleteCustomer")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
         }
 
         this.customerService.softDeleteCustomer(customerId);
@@ -146,13 +163,5 @@ public class CustomerResource {
     @Path("users")
     public UsersResource getUsersResource() {
         return usersResource;
-    }
-
-    private boolean authorizeCustomerAddDeleteViewLock(String authHeader,
-        String methodName) {
-
-        // Condition: Rackspace client can add, view, delete customer.
-        return authorizationHelper.checkRackspaceClientAuthorization(
-            authHeader, methodName);
     }
 }

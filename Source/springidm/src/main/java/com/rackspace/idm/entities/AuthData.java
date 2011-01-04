@@ -6,8 +6,8 @@ public class AuthData {
 
     private AccessToken accessToken;
     private RefreshToken refreshToken;
-    private User user;
-    private Client client;
+    private BaseUser user;
+    private BaseClient client;
     private List<Permission> permissions;
     
     public AuthData() {
@@ -34,19 +34,19 @@ public class AuthData {
         this.refreshToken = refreshToken;
     }
     
-    public User getUser() {
+    public BaseUser getUser() {
         return user;
     }
     
-    public void setUser(User user) {
+    public void setUser(BaseUser user) {
         this.user = user;
     }
     
-    public Client getClient() {
+    public BaseClient getClient() {
         return client;
     }
     
-    public void setClient(Client client) {
+    public void setClient(BaseClient client) {
         this.client = client;
     }
     

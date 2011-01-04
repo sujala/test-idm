@@ -1,6 +1,8 @@
 package com.rackspace.idm.converters;
 
 import com.rackspace.idm.entities.AuthData;
+import com.rackspace.idm.entities.Client;
+import com.rackspace.idm.entities.User;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class AuthConverter {
@@ -36,11 +38,11 @@ public class AuthConverter {
 
         if (auth.getClient() != null) {
             authJaxb.setClient(clientConverter
-                .toClientJaxbWithoutPermissionsOrCredentials(auth.getClient()));
+                .toClientJaxbFromBaseClient(auth.getClient()));
         }
 
         if (auth.getUser() != null) {
-            authJaxb.setUser(userConverter.toUserWithOnlyRolesJaxb(auth
+            authJaxb.setUser(userConverter.toUserJaxbFromBaseUser(auth
                 .getUser()));
         }
 

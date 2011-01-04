@@ -63,14 +63,4 @@ public class ApiError {
         return String.format("ApiError [code=%s, message=%s, details=%s]",
             code, message, details);
     }
-    
-    public String toJson() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(String.format("{\"apiError\":{\"@xmlNamespace\":\"%s", GlobalConstants.API_NAMESPACE_LOCATION));
-        sb.append(String.format("\"code\":%s,", this.getCode()));
-        sb.append(String.format("\"details\":\"%s\",", this.getDetails()));
-        sb.append(String.format("\"message\":\"%s\"", this.getMessage()));
-        sb.append("}}");
-        return sb.toString();
-    }
 }

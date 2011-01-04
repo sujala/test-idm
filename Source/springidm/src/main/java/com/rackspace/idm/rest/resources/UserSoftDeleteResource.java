@@ -12,13 +12,13 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.authorizationService.IDMAuthorizationHelper;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.UserConverter;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.BadRequestException;
+import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
-import com.rackspace.idm.oauth.OAuthService;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -28,19 +28,16 @@ public class UserSoftDeleteResource {
 
     private UserService userService;
     private UserConverter userConverter;
-    private IDMAuthorizationHelper authorizationHelper;
-    private OAuthService oauthService;
+    private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
     public UserSoftDeleteResource(UserService userService,
-        UserConverter userConverter,
-        IDMAuthorizationHelper authorizationHelper, OAuthService oauthService,
+        UserConverter userConverter, AuthorizationService authorizationService,
         LoggerFactoryWrapper logger) {
         this.userService = userService;
         this.userConverter = userConverter;
-        this.authorizationHelper = authorizationHelper;
-        this.oauthService = oauthService;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -64,12 +61,24 @@ public class UserSoftDeleteResource {
         logger.info("Updating SoftDelete for User: {} - {}", username,
             inputUser.isSoftDeleted());
 
+        // Racker's and Admins are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeAdmin(authHeader, customerId);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
         if (inputUser.isSoftDeleted() == null) {
             String errMsg = "Blank value for softDelted passed in.";
             logger.error(errMsg);
             throw new BadRequestException(errMsg);
         }
-        
+
         boolean softDelete = inputUser.isSoftDeleted();
 
         // get user to update
@@ -86,13 +95,6 @@ public class UserSoftDeleteResource {
 
         user.setSoftDeleted(softDelete);
 
-        if (!authorizeDeleteUser(authHeader, user, "deleteUser")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
-        }
-
         if (softDelete) {
             this.userService.softDeleteUser(username);
         } else {
@@ -101,7 +103,8 @@ public class UserSoftDeleteResource {
 
         logger.info("Updated SoftDelete for user: {} - []", user);
 
-        return Response.ok(userConverter.toUserWithOnlySoftDeletedJaxb(user)).build();
+        return Response.ok(userConverter.toUserWithOnlySoftDeletedJaxb(user))
+            .build();
     }
 
     private User checkAndGetUser(String customerId, String username) {
@@ -117,28 +120,5 @@ public class UserSoftDeleteResource {
             username);
         logger.error(errorMsg);
         throw new NotFoundException(errorMsg);
-    }
-
-    private boolean authorizeDeleteUser(String authHeader, User user,
-        String methodName) {
-        String subjectUsername = oauthService
-            .getUsernameFromAuthHeaderToken(authHeader);
-
-        String companyId = user.getCustomerId();
-
-        if (subjectUsername == null) {
-            return false;
-        }
-
-        // Condition 1: Admin can delete user.
-        if (authorizationHelper.checkAdminAuthorizationForUser(subjectUsername,
-            companyId, methodName)) {
-
-            // Condition 2: Admin cannot delete himself/herself.
-            if (!subjectUsername.equalsIgnoreCase(user.getUsername())) {
-                return true;
-            }
-        }
-        return false;
     }
 }

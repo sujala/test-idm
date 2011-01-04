@@ -4,10 +4,14 @@ import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +21,9 @@ import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.RoleConverter;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.entities.Role;
+import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.CustomerService;
 import com.rackspace.idm.services.RoleService;
 
@@ -29,15 +35,17 @@ public class RolesResource {
     private CustomerService customerService;
     private RoleService roleService;
     private RoleConverter roleConverter;
+    private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
     public RolesResource(CustomerService customerService,
         RoleService roleService, RoleConverter roleConverter,
-        LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.customerService = customerService;
         this.roleService = roleService;
         this.roleConverter = roleConverter;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -51,10 +59,28 @@ public class RolesResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @GET
-    public Response getRoles(
+    public Response getRoles(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId) {
 
         logger.debug("Getting Customer Roles: {}", customerId);
+
+        // Racker's, Specific Clients, Admins and Users are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId)
+            || authorizationService.authorizeCustomerUser(authHeader,
+                customerId);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         Customer customer = this.customerService.getCustomer(customerId);
         if (customer == null) {

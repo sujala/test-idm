@@ -8,8 +8,11 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,8 @@ import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.PermissionConverter;
 import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.entities.PermissionSet;
+import com.rackspace.idm.exceptions.ForbiddenException;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -30,6 +35,7 @@ public class PermissionsResource {
     private GrantedPermissionsResource grantedPermissionsResource;
     private ClientService clientService;
     private PermissionConverter permissionConverter;
+    private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
@@ -37,11 +43,12 @@ public class PermissionsResource {
         DefinedPermissionsResource definedPermissionsResource,
         GrantedPermissionsResource grantedPermissionsResource,
         ClientService clientService, PermissionConverter permissionConverter,
-        LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.definedPermissionsResource = definedPermissionsResource;
         this.grantedPermissionsResource = grantedPermissionsResource;
         this.permissionConverter = permissionConverter;
         this.clientService = clientService;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -55,13 +62,29 @@ public class PermissionsResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @GET
-    public Response getClientPermissions(
+    public Response getClientPermissions(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
         logger.debug(String.format("Getting Permissions for client %s",
             clientId));
+
+        // Racker's, Specific Clients and Admins are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
         List<Permission> defineds = this.clientService
             .getDefinedPermissionsByClientId(clientId);
 
@@ -69,7 +92,8 @@ public class PermissionsResource {
 
         permset.setDefineds(defineds);
         logger.debug(String.format("Got Permissions for client %s", clientId));
-        return Response.ok(permissionConverter.toPermissionsJaxb(permset)).build();
+        return Response.ok(permissionConverter.toPermissionsJaxb(permset))
+            .build();
     }
 
     @Path("defined")

@@ -1,12 +1,16 @@
 package com.rackspace.idm.entities;
 
+import java.io.Serializable;
+
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 
-public class Permission {
+public class Permission implements Serializable {
+    private static final long serialVersionUID = -4289257131504718968L;
+
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String permissionId;
@@ -32,8 +36,8 @@ public class Permission {
         return permissionId;
     }
 
-    public Permission(String permissionId, String clientId, String value,
-        String customerId) {
+    public Permission(String customerId, String clientId, String permissionId,
+        String value) {
         super();
         this.permissionId = permissionId;
         this.clientId = clientId;

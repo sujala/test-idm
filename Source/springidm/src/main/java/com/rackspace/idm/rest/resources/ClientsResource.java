@@ -14,6 +14,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -21,7 +22,6 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.authorizationService.IDMAuthorizationHelper;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.ClientConverter;
 import com.rackspace.idm.entities.Client;
@@ -33,6 +33,7 @@ import com.rackspace.idm.exceptions.CustomerConflictException;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.services.CustomerService;
 import com.rackspace.idm.validation.InputValidator;
@@ -51,20 +52,20 @@ public class ClientsResource {
     private ClientConverter clientConverter;
     private ClientService clientService;
     private ClientResource clientResource;
-    private IDMAuthorizationHelper authorizationHelper;
+    private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
     public ClientsResource(CustomerService customerService,
         InputValidator inputValidator, ClientConverter clientConverter,
         ClientService clientService, ClientResource clientResource,
-        IDMAuthorizationHelper authorizationHelper, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.customerService = customerService;
         this.clientService = clientService;
         this.clientConverter = clientConverter;
         this.inputValidator = inputValidator;
         this.clientResource = clientResource;
-        this.authorizationHelper = authorizationHelper;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -84,10 +85,26 @@ public class ClientsResource {
      * @return Clients that belong to the customer.
      */
     @GET
-    public Response getClients(
+    public Response getClients(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId) {
 
         logger.debug("Getting Customer Clients: {}", customerId);
+
+        // Racker's, Specific Clients and Admins are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         Customer customer = this.customerService.getCustomer(customerId);
         if (customer == null) {
@@ -113,6 +130,7 @@ public class ClientsResource {
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
      * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.409.qname {http://docs.rackspacecloud.com/idm/api/v1.0}customerIdConflict
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      * 
@@ -122,10 +140,25 @@ public class ClientsResource {
      * @return Client that was added.
      */
     @POST
-    public Response addClient(@Context UriInfo uriInfo,
+    public Response addClient(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         com.rackspace.idm.jaxb.Client client) {
+
+        // Racker's, Specific Clients and Admins are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         if (!client.getCustomerId().toLowerCase()
             .equals(customerId.toLowerCase())) {
@@ -142,15 +175,6 @@ public class ClientsResource {
         ApiError err = inputValidator.validate(clientDO);
         if (err != null) {
             throw new BadRequestException(err.getMessage());
-        }
-
-        String methodName = "addClient";
-
-        if (!authorizeAddClient(authHeader, customerId, methodName)) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
         }
 
         try {
@@ -182,11 +206,5 @@ public class ClientsResource {
     @Path("{clientId}")
     public ClientResource getClientResource() {
         return clientResource;
-    }
-
-    private boolean authorizeAddClient(String authHeader, String userCompanyId,
-        String methodName) throws ForbiddenException {
-        return authorizationHelper.checkAdminAuthorization(authHeader,
-            userCompanyId, methodName);
     }
 }

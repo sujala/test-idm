@@ -654,7 +654,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "There is no exisiting record for the given User instance. Has the userName been changed?");
         }
 
-        if (user.equals(oldUser)) {
+        List<Modification> mods = getModifications(oldUser, user);
+
+        if (user.equals(oldUser) || mods.size() < 1) {
             // No changes!
             return;
         }
@@ -662,8 +664,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         LDAPResult result = null;
         try {
             result = getAppConnPool().modify(
-                getUserDnByUsername(user.getUsername()),
-                getModifications(oldUser, user));
+                getUserDnByUsername(user.getUsername()), mods);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating user {} - {}",
                 user.getUsername(), ldapEx);

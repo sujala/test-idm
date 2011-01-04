@@ -113,10 +113,10 @@ public class DefaultCustomerService implements CustomerService {
         Role role = new Role();
         role.setCustomerId(customer.getCustomerId());
         role.setInum(customer.getInum() + "!0001");
-        role.setName("Admin");
+        role.setName(GlobalConstants.IDM_ADMIN_ROLE_NAME);
         role.setOrgInum(customer.getInum());
         role.setOwner(GlobalConstants.INUM_PREFIX + customer.getInum());
-         role.setType("rackspacePredefinedAdminGroup");
+         role.setType("rackspacePredefined");
 
         roles.add(role);
 

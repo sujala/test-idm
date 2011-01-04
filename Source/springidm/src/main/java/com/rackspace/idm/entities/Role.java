@@ -1,9 +1,11 @@
 package com.rackspace.idm.entities;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class Role {
-
+public class Role implements Serializable {
+    private static final long serialVersionUID = 875666210673489138L;
+    
     private String uniqueId = null;
     private String name = null;
     private String customerId = null;

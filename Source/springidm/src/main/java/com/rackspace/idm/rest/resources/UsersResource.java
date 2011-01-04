@@ -14,6 +14,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -22,7 +23,6 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.authorizationService.IDMAuthorizationHelper;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.UserConverter;
 import com.rackspace.idm.entities.Customer;
@@ -33,9 +33,10 @@ import com.rackspace.idm.errors.ApiError;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.DuplicateUsernameException;
+import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.exceptions.PasswordValidationException;
-import com.rackspace.idm.oauth.OAuthService;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.CustomerService;
 import com.rackspace.idm.services.PasswordComplexityService;
 import com.rackspace.idm.services.UserService;
@@ -52,8 +53,7 @@ public class UsersResource {
     private UserConverter userConverter;
     private InputValidator inputValidator;
     private PasswordComplexityService passwordComplexityService;
-    private IDMAuthorizationHelper authorizationHelper;
-    private OAuthService oauthService;
+    private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
@@ -61,16 +61,14 @@ public class UsersResource {
         CustomerService customerService, UserConverter userConverter,
         InputValidator inputValidator,
         PasswordComplexityService passwordComplexityService,
-        IDMAuthorizationHelper authorizationHelper, OAuthService oauthService,
-        LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.userResource = userResource;
         this.userService = userService;
         this.userConverter = userConverter;
         this.customerService = customerService;
         this.inputValidator = inputValidator;
         this.passwordComplexityService = passwordComplexityService;
-        this.authorizationHelper = authorizationHelper;
-        this.oauthService = oauthService;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -85,12 +83,27 @@ public class UsersResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @GET
-    public Response getUsers(
+    public Response getUsers(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @QueryParam("offset") int offset, @QueryParam("limit") int limit) {
 
         logger.debug("Getting Customer Users: {}", customerId);
+
+        // Racker's, Specific Clients and Admins are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         Customer customer = this.customerService.getCustomer(customerId);
         if (customer == null) {
@@ -98,13 +111,6 @@ public class UsersResource {
                 customerId);
             logger.error(errorMsg);
             throw new NotFoundException(errorMsg);
-        }
-
-        if (!checkAdminAuthorization(authHeader, customerId, "getUsers")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
         }
 
         Users users = userService.getByCustomerId(customerId, offset, limit);
@@ -124,10 +130,24 @@ public class UsersResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @POST
-    public Response addUser(@Context UriInfo uriInfo,
+    public Response addUser(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         com.rackspace.idm.jaxb.User user) {
+
+        // Racker's, Specific Clients and Admins are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         user.setCustomerId(customerId);
 
@@ -140,17 +160,6 @@ public class UsersResource {
         }
 
         logger.info("Adding User: {}", user.getUsername());
-
-        String httpMethodName = "POST";
-        String requestURI = "/customers/" + user.getCustomerId() + "/users";
-
-        if (!authorizeAdminOrRackspaceClient(authHeader, userDO, "addUser",
-            httpMethodName, requestURI)) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
-        }
 
         if (userDO.getPasswordObj() == null
             || StringUtils.isBlank(userDO.getPasswordObj().getValue())) {
@@ -180,7 +189,7 @@ public class UsersResource {
         }
 
         logger.info("Added User: {}", user);
-        
+
         String location = uriInfo.getPath() + userDO.getUsername();
 
         URI uri = null;
@@ -190,64 +199,12 @@ public class UsersResource {
             logger.error("Customer Location URI error");
         }
 
-        return Response.ok(userConverter.toUserJaxb(userDO))
-            .location(uri).status(HttpServletResponse.SC_CREATED).build();
+        return Response.ok(userConverter.toUserJaxb(userDO)).location(uri)
+            .status(HttpServletResponse.SC_CREATED).build();
     }
 
     @Path("{username}")
     public UserResource getUserResource() {
         return userResource;
-    }
-
-    private boolean authorizeAdminOrRackspaceClient(String authHeader,
-        User user, String methodName, String httpMethodName, String requestURI) {
-
-        String userCompanyId = user.getCustomerId();
-        String subjectUsername = oauthService
-            .getUsernameFromAuthHeaderToken(authHeader);
-
-        if (subjectUsername == null) {
-            // Condition 1: RACKSPACE Company can add user.
-
-            if (!authorizationHelper.checkPermission(authHeader,
-                httpMethodName, requestURI)) {
-                return authorizationHelper.checkRackspaceClientAuthorization(
-                    authHeader, methodName);
-            } else {
-                return true;
-            }
-
-        } else {
-            // Condition 2: Admin can add a user.
-            return authorizationHelper.checkAdminAuthorizationForUser(
-                subjectUsername, userCompanyId, methodName);
-        }
-    }
-
-    private boolean checkAdminAuthorization(String authHeader,
-        String companyId, String methodName) {
-
-        String subjectUsername = oauthService
-            .getUsernameFromAuthHeaderToken(authHeader);
-
-        if (subjectUsername == null) {
-            // Condition 1: RACKSPACE Company can add user.
-
-            String httpMethodName = "GET";
-            String requestURI = "/customers/" + companyId + "/users";
-
-            if (!authorizationHelper.checkPermission(authHeader,
-                httpMethodName, requestURI)) {
-                return authorizationHelper.checkRackspaceClientAuthorization(
-                    authHeader, methodName);
-            } else {
-                return true;
-            }
-
-        } else {
-            // Condition 2: Admin can add a user.
-            return authorizationHelper.checkAdminAuthorizationForUser(
-                subjectUsername, companyId, methodName);
-        }
     }
 }

@@ -14,6 +14,8 @@ import org.junit.Test;
 import com.rackspace.idm.config.MemcachedConfiguration;
 import com.rackspace.idm.config.PropertyFileConfiguration;
 import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.entities.BaseClient;
+import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.test.stub.StubLogger;
 
@@ -56,7 +58,7 @@ public class MemcachedAccessTokenRepositoryTest {
             Assert.assertTrue(true);
         }
         try {
-            repo.save(new AccessToken(null, null, owner, null, null));
+            repo.save(new AccessToken(null, null, getTestUser(), null, null));
             Assert
                 .fail("did not throw an exception when bad param(s) was passed in!");
         } catch (IllegalArgumentException e) {
@@ -140,13 +142,13 @@ public class MemcachedAccessTokenRepositoryTest {
     }
 
     @Test
-    public void shouldSeleteAllTokensForOwner() {
+    public void shoulddeleteAllTokensForOwner() {
         repo.save(token);
         AccessToken anotherToken = getNewToken(60);
         String anotherTokenString = "DELETE_ME_GOOD_TOO!";
         anotherToken.setTokenString(anotherTokenString);
-        String anotherRequestor = "another_rs_app";
-        anotherToken.setRequestor(anotherRequestor);
+        String anotherRequestor = getTestClient2().getClientId();
+        anotherToken.setTokenClient(getTestClient2());
         repo.save(anotherToken);
 
         Set<String> requestors = new HashSet<String>();
@@ -162,6 +164,27 @@ public class MemcachedAccessTokenRepositoryTest {
 
     private AccessToken getNewToken(int expInSeconds) {
         return new AccessToken(TOKEN_STRING, new DateTime()
-            .plusSeconds(expInSeconds), owner, requestor, IDM_SCOPE.FULL);
+            .plusSeconds(expInSeconds), getTestUser(), getTestClient(), IDM_SCOPE.FULL);
+    }
+    
+    private BaseUser getTestUser() {
+        BaseUser user = new BaseUser();
+        user.setCustomerId("customerId");
+        user.setUsername("johneo");
+        return user;
+    }
+    
+    private BaseClient getTestClient() {
+        BaseClient client = new BaseClient();
+        client.setClientId("controlpanel");
+        client.setCustomerId("customerId");
+        return client;
+    }
+    
+    private BaseClient getTestClient2() {
+        BaseClient client = new BaseClient();
+        client.setClientId("clientId2");
+        client.setCustomerId("customerId");
+        return client;
     }
 }

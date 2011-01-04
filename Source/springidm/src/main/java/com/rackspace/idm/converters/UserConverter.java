@@ -2,6 +2,7 @@ package com.rackspace.idm.converters;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.entities.UserStatus;
 import com.rackspace.idm.entities.Users;
@@ -181,6 +182,23 @@ public class UserConverter {
             returnedUser.setRoles(roles);
         }
 
+        return returnedUser;
+    }
+    
+    public com.rackspace.idm.jaxb.User toUserJaxbFromBaseUser(BaseUser user) {
+        com.rackspace.idm.jaxb.User returnedUser = of.createUser();
+        returnedUser.setUsername(user.getUsername());
+        returnedUser.setCustomerId(user.getCustomerId());
+        
+        if (user.getRoles() != null
+            && user.getRoles().size() > 0) {
+
+            com.rackspace.idm.jaxb.Roles roles = roleConverter.toRolesJaxb(user
+                .getRoles());
+
+            returnedUser.setRoles(roles);
+        }
+        
         return returnedUser;
     }
 

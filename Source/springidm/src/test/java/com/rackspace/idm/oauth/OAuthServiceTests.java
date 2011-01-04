@@ -216,7 +216,7 @@ public class OAuthServiceTests {
     public void shouldAssertTokenIsExpired() throws Exception {
         AccessToken accessToken = new AccessToken(tokenVal,
             MemcachedAccessTokenRepository.DATE_PARSER
-                .parseDateTime("20001231210627.300Z"), username, "requestor",
+                .parseDateTime("20001231210627.300Z"), getFakeUser(), getTestClient(),
             IDM_SCOPE.FULL);
         Assert.assertTrue(accessToken.isExpired(new DateTime()));
     }
@@ -615,7 +615,7 @@ public class OAuthServiceTests {
     private AccessToken getFakeAccessToken() {
         return new AccessToken(tokenVal,
             MemcachedAccessTokenRepository.DATE_PARSER
-                .parseDateTime("20201231210627.300Z"), username, "requestor",
+                .parseDateTime("20201231210627.300Z"), getFakeUser(), getTestClient(),
             IDM_SCOPE.FULL);
     }
 

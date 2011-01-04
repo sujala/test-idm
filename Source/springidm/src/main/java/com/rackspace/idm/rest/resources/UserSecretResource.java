@@ -6,21 +6,24 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.authorizationService.IDMAuthorizationHelper;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.BadRequestException;
+import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.jaxb.UserSecret;
-import com.rackspace.idm.oauth.OAuthService;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -29,17 +32,14 @@ import com.rackspace.idm.services.UserService;
 public class UserSecretResource {
 
     private UserService userService;
-    private IDMAuthorizationHelper authorizationHelper;
-    private OAuthService oauthService;
+    private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
     public UserSecretResource(UserService userService,
-        IDMAuthorizationHelper authorizationHelper, OAuthService oauthService,
-        LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.userService = userService;
-        this.authorizationHelper = authorizationHelper;
-        this.oauthService = oauthService;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -53,23 +53,28 @@ public class UserSecretResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @GET
-    public Response getUserSecret(
+    public Response getUserSecret(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
         logger.info("Getting Secret Q&A for User: {}", username);
 
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(authHeader,
+            request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
         // get user to update
         User user = checkAndGetUser(customerId, username);
-
-        if (!checkUserAuthorization(authHeader, user.getUsername(),
-            "setUserSecret")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
-        }
 
         com.rackspace.idm.jaxb.UserSecret secret = new com.rackspace.idm.jaxb.UserSecret();
         secret.setSecretAnswer(user.getSecretAnswer());
@@ -91,7 +96,8 @@ public class UserSecretResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @PUT
-    public Response setUserSecret(
+    public Response setUserSecret(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username,
@@ -101,16 +107,21 @@ public class UserSecretResource {
 
         logger.info("Updating Secret Q&A for User: {}", username);
 
+        // Racker's and User's are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeUser(authHeader, customerId,
+                username);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
         // get user to update
         User user = checkAndGetUser(customerId, username);
-
-        if (!checkUserAuthorization(authHeader, user.getUsername(),
-            "setUserSecret")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
-        }
 
         user.setSecretQuestion(userSecret.getSecretQuestion());
         user.setSecretAnswer(userSecret.getSecretAnswer());
@@ -149,19 +160,5 @@ public class UserSecretResource {
             username);
         logger.error(errorMsg);
         throw new NotFoundException(errorMsg);
-    }
-
-    private boolean checkUserAuthorization(String authHeader, String username,
-        String methodName) {
-
-        String subjectUserName = oauthService
-            .getUsernameFromAuthHeaderToken(authHeader);
-
-        if (subjectUserName == null) {
-            return false;
-        }
-
-        return authorizationHelper.checkUserAuthorization(subjectUserName,
-            username, methodName);
     }
 }

@@ -8,13 +8,10 @@
 		<param-value>/WEB-INF/spring/*.xml</param-value>
 	</context-param>
 
-	<!--
-		Ensures UTF-8 in content <filter>
-		<filter-name>charsetFilter</filter-name>
-		<filter-class>com.rackspace.idm.filters.CharsetFilter</filter-class>
-		</filter> <filter-mapping> <filter-name>charsetFilter</filter-name>
-		<url-pattern>/*</url-pattern> </filter-mapping>
-	-->
+	<!-- Ensures UTF-8 in content <filter> <filter-name>charsetFilter</filter-name> 
+		<filter-class>com.rackspace.idm.filters.CharsetFilter</filter-class> </filter> 
+		<filter-mapping> <filter-name>charsetFilter</filter-name> <url-pattern>/*</url-pattern> 
+		</filter-mapping> -->
 
 	<listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
@@ -33,13 +30,17 @@
 			<param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
 			<param-value>
 				com.rackspace.idm.interceptors.AuthenticationFilter;
-				com.rackspace.idm.interceptors.AuthorizationFilter;
-				com.rackspace.idm.interceptors.PasswordChangeFilter
+				com.rackspace.idm.interceptors.PasswordChangeFilter;
+				com.sun.jersey.api.container.filter.GZIPContentEncodingFilter
 			</param-value>
 		</init-param>
 		<init-param>
 			<param-name>com.sun.jersey.config.property.WadlGeneratorConfig</param-name>
 			<param-value>com.rackspace.idm.config.IdmWadlGeneratorConfig</param-value>
+		</init-param>
+		<init-param>
+			<param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
+			<param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter</param-value>
 		</init-param>
 	</servlet>
 	<servlet-mapping>

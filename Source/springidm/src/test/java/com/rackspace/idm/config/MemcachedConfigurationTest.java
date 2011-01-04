@@ -8,6 +8,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.entities.BaseClient;
+import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.test.stub.StubLogger;
 
@@ -33,7 +35,7 @@ public class MemcachedConfigurationTest {
     @Test
     public void shouldPutStuffIntoServer() {
         AccessToken token = new AccessToken("XXXXX", new DateTime()
-            .plusSeconds(5), "mkovacs", "unit test", IDM_SCOPE.FULL);
+            .plusSeconds(5), getTestUser(), getTestClient(), IDM_SCOPE.FULL);
         mclient.set("foo", 5, token);
         Assert.assertEquals(token, mclient.get("foo"));
     }
@@ -41,10 +43,24 @@ public class MemcachedConfigurationTest {
     @Test
     public void shouldExpire() throws InterruptedException {
         AccessToken token = new AccessToken("XXXXX", new DateTime()
-            .plusSeconds(5), "mkovacs", "unit test", IDM_SCOPE.FULL);
+            .plusSeconds(5), getTestUser(), getTestClient(), IDM_SCOPE.FULL);
         mclient.set("foo", 1, token);
         Assert.assertEquals(token, mclient.get("foo"));
         Thread.sleep(1000);
         Assert.assertNull(mclient.get("foo"));
+    }
+    
+    private BaseUser getTestUser() {
+        BaseUser user = new BaseUser();
+        user.setCustomerId("customerId");
+        user.setUsername("username");
+        return user;
+    }
+    
+    private BaseClient getTestClient() {
+        BaseClient client = new BaseClient();
+        client.setClientId("clientId");
+        client.setCustomerId("customerId");
+        return client;
     }
 }

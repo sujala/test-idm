@@ -5,19 +5,23 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.authorizationService.IDMAuthorizationHelper;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.UserConverter;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.BadRequestException;
+import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -27,16 +31,16 @@ public class UserLockResource {
 
     private UserService userService;
     private UserConverter userConverter;
-    private IDMAuthorizationHelper authorizationHelper;
+    private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
     public UserLockResource(UserService userService,
-        UserConverter userConverter,
-        IDMAuthorizationHelper authorizationHelper, LoggerFactoryWrapper logger) {
+        UserConverter userConverter, AuthorizationService authorizationService,
+        LoggerFactoryWrapper logger) {
         this.userService = userService;
         this.userConverter = userConverter;
-        this.authorizationHelper = authorizationHelper;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -51,7 +55,8 @@ public class UserLockResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @PUT
-    public Response setUserLock(
+    public Response setUserLock(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username,
@@ -59,27 +64,31 @@ public class UserLockResource {
 
         logger.info("Locking User: {} - {}", username);
 
+        // Only Rcker's and Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
         if (inputUser.isLocked() == null) {
             String errMsg = "Invalid value for locked sent in.";
             logger.error(errMsg);
             throw new BadRequestException(errMsg);
         }
-        
+
         boolean lockStatus = inputUser.isLocked();
 
         User user = checkAndGetUser(customerId, username);
 
         if (user == null) {
             handleUserNotFoundError(customerId, username);
-        }
-
-        String methodName = "setUserLock";
-        String httpMethodName = "PUT";
-        String requestURI = "/customers/" + user.getCustomerId() + "/users/"
-            + user.getUsername() + "/lock";
-        if (!authorizeRackerOrRackspaceApplication(authHeader, user,
-            methodName, httpMethodName, requestURI)) {
-            authorizationHelper.handleAuthorizationFailure();
         }
 
         user.setIsLocked(lockStatus);
@@ -102,20 +111,5 @@ public class UserLockResource {
             username);
         logger.error(errorMsg);
         throw new NotFoundException(errorMsg);
-    }
-
-    private boolean authorizeRackerOrRackspaceApplication(String authHeader,
-        User user, String methodName, String httpMethodName, String requestURI) {
-
-        if (!authorizationHelper.checkPermission(authHeader, httpMethodName,
-            requestURI)) {
-
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                return authorizationHelper.checkRackspaceClientAuthorization(
-                    authHeader, methodName);
-            }
-        }
-        return true;
     }
 }

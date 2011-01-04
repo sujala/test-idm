@@ -17,12 +17,12 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.authorizationService.IDMAuthorizationHelper;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.entities.User;
+import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.jaxb.UserApiKey;
-import com.rackspace.idm.oauth.OAuthService;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
 
 /**
@@ -41,17 +41,14 @@ public class ApiKeyResource {
     Request request;
 
     private UserService userService;
-    private IDMAuthorizationHelper authorizationHelper;
-    private OAuthService oauthService;
+    private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
     public ApiKeyResource(UserService userService,
-        IDMAuthorizationHelper authorizationHelper, OAuthService oauthService,
-        LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.userService = userService;
-        this.authorizationHelper = authorizationHelper;
-        this.oauthService = oauthService;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -72,22 +69,32 @@ public class ApiKeyResource {
      * @return The response with an userApiKey representation.
      */
     @GET
-    public Response getApiKey(
+    public Response getApiKey(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
         logger.debug("Reseting Cloud Auth service API key for User: {}",
             username);
 
-        // FIXME: We need to discuss who should be authorized to get an apiKey
+        // Racker's, Specific Clients, Admins and Users are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId)
+            || authorizationService.authorizeUser(authHeader, customerId,
+                username);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
         // get user to update
         User user = checkAndGetUser(customerId, username);
-        if (!checkUserOrAdminAuthorization(authHeader, user, "resetApiKey")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
-        }
 
         logger.debug("Retrieved Cloud Auth service API key for user: {}", user);
 
@@ -114,21 +121,32 @@ public class ApiKeyResource {
      * @return The response with a new userApiKey representation.
      */
     @POST
-    public Response resetApiKey(
+    public Response resetApiKey(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
         logger.info("Reseting Cloud Auth service API key for User: {}",
             username);
 
+        // Racker's, Specific Clients, Admins and Users are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId)
+            || authorizationService.authorizeUser(authHeader, customerId,
+                username);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
         // get user to update
         User user = checkAndGetUser(customerId, username);
-        if (!checkUserOrAdminAuthorization(authHeader, user, "resetApiKey")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
-        }
 
         // generate random api key
         String apiKey = userService.generateApiKey();
@@ -156,31 +174,5 @@ public class ApiKeyResource {
             username);
         logger.error(errorMsg);
         throw new NotFoundException(errorMsg);
-    }
-
-    private boolean checkUserOrAdminAuthorization(String authHeader, User user,
-        String methodName) {
-
-        String userName = user.getUsername();
-        String companyId = user.getCustomerId();
-
-        String subjectUsername = oauthService
-            .getUsernameFromAuthHeaderToken(authHeader);
-
-        if (subjectUsername == null) {
-            return false;
-        }
-
-        // Condition 1: User can do stuff.
-        if (!authorizationHelper.checkUserAuthorization(subjectUsername,
-            userName, methodName)) {
-
-            // Condition 2: An Admin can do stuff.
-            if (!authorizationHelper.checkAdminAuthorizationForUser(
-                subjectUsername, companyId, methodName)) {
-                return false;
-            }
-        }
-        return true;
     }
 }

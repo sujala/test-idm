@@ -11,6 +11,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -19,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.ErrorMsg;
-import com.rackspace.idm.authorizationService.IDMAuthorizationHelper;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.CustomerConverter;
 import com.rackspace.idm.entities.Customer;
@@ -27,6 +27,8 @@ import com.rackspace.idm.errors.ApiError;
 import com.rackspace.idm.exceptions.ApiException;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.DuplicateException;
+import com.rackspace.idm.exceptions.ForbiddenException;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.CustomerService;
 import com.rackspace.idm.validation.InputValidator;
 
@@ -39,19 +41,19 @@ public class CustomersResource {
     private CustomerService customerService;
     private InputValidator inputValidator;
     private CustomerConverter customerConverter;
-    private IDMAuthorizationHelper authorizationHelper;
+    private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
     public CustomersResource(CustomerResource customerResource,
         CustomerService customerService, InputValidator inputValidator,
-        CustomerConverter customerConverter,
-        IDMAuthorizationHelper authorizationHelper, LoggerFactoryWrapper logger) {
+        CustomerConverter customerConverter,AuthorizationService authorizationService,
+        LoggerFactoryWrapper logger) {
         this.customerResource = customerResource;
         this.customerService = customerService;
         this.inputValidator = inputValidator;
         this.customerConverter = customerConverter;
-        this.authorizationHelper = authorizationHelper;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -66,9 +68,21 @@ public class CustomersResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @POST
-    public Response addCustomer(@Context UriInfo uriInfo,
+    public Response addCustomer(@Context UriInfo uriInfo, @Context Request request,
         @HeaderParam("Authorization") String authHeader,
         com.rackspace.idm.jaxb.Customer inputCustomer) {
+        
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         Customer customer = customerConverter.toCustomerDO(inputCustomer);
         customer.setDefaults();
@@ -79,13 +93,6 @@ public class CustomersResource {
         }
 
         logger.info("Adding Customer: {}", customer.getCustomerId());
-
-        if (!authorizeCustomerAddDeleteViewLock(authHeader, "addCustomer")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
-        }
 
         try {
             this.customerService.addCustomer(customer);
@@ -116,13 +123,5 @@ public class CustomersResource {
     @Path("{customerId}")
     public CustomerResource getCustomerResource() {
         return customerResource;
-    }
-
-    private boolean authorizeCustomerAddDeleteViewLock(String authHeader,
-        String methodName) {
-
-        // Condition: Rackspace client can add, view, delete customer.
-        return authorizationHelper.checkRackspaceClientAuthorization(
-            authHeader, methodName);
     }
 }

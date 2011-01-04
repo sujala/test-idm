@@ -10,14 +10,18 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.UserConverter;
 import com.rackspace.idm.entities.Customer;
@@ -29,7 +33,9 @@ import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.CustomerConflictException;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.DuplicateUsernameException;
+import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.PasswordValidationException;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.CustomerService;
 import com.rackspace.idm.services.PasswordComplexityService;
 import com.rackspace.idm.services.RoleService;
@@ -47,6 +53,7 @@ public class FirstUserResource {
     private InputValidator inputValidator;
     private UserConverter userConverter;
     private PasswordComplexityService passwordComplexityService;
+    private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
@@ -54,13 +61,14 @@ public class FirstUserResource {
         UserService userService, RoleService roleService,
         InputValidator inputValidator, UserConverter userConverter,
         PasswordComplexityService passwordComplexityService,
-        LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.customerService = customerService;
         this.userService = userService;
         this.roleService = roleService;
         this.inputValidator = inputValidator;
         this.userConverter = userConverter;
         this.passwordComplexityService = passwordComplexityService;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -77,9 +85,22 @@ public class FirstUserResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @POST
-    public Response addFirstUser(
+    public Response addFirstUser(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         com.rackspace.idm.jaxb.User user) {
+
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(authHeader,
+            request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         User userDO = userConverter.toUserDO(user);
         userDO.setDefaults();
@@ -91,8 +112,8 @@ public class FirstUserResource {
 
         if (!this.userService.isUsernameUnique(userDO.getUsername())) {
             String errorMsg = String.format(
-                "A user with username '%s' already exists.", userDO
-                    .getUsername());
+                "A user with username '%s' already exists.",
+                userDO.getUsername());
             logger.error(errorMsg);
             throw new DuplicateUsernameException(errorMsg);
         }
@@ -123,8 +144,8 @@ public class FirstUserResource {
             this.customerService.addCustomer(customer);
         } catch (DuplicateException ex) {
             String errorMsg = String.format(
-                "A customer with customerId '%s' already exists.", customer
-                    .getCustomerId());
+                "A customer with customerId '%s' already exists.",
+                customer.getCustomerId());
             logger.error(errorMsg);
             throw new CustomerConflictException(errorMsg);
         }
@@ -136,13 +157,14 @@ public class FirstUserResource {
             this.customerService.deleteCustomer(customer.getCustomerId());
             // Then throw the error
             String errorMsg = String.format(
-                "A user with username '%s' already exists.", userDO
-                    .getUsername());
+                "A user with username '%s' already exists.",
+                userDO.getUsername());
             logger.error(errorMsg);
             throw new DuplicateUsernameException(errorMsg);
         }
 
-        Role role = this.roleService.getRole("Admin", userDO.getCustomerId());
+        Role role = this.roleService.getRole(
+            GlobalConstants.IDM_ADMIN_ROLE_NAME, userDO.getCustomerId());
         this.roleService.addUserToRole(userDO, role);
 
         // Add the new Admin role to the User Object
@@ -152,8 +174,8 @@ public class FirstUserResource {
 
         logger.info("Added User: {}", userDO);
 
-        String locationUri = String.format("/customers/%s/users/%s", customer
-            .getCustomerId(), user.getUsername());
+        String locationUri = String.format("/customers/%s/users/%s",
+            customer.getCustomerId(), user.getUsername());
 
         user = userConverter.toUserJaxb(userDO);
 
@@ -164,7 +186,7 @@ public class FirstUserResource {
             logger.error("Customer Location URI error");
         }
 
-        return Response.ok(user)
-            .location(uri).status(HttpServletResponse.SC_CREATED).build();
+        return Response.ok(user).location(uri)
+            .status(HttpServletResponse.SC_CREATED).build();
     }
 }

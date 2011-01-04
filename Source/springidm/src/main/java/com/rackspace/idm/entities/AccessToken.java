@@ -16,28 +16,28 @@ public final class AccessToken extends Token implements Serializable {
     }
 
     private String uniqueId;
-    private String owner;
-    private String requestor;
     private IDM_SCOPE idmScope = IDM_SCOPE.FULL;
     private boolean isTrusted = false;
+
+    private BaseUser user;
+    private BaseClient client;
 
     public AccessToken() {
         super(null, null);
     }
 
     public AccessToken(String tokenString, DateTime tokenExpiration,
-        String owner, String requestor, IDM_SCOPE idmScope) {
-
+        BaseUser user, BaseClient client, IDM_SCOPE idmScope) {
         super(tokenString, tokenExpiration);
-        this.owner = owner;
-        this.requestor = requestor;
+        this.user = user;
+        this.client = client;
         this.idmScope = idmScope;
     }
 
     public AccessToken(String tokenString, DateTime tokenExpiration,
-        String owner, String requestor, IDM_SCOPE idmScope, boolean isTrusted) {
+        BaseUser user, BaseClient client, IDM_SCOPE idmScope, boolean isTrusted) {
 
-        this(tokenString, tokenExpiration, owner, requestor, idmScope);
+        this(tokenString, tokenExpiration, user, client, idmScope);
         this.isTrusted = isTrusted;
     }
 
@@ -49,20 +49,34 @@ public final class AccessToken extends Token implements Serializable {
         this.uniqueId = uniqueId;
     }
 
+    public BaseUser getTokenUser() {
+        return user;
+    }
+
+    public void setTokenUser(BaseUser user) {
+        this.user = user;
+    }
+
+    public BaseClient getTokenClient() {
+        return client;
+    }
+
+    public void setTokenClient(BaseClient client) {
+        this.client = client;
+    }
+
     public String getRequestor() {
-        return requestor;
-    }
-
-    public void setRequestor(String requestor) {
-        this.requestor = requestor;
-    }
-
-    public void setOwner(String owner) {
-        this.owner = owner;
+        if (client == null) {
+            return null;
+        }
+        return client.getClientId();
     }
 
     public String getOwner() {
-        return owner;
+        if (user != null) {
+            return user.getUsername();
+        }
+        return client.getClientId();
     }
 
     public boolean isRestrictedToSetPassword() {
@@ -78,20 +92,30 @@ public final class AccessToken extends Token implements Serializable {
     }
 
     public boolean isClientToken() {
-        return this.owner.equals(this.requestor);
+        return user == null && client != null;
+    }
+
+    public boolean hasClientPermissions() {
+        return isClientToken() && client.permissions != null
+            && client.permissions.size() > 0;
+    }
+
+    public boolean hasUserRoles() {
+        return !isClientToken() && user != null && user.roles != null
+            && user.roles.size() > 0;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
+        result = prime * result + ((client == null) ? 0 : client.hashCode());
         result = prime * result
             + ((idmScope == null) ? 0 : idmScope.hashCode());
-        result = prime * result + ((owner == null) ? 0 : owner.hashCode());
-        result = prime * result
-            + ((requestor == null) ? 0 : requestor.hashCode());
+        result = prime * result + (isTrusted ? 1231 : 1237);
         result = prime * result
             + ((uniqueId == null) ? 0 : uniqueId.hashCode());
+        result = prime * result + ((user == null) ? 0 : user.hashCode());
         return result;
     }
 
@@ -107,25 +131,17 @@ public final class AccessToken extends Token implements Serializable {
             return false;
         }
         AccessToken other = (AccessToken) obj;
-        if (idmScope == null) {
-            if (other.idmScope != null) {
+        if (client == null) {
+            if (other.client != null) {
                 return false;
             }
-        } else if (!idmScope.equals(other.idmScope)) {
+        } else if (!client.equals(other.client)) {
             return false;
         }
-        if (owner == null) {
-            if (other.owner != null) {
-                return false;
-            }
-        } else if (!owner.equals(other.owner)) {
+        if (idmScope != other.idmScope) {
             return false;
         }
-        if (requestor == null) {
-            if (other.requestor != null) {
-                return false;
-            }
-        } else if (!requestor.equals(other.requestor)) {
+        if (isTrusted != other.isTrusted) {
             return false;
         }
         if (uniqueId == null) {
@@ -135,7 +151,11 @@ public final class AccessToken extends Token implements Serializable {
         } else if (!uniqueId.equals(other.uniqueId)) {
             return false;
         }
-        if (isTrusted != other.isTrusted) {
+        if (user == null) {
+            if (other.user != null) {
+                return false;
+            }
+        } else if (!user.equals(other.user)) {
             return false;
         }
         return true;
@@ -143,10 +163,9 @@ public final class AccessToken extends Token implements Serializable {
 
     @Override
     public String toString() {
-        return "Token [token=" + getTokenString() + ", tokenExpiration="
-            + getExpirationTime() + ", owner=" + owner + ", requestor="
-            + requestor + ", idmScope=" + idmScope + ", isTrusted=" + isTrusted
-            + "]";
+        return "AccessToken [uniqueId=" + uniqueId + ", idmScope=" + idmScope
+            + ", isTrusted=" + isTrusted + ", user=" + user + ", client="
+            + client + "]";
     }
 
     /**
@@ -181,8 +200,8 @@ public final class AccessToken extends Token implements Serializable {
         private String tokenString;
         private DateTime expirationTime;
         private String uniqueId;
-        private String owner;
-        private String requestor;
+        private BaseUser user;
+        private BaseClient client;
         private IDM_SCOPE idmScope;
         private boolean isTrusted;
 
@@ -190,15 +209,15 @@ public final class AccessToken extends Token implements Serializable {
             this.tokenString = token.getTokenString();
             this.expirationTime = token.getExpirationTime();
             this.uniqueId = token.uniqueId;
-            this.owner = token.owner;
-            this.requestor = token.requestor;
+            this.user = token.user;
+            this.client = token.client;
             this.idmScope = token.idmScope;
             this.isTrusted = token.isTrusted;
         }
 
         private Object readResolve() {
             AccessToken token = new AccessToken(tokenString, expirationTime,
-                owner, requestor, idmScope, isTrusted);
+                user, client, idmScope, isTrusted);
             token.setUniqueId(uniqueId);
             return token;
         }

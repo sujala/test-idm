@@ -6,22 +6,24 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.authorizationService.AuthorizationConstants;
-import com.rackspace.idm.authorizationService.IDMAuthorizationHelper;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.entities.Role;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.BadRequestException;
+import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
-import com.rackspace.idm.oauth.OAuthService;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.RoleService;
 import com.rackspace.idm.services.UserService;
 
@@ -32,17 +34,14 @@ public class UserRoleResource {
 
     private UserService userService;
     private RoleService roleService;
-    private IDMAuthorizationHelper authorizationHelper;
-    private OAuthService oauthService;
+    private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
     public UserRoleResource(UserService userService,
-        IDMAuthorizationHelper authorizationHelper, OAuthService oauthService,
-        LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.userService = userService;
-        this.authorizationHelper = authorizationHelper;
-        this.oauthService = oauthService;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -56,7 +55,7 @@ public class UserRoleResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @PUT
-    public Response setRole(
+    public Response setRole(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username,
@@ -70,15 +69,22 @@ public class UserRoleResource {
 
         logger.info("Setting role {} for User {}", roleName, username);
 
+        // Racker's, Specific Clients and Admins are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
         // get user to update
         User user = checkAndGetUser(customerId, username);
-
-        if (!authorizeSetRole(authHeader, user, "setRole", roleName)) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
-        }
 
         // get role to add user to
         Role role = this.roleService.getRole(roleName, user.getCustomerId());
@@ -93,7 +99,7 @@ public class UserRoleResource {
         this.roleService.addUserToRole(user, role);
 
         logger.info("Set the role {} for user {}", role, user);
-        
+
         return Response.noContent().build();
     }
 
@@ -107,13 +113,28 @@ public class UserRoleResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @DELETE
-    public Response deleteRole(
+    public Response deleteRole(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username,
         @PathParam("roleName") String roleName) {
 
         logger.info("Deleting role for User: {}", username);
+
+        // Racker's, Specific Clients and Admins are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         // get user to update
         User user = this.userService.getUser(customerId, username);
@@ -123,14 +144,6 @@ public class UserRoleResource {
                 "Set Role Failed - User not found: %s", username);
             logger.error(errorMsg);
             throw new NotFoundException(errorMsg);
-        }
-
-        if (!authorizeDeleteRole(authHeader, user, "deleteRole", roleName)) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-
-                authorizationHelper.handleAuthorizationFailure();
-            }
         }
 
         // get role to add user to
@@ -146,7 +159,7 @@ public class UserRoleResource {
         this.roleService.deleteUserFromRole(user, role);
 
         logger.info("User {} deleted from role {}", user, role);
-        
+
         return Response.noContent().build();
     }
 
@@ -163,47 +176,5 @@ public class UserRoleResource {
             username);
         logger.error(errorMsg);
         throw new NotFoundException(errorMsg);
-    }
-
-    private boolean authorizeSetRole(String authHeader, User user,
-        String methodName, String roleName) {
-
-        String subjectUsername = oauthService
-            .getUsernameFromAuthHeaderToken(authHeader);
-
-        if (subjectUsername == null) {
-            String httpMethodName = "PUT";
-            String requestURI = "/customers/" + user.getCustomerId()
-                + "/users/" + user.getUsername() + "/roles/" + roleName;
-
-            return authorizationHelper.checkPermission(authHeader,
-                httpMethodName, requestURI);
-        } else {
-            return authorizationHelper.checkAdminAuthorizationForUser(
-                subjectUsername, user.getCustomerId(), methodName);
-        }
-    }
-
-    private boolean authorizeDeleteRole(String authHeader, User user,
-        String methodName, String rolename) {
-
-        String requestor = oauthService
-            .getUsernameFromAuthHeaderToken(authHeader);
-
-        String targetUser = user.getUsername();
-
-        // Condition 1: An admin can delete other user's any role (including
-        // admin role).
-        if (!authorizationHelper.checkAdminAuthorizationForUser(requestor, user
-            .getCustomerId(), methodName)) {
-            return false;
-        }
-
-        // Condition 2: An admin cannot delete his/her own admin role.
-        if (requestor.equalsIgnoreCase(targetUser)
-            && rolename.equalsIgnoreCase(AuthorizationConstants.ADMIN_ROLE)) {
-            return false;
-        }
-        return true;
     }
 }

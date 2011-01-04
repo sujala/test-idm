@@ -14,16 +14,16 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 
-public class User {
+public class User extends BaseUser {
 
-    @NotNull
-    @Length(min = 1, max = 32)
-    @Pattern(regexp = RegexPatterns.USERNAME, message = MessageTexts.USERNAME)
-    protected String username = null;
+//    @NotNull
+//    @Length(min = 1, max = 32)
+//    @Pattern(regexp = RegexPatterns.USERNAME, message = MessageTexts.USERNAME)
+//    protected String username = null;
 
-    @NotNull
-    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
-    private String customerId = null;
+//    @NotNull
+//    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
+//    private String customerId = null;
     private String email = null;
     protected UserCredential credential = new UserCredential();
     private String personId = null;
@@ -44,7 +44,7 @@ public class User {
     private Boolean softDeleted = null;
     private String region = null;
 
-    private List<Role> roles;
+//    private List<Role> roles;
 
     public User() {
         // Needed by JAX-RS
@@ -59,7 +59,7 @@ public class User {
     public User(String username, String customerId, String email,
         UserHumanName name, UserLocale pref, UserCredential cred) {
         this.username = username;
-        this.customerId = customerId;
+        this.setCustomerId(customerId);
         this.email = email;
         this.name = name;
         this.preference = pref;
@@ -198,15 +198,15 @@ public class User {
         }
     }
 
-    public void setCustomerId(String customerId) {
-        if (customerId != null) {
-            this.customerId = customerId;
-        }
-    }
-
-    public String getCustomerId() {
-        return customerId;
-    }
+//    public void setCustomerId(String customerId) {
+//        if (customerId != null) {
+//            this.customerId = customerId;
+//        }
+//    }
+//
+//    public String getCustomerId() {
+//        return customerId;
+//    }
 
     public String getUsername() {
         return username;
@@ -377,12 +377,12 @@ public class User {
         this.setStatus(UserStatus.ACTIVE);
     }
 
-    public List<Role> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(List<Role> roles) {
-        this.roles = roles;
+    public BaseUser getBaseUser() {
+        BaseUser baseUser = new BaseUser();
+        baseUser.setCustomerId(this.customerId);
+        baseUser.setUsername(this.username);
+        baseUser.setRoles(this.roles);
+        return baseUser;
     }
 
     public void copyChanges(User modifiedUser) {
@@ -435,13 +435,11 @@ public class User {
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
+        int result = super.hashCode();
         result = prime * result + ((apiKey == null) ? 0 : apiKey.hashCode());
         result = prime * result + ((country == null) ? 0 : country.hashCode());
         result = prime * result
             + ((credential == null) ? 0 : credential.hashCode());
-        result = prime * result
-            + ((customerId == null) ? 0 : customerId.hashCode());
         result = prime * result
             + ((displayName == null) ? 0 : displayName.hashCode());
         result = prime * result + ((email == null) ? 0 : email.hashCode());
@@ -456,16 +454,12 @@ public class User {
         result = prime * result
             + ((preference == null) ? 0 : preference.hashCode());
         result = prime * result + ((region == null) ? 0 : region.hashCode());
-        result = prime * result + ((roles == null) ? 0 : roles.hashCode());
         result = prime * result + ((seeAlso == null) ? 0 : seeAlso.hashCode());
         result = prime * result
             + ((softDeleted == null) ? 0 : softDeleted.hashCode());
-        result = prime * result
-            + ((status == null) ? 0 : status.toString().hashCode());
+        result = prime * result + ((status == null) ? 0 : status.hashCode());
         result = prime * result
             + ((uniqueId == null) ? 0 : uniqueId.hashCode());
-        result = prime * result
-            + ((username == null) ? 0 : username.hashCode());
         return result;
     }
 
@@ -474,7 +468,7 @@ public class User {
         if (this == obj) {
             return true;
         }
-        if (obj == null) {
+        if (!super.equals(obj)) {
             return false;
         }
         if (getClass() != obj.getClass()) {
@@ -500,13 +494,6 @@ public class User {
                 return false;
             }
         } else if (!credential.equals(other.credential)) {
-            return false;
-        }
-        if (customerId == null) {
-            if (other.customerId != null) {
-                return false;
-            }
-        } else if (!customerId.equals(other.customerId)) {
             return false;
         }
         if (displayName == null) {
@@ -579,13 +566,6 @@ public class User {
         } else if (!region.equals(other.region)) {
             return false;
         }
-        if (roles == null) {
-            if (other.roles != null) {
-                return false;
-            }
-        } else if (!roles.equals(other.roles)) {
-            return false;
-        }
         if (seeAlso == null) {
             if (other.seeAlso != null) {
                 return false;
@@ -610,27 +590,10 @@ public class User {
         } else if (!uniqueId.equals(other.uniqueId)) {
             return false;
         }
-        if (username == null) {
-            if (other.username != null) {
-                return false;
-            }
-        } else if (!username.equals(other.username)) {
-            return false;
-        }
         return true;
     }
 
-    @Override
-    public String toString() {
-        return "User [apiKey=" + apiKey + ", country=" + country
-            + ", credential=" + credential + ", customerId=" + customerId
-            + ", displayName=" + displayName + ", email=" + email + ", iname="
-            + iname + ", inum=" + inum + ", name=" + name + ", orgInum="
-            + orgInum + ", personId=" + personId + ", preference=" + preference
-            + ", region=" + region + ", seeAlso=" + seeAlso + ", softDeleted="
-            + softDeleted + ", status=" + status + ", uniqueId=" + uniqueId
-            + ", username=" + username + "]";
-    }
+
 
     public static class Builder {
         private User user = null;

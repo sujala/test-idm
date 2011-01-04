@@ -6,6 +6,7 @@ import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotAuthorizedException;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.test.stub.StubLogger;
@@ -35,9 +36,9 @@ public class PasswordChangeFilterTest {
     public void shouldCheckAllOtherCalls() {
     }
 
-    @Test(expected = WebApplicationException.class)
+    @Test(expected = ForbiddenException.class)
     public void shouldNotPermitRestrictedTokenAccessToNonPasswordResetUri() {
-        throw new NotAuthorizedException();
+        throw new ForbiddenException();
     }
 
     @Test

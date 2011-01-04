@@ -420,7 +420,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 "There is no exisiting record for the given client instance.");
         }
 
-        if (client.equals(oldClient)) {
+        List<Modification> mods = getModifications(oldClient, client);
+
+        if (client.equals(oldClient) || mods.size() < 1) {
             // No changes!
             return;
         }
@@ -428,8 +430,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         LDAPResult result = null;
         try {
             result = getAppConnPool().modify(
-                getClientDnByClientId(client.getClientId()),
-                getModifications(oldClient, client));
+                getClientDnByClientId(client.getClientId()), mods);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating client {} - {}", client, ldapEx);
             throw new IllegalStateException(ldapEx);
@@ -654,12 +655,12 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         if (permissions != null && permissions.length > 0) {
             for (String s : permissions) {
-                // FIXME: We need to figure out how we're going to associate
-                // permissions
-                // with a human readable name and how to store it. For now the
-                // id is being populated with the permission string as well.
+                String[] split = s.split("::");
 
-                perms.add(new Permission(s, "IDM", s, "RCN-000-000-000"));
+                if (split.length == 3) {
+                    perms
+                        .add(new Permission(split[0], split[1], split[2], null));
+                }
             }
             client.setPermissions(perms);
         }

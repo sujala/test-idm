@@ -14,6 +14,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -28,7 +29,9 @@ import com.rackspace.idm.entities.PermissionSet;
 import com.rackspace.idm.errors.ApiError;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.DuplicateException;
+import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.PermissionConflictException;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.validation.InputValidator;
 
@@ -41,17 +44,20 @@ public class DefinedPermissionsResource {
     private ClientService clientService;
     private PermissionConverter permissionConverter;
     private InputValidator inputValidator;
+    private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
     public DefinedPermissionsResource(
         DefinedPermissionResource definedPermissionResource,
         ClientService clientService, PermissionConverter permissionConverter,
-        InputValidator inputValidator, LoggerFactoryWrapper logger) {
+        InputValidator inputValidator,
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.definedPermissionResource = definedPermissionResource;
         this.permissionConverter = permissionConverter;
         this.inputValidator = inputValidator;
         this.clientService = clientService;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -65,10 +71,25 @@ public class DefinedPermissionsResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @GET
-    public Response getClientDefinedPermissions(
+    public Response getClientDefinedPermissions(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
+
+        // Racker's, Specific Clients and Admins are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         List<Permission> defineds = this.clientService
             .getDefinedPermissionsByClientId(clientId);
@@ -92,11 +113,26 @@ public class DefinedPermissionsResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @POST
-    public Response addClientPermission(@Context UriInfo uriInfo,
+    public Response addClientPermission(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId,
         com.rackspace.idm.jaxb.Permission permission) {
+
+        // Racker's, Specific Clients and Admins are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         permission.setClientId(clientId);
         permission.setCustomerId(customerId);

@@ -15,9 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
 import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.authorizationService.AuthorizationService;
-import com.rackspace.idm.authorizationService.IDMAuthorizationHelper;
-import com.rackspace.idm.authorizationService.SunAuthorizationService;
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.AuthDao;
 import com.rackspace.idm.dao.ClientDao;
@@ -32,9 +29,11 @@ import com.rackspace.idm.oauth.DefaultOAuthService;
 import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.oauthAuthentication.HttpOauthAuthenticationService;
 import com.rackspace.idm.services.AccessTokenService;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.services.CustomerService;
 import com.rackspace.idm.services.DefaultAccessTokenService;
+import com.rackspace.idm.services.DefaultAuthorizationService;
 import com.rackspace.idm.services.DefaultClientService;
 import com.rackspace.idm.services.DefaultCustomerService;
 import com.rackspace.idm.services.DefaultEmailService;
@@ -133,32 +132,32 @@ public class ServiceConfiguration {
             .getLogger(DefaultAccessTokenService.class);
 
         return new DefaultAccessTokenService(defaultAttributes, accessTokenDao,
-            refreshTokenDao, clientDao, userRepo, dcLocations, logger);
+            refreshTokenDao, clientDao, userService(), dcLocations, logger);
     }
 
-    @Bean
-    public AuthorizationService authorizationService() {
-        Logger logger = LoggerFactory.getLogger(DefaultUserService.class);
-
-        String propsFileLoc = "";
-        org.apache.commons.configuration.Configuration config = null;
-
-        propsFileLoc = "SunXACMLAuthorization.properties";
-        try {
-            config = new PropertiesConfiguration(propsFileLoc);
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-            logger.error("Could not load Axiomatics configuraiton.", e);
-        }
-
-        String sunAuthConfigFilePath = config.getString("sunAuthConfigPath");
-        String xacmlPolicyFilePath = config.getString("xacmlPolicyFilePath");
-
-        boolean testMode = false;
-
-        return new SunAuthorizationService(logger, sunAuthConfigFilePath,
-            xacmlPolicyFilePath, testMode);
-    }
+//    @Bean
+//    public AuthorizationService authorizationService() {
+//        Logger logger = LoggerFactory.getLogger(DefaultUserService.class);
+//
+//        String propsFileLoc = "";
+//        org.apache.commons.configuration.Configuration config = null;
+//
+//        propsFileLoc = "SunXACMLAuthorization.properties";
+//        try {
+//            config = new PropertiesConfiguration(propsFileLoc);
+//        } catch (ConfigurationException e) {
+//            System.out.println(e);
+//            logger.error("Could not load Axiomatics configuraiton.", e);
+//        }
+//
+//        String sunAuthConfigFilePath = config.getString("sunAuthConfigPath");
+//        String xacmlPolicyFilePath = config.getString("xacmlPolicyFilePath");
+//
+//        boolean testMode = false;
+//
+//        return new SunAuthorizationService(logger, sunAuthConfigFilePath,
+//            xacmlPolicyFilePath, testMode);
+//    }
 
     @Bean
     public HttpOauthAuthenticationService httpOauthAuthenticationService() {
@@ -211,13 +210,13 @@ public class ServiceConfiguration {
         return new DefaultEmailService(emailSettings);
     }
 
-    @Bean
-    public IDMAuthorizationHelper idmAuthHelper() {
-        Logger logger = LoggerFactory.getLogger(DefaultOAuthService.class);
-        return new IDMAuthorizationHelper(oauthService(),
-            authorizationService(), roleService(), clientService(), logger);
-
-    }
+//    @Bean
+//    public IDMAuthorizationHelper idmAuthHelper() {
+//        Logger logger = LoggerFactory.getLogger(DefaultOAuthService.class);
+//        return new IDMAuthorizationHelper(oauthService(),
+//            authorizationService(), roleService(), clientService(), logger);
+//
+//    }
 
     @Bean
     public InputValidator inputValidator() {
@@ -273,4 +272,9 @@ public class ServiceConfiguration {
             roleService(), isTrustedServer, logger);
     }
 
+    @Bean
+    public AuthorizationService authorizationService() {
+        Logger logger = LoggerFactory.getLogger(DefaultAuthorizationService.class);
+        return new DefaultAuthorizationService(oauthService(), clientService(), logger);
+    }
 }

@@ -9,15 +9,17 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.authorizationService.IDMAuthorizationHelper;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.PasswordConverter;
 import com.rackspace.idm.converters.TokenConverter;
@@ -35,6 +37,7 @@ import com.rackspace.idm.exceptions.UserDisabledException;
 import com.rackspace.idm.jaxb.PasswordRecovery;
 import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.AccessTokenService;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.PasswordComplexityService;
 import com.rackspace.idm.services.UserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
@@ -51,24 +54,23 @@ public class UserPasswordResource {
     private PasswordConverter passwordConverter;
     private TokenConverter tokenConverter;
     private AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
-    private IDMAuthorizationHelper authorizationHelper;
+    private AuthorizationService authorizationService;
     private Logger logger;
     String errorMsg = String.format("Authorization Failed");
 
     @Autowired
     public UserPasswordResource(OAuthService oauthService,
         AccessTokenService accessTokenService, UserService userService,
-        IDMAuthorizationHelper authorizationHelper,
         PasswordComplexityService passwordComplexityService,
         PasswordConverter passwordConverter, TokenConverter tokenConverter,
-        LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.oauthService = oauthService;
         this.accessTokenService = accessTokenService;
         this.userService = userService;
         this.passwordComplexityService = passwordComplexityService;
         this.passwordConverter = passwordConverter;
         this.tokenConverter = tokenConverter;
-        this.authorizationHelper = authorizationHelper;
+        this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -82,24 +84,27 @@ public class UserPasswordResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @GET
-    public Response getUserPassword(
+    public Response getUserPassword(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
-        User user = checkAndGetUser(customerId, username);
+        // Racker's, Specific Clients and Admins are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId);
 
-        String httpMethodName = "GET";
-        String requestURI = "/customers/" + user.getCustomerId() + "/users/"
-            + user.getUsername() + "/password";
-
-        if (!authorizeAdminOrRackspaceClient(authHeader, user,
-            "getUserPassword", httpMethodName, requestURI)) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
         }
+
+        User user = checkAndGetUser(customerId, username);
 
         Password password = Password.existingInstance(user
             .getPasswordNoPrefix());
@@ -117,21 +122,28 @@ public class UserPasswordResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @POST
-    public Response resetUserPassword(
+    public Response resetUserPassword(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
         logger.info("Reseting Password for User: {}", username);
 
-        User user = checkAndGetUser(customerId, username);
+        // Racker's, Specific Clients and Admins are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId);
 
-        if (!checkUserOrAdminAuthorization(authHeader, user,
-            "resetUserPassword")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
         }
+
+        User user = checkAndGetUser(customerId, username);
 
         Password newpassword = Password.generateRandom();
         user.setPasswordObj(newpassword);
@@ -152,12 +164,29 @@ public class UserPasswordResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @PUT
-    public Response setUserPassword(
+    public Response setUserPassword(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username,
         com.rackspace.idm.jaxb.UserCredentials userCred,
         @QueryParam("recovery") boolean isRecovery) {
+
+        // Racker's, Specific Clients, Admins and User's are authorized
+        boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(authHeader, customerId)
+            || authorizationService.authorizeUser(authHeader, customerId,
+                username);
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         if (!passwordComplexityService.checkPassword(
             userCred.getNewPassword().getPassword()).isValidPassword()) {
@@ -230,10 +259,10 @@ public class UserPasswordResource {
                 logger.error(errMsg);
                 throw new BadRequestException(errMsg);
             }
-            
+
             // authenticate using old password
             if (!this.oauthService.authenticateUser(username, userCred
-                    .getCurrentPassword().getPassword())) {
+                .getCurrentPassword().getPassword())) {
                 String errorMsg = String.format("Bad credential for user: %s",
                     username);
                 logger.debug(errorMsg);
@@ -242,14 +271,6 @@ public class UserPasswordResource {
         }
 
         User user = checkAndGetUser(customerId, username);
-
-        if (!checkUserAuthorization(authHeader, user.getUsername(),
-            "setUserPassword")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
-        }
 
         user.setPasswordObj(Password.newInstance(userCred.getNewPassword()
             .getPassword()));
@@ -269,10 +290,23 @@ public class UserPasswordResource {
      */
     @POST
     @Path("recoverytoken")
-    public Response getPasswordResetToken(
+    public Response getPasswordResetToken(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
+
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(authHeader,
+            request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         User user = checkAndGetUser(customerId, username);
 
@@ -287,11 +321,6 @@ public class UserPasswordResource {
             logger.error(errorMsg);
 
             throw new UserDisabledException(errorMsg);
-        }
-
-        String httpMethodName = "POST";
-        if (!authorizeGetPasswordResetToken(authHeader, user, httpMethodName)) {
-            authorizationHelper.handleAuthorizationFailure();
         }
 
         String clientId = oauthService
@@ -318,21 +347,27 @@ public class UserPasswordResource {
      */
     @POST
     @Path("recoveryemail")
-    public Response sendRecoveryEmail(
+    public Response sendRecoveryEmail(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username, PasswordRecovery recoveryParam) {
 
         logger.info("Sending password recovery email for User: {}", username);
+        
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(authHeader,
+            request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String token = authHeader.split(" ")[1];
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
 
         User user = checkAndGetUser(customerId, username);
-
-        if (!authorizeSendRecoveryEmail(authHeader, user, "sendRecoveryEmail")) {
-            if (!authorizationHelper
-                .checkRackspaceEmployeeAuthorization(authHeader)) {
-                authorizationHelper.handleAuthorizationFailure();
-            }
-        }
 
         if (!user.getStatus().equals(UserStatus.ACTIVE)) {
             String errorMsg = "User is not active";
@@ -374,7 +409,7 @@ public class UserPasswordResource {
         }
 
         logger.info("Sent password recovery email for User: {}", username);
-        
+
         return Response.noContent().build();
     }
 
@@ -391,86 +426,5 @@ public class UserPasswordResource {
             username);
         logger.error(errorMsg);
         throw new NotFoundException(errorMsg);
-    }
-
-    private boolean authorizeAdminOrRackspaceClient(String authHeader,
-        User user, String methodName, String httpMethodName, String requestURI) {
-
-        String userCompanyId = user.getCustomerId();
-        String subjectUsername = oauthService
-            .getUsernameFromAuthHeaderToken(authHeader);
-
-        if (subjectUsername == null) {
-            // Condition 1: RACKSPACE Company can add user.
-
-            if (!authorizationHelper.checkPermission(authHeader,
-                httpMethodName, requestURI)) {
-                return authorizationHelper.checkRackspaceClientAuthorization(
-                    authHeader, methodName);
-            } else {
-                return true;
-            }
-
-        } else {
-            // Condition 2: Admin can add a user.
-            return authorizationHelper.checkAdminAuthorizationForUser(
-                subjectUsername, userCompanyId, methodName);
-        }
-    }
-
-    private boolean authorizeSendRecoveryEmail(String authHeader, User user,
-        String methodName) {
-        return authorizationHelper.checkRackspaceClientAuthorization(
-            authHeader, methodName);
-    }
-
-    private boolean authorizeGetPasswordResetToken(String authHeader,
-        User user, String httpMethodName) {
-
-        String requestURI = "/customers/" + user.getCustomerId() + "/users/"
-            + user.getUsername() + "/password/recoverytoken";
-
-        return authorizationHelper.checkPermission(authHeader, httpMethodName,
-            requestURI);
-    }
-
-    private boolean checkUserAuthorization(String authHeader, String username,
-        String methodName) {
-
-        String subjectUserName = oauthService
-            .getUsernameFromAuthHeaderToken(authHeader);
-
-        if (subjectUserName == null) {
-            return false;
-        }
-
-        return authorizationHelper.checkUserAuthorization(subjectUserName,
-            username, methodName);
-    }
-
-    private boolean checkUserOrAdminAuthorization(String authHeader, User user,
-        String methodName) {
-
-        String userName = user.getUsername();
-        String companyId = user.getCustomerId();
-
-        String subjectUsername = oauthService
-            .getUsernameFromAuthHeaderToken(authHeader);
-
-        if (subjectUsername == null) {
-            return false;
-        }
-
-        // Condition 1: User can do stuff.
-        if (!authorizationHelper.checkUserAuthorization(subjectUsername,
-            userName, methodName)) {
-
-            // Condition 2: An Admin can do stuff.
-            if (!authorizationHelper.checkAdminAuthorizationForUser(
-                subjectUsername, companyId, methodName)) {
-                return false;
-            }
-        }
-        return true;
     }
 }

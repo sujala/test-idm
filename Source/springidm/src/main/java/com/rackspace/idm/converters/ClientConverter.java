@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.rackspace.idm.entities.BaseClient;
 import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.ClientStatus;
 import com.rackspace.idm.jaxb.Clients;
@@ -74,11 +75,11 @@ public class ClientConverter {
     }
 
     public Clients toClientListJaxb(List<Client> clients) {
-        
+
         if (clients == null || clients.size() < 1) {
             return null;
         }
-        
+
         Clients returnedClients = of.createClients();
 
         for (Client client : clients) {
@@ -101,9 +102,11 @@ public class ClientConverter {
         returnedClient.setName(client.getName());
         returnedClient.setSoftDeleted(client.getSoftDeleted());
 
-        returnedClient.setStatus(Enum.valueOf(
-            com.rackspace.idm.jaxb.ClientStatus.class, client.getStatus()
-                .toString().toUpperCase()));
+        if (client.getStatus() != null) {
+            returnedClient.setStatus(Enum.valueOf(
+                com.rackspace.idm.jaxb.ClientStatus.class, client.getStatus()
+                    .toString().toUpperCase()));
+        }
 
         if (includeCredentials && client.getClientSecretObj() != null
             && !StringUtils.isBlank(client.getClientSecret())) {
@@ -116,6 +119,25 @@ public class ClientConverter {
         }
 
         if (includePermissions && client.getPermissions() != null
+            && client.getPermissions().size() > 0) {
+
+            com.rackspace.idm.jaxb.PermissionList perms = permissionConverter
+                .toPermissionListJaxb(client.getPermissions());
+
+            returnedClient.setPermissions(perms);
+        }
+
+        return returnedClient;
+    }
+
+    public com.rackspace.idm.jaxb.Client toClientJaxbFromBaseClient(
+        BaseClient client) {
+        com.rackspace.idm.jaxb.Client returnedClient = of.createClient();
+
+        returnedClient.setClientId(client.getClientId());
+        returnedClient.setCustomerId(client.getCustomerId());
+
+        if (client.getPermissions() != null
             && client.getPermissions().size() > 0) {
 
             com.rackspace.idm.jaxb.PermissionList perms = permissionConverter

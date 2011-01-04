@@ -10,20 +10,45 @@ public class TokenTest {
 
     private String tokenString = "token";
     private DateTime tokenExpiration = new DateTime(2010, 6, 1, 12, 12, 35, 200);
-    private String owner = "Owner";
-    private String requestor = "Requestor";
-    private boolean isTrusted = false;
 
     private AccessToken getTestToken() {
-        return new AccessToken(tokenString, tokenExpiration, owner, requestor,
+        return new AccessToken(tokenString, tokenExpiration, getTestUser(), getTestClient(),
             IDM_SCOPE.FULL);
+    }
+    
+    private BaseUser getTestUser() {
+        BaseUser user = new BaseUser();
+        user.setCustomerId("customerId");
+        user.setUsername("username");
+        return user;
+    }
+    
+    private BaseClient getTestClient() {
+        BaseClient client = new BaseClient();
+        client.setClientId("clientId");
+        client.setCustomerId("customerId");
+        return client;
+    }
+    
+    private BaseUser getTestUser2() {
+        BaseUser user = new BaseUser();
+        user.setCustomerId("customerId");
+        user.setUsername("username2");
+        return user;
+    }
+    
+    private BaseClient getTestClient2() {
+        BaseClient client = new BaseClient();
+        client.setClientId("clientId2");
+        client.setCustomerId("customerId");
+        return client;
     }
 
     @Test
     public void shouldDetermineExpiration() {
         DateTime expiration = new DateTime(2010, 6, 1, 12, 12, 35, 200);
         AccessToken token = new AccessToken("fake_token", expiration,
-            "fake_owner", "requestor", IDM_SCOPE.FULL);
+            getTestUser(), getTestClient(), IDM_SCOPE.FULL);
 
         DateTime notExpireTime = new DateTime(2010, 6, 1, 11, 0, 0, 0);
         Assert.assertFalse(token.isExpired(notExpireTime));
@@ -36,7 +61,7 @@ public class TokenTest {
     public void shouldThrowErrorForExpirationIfTimeIsNull() {
         DateTime expiration = new DateTime(2010, 6, 1, 12, 12, 35, 200);
         AccessToken token = new AccessToken("fake_token", expiration,
-            "fake_owner", "requestor", IDM_SCOPE.FULL);
+            getTestUser(), getTestClient(), IDM_SCOPE.FULL);
         try {
             token.isExpired(null);
             Assert.fail("Should have thrown an exception!");
@@ -49,7 +74,7 @@ public class TokenTest {
     public void shouldDetermineRemainingSeconds() {
         DateTime expiration = new DateTime(2010, 6, 1, 12, 12, 35, 200);
         AccessToken token = new AccessToken("fake_token", expiration,
-            "fake_owner", "requestor", IDM_SCOPE.FULL);
+            getTestUser(), getTestClient(), IDM_SCOPE.FULL);
 
         DateTime goodCurrentDateTime = new DateTime(2010, 6, 1, 12, 12, 15, 200);
         Assert.assertTrue(token.secondsToExpiration(goodCurrentDateTime) == 20);
@@ -62,7 +87,7 @@ public class TokenTest {
     public void shouldThrowErrorIfCurrentTimeIsNull() {
         DateTime expiration = new DateTime(2010, 6, 1, 12, 12, 35, 200);
         AccessToken token = new AccessToken("fake_token", expiration,
-            "fake_owner", "requestor", IDM_SCOPE.FULL);
+            getTestUser(), getTestClient(), IDM_SCOPE.FULL);
         try {
             token.secondsToExpiration(null);
             Assert.fail("Should have thrown an exception!");
@@ -74,13 +99,8 @@ public class TokenTest {
     @Test
     public void shouldReturnToString() {
         AccessToken token = getTestToken();
-        String expectedString = String
-            .format(
-                "Token [token=%s, tokenExpiration=%s, owner=%s, requestor=%s, idmScope=%s, isTrusted=%s]",
-                tokenString, tokenExpiration, owner, requestor, IDM_SCOPE.FULL, isTrusted);
 
-        Assert.assertEquals(expectedString, token.toString());
-
+        Assert.assertNotNull(token.toString());
     }
 
     @Test
@@ -91,13 +111,13 @@ public class TokenTest {
         Assert.assertTrue(token1.equals(token1));
         Assert.assertTrue(token1.equals(token2));
 
-        token1.setOwner(null);
-        token1.setRequestor(null);
+        token1.setTokenUser(null);
+        token1.setTokenClient(null);
         token1.setExpirationTime(null);
         token1.setTokenString(null);
 
-        token2.setOwner(null);
-        token2.setRequestor(null);
+        token2.setTokenUser(null);
+        token2.setTokenClient(null);
         token2.setExpirationTime(null);
         token2.setTokenString(null);
 
@@ -110,19 +130,19 @@ public class TokenTest {
         AccessToken token2 = getTestToken();
 
         Assert.assertFalse(token1.equals(null));
-        Assert.assertFalse(token1.equals(1));
+        Assert.assertFalse(token2.equals(null));
 
-        token2.setOwner("SomeOtherValue");
+        token2.setTokenUser(getTestUser2());
         Assert.assertFalse(token1.equals(token2));
-        token2.setOwner(null);
+        token2.setTokenUser(null);
         Assert.assertFalse(token2.equals(token1));
-        token2.setOwner(token1.getOwner());
+        token2.setTokenUser(token1.getTokenUser());
 
-        token2.setRequestor("SomeOtherValue");
+        token2.setTokenClient(getTestClient2());
         Assert.assertFalse(token1.equals(token2));
-        token2.setRequestor(null);
+        token2.setTokenClient(null);
         Assert.assertFalse(token2.equals(token1));
-        token2.setRequestor(token1.getRequestor());
+        token2.setTokenClient(token1.getTokenClient());
 
         token2.setExpirationTime(new DateTime(2010, 6, 1, 11, 0, 0, 0));
         Assert.assertFalse(token1.equals(token2));
@@ -143,20 +163,5 @@ public class TokenTest {
         Assert.assertFalse(token.isRestrictedToSetPassword());
         token.setRestrictedToSetPassword();
         Assert.assertTrue(token.isRestrictedToSetPassword());
-    }
-
-    @Test
-    public void shouldDetectRackerToken() {
-        // TODO
-//        AccessToken tk = getTestToken();
-//        tk.setOwner("foo@RacKsPace.CoM");
-//        Assert.assertTrue(tk.isRackerToken());
-    }
-
-    @Test
-    public void shouldDetectNonRackerToken() {
-        AccessToken tk = getTestToken();
-        tk.setOwner("bar.foo@rackspace.com.morestuff.eu");
-        Assert.assertFalse(tk.getIsTrusted());
     }
 }
