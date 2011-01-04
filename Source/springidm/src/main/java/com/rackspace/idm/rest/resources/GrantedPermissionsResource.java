@@ -12,6 +12,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.config.LoggerFactoryWrapper;
@@ -22,7 +23,6 @@ import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
-import com.rackspace.idm.validation.InputValidator;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -34,6 +34,7 @@ public class GrantedPermissionsResource {
     private AuthorizationService authorizationService;
     private Logger logger;
 
+    @Autowired
     public GrantedPermissionsResource(ClientService clientService,
         PermissionConverter permissionConverter,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
