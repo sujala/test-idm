@@ -1,0 +1,46 @@
+##############################################################################################################
+#
+# DEV RACKER AUTHENTICATION CONFIGURATION.
+#
+# Configuration for IDM server that authenticates Rackers on the trusted network.
+# Note that on this file needs to be renamed to config.properties to enable the Racker authentication.
+#
+##############################################################################################################
+
+##############################################################################################################
+#
+# RACKER LDAP SERVER
+#
+##############################################################################################################
+
+# Directory info for racker authentication
+#ldap.server.address=cert-edir.dfw1.corp.rackspace.com
+ldap.bind.dn=cn=Directory Manager
+ldap.bind.password=Esp$2t#
+ldap.server.address=172.17.16.85
+ldap.server.port=389
+ldap.server.trusted=true
+ldap.server.pool.size.init=2
+ldap.server.pool.size.max=10
+ldap.server.base=ou=users,o=rackspace
+
+##############################################################################################################
+#
+# MEMCAHED SERVER
+#
+##############################################################################################################
+
+# Space delimited list of memcached instances in host:port format
+memcached.serverList=172.17.16.84:11211
+
+##############################################################################################################
+#
+# TOKEN SETTINGS
+#
+##############################################################################################################
+
+token.expirationSeconds=3600
+token.maxExpirationSeconds=86400
+token.minExpirationSeconds=10
+token.refreshTokenExpirationSeconds=86400
+token.dataCenterPrefix=DFW

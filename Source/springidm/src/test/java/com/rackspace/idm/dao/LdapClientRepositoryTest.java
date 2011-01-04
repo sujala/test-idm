@@ -1,0 +1,317 @@
+package com.rackspace.idm.dao;
+
+import java.util.List;
+
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.rackspace.idm.config.LdapConfiguration;
+import com.rackspace.idm.config.PropertyFileConfiguration;
+import com.rackspace.idm.entities.Client;
+import com.rackspace.idm.entities.ClientSecret;
+import com.rackspace.idm.entities.ClientStatus;
+import com.rackspace.idm.entities.Permission;
+import com.rackspace.idm.test.stub.StubLogger;
+import com.unboundid.ldap.sdk.Modification;
+
+public class LdapClientRepositoryTest {
+
+    private LdapClientRepository repo;
+    private LdapConnectionPools connPools;
+
+    @BeforeClass
+    public static void cleanUpData() {
+        LdapClientRepository cleanUpRepo = getRepo(getConnPools());
+        Client deleteme = cleanUpRepo.findByClientId("DELETE_My_ClientId");
+        if (deleteme != null) {
+            cleanUpRepo.delete("DELETE_My_ClientId");
+        }
+    }
+
+    private static LdapClientRepository getRepo(LdapConnectionPools connPools) {
+        return new LdapClientRepository(connPools, new StubLogger());
+    }
+
+    private static LdapConnectionPools getConnPools() {
+        return new LdapConfiguration(new PropertyFileConfiguration()
+            .getConfigFromClasspath(), new StubLogger()).connectionPools();
+    }
+
+    @Before
+    public void setUp() {
+        connPools = getConnPools();
+        repo = getRepo(connPools);
+    }
+
+    @Test
+    public void shouldNotAcceptNullOrBlankClientname() {
+        try {
+            repo.findByClientname(null);
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+
+        try {
+            repo.findByClientname("     ");
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+
+        try {
+            repo.add(null);
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+
+        try {
+            repo.delete("     ");
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+
+        try {
+            repo.findByClientId("     ");
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+
+        try {
+            repo.findByInum("    ");
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+
+        try {
+            repo.save(null);
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+
+        try {
+            repo.addDefinedPermission(null);
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+
+        try {
+            repo.deleteDefinedPermission(null);
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+
+        try {
+            repo.updateDefinedPermission(null);
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+    }
+
+    @Test
+    public void shouldFindOneClientThatExists() {
+        Client client = repo.findByClientId("ABCDEF");
+        Assert.assertNotNull(client);
+        Assert.assertEquals("ABCDEF", client.getClientId());
+    }
+
+    @Test
+    public void shouldNotFindClientThatDoesNotExist() {
+        Client client = repo.findByClientname("hi. i don't exist.");
+        Assert.assertNull(client);
+    }
+
+    @Test
+    public void shouldRetrieveAllClientsThatExist() {
+        List<Client> clients = repo.findAll();
+        Assert.assertTrue(clients.size() >= 2);
+    }
+
+    @Test
+    public void shouldAddNewClient() {
+        Client newClient = addNewTestClient();
+        Client checkClient = repo.findByClientId(newClient.getClientId());
+        Assert.assertNotNull(checkClient);
+        Assert.assertEquals("DELETE_My_Name", checkClient.getName());
+        cleanUpData();
+    }
+
+    @Test
+    public void shouldDeleteClient() {
+        Client newClient = addNewTestClient();
+        repo.delete(newClient.getClientId());
+        Client idontexist = repo.findByClientname(newClient.getName());
+        Assert.assertNull(idontexist);
+    }
+
+    @Test
+    public void shouldUpdateNonDnAttrOfClient() {
+        Client newClient = addNewTestClient();
+        String clientId = newClient.getClientId();
+
+        // Update all non-DN attributes
+        newClient.setClientSecretObj(ClientSecret.newInstance("My_New_Secret"));
+        newClient.setStatus(ClientStatus.INACTIVE);
+
+        try {
+            repo.save(newClient);
+        } catch (IllegalStateException e) {
+            Assert.fail("Could not save the record: " + e.getMessage());
+        }
+
+        Client changedClient = repo.findByClientId(clientId);
+        Assert.assertEquals(newClient, changedClient);
+
+        // Update only one attribute
+        newClient.setStatus(ClientStatus.ACTIVE);
+
+        try {
+            repo.save(newClient);
+        } catch (IllegalStateException e) {
+            Assert.fail("Could not save the record: " + e.getMessage());
+        }
+
+        changedClient = repo.findByClientId(clientId);
+        Assert.assertEquals(newClient, changedClient);
+
+        repo.delete(newClient.getClientId());
+    }
+
+    @Test
+    public void shouldGenerateClientDn() {
+        String dn = repo.getClientDnByClientId("ABCDEF");
+        Assert
+            .assertEquals(
+                "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!2222,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com",
+                dn);
+    }
+
+    @Test
+    public void shouldAuthenticateForCorrectCredentials() {
+        boolean authenticated = repo.authenticate("ABCDEF", "password");
+        Assert.assertTrue(authenticated);
+    }
+
+    @Test
+    public void shouldGenerateModifications() {
+        Client client = createTestClientInstance();
+        Client cClient = createTestClientInstance();
+        cClient.setName("changed_client_name");
+        cClient.setClientSecretObj(ClientSecret
+            .newInstance("changed_client_secret"));
+        cClient.setStatus(ClientStatus.INACTIVE);
+
+        List<Modification> mods = repo.getModifications(client, cClient);
+
+        Assert.assertEquals(2, mods.size());
+        Assert.assertEquals("changed_client_secret", mods.get(0).getAttribute()
+            .getValue());
+        Assert.assertEquals(ClientStatus.INACTIVE.toString(), mods.get(1)
+            .getAttribute().getValue());
+    }
+
+    @Test
+    public void shouldGetUnusedClientInum() {
+        String inum = repo
+            .getUnusedClientInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE");
+        Assert.assertFalse(inum.equals("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!2222"));
+    }
+
+    @Test
+    public void shouldSetAllClientLocked() {
+        Client newClient = addNewTestClient();
+        repo.setAllClientLocked(newClient.getCustomerId(), true);
+        Client changedClient = repo.findByClientId(newClient.getClientId());
+        Assert.assertEquals(changedClient.getIsLocked(), true);
+        repo.delete(newClient.getClientId());
+    }
+
+    @Test
+    public void shouldAddAndDeleteNewPermisison() {
+        Client testClient = addNewTestClient();
+        Permission testPermission = addNewTestPermission();
+        Permission checkPermission = repo
+            .getDefinedPermissionByClientIdAndPermissionId(
+                "DELETE_My_ClientId", "DELETE_My_Permission");
+        Assert.assertTrue(checkPermission.getValue().equals("Some Value"));
+        repo.deleteDefinedPermission(checkPermission);
+        cleanUpData();
+    }
+
+    @Test
+    public void shouldUpdatePermission() {
+        Client testClient = addNewTestClient();
+        Permission testPermission = addNewTestPermission();
+        Permission checkPermission = repo
+            .getDefinedPermissionByClientIdAndPermissionId(
+                "DELETE_My_ClientId", "DELETE_My_Permission");
+        Assert.assertTrue(checkPermission.getValue().equals("Some Value"));
+        testPermission.setValue("Some Other Value");
+        repo.updateDefinedPermission(testPermission);
+        checkPermission = repo.getDefinedPermissionByClientIdAndPermissionId(
+            "DELETE_My_ClientId", "DELETE_My_Permission");
+        Assert
+            .assertTrue(checkPermission.getValue().equals("Some Other Value"));
+        repo.deleteDefinedPermission(checkPermission);
+        cleanUpData();
+    }
+
+    @Test
+    public void shouldGetPermissions() {
+        Client testClient = addNewTestClient();
+        Permission testPermission = addNewTestPermission();
+        List<Permission> resources = repo
+            .getDefinedPermissionsByClientId("DELETE_My_ClientId");
+        Assert.assertTrue(resources.size() >= 1);
+        repo.deleteDefinedPermission(testPermission);
+        cleanUpData();
+    }
+
+    @After
+    public void tearDown() {
+        connPools.close();
+    }
+
+    private Client addNewTestClient() {
+        Client newClient = createTestClientInstance();
+        repo.add(newClient);
+        return newClient;
+    }
+
+    private Client createTestClientInstance() {
+        Client newClient = new Client("DELETE_My_ClientId", ClientSecret
+            .newInstance("DELETE_My_Client_Secret"), "DELETE_My_Name", "inum",
+            "iname", "RCN-123-456-789", ClientStatus.ACTIVE,
+            "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111",
+            "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE");
+        newClient.setIsLocked(false);
+        newClient.setSoftDeleted(false);
+        return newClient;
+    }
+
+    private Permission addNewTestPermission() {
+        Permission res = createTestPermissionInstance();
+        repo.addDefinedPermission(res);
+        return res;
+    }
+
+    private Permission createTestPermissionInstance() {
+        Permission res = new Permission();
+        res.setClientId("DELETE_My_ClientId");
+        res.setCustomerId("RCN-123-456-789");
+        res.setPermissionId("DELETE_My_Permission");
+        res.setValue("Some Value");
+        return res;
+    }
+}

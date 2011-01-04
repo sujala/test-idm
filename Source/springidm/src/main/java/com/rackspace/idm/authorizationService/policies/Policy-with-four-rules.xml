@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><xacml2:Policy xmlns:xacml2="urn:oasis:names:tc:xacml:2.0:policy:schema:os" PolicyId="Policy-with-5-rules" RuleCombiningAlgId="urn:oasis:names:tc:xacml:1.0:rule-combining-algorithm:permit-overrides" Version="1">
+  <xacml2:Description>Policy-with-5-rules</xacml2:Description>
+<xacml2:PolicyDefaults><xacml2:XPathVersion>http://www.w3.org/TR/1999/Rec-xpath-19991116</xacml2:XPathVersion></xacml2:PolicyDefaults>
+  <xacml2:Target/>
+  <xacml2:Rule Effect="Permit" RuleId="Rule1">
+    <xacml2:Description>User should be able access his/her own stuff (Check subject-id is equal to resource-id)</xacml2:Description>
+    <xacml2:Target/>
+    <xacml2:Condition>
+      <xacml2:Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+        <xacml2:Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-one-and-only">
+          <xacml2:SubjectAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false" SubjectCategory="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject"/>
+        </xacml2:Apply>
+        <xacml2:Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-one-and-only">
+          <xacml2:ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+        </xacml2:Apply>
+      </xacml2:Apply>
+    </xacml2:Condition>
+  </xacml2:Rule>
+  <xacml2:Rule Effect="Permit" RuleId="Rule2">
+    <xacml2:Description>Only user's company's client can access user's stuff (Check client's company is equal to user's company)</xacml2:Description>
+    <xacml2:Target/>
+    <xacml2:Condition>
+      <xacml2:Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+        <xacml2:Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-one-and-only">
+          <xacml2:SubjectAttributeDesignator AttributeId="companyId" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false" SubjectCategory="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject"/>
+        </xacml2:Apply>
+        <xacml2:Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-one-and-only">
+          <xacml2:ResourceAttributeDesignator AttributeId="resourceCompanyId" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+        </xacml2:Apply>
+      </xacml2:Apply>
+    </xacml2:Condition>
+  </xacml2:Rule>
+  <xacml2:Rule Effect="Permit" RuleId="adbe1a29-40c2-43e6-9da6-ac47d35bf96b">
+    <xacml2:Description>Rackspace-Company-can-Add-User</xacml2:Description>
+    <xacml2:Target/>
+    <xacml2:Condition>
+      <xacml2:Apply FunctionId="urn:oasis:names:tc:xacml:3.0:function:string-equal-ignore-case">
+        <xacml2:Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-one-and-only">
+          <xacml2:SubjectAttributeDesignator AttributeId="companyId" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false" SubjectCategory="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject"/>
+        </xacml2:Apply>
+        <xacml2:AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">RCN-000-000-000</xacml2:AttributeValue>
+      </xacml2:Apply>
+    </xacml2:Condition>
+  </xacml2:Rule>
+  <xacml2:Rule Effect="Permit" RuleId="0f667122-d9ce-40e4-99f9-17c10530e0a3">
+    <xacml2:Description>Only Admin can add a user</xacml2:Description>
+    <xacml2:Target/>
+    <xacml2:Condition>
+      <xacml2:Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:and">
+        <xacml2:Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-is-in">
+          <xacml2:Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-normalize-to-lower-case">
+            <xacml2:AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">admin</xacml2:AttributeValue>
+          </xacml2:Apply>
+          <xacml2:SubjectAttributeDesignator AttributeId="role" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false" SubjectCategory="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject"/>
+        </xacml2:Apply>
+        <xacml2:Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-is-in">
+          <xacml2:Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-normalize-to-lower-case">
+            <xacml2:Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-one-and-only">
+              <xacml2:ResourceAttributeDesignator AttributeId="resourceCompanyId" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+            </xacml2:Apply>
+          </xacml2:Apply>
+          <xacml2:SubjectAttributeDesignator AttributeId="role-for-company" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false" SubjectCategory="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject"/>
+        </xacml2:Apply>
+      </xacml2:Apply>
+    </xacml2:Condition>
+  </xacml2:Rule>
+</xacml2:Policy>

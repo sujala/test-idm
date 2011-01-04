@@ -1,0 +1,34 @@
+dn: cn=schema
+objectClass: top
+objectClass: ldapSubentry
+objectClass: subschema
+cn: schema
+attributeTypes: (1.3.6.1.4.1.20988.2.1.10 NAME 'middleName' SUP name X-ORIGIN 'RFC 4519' )
+attributeTypes: (1.3.6.1.4.1.20988.2.1.50 NAME 'rackspaceRegion' DESC 'The region for a user' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: (1.3.6.1.4.1.20988.2.1.51 NAME 'softDeleted' DESC 'record soft deleted' EQUALITY booleanMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )
+attributeTypes: (1.3.6.1.4.1.20988.2.1.52 NAME 'locked' DESC 'record is locked' EQUALITY booleanMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )
+attributeTypes: ( 1.3.6.1.4.1.20988.2.1.16 NAME 'rackspaceApiKey' DESC 'An API Key for a user' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: ( 1.3.6.1.4.1.20988.2.1.22 NAME 'status' DESC 'status' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: ( 1.3.6.1.4.1.20988.2.1.23 NAME 'groupType' DESC 'groupType' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: ( 1.3.6.1.4.1.20988.2.1.70 NAME 'permissionType' DESC 'permissionType' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: ( 1.3.6.1.4.1.20988.2.1.17 NAME 'inum' DESC 'An i-number' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: ( 1.3.6.1.4.1.20988.2.1.18 NAME 'iname' DESC 'An i-name' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: ( 1.3.6.1.4.1.20988.2.1.60 NAME 'blob' DESC 'blob' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: (1.3.6.1.4.1.20988.2.1.9 NAME 'timeZone' DESC 'Property of a User indicating the time zone' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: ( 1.3.6.1.4.1.20988.2.1.19 NAME 'tokenRequestor' DESC 'The XRI of the token requestor' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: ( 1.3.6.1.4.1.20988.2.1.24 NAME 'tokenOwner' DESC 'The token owner' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: ( 1.3.6.1.4.1.20988.2.1.20 NAME 'secretQuestion' DESC 'Users secret question used to reset password' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: ( 1.3.6.1.4.1.20988.2.1.21 NAME 'secretAnswer' DESC 'Users secret answer used to reset password' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: (1.3.6.1.4.1.20988.2.1.6 NAME 'rackspaceCustomerNumber' DESC 'Property of an rackspaceUser denoting the Customer Id the the User is associated with' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: (1.3.6.1.4.1.20988.2.1.30 NAME 'rackspacePersonNumber' DESC 'Property of an rackspaceUser denoting the Person Id the the User is associated with' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: ( 1.3.6.1.4.1.20988.2.1.40 NAME 'permission' DESC 'A list of permissions' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: ( 1.3.6.1.4.1.20988.2.1.15 NAME 'expiration' DESC 'UTC Time of Token Expiration' EQUALITY generalizedTimeMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 SINGLE-VALUE X-ORIGIN 'RFC 4403' )
+objectClasses: ( 1.3.6.1.4.1.20988.2.2.5 NAME 'rackspacePerson' SUP top STRUCTURAL MUST inum MAY (isMemberOf $ c $ displayName $ givenName $ iname $ locked $ mail $ middleName $ o $ permission $ preferredLanguage $ rackspaceCustomerNumber $ rackspacePersonNumber $ rackspaceApiKey $ secretQuestion $ secretAnswer $ status $ seeAlso $ sn $ timeZone $ uid $ userPassword $ rackspaceRegion $ softDeleted ) X-ORIGIN 'RFC 4519' )
+objectClasses: ( 1.3.6.1.4.1.20988.2.2.6 NAME 'rackspaceOrganization' SUP top STRUCTURAL MUST inum MAY ( iname $ locked $ o $ owner $ rackspaceCustomerNumber $ status $ seeAlso $ softDeleted ) X-ORIGIN 'RFC 4519' )
+objectClasses: ( 1.3.6.1.4.1.20988.2.2.3 NAME 'rackspaceApplication' SUP top STRUCTURAL MUST ( displayName $ inum $ rackspaceApiKey $ userPassword ) MAY ( iname $ locked $ owner $ permission $ rackspaceCustomerNumber $ status $ seeAlso $ softDeleted ) X-ORIGIN 'RFC 4519' )
+objectClasses: ( 1.3.6.1.4.1.20988.2.2.4 NAME 'rackspaceToken' SUP top STRUCTURAL MUST o MAY ( expiration $ status $ seeAlso $ tokenOwner $ tokenRequestor) X-ORIGIN 'RFC 4519' )
+objectClasses: ( 1.3.6.1.4.1.20988.2.2.40 NAME 'rackspaceGroup' SUP groupOfUniqueNames STRUCTURAL MUST ( inum ) MAY ( c $ displayName $ groupType $ iname $ permission $ rackspaceCustomerNumber $ status $ softDeleted ) )
+objectClasses: ( 1.3.6.1.4.1.20988.2.2.60 NAME 'clientPermission' SUP top STRUCTURAL MUST ( cn $ rackspaceApiKey $ rackspaceCustomerNumber $ blob ) MAY ( permissionType ) )
+ds-update-time:: AAABKLZPnxA=
+modifiersname: cn=Directory Manager,cn=Root DNs,cn=config
+
