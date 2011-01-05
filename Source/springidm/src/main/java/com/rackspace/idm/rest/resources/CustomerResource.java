@@ -47,8 +47,8 @@ public class CustomerResource {
     public CustomerResource(ClientsResource clientsResource,
         CustomerLockResource customerLockResource, RolesResource rolesResource,
         UsersResource usersResource, CustomerService customerService,
-        CustomerConverter customerConverter, AuthorizationService authorizationService,
-        LoggerFactoryWrapper logger) {
+        CustomerConverter customerConverter,
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.clientsResource = clientsResource;
         this.customerLockResource = customerLockResource;
         this.rolesResource = rolesResource;
@@ -80,9 +80,10 @@ public class CustomerResource {
         @PathParam("customerId") String customerId) {
 
         logger.debug("Getting Customer: {}", customerId);
-        
-        // Racker's and Specific Clients are authorized
+
+        // Racker's, Rackspace Clients and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeRackspaceClient(authHeader)
             || authorizationService.authorizeClient(authHeader,
                 request.getMethod(), uriInfo.getPath());
 
@@ -130,10 +131,10 @@ public class CustomerResource {
         @PathParam("customerId") String customerId) {
 
         logger.info("Deleting Customer :{}", customerId);
-        
+
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath());
+            request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
             String token = authHeader.split(" ")[1];
@@ -155,7 +156,7 @@ public class CustomerResource {
         this.customerService.softDeleteCustomer(customerId);
 
         logger.info("Deleted Customer: {}", customerId);
-        
+
         return Response.noContent().build();
     }
 

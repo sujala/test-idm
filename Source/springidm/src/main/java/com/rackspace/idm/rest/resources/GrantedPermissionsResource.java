@@ -69,9 +69,11 @@ public class GrantedPermissionsResource {
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
-        
-        // Racker's, Specific Clients and Admins are authorized
+
+        // Racker's, Rackspace Clients, Specific Clients and Admins are
+        // authorized
         boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeRackspaceClient(authHeader)
             || authorizationService.authorizeClient(authHeader,
                 request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(authHeader, customerId);
@@ -83,22 +85,25 @@ public class GrantedPermissionsResource {
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
-        
+
         Client client = this.clientService.getById(clientId);
-        
+
         if (client == null || !client.getCustomerId().equals(customerId)) {
-            String errMsg = String.format("Client With Client Id %SNot Found", clientId);
+            String errMsg = String.format("Client With Client Id %SNot Found",
+                clientId);
             logger.error(errMsg);
             throw new NotFoundException(errMsg);
         }
-        
-        if (client.getPermissions() == null || client.getPermissions().size() <1) {
+
+        if (client.getPermissions() == null
+            || client.getPermissions().size() < 1) {
             Response.noContent().build();
         }
-        
+
         PermissionSet perms = new PermissionSet();
         perms.setGranteds(client.getPermissions());
 
-        return Response.ok(permissionConverter.toPermissionsJaxb(perms)).build();
+        return Response.ok(permissionConverter.toPermissionsJaxb(perms))
+            .build();
     }
 }

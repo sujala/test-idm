@@ -189,8 +189,9 @@ public class TokenResource {
 
         logger.debug("Validating Access Token: {}", tokenString);
 
-        // Only Rcker's and Specific Clients are authorized
+        // Only Rackers, Rackspace Clients and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeRackspaceClient(authHeader)
             || authorizationService.authorizeClient(authHeader,
                 request.getMethod(), uriInfo.getPath());
 
@@ -246,9 +247,11 @@ public class TokenResource {
 
         logger.debug("Revoking Token: {}", tokenString);
 
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(authHeader,
-            request.getMethod(), uriInfo.getPath());
+        // Only Rackspace Clients and Specific Clients are authorized
+        boolean authorized = authorizationService
+            .authorizeRackspaceClient(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
             String token = authHeader.split(" ")[1];

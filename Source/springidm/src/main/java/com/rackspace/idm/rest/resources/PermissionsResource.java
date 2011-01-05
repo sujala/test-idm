@@ -80,8 +80,10 @@ public class PermissionsResource {
         logger.debug(String.format("Getting Permissions for client %s",
             clientId));
 
-        // Racker's, Specific Clients and Admins are authorized
+        // Racker's, Rackspace Clients, Specific Clients and Admins are
+        // authorized
         boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeRackspaceClient(authHeader)
             || authorizationService.authorizeClient(authHeader,
                 request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(authHeader, customerId);

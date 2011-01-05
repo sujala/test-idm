@@ -74,8 +74,10 @@ public class ClientResource {
         @PathParam("clientId") String clientId) {
         logger.debug("Getting Client: {}", clientId);
 
-        // Racker's, Specific Clients and Admins are authorized
+        // Racker's, Rackspace Clients, Specific Clients, Admins and Users are
+        // authorized
         boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeRackspaceClient(authHeader)
             || authorizationService.authorizeClient(authHeader,
                 request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(authHeader, customerId);

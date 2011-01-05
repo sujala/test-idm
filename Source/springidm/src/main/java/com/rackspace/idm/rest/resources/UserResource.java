@@ -98,8 +98,10 @@ public class UserResource {
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
-        // Racker's, Specific Clients, Admins and User's are authorized
+        // Racker's, Rackspace Clients, Specific Clients, Admins and User's are
+        // authorized
         boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeRackspaceClient(authHeader)
             || authorizationService.authorizeClient(authHeader,
                 request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(authHeader, customerId)

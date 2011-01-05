@@ -27,6 +27,7 @@ import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.validation.InputValidator;
+
 /**
  * A Client defined permission.
  *
@@ -195,8 +196,10 @@ public class DefinedPermissionResource {
         @PathParam("clientId") String clientId,
         @PathParam("permissionId") String permissionId) {
 
-        // Racker's, Specific Clients and Admins are authorized
+        // Racker's, Rackspace Clients, Specific Clients and Admins are
+        // authorized
         boolean authorized = authorizationService.authorizeRacker(authHeader)
+            || authorizationService.authorizeRackspaceClient(authHeader)
             || authorizationService.authorizeClient(authHeader,
                 request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(authHeader, customerId);
