@@ -55,7 +55,8 @@ public class LdapUserRepositoryTest {
 
     private static LdapConnectionPools getConnPools() {
         LdapConfiguration config = new LdapConfiguration(
-            new PropertyFileConfiguration().getConfigFromClasspath(), new StubLogger());
+            new PropertyFileConfiguration().getConfigFromClasspath(),
+            new StubLogger());
         return config.connectionPools();
     }
 
@@ -76,6 +77,20 @@ public class LdapUserRepositoryTest {
 
         try {
             repo.findByUsername("     ");
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+        
+        try {
+            repo.findByNastId(null);
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+
+        try {
+            repo.findByNastId("     ");
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
@@ -134,6 +149,20 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldFindOneUserThatExistsByUsername() {
         User user = repo.findByUsername("mkovacs");
+        Assert.assertNotNull(user);
+        Assert.assertEquals("Kovacs", user.getLastname());
+    }
+
+    @Test
+    public void shouldFindOneUserThatExistsByNastId() {
+        User user = repo.findByNastId("IDMTESTNASTID");
+        Assert.assertNotNull(user);
+        Assert.assertEquals("Kovacs", user.getLastname());
+    }
+
+    @Test
+    public void shouldFindOneUserThatExistsByMossoId() {
+        User user = repo.findByMossoId(88888);
         Assert.assertNotNull(user);
         Assert.assertEquals("Kovacs", user.getLastname());
     }
@@ -203,8 +232,8 @@ public class LdapUserRepositoryTest {
         Map<String, String> userStatusMap = new HashMap<String, String>();
         userStatusMap.put(GlobalConstants.ATTR_SOFT_DELETED, "FALSE");
 
-        User deletedUser = repo.findUser(newUser.getCustomerId(), newUser
-            .getUsername(), userStatusMap);
+        User deletedUser = repo.findUser(newUser.getCustomerId(),
+            newUser.getUsername(), userStatusMap);
     }
 
     @Test

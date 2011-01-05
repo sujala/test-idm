@@ -70,6 +70,9 @@ public class UserServiceTests {
 
     String tokenString = "XXXX";
     String callbackUrl = "www.cp.com";
+    
+    String nastId = "nastId";
+    int mossoId = 6676;
 
     int limit = 100;
     int offset = 1;
@@ -156,6 +159,32 @@ public class UserServiceTests {
         EasyMock.replay(mockUserDao);
 
         User retrievedUser = userService.getUser(username);
+
+        Assert.assertTrue(retrievedUser.getUsername().equals(username));
+        EasyMock.verify(mockUserDao);
+    }
+    
+    @Test
+    public void shouldGetUserByNastId() {
+        User user = getFakeUser();
+
+        EasyMock.expect(mockUserDao.findByNastId(nastId)).andReturn(user);
+        EasyMock.replay(mockUserDao);
+
+        User retrievedUser = userService.getUserByNastId(nastId);
+
+        Assert.assertTrue(retrievedUser.getUsername().equals(username));
+        EasyMock.verify(mockUserDao);
+    }
+    
+    @Test
+    public void shouldGetUserByMossoId() {
+        User user = getFakeUser();
+
+        EasyMock.expect(mockUserDao.findByMossoId(mossoId)).andReturn(user);
+        EasyMock.replay(mockUserDao);
+
+        User retrievedUser = userService.getUserByMossoId(mossoId);
 
         Assert.assertTrue(retrievedUser.getUsername().equals(username));
         EasyMock.verify(mockUserDao);
