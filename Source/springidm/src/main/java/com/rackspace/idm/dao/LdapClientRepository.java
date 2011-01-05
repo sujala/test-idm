@@ -189,7 +189,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             && client.getPermissions().size() > 0) {
             List<String> permissions = new ArrayList<String>();
             for (Permission permission : client.getPermissions()) {
-                permissions.add(permission.getValue());
+                permissions.add(permission.getCustomerId() + "::"
+                    + permission.getClientId() + "::"
+                    + permission.getPermissionId());
             }
             String[] perms = permissions
                 .toArray(new String[permissions.size()]);
