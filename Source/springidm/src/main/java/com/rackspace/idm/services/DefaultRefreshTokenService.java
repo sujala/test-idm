@@ -1,6 +1,5 @@
 package com.rackspace.idm.services;
 
-import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
@@ -9,7 +8,6 @@ import org.slf4j.Logger;
 import com.rackspace.idm.dao.RefreshTokenDao;
 import com.rackspace.idm.entities.RefreshToken;
 import com.rackspace.idm.entities.RefreshTokenDefaultAttributes;
-import com.rackspace.idm.util.HashHelper;
 
 public class DefaultRefreshTokenService implements RefreshTokenService {
     
