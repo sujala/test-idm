@@ -188,15 +188,14 @@
 						xmlns="http://www.w3.org/1999/xhtml">
 						<p>
 							The user's secret contains a question and
-							answer that can be
-							used to confirm the
+							answer that can be used to confirm the
 							user's identity.
 						</p>
 					</xsd:documentation>
 				</annotation>
 			</element>
-			<element name="password" type="idm:UserPassword" minOccurs="0"
-				maxOccurs="1">
+			<element name="password" type="idm:UserPassword"
+				minOccurs="0" maxOccurs="1">
 				<annotation>
 					<xsd:documentation xml:lang="EN"
 						xmlns="http://www.w3.org/1999/xhtml">
@@ -248,8 +247,7 @@
 					xmlns="http://www.w3.org/1999/xhtml">
 					<p>
 						The customer inum of the customer that the user
-						is associated
-						with.
+						is associated with.
 					</p>
 				</xsd:documentation>
 			</annotation>
@@ -371,7 +369,8 @@
 				</xsd:documentation>
 			</annotation>
 		</attribute>
-		<attribute name="timeZone" type="xsd:string" use="optional" default="America/Chicago">
+		<attribute name="timeZone" type="xsd:string" use="optional"
+			default="America/Chicago">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
@@ -379,6 +378,8 @@
 				</xsd:documentation>
 			</annotation>
 		</attribute>
+		<attribute name="mossoId" type="xsd:int"></attribute>
+		<attribute name="nastId" type="xsd:string"></attribute>
 	</complexType>
 
 	<complexType name="UserList">
