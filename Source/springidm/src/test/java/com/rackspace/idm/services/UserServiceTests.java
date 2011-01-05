@@ -305,6 +305,32 @@ public class UserServiceTests {
         Assert.assertTrue(authenticated);
         EasyMock.verify(mockUserDao);
     }
+    
+    @Test
+    public void shouldAuthenticateUserByNastIdApiKey() {
+        EasyMock.expect(mockUserDao.authenticateByNastIdAndAPIKey(nastId, apiKey))
+            .andReturn(true);
+        EasyMock.replay(mockUserDao);
+
+        boolean authenticated = userService.authenticateWithApiKey(username,
+            apiKey);
+
+        Assert.assertTrue(authenticated);
+        EasyMock.verify(mockUserDao);
+    }
+    
+    @Test
+    public void shouldAuthenticateUserByMossoIdApiKey() {
+        EasyMock.expect(mockUserDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey))
+            .andReturn(true);
+        EasyMock.replay(mockUserDao);
+
+        boolean authenticated = userService.authenticateWithApiKey(username,
+            apiKey);
+
+        Assert.assertTrue(authenticated);
+        EasyMock.verify(mockUserDao);
+    }
 
     @Test
     public void shouldUpdateUserStatusActive() {

@@ -81,7 +81,7 @@ public class LdapUserRepositoryTest {
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
-        
+
         try {
             repo.findByNastId(null);
             Assert.fail("Should have thrown an exception!");
@@ -139,6 +139,13 @@ public class LdapUserRepositoryTest {
         }
 
         try {
+            repo.authenticateByNastIdAndAPIKey(null, "");
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+
+        try {
             repo.getUnusedUserInum(null);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
@@ -170,9 +177,9 @@ public class LdapUserRepositoryTest {
         Assert.assertNotNull(user);
         Assert.assertEquals("deleteme", user.getLastname());
 
-        repo.delete(newUser.getUsername()); 
+        repo.delete(newUser.getUsername());
     }
-    
+
     @Test
     public void shouldNotFindOneUserThatDoesNotExistsByNastId() {
         User user = repo.findByNastId("NOTAREALNASTID");
@@ -396,6 +403,24 @@ public class LdapUserRepositoryTest {
         boolean authenticated = repo.authenticateByAPIKey("mkovacs",
             "1234567890");
         Assert.assertTrue(authenticated);
+    }
+
+    @Test
+    public void shouldAuthenticateByNastIdAndAPIKey() {
+        User newUser = addNewTestUser();
+        boolean authenticated = repo.authenticateByNastIdAndAPIKey(
+            "TESTNASTID", "1234567890");
+        Assert.assertTrue(authenticated);
+        repo.delete(newUser.getUsername());
+    }
+
+    @Test
+    public void shouldAuthenticateByMossoIdAndAPIKey() {
+        User newUser = addNewTestUser();
+        boolean authenticated = repo.authenticateByMossoIdAndAPIKey(88888,
+            "1234567890");
+        Assert.assertTrue(authenticated);
+        repo.delete(newUser.getUsername());
     }
 
     @Test
