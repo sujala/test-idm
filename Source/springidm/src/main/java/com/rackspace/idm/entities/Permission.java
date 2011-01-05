@@ -10,19 +10,20 @@ import com.rackspace.idm.validation.RegexPatterns;
 
 public class Permission implements Serializable {
     private static final long serialVersionUID = -4289257131504718968L;
+    public static final String LDAP_SEPERATOR = "::";
 
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String permissionId;
-    
+
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String clientId;
-    
+
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String value;
-    
+
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String customerId;
@@ -31,7 +32,7 @@ public class Permission implements Serializable {
 
     public Permission() {
     }
-    
+
     public String getPermissionId() {
         return permissionId;
     }
@@ -87,6 +88,17 @@ public class Permission implements Serializable {
 
     public void setUniqueId(String uniqueId) {
         this.uniqueId = uniqueId;
+    }
+
+    public String getPermissionLDAPserialization() {
+
+        if (this.customerId == null || this.clientId == null
+            || this.permissionId == null) {
+            return null;
+        }
+        
+        return this.customerId + LDAP_SEPERATOR + this.clientId
+        + LDAP_SEPERATOR + this.permissionId;
     }
 
     @Override

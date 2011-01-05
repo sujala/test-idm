@@ -189,9 +189,10 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             && client.getPermissions().size() > 0) {
             List<String> permissions = new ArrayList<String>();
             for (Permission permission : client.getPermissions()) {
-                permissions.add(permission.getCustomerId() + "::"
-                    + permission.getClientId() + "::"
-                    + permission.getPermissionId());
+                String p = permission.getPermissionLDAPserialization();
+                if (p != null) {
+                    permissions.add(p);
+                }
             }
             String[] perms = permissions
                 .toArray(new String[permissions.size()]);
@@ -592,9 +593,10 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 // we can just do a replace modification
                 List<String> permissions = new ArrayList<String>();
                 for (Permission permission : cNew.getPermissions()) {
-                    permissions.add(permission.getCustomerId() + "::"
-                        + permission.getClientId() + "::"
-                        + permission.getPermissionId());
+                    String p = permission.getPermissionLDAPserialization();
+                    if (p != null) {
+                        permissions.add(p);
+                    }
                 }
                 String[] perms = permissions.toArray(new String[permissions
                     .size()]);
@@ -658,7 +660,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         if (permissions != null && permissions.length > 0) {
             for (String s : permissions) {
-                String[] split = s.split("::");
+                String[] split = s.split(Permission.LDAP_SEPERATOR);
 
                 if (split.length == 3) {
                     perms
