@@ -23,6 +23,10 @@ public interface UserDao {
 
     User findByUsername(String username);
 
+    User findByNastId(String nastId);
+
+    User findByMossoId(int mossoId);
+
     User findByInum(String inum);
 
     List<User> findAll();
