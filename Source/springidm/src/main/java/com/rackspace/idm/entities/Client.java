@@ -1,7 +1,5 @@
 package com.rackspace.idm.entities;
 
-import java.util.List;
-
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 
@@ -9,18 +7,13 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 public class Client extends BaseClient{
-
-//    private String clientId = null;
+    private static final long serialVersionUID = -3160754818606772239L;
 
     private ClientSecret clientSecret;
 
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String name = null;
-
-//    @NotNull
-//    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
-//    private String customerId = null;
 
     @NotNull
     private ClientStatus status = null;
@@ -32,7 +25,6 @@ public class Client extends BaseClient{
     private String seeAlso = null;
     private Boolean softDeleted = null;
     private String owner = null;
-//    private List<Permission> permissions;
 
     public Client() {
     }
@@ -60,16 +52,6 @@ public class Client extends BaseClient{
     public String getUniqueId() {
         return uniqueId;
     }
-
-//    public void setClientId(String clientId) {
-//        if (clientId != null) {
-//            this.clientId = clientId;
-//        }
-//    }
-//
-//    public String getClientId() {
-//        return clientId;
-//    }
 
     public void setClientSecretObj(ClientSecret clientSecret) {
         if (clientSecret != null) {
@@ -110,16 +92,6 @@ public class Client extends BaseClient{
             this.iname = iname;
         }
     }
-
-//    public String getCustomerId() {
-//        return customerId;
-//    }
-//
-//    public void setCustomerId(String customerId) {
-//        if (customerId != null) {
-//            this.customerId = customerId;
-//        }
-//    }
 
     public ClientStatus getStatus() {
         return status;
@@ -176,14 +148,6 @@ public class Client extends BaseClient{
     public String getInum() {
         return inum;
     }
-
-//    public List<Permission> getPermissions() {
-//        return permissions;
-//    }
-//
-//    public void setPermissions(List<Permission> permissions) {
-//        this.permissions = permissions;
-//    }
 
     public void setDefaults() {
         this.setIsLocked(false);

@@ -1,29 +1,15 @@
 package com.rackspace.idm.entities;
 
-import java.util.List;
 import java.util.Locale;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-
 import org.apache.commons.lang.StringUtils;
-import org.hibernate.validator.constraints.Length;
 import org.joda.time.DateTimeZone;
 
 import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.validation.MessageTexts;
-import com.rackspace.idm.validation.RegexPatterns;
 
 public class User extends BaseUser {
+    private static final long serialVersionUID = 1347677880811855274L;
 
-//    @NotNull
-//    @Length(min = 1, max = 32)
-//    @Pattern(regexp = RegexPatterns.USERNAME, message = MessageTexts.USERNAME)
-//    protected String username = null;
-
-//    @NotNull
-//    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
-//    private String customerId = null;
     private String email = null;
     protected UserCredential credential = new UserCredential();
     private String personId = null;
@@ -43,8 +29,6 @@ public class User extends BaseUser {
 
     private Boolean softDeleted = null;
     private String region = null;
-
-//    private List<Role> roles;
 
     public User() {
         // Needed by JAX-RS
@@ -197,16 +181,6 @@ public class User extends BaseUser {
             this.seeAlso = seeAlso;
         }
     }
-
-//    public void setCustomerId(String customerId) {
-//        if (customerId != null) {
-//            this.customerId = customerId;
-//        }
-//    }
-//
-//    public String getCustomerId() {
-//        return customerId;
-//    }
 
     public String getUsername() {
         return username;

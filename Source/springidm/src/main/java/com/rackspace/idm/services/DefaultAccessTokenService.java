@@ -1,6 +1,5 @@
 package com.rackspace.idm.services;
 
-import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -13,7 +12,6 @@ import org.slf4j.Logger;
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.RefreshTokenDao;
-import com.rackspace.idm.dao.UserDao;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.BaseClient;
@@ -23,7 +21,6 @@ import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.oauthAuthentication.Token;
-import com.rackspace.idm.util.HashHelper;
 
 public class DefaultAccessTokenService implements AccessTokenService {
 
