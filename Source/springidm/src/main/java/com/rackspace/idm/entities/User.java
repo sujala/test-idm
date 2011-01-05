@@ -29,6 +29,9 @@ public class User extends BaseUser {
 
     private Boolean softDeleted = null;
     private String region = null;
+    
+    private String nastId = null;
+    private Integer mossoId = null;
 
     public User() {
         // Needed by JAX-RS
@@ -336,6 +339,22 @@ public class User extends BaseUser {
             this.personId = personId;
         }
     }
+    
+    public String getNastId() {
+        return nastId;
+    }
+
+    public void setNastId(String nastId) {
+        this.nastId = nastId;
+    }
+
+    public Integer getMossoId() {
+        return mossoId;
+    }
+
+    public void setMossoId(Integer mossoId) {
+        this.mossoId = mossoId;
+    }
 
     public void setDefaults() {
         if (this.preference.getLocale() == null) {
@@ -406,6 +425,8 @@ public class User extends BaseUser {
         }
     }
 
+    
+    
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -421,7 +442,9 @@ public class User extends BaseUser {
         result = prime * result + ((inum == null) ? 0 : inum.hashCode());
         result = prime * result
             + ((isLocked == null) ? 0 : isLocked.hashCode());
+        result = prime * result + ((mossoId == null) ? 0 : mossoId.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((nastId == null) ? 0 : nastId.hashCode());
         result = prime * result + ((orgInum == null) ? 0 : orgInum.hashCode());
         result = prime * result
             + ((personId == null) ? 0 : personId.hashCode());
@@ -431,7 +454,7 @@ public class User extends BaseUser {
         result = prime * result + ((seeAlso == null) ? 0 : seeAlso.hashCode());
         result = prime * result
             + ((softDeleted == null) ? 0 : softDeleted.hashCode());
-        result = prime * result + ((status == null) ? 0 : status.hashCode());
+        result = prime * result + ((status == null) ? 0 : status.toString().hashCode());
         result = prime * result
             + ((uniqueId == null) ? 0 : uniqueId.hashCode());
         return result;
@@ -505,11 +528,25 @@ public class User extends BaseUser {
         } else if (!isLocked.equals(other.isLocked)) {
             return false;
         }
+        if (mossoId == null) {
+            if (other.mossoId != null) {
+                return false;
+            }
+        } else if (!mossoId.equals(other.mossoId)) {
+            return false;
+        }
         if (name == null) {
             if (other.name != null) {
                 return false;
             }
         } else if (!name.equals(other.name)) {
+            return false;
+        }
+        if (nastId == null) {
+            if (other.nastId != null) {
+                return false;
+            }
+        } else if (!nastId.equals(other.nastId)) {
             return false;
         }
         if (orgInum == null) {
@@ -567,7 +604,17 @@ public class User extends BaseUser {
         return true;
     }
 
-
+    @Override
+    public String toString() {
+        return "User [email=" + email + ", credential=" + credential
+            + ", personId=" + personId + ", uniqueId=" + uniqueId + ", name="
+            + name + ", preference=" + preference + ", country=" + country
+            + ", displayName=" + displayName + ", inum=" + inum + ", iname="
+            + iname + ", isLocked=" + isLocked + ", orgInum=" + orgInum
+            + ", apiKey=" + apiKey + ", status=" + status + ", seeAlso="
+            + seeAlso + ", softDeleted=" + softDeleted + ", region=" + region
+            + ", nastId=" + nastId + ", mossoId=" + mossoId + "]";
+    }
 
     public static class Builder {
         private User user = null;
