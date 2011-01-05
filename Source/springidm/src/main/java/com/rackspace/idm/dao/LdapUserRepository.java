@@ -60,6 +60,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     private static final String ATTR_TIME_ZONE = "timeZone";
     private static final String ATTR_UID = "uid";
     private static final String ATTR_PASSWORD = "userPassword";
+    
+    private static final String ATTR_MOSSO_ID = "rsMossoId";
+    private static final String ATTR_NAST_ID = "rsNastId";
 
     private static final String[] ATTR_OBJECT_CLASS_VALUES = {"top",
         "rackspacePerson"};
@@ -67,6 +70,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     private static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
 
     private static final String USER_FIND_BY_EMAIL_STRING = "(&(objectClass=rackspacePerson)(mail=%s))";
+    private static final String USER_FIND_BY_NAST_ID = "(&(objectClass=rackspacePerson)(rsNastId=%s))";
+    private static final String USER_FIND_BY_MOSSO_ID = "(&(objectClass=rackspacePerson)(rsMossoId=%s))";
     private static final String USER_FIND_BY_USERNAME_STRING = "(&(objectClass=rackspacePerson)(uid=%s))";
 
     private static final String USER_FIND_BY_USERNAME_BASESTRING = "(&(objectClass=rackspacePerson)(uid=%s)";
@@ -446,6 +451,69 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 username);
             throw new IllegalStateException(
                 "More than one entry was found for this username");
+        }
+
+        getLogger().debug("Found User - {}", user);
+
+        return user;
+    }
+    
+    public User findByNastId(String nastId) {
+        getLogger().debug("Doing search for nastId " + nastId);
+        if (StringUtils.isBlank(nastId)) {
+            getLogger().error("Null or Empty nastId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty nastId parameter.");
+        }
+
+        User user = null;
+        SearchResult searchResult = null;
+        try {
+            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
+                String.format(USER_FIND_BY_NAST_ID, nastId));
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("Error searching for user by nastId {} - {}",
+                nastId, ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() == 1) {
+            SearchResultEntry e = searchResult.getSearchEntries().get(0);
+            user = getUser(e);
+        } else if (searchResult.getEntryCount() > 1) {
+            getLogger().error(
+                "More than one entry was found for user with nastId {}", nastId);
+            throw new IllegalStateException(
+                "More than one entry was found for this nastId");
+        }
+
+        getLogger().debug("Found User - {}", user);
+
+        return user;
+    }
+    
+    public User findByMossoId(int mossoId) {
+        getLogger().debug("Doing search for nastId " + mossoId);
+
+        User user = null;
+        SearchResult searchResult = null;
+        try {
+            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
+                String.format(USER_FIND_BY_MOSSO_ID, mossoId));
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("Error searching for user by mossoId {} - {}",
+                mossoId, ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() == 1) {
+            SearchResultEntry e = searchResult.getSearchEntries().get(0);
+            user = getUser(e);
+        } else if (searchResult.getEntryCount() > 1) {
+            getLogger().error(
+                "More than one entry was found for user with mossoId {}", mossoId);
+            throw new IllegalStateException(
+                "More than one entry was found for this mossoId");
         }
 
         getLogger().debug("Found User - {}", user);
@@ -867,6 +935,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             atts.add(new Attribute(GlobalConstants.ATTR_SOFT_DELETED, String
                 .valueOf(user.getSoftDeleted())));
         }
+        
+        if (!StringUtils.isBlank(user.getNastId())) {
+            atts.add(new Attribute(ATTR_NAST_ID, user.getNastId()));
+        }
+        
+        if (user.getMossoId() != null && user.getMossoId().intValue() > 0) {
+            atts.add(new Attribute(ATTR_MOSSO_ID, user.getMossoId().toString()));
+        }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
 
@@ -925,6 +1001,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             user.setIsLocked(resultEntry
                 .getAttributeValueAsBoolean(ATTR_LOCKED));
         }
+        
+        user.setMossoId(resultEntry.getAttributeValueAsInteger(ATTR_MOSSO_ID));
+        user.setNastId(resultEntry.getAttributeValue(ATTR_NAST_ID));
 
         return user;
     }
@@ -1124,6 +1203,23 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             && uNew.getSoftDeleted() != uOld.getSoftDeleted()) {
             mods.add(new Modification(ModificationType.REPLACE,
                 GlobalConstants.ATTR_SOFT_DELETED, String.valueOf(uNew
+                    .getSoftDeleted())));
+        }
+        
+        if (uNew.getNastId() != null) {
+            if (StringUtils.isBlank(uNew.getNastId())) {
+                mods.add(new Modification(ModificationType.DELETE,
+                    ATTR_NAST_ID));
+            } else if (!uNew.getNastId().equals(uOld.getNastId())) {
+                mods.add(new Modification(ModificationType.REPLACE,
+                    ATTR_NAST_ID, uNew.getNastId()));
+            }
+        }
+        
+        if (uNew.getMossoId() != null
+            && uNew.getMossoId() != uOld.getMossoId()) {
+            mods.add(new Modification(ModificationType.REPLACE,
+                ATTR_MOSSO_ID, String.valueOf(uNew
                     .getSoftDeleted())));
         }
 
