@@ -155,16 +155,34 @@ public class LdapUserRepositoryTest {
 
     @Test
     public void shouldFindOneUserThatExistsByNastId() {
+        User newUser = addNewTestUser();
         User user = repo.findByNastId("IDMTESTNASTID");
         Assert.assertNotNull(user);
-        Assert.assertEquals("Kovacs", user.getLastname());
+        Assert.assertEquals("deleteme", user.getLastname());
+
+        repo.delete(newUser.getUsername());
     }
 
     @Test
     public void shouldFindOneUserThatExistsByMossoId() {
+        User newUser = addNewTestUser();
         User user = repo.findByMossoId(88888);
         Assert.assertNotNull(user);
-        Assert.assertEquals("Kovacs", user.getLastname());
+        Assert.assertEquals("deleteme", user.getLastname());
+
+        repo.delete(newUser.getUsername()); 
+    }
+    
+    @Test
+    public void shouldNotFindOneUserThatDoesNotExistsByNastId() {
+        User user = repo.findByNastId("NOTAREALNASTID");
+        Assert.assertNull(user);
+    }
+
+    @Test
+    public void shouldNotFindOneUserThatDoesNotExistsByMossoId() {
+        User user = repo.findByMossoId(0);
+        Assert.assertNotNull(user);
     }
 
     @Test
@@ -458,6 +476,8 @@ public class LdapUserRepositoryTest {
         newUser.setRegion("ORD");
         newUser.setSoftDeleted(false);
         newUser.setDefaults();
+        newUser.setNastId("TESTNASTID");
+        newUser.setMossoId(88888);
         return newUser;
     }
 
