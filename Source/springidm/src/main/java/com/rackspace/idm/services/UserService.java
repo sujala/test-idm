@@ -21,6 +21,10 @@ public interface UserService {
 
     User getUser(String username);
     
+    User getUserByNastId(String natsId);
+    
+    User getUserByMossoId(int mossoId);
+    
     User getUser(String customerId, String username);
     
     User getSoftDeletedUser(String customerId, String username);

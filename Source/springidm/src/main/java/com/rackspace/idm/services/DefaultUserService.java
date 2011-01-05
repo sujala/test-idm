@@ -180,6 +180,22 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
+    public User getUserByNastId(String nastId) {
+        logger.debug("Getting User: {}", nastId);
+        User user = userDao.findByNastId(nastId);
+        user.setRoles(roleService.getRolesForUser(nastId));
+        logger.debug("Got User: {}", user);
+        return user;
+    }
+
+    public User getUserByMossoId(int mossoId) {
+        logger.debug("Getting User: {}", mossoId);
+        User user = userDao.findByMossoId(mossoId);
+        user.setRoles(roleService.getRolesForUser(user.getUsername()));
+        logger.debug("Got User: {}", user);
+        return user;
+    }
+
     public User getUser(String customerId, String username) {
         logger.debug("Getting User: {} - {}", customerId, username);
         User user = userDao.findUser(customerId, username);
@@ -223,8 +239,8 @@ public class DefaultUserService implements UserService {
         List<String> recipients = new ArrayList<String>();
         recipients.add(userEmail);
 
-        String link = String.format(PASSWORD_RECOVERY_URL, recoveryParam
-            .getCallbackUrl(), username, tokenString);
+        String link = String.format(PASSWORD_RECOVERY_URL,
+            recoveryParam.getCallbackUrl(), username, tokenString);
         String message = getEmailMessageBody(link, recoveryParam);
         try {
             emailService.sendEmail(recipients, recoveryParam.getFrom(),
@@ -314,11 +330,11 @@ public class DefaultUserService implements UserService {
             allClientInums.add(client.getInum());
             allClientIds.add(client.getClientId());
         }
-        tokenDao.deleteAllTokensForOwner(owner, Collections
-            .unmodifiableSet(allClientInums));
+        tokenDao.deleteAllTokensForOwner(owner,
+            Collections.unmodifiableSet(allClientInums));
 
-        refreshTokenDao.deleteAllTokensForUser(username, Collections
-            .unmodifiableSet(allClientIds));
+        refreshTokenDao.deleteAllTokensForUser(username,
+            Collections.unmodifiableSet(allClientIds));
 
         logger.info("Soft Deleted User: {}", username);
     }
@@ -331,8 +347,8 @@ public class DefaultUserService implements UserService {
 
     public void updateUserStatus(User user, String statusStr) {
 
-        UserStatus status = Enum.valueOf(UserStatus.class, statusStr
-            .toUpperCase());
+        UserStatus status = Enum.valueOf(UserStatus.class,
+            statusStr.toUpperCase());
         user.setStatus(status);
         this.userDao.save(user);
 
@@ -345,8 +361,8 @@ public class DefaultUserService implements UserService {
             for (Client client : clientDao.findAll()) {
                 allClientInums.add(client.getInum());
             }
-            tokenDao.deleteAllTokensForOwner(owner, Collections
-                .unmodifiableSet(allClientInums));
+            tokenDao.deleteAllTokensForOwner(owner,
+                Collections.unmodifiableSet(allClientInums));
         }
     }
 
@@ -362,5 +378,4 @@ public class DefaultUserService implements UserService {
     public boolean isUsernameUnique(String username) {
         return userDao.isUsernameUnique(username);
     }
-
 }
