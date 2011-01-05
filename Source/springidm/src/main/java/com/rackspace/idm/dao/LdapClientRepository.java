@@ -196,7 +196,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             }
             String[] perms = permissions
                 .toArray(new String[permissions.size()]);
-            atts.add(new Attribute(ATTR_PERMISSION, perms));
+            if (perms.length > 0) {
+                atts.add(new Attribute(ATTR_PERMISSION, perms));
+            }
         }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
@@ -600,8 +602,10 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 }
                 String[] perms = permissions.toArray(new String[permissions
                     .size()]);
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_PERMISSION, perms));
+                if (perms.length > 0) {
+                    mods.add(new Modification(ModificationType.REPLACE,
+                        ATTR_PERMISSION, perms));
+                }
             }
         }
 
