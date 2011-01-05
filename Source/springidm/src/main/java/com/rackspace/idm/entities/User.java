@@ -141,7 +141,7 @@ public class User extends BaseUser {
         return isLocked;
     }
 
-    public void setIsLocked(boolean isLocked) {
+    public void setIsLocked(Boolean isLocked) {
         this.isLocked = isLocked;
     }
 

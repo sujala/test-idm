@@ -35,9 +35,7 @@ public class ClientConverter {
         client.setIname(jaxbClient.getIname());
         client.setInum(jaxbClient.getInum());
 
-        if (jaxbClient.isLocked() != null) {
-            client.setIsLocked(jaxbClient.isLocked());
-        }
+        client.setIsLocked(jaxbClient.isLocked());
 
         client.setName(jaxbClient.getName());
 
@@ -47,9 +45,7 @@ public class ClientConverter {
                 .toPermissionListDO(jaxbClient.getPermissions()));
         }
 
-        if (jaxbClient.isSoftDeleted() != null) {
-            client.setSoftDeleted(jaxbClient.isSoftDeleted());
-        }
+        client.setSoftDeleted(jaxbClient.isSoftDeleted());
 
         if (jaxbClient.getStatus() != null) {
             client.setStatus(Enum.valueOf(ClientStatus.class, jaxbClient

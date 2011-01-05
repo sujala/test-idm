@@ -28,10 +28,7 @@ public class UserConverter {
         user.setFirstname(jaxbUser.getFirstName());
         user.setIname(jaxbUser.getIname());
         user.setInum(jaxbUser.getInum());
-
-        if (jaxbUser.isLocked() != null) {
-            user.setIsLocked(jaxbUser.isLocked());
-        }
+        user.setIsLocked(jaxbUser.isLocked());
 
         user.setLastname(jaxbUser.getLastName());
         user.setMiddlename(jaxbUser.getMiddleName());
@@ -40,16 +37,15 @@ public class UserConverter {
         user.setPrefferedLang(jaxbUser.getPrefLanguage());
         user.setRegion(jaxbUser.getRegion());
 
-        if (jaxbUser.isSoftDeleted() != null) {
-            user.setSoftDeleted(jaxbUser.isSoftDeleted());
-        }
+        user.setSoftDeleted(jaxbUser.isSoftDeleted());
 
         if (jaxbUser.getStatus() != null) {
             user.setStatus(Enum.valueOf(UserStatus.class, jaxbUser.getStatus()
                 .value().toUpperCase()));
         }
 
-        // user.setTimeZone(jaxbUser.getTimeZone());
+        user.setNastId(jaxbUser.getNastId());
+        user.setMossoId(jaxbUser.getMossoId());
         user.setUsername(jaxbUser.getUsername());
 
         if (jaxbUser.getPassword() != null
@@ -78,11 +74,12 @@ public class UserConverter {
     }
 
     public com.rackspace.idm.jaxb.Users toUserListJaxb(Users users) {
-        
-        if (users == null || users.getUsers() == null || users.getUsers().size() < 1) {
+
+        if (users == null || users.getUsers() == null
+            || users.getUsers().size() < 1) {
             return null;
         }
-        
+
         com.rackspace.idm.jaxb.Users userlist = of.createUsers();
 
         for (User user : users.getUsers()) {
@@ -153,6 +150,8 @@ public class UserConverter {
             com.rackspace.idm.jaxb.UserStatus.class, status));
         returnedUser.setUsername(user.getUsername());
         returnedUser.setSoftDeleted(user.getSoftDeleted());
+        returnedUser.setMossoId(user.getMossoId());
+        returnedUser.setNastId(user.getNastId());
 
         if (includePassword && user.getPasswordObj() != null
             && !StringUtils.isBlank(user.getPasswordObj().getValue())) {
@@ -184,21 +183,20 @@ public class UserConverter {
 
         return returnedUser;
     }
-    
+
     public com.rackspace.idm.jaxb.User toUserJaxbFromBaseUser(BaseUser user) {
         com.rackspace.idm.jaxb.User returnedUser = of.createUser();
         returnedUser.setUsername(user.getUsername());
         returnedUser.setCustomerId(user.getCustomerId());
-        
-        if (user.getRoles() != null
-            && user.getRoles().size() > 0) {
+
+        if (user.getRoles() != null && user.getRoles().size() > 0) {
 
             com.rackspace.idm.jaxb.Roles roles = roleConverter.toRolesJaxb(user
                 .getRoles());
 
             returnedUser.setRoles(roles);
         }
-        
+
         return returnedUser;
     }
 
