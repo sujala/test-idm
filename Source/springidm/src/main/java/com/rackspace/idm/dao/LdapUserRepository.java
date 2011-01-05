@@ -60,7 +60,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     private static final String ATTR_TIME_ZONE = "timeZone";
     private static final String ATTR_UID = "uid";
     private static final String ATTR_PASSWORD = "userPassword";
-    
+
     private static final String ATTR_MOSSO_ID = "rsMossoId";
     private static final String ATTR_NAST_ID = "rsNastId";
 
@@ -457,7 +457,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         return user;
     }
-    
+
     public User findByNastId(String nastId) {
         getLogger().debug("Doing search for nastId " + nastId);
         if (StringUtils.isBlank(nastId)) {
@@ -481,8 +481,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             SearchResultEntry e = searchResult.getSearchEntries().get(0);
             user = getUser(e);
         } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error(
-                "More than one entry was found for user with nastId {}", nastId);
+            getLogger()
+                .error("More than one entry was found for user with nastId {}",
+                    nastId);
             throw new IllegalStateException(
                 "More than one entry was found for this nastId");
         }
@@ -491,7 +492,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         return user;
     }
-    
+
     public User findByMossoId(int mossoId) {
         getLogger().debug("Doing search for nastId " + mossoId);
 
@@ -511,7 +512,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             user = getUser(e);
         } else if (searchResult.getEntryCount() > 1) {
             getLogger().error(
-                "More than one entry was found for user with mossoId {}", mossoId);
+                "More than one entry was found for user with mossoId {}",
+                mossoId);
             throw new IllegalStateException(
                 "More than one entry was found for this mossoId");
         }
@@ -935,11 +937,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             atts.add(new Attribute(GlobalConstants.ATTR_SOFT_DELETED, String
                 .valueOf(user.getSoftDeleted())));
         }
-        
+
         if (!StringUtils.isBlank(user.getNastId())) {
             atts.add(new Attribute(ATTR_NAST_ID, user.getNastId()));
         }
-        
+
         if (user.getMossoId() != null && user.getMossoId().intValue() > 0) {
             atts.add(new Attribute(ATTR_MOSSO_ID, user.getMossoId().toString()));
         }
@@ -1001,7 +1003,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             user.setIsLocked(resultEntry
                 .getAttributeValueAsBoolean(ATTR_LOCKED));
         }
-        
+
         user.setMossoId(resultEntry.getAttributeValueAsInteger(ATTR_MOSSO_ID));
         user.setNastId(resultEntry.getAttributeValue(ATTR_NAST_ID));
 
@@ -1205,22 +1207,26 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 GlobalConstants.ATTR_SOFT_DELETED, String.valueOf(uNew
                     .getSoftDeleted())));
         }
-        
+
         if (uNew.getNastId() != null) {
             if (StringUtils.isBlank(uNew.getNastId())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_NAST_ID));
+                mods.add(new Modification(ModificationType.DELETE, ATTR_NAST_ID));
             } else if (!uNew.getNastId().equals(uOld.getNastId())) {
                 mods.add(new Modification(ModificationType.REPLACE,
                     ATTR_NAST_ID, uNew.getNastId()));
             }
         }
-        
-        if (uNew.getMossoId() != null
-            && uNew.getMossoId() != uOld.getMossoId()) {
-            mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_MOSSO_ID, String.valueOf(uNew
-                    .getSoftDeleted())));
+
+        // To delete the attribute MossoId a negative value for the mossoId
+        // is sent in.
+        if (uNew.getMossoId() != null) {
+            if (uNew.getMossoId() < 0) {
+                mods.add(new Modification(ModificationType.DELETE,
+                    ATTR_MOSSO_ID));
+            } else if (uNew.getMossoId() != uOld.getMossoId()) {
+                mods.add(new Modification(ModificationType.REPLACE,
+                    ATTR_MOSSO_ID, String.valueOf(uNew.getSoftDeleted())));
+            }
         }
 
         return mods;
