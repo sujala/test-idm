@@ -578,8 +578,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         if (cNew.getPermissions() != null
             && !cNew.getPermissions().equals(cOld.getPermissions())) {
-            if (cNew.getPermissions() == null
-                || cNew.getPermissions().size() == 0) {
+            if (cNew.getPermissions().size() == 0) {
                 // If the new list of permissions has zero permissions but the
                 // old list of permissions is greater than 0. Then we need to
                 // add
@@ -591,7 +590,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 // we can just do a replace modification
                 List<String> permissions = new ArrayList<String>();
                 for (Permission permission : cNew.getPermissions()) {
-                    permissions.add(permission.getValue());
+                    permissions.add(permission.getCustomerId() + "::"
+                        + permission.getClientId() + "::"
+                        + permission.getPermissionId());
                 }
                 String[] perms = permissions.toArray(new String[permissions
                     .size()]);
