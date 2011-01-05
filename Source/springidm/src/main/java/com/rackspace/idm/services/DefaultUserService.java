@@ -142,6 +142,22 @@ public class DefaultUserService implements UserService {
             authenticated);
         return authenticated;
     }
+    
+    public boolean authenticateWithNastIdAndApiKey(String nastId, String apiKey) {
+        logger.debug("Authenticating User with NastId {} and API Key", nastId);
+        boolean authenticated = userDao.authenticateByNastIdAndAPIKey(nastId, apiKey);
+        logger.debug("Authenticated User with NastId {} and API Key - {}", nastId,
+            authenticated);
+        return authenticated;
+    }
+    
+    public boolean authenticateWithMossoIdAndApiKey(int mossoId, String apiKey) {
+        logger.debug("Authenticating User with MossoId {} and Api Key", mossoId);
+        boolean authenticated = userDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey);
+        logger.debug("Authenticated User with MossoId {} and API Key - {}", mossoId,
+            authenticated);
+        return authenticated;
+    }
 
     public void deleteUser(String username) {
         logger.info("Deleting User: {}", username);

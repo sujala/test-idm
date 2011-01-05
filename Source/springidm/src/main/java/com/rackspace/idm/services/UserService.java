@@ -12,6 +12,10 @@ public interface UserService {
     boolean authenticate(String username, String password);
 
     boolean authenticateWithApiKey(String username, String apiKey);
+    
+    boolean authenticateWithNastIdAndApiKey(String nastId, String apiKey);
+    
+    boolean authenticateWithMossoIdAndApiKey(int mossoId, String apiKey);
 
     void deleteUser(String username);
 

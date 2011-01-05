@@ -184,6 +184,36 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         return authenticated;
     }
+    
+    public boolean authenticateByNastIdAndAPIKey(String nastId, String apiKey) {
+        getLogger().debug("Authenticating User with NastId {}", nastId);
+        if (StringUtils.isBlank(nastId)) {
+            getLogger().error("Null or Empty NastId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty NastId parameter.");
+        }
+
+        User user = findByNastId(nastId);
+
+        Boolean authenticated = user.getApiKey().equals(apiKey);
+
+        getLogger().debug("Authenticated User with NastId {}", nastId);
+
+        return authenticated;
+    }
+
+
+    public boolean authenticateByMossoIdAndAPIKey(int mossoId, String apiKey) {
+        getLogger().debug("Authenticating User with NastId {}", mossoId);
+
+        User user = findByMossoId(mossoId);
+
+        Boolean authenticated = user.getApiKey().equals(apiKey);
+
+        getLogger().debug("Authenticated User with NastId {}", mossoId);
+
+        return authenticated;
+    }
 
     public void delete(String username) {
         getLogger().info("Deleting username - {}", username);

@@ -12,6 +12,10 @@ public interface UserDao {
 
     boolean authenticateByAPIKey(String username, String apiKey);
 
+    boolean authenticateByNastIdAndAPIKey(String nastId, String apiKey);
+
+    boolean authenticateByMossoIdAndAPIKey(int mossoId, String apiKey);
+
     void add(User user, String customerDN);
 
     User findByEmail(String email);
