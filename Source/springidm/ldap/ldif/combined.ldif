@@ -833,6 +833,20 @@ timeZone: America/Chicago
 uid: testuser
 userPassword: password
 
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000!6666,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rackspaceApplication
+displayName: Customer Client
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000!6666
+locked: FALSE
+owner: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000
+rackspaceCustomerNumber: RCN-111-111-111
+rackspaceApiKey: CUSTOMERCLIENT
+status: ACTIVE
+seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000
+softDeleted: FALSE
+userPassword: password
+
 dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000!AAAA,ou=groups,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: groupOfUniqueNames
