@@ -43,8 +43,10 @@ public class UserRoleResource {
 
     @Autowired
     public UserRoleResource(UserService userService,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService, RoleService roleService,
+        LoggerFactoryWrapper logger) {
         this.userService = userService;
+        this.roleService = roleService;
         this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }

@@ -100,11 +100,9 @@ public class UserPasswordResource {
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
-        // Racker's, Specific Clients and Admins are authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath())
-            || authorizationService.authorizeAdmin(authHeader, customerId);
+        // Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
             String token = authHeader.split(" ")[1];

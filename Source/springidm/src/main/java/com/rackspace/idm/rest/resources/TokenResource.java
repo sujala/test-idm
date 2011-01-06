@@ -247,20 +247,6 @@ public class TokenResource {
 
         logger.debug("Revoking Token: {}", tokenString);
 
-        // Only Rackspace Clients and Specific Clients are authorized
-        boolean authorized = authorizationService
-            .authorizeRackspaceClient(authHeader)
-            || authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath());
-
-        if (!authorized) {
-            String token = authHeader.split(" ")[1];
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
-            logger.error(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-
         try {
             logger.debug("Parsing Auth Header");
             String authTokenString = authHeaderHelper

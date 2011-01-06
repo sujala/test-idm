@@ -71,10 +71,8 @@ public class UserSecretResource {
 
         logger.info("Getting Secret Q&A for User: {}", username);
 
-        // Only Rackspace Clients and Specific Clients are authorized
-        boolean authorized = authorizationService
-            .authorizeRackspaceClient(authHeader)
-            || authorizationService.authorizeClient(authHeader,
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(authHeader,
                 request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {

@@ -75,15 +75,13 @@ public class RolesResource {
 
         logger.debug("Getting Customer Roles: {}", customerId);
 
-        // Racker's, Rackspace Clients, Specific Clients, Admins and Users are
+        // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(authHeader)
             || authorizationService.authorizeRackspaceClient(authHeader)
             || authorizationService.authorizeClient(authHeader,
                 request.getMethod(), uriInfo.getPath())
-            || authorizationService.authorizeAdmin(authHeader, customerId)
-            || authorizationService.authorizeCustomerUser(authHeader,
-                customerId);
+            || authorizationService.authorizeAdmin(authHeader, customerId);
 
         if (!authorized) {
             String token = authHeader.split(" ")[1];
