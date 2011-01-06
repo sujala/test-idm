@@ -235,7 +235,7 @@ objectClass: clientPermission
 cn: AddCustomer
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /customers
+blob: POST customers
 
 dn: cn=GetCustomer,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -243,7 +243,7 @@ objectClass: clientPermission
 cn: GetCustomer
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/[^/]+
+blob: GET customers/[^/]+
 
 dn: cn=DeleteCustomer,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -251,7 +251,7 @@ objectClass: clientPermission
 cn: DeleteCustomer
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: DELETE /customers/[^/]+
+blob: DELETE customers/[^/]+
 
 dn: cn=SetCustomerLock,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -259,7 +259,7 @@ objectClass: clientPermission
 cn: SetCustomerLock
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/[^/]+/actions/lock
+blob: PUT customers/[^/]+/actions/lock
 
 dn: cn=GetCustomerClients,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -267,7 +267,7 @@ objectClass: clientPermission
 cn: GetCustomerClients
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/[^/]+/clients
+blob: GET customers/[^/]+/clients
 
 dn: cn=GetMyCustomerClients,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -275,7 +275,7 @@ objectClass: clientPermission
 cn: GetMyCustomerClients
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/{customerId}/clients
+blob: GET customers/{customerId}/clients
 
 dn: cn=AddCustomerClient,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -283,7 +283,7 @@ objectClass: clientPermission
 cn: AddCustomerClient
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /customers/[^/]+/clients
+blob: POST customers/[^/]+/clients
 
 dn: cn=AddMyCustomerClient,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -291,7 +291,7 @@ objectClass: clientPermission
 cn: AddMyCustomerClient
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /customers/{customerId}/clients
+blob: POST customers/{customerId}/clients
 
 dn: cn=GetCustomerClient,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -299,7 +299,7 @@ objectClass: clientPermission
 cn: GetCustomerClient
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/[^/]+/clients/[^/]+
+blob: GET customers/[^/]+/clients/[^/]+
 
 dn: cn=GetMyCustomerClient,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -307,7 +307,7 @@ objectClass: clientPermission
 cn: GetMyCustomerClient
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/{customerId}/clients/[^/]+
+blob: GET customers/{customerId}/clients/[^/]+
 
 dn: cn=GetCustomerClientPermissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -315,7 +315,7 @@ objectClass: clientPermission
 cn: GetCustomerClientPermissions
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/[^/]+/clients/[^/]+/permissions
+blob: GET customers/[^/]+/clients/[^/]+/permissions
 
 dn: cn=GetMyCustomerClientPermissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -323,7 +323,7 @@ objectClass: clientPermission
 cn: GetMyCustomerClientPermissions
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/{customerId}/clients/[^/]+/permissions
+blob: GET customers/{customerId}/clients/[^/]+/permissions
 
 dn: cn=GetCustomerClientGrantedPermissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -331,7 +331,7 @@ objectClass: clientPermission
 cn: GetCustomerClientGrantedPermissions
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/[^/]+/clients/[^/]+/permissions/granted
+blob: GET customers/[^/]+/clients/[^/]+/permissions/granted
 
 dn: cn=GetMyCustomerClientGrantedPermissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -339,7 +339,7 @@ objectClass: clientPermission
 cn: GetMyCustomerClientGrantedPermissions
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/{customerId}/clients/[^/]+/permissions/granted
+blob: GET customers/{customerId}/clients/[^/]+/permissions/granted
 
 dn: cn=GetCustomerClientDefinedPermissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -347,7 +347,7 @@ objectClass: clientPermission
 cn: GetCustomerClientDefinedPermissions
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/[^/]+/clients/[^/]+/permissions/defined
+blob: GET customers/[^/]+/clients/[^/]+/permissions/defined
 
 dn: cn=GetMyCustomerClientDefinedPermissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -355,7 +355,7 @@ objectClass: clientPermission
 cn: GetMyCustomerClientDefinedPermissions
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/{customerId}/clients/[^/]+/permissions/defined
+blob: GET customers/{customerId}/clients/[^/]+/permissions/defined
 
 dn: cn=GetCustomerClientDefinedPermission,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -363,7 +363,7 @@ objectClass: clientPermission
 cn: GetCustomerClientDefinedPermission
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+
+blob: GET customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+
 
 dn: cn=AddCustomerClientDefinedPermission,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -371,7 +371,7 @@ objectClass: clientPermission
 cn: AddCustomerClientDefinedPermission
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /customers/[^/]+/clients/[^/]+/permissions/defined
+blob: POST customers/[^/]+/clients/[^/]+/permissions/defined
 
 dn: cn=AddMyCustomerClientDefinedPermission,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -379,7 +379,7 @@ objectClass: clientPermission
 cn: AddMyCustomerClientDefinedPermission
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /customers/{customerId}/clients/[^/]+/permissions/defined
+blob: POST customers/{customerId}/clients/[^/]+/permissions/defined
 
 dn: cn=UpdateCustomerClientDefinedPermission,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -387,7 +387,7 @@ objectClass: clientPermission
 cn: UpdateCustomerClientDefinedPermission
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+
+blob: POST customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+
 
 dn: cn=GetMyCustomerClientDefinedPermission,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -395,7 +395,7 @@ objectClass: clientPermission
 cn: UpdateMyCustomerClientDefinedPermission
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /customers/{customerId}/clients/[^/]+/permissions/defined/[^/]+
+blob: POST customers/{customerId}/clients/[^/]+/permissions/defined/[^/]+
 
 dn: cn=DeleteCustomerClientDefinedPermission,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -403,7 +403,7 @@ objectClass: clientPermission
 cn: DeleteCustomerClientDefinedPermission
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: DELETE /customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+
+blob: DELETE customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+
 
 dn: cn=DeleteMyCustomerClientDefinedPermission,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -411,7 +411,7 @@ objectClass: clientPermission
 cn: DeleteMyCustomerClientDefinedPermission
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: DELETE /customers/{customerId}/clients/[^/]+/permissions/defined/[^/]+
+blob: DELETE customers/{customerId}/clients/[^/]+/permissions/defined/[^/]+
 
 dn: cn=GetCustomerRoles,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -419,7 +419,7 @@ objectClass: clientPermission
 cn: GetCustomerRoles
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/[^/]+/roles
+blob: GET customers/[^/]+/roles
 
 dn: cn=GetMyCustomerRoles,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -427,7 +427,7 @@ objectClass: clientPermission
 cn: GetMyCustomerRoles
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/{customerId}/roles
+blob: GET customers/{customerId}/roles
 
 dn: cn=GetCustomerUsers,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -435,7 +435,7 @@ objectClass: clientPermission
 cn: GetCustomerUsers
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/[^/]+/users
+blob: GET customers/[^/]+/users
 
 dn: cn=GetMyCustomerUsers,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -443,7 +443,7 @@ objectClass: clientPermission
 cn: GetMyCustomerUsers
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/{customerId}/users
+blob: GET customers/{customerId}/users
 
 dn: cn=AddCustomerUser,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -451,7 +451,7 @@ objectClass: clientPermission
 cn: AddCustomerUser
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /customers/[^/]+/users
+blob: POST customers/[^/]+/users
 
 dn: cn=AddMyCustomerUser,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -459,7 +459,7 @@ objectClass: clientPermission
 cn: AddMyCustomerUser
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /customers/{customerId}/users
+blob: POST customers/{customerId}/users
 
 dn: cn=GetCustomerUser,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -467,7 +467,7 @@ objectClass: clientPermission
 cn: GetCustomerUser
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/[^/]+/users/[^/]+
+blob: GET customers/[^/]+/users/[^/]+
 
 dn: cn=GetMyCustomerUser,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -475,7 +475,7 @@ objectClass: clientPermission
 cn: GetMyCustomerUser
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/{customerId}/users/[^/]+
+blob: GET customers/{customerId}/users/[^/]+
 
 dn: cn=UpdateCustomerUser,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -483,7 +483,7 @@ objectClass: clientPermission
 cn: UpdateCustomerUser
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/[^/]+/users/[^/]+
+blob: PUT customers/[^/]+/users/[^/]+
 
 dn: cn=UpdateMyCustomerUser,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -491,7 +491,7 @@ objectClass: clientPermission
 cn: UpdateMyCustomerUser
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/{customerId}/users/[^/]+
+blob: PUT customers/{customerId}/users/[^/]+
 
 dn: cn=UpdateMyCustomerMyUser,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -499,7 +499,7 @@ objectClass: clientPermission
 cn: UpdateMyCustomerMyUser
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/{customerId}/users/{username}
+blob: PUT customers/{customerId}/users/{username}
 
 dn: cn=DeleteCustomerUser,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -507,7 +507,7 @@ objectClass: clientPermission
 cn: DeleteCustomerUser
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: DELETE /customers/[^/]+/users/[^/]+
+blob: DELETE customers/[^/]+/users/[^/]+
 
 dn: cn=GetCustomerUserApiKey,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -515,7 +515,7 @@ objectClass: clientPermission
 cn: GetCustomerUserApiKey
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/[^/]+/users/[^/]+/key
+blob: GET customers/[^/]+/users/[^/]+/key
 
 dn: cn=GetMyCustomerMyUserApiKey,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -523,7 +523,7 @@ objectClass: clientPermission
 cn: GetMyCustomerMyUserApiKey
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/{customerId}/users/{username}/key
+blob: GET customers/{customerId}/users/{username}/key
 
 dn: cn=ResetCustomerUserApiKey,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -531,7 +531,7 @@ objectClass: clientPermission
 cn: ResetCustomerUserApiKey
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /customers/[^/]+/users/[^/]+/key
+blob: POST customers/[^/]+/users/[^/]+/key
 
 dn: cn=ResetMyCustomerMyUserApiKey,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -539,7 +539,7 @@ objectClass: clientPermission
 cn: ResetMyCustomerMyUserApiKey
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /customers/{customerId}/users/{username}/key
+blob: POST customers/{customerId}/users/{username}/key
 
 dn: cn=SetCustomerUserLock,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -547,7 +547,7 @@ objectClass: clientPermission
 cn: SetCustomerUserLock
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/[^/]+/users/[^/]+/lock
+blob: PUT customers/[^/]+/users/[^/]+/lock
 
 dn: cn=GetCustomerUserPassword,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -555,7 +555,7 @@ objectClass: clientPermission
 cn: GetCustomerUserPassword
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/[^/]+/users/[^/]+/password
+blob: GET customers/[^/]+/users/[^/]+/password
 
 dn: cn=GetMyCustomerUserPassword,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -563,7 +563,7 @@ objectClass: clientPermission
 cn: GetMyCustomerUserPassword
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/{customerId}/users/[^/]+/password
+blob: GET customers/{customerId}/users/[^/]+/password
 
 dn: cn=ResetCustomerUserPassword,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -571,7 +571,7 @@ objectClass: clientPermission
 cn: ResetCustomerUserPassword
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /customers/[^/]+/users/[^/]+/password
+blob: POST customers/[^/]+/users/[^/]+/password
 
 dn: cn=ResetMyCustomerUserPassword,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -579,7 +579,7 @@ objectClass: clientPermission
 cn: ResetMyCustomerUserPassword
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /customers/{customerId}/users/[^/]+/password
+blob: POST customers/{customerId}/users/[^/]+/password
 
 dn: cn=SetCustomerUserPassword,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -587,7 +587,7 @@ objectClass: clientPermission
 cn: SetCustomerUserPassword
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/[^/]+/users/[^/]+/password
+blob: PUT customers/[^/]+/users/[^/]+/password
 
 dn: cn=SetMyCustomerUserPassword,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -595,7 +595,7 @@ objectClass: clientPermission
 cn: SetMyCustomerUserPassword
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/{customerId}/users/[^/]+/password
+blob: PUT customers/{customerId}/users/[^/]+/password
 
 dn: cn=SetMyCustomerMyUserPassword,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -603,7 +603,7 @@ objectClass: clientPermission
 cn: SetMyCustomerMyUserPassword
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/{customerId}/users/{username}/password
+blob: PUT customers/{customerId}/users/{username}/password
 
 dn: cn=GetCustomerUserPasswordRecoveryToken,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -611,7 +611,7 @@ objectClass: clientPermission
 cn: GetCustomerUserPasswordRecoveryToken
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /customers/[^/]+/users/[^/]+/password/recoverytoken
+blob: POST customers/[^/]+/users/[^/]+/password/recoverytoken
 
 dn: cn=GetCustomerUserPasswordRecoveryEmail,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -619,7 +619,7 @@ objectClass: clientPermission
 cn: GetCustomerUserPasswordRecoveryEmail
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /customers/[^/]+/users/[^/]+/password/recoveryemail
+blob: POST customers/[^/]+/users/[^/]+/password/recoveryemail
 
 dn: cn=GetCustomerUserRoles,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -627,7 +627,7 @@ objectClass: clientPermission
 cn: GetCustomerUserRoles
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/[^/]+/users/[^/]+/roles
+blob: GET customers/[^/]+/users/[^/]+/roles
 
 dn: cn=GetMyCustomerUserRoles,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -635,7 +635,7 @@ objectClass: clientPermission
 cn: GetMyCustomerUserRoles
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/{customerId}/users/[^/]+/roles
+blob: GET customers/{customerId}/users/[^/]+/roles
 
 dn: cn=GetMyCustomerMyUserRoles,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -643,7 +643,7 @@ objectClass: clientPermission
 cn: GetMyCustomerMyUserRoles
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/{customerId}/users/{username}/roles
+blob: GET customers/{customerId}/users/{username}/roles
 
 dn: cn=SetCustomerUserRole,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -651,7 +651,7 @@ objectClass: clientPermission
 cn: SetCustomerUserRole
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/[^/]+/users/[^/]+/roles/[^/]+
+blob: PUT customers/[^/]+/users/[^/]+/roles/[^/]+
 
 dn: cn=SetMyCustomerUserRole,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -659,7 +659,7 @@ objectClass: clientPermission
 cn: SetMyCustomerUserRole
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/{customerId}/users/[^/]+/roles/[^/]+
+blob: PUT customers/{customerId}/users/[^/]+/roles/[^/]+
 
 dn: cn=DeleteCustomerUserRole,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -667,7 +667,7 @@ objectClass: clientPermission
 cn: DeleteCustomerUserRole
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: DELETE /customers/[^/]+/users/[^/]+/roles/[^/]+
+blob: DELETE customers/[^/]+/users/[^/]+/roles/[^/]+
 
 dn: cn=DeleteMyCustomerUserRole,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -675,7 +675,7 @@ objectClass: clientPermission
 cn: DeleteMyCustomerUserRole
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: DELETE /customers/{customerId}/users/[^/]+/roles/[^/]+
+blob: DELETE customers/{customerId}/users/[^/]+/roles/[^/]+
 
 dn: cn=GetCustomerUserSecret,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -683,7 +683,7 @@ objectClass: clientPermission
 cn: GetCustomerUserSecret
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /customers/[^/]+/users/[^/]+/secret
+blob: GET customers/[^/]+/users/[^/]+/secret
 
 dn: cn=SetCustomerUserSecret,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -691,7 +691,7 @@ objectClass: clientPermission
 cn: SetCustomerUserSecret
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/[^/]+/users/[^/]+/secret
+blob: PUT customers/[^/]+/users/[^/]+/secret
 
 dn: cn=SetMyCustomerMyUserSecret,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -699,7 +699,7 @@ objectClass: clientPermission
 cn: SetMyCustomerMyUserSecret
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/{customerId}/users/{username}/secret
+blob: PUT customers/{customerId}/users/{username}/secret
 
 dn: cn=SetCustomerUserSoftDelete,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -707,7 +707,7 @@ objectClass: clientPermission
 cn: SetCustomerUserSoftDelete
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/[^/]+/users/[^/]+/softdelete
+blob: PUT customers/[^/]+/users/[^/]+/softdelete
 
 dn: cn=SetMyCustomerUserSoftDelete,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -715,7 +715,7 @@ objectClass: clientPermission
 cn: SetMyCustomerUserSoftDelete
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/{customerId}/users/[^/]+/softdelete
+blob: PUT customers/{customerId}/users/[^/]+/softdelete
 
 dn: cn=SetCustomerUserStatus,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -723,7 +723,7 @@ objectClass: clientPermission
 cn: SetCustomerUserStatus
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/[^/]+/users/[^/]+/status
+blob: PUT customers/[^/]+/users/[^/]+/status
 
 dn: cn=SetMyCustomerUserStatus,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -731,7 +731,7 @@ objectClass: clientPermission
 cn: SetMyCustomerUserStatus
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: PUT /customers/{customerId}/users/[^/]+/status
+blob: PUT customers/{customerId}/users/[^/]+/status
 
 dn: cn=AddFirstUser,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -739,7 +739,7 @@ objectClass: clientPermission
 cn: AddFirstUser
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: POST /users
+blob: POST users
 
 dn: cn=ValidateToken,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -747,7 +747,7 @@ objectClass: clientPermission
 cn: ValidateToken
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: GET /token/[^/]+
+blob: GET token/[^/]+
 
 dn: cn=RevokeToken,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -755,7 +755,7 @@ objectClass: clientPermission
 cn: RevokeToken
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
-blob: DELETE /token/[^/]+
+blob: DELETE token/[^/]+
 
 dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!AAAA,ou=groups,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
