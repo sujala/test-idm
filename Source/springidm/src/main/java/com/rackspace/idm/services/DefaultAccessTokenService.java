@@ -359,12 +359,23 @@ public class DefaultAccessTokenService implements AccessTokenService {
             throw new IllegalStateException(error);
         }
 
-        // Only CustomerIdm Client and Client that got token are authorized to
-        // revoke token
-        boolean authorized = requestingToken.getTokenClient().getClientId()
-            .equals(GlobalConstants.IDM_CLIENT_ID)
-            || requestingToken.getTokenClient().getClientId()
+        // Only CustomerIdm Client and Client that got token or the user of the
+        // toke are authorized to revoke token
+
+        boolean isCustomerIdm = requestingToken.isClientToken()
+            && requestingToken.getTokenClient().getClientId()
+                .equals(GlobalConstants.IDM_CLIENT_ID);
+        
+        boolean isRequestor = requestingToken.isClientToken()
+            && requestingToken.getTokenClient().getClientId()
                 .equals(deletingToken.getTokenClient().getClientId());
+        
+        boolean isOwner = requestingToken.getTokenUser() != null
+            && deletingToken.getTokenUser() != null
+            && requestingToken.getTokenUser().getUsername()
+                .equals(deletingToken.getTokenUser().getUsername());
+
+        boolean authorized = isCustomerIdm || isRequestor || isOwner;
 
         if (!authorized) {
             String errMsg = String.format(
@@ -450,16 +461,16 @@ public class DefaultAccessTokenService implements AccessTokenService {
         // info we no longer need to do a lot of these calls.
         // So ... Here's the new method we should use
         //
-//        String username = accessToken.getOwner();
-//        String clientId = accessToken.getRequestor();
-//
-//        if (!StringUtils.isEmpty(accessToken.getOwner())
-//            && !StringUtils.isEmpty(accessToken.getRequestor())) {
-//            Set<String> tokenRequestors = new HashSet<String>();
-//            tokenRequestors.add(clientId);
-//            refreshTokenDao.deleteAllTokensForUser(username, tokenRequestors);
-//        }
-        
+        // String username = accessToken.getOwner();
+        // String clientId = accessToken.getRequestor();
+        //
+        // if (!StringUtils.isEmpty(accessToken.getOwner())
+        // && !StringUtils.isEmpty(accessToken.getRequestor())) {
+        // Set<String> tokenRequestors = new HashSet<String>();
+        // tokenRequestors.add(clientId);
+        // refreshTokenDao.deleteAllTokensForUser(username, tokenRequestors);
+        // }
+
         String username = StringUtils.EMPTY;
         String clientId = StringUtils.EMPTY;
 
