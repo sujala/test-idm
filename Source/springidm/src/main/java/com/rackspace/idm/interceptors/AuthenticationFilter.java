@@ -49,9 +49,13 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         String path = request.getPath();
         String method = request.getMethod();
 
-        // Skip authentication for the following 4 calls
+        // Skip authentication for the following 5 calls
 
         if ("GET".equals(method) && "application.wadl".equals(path)) {
+            return request;
+        }
+        
+        if ("GET".equals(method) && path.startsWith("xsd")) {
             return request;
         }
 
