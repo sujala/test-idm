@@ -9,6 +9,7 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.RefreshTokenDao;
@@ -20,6 +21,7 @@ import com.rackspace.idm.entities.TokenStatusCode;
 import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
+import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.oauthAuthentication.Token;
 
 public class DefaultAccessTokenService implements AccessTokenService {
@@ -41,8 +43,8 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
     public DefaultAccessTokenService(TokenDefaultAttributes defaultAttributes,
         AccessTokenDao tokenDao, RefreshTokenDao refreshTokenDao,
-        ClientDao clientDao, UserService userService, Map<String, String> dcLocations,
-        Logger logger) {
+        ClientDao clientDao, UserService userService,
+        Map<String, String> dcLocations, Logger logger) {
 
         this.tokenDao = tokenDao;
         this.refreshTokenDao = refreshTokenDao;
@@ -79,8 +81,9 @@ public class DefaultAccessTokenService implements AccessTokenService {
         tokenString = generateTokenWithDcPrefix();
 
         Client owner = clientDao.findByClientId(clientId);
-        AccessToken accessToken = new AccessToken(tokenString, new DateTime()
-            .plusSeconds(expirationTimeInSeconds), null, owner.getBaseClient(), IDM_SCOPE.FULL);
+        AccessToken accessToken = new AccessToken(tokenString,
+            new DateTime().plusSeconds(expirationTimeInSeconds), null,
+            owner.getBaseClient(), IDM_SCOPE.FULL);
         tokenDao.save(accessToken);
         logger.debug("Created Access Token For Client: {} : {}", clientId,
             accessToken);
@@ -136,19 +139,18 @@ public class DefaultAccessTokenService implements AccessTokenService {
         String requestor, int expirationTimeInSeconds) {
 
         String tokenString = generateTokenWithDcPrefix();
-        
+
         BaseUser user = new BaseUser();
         BaseClient client = clientDao.findByClientId(requestor).getBaseClient();
 
         if (isTrustedServer) {
             user.setUsername(username);
-        }
-        else {
-            user = userService.getUser(username).getBaseUser(); 
+        } else {
+            user = userService.getUser(username).getBaseUser();
         }
 
-        AccessToken accessToken = new AccessToken(tokenString, new DateTime()
-            .plusSeconds(expirationTimeInSeconds), user, client,
+        AccessToken accessToken = new AccessToken(tokenString,
+            new DateTime().plusSeconds(expirationTimeInSeconds), user, client,
             IDM_SCOPE.FULL, isTrustedServer);
 
         tokenDao.save(accessToken);
@@ -198,8 +200,10 @@ public class DefaultAccessTokenService implements AccessTokenService {
                 "Client %s is missing i-number", clientId));
         }
 
-        AccessToken accessToken = new AccessToken(tokenString, new DateTime()
-            .plusSeconds(expirationTimeInSeconds), tokenOwner.getBaseUser(), tokenRequestor.getBaseClient(), IDM_SCOPE.SET_PASSWORD);
+        AccessToken accessToken = new AccessToken(tokenString,
+            new DateTime().plusSeconds(expirationTimeInSeconds),
+            tokenOwner.getBaseUser(), tokenRequestor.getBaseClient(),
+            IDM_SCOPE.SET_PASSWORD);
         tokenDao.save(accessToken);
         logger.debug("Created Password Reset Access Token For User: {} : {}",
             username, accessToken);
@@ -346,6 +350,30 @@ public class DefaultAccessTokenService implements AccessTokenService {
             throw new IllegalStateException(error);
         }
 
+        AccessToken requestingToken = (AccessToken) tokenDao
+            .findByTokenString(tokenStringRequestingDelete);
+        if (requestingToken == null) {
+            String error = "No entry found for token "
+                + tokenStringRequestingDelete;
+            logger.debug(error);
+            throw new IllegalStateException(error);
+        }
+
+        // Only CustomerIdm Client and Client that got token are authorized to
+        // revoke token
+        boolean authorized = requestingToken.getTokenClient().getClientId()
+            .equals(GlobalConstants.IDM_CLIENT_ID)
+            || requestingToken.getTokenClient().getClientId()
+                .equals(deletingToken.getTokenClient().getClientId());
+
+        if (!authorized) {
+            String errMsg = String.format(
+                "Requesting token %s not authorized to revoke token %s",
+                tokenStringRequestingDelete, tokenToDelete);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
         if (deletingToken.getRequestor() == null) {
             String error = String.format("Token %s does not have a requestor",
                 deletingToken.getTokenString());
@@ -412,6 +440,26 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
     private void deleteRefreshTokenByAccessToken(AccessToken accessToken) {
 
+        // Clients do not get Refresh Tokens so there is no need to
+        // revoke one if the access token is for a client
+        if (accessToken.isClientToken()) {
+            return;
+        }
+
+        // FIXME: With the new AccessToken that includes user and client
+        // info we no longer need to do a lot of these calls.
+        // So ... Here's the new method we should use
+        //
+//        String username = accessToken.getOwner();
+//        String clientId = accessToken.getRequestor();
+//
+//        if (!StringUtils.isEmpty(accessToken.getOwner())
+//            && !StringUtils.isEmpty(accessToken.getRequestor())) {
+//            Set<String> tokenRequestors = new HashSet<String>();
+//            tokenRequestors.add(clientId);
+//            refreshTokenDao.deleteAllTokensForUser(username, tokenRequestors);
+//        }
+        
         String username = StringUtils.EMPTY;
         String clientId = StringUtils.EMPTY;
 
@@ -432,10 +480,10 @@ public class DefaultAccessTokenService implements AccessTokenService {
     }
 
     private String generateTokenWithDcPrefix() {
-            String token = UUID.randomUUID().toString().replace("-", "");
-            String tokenString = String.format("%s-%s", this.dataCenterPrefix,
-                token);
-            return tokenString;
+        String token = UUID.randomUUID().toString().replace("-", "");
+        String tokenString = String.format("%s-%s", this.dataCenterPrefix,
+            token);
+        return tokenString;
     }
 
     private String getIDMLocationForDC(String tokenString) {

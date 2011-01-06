@@ -13,8 +13,8 @@ public class LdapRoleRepositoryTest {
     private LdapRoleRepository repo;
     private LdapConnectionPools connPools;
 
-    String customerNumber = "RCN-000-000-000";
-    String adminRoleName = "Admin";
+    String customerNumber = "RACKSPACE";
+    String adminRoleName = "Idm Admin";
     String adminRoleInum = "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!AAAA";
     String badRoleInum = "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!XXXX";
     String roleDN = "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!AAAA,ou=groups,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com";
@@ -100,7 +100,7 @@ public class LdapRoleRepositoryTest {
     public void shouldFindOneRoleThatExistsByInum() {
         Role role = repo.findByInum(adminRoleInum);
         Assert.assertNotNull(role);
-        Assert.assertEquals("Admin", role.getName());
+        Assert.assertEquals("Idm Admin", role.getName());
     }
 
     @Test
@@ -114,7 +114,7 @@ public class LdapRoleRepositoryTest {
         Role role = repo.findByRoleNameAndCustomerId(adminRoleName,
             customerNumber);
         Assert.assertNotNull(role);
-        Assert.assertEquals("Admin", role.getName());
+        Assert.assertEquals("Idm Admin", role.getName());
     }
 
     @Test

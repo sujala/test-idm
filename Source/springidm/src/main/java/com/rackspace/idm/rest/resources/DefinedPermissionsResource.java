@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.PermissionConverter;
+import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.entities.PermissionSet;
 import com.rackspace.idm.errors.ApiError;
@@ -31,6 +32,8 @@ import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.PermissionConflictException;
+import com.rackspace.idm.oauth.OAuthService;
+import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.validation.InputValidator;
@@ -49,6 +52,7 @@ public class DefinedPermissionsResource {
     private PermissionConverter permissionConverter;
     private InputValidator inputValidator;
     private AuthorizationService authorizationService;
+    private OAuthService oauthService;
     private Logger logger;
 
     @Autowired
@@ -56,12 +60,14 @@ public class DefinedPermissionsResource {
         DefinedPermissionResource definedPermissionResource,
         ClientService clientService, PermissionConverter permissionConverter,
         InputValidator inputValidator,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService, OAuthService oauthService,
+        LoggerFactoryWrapper logger) {
         this.definedPermissionResource = definedPermissionResource;
         this.permissionConverter = permissionConverter;
         this.inputValidator = inputValidator;
         this.clientService = clientService;
         this.authorizationService = authorizationService;
+        this.oauthService = oauthService;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -139,16 +145,16 @@ public class DefinedPermissionsResource {
         @PathParam("clientId") String clientId,
         com.rackspace.idm.jaxb.Permission permission) {
 
-        // Racker's, Specific Clients and Admins are authorized
+        AccessToken token = oauthService.getTokenFromAuthHeader(authHeader);
+
+        // Racker's or the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath())
-            || authorizationService.authorizeAdmin(authHeader, customerId);
+            || (token.isClientToken() && token.getTokenClient().getClientId()
+                .equals(clientId));
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+                token.getTokenString());
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }

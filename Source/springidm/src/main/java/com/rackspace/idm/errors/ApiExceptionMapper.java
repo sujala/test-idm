@@ -125,7 +125,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             }
         }
 
-        return toResponse(new ServiceUnavailable(), e, 500);
+        return toResponse(new ServerError(), e, 500);
     }
 
     private Response toResponse(IdmFault fault, Throwable t, int code) {

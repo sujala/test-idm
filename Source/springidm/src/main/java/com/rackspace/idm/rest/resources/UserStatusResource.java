@@ -67,7 +67,6 @@ public class UserStatusResource {
      * @param inputUser The user status flag
      */
     @PUT
-    @Path("{username}/status")
     public Response setUserStatus(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,

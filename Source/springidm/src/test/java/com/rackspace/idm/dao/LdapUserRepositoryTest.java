@@ -163,9 +163,9 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldFindOneUserThatExistsByNastId() {
         User newUser = addNewTestUser();
-        User user = repo.findByNastId("IDMTESTNASTID");
+        User user = repo.findByNastId("TESTNASTID");
         Assert.assertNotNull(user);
-        Assert.assertEquals("deleteme", user.getLastname());
+        Assert.assertEquals("deleteme", user.getUsername());
 
         repo.delete(newUser.getUsername());
     }
@@ -175,7 +175,7 @@ public class LdapUserRepositoryTest {
         User newUser = addNewTestUser();
         User user = repo.findByMossoId(88888);
         Assert.assertNotNull(user);
-        Assert.assertEquals("deleteme", user.getLastname());
+        Assert.assertEquals("deleteme", user.getUsername());
 
         repo.delete(newUser.getUsername());
     }
@@ -189,7 +189,7 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldNotFindOneUserThatDoesNotExistsByMossoId() {
         User user = repo.findByMossoId(0);
-        Assert.assertNotNull(user);
+        Assert.assertNull(user);
     }
 
     @Test
@@ -409,7 +409,7 @@ public class LdapUserRepositoryTest {
     public void shouldAuthenticateByNastIdAndAPIKey() {
         User newUser = addNewTestUser();
         boolean authenticated = repo.authenticateByNastIdAndAPIKey(
-            "TESTNASTID", "1234567890");
+            "TESTNASTID", "XXX");
         Assert.assertTrue(authenticated);
         repo.delete(newUser.getUsername());
     }
@@ -418,7 +418,7 @@ public class LdapUserRepositoryTest {
     public void shouldAuthenticateByMossoIdAndAPIKey() {
         User newUser = addNewTestUser();
         boolean authenticated = repo.authenticateByMossoIdAndAPIKey(88888,
-            "1234567890");
+            "XXX");
         Assert.assertTrue(authenticated);
         repo.delete(newUser.getUsername());
     }
@@ -467,7 +467,7 @@ public class LdapUserRepositoryTest {
 
     @Test
     public void shouldFindByCustomerID() {
-        Users users = repo.findByCustomerId("RCN-000-000-000", 0, 200);
+        Users users = repo.findByCustomerId("RACKSPACE", 0, 200);
 
         Assert.assertTrue(users.getLimit() == 200);
         Assert.assertTrue(users.getOffset() == 0);

@@ -33,6 +33,7 @@ import com.rackspace.idm.entities.UserHumanName;
 import com.rackspace.idm.entities.UserLocale;
 import com.rackspace.idm.entities.UserStatus;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
+import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.test.stub.StubLogger;
 
@@ -508,6 +509,9 @@ public class TokenServiceTests {
         EasyMock.expect(
             mockTokenDao.findByTokenString(userToken.getTokenString()))
             .andReturn(userToken);
+        EasyMock.expect(
+            mockTokenDao.findByTokenString(userToken.getTokenString()))
+            .andReturn(clientToken);
         mockTokenDao.delete(userToken.getTokenString());
         EasyMock.replay(mockTokenDao);
 
@@ -539,25 +543,6 @@ public class TokenServiceTests {
         EasyMock.expect(
             mockTokenDao.findByTokenString(userToken.getTokenString()))
             .andReturn(null);
-        EasyMock.expect(
-            mockTokenDao.findByTokenString(clientToken.getTokenString()))
-            .andReturn(clientToken);
-        mockTokenDao.delete(userToken.getTokenString());
-        EasyMock.replay(mockTokenDao);
-
-        tokenService.revokeToken(clientToken.getTokenString(),
-            userToken.getTokenString());
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void shouldNotRevokeTokenForTokenWithNullRequestor() {
-        AccessToken userToken = getFakeUserToken();
-        userToken.setTokenClient(null);
-        AccessToken clientToken = getFakeClientToken();
-
-        EasyMock.expect(
-            mockTokenDao.findByTokenString(userToken.getTokenString()))
-            .andReturn(userToken);
         EasyMock.expect(
             mockTokenDao.findByTokenString(clientToken.getTokenString()))
             .andReturn(clientToken);
@@ -633,7 +618,7 @@ public class TokenServiceTests {
     }
 
     private AccessToken getFakeClientToken() {
-        return new AccessToken(tokenString, tokenExpiration, getFakeUser(),
+        return new AccessToken(tokenString, tokenExpiration, null,
             getFakeClient(), IDM_SCOPE.FULL);
     }
 

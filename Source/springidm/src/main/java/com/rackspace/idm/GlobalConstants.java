@@ -19,8 +19,8 @@ public final class GlobalConstants {
 
     public static final String INUM_PREFIX = "inum=";
     // Match /users/username/password URI
-//    public static final Pattern PASSWORD_URI_PATTERN = Pattern
-//        .compile("^/(?i:users)/.+/(?i:password)$");
+    // public static final Pattern PASSWORD_URI_PATTERN = Pattern
+    // .compile("^/(?i:users)/.+/(?i:password)$");
 
     public static final int LDAP_PAGING_DEFAULT_OFFSET = 0;
     public static final int LDAP_PAGING_DEFAULT_LIMIT = 25;
@@ -31,11 +31,6 @@ public final class GlobalConstants {
     public static final String DFW_DC = "DFW";
     public static final String LONDON_DC = "LON";
 
-//    public static final String XML_NAMESPACE = "http://docs.rackspacecloud.com/idm/api/v1.0";
-//    public static final String JSON_NAMESPACE = "idm";
-
-//    public static final String SECRET_QUESTION = "secretQuestion";
-//    public static final String SECRET_ANSWER = "secretAnswer";
 
     // Values to return for the version request
     public static final String DOC_URL = "http://172.17.16.85:8080/idm-docs/idm-devguide-20101111.pdf";
@@ -45,6 +40,8 @@ public final class GlobalConstants {
 
     public static final String USER_PREFERRED_LANG_DEFAULT = "en_US";
     public static final String USER_TIME_ZONE_DEFAULT = "America/Chicago";
-    
+
+    // IdM Specific values
     public static final String IDM_ADMIN_ROLE_NAME = "Idm Admin";
+    public static final String IDM_CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221";
 }
