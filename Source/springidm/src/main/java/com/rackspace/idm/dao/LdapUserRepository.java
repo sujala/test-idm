@@ -184,7 +184,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         return authenticated;
     }
-    
+
     public boolean authenticateByNastIdAndAPIKey(String nastId, String apiKey) {
         getLogger().debug("Authenticating User with NastId {}", nastId);
         if (StringUtils.isBlank(nastId)) {
@@ -201,7 +201,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         return authenticated;
     }
-
 
     public boolean authenticateByMossoIdAndAPIKey(int mossoId, String apiKey) {
         getLogger().debug("Authenticating User with NastId {}", mossoId);
@@ -1253,9 +1252,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             if (uNew.getMossoId() < 0) {
                 mods.add(new Modification(ModificationType.DELETE,
                     ATTR_MOSSO_ID));
-            } else if (uNew.getMossoId() != uOld.getMossoId()) {
+            } else if (!uNew.getMossoId().equals(uOld.getMossoId())) {
                 mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_MOSSO_ID, String.valueOf(uNew.getSoftDeleted())));
+                    ATTR_MOSSO_ID, String.valueOf(uNew.getMossoId())));
             }
         }
 
