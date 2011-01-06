@@ -312,7 +312,7 @@ public class UserServiceTests {
             .andReturn(true);
         EasyMock.replay(mockUserDao);
 
-        boolean authenticated = userService.authenticateWithApiKey(username,
+        boolean authenticated = userService.authenticateWithNastIdAndApiKey(nastId,
             apiKey);
 
         Assert.assertTrue(authenticated);
@@ -325,7 +325,7 @@ public class UserServiceTests {
             .andReturn(true);
         EasyMock.replay(mockUserDao);
 
-        boolean authenticated = userService.authenticateWithApiKey(username,
+        boolean authenticated = userService.authenticateWithMossoIdAndApiKey(mossoId,
             apiKey);
 
         Assert.assertTrue(authenticated);
