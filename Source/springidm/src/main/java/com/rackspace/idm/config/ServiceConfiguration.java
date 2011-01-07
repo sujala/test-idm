@@ -135,30 +135,6 @@ public class ServiceConfiguration {
             refreshTokenDao, clientDao, userService(), dcLocations, logger);
     }
 
-//    @Bean
-//    public AuthorizationService authorizationService() {
-//        Logger logger = LoggerFactory.getLogger(DefaultUserService.class);
-//
-//        String propsFileLoc = "";
-//        org.apache.commons.configuration.Configuration config = null;
-//
-//        propsFileLoc = "SunXACMLAuthorization.properties";
-//        try {
-//            config = new PropertiesConfiguration(propsFileLoc);
-//        } catch (ConfigurationException e) {
-//            System.out.println(e);
-//            logger.error("Could not load Axiomatics configuraiton.", e);
-//        }
-//
-//        String sunAuthConfigFilePath = config.getString("sunAuthConfigPath");
-//        String xacmlPolicyFilePath = config.getString("xacmlPolicyFilePath");
-//
-//        boolean testMode = false;
-//
-//        return new SunAuthorizationService(logger, sunAuthConfigFilePath,
-//            xacmlPolicyFilePath, testMode);
-//    }
-
     @Bean
     public HttpOauthAuthenticationService httpOauthAuthenticationService() {
         return new HttpOauthAuthenticationService(tokenService());
