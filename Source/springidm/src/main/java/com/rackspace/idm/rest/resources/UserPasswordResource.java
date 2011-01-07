@@ -102,7 +102,7 @@ public class UserPasswordResource {
 
         // Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath());
+            request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
             String token = authHeader.split(" ")[1];
@@ -323,9 +323,11 @@ public class UserPasswordResource {
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(authHeader,
-            request.getMethod(), uriInfo.getPath());
+        // Only Rackspace Clients and Specific Clients are authorized
+        boolean authorized = authorizationService
+            .authorizeRackspaceClient(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
             String token = authHeader.split(" ")[1];
@@ -388,10 +390,11 @@ public class UserPasswordResource {
         @PathParam("username") String username, PasswordRecovery recoveryParam) {
 
         logger.info("Sending password recovery email for User: {}", username);
-        
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(authHeader,
-            request.getMethod(), uriInfo.getPath());
+
+        boolean authorized = authorizationService
+            .authorizeRackspaceClient(authHeader)
+            || authorizationService.authorizeClient(authHeader,
+                request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
             String token = authHeader.split(" ")[1];
