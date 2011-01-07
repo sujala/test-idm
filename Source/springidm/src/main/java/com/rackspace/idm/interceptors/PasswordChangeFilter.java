@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.exceptions.NotAuthorizedException;
@@ -24,6 +25,7 @@ import com.sun.jersey.spi.container.ContainerRequestFilter;
  *         restricted token from doing anything other than set the user
  *         password.
  */
+@Component
 public class PasswordChangeFilter implements ContainerRequestFilter,
     ApplicationContextAware {
     private static final Pattern SET_USER_PASSWORD_PATTERN = Pattern
