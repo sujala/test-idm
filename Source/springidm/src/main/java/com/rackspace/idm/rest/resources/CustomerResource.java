@@ -37,7 +37,7 @@ public class CustomerResource {
     private ClientsResource clientsResource;
     private CustomerLockResource customerLockResource;
     private RolesResource rolesResource;
-    private UsersResource usersResource;
+    private CustomerUsersResource customerUsersResource;
     private CustomerService customerService;
     private CustomerConverter customerConverter;
     private AuthorizationService authorizationService;
@@ -46,13 +46,13 @@ public class CustomerResource {
     @Autowired
     public CustomerResource(ClientsResource clientsResource,
         CustomerLockResource customerLockResource, RolesResource rolesResource,
-        UsersResource usersResource, CustomerService customerService,
+        CustomerUsersResource customerUsersResource, CustomerService customerService,
         CustomerConverter customerConverter,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.clientsResource = clientsResource;
         this.customerLockResource = customerLockResource;
         this.rolesResource = rolesResource;
-        this.usersResource = usersResource;
+        this.customerUsersResource = customerUsersResource;
         this.customerService = customerService;
         this.customerConverter = customerConverter;
         this.authorizationService = authorizationService;
@@ -176,7 +176,7 @@ public class CustomerResource {
     }
 
     @Path("users")
-    public UsersResource getUsersResource() {
-        return usersResource;
+    public CustomerUsersResource getCustomerUsersResource() {
+        return customerUsersResource;
     }
 }

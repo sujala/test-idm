@@ -227,7 +227,7 @@ rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 status: ACTIVE
 seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
 softDeleted: FALSE
-userPassword: 4ea68a5cb7fa8298e5d77700cea6cee7271500cf
+userPassword: password
 
 dn: cn=AddCustomer,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top

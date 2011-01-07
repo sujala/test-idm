@@ -1,33 +1,11 @@
 package com.rackspace.idm.config;
 
+import com.rackspace.idm.rest.resources.*;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import com.rackspace.idm.rest.resources.ApiKeyResource;
-import com.rackspace.idm.rest.resources.ClientResource;
-import com.rackspace.idm.rest.resources.ClientsResource;
-import com.rackspace.idm.rest.resources.CustomerLockResource;
-import com.rackspace.idm.rest.resources.CustomerResource;
-import com.rackspace.idm.rest.resources.CustomersResource;
-import com.rackspace.idm.rest.resources.DefinedPermissionResource;
-import com.rackspace.idm.rest.resources.DefinedPermissionsResource;
-import com.rackspace.idm.rest.resources.FirstUserResource;
-import com.rackspace.idm.rest.resources.GrantedPermissionsResource;
-import com.rackspace.idm.rest.resources.PasswordRulesResource;
-import com.rackspace.idm.rest.resources.PermissionsResource;
-import com.rackspace.idm.rest.resources.RolesResource;
-import com.rackspace.idm.rest.resources.TokenResource;
-import com.rackspace.idm.rest.resources.UserLockResource;
-import com.rackspace.idm.rest.resources.UserPasswordResource;
-import com.rackspace.idm.rest.resources.UserResource;
-import com.rackspace.idm.rest.resources.UserRoleResource;
-import com.rackspace.idm.rest.resources.UserRolesResource;
-import com.rackspace.idm.rest.resources.UserSecretResource;
-import com.rackspace.idm.rest.resources.UserSoftDeleteResource;
-import com.rackspace.idm.rest.resources.UserStatusResource;
 import com.rackspace.idm.rest.resources.UsersResource;
-import com.rackspace.idm.rest.resources.VersionResource;
 
 public class SpringConfigurationTest {
 
@@ -61,7 +39,7 @@ public class SpringConfigurationTest {
         DefinedPermissionsResource definedPermissionsResource = ctx.getBean(DefinedPermissionsResource.class);
         Assert.assertNotNull(definedPermissionsResource);
         
-        FirstUserResource firstUserResource = ctx.getBean(FirstUserResource.class);
+        UsersResource firstUserResource = ctx.getBean(UsersResource.class);
         Assert.assertNotNull(firstUserResource);
         
         GrantedPermissionsResource grantedPermissionsResource = ctx.getBean(GrantedPermissionsResource.class);
@@ -100,8 +78,8 @@ public class SpringConfigurationTest {
         UserSoftDeleteResource userSoftDeleteResource = ctx.getBean(UserSoftDeleteResource.class);
         Assert.assertNotNull(userSoftDeleteResource);
         
-        UsersResource usersResource = ctx.getBean(UsersResource.class);
-        Assert.assertNotNull(usersResource);
+        CustomerUsersResource customerUsersResource = ctx.getBean(CustomerUsersResource.class);
+        Assert.assertNotNull(customerUsersResource);
         
         UserStatusResource userStatusResource = ctx.getBean(UserStatusResource.class);
         Assert.assertNotNull(userStatusResource);
