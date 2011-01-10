@@ -1,10 +1,10 @@
 package com.rackspace.idm.interceptors;
 
-import java.util.regex.Pattern;
-
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response.Status;
-
+import com.rackspace.idm.exceptions.NotAuthenticatedException;
+import com.rackspace.idm.oauth.OAuthService;
+import com.rackspace.idm.util.AuthHeaderHelper;
+import com.sun.jersey.spi.container.ContainerRequest;
+import com.sun.jersey.spi.container.ContainerRequestFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -12,13 +12,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.exceptions.NotAuthenticatedException;
-import com.rackspace.idm.oauthAuthentication.AuthenticationResult;
-import com.rackspace.idm.oauthAuthentication.HttpOauthAuthenticationService;
-import com.rackspace.idm.oauthAuthentication.OauthAuthenticationService;
-import com.rackspace.idm.util.AuthHeaderHelper;
-import com.sun.jersey.spi.container.ContainerRequest;
-import com.sun.jersey.spi.container.ContainerRequestFilter;
+import javax.ws.rs.core.HttpHeaders;
+import java.util.regex.Pattern;
 
 /**
  * @author john.eo Apply token-based authentication to all calls except the
@@ -26,10 +21,10 @@ import com.sun.jersey.spi.container.ContainerRequestFilter;
  */
 @Component
 public class AuthenticationFilter implements ContainerRequestFilter,
-    ApplicationContextAware {
+        ApplicationContextAware {
     private static final Pattern PASSWORD_CHANGE_PATTERN = Pattern
-        .compile("^customers/.+/users/.+/password$");
-    private OauthAuthenticationService oauthService;
+            .compile("^customers/.+/users/.+/password$");
+    private OAuthService oauthService;
     private AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private Logger logger;
 
@@ -39,7 +34,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         logger = LoggerFactory.getLogger(AuthenticationFilter.class);
     }
 
-    AuthenticationFilter(OauthAuthenticationService oauthService, Logger logger) {
+    AuthenticationFilter(OAuthService oauthService, Logger logger) {
         this.oauthService = oauthService;
         this.logger = logger;
     }
@@ -54,7 +49,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         if ("GET".equals(method) && "application.wadl".equals(path)) {
             return request;
         }
-        
+
         if ("GET".equals(method) && path.startsWith("xsd")) {
             return request;
         }
@@ -64,7 +59,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         }
 
         if ("PUT".equals(method)
-            && PASSWORD_CHANGE_PATTERN.matcher(path).matches()) {
+                && PASSWORD_CHANGE_PATTERN.matcher(path).matches()) {
             return request;
         }
 
@@ -75,35 +70,33 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         String authHeader = request.getHeaderValue(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || authHeader.isEmpty()) {
             throw new NotAuthenticatedException(
-                "The request for the resource must include the Authorization header.");
+                    "The request for the resource must include the Authorization header.");
         }
         String tokenString = authHeaderHelper
-            .getTokenFromAuthHeader(authHeader);
-        AuthenticationResult authResult = getOauthService().authenticateToken(
-            tokenString);
+                .getTokenFromAuthHeader(authHeader);
+        boolean authResult = getOauthService().authenticateToken(
+                tokenString);
 
-        if (authResult.getHttpStatusCode() == Status.OK.getStatusCode()) {
+        if (authResult) {
             // Authenticated
             return request;
         }
 
         // authentication failed if we reach this point
-        String errorMsg = String.format("Authentication Failed. Reason: %s",
-            authResult.getMessage());
-        logger.error(errorMsg);
-        throw new NotAuthenticatedException(errorMsg);
+        logger.error("Authentication Failed.");
+        throw new NotAuthenticatedException("Authentication Failed.");
     }
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext)
-        throws BeansException {
+            throws BeansException {
         springCtx = applicationContext;
     }
 
-    private OauthAuthenticationService getOauthService() {
+    private OAuthService getOauthService() {
         if (oauthService == null) {
             oauthService = springCtx
-                .getBean(HttpOauthAuthenticationService.class);
+                    .getBean(OAuthService.class);
         }
 
         return oauthService;

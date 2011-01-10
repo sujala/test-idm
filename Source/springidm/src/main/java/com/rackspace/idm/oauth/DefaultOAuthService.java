@@ -1,96 +1,39 @@
 package com.rackspace.idm.oauth;
 
-import java.util.Map;
-
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
-
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.AuthData;
 import com.rackspace.idm.entities.RefreshToken;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.services.AccessTokenService;
-import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.services.RefreshTokenService;
 import com.rackspace.idm.services.UserService;
-import com.rackspace.idm.util.AuthHeaderHelper;
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
 
 public class DefaultOAuthService implements OAuthService {
     private UserService userService;
-    private ClientService clientService;
     private AccessTokenService accessTokenService;
     private RefreshTokenService refreshTokenService;
-    private AuthHeaderHelper authHeaderHelper;
     private Logger logger;
 
-    public DefaultOAuthService(UserService userService,
-        ClientService clientService, AccessTokenService accessTokenService,
-        RefreshTokenService refreshTokenService,
-        AuthHeaderHelper authHeaderHelper, Logger logger) {
+    public DefaultOAuthService(UserService userService, AccessTokenService accessTokenService,
+        RefreshTokenService refreshTokenService, Logger logger) {
 
         this.userService = userService;
-        this.clientService = clientService;
         this.accessTokenService = accessTokenService;
         this.refreshTokenService = refreshTokenService;
-        this.authHeaderHelper = authHeaderHelper;
         this.logger = logger;
     }
 
-    public boolean authenticateAuthHeader(String authHeader) {
-        logger.debug("Authorizing Header: {}", authHeader);
-        Boolean authenticated = false;
-        try {
-
-            Map<String, String> authParams = authHeaderHelper
-                .parseTokenParams(authHeader);
-            AuthFlowType authType = getAuthTypeFromHeader(authHeader);
-            if (AuthFlowType.oauth == authType) {
-                String token = authParams.get("token");
-                authenticated = this.authenticateToken(token);
-            } else {
-                authenticated = false;
-            }
-
-        } catch (Exception ex) {
-            logger.error("Encountered an error during authentication.", ex);
-            authenticated = false;
-        }
-        logger.debug("Authorized Header: {} : {}", authHeader, authenticated);
-        return authenticated;
-    }
-
-    public boolean authenticateClient(String clientKey, String clientSecret) {
-        logger.debug("Authorizing Client: {}", clientKey);
-        boolean authenticated = clientService.authenticate(clientKey,
-            clientSecret);
-        logger.debug("Authorized Client: {} : {}", clientKey, authenticated);
-        return authenticated;
-    }
-
-    public boolean authenticateUser(String username, String password) {
-        boolean authenticated = userService.authenticate(username, password);
-        logger.debug("Authorized User: {} : {}", username, authenticated);
-
-        return authenticated;
-    }
-
-    public boolean authenticateUserApiKey(String username, String apiKey) {
-        logger.debug("Authorising User: {} by API Key", username);
-        boolean authenticated = userService.authenticateWithApiKey(username,
-            apiKey);
-        logger.debug("Authorized User: {} by API Key - {}", username,
-            authenticated);
-        return authenticated;
-    }
-
+    @Override
     public boolean authenticateToken(String token) {
         logger.debug("Authorizing Token: {}", token);
         Boolean authenticated = false;
 
         // check token is valid and not expired
         AccessToken accessToken = accessTokenService
-            .getTokenByTokenString(token);
+            .getAccessTokenByTokenString(token);
         if (accessToken != null && !accessToken.isExpired(new DateTime())) {
             authenticated = true;
         }
@@ -98,51 +41,9 @@ public class DefaultOAuthService implements OAuthService {
         return authenticated;
     }
 
-    public AuthFlowType getAuthTypeFromHeader(String authHeader) {
-        logger.debug("Getting AuthType From Header: {}", authHeader);
-        String authType = authHeader.substring(0, authHeader.indexOf(' '))
-            .toLowerCase();
-        return AuthFlowType.valueOf(authType);
-    }
-    
-    public AccessToken getTokenFromAuthHeader(String authHeader) {
-        String tokenString = authHeaderHelper
-            .getTokenFromAuthHeader(authHeader);
-        AccessToken accessToken = accessTokenService
-            .getTokenByTokenString(tokenString);
-        return accessToken;
-    }
-
-    public String getUsernameFromAuthHeaderToken(String authHeader) {
-
-        String tokenString = authHeaderHelper
-            .getTokenFromAuthHeader(authHeader);
-        String username = accessTokenService
-            .getUsernameByTokenString(tokenString);
-
-        return username;
-    }
-
-    public String getCustomerIdFromAuthHeaderToken(String authHeader) {
-        String tokenString = authHeaderHelper
-            .getTokenFromAuthHeader(authHeader);
-        String customerId = accessTokenService
-            .getCustomerIdByTokenString(tokenString);
-
-        return customerId;
-    }
-
-    public String getClientIdFromAuthHeaderToken(String authHeader) {
-        String tokenString = authHeaderHelper
-            .getTokenFromAuthHeader(authHeader);
-        String clientId = accessTokenService
-            .getClientIdByTokenString(tokenString);
-
-        return clientId;
-    }
-
+    @Override
     public AuthData getTokens(OAuthGrantType grantType,
-        AuthCredentials credentials, int expirationSeconds, DateTime currentTime) {
+                              AuthCredentials credentials, int expirationSeconds, DateTime currentTime) {
 
         String clientId = credentials.getClientId();
         String username = credentials.getUsername();
@@ -199,7 +100,9 @@ public class DefaultOAuthService implements OAuthService {
                 "Unauthorized Client For: %s", clientId));
         }
 
-        if (!this.authenticateUserApiKey(username, userpasswd)) {
+        boolean authenticated = userService.authenticateWithApiKey(username,
+            userpasswd);
+        if (!authenticated) {
             throwNotAuthenticatedException(String.format(
                 "Incorrect Credentials For: %s", username));
         }
@@ -222,7 +125,8 @@ public class DefaultOAuthService implements OAuthService {
         String username, String userpasswd, int expirationSeconds,
         DateTime currentTime) {
 
-        if (!this.authenticateUser(username, userpasswd)) {
+        boolean authenticated = userService.authenticate(username, userpasswd);
+        if (!authenticated) {
             throwNotAuthenticatedException(String.format(
                 "User failed authentication: %s", username));
         }

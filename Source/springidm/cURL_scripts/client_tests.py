@@ -45,8 +45,8 @@ def main():
     try:
         # Get root resource, versions.
         do_get('/')
-        authCred = {'password':'password', 'username':'mkovacs', 'clientSecret':'password',
-            'clientId':'ABCDEF', 'grantType':'PASSWORD'}
+        authCred = {'password':'password', 'username':'mkovacs', 'client_secret':'password',
+            'client_id':'ABCDEF', 'grant_type':'PASSWORD'}
         
         # Get an access token
         auth = get_auth(json.dumps(authCred))

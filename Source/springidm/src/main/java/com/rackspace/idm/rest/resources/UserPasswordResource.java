@@ -1,46 +1,20 @@
 package com.rackspace.idm.rest.resources;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
+import com.rackspace.idm.config.LoggerFactoryWrapper;
+import com.rackspace.idm.converters.PasswordConverter;
+import com.rackspace.idm.converters.TokenConverter;
+import com.rackspace.idm.entities.*;
+import com.rackspace.idm.exceptions.*;
+import com.rackspace.idm.jaxb.PasswordRecovery;
+import com.rackspace.idm.services.*;
+import com.rackspace.idm.util.AuthHeaderHelper;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.config.LoggerFactoryWrapper;
-import com.rackspace.idm.converters.PasswordConverter;
-import com.rackspace.idm.converters.TokenConverter;
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.Password;
-import com.rackspace.idm.entities.User;
-import com.rackspace.idm.entities.UserStatus;
-import com.rackspace.idm.exceptions.BadRequestException;
-import com.rackspace.idm.exceptions.ForbiddenException;
-import com.rackspace.idm.exceptions.IdmException;
-import com.rackspace.idm.exceptions.NotAuthenticatedException;
-import com.rackspace.idm.exceptions.NotAuthorizedException;
-import com.rackspace.idm.exceptions.NotFoundException;
-import com.rackspace.idm.exceptions.UserDisabledException;
-import com.rackspace.idm.jaxb.PasswordRecovery;
-import com.rackspace.idm.oauth.OAuthService;
-import com.rackspace.idm.services.AccessTokenService;
-import com.rackspace.idm.services.AuthorizationService;
-import com.rackspace.idm.services.PasswordComplexityService;
-import com.rackspace.idm.services.UserService;
-import com.rackspace.idm.util.AuthHeaderHelper;
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
 
 /**
  * User Password.
@@ -50,10 +24,9 @@ import com.rackspace.idm.util.AuthHeaderHelper;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class UserPasswordResource {
-
-    private OAuthService oauthService;
     private AccessTokenService accessTokenService;
     private UserService userService;
+    private ClientService clientService;
     private PasswordComplexityService passwordComplexityService;
     private PasswordConverter passwordConverter;
     private TokenConverter tokenConverter;
@@ -63,14 +36,14 @@ public class UserPasswordResource {
     String errorMsg = String.format("Authorization Failed");
 
     @Autowired
-    public UserPasswordResource(OAuthService oauthService,
-        AccessTokenService accessTokenService, UserService userService,
+    public UserPasswordResource(
+        AccessTokenService accessTokenService, UserService userService, ClientService clientService,
         PasswordComplexityService passwordComplexityService,
         PasswordConverter passwordConverter, TokenConverter tokenConverter,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
-        this.oauthService = oauthService;
         this.accessTokenService = accessTokenService;
         this.userService = userService;
+        this.clientService = clientService;
         this.passwordComplexityService = passwordComplexityService;
         this.passwordConverter = passwordConverter;
         this.tokenConverter = tokenConverter;
@@ -182,7 +155,8 @@ public class UserPasswordResource {
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
      * @param username username
-     * @param userCredentials The user's current password and new password.
+     * @param userCred The user's current password and new password.
+     * @param isRecovery If true, this request is a password reset attempt.
      */
     @PUT
     public Response setUserPassword(@Context Request request,
@@ -234,7 +208,7 @@ public class UserPasswordResource {
             }
 
             AccessToken token = accessTokenService
-                .getTokenByTokenString(tokenString);
+                .getAccessTokenByTokenString(tokenString);
             if (token == null) {
                 String errorMsg = String.format("No token found for %s",
                     tokenString);
@@ -242,8 +216,7 @@ public class UserPasswordResource {
                 throw new NotAuthorizedException(errorMsg);
             }
 
-            String tokenUser = oauthService
-                .getUsernameFromAuthHeaderToken(authHeader);
+            String tokenUser = getUsernameByTokenString(tokenString);
 
             // TODO jeo this logic is redundant, as the authorization logic
             // below should handle it
@@ -282,8 +255,8 @@ public class UserPasswordResource {
             }
 
             // authenticate using old password
-            if (!this.oauthService.authenticateUser(username, userCred
-                .getCurrentPassword().getPassword())) {
+            if (!this.userService.authenticate(username, userCred
+                    .getCurrentPassword().getPassword())) {
                 String errorMsg = String.format("Bad credential for user: %s",
                     username);
                 logger.debug(errorMsg);
@@ -352,16 +325,14 @@ public class UserPasswordResource {
             throw new UserDisabledException(errorMsg);
         }
 
-        String clientId = oauthService
-            .getClientIdFromAuthHeaderToken(authHeader);
-
+        String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
+        String clientId = getClientIdByTokenString(tokenStr);
         AccessToken token = accessTokenService
             .createPasswordResetAccessTokenForUser(username, clientId);
 
         logger.debug("Got Password Reset Token for User :{}", user);
 
         return Response.ok(tokenConverter.toAccessTokenJaxb(token)).build();
-
     }
 
     /**
@@ -430,8 +401,8 @@ public class UserPasswordResource {
             throw new BadRequestException(errorMsg);
         }
 
-        String clientId = oauthService
-            .getClientIdFromAuthHeaderToken(authHeader);
+        String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
+        String clientId = getClientIdByTokenString(tokenStr);
 
         AccessToken token = accessTokenService
             .createPasswordResetAccessTokenForUser(username, clientId);
@@ -463,5 +434,51 @@ public class UserPasswordResource {
             username);
         logger.error(errorMsg);
         throw new NotFoundException(errorMsg);
+    }
+
+    private String getUsernameByTokenString(String tokenString) {
+        logger.debug("Getting Username From Token: {}", tokenString);
+        AccessToken token = accessTokenService.getAccessTokenByTokenString(tokenString);
+        if (token == null) {
+            return null;
+        }
+
+        // Get the Owner and filter out the inum= prefix
+        String ownerUsername = token.getOwner();
+        if (token.getIsTrusted()) {
+            return ownerUsername;
+        }
+
+        User user = userService.getUser(ownerUsername);
+
+        if (user != null) {
+            String username = user.getUsername();
+            logger.debug("Got Username From Token: {} : {}", tokenString,
+                username);
+            return username;
+        }
+        logger.debug("No User Associated With Token: {}", tokenString);
+        return null;
+    }
+
+    private String getClientIdByTokenString(String tokenString) {
+        logger.debug("Getting ClientId From Token: {}", tokenString);
+        AccessToken token = accessTokenService.getAccessTokenByTokenString(tokenString);
+        if (token == null) {
+            return null;
+        }
+
+        // Get the Owner and filter out the inum= prefix
+        String requestor = token.getRequestor();
+        Client client = clientService.getById(requestor);
+
+        if (client != null) {
+            String clientId = client.getClientId();
+            logger.debug("Got clientId From Token: {} : {}", tokenString,
+                clientId);
+            return clientId;
+        }
+        logger.debug("No Client Associated With Token: {}", tokenString);
+        return null;
     }
 }

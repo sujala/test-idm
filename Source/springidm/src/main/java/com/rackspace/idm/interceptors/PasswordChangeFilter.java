@@ -78,7 +78,7 @@ public class PasswordChangeFilter implements ContainerRequestFilter,
         }
 
         AccessToken token = getTokenService()
-            .getTokenByTokenString(tokenString);
+            .getAccessTokenByTokenString(tokenString);
         if (token == null) {
             String errMsg = "Token " + tokenString + " expired.";
             logger.info(errMsg);

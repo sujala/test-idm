@@ -1,11 +1,14 @@
 package com.rackspace.idm.config;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.validation.Validation;
-import javax.validation.Validator;
-
+import com.rackspace.idm.dao.*;
+import com.rackspace.idm.entities.EmailSettings;
+import com.rackspace.idm.entities.RefreshTokenDefaultAttributes;
+import com.rackspace.idm.entities.TokenDefaultAttributes;
+import com.rackspace.idm.oauth.DefaultOAuthService;
+import com.rackspace.idm.oauth.OAuthService;
+import com.rackspace.idm.services.*;
+import com.rackspace.idm.util.AuthHeaderHelper;
+import com.rackspace.idm.validation.InputValidator;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -14,40 +17,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
-import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.dao.AccessTokenDao;
-import com.rackspace.idm.dao.AuthDao;
-import com.rackspace.idm.dao.ClientDao;
-import com.rackspace.idm.dao.CustomerDao;
-import com.rackspace.idm.dao.RefreshTokenDao;
-import com.rackspace.idm.dao.RoleDao;
-import com.rackspace.idm.dao.UserDao;
-import com.rackspace.idm.entities.EmailSettings;
-import com.rackspace.idm.entities.RefreshTokenDefaultAttributes;
-import com.rackspace.idm.entities.TokenDefaultAttributes;
-import com.rackspace.idm.oauth.DefaultOAuthService;
-import com.rackspace.idm.oauth.OAuthService;
-import com.rackspace.idm.oauthAuthentication.HttpOauthAuthenticationService;
-import com.rackspace.idm.services.AccessTokenService;
-import com.rackspace.idm.services.AuthorizationService;
-import com.rackspace.idm.services.ClientService;
-import com.rackspace.idm.services.CustomerService;
-import com.rackspace.idm.services.DefaultAccessTokenService;
-import com.rackspace.idm.services.DefaultAuthorizationService;
-import com.rackspace.idm.services.DefaultClientService;
-import com.rackspace.idm.services.DefaultCustomerService;
-import com.rackspace.idm.services.DefaultEmailService;
-import com.rackspace.idm.services.DefaultPasswordComplexityService;
-import com.rackspace.idm.services.DefaultRefreshTokenService;
-import com.rackspace.idm.services.DefaultRoleService;
-import com.rackspace.idm.services.DefaultUserService;
-import com.rackspace.idm.services.EmailService;
-import com.rackspace.idm.services.PasswordComplexityService;
-import com.rackspace.idm.services.RefreshTokenService;
-import com.rackspace.idm.services.RoleService;
-import com.rackspace.idm.services.UserService;
-import com.rackspace.idm.util.AuthHeaderHelper;
-import com.rackspace.idm.validation.InputValidator;
+import javax.validation.Validation;
+import javax.validation.Validator;
 
 /**
  * @author john.eo <br/>
@@ -110,34 +81,11 @@ public class ServiceConfiguration {
             defaultTokenExpirationSeconds, maxTokenExpirationSeconds,
             minTokenExpirationSeconds, dataCenterPrefix, isTrustedServer);
 
-        String dcPropsFile = "dclocations.properties";
-        Configuration dcConfig;
-        try {
-            dcConfig = new PropertiesConfiguration(dcPropsFile);
-        } catch (ConfigurationException e) {
-            e.printStackTrace();
-            throw new RuntimeException(
-                "Error encountered when loading the data center location config file.");
-        }
-
-        String dc_dfw_idm_location = dcConfig.getString("DC_DFW_IDM_LOCATION");
-        String dc_london_idm_location = dcConfig
-            .getString("DC_LONDON_IDM_LOCATION");
-
-        Map<String, String> dcLocations = new HashMap<String, String>();
-        dcLocations.put(GlobalConstants.DFW_DC, dc_dfw_idm_location);
-        dcLocations.put(GlobalConstants.LONDON_DC, dc_london_idm_location);
-
         Logger logger = LoggerFactory
             .getLogger(DefaultAccessTokenService.class);
 
         return new DefaultAccessTokenService(defaultAttributes, accessTokenDao,
-            refreshTokenDao, clientDao, userService(), dcLocations, logger);
-    }
-
-    @Bean
-    public HttpOauthAuthenticationService httpOauthAuthenticationService() {
-        return new HttpOauthAuthenticationService(tokenService());
+            refreshTokenDao, clientDao, userService(), logger);
     }
 
     @Bean
@@ -186,27 +134,11 @@ public class ServiceConfiguration {
         return new DefaultEmailService(emailSettings);
     }
 
-//    @Bean
-//    public IDMAuthorizationHelper idmAuthHelper() {
-//        Logger logger = LoggerFactory.getLogger(DefaultOAuthService.class);
-//        return new IDMAuthorizationHelper(oauthService(),
-//            authorizationService(), roleService(), clientService(), logger);
-//
-//    }
-
     @Bean
     public InputValidator inputValidator() {
         Validator validator = Validation.buildDefaultValidatorFactory()
             .getValidator();
         return new InputValidator(validator);
-    }
-
-    @Bean
-    public OAuthService oauthService() {
-        Logger logger = LoggerFactory.getLogger(DefaultOAuthService.class);
-        return new DefaultOAuthService(userService(), clientService(),
-            tokenService(), refreshTokenService(), new AuthHeaderHelper(),
-            logger);
     }
 
     @Bean
@@ -249,8 +181,14 @@ public class ServiceConfiguration {
     }
 
     @Bean
+    public OAuthService oauthService() {
+        Logger logger = LoggerFactory.getLogger(DefaultOAuthService.class);
+        return new DefaultOAuthService(userService(), tokenService(), refreshTokenService(), logger);
+    }
+
+    @Bean
     public AuthorizationService authorizationService() {
         Logger logger = LoggerFactory.getLogger(DefaultAuthorizationService.class);
-        return new DefaultAuthorizationService(oauthService(), clientService(), logger);
+        return new DefaultAuthorizationService(accessTokenDao, clientDao, authHeaderHelper(), logger);
     }
 }

@@ -13,6 +13,8 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.rackspace.idm.services.AccessTokenService;
+import com.rackspace.idm.util.AuthHeaderHelper;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -25,7 +27,6 @@ import com.rackspace.idm.errors.ApiError;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
-import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.validation.InputValidator;
@@ -43,19 +44,21 @@ public class DefinedPermissionResource {
     private PermissionConverter permissionConverter;
     private InputValidator inputValidator;
     private AuthorizationService authorizationService;
-    private OAuthService oauthService;
+    private AccessTokenService accessTokenService;
+    private AuthHeaderHelper authHeaderHelper;
     private Logger logger;
 
     @Autowired
     public DefinedPermissionResource(ClientService clientService,
         PermissionConverter permissionConverter, InputValidator inputValidator,
-        AuthorizationService authorizationService, OAuthService oauthService,
-        LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService, AccessTokenService accessTokenService,
+        AuthHeaderHelper authHeaderHelper, LoggerFactoryWrapper logger) {
         this.permissionConverter = permissionConverter;
         this.inputValidator = inputValidator;
         this.clientService = clientService;
         this.authorizationService = authorizationService;
-        this.oauthService = oauthService;
+        this.accessTokenService = accessTokenService;
+        this.authHeaderHelper = authHeaderHelper;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -84,8 +87,7 @@ public class DefinedPermissionResource {
         @PathParam("clientId") String clientId,
         @PathParam("permissionId") String permissionId,
         com.rackspace.idm.jaxb.Permission permission) {
-
-        AccessToken token = oauthService.getTokenFromAuthHeader(authHeader);
+        AccessToken token = getAccessTokenFromAuthHeader(authHeader);
 
         // Racker's or the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(authHeader)
@@ -123,6 +125,11 @@ public class DefinedPermissionResource {
         return Response.ok(permission).build();
     }
 
+    private AccessToken getAccessTokenFromAuthHeader(String authHeader) {
+        String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
+        return accessTokenService.getAccessTokenByTokenString(tokenStr);
+    }
+
     /**
      * Deletes a Client defined permission.
      * 
@@ -146,8 +153,7 @@ public class DefinedPermissionResource {
         @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId,
         @PathParam("permissionId") String permissionId) {
-
-        AccessToken token = oauthService.getTokenFromAuthHeader(authHeader);
+        AccessToken token = getAccessTokenFromAuthHeader(authHeader);
 
         // Racker's or the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(authHeader)

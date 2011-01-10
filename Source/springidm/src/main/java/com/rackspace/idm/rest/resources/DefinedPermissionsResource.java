@@ -18,6 +18,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.rackspace.idm.util.AuthHeaderHelper;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -52,7 +53,8 @@ public class DefinedPermissionsResource {
     private PermissionConverter permissionConverter;
     private InputValidator inputValidator;
     private AuthorizationService authorizationService;
-    private OAuthService oauthService;
+    private AccessTokenService accessTokenService;
+    private AuthHeaderHelper authHeaderHelper;
     private Logger logger;
 
     @Autowired
@@ -60,14 +62,16 @@ public class DefinedPermissionsResource {
         DefinedPermissionResource definedPermissionResource,
         ClientService clientService, PermissionConverter permissionConverter,
         InputValidator inputValidator,
-        AuthorizationService authorizationService, OAuthService oauthService,
+        AuthorizationService authorizationService, AccessTokenService accessTokenService,
+        AuthHeaderHelper authHeaderHelper,
         LoggerFactoryWrapper logger) {
         this.definedPermissionResource = definedPermissionResource;
         this.permissionConverter = permissionConverter;
         this.inputValidator = inputValidator;
         this.clientService = clientService;
         this.authorizationService = authorizationService;
-        this.oauthService = oauthService;
+        this.accessTokenService = accessTokenService;
+        this.authHeaderHelper = authHeaderHelper;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -144,8 +148,8 @@ public class DefinedPermissionsResource {
         @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId,
         com.rackspace.idm.jaxb.Permission permission) {
-
-        AccessToken token = oauthService.getTokenFromAuthHeader(authHeader);
+        String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
+        AccessToken token = accessTokenService.getAccessTokenByTokenString(tokenStr);
 
         // Racker's or the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(authHeader)

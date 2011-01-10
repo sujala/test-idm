@@ -17,53 +17,38 @@ import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.BaseClient;
 import com.rackspace.idm.entities.TokenDefaultAttributes;
-import com.rackspace.idm.entities.TokenStatusCode;
 import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.exceptions.ForbiddenException;
-import com.rackspace.idm.oauthAuthentication.Token;
 
 public class DefaultAccessTokenService implements AccessTokenService {
-
     private AccessTokenDao tokenDao;
     private RefreshTokenDao refreshTokenDao;
     private ClientDao clientDao;
     private Logger logger;
     private UserService userService;
-
     private int defaultTokenExpirationSeconds;
-    private int maxTokenExpirationSeconds;
-    private int minTokenExpirationSeconds;
     private String dataCenterPrefix;
-
-    private Map<String, String> dcLocations;
-
     private boolean isTrustedServer;
 
     public DefaultAccessTokenService(TokenDefaultAttributes defaultAttributes,
         AccessTokenDao tokenDao, RefreshTokenDao refreshTokenDao,
         ClientDao clientDao, UserService userService,
-        Map<String, String> dcLocations, Logger logger) {
+        Logger logger) {
 
         this.tokenDao = tokenDao;
         this.refreshTokenDao = refreshTokenDao;
         this.clientDao = clientDao;
         this.userService = userService;
-        this.dcLocations = dcLocations;
         this.logger = logger;
-
         this.defaultTokenExpirationSeconds = defaultAttributes
             .getExpirationSeconds();
-        this.maxTokenExpirationSeconds = defaultAttributes
-            .getMaxExpirationSeconds();
-        this.minTokenExpirationSeconds = defaultAttributes
-            .getMinExpirationSeconds();
         this.dataCenterPrefix = defaultAttributes.getDataCenterPrefix();
         this.isTrustedServer = defaultAttributes.getIsTrustedServer();
     }
 
-    public AccessToken getTokenByTokenString(String tokenString) {
+    public AccessToken getAccessTokenByTokenString(String tokenString) {
         return (AccessToken) tokenDao.findByTokenString(tokenString);
     }
 
@@ -214,84 +199,6 @@ public class DefaultAccessTokenService implements AccessTokenService {
         return this.defaultTokenExpirationSeconds;
     }
 
-    public int getMaxTokenExpirationSeconds() {
-        return this.maxTokenExpirationSeconds;
-    }
-
-    public int getMinTokenExpirationSeconds() {
-        return this.minTokenExpirationSeconds;
-    }
-
-    public String getUsernameByTokenString(String tokenString) {
-        logger.debug("Getting Username From Token: {}", tokenString);
-        AccessToken token = getTokenByTokenString(tokenString);
-        if (token == null) {
-            return null;
-        }
-
-        // Get the Owner and filter out the inum= prefix
-        String ownerUsername = token.getOwner();
-        if (token.getIsTrusted()) {
-            return ownerUsername;
-        }
-
-        User user = userService.getUser(ownerUsername);
-
-        if (user != null) {
-            String username = user.getUsername();
-            logger.debug("Got Username From Token: {} : {}", tokenString,
-                username);
-            return username;
-        }
-        logger.debug("No User Associated With Token: {}", tokenString);
-        return null;
-    }
-
-    public String getCustomerIdByTokenString(String tokenString) {
-        logger.debug("Getting CustomerId From Token: {}", tokenString);
-        AccessToken token = getTokenByTokenString(tokenString);
-        if (token == null) {
-            return null;
-        }
-
-        // Get the Owner and filter out the inum= prefix
-        // String requestorInum = token.getRequestor();
-        String requestor = token.getRequestor();
-
-        Client client = clientDao.findByClientId(requestor);
-
-        if (client != null) {
-            String customerId = client.getCustomerId();
-            logger.debug("Got customerId From Token: {} : {}", tokenString,
-                customerId);
-            return customerId;
-        }
-        logger.debug("No Customer Associated With Token: {}", tokenString);
-        return null;
-    }
-
-    public String getClientIdByTokenString(String tokenString) {
-        logger.debug("Getting ClientId From Token: {}", tokenString);
-        AccessToken token = getTokenByTokenString(tokenString);
-        if (token == null) {
-            return null;
-        }
-
-        // Get the Owner and filter out the inum= prefix
-        String requestor = token.getRequestor();
-
-        Client client = clientDao.findByClientId(requestor);
-
-        if (client != null) {
-            String clientId = client.getClientId();
-            logger.debug("Got clientId From Token: {} : {}", tokenString,
-                clientId);
-            return clientId;
-        }
-        logger.debug("No Client Associated With Token: {}", tokenString);
-        return null;
-    }
-
     public AccessToken getAccessTokenForUser(String username, String clientId,
         DateTime expiresAfter) {
         logger.debug("Getting Token For User: {}", username);
@@ -398,34 +305,6 @@ public class DefaultAccessTokenService implements AccessTokenService {
         logger.info("Deleted Token {}", deletingToken);
     }
 
-    public TokenStatusCode authenticateToken(String tokenString) {
-        logger.debug("Authorizing Token: {}", tokenString);
-        TokenStatusCode code = TokenStatusCode.OK;
-
-        // check token is valid and not expired
-        AccessToken accessToken = getTokenByTokenString(tokenString);
-        if (accessToken == null) {
-            code = TokenStatusCode.NOT_FOUND;
-        } else if (accessToken.isExpired(new DateTime())) {
-            code = TokenStatusCode.EXPIRED;
-        }
-
-        logger.debug("Authorized Token: {} : {}", tokenString, code);
-        return code;
-    }
-
-    public Token getToken(String tokenString) {
-        logger.debug("Getting Oauth Token {}", tokenString);
-        Token oauthToken = this.getTokenByTokenString(tokenString);
-
-        String tokenVal = null;
-        if (oauthToken != null) {
-            tokenVal = oauthToken.toString();
-        }
-        logger.debug("Got Oauth Token - {}", tokenVal);
-        return oauthToken;
-    }
-
     public AccessToken validateToken(String tokenString) {
 
         logger.debug("Validating Token: {}", tokenString);
@@ -493,24 +372,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
     private String generateTokenWithDcPrefix() {
         String token = UUID.randomUUID().toString().replace("-", "");
         String tokenString = String.format("%s-%s", this.dataCenterPrefix,
-            token);
+                token);
         return tokenString;
-    }
-
-    private String getIDMLocationForDC(String tokenString) {
-        String idmLocationForDC = null;
-
-        String[] splitTokenString = tokenString.split("-");
-        String dcPrefix = splitTokenString[0];
-
-        if (dcPrefix != null) {
-            idmLocationForDC = dcLocations.get(dcPrefix);
-        }
-
-        return idmLocationForDC;
-    }
-
-    private boolean tokenBelongingToOtherDC(String tokenString) {
-        return tokenString.startsWith(dataCenterPrefix);
     }
 }

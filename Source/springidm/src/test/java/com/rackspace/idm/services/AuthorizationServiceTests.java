@@ -1,29 +1,23 @@
 package com.rackspace.idm.services;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.dao.AccessTokenDao;
+import com.rackspace.idm.dao.ClientDao;
+import com.rackspace.idm.entities.*;
+import com.rackspace.idm.test.stub.StubLogger;
+import com.rackspace.idm.util.AuthHeaderHelper;
 import junit.framework.Assert;
-
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.BaseClient;
-import com.rackspace.idm.entities.BaseUser;
-import com.rackspace.idm.entities.Client;
-import com.rackspace.idm.entities.Permission;
-import com.rackspace.idm.entities.Role;
-import com.rackspace.idm.entities.User;
-import com.rackspace.idm.oauth.OAuthService;
-import com.rackspace.idm.test.stub.StubLogger;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AuthorizationServiceTests {
-    OAuthService mockOauthService;
-    ClientService mockClientService;
+    AccessTokenDao mockAccessTokenDao;
+    ClientDao mockClientDao;
     AuthorizationService service;
 
     String authHeader = "OAuth XXXX";
@@ -71,168 +65,161 @@ public class AuthorizationServiceTests {
 
     @Before
     public void setUp() throws Exception {
-
-        mockOauthService = EasyMock.createMock(OAuthService.class);
-        mockClientService = EasyMock.createMock(ClientService.class);
-
-        service = new DefaultAuthorizationService(mockOauthService,
-            mockClientService, new StubLogger());
-
+        mockAccessTokenDao = EasyMock.createMock(AccessTokenDao.class);
+        mockClientDao = EasyMock.createMock(ClientDao.class);
+        service = new DefaultAuthorizationService(mockAccessTokenDao, mockClientDao, new AuthHeaderHelper(), new StubLogger());
         setUpObjects();
     }
 
     @Test
-    public void ShouldReturnTrueForRacker() {
-        EasyMock.expect(mockOauthService.getTokenFromAuthHeader(authHeader))
-            .andReturn(trustedToken);
-        EasyMock.replay(mockOauthService);
-
+    public void shouldReturnTrueForRacker() {
+        EasyMock.expect(mockAccessTokenDao.findByTokenString(tokenString)).andReturn(trustedToken);
+        EasyMock.replay(mockAccessTokenDao);
         boolean authorized = service.authorizeRacker(authHeader);
-
         Assert.assertTrue(authorized);
-        EasyMock.verify(mockOauthService);
+        EasyMock.verify(mockAccessTokenDao);
     }
 
     @Test
-    public void ShouldReturnFalseForRacker() {
-        EasyMock.expect(mockOauthService.getTokenFromAuthHeader(authHeader))
-            .andReturn(authorizedUserToken);
-        EasyMock.replay(mockOauthService);
+    public void shouldReturnFalseForRacker() {
+        EasyMock.expect(mockAccessTokenDao.findByTokenString(tokenString))
+                .andReturn(authorizedUserToken);
+        EasyMock.replay(mockAccessTokenDao);
 
         boolean authorized = service.authorizeRacker(authHeader);
 
         Assert.assertTrue(!authorized);
-        EasyMock.verify(mockOauthService);
+        EasyMock.verify(mockAccessTokenDao);
     }
 
     @Test
     public void ShouldReturnTrueForRackspaceClient() {
-        EasyMock.expect(mockOauthService.getTokenFromAuthHeader(authHeader))
-            .andReturn(authorizedClientToken);
-        EasyMock.replay(mockOauthService);
+        EasyMock.expect(mockAccessTokenDao.findByTokenString(tokenString))
+                .andReturn(authorizedClientToken);
+        EasyMock.replay(mockAccessTokenDao);
 
         boolean authorized = service.authorizeRackspaceClient(authHeader);
 
         Assert.assertTrue(authorized);
-        EasyMock.verify(mockOauthService);
+        EasyMock.verify(mockAccessTokenDao);
     }
 
     @Test
     public void ShouldReturnFalseForRackspaceClient() {
-        EasyMock.expect(mockOauthService.getTokenFromAuthHeader(authHeader))
-            .andReturn(nonRackspaceClientToken);
-        EasyMock.replay(mockOauthService);
+        EasyMock.expect(mockAccessTokenDao.findByTokenString(tokenString))
+                .andReturn(nonRackspaceClientToken);
+        EasyMock.replay(mockAccessTokenDao);
 
         boolean authorized = service.authorizeRackspaceClient(authHeader);
 
         Assert.assertTrue(!authorized);
-        EasyMock.verify(mockOauthService);
+        EasyMock.verify(mockAccessTokenDao);
     }
 
     @Test
     public void ShouldReturnTrueForClient() {
-        EasyMock.expect(mockOauthService.getTokenFromAuthHeader(authHeader))
-            .andReturn(authorizedClientToken);
-        EasyMock.replay(mockOauthService);
+        EasyMock.expect(mockAccessTokenDao.findByTokenString(tokenString))
+                .andReturn(authorizedClientToken);
+        EasyMock.replay(mockAccessTokenDao);
 
         EasyMock.expect(
-            mockClientService.getDefinedPermissionByClientIdAndPermissionId(
-                clientId, permissionId)).andReturn(perm);
-        EasyMock.replay(mockClientService);
+                mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
+                        clientId, permissionId)).andReturn(perm);
+        EasyMock.replay(mockClientDao);
 
         boolean authorized = service.authorizeClient(authHeader, verb, uri);
 
         Assert.assertTrue(authorized);
-        EasyMock.verify(mockOauthService);
-        EasyMock.verify(mockClientService);
+        EasyMock.verify(mockAccessTokenDao);
+        EasyMock.verify(mockClientDao);
     }
 
     @Test
     public void ShouldReturnFalseForClient() {
-        EasyMock.expect(mockOauthService.getTokenFromAuthHeader(authHeader))
-            .andReturn(notAuthorizedClientToken);
-        EasyMock.replay(mockOauthService);
+        EasyMock.expect(mockAccessTokenDao.findByTokenString(tokenString))
+                .andReturn(notAuthorizedClientToken);
+        EasyMock.replay(mockAccessTokenDao);
 
         boolean authorized = service.authorizeClient(authHeader, verb, uri);
 
         Assert.assertTrue(!authorized);
-        EasyMock.verify(mockOauthService);
+        EasyMock.verify(mockAccessTokenDao);
     }
 
     @Test
     public void ShouldReturnTrueForAdmin() {
-        EasyMock.expect(mockOauthService.getTokenFromAuthHeader(authHeader))
-            .andReturn(authorizedAdminToken);
-        EasyMock.replay(mockOauthService);
+        EasyMock.expect(mockAccessTokenDao.findByTokenString(tokenString))
+                .andReturn(authorizedAdminToken);
+        EasyMock.replay(mockAccessTokenDao);
 
         boolean authorized = service.authorizeAdmin(authHeader, customerId);
 
         Assert.assertTrue(authorized);
-        EasyMock.verify(mockOauthService);
+        EasyMock.verify(mockAccessTokenDao);
     }
 
     @Test
     public void ShouldReturnFalseForAdmin() {
-        EasyMock.expect(mockOauthService.getTokenFromAuthHeader(authHeader))
-            .andReturn(otherCompanyAdminToken);
-        EasyMock.replay(mockOauthService);
+        EasyMock.expect(mockAccessTokenDao.findByTokenString(tokenString))
+                .andReturn(otherCompanyAdminToken);
+        EasyMock.replay(mockAccessTokenDao);
 
         boolean authorized = service.authorizeAdmin(authHeader, customerId);
 
         Assert.assertTrue(!authorized);
-        EasyMock.verify(mockOauthService);
+        EasyMock.verify(mockAccessTokenDao);
     }
 
     @Test
     public void ShouldReturnTrueForUser() {
-        EasyMock.expect(mockOauthService.getTokenFromAuthHeader(authHeader))
-            .andReturn(authorizedUserToken);
-        EasyMock.replay(mockOauthService);
+        EasyMock.expect(mockAccessTokenDao.findByTokenString(tokenString))
+                .andReturn(authorizedUserToken);
+        EasyMock.replay(mockAccessTokenDao);
 
         boolean authorized = service.authorizeUser(authHeader, customerId,
-            username);
+                username);
 
         Assert.assertTrue(authorized);
-        EasyMock.verify(mockOauthService);
+        EasyMock.verify(mockAccessTokenDao);
     }
 
     @Test
     public void ShouldReturnFalseForUser() {
-        EasyMock.expect(mockOauthService.getTokenFromAuthHeader(authHeader))
-            .andReturn(otherCompanyUserToken);
-        EasyMock.replay(mockOauthService);
+        EasyMock.expect(mockAccessTokenDao.findByTokenString(tokenString))
+                .andReturn(otherCompanyUserToken);
+        EasyMock.replay(mockAccessTokenDao);
 
         boolean authorized = service.authorizeUser(authHeader, customerId,
-            username);
+                username);
 
         Assert.assertTrue(!authorized);
-        EasyMock.verify(mockOauthService);
+        EasyMock.verify(mockAccessTokenDao);
     }
 
     @Test
     public void ShouldReturnTrueForCompanyUser() {
-        EasyMock.expect(mockOauthService.getTokenFromAuthHeader(authHeader))
-            .andReturn(authorizedUserToken);
-        EasyMock.replay(mockOauthService);
+        EasyMock.expect(mockAccessTokenDao.findByTokenString(tokenString))
+                .andReturn(authorizedUserToken);
+        EasyMock.replay(mockAccessTokenDao);
 
         boolean authorized = service.authorizeCustomerUser(authHeader,
-            customerId);
+                customerId);
 
         Assert.assertTrue(authorized);
-        EasyMock.verify(mockOauthService);
+        EasyMock.verify(mockAccessTokenDao);
     }
 
     @Test
     public void ShouldReturnFalseForCompanyUser() {
-        EasyMock.expect(mockOauthService.getTokenFromAuthHeader(authHeader))
-            .andReturn(otherCompanyUserToken);
-        EasyMock.replay(mockOauthService);
+        EasyMock.expect(mockAccessTokenDao.findByTokenString(tokenString))
+                .andReturn(otherCompanyUserToken);
+        EasyMock.replay(mockAccessTokenDao);
 
         boolean authorized = service.authorizeCustomerUser(authHeader,
-            customerId);
+                customerId);
 
         Assert.assertTrue(!authorized);
-        EasyMock.verify(mockOauthService);
+        EasyMock.verify(mockAccessTokenDao);
     }
 
     private void setUpObjects() {
@@ -259,7 +246,7 @@ public class AuthorizationServiceTests {
         notAuthorizedClient = new Client();
         notAuthorizedClient.setClientId(clientId);
         notAuthorizedClient.setCustomerId(customerId);
-        
+
         nonRackspaceClient = new Client();
         nonRackspaceClient.setClientId(clientId);
         nonRackspaceClient.setCustomerId(otherCustomerId);
@@ -285,32 +272,32 @@ public class AuthorizationServiceTests {
         tokenExpiration = new DateTime();
 
         trustedToken = new AccessToken(tokenString, tokenExpiration,
-            authorizedUser, authorizedClient, AccessToken.IDM_SCOPE.FULL, true);
+                authorizedUser, authorizedClient, AccessToken.IDM_SCOPE.FULL, true);
 
         authorizedClientToken = new AccessToken(tokenString, tokenExpiration,
-            null, authorizedClient, AccessToken.IDM_SCOPE.FULL, false);
+                null, authorizedClient, AccessToken.IDM_SCOPE.FULL, false);
 
         notAuthorizedClientToken = new AccessToken(tokenString,
-            tokenExpiration, null, notAuthorizedClient,
-            AccessToken.IDM_SCOPE.FULL, false);
-        
+                tokenExpiration, null, notAuthorizedClient,
+                AccessToken.IDM_SCOPE.FULL, false);
+
         nonRackspaceClientToken = new AccessToken(tokenString,
-            tokenExpiration, null, nonRackspaceClient,
-            AccessToken.IDM_SCOPE.FULL, false);
+                tokenExpiration, null, nonRackspaceClient,
+                AccessToken.IDM_SCOPE.FULL, false);
 
         authorizedUserToken = new AccessToken(tokenString, tokenExpiration,
-            authorizedUser, authorizedClient, AccessToken.IDM_SCOPE.FULL, false);
+                authorizedUser, authorizedClient, AccessToken.IDM_SCOPE.FULL, false);
 
         otherCompanyUserToken = new AccessToken(tokenString, tokenExpiration,
-            otherCompanyUser, authorizedClient, AccessToken.IDM_SCOPE.FULL,
-            false);
+                otherCompanyUser, authorizedClient, AccessToken.IDM_SCOPE.FULL,
+                false);
 
         authorizedAdminToken = new AccessToken(tokenString, tokenExpiration,
-            authorizedAdmin, authorizedClient, AccessToken.IDM_SCOPE.FULL,
-            false);
+                authorizedAdmin, authorizedClient, AccessToken.IDM_SCOPE.FULL,
+                false);
 
         otherCompanyAdminToken = new AccessToken(tokenString, tokenExpiration,
-            otherCompanyAdmin, authorizedClient, AccessToken.IDM_SCOPE.FULL,
-            false);
+                otherCompanyAdmin, authorizedClient, AccessToken.IDM_SCOPE.FULL,
+                false);
     }
 }

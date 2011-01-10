@@ -1,31 +1,27 @@
 package com.rackspace.idm.interceptors;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response.Status;
-
+import com.rackspace.idm.exceptions.NotAuthenticatedException;
+import com.rackspace.idm.oauth.OAuthService;
+import com.rackspace.idm.test.stub.StubLogger;
+import com.sun.jersey.spi.container.ContainerRequest;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
-import com.rackspace.idm.exceptions.NotAuthenticatedException;
-import com.rackspace.idm.oauthAuthentication.AuthenticationResult;
-import com.rackspace.idm.oauthAuthentication.HttpOauthAuthenticationService;
-import com.rackspace.idm.test.stub.StubLogger;
-import com.sun.jersey.spi.container.ContainerRequest;
+import javax.ws.rs.core.HttpHeaders;
 
 public class AuthenticationFilterTests {
 
-    private HttpOauthAuthenticationService oauthService;
-    private Logger logger;
+    private OAuthService oauthService;
     private AuthenticationFilter authFilter;
     private ContainerRequest request;
 
     @Before
     public void setUp() {
         oauthService = EasyMock
-            .createNiceMock(HttpOauthAuthenticationService.class);
-        logger = new StubLogger();
+                .createNiceMock(OAuthService.class);
+        Logger logger = new StubLogger();
         authFilter = new AuthenticationFilter(oauthService, logger);
         request = EasyMock.createNiceMock(ContainerRequest.class);
     }
@@ -40,7 +36,7 @@ public class AuthenticationFilterTests {
     @Test
     public void shouldIgnorePasswordChangeRequest() {
         EasyMock.expect(request.getPath()).andReturn(
-            "customers/RCN-000-000-000/users/foobar/password");
+                "customers/RCN-000-000-000/users/foobar/password");
         EasyMock.expect(request.getMethod()).andReturn("PUT");
         replayAndRunFilter();
     }
@@ -62,16 +58,14 @@ public class AuthenticationFilterTests {
     @Test()
     public void shouldAcceptAnyOtherRequest() {
         EasyMock.expect(request.getPath()).andReturn(
-            "customers/RCN-000-000-000/users/foobar/password");
+                "customers/RCN-000-000-000/users/foobar/password");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         String tokenString = "hiiamatoken";
         String header = "OAuth " + tokenString;
         EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
-            .andReturn(header);
-        AuthenticationResult result = new AuthenticationResult();
-        result.setHttpStatusCode(Status.OK.getStatusCode());
+                .andReturn(header);
         EasyMock.expect(oauthService.authenticateToken(tokenString)).andReturn(
-            result);
+                true);
         replayAndRunFilter();
     }
 
@@ -82,11 +76,9 @@ public class AuthenticationFilterTests {
         String tokenString = "hiiamatoken";
         String header = "OAuth " + tokenString;
         EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
-            .andReturn(header);
-        AuthenticationResult result = new AuthenticationResult();
-        result.setHttpStatusCode(Status.OK.getStatusCode());
+                .andReturn(header);
         EasyMock.expect(oauthService.authenticateToken(tokenString)).andReturn(
-            result);
+                true);
         replayAndRunFilter();
     }
 
@@ -97,11 +89,9 @@ public class AuthenticationFilterTests {
         String tokenString = "hiiamatoken";
         String header = "OAuth " + tokenString;
         EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
-            .andReturn(header);
-        AuthenticationResult result = new AuthenticationResult();
-        result.setHttpStatusCode(Status.UNAUTHORIZED.getStatusCode());
+                .andReturn(header);
         EasyMock.expect(oauthService.authenticateToken(tokenString)).andReturn(
-            result);
+                false);
         replayAndRunFilter();
     }
 
@@ -110,7 +100,7 @@ public class AuthenticationFilterTests {
         EasyMock.expect(request.getPath()).andReturn("foo");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
-            .andReturn(null);
+                .andReturn(null);
         replayAndRunFilter();
     }
 
