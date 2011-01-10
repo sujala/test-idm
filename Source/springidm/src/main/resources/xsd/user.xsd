@@ -380,6 +380,8 @@
 		</attribute>
 		<attribute name="mossoId" type="xsd:int"></attribute>
 		<attribute name="nastId" type="xsd:string"></attribute>
+		<attribute name="created" type="xsd:dateTime"></attribute>
+		<attribute name="updated" type="xsd:dateTime"></attribute>
 	</complexType>
 
 	<complexType name="UserList">
