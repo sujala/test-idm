@@ -5,7 +5,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 
 import com.rackspace.idm.GlobalConstants;
@@ -35,6 +38,9 @@ import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
 
 public class LdapUserRepository extends LdapRepository implements UserDao {
 
+    public static final DateTimeFormatter DATE_PARSER = DateTimeFormat
+        .forPattern("yyyyMMddHHmmss.SSS'Z");
+
     private static final String ATTR_C = "c";
     private static final String ATTR_DISPLAY_NAME = "displayName";
     private static final String ATTR_GIVEN_NAME = "givenName";
@@ -63,6 +69,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     private static final String ATTR_MOSSO_ID = "rsMossoId";
     private static final String ATTR_NAST_ID = "rsNastId";
+
+    private static final String ATTR_CREATED_DATE = "createTimestamp";
+    private static final String ATTR_UPDATED_DATE = "modifyTimestamp";
+    
+    private static final String[] ATTR_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE};
 
     private static final String[] ATTR_OBJECT_CLASS_VALUES = {"top",
         "rackspacePerson"};
@@ -248,7 +259,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         SearchResult searchResult = null;
         try {
             searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                USER_FIND_ALL_STRING_NOT_DELETED);
+                USER_FIND_ALL_STRING_NOT_DELETED,ATTR_SEARCH_ATTRIBUTES);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for all users under DN {} - {}",
                 BASE_DN, ldapEx);
@@ -293,7 +304,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
             SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
                 String.format(USER_FIND_BY_CUSTOMERID_AND_LOCK_STRING,
-                    customerId, isLocked));
+                    customerId, isLocked),ATTR_SEARCH_ATTRIBUTES);
 
             request.setControls(new Control[]{sortRequest, vlvRequest});
             searchResult = getAppConnPool().search(request);
@@ -356,7 +367,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
             SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
                 String.format(USER_FIND_BY_CUSTOMERID_STRING_NOT_DELETED,
-                    customerId));
+                    customerId),ATTR_SEARCH_ATTRIBUTES);
 
             request.setControls(new Control[]{sortRequest, vlvRequest});
             searchResult = getAppConnPool().search(request);
@@ -403,7 +414,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         SearchResult searchResult = null;
         try {
             searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(USER_FIND_BY_EMAIL_STRING, email));
+                String.format(USER_FIND_BY_EMAIL_STRING, email),ATTR_SEARCH_ATTRIBUTES);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for user by email {} - {}",
                 email, ldapEx);
@@ -440,7 +451,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         SearchResult searchResult = null;
         try {
             searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(USER_FIND_BY_INUM_STRING, inum));
+                String.format(USER_FIND_BY_INUM_STRING, inum),ATTR_SEARCH_ATTRIBUTES);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for inum {} - {}", inum, ldapEx);
             throw new IllegalStateException(ldapEx);
@@ -499,7 +510,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         SearchResult searchResult = null;
         try {
             searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(USER_FIND_BY_NAST_ID, nastId));
+                String.format(USER_FIND_BY_NAST_ID, nastId),ATTR_SEARCH_ATTRIBUTES);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for user by nastId {} - {}",
                 nastId, ldapEx);
@@ -529,7 +540,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         SearchResult searchResult = null;
         try {
             searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(USER_FIND_BY_MOSSO_ID, mossoId));
+                String.format(USER_FIND_BY_MOSSO_ID, mossoId),ATTR_SEARCH_ATTRIBUTES);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for user by mossoId {} - {}",
                 mossoId, ldapEx);
@@ -576,7 +587,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 BASE_DN,
                 SearchScope.SUB,
                 String.format(USER_FIND_BY_CUSTOMERID_USERNAME_NOT_DELETED,
-                    customerId, username));
+                    customerId, username),ATTR_SEARCH_ATTRIBUTES);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for username {} - {}", username,
                 ldapEx);
@@ -624,7 +635,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         try {
             searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(searchString, customerId, username));
+                String.format(searchString, customerId, username),ATTR_SEARCH_ATTRIBUTES);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for username {} - {}", username,
                 ldapEx);
@@ -663,7 +674,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 BASE_DN,
                 SearchScope.SUB,
                 String.format(USER_FIND_BY_USERNAME_STRING_NOT_DELETED,
-                    username), new String[]{"isMemberOf"});
+                    username), new String[]{ATTR_MEMBER_OF});
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for username {} - {}", username,
                 ldapEx);
@@ -723,7 +734,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         SearchResult searchResult = null;
         try {
             searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(USER_FIND_BY_USERNAME_STRING, username));
+                String.format(USER_FIND_BY_USERNAME_STRING, username),ATTR_SEARCH_ATTRIBUTES);
             if (searchResult.getEntryCount() > 0) {
                 isUsernameUnique = false;
             }
@@ -1036,6 +1047,18 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         user.setMossoId(resultEntry.getAttributeValueAsInteger(ATTR_MOSSO_ID));
         user.setNastId(resultEntry.getAttributeValue(ATTR_NAST_ID));
 
+        String created = resultEntry.getAttributeValue(ATTR_CREATED_DATE);
+        if (created != null) {
+            DateTime createdDate = DATE_PARSER.parseDateTime(created);
+            user.setCreated(createdDate);
+        }
+
+        String updated = resultEntry.getAttributeValue(ATTR_UPDATED_DATE);
+        if (created != null) {
+            DateTime updatedDate = DATE_PARSER.parseDateTime(updated);
+            user.setUpdated(updatedDate);
+        }
+
         return user;
     }
 
@@ -1065,7 +1088,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 BASE_DN,
                 SearchScope.SUB,
                 String.format(USER_FIND_BY_USERNAME_STRING_NOT_DELETED,
-                    username));
+                    username),ATTR_SEARCH_ATTRIBUTES);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for username {} - {}", username,
                 ldapEx);
