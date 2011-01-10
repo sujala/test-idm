@@ -24,6 +24,8 @@ public class VersionResource {
 
     private UsersResource usersResource;
     private CustomersResource customersResource;
+    private MossoUserResource mossoUserResource;
+    private NastUserResource nastUserResource;
     private PasswordRulesResource passwordRulesResource;
     private TokenResource tokenResource;
     private XsdResource xsdResource;
@@ -31,14 +33,18 @@ public class VersionResource {
     @Autowired
     public VersionResource(UsersResource usersResource,
         CustomersResource customersResource,
-        PasswordRulesResource passwordRulesResource, TokenResource tokenResource, XsdResource xsdResource) {
+        MossoUserResource mossoUserResource, NastUserResource nastUserResource,
+        PasswordRulesResource passwordRulesResource,
+        TokenResource tokenResource, XsdResource xsdResource) {
         this.usersResource = usersResource;
         this.customersResource = customersResource;
+        this.mossoUserResource = mossoUserResource;
+        this.nastUserResource = nastUserResource;
         this.passwordRulesResource = passwordRulesResource;
         this.tokenResource = tokenResource;
         this.xsdResource = xsdResource;
     }
-    
+
     /**
      * Gets the API Version info.
      *
@@ -73,6 +79,16 @@ public class VersionResource {
         return usersResource;
     }
 
+    @Path("mosso")
+    public MossoUserResource getMossoUserResource() {
+        return mossoUserResource;
+    }
+
+    @Path("nast")
+    public NastUserResource getNastUserResource() {
+        return nastUserResource;
+    }
+
     @Path("passwordrules")
     public PasswordRulesResource getPasswordRulesResource() {
         return passwordRulesResource;
@@ -82,7 +98,7 @@ public class VersionResource {
     public TokenResource getTokenResource() {
         return tokenResource;
     }
-    
+
     @Path("xsd")
     public XsdResource getXsdResource() {
         return xsdResource;
