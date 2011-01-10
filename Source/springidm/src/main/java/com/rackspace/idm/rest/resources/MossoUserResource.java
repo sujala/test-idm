@@ -13,6 +13,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.config.LoggerFactoryWrapper;
@@ -36,6 +37,7 @@ public class MossoUserResource {
     private AuthorizationService authorizationService;
     private Logger logger;
 
+    @Autowired
     public MossoUserResource(UserService userService,
         UserConverter userConverter, AuthorizationService authorizationService,
         LoggerFactoryWrapper logger) {
