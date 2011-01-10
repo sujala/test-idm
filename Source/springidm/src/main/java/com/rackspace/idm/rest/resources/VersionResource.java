@@ -26,15 +26,17 @@ public class VersionResource {
     private CustomersResource customersResource;
     private PasswordRulesResource passwordRulesResource;
     private TokenResource tokenResource;
+    private XsdResource xsdResource;
 
     @Autowired
     public VersionResource(UsersResource usersResource,
         CustomersResource customersResource,
-        PasswordRulesResource passwordRulesResource, TokenResource tokenResource) {
+        PasswordRulesResource passwordRulesResource, TokenResource tokenResource, XsdResource xsdResource) {
         this.usersResource = usersResource;
         this.customersResource = customersResource;
         this.passwordRulesResource = passwordRulesResource;
         this.tokenResource = tokenResource;
+        this.xsdResource = xsdResource;
     }
     
     /**
@@ -79,5 +81,10 @@ public class VersionResource {
     @Path("token")
     public TokenResource getTokenResource() {
         return tokenResource;
+    }
+    
+    @Path("xsd")
+    public XsdResource getXsdResource() {
+        return xsdResource;
     }
 }

@@ -38,7 +38,7 @@ public class UserLocale {
     }
 
     public String getPrefferedLang() {
-        return prefferedLang.toString();
+        return prefferedLang != null ? prefferedLang.toString() : null;
     }
 
     public void setPrefferedLang(String lang) {

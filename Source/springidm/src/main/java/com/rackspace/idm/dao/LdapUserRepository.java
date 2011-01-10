@@ -1,6 +1,7 @@
 package com.rackspace.idm.dao;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -1047,15 +1048,15 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         user.setMossoId(resultEntry.getAttributeValueAsInteger(ATTR_MOSSO_ID));
         user.setNastId(resultEntry.getAttributeValue(ATTR_NAST_ID));
 
-        String created = resultEntry.getAttributeValue(ATTR_CREATED_DATE);
+        Date created = resultEntry.getAttributeValueAsDate(ATTR_CREATED_DATE);
         if (created != null) {
-            DateTime createdDate = DATE_PARSER.parseDateTime(created);
+            DateTime createdDate = new DateTime(created);
             user.setCreated(createdDate);
         }
 
-        String updated = resultEntry.getAttributeValue(ATTR_UPDATED_DATE);
+        Date updated = resultEntry.getAttributeValueAsDate(ATTR_UPDATED_DATE);
         if (created != null) {
-            DateTime updatedDate = DATE_PARSER.parseDateTime(updated);
+            DateTime updatedDate = new DateTime(updated);
             user.setUpdated(updatedDate);
         }
 
