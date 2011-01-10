@@ -3,6 +3,7 @@ package com.rackspace.idm.entities;
 import java.util.Locale;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import com.rackspace.idm.GlobalConstants;
@@ -32,6 +33,9 @@ public class User extends BaseUser {
     
     private String nastId = null;
     private Integer mossoId = null;
+    
+    private DateTime created;
+    private DateTime updated;
 
     public User() {
         // Needed by JAX-RS
@@ -356,6 +360,22 @@ public class User extends BaseUser {
         this.mossoId = mossoId;
     }
 
+    public DateTime getCreated() {
+        return created;
+    }
+
+    public void setCreated(DateTime created) {
+        this.created = created;
+    }
+
+    public DateTime getUpdated() {
+        return updated;
+    }
+
+    public void setUpdated(DateTime updated) {
+        this.updated = updated;
+    }
+
     public void setDefaults() {
         if (this.preference.getLocale() == null) {
             this.setPrefferedLang(GlobalConstants.USER_PREFERRED_LANG_DEFAULT);
@@ -425,14 +445,13 @@ public class User extends BaseUser {
         }
     }
 
-    
-    
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + ((apiKey == null) ? 0 : apiKey.hashCode());
         result = prime * result + ((country == null) ? 0 : country.hashCode());
+        result = prime * result + ((created == null) ? 0 : created.hashCode());
         result = prime * result
             + ((credential == null) ? 0 : credential.hashCode());
         result = prime * result
@@ -457,6 +476,7 @@ public class User extends BaseUser {
         result = prime * result + ((status == null) ? 0 : status.toString().hashCode());
         result = prime * result
             + ((uniqueId == null) ? 0 : uniqueId.hashCode());
+        result = prime * result + ((updated == null) ? 0 : updated.hashCode());
         return result;
     }
 
@@ -484,6 +504,13 @@ public class User extends BaseUser {
                 return false;
             }
         } else if (!country.equals(other.country)) {
+            return false;
+        }
+        if (created == null) {
+            if (other.created != null) {
+                return false;
+            }
+        } else if (!created.equals(other.created)) {
             return false;
         }
         if (credential == null) {
@@ -601,6 +628,13 @@ public class User extends BaseUser {
         } else if (!uniqueId.equals(other.uniqueId)) {
             return false;
         }
+        if (updated == null) {
+            if (other.updated != null) {
+                return false;
+            }
+        } else if (!updated.equals(other.updated)) {
+            return false;
+        }
         return true;
     }
 
@@ -613,7 +647,9 @@ public class User extends BaseUser {
             + iname + ", isLocked=" + isLocked + ", orgInum=" + orgInum
             + ", apiKey=" + apiKey + ", status=" + status + ", seeAlso="
             + seeAlso + ", softDeleted=" + softDeleted + ", region=" + region
-            + ", nastId=" + nastId + ", mossoId=" + mossoId + "]";
+            + ", nastId=" + nastId + ", mossoId=" + mossoId + ", created="
+            + created + ", updated=" + updated + ", username=" + username
+            + ", customerId=" + customerId + ", roles=" + roles + "]";
     }
 
     public static class Builder {
