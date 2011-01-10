@@ -8,6 +8,12 @@ url = 'http://localhost:8080/idm'
 def_hdrs = {'Content-Type':'application/json'}
 root = Resource(url)
 
+admin_cred = {'password':'password', 'username':'mkovacs', 'client_secret':'password',
+    'client_id':'ABCDEF', 'grant_type':'PASSWORD'}
+client_cred = {'client_secret':'password',
+    'client_id':'ABCDEF', 'grant_type':'NONE'}
+
+
 def show_response(resp):
     print(resp.status)
     body = resp.body_string()
@@ -15,10 +21,12 @@ def show_response(resp):
     print
     return body
 
+
 def do_get(res, hdrs=def_hdrs):
     print("GET %s" % res)
     resp = root.get(res, hdrs)
     return show_response(resp)
+
 
 def do_post(res, body, hdrs=def_hdrs):
     print("POST: %s" % res)
@@ -26,39 +34,44 @@ def do_post(res, body, hdrs=def_hdrs):
     resp = root.post(res, body, hdrs)
     return show_response(resp)
 
+
 def do_put(res, body, hdrs=def_hdrs):
     print("PUT: %s" % res)
     print("body -> %s" % body)
     resp = root.put(res, body, hdrs)
     return show_response(resp)
 
+
 def do_delete(res, hdrs=def_hdrs):
     print("DELETE %s" % res)
     resp = root.delete(res, hdrs)
     return show_response(resp)
 
+
 def get_auth(body):
     body = do_post('/token', body)
     return json.loads(body)
+
+
+def auth_header(cred, headers={}):
+    auth = get_auth(json.dumps(cred))
+    atoken = auth[u'access_token'][u'id']
+    headers['Authorization'] = 'OAuth %s' % atoken
+    print("Header: %s" % headers)
+    return headers
+
 
 def main():
     try:
         # Get root resource, versions.
         do_get('/')
-        authCred = {'password':'password', 'username':'mkovacs', 'client_secret':'password',
-            'client_id':'ABCDEF', 'grant_type':'PASSWORD'}
         
         # Get an access token
-        auth = get_auth(json.dumps(authCred))
-        print(auth)
-        atoken = auth[u'accessToken'][u'id']
-        # Make a header dictionary with the access token
-        hdrs = {}
+        hdrs = auth_header(admin_cred)
         hdrs.update(def_hdrs)
-        hdrs['Authorization'] = 'OAuth %s' % atoken
         
         # Test user
-        user_res = '/customers/RCN-000-000-000/users/john.eo'
+        user_res = '/customers/RACKSPACE/users/john.eo'
         
         #Get a user
         userResp = None
@@ -71,23 +84,22 @@ def main():
         if userResp:
             user = json.loads(userResp)
             if user['username'] == 'john.eo':
+                hdrs = auth_header(client_cred, hdrs)
                 do_delete(user_res, hdrs)
         
         # Add a user
-        user = {'customerId':'RCN-000-000-000', 'personId':'RPN-000-123-4567', 'username':'john.eo',
+        user = {'customerId':'RACKSPACE', 'personId':'RPN-000-123-4567', 'username':'john.eo',
             'password':{'password':'D0ntL00k@me'}, 'firstName':'John', 'lastName':'Eo',
             'email':'john.eo@rackspace.com', 'middleName':'helloworld',
             'secret':{'secretQuestion':'What is your favourite colour?',
                 'secretAnswer':'Yellow. No, blue!'},
             'prefLanguage':'en_US', 'timeZone':'America/Chicago'}
-        do_post('/customers/RCN-000-000-000/users/', json.dumps(user), hdrs)
+        hdrs = auth_header(admin_cred, hdrs)
+        do_post('/customers/RACKSPACE/users/', json.dumps(user), hdrs)
         
         # Authenticate the test user and validate his token
-        userCred = {'password':'D0ntL00k@me', 'username':'john.eo', 'clientSecret':'password',
-            'clientId':'ABCDEF', 'grantType':'PASSWORD'}
-        userAuth = get_auth(json.dumps(userCred))
-        utoken = userAuth[u'accessToken'][u'id']
-        do_get('/token/%s' % utoken, hdrs)
+        hdrs = auth_header(client_cred, hdr)
+        do_get('/token/%s' % ctoken, hdrs)
         
         # Clean up by deleting the test user
         do_delete(user_res, hdrs)
