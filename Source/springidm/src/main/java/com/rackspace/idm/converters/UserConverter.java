@@ -1,5 +1,8 @@
 package com.rackspace.idm.converters;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+
 import org.apache.commons.lang.StringUtils;
 
 import com.rackspace.idm.entities.BaseUser;
@@ -152,6 +155,25 @@ public class UserConverter {
         returnedUser.setSoftDeleted(user.getSoftDeleted());
         returnedUser.setMossoId(user.getMossoId());
         returnedUser.setNastId(user.getNastId());
+
+        try {
+            if (user.getCreated() != null) {
+
+                returnedUser.setCreated(DatatypeFactory.newInstance()
+                    .newXMLGregorianCalendar(
+                        user.getCreated().toGregorianCalendar()));
+            }
+
+            if (user.getUpdated() != null) {
+                returnedUser.setUpdated(DatatypeFactory.newInstance()
+                    .newXMLGregorianCalendar(
+                        user.getUpdated().toGregorianCalendar()));
+            }
+
+        } catch (DatatypeConfigurationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
         if (includePassword && user.getPasswordObj() != null
             && !StringUtils.isBlank(user.getPasswordObj().getValue())) {
