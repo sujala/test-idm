@@ -9,10 +9,6 @@
         <webroots>
           <root url="file://$MODULE_DIR$/src/main/webapp" relative="/" />
         </webroots>
-        <sourceRoots>
-          <root url="file://$MODULE_DIR$/src/main/java" />
-          <root url="file://$MODULE_DIR$/src/main/resources" />
-        </sourceRoots>
       </configuration>
     </facet>
   </component>
@@ -83,12 +79,10 @@
     <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-jaxrs:1.5.5" level="project" />
     <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-xc:1.5.5" level="project" />
     <orderEntry type="library" name="Maven: com.sun.jersey.contribs:jersey-spring:1.4" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.lunatech.doclets:jax-doclets:0.7" level="project" />
+    <orderEntry type="library" name="Maven: com.lunatech.doclets:jax-doclets:0.7" level="project" />
     <orderEntry type="library" name="Maven: org.hibernate:hibernate-validator:4.0.2.GA" level="project" />
     <orderEntry type="library" name="Maven: javax.validation:validation-api:1.0.0.GA" level="project" />
     <orderEntry type="library" name="Maven: spy:memcached:2.5" level="project" />
-    <orderEntry type="library" name="Maven: com.sun:sunxacml:1.0" level="project" />
-    <orderEntry type="library" name="Maven: com.sun:sunxacmltests:1.0" level="project" />
     <orderEntry type="library" name="Maven: org.aspectj:aspectjtools:1.6.10" level="project" />
   </component>
 </module>
