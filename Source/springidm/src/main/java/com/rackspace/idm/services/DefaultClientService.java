@@ -13,6 +13,7 @@ import com.rackspace.idm.entities.ClientSecret;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.exceptions.DuplicateException;
+import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.util.HashHelper;
 
 public class DefaultClientService implements ClientService {
@@ -37,7 +38,7 @@ public class DefaultClientService implements ClientService {
             logger.warn(
                 "Couldn't add client {} because customerId doesn't exist",
                 client.getCustomerId());
-            throw new IllegalStateException("Customer doesn't exist");
+            throw new NotFoundException("Customer doesn't exist");
         }
 
         Client exists = clientDao.findByClientname(client.getName());
