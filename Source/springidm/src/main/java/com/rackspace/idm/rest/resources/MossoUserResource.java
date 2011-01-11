@@ -67,8 +67,7 @@ public class MossoUserResource {
         @HeaderParam("Authorization") String authHeader,
         @PathParam("mossoId") int mossoId) {
 
-        // Racker's, Rackspace Clients, Specific Clients, Admins and User's are
-        // authorized
+        // Racker's, Rackspace Clients, Specific Clients, are authorized
         boolean authorized = authorizationService.authorizeRacker(authHeader)
             || authorizationService.authorizeRackspaceClient(authHeader)
             || authorizationService.authorizeClient(authHeader,
