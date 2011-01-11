@@ -235,6 +235,13 @@ public class DefinedPermissionResource {
             .getDefinedPermissionByClientIdAndPermissionId(clientId,
                 permissionId);
 
+        if (permission == null || !clientId.equals(permission.getClientId())) {
+            String errorMsg = String.format("Permission Not Found: %s",
+                permissionId);
+            logger.error(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+
         return Response.ok(permissionConverter.toPermissionJaxb(permission))
             .build();
     }
