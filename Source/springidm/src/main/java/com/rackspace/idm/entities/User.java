@@ -1,5 +1,6 @@
 package com.rackspace.idm.entities;
 
+import java.util.List;
 import java.util.Locale;
 
 import org.apache.commons.lang.StringUtils;
@@ -43,14 +44,13 @@ public class User extends BaseUser {
 
     @Deprecated
     public User(String username) {
-        this.username = username;
+        super(username);
     }
 
     @Deprecated
     public User(String username, String customerId, String email,
         UserHumanName name, UserLocale pref, UserCredential cred) {
-        this.username = username;
-        this.setCustomerId(customerId);
+        super(username, customerId);
         this.email = email;
         this.name = name;
         this.preference = pref;
@@ -374,6 +374,16 @@ public class User extends BaseUser {
 
     public void setUpdated(DateTime updated) {
         this.updated = updated;
+    }
+
+    @Override
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
+    }
+
+    @Override
+    public void setRoles(List<Role> roles) {
+        this.roles = roles;
     }
 
     public void setDefaults() {

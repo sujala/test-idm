@@ -168,10 +168,7 @@ public class MemcachedAccessTokenRepositoryTest {
     }
     
     private BaseUser getTestUser() {
-        BaseUser user = new BaseUser();
-        user.setCustomerId("customerId");
-        user.setUsername("johneo");
-        return user;
+        return new BaseUser("johneo", "customerId");
     }
     
     private BaseClient getTestClient() {

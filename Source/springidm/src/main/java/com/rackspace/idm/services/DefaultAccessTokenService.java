@@ -122,21 +122,17 @@ public class DefaultAccessTokenService implements AccessTokenService {
             owner = tokenOwner.getUsername();
         }
 
-        AccessToken accessToken = createToken(username, owner, requestor,
+        AccessToken accessToken = createToken(username, requestor,
             expirationTimeInSeconds);
         return accessToken;
     }
 
-    private AccessToken createToken(String username, String owner,
-        String requestor, int expirationTimeInSeconds) {
-
+    private AccessToken createToken(String username, String requestor, int expirationTimeInSeconds) {
         String tokenString = generateTokenWithDcPrefix();
-
-        BaseUser user = new BaseUser();
         BaseClient client = clientDao.findByClientId(requestor).getBaseClientWithoutClientPerms();
-
+        BaseUser user;
         if (isTrustedServer) {
-            user.setUsername(username);
+            user = new BaseUser(username);
         } else {
             user = userService.getUser(username).getBaseUser();
         }

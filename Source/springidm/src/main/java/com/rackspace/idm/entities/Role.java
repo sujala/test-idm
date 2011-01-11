@@ -1,11 +1,13 @@
 package com.rackspace.idm.entities;
 
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.List;
 
 public class Role implements Serializable {
     private static final long serialVersionUID = 875666210673489138L;
-    
+
     private String uniqueId = null;
     private String name = null;
     private String customerId = null;
@@ -23,8 +25,8 @@ public class Role implements Serializable {
     }
 
     public Role(String uniqueId, String name, String customerId,
-        String country, String inum, String iname, String orgInum,
-        String owner, RoleStatus status, String seeAlso, String type) {
+                String country, String inum, String iname, String orgInum,
+                String owner, RoleStatus status, String seeAlso, String type) {
         this.name = name;
         this.customerId = customerId;
         this.country = country;
@@ -162,7 +164,7 @@ public class Role implements Serializable {
         int result = 1;
         result = prime * result + ((country == null) ? 0 : country.hashCode());
         result = prime * result
-            + ((customerId == null) ? 0 : customerId.hashCode());
+                + ((customerId == null) ? 0 : customerId.hashCode());
         result = prime * result + ((iname == null) ? 0 : iname.hashCode());
         result = prime * result + ((inum == null) ? 0 : inum.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
@@ -170,10 +172,10 @@ public class Role implements Serializable {
         result = prime * result + ((owner == null) ? 0 : owner.hashCode());
         result = prime * result + ((seeAlso == null) ? 0 : seeAlso.hashCode());
         result = prime * result
-            + ((status == null) ? 0 : status.toString().hashCode());
+                + ((status == null) ? 0 : status.toString().hashCode());
         result = prime * result + ((type == null) ? 0 : type.hashCode());
         result = prime * result
-            + ((uniqueId == null) ? 0 : uniqueId.hashCode());
+                + ((uniqueId == null) ? 0 : uniqueId.hashCode());
         return result;
     }
 
@@ -272,9 +274,74 @@ public class Role implements Serializable {
     @Override
     public String toString() {
         return "Role [country=" + country + ", customerId=" + customerId
-            + ", iname=" + iname + ", inum=" + inum + ", name=" + name
-            + ", orgInum=" + orgInum + ", owner=" + owner + ", seeAlso="
-            + seeAlso + ", status=" + status + ", type=" + type + ", uniqueId="
-            + uniqueId + "]";
+                + ", iname=" + iname + ", inum=" + inum + ", name=" + name
+                + ", orgInum=" + orgInum + ", owner=" + owner + ", seeAlso="
+                + seeAlso + ", status=" + status + ", type=" + type + ", uniqueId="
+                + uniqueId + "]";
+    }
+
+    /**
+     * Used by Java serialization. Produces the serialized form of the Token
+     * class.
+     *
+     * @return The proxy instance of the Token class
+     */
+    private Object writeReplace() {
+        return new SerializationProxy(this);
+    }
+
+    /**
+     * Used by Java serialization. Prevent attempts to deserialize the Token
+     * object directly, without using the proxy object.
+     *
+     * @param stream Used by Java serialization API
+     * @throws java.io.InvalidObjectException By the Java serialization API
+     */
+    private void readObject(ObjectInputStream stream)
+            throws InvalidObjectException {
+        throw new InvalidObjectException("Serialization proxy is required.");
+    }
+
+    /**
+     * Serialized form for the Token object, based on the Serialization Proxy
+     * pattern in the book Effective Java, 2nd Edition, p. 312
+     * <p/>
+     * I.e., this is what actually gets serialized.
+     */
+    private static class SerializationProxy implements Serializable {
+        private String uniqueId = null;
+        private String name = null;
+        private String customerId = null;
+        private String country = null;
+        private String inum = null;
+        private String iname = null;
+        private String orgInum = null;
+        private String owner = null;
+        private RoleStatus status = RoleStatus.ACTIVE;
+        private String seeAlso = null;
+        private String type = null;
+        private List<Permission> permissions;
+
+        SerializationProxy(Role role) {
+            this.uniqueId = role.uniqueId;
+            this.name = role.name;
+            this.customerId = role.customerId;
+            this.country = role.country;
+            this.inum = role.inum;
+            this.iname = role.iname;
+            this.orgInum = role.orgInum;
+            this.owner = role.owner;
+            this.status = role.status;
+            this.seeAlso = role.seeAlso;
+            this.type = role.type;
+            this.permissions = role.permissions;
+        }
+
+        private Object readResolve() {
+            Role role = new Role(uniqueId, name, customerId, country, inum, iname, orgInum, owner, status, seeAlso, type);
+            role.setPermissions(permissions);
+            return role;
+        }
+
     }
 }

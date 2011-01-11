@@ -193,23 +193,10 @@ public class AuthorizationServiceTests {
         notAuthorizedClient = new BaseClient(clientId, customerId);
         nonRackspaceClient = new BaseClient(clientId, otherCustomerId);
 
-        authorizedUser = new User();
-        authorizedUser.setCustomerId(customerId);
-        authorizedUser.setUsername(username);
-
-        otherCompanyUser = new User();
-        otherCompanyUser.setCustomerId(otherCustomerId);
-        otherCompanyUser.setUsername(username);
-
-        authorizedAdmin = new User();
-        authorizedAdmin.setCustomerId(customerId);
-        authorizedAdmin.setUsername(username);
-        authorizedAdmin.setRoles(roles);
-
-        otherCompanyAdmin = new User();
-        otherCompanyAdmin.setCustomerId(otherCustomerId);
-        otherCompanyAdmin.setUsername(username);
-        otherCompanyAdmin.setRoles(roles);
+        authorizedUser = new BaseUser(username, customerId);
+        otherCompanyUser = new BaseUser(username, otherCustomerId);
+        authorizedAdmin = new BaseUser(username, customerId, roles);
+        otherCompanyAdmin = new BaseUser(username, otherCustomerId, roles);
 
         tokenExpiration = new DateTime();
 
