@@ -3,9 +3,7 @@ package com.rackspace.idm.services;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
-import com.rackspace.idm.util.AuthHeaderHelper;
 import org.slf4j.Logger;
 
 import com.rackspace.idm.GlobalConstants;

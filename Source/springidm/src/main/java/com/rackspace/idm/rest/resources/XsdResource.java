@@ -1,9 +1,7 @@
 package com.rackspace.idm.rest.resources;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.net.URL;
 
 import javax.ws.rs.GET;
