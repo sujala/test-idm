@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xslt/schema.xslt"?>
+
+<!-- (C) 2010 Rackspace Hosting, All Rights Reserved -->
+
+<schema elementFormDefault="qualified" attributeFormDefault="unqualified"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:idm="http://docs.rackspacecloud.com/idm/api/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+	xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" jaxb:version="2.1"
+	xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+	jaxb:extensionBindingPrefixes="xjc"
+	targetNamespace="http://docs.rackspacecloud.com/idm/api/v1.0">
+
+	<annotation>
+		<xsd:appinfo xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+			<xsdxt:title>Credentials</xsdxt:title>
+			<xsdxt:link rel="index" href="idmapi.xsd" />
+		</xsd:appinfo>
+		<xsd:documentation xml:lang="EN"
+			xmlns="http://www.w3.org/1999/xhtml">
+			<p>
+				This schema file defines entities credentials used to obtained
+				a
+				token from the authentication service.
+                 </p>
+		</xsd:documentation>
+	</annotation>
+
+	<element name="credentials" type="idm:UsernameCredentials">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					Credentials used to obtain an auth token.
+                     </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../samples/credentials.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/credentials.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="nastCredentials" type="idm:NastCredentials">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					Nast Credentials.
+                     </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../samples/nast-credentials.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/nast-credentials.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="mossoCredentials" type="idm:MossoCredentials">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					Mosso Credentials.
+                     </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../samples/mosso-credentials.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/mosso-credentials.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+
+	<!-- Complex Types -->
+
+	<complexType name="UsernameCredentials">
+		<attribute name="username" type="xsd:string" use="required">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>
+						The name of the user authenticated.
+                                 </p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+		<attribute name="key" type="xsd:string" use="required">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>
+						The API key.
+                         </p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+	</complexType>
+
+	<complexType name="NastCredentials">
+		<attribute name="nastId" type="xsd:string" use="required">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>
+						Nast Id used to identify the user.
+                                 </p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+		<attribute name="key" type="xsd:string" use="required">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>
+						The API key.
+                         </p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+	</complexType>
+
+	<complexType name="MossoCredentials">
+		<attribute name="mossoId" type="xsd:int" use="required">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>
+						Mosso account used to identify the user.
+                                 </p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+		<attribute name="key" type="xsd:string" use="required">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>
+						The API key.
+                         </p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+	</complexType>
+
+</schema>
+
