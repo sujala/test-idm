@@ -75,7 +75,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
 
-        boolean authorized = token.getTokenUser().getCustomerId() == customerId;
+        boolean authorized = token.getTokenUser().getCustomerId().equals(customerId);
 
         return authorized;
     }
