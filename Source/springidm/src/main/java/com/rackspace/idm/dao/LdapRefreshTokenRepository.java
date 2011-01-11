@@ -1,27 +1,16 @@
 package com.rackspace.idm.dao;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
+import com.rackspace.idm.entities.RefreshToken;
+import com.unboundid.ldap.sdk.*;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 
-import com.rackspace.idm.entities.RefreshToken;
-import com.rackspace.idm.oauthAuthentication.Token;
-import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.LDAPResult;
-import com.unboundid.ldap.sdk.LDAPSearchException;
-import com.unboundid.ldap.sdk.Modification;
-import com.unboundid.ldap.sdk.ModificationType;
-import com.unboundid.ldap.sdk.ResultCode;
-import com.unboundid.ldap.sdk.SearchResult;
-import com.unboundid.ldap.sdk.SearchResultEntry;
-import com.unboundid.ldap.sdk.SearchScope;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class LdapRefreshTokenRepository extends LdapRepository implements
     RefreshTokenDao {
@@ -49,10 +38,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         super(connPools, logger);
     }
 
-    public void save(Token token) {
-        
-        RefreshToken refreshToken = (RefreshToken) token;
-        
+    public void save(RefreshToken refreshToken) {
         getLogger().info("Saving Refresh Token - {}", refreshToken);
         if (refreshToken == null) {
             getLogger().error("Null instance of Token was passed");
@@ -67,7 +53,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         if (!StringUtils.isBlank(refreshToken.getTokenString())) {
             atts.add(new Attribute(ATTR_O, refreshToken.getTokenString()));
         }
-        if (token.getExpirationTime() != null) {
+        if (refreshToken.getExpirationTime() != null) {
             atts.add(new Attribute(ATTR_EXPIRATION, DATE_PARSER.print(refreshToken
                 .getExpirationTime())));
         }
@@ -142,7 +128,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         int delCount = 0;
         DateTime currentTime = new DateTime();
         for (String requestor : tokenRequestors) {
-            RefreshToken token = (RefreshToken) this.findTokenForOwner(username, 
+            RefreshToken token = this.findTokenForOwner(username,
                 requestor, currentTime);
             if (token != null) {
                 this.delete(token.getTokenString());

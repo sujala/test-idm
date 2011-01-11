@@ -1,15 +1,14 @@
 package com.rackspace.idm.dao;
 
-import java.util.Set;
-
+import com.rackspace.idm.entities.RefreshToken;
 import org.joda.time.DateTime;
 
-import com.rackspace.idm.entities.RefreshToken;
+import java.util.Set;
 
-public interface RefreshTokenDao extends GenericTokenDao {
+public interface RefreshTokenDao extends GenericTokenDao<RefreshToken> {
 
     RefreshToken findTokenForOwner(String owner, String requestor,
-        DateTime expiredAfter);
+                                   DateTime expiredAfter);
 
     void updateToken(RefreshToken refreshToken);
 

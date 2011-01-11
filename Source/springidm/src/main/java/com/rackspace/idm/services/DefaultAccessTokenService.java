@@ -49,7 +49,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
     }
 
     public AccessToken getAccessTokenByTokenString(String tokenString) {
-        return (AccessToken) tokenDao.findByTokenString(tokenString);
+        return tokenDao.findByTokenString(tokenString);
     }
 
     public AccessToken createAccessTokenForClient(String clientId) {
@@ -249,7 +249,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
         logger.info("Deleting Token {}", tokenToDelete);
 
-        AccessToken deletingToken = (AccessToken) tokenDao
+        AccessToken deletingToken = tokenDao
             .findByTokenString(tokenToDelete);
         if (deletingToken == null) {
             String error = "No entry found for token " + deletingToken;
@@ -257,7 +257,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
             throw new IllegalStateException(error);
         }
 
-        AccessToken requestingToken = (AccessToken) tokenDao
+        AccessToken requestingToken = tokenDao
             .findByTokenString(tokenStringRequestingDelete);
         if (requestingToken == null) {
             String error = "No entry found for token "
@@ -309,7 +309,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
         logger.debug("Validating Token: {}", tokenString);
 
-        AccessToken token = (AccessToken) tokenDao
+        AccessToken token = tokenDao
             .findByTokenString(tokenString);
 
         // Check if token is from other data center. Leaving this here.

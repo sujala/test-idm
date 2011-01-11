@@ -1,18 +1,15 @@
 package com.rackspace.idm.dao;
 
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-
+import com.rackspace.idm.entities.AccessToken;
 import net.spy.memcached.MemcachedClient;
-
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.oauthAuthentication.Token;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class MemcachedAccessTokenRepository implements AccessTokenDao {
 
@@ -28,10 +25,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
         this.logger = logger;
     }
 
-    public void save(Token token) {
-
-        AccessToken accessToken = (AccessToken) token;
-
+    public void save(AccessToken accessToken) {
         // Validate params
         if (accessToken == null) {
             logger.error("Token is null");
@@ -181,8 +175,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
         return null;
     }
 
-    public void deleteAllTokensForOwner(String owner,
-        Set<String> tokenRequestors) {
+    public void deleteAllTokensForOwner(String owner, Set<String> tokenRequestors) {
         if (StringUtils.isBlank(owner) || tokenRequestors == null
             || tokenRequestors.isEmpty()) {
             logger.error("Given parameters are null or empty");

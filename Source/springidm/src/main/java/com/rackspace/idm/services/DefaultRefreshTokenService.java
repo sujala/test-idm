@@ -49,7 +49,7 @@ public class DefaultRefreshTokenService implements RefreshTokenService {
     public RefreshToken getRefreshTokenByTokenString(String tokenString) {
         
         logger.debug("Getting refresh token: {}", tokenString);
-        RefreshToken refreshToken = (RefreshToken) refreshTokenDao.findByTokenString(tokenString);
+        RefreshToken refreshToken = refreshTokenDao.findByTokenString(tokenString);
         logger.debug("Got refresh token: {}", refreshToken);
         return refreshToken;
     }

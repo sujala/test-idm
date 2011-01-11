@@ -2,11 +2,11 @@ package com.rackspace.idm.dao;
 
 import com.rackspace.idm.oauthAuthentication.Token;
 
-public interface GenericTokenDao {
+public interface GenericTokenDao<T extends Token> {
 
-    void save(Token token);
+    void save(T token);
 
-    Token findByTokenString(String tokenString);
+    T findByTokenString(String tokenString);
 
     void delete(String tokenString);
 }

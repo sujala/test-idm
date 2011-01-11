@@ -102,7 +102,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     private AccessToken getAccessTokenFromAuthHeader(String authHeader) {
         String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
-        return (AccessToken) accessTokenDao.findByTokenString(tokenStr);
+        return accessTokenDao.findByTokenString(tokenStr);
     }
 
     private List<String> getAllowedMethodsFromPermissions(
