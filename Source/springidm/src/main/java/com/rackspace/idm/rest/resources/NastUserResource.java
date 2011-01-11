@@ -67,7 +67,7 @@ public class NastUserResource {
      * @param nastId username
      */
     @GET
-    @Path("{nastId")
+    @Path("{nastId}")
     public Response getUser(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("nastId") String nastId) {
