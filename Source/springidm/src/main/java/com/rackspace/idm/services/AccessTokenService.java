@@ -5,6 +5,8 @@ import com.rackspace.idm.exceptions.NotAuthorizedException;
 import org.joda.time.DateTime;
 
 public interface AccessTokenService {
+    AccessToken getAccessTokenByAuthHeader(String authHeader);
+    
     AccessToken getAccessTokenByTokenString(String tokenString);
 
     AccessToken getAccessTokenForUser(String username, String clientId,

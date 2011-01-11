@@ -18,11 +18,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.config.LoggerFactoryWrapper;
+import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.jaxb.UserSecret;
+import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
 
@@ -35,13 +37,16 @@ import com.rackspace.idm.services.UserService;
 @Component
 public class UserSecretResource {
 
+    private AccessTokenService accessTokenService;
     private UserService userService;
     private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
-    public UserSecretResource(UserService userService,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+    public UserSecretResource(AccessTokenService accessTokenService,
+        UserService userService, AuthorizationService authorizationService,
+        LoggerFactoryWrapper logger) {
+        this.accessTokenService = accessTokenService;
         this.userService = userService;
         this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
@@ -71,12 +76,14 @@ public class UserSecretResource {
 
         logger.info("Getting Secret Q&A for User: {}", username);
 
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);
@@ -123,13 +130,14 @@ public class UserSecretResource {
 
         logger.info("Updating Secret Q&A for User: {}", username);
 
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Racker's and User's are authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeUser(authHeader, customerId,
-                username);
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeUser(token, customerId, username);
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);

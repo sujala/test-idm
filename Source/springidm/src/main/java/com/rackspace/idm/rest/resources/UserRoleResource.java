@@ -18,11 +18,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.config.LoggerFactoryWrapper;
+import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Role;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.RoleService;
 import com.rackspace.idm.services.UserService;
@@ -36,15 +38,17 @@ import com.rackspace.idm.services.UserService;
 @Component
 public class UserRoleResource {
 
+    private AccessTokenService accessTokenService;
     private UserService userService;
     private RoleService roleService;
     private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
-    public UserRoleResource(UserService userService,
-        AuthorizationService authorizationService, RoleService roleService,
-        LoggerFactoryWrapper logger) {
+    public UserRoleResource(AccessTokenService accessTokenService,
+        UserService userService, AuthorizationService authorizationService,
+        RoleService roleService, LoggerFactoryWrapper logger) {
+        this.accessTokenService = accessTokenService;
         this.userService = userService;
         this.roleService = roleService;
         this.authorizationService = authorizationService;
@@ -82,14 +86,16 @@ public class UserRoleResource {
 
         logger.info("Setting role {} for User {}", roleName, username);
 
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Racker's, Specific Clients and Admins are authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath())
-            || authorizationService.authorizeAdmin(authHeader, customerId);
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo.getPath())
+            || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);
@@ -141,14 +147,16 @@ public class UserRoleResource {
 
         logger.info("Deleting role for User: {}", username);
 
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Racker's, Specific Clients and Admins are authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath())
-            || authorizationService.authorizeAdmin(authHeader, customerId);
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo.getPath())
+            || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);

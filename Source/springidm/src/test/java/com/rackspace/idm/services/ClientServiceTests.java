@@ -19,6 +19,7 @@ import com.rackspace.idm.entities.CustomerStatus;
 import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.DuplicateException;
+import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.services.DefaultClientService;
 import com.rackspace.idm.test.stub.StubLogger;
@@ -143,7 +144,7 @@ public class ClientServiceTests {
         EasyMock.verify(mockClientDao);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = NotFoundException.class)
     public void shouldNotAddClientIfCustomerNotExist() {
         Client client = getFakeClient();
         

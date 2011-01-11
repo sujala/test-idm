@@ -19,10 +19,12 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.RoleConverter;
+import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.entities.Role;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.CustomerService;
 import com.rackspace.idm.services.RoleService;
@@ -36,6 +38,7 @@ import com.rackspace.idm.services.RoleService;
 @Component
 public class RolesResource {
 
+    private AccessTokenService accessTokenService;
     private CustomerService customerService;
     private RoleService roleService;
     private RoleConverter roleConverter;
@@ -43,9 +46,11 @@ public class RolesResource {
     private Logger logger;
 
     @Autowired
-    public RolesResource(CustomerService customerService,
-        RoleService roleService, RoleConverter roleConverter,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+    public RolesResource(AccessTokenService accessTokenService,
+        CustomerService customerService, RoleService roleService,
+        RoleConverter roleConverter, AuthorizationService authorizationService,
+        LoggerFactoryWrapper logger) {
+        this.accessTokenService = accessTokenService;
         this.customerService = customerService;
         this.roleService = roleService;
         this.roleConverter = roleConverter;
@@ -75,16 +80,18 @@ public class RolesResource {
 
         logger.debug("Getting Customer Roles: {}", customerId);
 
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeRackspaceClient(authHeader)
-            || authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath())
-            || authorizationService.authorizeAdmin(authHeader, customerId);
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeRackspaceClient(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo.getPath())
+            || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);

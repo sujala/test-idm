@@ -21,6 +21,7 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.UserConverter;
+import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.entities.Password;
 import com.rackspace.idm.entities.Role;
@@ -32,6 +33,7 @@ import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.DuplicateUsernameException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.PasswordValidationException;
+import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.CustomerService;
 import com.rackspace.idm.services.PasswordComplexityService;
@@ -48,6 +50,7 @@ import com.rackspace.idm.validation.InputValidator;
 @Component
 public class UsersResource {
 
+    private AccessTokenService accessTokenService;
     private CustomerService customerService;
     private UserService userService;
     private RoleService roleService;
@@ -58,11 +61,13 @@ public class UsersResource {
     private Logger logger;
 
     @Autowired
-    public UsersResource(CustomerService customerService,
-                         UserService userService, RoleService roleService,
-                         InputValidator inputValidator, UserConverter userConverter,
-                         PasswordComplexityService passwordComplexityService,
-                         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+    public UsersResource(AccessTokenService accessTokenService,
+        CustomerService customerService, UserService userService,
+        RoleService roleService, InputValidator inputValidator,
+        UserConverter userConverter,
+        PasswordComplexityService passwordComplexityService,
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        this.accessTokenService = accessTokenService;
         this.customerService = customerService;
         this.userService = userService;
         this.roleService = roleService;
@@ -96,12 +101,14 @@ public class UsersResource {
         @HeaderParam("Authorization") String authHeader,
         com.rackspace.idm.jaxb.User user) {
 
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(authHeader,
+        boolean authorized = authorizationService.authorizeClient(token,
             request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);
@@ -216,15 +223,17 @@ public class UsersResource {
         @HeaderParam("Authorization") String authHeader,
         @PathParam("username") String username) {
 
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Racker's, Rackspace Clients, Specific Clients, Admins and User's are
         // authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeRackspaceClient(authHeader)
-            || authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeRackspaceClient(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo.getPath());
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);

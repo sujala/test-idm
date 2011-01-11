@@ -21,6 +21,7 @@ import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.exceptions.ForbiddenException;
+import com.rackspace.idm.util.AuthHeaderHelper;
 
 public class DefaultAccessTokenService implements AccessTokenService {
     private AccessTokenDao tokenDao;
@@ -31,10 +32,11 @@ public class DefaultAccessTokenService implements AccessTokenService {
     private int defaultTokenExpirationSeconds;
     private String dataCenterPrefix;
     private boolean isTrustedServer;
+    private AuthHeaderHelper authHeaderHelper;
 
     public DefaultAccessTokenService(TokenDefaultAttributes defaultAttributes,
         AccessTokenDao tokenDao, RefreshTokenDao refreshTokenDao,
-        ClientDao clientDao, UserService userService,
+        ClientDao clientDao, UserService userService,AuthHeaderHelper authHeaderHelper,
         Logger logger) {
 
         this.tokenDao = tokenDao;
@@ -46,6 +48,12 @@ public class DefaultAccessTokenService implements AccessTokenService {
             .getExpirationSeconds();
         this.dataCenterPrefix = defaultAttributes.getDataCenterPrefix();
         this.isTrustedServer = defaultAttributes.getIsTrustedServer();
+        this.authHeaderHelper = authHeaderHelper;
+    }
+    
+    public AccessToken getAccessTokenByAuthHeader(String authHeader) {
+        String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
+        return (AccessToken) tokenDao.findByTokenString(tokenStr);
     }
 
     public AccessToken getAccessTokenByTokenString(String tokenString) {

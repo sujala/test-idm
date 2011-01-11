@@ -15,33 +15,25 @@ import com.rackspace.idm.entities.Role;
 
 public class DefaultAuthorizationService implements AuthorizationService {
 
-    private AccessTokenDao accessTokenDao;
     private ClientDao clientDao;
-    private AuthHeaderHelper authHeaderHelper;
     private Logger logger;
 
-    public DefaultAuthorizationService(AccessTokenDao accessTokenDao,
-        ClientDao clientDao, AuthHeaderHelper authHeaderHelper, Logger logger) {
-        this.accessTokenDao = accessTokenDao;
-        this.authHeaderHelper = authHeaderHelper;
+    public DefaultAuthorizationService(ClientDao clientDao, Logger logger) {
         this.clientDao = clientDao;
         this.logger = logger;
     }
 
-    public boolean authorizeRacker(String authHeader) {
-        AccessToken token = getAccessTokenFromAuthHeader(authHeader);
+    public boolean authorizeRacker(AccessToken token) {
         return token.getIsTrusted();
     }
 
-    public boolean authorizeRackspaceClient(String authHeader) {
-        AccessToken token = getAccessTokenFromAuthHeader(authHeader);
+    public boolean authorizeRackspaceClient(AccessToken token) {
         return token.isClientToken()
             && token.getTokenClient().getCustomerId()
                 .equals(GlobalConstants.RACKSPACE_CUSTOMER_ID);
     }
 
-    public boolean authorizeClient(String authHeader, String verb, String uri) {
-        AccessToken token = getAccessTokenFromAuthHeader(authHeader);
+    public boolean authorizeClient(AccessToken token, String verb, String uri) {
 
         if (!token.hasClientPermissions()) {
             return false;
@@ -53,9 +45,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return checkPermissions(allowedActions, verb, uri);
     }
 
-    public boolean authorizeUser(String authHeader, String customerId,
+    public boolean authorizeUser(AccessToken token, String customerId,
         String username) {
-        AccessToken token = getAccessTokenFromAuthHeader(authHeader);
 
         if (token.isClientToken()) {
             return false;
@@ -68,20 +59,19 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    public boolean authorizeCustomerUser(String authHeader, String customerId) {
-        AccessToken token = getAccessTokenFromAuthHeader(authHeader);
+    public boolean authorizeCustomerUser(AccessToken token, String customerId) {
 
         if (token.isClientToken()) {
             return false;
         }
 
-        boolean authorized = token.getTokenUser().getCustomerId().equals(customerId);
+        boolean authorized = token.getTokenUser().getCustomerId()
+            .equals(customerId);
 
         return authorized;
     }
 
-    public boolean authorizeAdmin(String authHeader, String customerId) {
-        AccessToken token = getAccessTokenFromAuthHeader(authHeader);
+    public boolean authorizeAdmin(AccessToken token, String customerId) {
 
         if (!token.hasUserRoles()
             || !token.getTokenUser().getCustomerId().equals(customerId)) {
@@ -98,11 +88,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         return authorized;
-    }
-
-    private AccessToken getAccessTokenFromAuthHeader(String authHeader) {
-        String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
-        return accessTokenDao.findByTokenString(tokenStr);
     }
 
     private List<String> getAllowedMethodsFromPermissions(

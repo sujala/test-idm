@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.ClientConverter;
+import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.errors.ApiError;
@@ -33,6 +34,7 @@ import com.rackspace.idm.exceptions.CustomerConflictException;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.services.CustomerService;
@@ -47,6 +49,7 @@ import com.rackspace.idm.validation.InputValidator;
 @Component
 public class ClientsResource {
 
+    private AccessTokenService accessTokenService;
     private CustomerService customerService;
     private InputValidator inputValidator;
     private ClientConverter clientConverter;
@@ -56,10 +59,12 @@ public class ClientsResource {
     private Logger logger;
 
     @Autowired
-    public ClientsResource(CustomerService customerService,
-        InputValidator inputValidator, ClientConverter clientConverter,
-        ClientService clientService, ClientResource clientResource,
+    public ClientsResource(AccessTokenService accessTokenService,
+        CustomerService customerService, InputValidator inputValidator,
+        ClientConverter clientConverter, ClientService clientService,
+        ClientResource clientResource,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        this.accessTokenService = accessTokenService;
         this.customerService = customerService;
         this.clientService = clientService;
         this.clientConverter = clientConverter;
@@ -91,16 +96,18 @@ public class ClientsResource {
 
         logger.debug("Getting Customer Clients: {}", customerId);
 
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeRackspaceClient(authHeader)
-            || authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath())
-            || authorizationService.authorizeAdmin(authHeader, customerId);
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeRackspaceClient(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo.getPath())
+            || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);
@@ -146,14 +153,16 @@ public class ClientsResource {
         @PathParam("customerId") String customerId,
         com.rackspace.idm.jaxb.Client client) {
 
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Racker's, Specific Clients and Admins are authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath())
-            || authorizationService.authorizeAdmin(authHeader, customerId);
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo.getPath())
+            || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);

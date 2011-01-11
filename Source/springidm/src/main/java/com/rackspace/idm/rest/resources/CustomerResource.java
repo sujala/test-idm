@@ -19,9 +19,11 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.CustomerConverter;
+import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.CustomerService;
 
@@ -34,6 +36,7 @@ import com.rackspace.idm.services.CustomerService;
 @Component
 public class CustomerResource {
 
+    private AccessTokenService accessTokenService;
     private ClientsResource clientsResource;
     private CustomerLockResource customerLockResource;
     private RolesResource rolesResource;
@@ -44,11 +47,13 @@ public class CustomerResource {
     private Logger logger;
 
     @Autowired
-    public CustomerResource(ClientsResource clientsResource,
+    public CustomerResource(AccessTokenService accessTokenService,
+        ClientsResource clientsResource,
         CustomerLockResource customerLockResource, RolesResource rolesResource,
-        CustomerUsersResource customerUsersResource, CustomerService customerService,
-        CustomerConverter customerConverter,
+        CustomerUsersResource customerUsersResource,
+        CustomerService customerService, CustomerConverter customerConverter,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        this.accessTokenService = accessTokenService;
         this.clientsResource = clientsResource;
         this.customerLockResource = customerLockResource;
         this.rolesResource = rolesResource;
@@ -81,14 +86,16 @@ public class CustomerResource {
 
         logger.debug("Getting Customer: {}", customerId);
 
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Racker's, Rackspace Clients and Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeRackspaceClient(authHeader)
-            || authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeRackspaceClient(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo.getPath());
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);
@@ -132,12 +139,14 @@ public class CustomerResource {
 
         logger.info("Deleting Customer :{}", customerId);
 
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(authHeader,
+        boolean authorized = authorizationService.authorizeClient(token,
             request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);

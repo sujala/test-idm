@@ -18,10 +18,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.config.LoggerFactoryWrapper;
+import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.jaxb.UserApiKey;
+import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
 
@@ -40,13 +42,15 @@ public class ApiKeyResource {
     @Context
     Request request;
 
+    private AccessTokenService accessTokenService;
     private UserService userService;
     private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
-    public ApiKeyResource(UserService userService,
+    public ApiKeyResource(AccessTokenService accessTokenService,UserService userService,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        this.accessTokenService = accessTokenService;
         this.userService = userService;
         this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
@@ -75,15 +79,16 @@ public class ApiKeyResource {
         @PathParam("username") String username) {
         logger.debug("Reseting Cloud Auth service API key for User: {}",
             username);
+        
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Specific Clients and Users are authorized
-        boolean authorized = authorizationService.authorizeClient(authHeader,
+        boolean authorized = authorizationService.authorizeClient(token,
                 request.getMethod(), uriInfo.getPath())
-            || authorizationService.authorizeUser(authHeader, customerId,
+            || authorizationService.authorizeUser(token, customerId,
                 username);
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);
@@ -124,17 +129,18 @@ public class ApiKeyResource {
         @PathParam("username") String username) {
         logger.info("Reseting Cloud Auth service API key for User: {}",
             username);
+        
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients, Admins and Users are authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeClient(authHeader,
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeClient(token,
                 request.getMethod(), uriInfo.getPath())
-            || authorizationService.authorizeAdmin(authHeader, customerId)
-            || authorizationService.authorizeUser(authHeader, customerId,
+            || authorizationService.authorizeAdmin(token, customerId)
+            || authorizationService.authorizeUser(token, customerId,
                 username);
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);

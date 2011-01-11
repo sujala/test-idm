@@ -22,12 +22,14 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.ErrorMsg;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.CustomerConverter;
+import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.errors.ApiError;
 import com.rackspace.idm.exceptions.ApiException;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.ForbiddenException;
+import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.CustomerService;
 import com.rackspace.idm.validation.InputValidator;
@@ -41,6 +43,7 @@ import com.rackspace.idm.validation.InputValidator;
 @Component
 public class CustomersResource {
 
+    private AccessTokenService accessTokenService;
     private CustomerResource customerResource;
     private CustomerService customerService;
     private InputValidator inputValidator;
@@ -49,10 +52,11 @@ public class CustomersResource {
     private Logger logger;
 
     @Autowired
-    public CustomersResource(CustomerResource customerResource,
-        CustomerService customerService, InputValidator inputValidator,
-        CustomerConverter customerConverter,AuthorizationService authorizationService,
-        LoggerFactoryWrapper logger) {
+    public CustomersResource(AccessTokenService accessTokenService,
+        CustomerResource customerResource, CustomerService customerService,
+        InputValidator inputValidator, CustomerConverter customerConverter,
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        this.accessTokenService = accessTokenService;
         this.customerResource = customerResource;
         this.customerService = customerService;
         this.inputValidator = inputValidator;
@@ -77,16 +81,19 @@ public class CustomersResource {
      * @param inputCustomer New Customer
      */
     @POST
-    public Response addCustomer(@Context UriInfo uriInfo, @Context Request request,
+    public Response addCustomer(@Context UriInfo uriInfo,
+        @Context Request request,
         @HeaderParam("Authorization") String authHeader,
         com.rackspace.idm.jaxb.Customer inputCustomer) {
-        
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);

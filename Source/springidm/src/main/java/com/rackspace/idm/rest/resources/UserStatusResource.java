@@ -3,7 +3,6 @@ package com.rackspace.idm.rest.resources;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
@@ -18,10 +17,12 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.UserConverter;
+import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
 
@@ -34,15 +35,17 @@ import com.rackspace.idm.services.UserService;
 @Component
 public class UserStatusResource {
 
+    private AccessTokenService accessTokenService;
     private UserService userService;
     private UserConverter userConverter;
     private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
-    public UserStatusResource(UserService userService,
-        UserConverter userConverter, AuthorizationService authorizationService,
-        LoggerFactoryWrapper logger) {
+    public UserStatusResource(AccessTokenService accessTokenService,
+        UserService userService, UserConverter userConverter,
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        this.accessTokenService = accessTokenService;
         this.userService = userService;
         this.userConverter = userConverter;
         this.authorizationService = authorizationService;
@@ -76,14 +79,16 @@ public class UserStatusResource {
 
         logger.info("Updating Status for User: {}", username);
 
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Racker's, Specific Clients and Admins are authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath())
-            || authorizationService.authorizeAdmin(authHeader, customerId);
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo.getPath())
+            || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);

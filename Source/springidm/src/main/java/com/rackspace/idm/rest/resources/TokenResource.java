@@ -162,17 +162,19 @@ public class TokenResource {
         @PathParam("tokenString") String tokenString) {
 
         logger.debug("Validating Access Token: {}", tokenString);
+        
+        AccessToken authToken = this.tokenService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Only Rackers, Rackspace Clients and Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeRackspaceClient(authHeader)
-            || authorizationService.authorizeClient(authHeader,
+        boolean authorized = authorizationService.authorizeRacker(authToken)
+            || authorizationService.authorizeRackspaceClient(authToken)
+            || authorizationService.authorizeClient(authToken,
                 request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+                authToken);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }

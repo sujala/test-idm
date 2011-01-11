@@ -14,7 +14,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import com.rackspace.idm.services.AccessTokenService;
-import com.rackspace.idm.util.AuthHeaderHelper;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -46,20 +45,18 @@ public class DefinedPermissionResource {
     private InputValidator inputValidator;
     private AuthorizationService authorizationService;
     private AccessTokenService accessTokenService;
-    private AuthHeaderHelper authHeaderHelper;
     private Logger logger;
 
     @Autowired
     public DefinedPermissionResource(ClientService clientService,
         PermissionConverter permissionConverter, InputValidator inputValidator,
-        AuthorizationService authorizationService, AccessTokenService accessTokenService,
-        AuthHeaderHelper authHeaderHelper, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService,
+        AccessTokenService accessTokenService, LoggerFactoryWrapper logger) {
         this.permissionConverter = permissionConverter;
         this.inputValidator = inputValidator;
         this.clientService = clientService;
         this.authorizationService = authorizationService;
         this.accessTokenService = accessTokenService;
-        this.authHeaderHelper = authHeaderHelper;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -88,16 +85,18 @@ public class DefinedPermissionResource {
         @PathParam("clientId") String clientId,
         @PathParam("permissionId") String permissionId,
         com.rackspace.idm.jaxb.Permission permission) {
-        AccessToken token = getAccessTokenFromAuthHeader(authHeader);
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's or the specified client are authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
+        boolean authorized = authorizationService.authorizeRacker(token)
             || (token.isClientToken() && token.getTokenClient().getClientId()
                 .equals(clientId));
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+                token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -126,11 +125,6 @@ public class DefinedPermissionResource {
         return Response.ok(permission).build();
     }
 
-    private AccessToken getAccessTokenFromAuthHeader(String authHeader) {
-        String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
-        return accessTokenService.getAccessTokenByTokenString(tokenStr);
-    }
-
     /**
      * Deletes a Client defined permission.
      * 
@@ -154,16 +148,18 @@ public class DefinedPermissionResource {
         @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId,
         @PathParam("permissionId") String permissionId) {
-        AccessToken token = getAccessTokenFromAuthHeader(authHeader);
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's or the specified client are authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
+        boolean authorized = authorizationService.authorizeRacker(token)
             || (token.isClientToken() && token.getTokenClient().getClientId()
                 .equals(clientId));
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+                token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -208,25 +204,28 @@ public class DefinedPermissionResource {
         @PathParam("clientId") String clientId,
         @PathParam("permissionId") String permissionId) {
 
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeRackspaceClient(authHeader)
-            || authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath())
-            || authorizationService.authorizeAdmin(authHeader, customerId);
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeRackspaceClient(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo.getPath())
+            || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
-        
+
         Client client = this.clientService.getById(clientId);
         if (client == null || !client.getCustomerId().equals(customerId)) {
-            String errMsg = String.format("Client with Id %s not found.", clientId);
+            String errMsg = String.format("Client with Id %s not found.",
+                clientId);
             logger.error(errMsg);
             throw new NotFoundException(errMsg);
         }

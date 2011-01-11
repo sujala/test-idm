@@ -22,6 +22,7 @@ import com.rackspace.idm.GlobalConstants;
 @Component
 public class VersionResource {
 
+    private AuthResource authResource;
     private UsersResource usersResource;
     private CustomersResource customersResource;
     private MossoUserResource mossoUserResource;
@@ -31,11 +32,12 @@ public class VersionResource {
     private XsdResource xsdResource;
 
     @Autowired
-    public VersionResource(UsersResource usersResource,
+    public VersionResource(AuthResource authResource, UsersResource usersResource,
         CustomersResource customersResource,
         MossoUserResource mossoUserResource, NastUserResource nastUserResource,
         PasswordRulesResource passwordRulesResource,
         TokenResource tokenResource, XsdResource xsdResource) {
+        this.authResource = authResource;
         this.usersResource = usersResource;
         this.customersResource = customersResource;
         this.mossoUserResource = mossoUserResource;
@@ -92,6 +94,11 @@ public class VersionResource {
     @Path("passwordrules")
     public PasswordRulesResource getPasswordRulesResource() {
         return passwordRulesResource;
+    }
+
+    @Path("auth")
+    public AuthResource getAuthResource() {
+        return authResource;
     }
 
     @Path("token")

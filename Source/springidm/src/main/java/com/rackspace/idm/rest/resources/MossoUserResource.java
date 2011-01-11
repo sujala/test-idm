@@ -18,9 +18,11 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.UserConverter;
+import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
 
@@ -32,15 +34,18 @@ import com.rackspace.idm.services.UserService;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class MossoUserResource {
+
+    private AccessTokenService accessTokenService;
     private UserService userService;
     private UserConverter userConverter;
     private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
-    public MossoUserResource(UserService userService,
-        UserConverter userConverter, AuthorizationService authorizationService,
-        LoggerFactoryWrapper logger) {
+    public MossoUserResource(AccessTokenService accessTokenService,
+        UserService userService, UserConverter userConverter,
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        this.accessTokenService = accessTokenService;
         this.userConverter = userConverter;
         this.userService = userService;
         this.authorizationService = authorizationService;
@@ -67,14 +72,16 @@ public class MossoUserResource {
         @HeaderParam("Authorization") String authHeader,
         @PathParam("mossoId") int mossoId) {
 
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Racker's, Rackspace Clients, Specific Clients, are authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeRackspaceClient(authHeader)
-            || authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeRackspaceClient(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo.getPath());
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);

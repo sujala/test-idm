@@ -18,7 +18,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import com.rackspace.idm.util.AuthHeaderHelper;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -35,7 +34,6 @@ import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.exceptions.PermissionConflictException;
-import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
@@ -56,7 +54,6 @@ public class DefinedPermissionsResource {
     private InputValidator inputValidator;
     private AuthorizationService authorizationService;
     private AccessTokenService accessTokenService;
-    private AuthHeaderHelper authHeaderHelper;
     private Logger logger;
 
     @Autowired
@@ -64,16 +61,14 @@ public class DefinedPermissionsResource {
         DefinedPermissionResource definedPermissionResource,
         ClientService clientService, PermissionConverter permissionConverter,
         InputValidator inputValidator,
-        AuthorizationService authorizationService, AccessTokenService accessTokenService,
-        AuthHeaderHelper authHeaderHelper,
-        LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService,
+        AccessTokenService accessTokenService, LoggerFactoryWrapper logger) {
         this.definedPermissionResource = definedPermissionResource;
         this.permissionConverter = permissionConverter;
         this.inputValidator = inputValidator;
         this.clientService = clientService;
         this.authorizationService = authorizationService;
         this.accessTokenService = accessTokenService;
-        this.authHeaderHelper = authHeaderHelper;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -99,35 +94,38 @@ public class DefinedPermissionsResource {
         @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
-            || authorizationService.authorizeRackspaceClient(authHeader)
-            || authorizationService.authorizeClient(authHeader,
-                request.getMethod(), uriInfo.getPath())
-            || authorizationService.authorizeAdmin(authHeader, customerId);
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeRackspaceClient(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo.getPath())
+            || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String token = authHeader.split(" ")[1];
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
-        
+
         Client client = this.clientService.getById(clientId);
         if (client == null || !client.getCustomerId().equals(customerId)) {
-            String errMsg = String.format("Client with Id %s not found.", clientId);
+            String errMsg = String.format("Client with Id %s not found.",
+                clientId);
             logger.error(errMsg);
             throw new NotFoundException(errMsg);
         }
 
         List<Permission> defineds = this.clientService
             .getDefinedPermissionsByClientId(clientId);
-        
+
         if (defineds == null) {
-            String errorMsg = String.format("Permissions Not Found for client: %s",
-                clientId);
+            String errorMsg = String.format(
+                "Permissions Not Found for client: %s", clientId);
             logger.error(errorMsg);
             throw new NotFoundException(errorMsg);
         }
@@ -164,11 +162,12 @@ public class DefinedPermissionsResource {
         @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId,
         com.rackspace.idm.jaxb.Permission permission) {
-        String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
-        AccessToken token = accessTokenService.getAccessTokenByTokenString(tokenStr);
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's or the specified client are authorized
-        boolean authorized = authorizationService.authorizeRacker(authHeader)
+        boolean authorized = authorizationService.authorizeRacker(token)
             || (token.isClientToken() && token.getTokenClient().getClientId()
                 .equals(clientId));
 
