@@ -133,7 +133,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
         String tokenString = generateTokenWithDcPrefix();
 
         BaseUser user = new BaseUser();
-        BaseClient client = clientDao.findByClientId(requestor).getBaseClient();
+        BaseClient client = clientDao.findByClientId(requestor).getBaseClientWithoutClientPerms();
 
         if (isTrustedServer) {
             user.setUsername(username);
@@ -194,7 +194,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
         AccessToken accessToken = new AccessToken(tokenString,
             new DateTime().plusSeconds(expirationTimeInSeconds),
-            tokenOwner.getBaseUser(), tokenRequestor.getBaseClient(),
+            tokenOwner.getBaseUser(), tokenRequestor.getBaseClientWithoutClientPerms(),
             IDM_SCOPE.SET_PASSWORD);
         tokenDao.save(accessToken);
         logger.debug("Created Password Reset Access Token For User: {} : {}",
