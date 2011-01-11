@@ -67,7 +67,7 @@ public class MossoUserResource {
      * @param mossoId username
      */
     @GET
-    @Path("{mossoId")
+    @Path("{mossoId}")
     public Response getUser(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("mossoId") int mossoId) {
