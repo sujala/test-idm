@@ -1,3 +1,5 @@
+######################################## Top Levels #######################################
+
 dn: dc=rackspace,dc=com
 objectClass: top
 objectClass: domain
@@ -17,6 +19,9 @@ objectClass: top
 objectClass: organization
 objectClass: extensibleObject
 o: rackspace
+
+
+######################################## Customers #######################################
 
 dn: o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -49,6 +54,73 @@ objectClass: top
 objectClass: organizationalUnit
 objectClass: extensibleObject
 ou: applications
+
+dn: o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rackspaceOrganization
+objectClass: extensibleObject
+iname: @Rackspace.TestCustomer
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000
+locked: FALSE
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000
+owner: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000
+rackspaceCustomerNumber: RCN-111-111-111
+softDeleted: FALSE
+status: ACTIVE
+seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000
+
+dn: ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+objectClass: extensibleObject
+ou: people
+
+dn: ou=groups,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+objectClass: extensibleObject
+ou: groups
+
+dn: ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+objectClass: extensibleObject
+ou: applications
+
+dn: o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rackspaceOrganization
+objectClass: extensibleObject
+iname: @Rackspace.QATestingCustomer
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.999
+locked: FALSE
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.999
+owner: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999
+rackspaceCustomerNumber: RCN-QATestingCustomer
+softDeleted: FALSE
+status: ACTIVE
+seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999
+
+
+dn: ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+objectClass: extensibleObject
+ou: people
+
+dn: ou=groups,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+objectClass: extensibleObject
+ou: groups
+
+dn: ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+objectClass: extensibleObject
+ou: applications
+
+######################################## Users #######################################
 
 dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -101,6 +173,85 @@ sn: Ly
 timeZone: America/Chicago
 uid: huey
 userPassword: P@ssw0rd
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000!1111,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rackspacePerson
+c: USA
+displayName: Test User
+givenName: Test
+iname: @Rackspace.TestCustomer*Matt
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000!1111
+locked: FALSE
+mail: test.user@rackspace.com
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000
+preferredLanguage: en-US
+rackspaceCustomerNumber: RCN-111-111-111
+rackspacePersonNumber: RPN-999-999-999
+rackspaceApiKey: 0987654321
+secretQuestion: What is the name of your employer?
+secretAnswer: Test Customer
+softDeleted: FALSE
+status: ACTIVE
+seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000!1111
+sn: User
+timeZone: America/Chicago
+uid: testuser
+userPassword: password
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!10001,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rackspacePerson
+c: USA
+displayName: qauser
+givenName: qauser
+iname: @Rackspace.TestCustomer*QATester
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.999!10001
+locked: FALSE
+mail: quauser@example.com
+middleName: none
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.999
+preferredLanguage: en-US
+rackspaceCustomerNumber: RCN-QATestingCustomer
+rackspacePersonNumber: RPN-qauser-000-10001
+rackspaceApiKey: qauser-000-001
+secretQuestion: What is the name of your employer?
+secretAnswer: Rackspace
+softDeleted: FALSE
+status: ACTIVE
+seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!10001
+sn: Tester
+timeZone: America/Chicago
+uid: qauser
+userPassword: password
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!10002,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rackspacePerson
+c: USA
+displayName: qaadmin
+givenName: qaadmin
+iname: @Rackspace.TestCustomer*QAAdmin
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.999!10002
+locked: FALSE
+mail: qaadmin@example.com
+middleName: none
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.999
+preferredLanguage: en-US
+rackspaceCustomerNumber: RCN-QATestingCustomer
+rackspacePersonNumber: RPN-qauser-000-10002
+rackspaceApiKey: qaadmin-000-10002
+secretQuestion: What is the name of your employer?
+secretAnswer: Rackspace
+softDeleted: FALSE
+status: ACTIVE
+seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!10002
+sn: Tester
+timeZone: America/Chicago
+uid: qaadmin
+userPassword: password
+
+######################################## Applications #######################################
 
 dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!2222,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -228,6 +379,36 @@ status: ACTIVE
 seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
 softDeleted: FALSE
 userPassword: password
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000!6666,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rackspaceApplication
+displayName: Customer Client
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000!6666
+locked: FALSE
+owner: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000
+rackspaceCustomerNumber: RCN-111-111-111
+rackspaceApiKey: CUSTOMERCLIENT
+status: ACTIVE
+seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000
+softDeleted: FALSE
+userPassword: password
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!APP.001,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rackspaceApplication
+displayName: QA Client
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.999!APP.001
+locked: FALSE
+owner: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999
+rackspaceCustomerNumber: RCN-QATestingCustomer
+rackspaceApiKey: QATESTCLIENT
+status: ACTIVE
+seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999
+softDeleted: FALSE
+userPassword: password
+
+######################################## Permissions #######################################
 
 dn: cn=AddCustomer,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -757,6 +938,8 @@ rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
 blob: DELETE token/[^/]+
 
+######################################## Groups (Roles) #######################################
+
 dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!AAAA,ou=groups,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: groupOfUniqueNames
@@ -776,77 +959,6 @@ softDeleted: FALSE
 status: ACTIVE
 seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
 
-dn: o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: rackspaceOrganization
-objectClass: extensibleObject
-iname: @Rackspace.TestCustomer
-inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000
-locked: FALSE
-o: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000
-owner: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000
-rackspaceCustomerNumber: RCN-111-111-111
-softDeleted: FALSE
-status: ACTIVE
-seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000
-
-dn: ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: organizationalUnit
-objectClass: extensibleObject
-ou: people
-
-dn: ou=groups,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: organizationalUnit
-objectClass: extensibleObject
-ou: groups
-
-dn: ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: organizationalUnit
-objectClass: extensibleObject
-ou: applications
-
-dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000!1111,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: rackspacePerson
-c: USA
-displayName: Test User
-givenName: Test
-iname: @Rackspace.TestCustomer*Matt
-inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000!1111
-locked: FALSE
-mail: test.user@rackspace.com
-o: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000
-preferredLanguage: en-US
-rackspaceCustomerNumber: RCN-111-111-111
-rackspacePersonNumber: RPN-999-999-999
-rackspaceApiKey: 0987654321
-secretQuestion: What is the name of your employer?
-secretAnswer: Test Customer
-softDeleted: FALSE
-status: ACTIVE
-seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000!1111
-sn: User
-timeZone: America/Chicago
-uid: testuser
-userPassword: password
-
-dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000!6666,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: rackspaceApplication
-displayName: Customer Client
-inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000!6666
-locked: FALSE
-owner: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000
-rackspaceCustomerNumber: RCN-111-111-111
-rackspaceApiKey: CUSTOMERCLIENT
-status: ACTIVE
-seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000
-softDeleted: FALSE
-userPassword: password
-
 dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000!AAAA,ou=groups,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: groupOfUniqueNames
@@ -865,3 +977,22 @@ rackspaceCustomerNumber: RCN-111-111-111
 softDeleted: FALSE
 status: ACTIVE
 seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!AAAA,ou=groups,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: rackspaceGroup
+objectClass: extensibleObject
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.999!AAAA
+c: USA
+cn: Idm Admin
+displayName: Idm Admin
+groupType: rackspacePredefined
+iname: @Rackspace.QATestCustomer*IdmAdmin
+uniqueMember: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!10002,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.999
+owner: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999
+rackspaceCustomerNumber: RCN-QATestingCustomer
+softDeleted: FALSE
+status: ACTIVE
+seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999
