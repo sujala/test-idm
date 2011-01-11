@@ -1,6 +1,7 @@
 package com.rackspace.idm.entities;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -35,7 +36,7 @@ public class BaseClient implements Serializable {
     }
     
     public List<Permission> getPermissions() {
-        return permissions;
+        return Collections.unmodifiableList(permissions);
     }
     
     public void setPermissions(List<Permission> permissions) {

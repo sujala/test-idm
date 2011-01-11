@@ -1,6 +1,7 @@
 package com.rackspace.idm.entities;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -41,7 +42,7 @@ public class BaseUser implements Serializable {
     }
 
     public List<Role> getRoles() {
-        return roles;
+        return Collections.unmodifiableList(roles);
     }
 
     public void setRoles(List<Role> roles) {
