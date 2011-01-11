@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.PermissionConverter;
 import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.errors.ApiError;
 import com.rackspace.idm.exceptions.BadRequestException;
@@ -222,17 +223,17 @@ public class DefinedPermissionResource {
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
+        
+        Client client = this.clientService.getById(clientId);
+        if (client == null || !client.getCustomerId().equals(customerId)) {
+            String errMsg = String.format("Client with Id %s not found.", clientId);
+            logger.error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
 
         Permission permission = this.clientService
             .getDefinedPermissionByClientIdAndPermissionId(clientId,
                 permissionId);
-
-        if (!customerId.equals(permission.getCustomerId())) {
-            String errorMsg = String.format("Permission Not Found: %s",
-                permissionId);
-            logger.error(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
 
         return Response.ok(permissionConverter.toPermissionJaxb(permission))
             .build();
