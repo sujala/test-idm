@@ -42,7 +42,7 @@ public class BaseUser implements Serializable {
     }
 
     public List<Role> getRoles() {
-        return Collections.unmodifiableList(roles);
+        return roles != null ? Collections.unmodifiableList(roles) : null;
     }
 
     public void setRoles(List<Role> roles) {

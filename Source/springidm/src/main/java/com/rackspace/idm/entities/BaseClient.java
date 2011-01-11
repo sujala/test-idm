@@ -36,7 +36,7 @@ public class BaseClient implements Serializable {
     }
     
     public List<Permission> getPermissions() {
-        return Collections.unmodifiableList(permissions);
+        return permissions != null ? Collections.unmodifiableList(permissions) : null;
     }
     
     public void setPermissions(List<Permission> permissions) {
