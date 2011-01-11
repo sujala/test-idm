@@ -26,12 +26,14 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.PermissionConverter;
 import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.entities.PermissionSet;
 import com.rackspace.idm.errors.ApiError;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.ForbiddenException;
+import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.exceptions.PermissionConflictException;
 import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.AccessTokenService;
@@ -112,9 +114,23 @@ public class DefinedPermissionsResource {
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
+        
+        Client client = this.clientService.getById(clientId);
+        if (client == null || !client.getCustomerId().equals(customerId)) {
+            String errMsg = String.format("Client with Id %s not found.", clientId);
+            logger.error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
 
         List<Permission> defineds = this.clientService
             .getDefinedPermissionsByClientId(clientId);
+        
+        if (defineds == null) {
+            String errorMsg = String.format("Permissions Not Found for client: %s",
+                clientId);
+            logger.error(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
 
         PermissionSet permset = new PermissionSet();
 
