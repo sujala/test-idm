@@ -175,16 +175,10 @@ public class MemcachedAccessTokenRepositoryTest {
     }
     
     private BaseClient getTestClient() {
-        BaseClient client = new BaseClient();
-        client.setClientId("controlpanel");
-        client.setCustomerId("customerId");
-        return client;
+        return new BaseClient("controlpanel", "customerId");
     }
     
     private BaseClient getTestClient2() {
-        BaseClient client = new BaseClient();
-        client.setClientId("clientId2");
-        client.setCustomerId("customerId");
-        return client;
+        return new BaseClient("clientId2", "customerId");
     }
 }

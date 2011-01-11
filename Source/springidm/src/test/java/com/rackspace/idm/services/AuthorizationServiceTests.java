@@ -189,18 +189,9 @@ public class AuthorizationServiceTests {
         roles = new ArrayList<Role>();
         roles.add(admin);
 
-        authorizedClient = new Client();
-        authorizedClient.setClientId(clientId);
-        authorizedClient.setCustomerId(customerId);
-        authorizedClient.setPermissions(permissions);
-
-        notAuthorizedClient = new Client();
-        notAuthorizedClient.setClientId(clientId);
-        notAuthorizedClient.setCustomerId(customerId);
-
-        nonRackspaceClient = new Client();
-        nonRackspaceClient.setClientId(clientId);
-        nonRackspaceClient.setCustomerId(otherCustomerId);
+        authorizedClient = new BaseClient(clientId, customerId, permissions);
+        notAuthorizedClient = new BaseClient(clientId, customerId);
+        nonRackspaceClient = new BaseClient(clientId, otherCustomerId);
 
         authorizedUser = new User();
         authorizedUser.setCustomerId(customerId);

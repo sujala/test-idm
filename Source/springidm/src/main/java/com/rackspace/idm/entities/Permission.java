@@ -1,12 +1,13 @@
 package com.rackspace.idm.entities;
 
-import java.io.Serializable;
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-
-import com.rackspace.idm.validation.MessageTexts;
-import com.rackspace.idm.validation.RegexPatterns;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 
 public class Permission implements Serializable {
     private static final long serialVersionUID = -4289257131504718968L;
@@ -33,17 +34,17 @@ public class Permission implements Serializable {
     public Permission() {
     }
 
-    public String getPermissionId() {
-        return permissionId;
-    }
-
     public Permission(String customerId, String clientId, String permissionId,
-        String value) {
+                      String value) {
         super();
         this.permissionId = permissionId;
         this.clientId = clientId;
         this.value = value;
         this.customerId = customerId;
+    }
+
+    public String getPermissionId() {
+        return permissionId;
     }
 
     public void setPermissionId(String permissionId) {
@@ -93,12 +94,12 @@ public class Permission implements Serializable {
     public String getPermissionLDAPserialization() {
 
         if (this.customerId == null || this.clientId == null
-            || this.permissionId == null) {
+                || this.permissionId == null) {
             return null;
         }
-        
+
         return this.customerId + LDAP_SEPERATOR + this.clientId
-        + LDAP_SEPERATOR + this.permissionId;
+                + LDAP_SEPERATOR + this.permissionId;
     }
 
     @Override
@@ -106,14 +107,14 @@ public class Permission implements Serializable {
         final int prime = 31;
         int result = 1;
         result = prime * result
-            + ((clientId == null) ? 0 : clientId.hashCode());
+                + ((clientId == null) ? 0 : clientId.hashCode());
         result = prime * result
-            + ((customerId == null) ? 0 : customerId.hashCode());
+                + ((customerId == null) ? 0 : customerId.hashCode());
         result = prime * result
-            + ((permissionId == null) ? 0 : permissionId.hashCode());
+                + ((permissionId == null) ? 0 : permissionId.hashCode());
         result = prime * result + ((type == null) ? 0 : type.hashCode());
         result = prime * result
-            + ((uniqueId == null) ? 0 : uniqueId.hashCode());
+                + ((uniqueId == null) ? 0 : uniqueId.hashCode());
         result = prime * result + ((value == null) ? 0 : value.hashCode());
         return result;
     }
@@ -178,7 +179,62 @@ public class Permission implements Serializable {
     @Override
     public String toString() {
         return "Permission [clientId=" + clientId + ", customerId="
-            + customerId + ", permissionId=" + permissionId + ", type=" + type
-            + ", uniqueId=" + uniqueId + ", value=" + value + "]";
+                + customerId + ", permissionId=" + permissionId + ", type=" + type
+                + ", uniqueId=" + uniqueId + ", value=" + value + "]";
+    }
+
+
+    /**
+     * Used by Java serialization. Produces the serialized form of the Token
+     * class.
+     *
+     * @return The proxy instance of the Token class
+     */
+    private Object writeReplace() {
+        return new SerializationProxy(this);
+    }
+
+    /**
+     * Used by Java serialization. Prevent attempts to deserialize the Token
+     * object directly, without using the proxy object.
+     *
+     * @param stream Used by Java serialization API
+     * @throws java.io.InvalidObjectException By the Java serialization API
+     */
+    private void readObject(ObjectInputStream stream)
+            throws InvalidObjectException {
+        throw new InvalidObjectException("Serialization proxy is required.");
+    }
+
+    /**
+     * Serialized form for the Token object, based on the Serialization Proxy
+     * pattern in the book Effective Java, 2nd Edition, p. 312
+     * <p/>
+     * I.e., this is what actually gets serialized.
+     */
+    private static class SerializationProxy implements Serializable {
+        private String permissionId;
+        private String clientId;
+        private String value;
+        private String customerId;
+        private String type;
+        private String uniqueId;
+
+        SerializationProxy(Permission permission) {
+            this.permissionId = permission.permissionId;
+            this.clientId = permission.clientId;
+            this.value = permission.value;
+            this.customerId = permission.customerId;
+            this.type = permission.type;
+            this.uniqueId = permission.uniqueId;
+        }
+
+        private Object readResolve() {
+            Permission permission = new Permission(customerId, clientId, permissionId, value);
+            permission.setType(type);
+            permission.setUniqueId(uniqueId);
+            return permission;
+        }
+
     }
 }

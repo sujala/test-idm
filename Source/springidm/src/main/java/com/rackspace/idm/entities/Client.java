@@ -5,8 +5,9 @@ import com.rackspace.idm.validation.RegexPatterns;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import java.util.List;
 
-public class Client extends BaseClient{
+public class Client extends BaseClient {
     private static final long serialVersionUID = -3160754818606772239L;
 
     private ClientSecret clientSecret;
@@ -30,14 +31,13 @@ public class Client extends BaseClient{
     }
 
     public Client(String clientId, ClientSecret clientSecret, String name,
-        String inum, String iname, String customerId, ClientStatus status,
-        String seeAlso, String owner) {
-        this.clientId = clientId;
+                  String inum, String iname, String customerId, ClientStatus status,
+                  String seeAlso, String owner) {
+        super(clientId, customerId);
         this.clientSecret = clientSecret;
         this.name = name;
         this.inum = inum;
         this.iname = iname;
-        this.customerId = customerId;
         this.status = status;
         this.seeAlso = seeAlso;
         this.owner = owner;
@@ -149,18 +149,39 @@ public class Client extends BaseClient{
         return inum;
     }
 
+    // The following overrides allow for a more permissive mutators in the child (Client)
+    // while maintaining a more strict, immutable-ish characteristics in the parent (BaseClient).
+
+    @Override
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    @Override
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
+    }
+
+    @Override
+    public void setPermissions(List<Permission> permissions) {
+        // Make the setter more permissive here, but keep it restrictive in BaseClient
+        this.permissions = permissions;
+    }
+
     public void setDefaults() {
         this.setIsLocked(false);
         this.setSoftDeleted(false);
         this.setStatus(ClientStatus.ACTIVE);
     }
-    
+
     public BaseClient getBaseClient() {
-        BaseClient baseClient = new BaseClient();
-        baseClient.setClientId(this.clientId);
-        baseClient.setCustomerId(this.customerId);
+        BaseClient baseClient = getBaseClientWithoutClientPerms();
         baseClient.setPermissions(this.permissions);
         return baseClient;
+    }
+
+    public BaseClient getBaseClientWithoutClientPerms() {
+        return new BaseClient(clientId, customerId);
     }
 
     @Override
@@ -168,19 +189,19 @@ public class Client extends BaseClient{
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result
-            + ((clientSecret == null) ? 0 : clientSecret.hashCode());
+                + ((clientSecret == null) ? 0 : clientSecret.hashCode());
         result = prime * result + ((iname == null) ? 0 : iname.hashCode());
         result = prime * result + ((inum == null) ? 0 : inum.hashCode());
         result = prime * result
-            + ((isLocked == null) ? 0 : isLocked.hashCode());
+                + ((isLocked == null) ? 0 : isLocked.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((owner == null) ? 0 : owner.hashCode());
         result = prime * result + ((seeAlso == null) ? 0 : seeAlso.hashCode());
         result = prime * result
-            + ((softDeleted == null) ? 0 : softDeleted.hashCode());
+                + ((softDeleted == null) ? 0 : softDeleted.hashCode());
         result = prime * result + ((status == null) ? 0 : status.hashCode());
         result = prime * result
-            + ((uniqueId == null) ? 0 : uniqueId.hashCode());
+                + ((uniqueId == null) ? 0 : uniqueId.hashCode());
         return result;
     }
 
@@ -268,9 +289,9 @@ public class Client extends BaseClient{
     @Override
     public String toString() {
         return "Client [clientSecret=" + clientSecret + ", name=" + name
-            + ", status=" + status + ", uniqueId=" + uniqueId + ", inum="
-            + inum + ", iname=" + iname + ", isLocked=" + isLocked
-            + ", seeAlso=" + seeAlso + ", softDeleted=" + softDeleted
-            + ", owner=" + owner + "]";
+                + ", status=" + status + ", uniqueId=" + uniqueId + ", inum="
+                + inum + ", iname=" + iname + ", isLocked=" + isLocked
+                + ", seeAlso=" + seeAlso + ", softDeleted=" + softDeleted
+                + ", owner=" + owner + "]";
     }
 }

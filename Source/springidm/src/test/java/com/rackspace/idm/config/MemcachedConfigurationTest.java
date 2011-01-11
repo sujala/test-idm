@@ -58,9 +58,6 @@ public class MemcachedConfigurationTest {
     }
     
     private BaseClient getTestClient() {
-        BaseClient client = new BaseClient();
-        client.setClientId("clientId");
-        client.setCustomerId("customerId");
-        return client;
+        return new BaseClient("clientId", "customerId");
     }
 }
