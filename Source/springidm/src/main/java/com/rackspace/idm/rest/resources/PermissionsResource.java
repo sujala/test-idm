@@ -20,9 +20,11 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.PermissionConverter;
+import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.entities.PermissionSet;
 import com.rackspace.idm.exceptions.ForbiddenException;
+import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 
@@ -95,6 +97,13 @@ public class PermissionsResource {
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
+        
+        Client client = this.clientService.getById(clientId);
+        if (client == null || !client.getCustomerId().equals(customerId)) {
+            String errMsg = String.format("Client with Id %s not found.", clientId);
+            logger.error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
 
         List<Permission> defineds = this.clientService
             .getDefinedPermissionsByClientId(clientId);
@@ -102,6 +111,7 @@ public class PermissionsResource {
         PermissionSet permset = new PermissionSet();
 
         permset.setDefineds(defineds);
+        permset.setGranteds(client.getPermissions());
         logger.debug(String.format("Got Permissions for client %s", clientId));
         return Response.ok(permissionConverter.toPermissionsJaxb(permset))
             .build();
