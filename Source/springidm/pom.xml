@@ -221,16 +221,6 @@
 			<version>2.5</version>
 		</dependency>
 		<dependency>
-			<groupId>com.sun</groupId>
-			<artifactId>sunxacml</artifactId>
-			<version>1.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.sun</groupId>
-			<artifactId>sunxacmltests</artifactId>
-			<version>1.0</version>
-		</dependency>
-		<dependency>
 			<groupId>org.aspectj</groupId>
 			<artifactId>aspectjtools</artifactId>
 			<version>1.6.10</version>
@@ -325,44 +315,6 @@
 					<verbose>true</verbose>
 					<extension>true</extension>
 				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-install-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>sunxacml</id>
-						<phase>validate</phase>
-						<configuration>
-							<file>${basedir}/lib/sunxacml.jar</file>
-							<repositoryLayout>default</repositoryLayout>
-							<groupId>com.sun</groupId>
-							<artifactId>sunxacml</artifactId>
-							<version>1.0</version>
-							<packaging>jar</packaging>
-							<generatePom>true</generatePom>
-						</configuration>
-						<goals>
-							<goal>install-file</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>sunxacmltests</id>
-						<phase>validate</phase>
-						<configuration>
-							<file>${basedir}/lib/sunxacmltests.jar</file>
-							<repositoryLayout>default</repositoryLayout>
-							<groupId>com.sun</groupId>
-							<artifactId>sunxacmltests</artifactId>
-							<version>1.0</version>
-							<packaging>jar</packaging>
-							<generatePom>true</generatePom>
-						</configuration>
-						<goals>
-							<goal>install-file</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
