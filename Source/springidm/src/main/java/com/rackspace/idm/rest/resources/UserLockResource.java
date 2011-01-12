@@ -108,7 +108,7 @@ public class UserLockResource {
             handleUserNotFoundError(customerId, username);
         }
 
-        user.setIsLocked(lockStatus);
+        user.setLocked(lockStatus);
 
         this.userService.updateUser(user);
 

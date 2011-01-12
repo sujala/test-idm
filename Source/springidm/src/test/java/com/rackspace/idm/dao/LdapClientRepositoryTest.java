@@ -238,7 +238,7 @@ public class LdapClientRepositoryTest {
         Client newClient = addNewTestClient();
         repo.setAllClientLocked(newClient.getCustomerId(), true);
         Client changedClient = repo.findByClientId(newClient.getClientId());
-        Assert.assertEquals(changedClient.getIsLocked(), true);
+        Assert.assertEquals(changedClient.isLocked(), true);
         repo.delete(newClient.getClientId());
     }
 
@@ -300,7 +300,7 @@ public class LdapClientRepositoryTest {
             "iname", "RCN-123-456-789", ClientStatus.ACTIVE,
             "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111",
             "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE");
-        newClient.setIsLocked(false);
+        newClient.setLocked(false);
         newClient.setSoftDeleted(false);
         return newClient;
     }

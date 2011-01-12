@@ -181,6 +181,15 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return authenticateUserByApiKey(user, apiKey);
     }
 
+    public UserAuthenticationResult authenticateByMossoIdAndAPIKey(int mossoId,
+        String apiKey) {
+        getLogger().info("Authenticating User with MossoId {}", mossoId);
+
+        User user = findByMossoId(mossoId);
+
+        return authenticateUserByApiKey(user, apiKey);
+    }
+
     public UserAuthenticationResult authenticateByNastIdAndAPIKey(
         String nastId, String apiKey) {
         getLogger().debug("Authenticating User with NastId {}", nastId);
@@ -193,40 +202,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         User user = findByNastId(nastId);
 
         return authenticateUserByApiKey(user, apiKey);
-    }
-
-    public UserAuthenticationResult authenticateByMossoIdAndAPIKey(int mossoId,
-        String apiKey) {
-        getLogger().info("Authenticating User with MossoId {}", mossoId);
-
-        User user = findByMossoId(mossoId);
-
-        return authenticateUserByApiKey(user, apiKey);
-    }
-
-    private UserAuthenticationResult authenticateUserByApiKey(User user,
-        String apiKey) {
-
-        if (user == null) {
-            return new UserAuthenticationResult(null, false);
-        }
-
-        Boolean authenticated = !StringUtils.isBlank(user.getApiKey())
-            && user.getApiKey().equals(apiKey);
-
-        if (authenticated && user.isDisabled()) {
-            String errMsg = String.format("User %s is disabled.",
-                user.getUsername());
-            getLogger().error(errMsg);
-            throw new UserDisabledException(errMsg);
-        }
-
-        UserAuthenticationResult authResult = new UserAuthenticationResult(
-            user, authenticated);
-
-        getLogger().debug("Authenticated User by API Key - {}", authResult);
-
-        return authResult;
     }
 
     public void delete(String username) {
@@ -258,90 +233,17 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Deleted username - {}", username);
     }
 
-    public List<User> findAll() {
+    public Users findAll(int offset, int limit) {
         getLogger().debug("Search all users");
-        SearchResult searchResult = null;
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                USER_FIND_ALL_STRING_NOT_DELETED, ATTR_SEARCH_ATTRIBUTES);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for all users under DN {} - {}",
-                BASE_DN, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
 
-        List<User> users = new ArrayList<User>();
-        for (SearchResultEntry e : searchResult.getSearchEntries()) {
-            User user = getUser(e);
-            users.add(user);
-        }
+        String searchFilter = USER_FIND_ALL_STRING_NOT_DELETED;
+        Users users = getMultipleUsers(searchFilter, ATTR_SEARCH_ATTRIBUTES,
+            offset, limit);
 
-        getLogger().debug("Found {} users under DN ", users.size(), BASE_DN);
+        getLogger().debug("Found Users - {}", users);
 
         return users;
-    }
 
-    public Users findFirst100ByCustomerIdAndLock(String customerId,
-        boolean isLocked) {
-        getLogger().debug("Doing search for customerId {}", customerId);
-
-        int limit = 100;
-        int offset = 1;
-
-        ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
-            new SortKey("uid"));
-
-        VirtualListViewRequestControl vlvRequest = new VirtualListViewRequestControl(
-            offset, 0, limit - 1, 0, null);
-
-        int contentCount = 0;
-
-        if (StringUtils.isBlank(customerId)) {
-            getLogger().error("Null or Empty customerId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty customerId parameter.");
-        }
-
-        List<User> users = new ArrayList<User>();
-        SearchResult searchResult = null;
-        try {
-
-            SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
-                String.format(USER_FIND_BY_CUSTOMERID_AND_LOCK_STRING,
-                    customerId, isLocked), ATTR_SEARCH_ATTRIBUTES);
-
-            request.setControls(new Control[]{sortRequest, vlvRequest});
-            searchResult = getAppConnPool().search(request);
-
-            for (Control c : searchResult.getResponseControls()) {
-                if (c instanceof VirtualListViewResponseControl) {
-                    VirtualListViewResponseControl vlvResponse = (VirtualListViewResponseControl) c;
-                    contentCount = vlvResponse.getContentCount();
-                }
-            }
-
-        } catch (LDAPException ldapEx) {
-            getLogger().error("Error searching for Users CustomerId {} - {}",
-                customerId, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() > 0) {
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
-                users.add(getUser(entry));
-            }
-        }
-
-        getLogger().debug("Found users {} for customer {}", users, customerId);
-
-        Users usersObject = new Users();
-
-        usersObject.setLimit(limit);
-        usersObject.setOffset(offset);
-        usersObject.setTotalRecords(contentCount);
-        usersObject.setUsers(users);
-
-        return usersObject;
     }
 
     public Users findByCustomerId(String customerId, int offset, int limit) {
@@ -353,58 +255,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "Null or Empty customerId parameter.");
         }
 
-        ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
-            new SortKey("uid"));
+        String searchFilter = String.format(
+            USER_FIND_BY_CUSTOMERID_STRING_NOT_DELETED, customerId);
+        Users users = getMultipleUsers(searchFilter, ATTR_SEARCH_ATTRIBUTES,
+            offset, limit);
 
-        // In the constructor below we're adding one to the offset because the
-        // Rackspace
-        // API standard calls for a 0 based offset while LDAP uses a 1 based
-        // offset.
-        VirtualListViewRequestControl vlvRequest = new VirtualListViewRequestControl(
-            offset + 1, 0, limit - 1, 0, null);
+        getLogger().debug("Found Users - {}", users);
 
-        int contentCount = 0;
-
-        List<User> users = new ArrayList<User>();
-        SearchResult searchResult = null;
-        try {
-
-            SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
-                String.format(USER_FIND_BY_CUSTOMERID_STRING_NOT_DELETED,
-                    customerId), ATTR_SEARCH_ATTRIBUTES);
-
-            request.setControls(new Control[]{sortRequest, vlvRequest});
-            searchResult = getAppConnPool().search(request);
-
-            for (Control c : searchResult.getResponseControls()) {
-                if (c instanceof VirtualListViewResponseControl) {
-                    VirtualListViewResponseControl vlvResponse = (VirtualListViewResponseControl) c;
-                    contentCount = vlvResponse.getContentCount();
-                }
-            }
-
-        } catch (LDAPException ldapEx) {
-            getLogger().error("Error searching for Users CustomerId {} - {}",
-                customerId, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() > 0) {
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
-                users.add(getUser(entry));
-            }
-        }
-
-        getLogger().debug("Found users {} for customer {}", users, customerId);
-
-        Users usersObject = new Users();
-
-        usersObject.setLimit(limit);
-        usersObject.setOffset(offset);
-        usersObject.setTotalRecords(contentCount);
-        usersObject.setUsers(users);
-
-        return usersObject;
+        return users;
     }
 
     public User findByEmail(String email) {
@@ -414,27 +272,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalArgumentException("Null or Empty email parameter.");
         }
 
-        User user = null;
-        SearchResult searchResult = null;
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(USER_FIND_BY_EMAIL_STRING, email),
-                ATTR_SEARCH_ATTRIBUTES);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for user by email {} - {}",
-                email, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            user = getUser(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error(
-                "More than one entry was found for user with email {}", email);
-            throw new IllegalStateException(
-                "More than one entry was found for this email");
-        }
+        String searchFilter = String.format(USER_FIND_BY_EMAIL_STRING, email);
+        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
 
@@ -443,61 +282,27 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     public User findByInum(String inum) {
         // NOTE: This method returns a user regardless of whether the
-        // softDeleted
-        // flag is set or not because this method is only used internally.
+        // softDeleted flag is set or not because this method is only
+        // used internally.
         getLogger().debug("Doing search for inum " + inum);
         if (StringUtils.isBlank(inum)) {
             getLogger().error("Null or Empty inum parameter");
             throw new IllegalArgumentException("Null or Empty inum parameter.");
         }
 
-        User user = null;
-
-        SearchResult searchResult = null;
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(USER_FIND_BY_INUM_STRING, inum),
-                ATTR_SEARCH_ATTRIBUTES);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for inum {} - {}", inum, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            user = getUser(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger()
-                .error("More than one entry was found for inum {}", inum);
-            throw new IllegalStateException(
-                "More than one entry was found for this inum");
-        }
+        String searchFilter = String.format(USER_FIND_BY_INUM_STRING, inum);
+        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
 
         return user;
     }
 
-    public User findByUsername(String username) {
-        getLogger().debug("Doing search for username " + username);
-        if (StringUtils.isBlank(username)) {
-            getLogger().error("Null or Empty username parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty username parameter.");
-        }
+    public User findByMossoId(int mossoId) {
+        getLogger().debug("Doing search for nastId " + mossoId);
 
-        User user = null;
-        SearchResult searchResult = getUserSearchResult(username);
-
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            user = getUser(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error("More than one entry was found for username {}",
-                username);
-            throw new IllegalStateException(
-                "More than one entry was found for this username");
-        }
+        String searchFilter = String.format(USER_FIND_BY_MOSSO_ID, mossoId);
+        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
 
@@ -512,59 +317,25 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "Null or Empty nastId parameter.");
         }
 
-        User user = null;
-        SearchResult searchResult = null;
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(USER_FIND_BY_NAST_ID, nastId),
-                ATTR_SEARCH_ATTRIBUTES);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for user by nastId {} - {}",
-                nastId, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            user = getUser(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger()
-                .error("More than one entry was found for user with nastId {}",
-                    nastId);
-            throw new IllegalStateException(
-                "More than one entry was found for this nastId");
-        }
+        String searchFilter = String.format(USER_FIND_BY_NAST_ID, nastId);
+        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
 
         return user;
     }
 
-    public User findByMossoId(int mossoId) {
-        getLogger().debug("Doing search for nastId " + mossoId);
-
-        User user = null;
-        SearchResult searchResult = null;
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(USER_FIND_BY_MOSSO_ID, mossoId),
-                ATTR_SEARCH_ATTRIBUTES);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for user by mossoId {} - {}",
-                mossoId, ldapEx);
-            throw new IllegalStateException(ldapEx);
+    public User findByUsername(String username) {
+        getLogger().debug("Doing search for username " + username);
+        if (StringUtils.isBlank(username)) {
+            getLogger().error("Null or Empty username parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty username parameter.");
         }
 
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            user = getUser(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error(
-                "More than one entry was found for user with mossoId {}",
-                mossoId);
-            throw new IllegalStateException(
-                "More than one entry was found for this mossoId");
-        }
+        String searchFilter = String.format(
+            USER_FIND_BY_USERNAME_STRING_NOT_DELETED, username);
+        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
 
@@ -588,29 +359,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "Null or Empty username parameter.");
         }
 
-        User user = null;
-        SearchResult searchResult = null;
-        try {
-            searchResult = getAppConnPool().search(
-                BASE_DN,
-                SearchScope.SUB,
-                String.format(USER_FIND_BY_CUSTOMERID_USERNAME_NOT_DELETED,
-                    customerId, username), ATTR_SEARCH_ATTRIBUTES);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for username {} - {}", username,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            user = getUser(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error("More than one entry was found for username {}",
-                username);
-            throw new IllegalStateException(
-                "More than one entry was found for this username");
-        }
+        String searchFilter = String.format(
+            USER_FIND_BY_CUSTOMERID_USERNAME_NOT_DELETED, customerId, username);
+        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User for customer - {}, {}", customerId, user);
 
@@ -635,31 +386,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "Null or Empty username parameter.");
         }
 
-        User user = null;
-        SearchResult searchResult = null;
-
         String searchString = buildSearchString(
             USER_FIND_BY_CUSTOMER_NUMBER_STRING, userStatusMap);
 
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(searchString, customerId, username),
-                ATTR_SEARCH_ATTRIBUTES);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for username {} - {}", username,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            user = getUser(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error("More than one entry was found for username {}",
-                username);
-            throw new IllegalStateException(
-                "More than one entry was found for this username");
-        }
+        User user = getSingleUser(searchString, ATTR_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User for customer - {}, {}", customerId, user);
 
@@ -725,36 +455,25 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     public String getUserDnByUsername(String username) {
         String dn = null;
-        SearchResult searchResult = getUserSearchResult(username);
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            dn = e.getDN();
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error("More than one entry was found for username {}",
-                username);
-            throw new IllegalStateException(
-                "More than one entry was found for this username");
+
+        String searchFilter = String.format(
+            USER_FIND_BY_USERNAME_STRING_NOT_DELETED, username);
+        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
+
+        if (user != null) {
+            dn = user.getUniqueId();
         }
+
         return dn;
     }
 
     public boolean isUsernameUnique(String username) {
-        boolean isUsernameUnique = true;
-        SearchResult searchResult = null;
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(USER_FIND_BY_USERNAME_STRING, username),
-                ATTR_SEARCH_ATTRIBUTES);
-            if (searchResult.getEntryCount() > 0) {
-                isUsernameUnique = false;
-            }
 
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for username {} - {}", username,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-        return isUsernameUnique;
+        String searchFilter = String.format(USER_FIND_BY_USERNAME_STRING,
+            username);
+        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
+
+        return user == null;
     }
 
     public void save(User user) {
@@ -776,7 +495,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         List<Modification> mods = getModifications(oldUser, user);
 
-        if (user.equals(oldUser) || mods.size() < 1) {
+        if (mods.size() < 1) {
             // No changes!
             return;
         }
@@ -874,7 +593,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             !isLocked);
         if (users.getUsers() != null && users.getUsers().size() > 0) {
             for (User user : users.getUsers()) {
-                user.setIsLocked(isLocked);
+                user.setLocked(isLocked);
                 this.save(user);
             }
         }
@@ -882,6 +601,67 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             this.setAllUsersLocked(customerId, isLocked);
         }
 
+    }
+
+    private UserAuthenticationResult authenticateUserByApiKey(User user,
+        String apiKey) {
+
+        if (user == null) {
+            return new UserAuthenticationResult(null, false);
+        }
+
+        Boolean authenticated = !StringUtils.isBlank(user.getApiKey())
+            && user.getApiKey().equals(apiKey);
+
+        if (authenticated && user.isDisabled()) {
+            String errMsg = String.format("User %s is disabled.",
+                user.getUsername());
+            getLogger().error(errMsg);
+            throw new UserDisabledException(errMsg);
+        }
+
+        UserAuthenticationResult authResult = new UserAuthenticationResult(
+            user, authenticated);
+
+        getLogger().debug("Authenticated User by API Key - {}", authResult);
+
+        return authResult;
+    }
+
+    private String buildSearchString(String baseString,
+        Map<String, String> userStatusMap) {
+        String ldapSearchString = baseString;
+
+        for (String key : userStatusMap.keySet()) {
+            String value = userStatusMap.get(key);
+
+            if (key.equals(GlobalConstants.ATTR_SOFT_DELETED)) {
+                ldapSearchString += "(" + GlobalConstants.ATTR_SOFT_DELETED
+                    + "=" + value + "))";
+            }
+
+            if (key.equals(ATTR_LOCKED)) {
+                ldapSearchString += "(" + ATTR_LOCKED + "=" + value + "))";
+            }
+        }
+        return ldapSearchString;
+    }
+
+    private Users findFirst100ByCustomerIdAndLock(String customerId,
+        boolean isLocked) {
+        getLogger().debug("Doing search for customerId {}", customerId);
+
+        int limit = 100;
+        int offset = 1;
+
+        String searchFilter = String.format(
+            USER_FIND_BY_CUSTOMERID_AND_LOCK_STRING, customerId, isLocked);
+        Users users = getMultipleUsers(searchFilter, ATTR_SEARCH_ATTRIBUTES,
+            offset, limit);
+
+        getLogger().debug("Found Users - {}", users);
+
+        return users;
     }
 
     private Attribute[] getAddAttributes(User user) {
@@ -978,14 +758,13 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             atts.add(new Attribute(ATTR_RACKSPACE_REGION, user.getRegion()));
         }
 
-        if (user.getIsLocked() != null) {
-            atts.add(new Attribute(ATTR_LOCKED, String.valueOf(user
-                .getIsLocked())));
+        if (user.isLocked() != null) {
+            atts.add(new Attribute(ATTR_LOCKED, String.valueOf(user.isLocked())));
         }
 
-        if (user.getSoftDeleted() != null) {
+        if (user.isSoftDeleted() != null) {
             atts.add(new Attribute(GlobalConstants.ATTR_SOFT_DELETED, String
-                .valueOf(user.getSoftDeleted())));
+                .valueOf(user.isSoftDeleted())));
         }
 
         if (!StringUtils.isBlank(user.getNastId())) {
@@ -999,6 +778,87 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         Attribute[] attributes = atts.toArray(new Attribute[0]);
 
         return attributes;
+    }
+
+    private Users getMultipleUsers(String searchFilter,
+        String[] searchAttributes, int offset, int limit) {
+
+        ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
+            new SortKey("uid"));
+
+        // In the constructor below we're adding one to the offset because the
+        // Rackspace API standard calls for a 0 based offset while LDAP uses a
+        // 1 based offset.
+        VirtualListViewRequestControl vlvRequest = new VirtualListViewRequestControl(
+            offset + 1, 0, limit - 1, 0, null);
+
+        int contentCount = 0;
+
+        List<User> userList = new ArrayList<User>();
+        SearchResult searchResult = null;
+        try {
+
+            SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
+                searchFilter, searchAttributes);
+
+            request.setControls(new Control[]{sortRequest, vlvRequest});
+            searchResult = getAppConnPool().search(request);
+
+            for (Control c : searchResult.getResponseControls()) {
+                if (c instanceof VirtualListViewResponseControl) {
+                    VirtualListViewResponseControl vlvResponse = (VirtualListViewResponseControl) c;
+                    contentCount = vlvResponse.getContentCount();
+                }
+            }
+
+        } catch (LDAPException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() > 0) {
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                userList.add(getUser(entry));
+            }
+        }
+
+        getLogger().debug("Found users {}", userList);
+
+        Users users = new Users();
+
+        users.setLimit(limit);
+        users.setOffset(offset);
+        users.setTotalRecords(contentCount);
+        users.setUsers(userList);
+
+        return users;
+    }
+
+    private User getSingleUser(String searchFilter, String[] searchAttributes) {
+        User user = null;
+        SearchResult searchResult = null;
+        try {
+            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
+                searchFilter, searchAttributes);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() == 1) {
+            SearchResultEntry e = searchResult.getSearchEntries().get(0);
+            user = getUser(e);
+        } else if (searchResult.getEntryCount() > 1) {
+            String errMsg = String.format(
+                "More than one entry was found for user search - %s",
+                searchFilter);
+            getLogger().error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
+        getLogger().debug("Found User - {}", user);
+
+        return user;
     }
 
     private User getUser(SearchResultEntry resultEntry) {
@@ -1050,8 +910,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         String locked = resultEntry.getAttributeValue(ATTR_LOCKED);
         if (locked != null) {
-            user.setIsLocked(resultEntry
-                .getAttributeValueAsBoolean(ATTR_LOCKED));
+            user.setLocked(resultEntry.getAttributeValueAsBoolean(ATTR_LOCKED));
         }
 
         user.setMossoId(resultEntry.getAttributeValueAsInteger(ATTR_MOSSO_ID));
@@ -1070,41 +929,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         return user;
-    }
-
-    private String buildSearchString(String baseString,
-        Map<String, String> userStatusMap) {
-        String ldapSearchString = baseString;
-
-        for (String key : userStatusMap.keySet()) {
-            String value = userStatusMap.get(key);
-
-            if (key.equals(GlobalConstants.ATTR_SOFT_DELETED)) {
-                ldapSearchString += "(" + GlobalConstants.ATTR_SOFT_DELETED
-                    + "=" + value + "))";
-            }
-
-            if (key.equals(ATTR_LOCKED)) {
-                ldapSearchString += "(" + ATTR_LOCKED + "=" + value + "))";
-            }
-        }
-        return ldapSearchString;
-    }
-
-    private SearchResult getUserSearchResult(String username) {
-        SearchResult searchResult = null;
-        try {
-            searchResult = getAppConnPool().search(
-                BASE_DN,
-                SearchScope.SUB,
-                String.format(USER_FIND_BY_USERNAME_STRING_NOT_DELETED,
-                    username), ATTR_SEARCH_ATTRIBUTES);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for username {} - {}", username,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-        return searchResult;
     }
 
     List<Modification> getModifications(User uOld, User uNew) {
@@ -1257,17 +1081,16 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 uNew.getPasswordObj().getValue()));
         }
 
-        if (uNew.getIsLocked() != null
-            && uNew.getIsLocked() != uOld.getIsLocked()) {
+        if (uNew.isLocked() != null && uNew.isLocked() != uOld.isLocked()) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_LOCKED,
-                String.valueOf(uNew.getIsLocked())));
+                String.valueOf(uNew.isLocked())));
         }
 
-        if (uNew.getSoftDeleted() != null
-            && uNew.getSoftDeleted() != uOld.getSoftDeleted()) {
+        if (uNew.isSoftDeleted() != null
+            && uNew.isSoftDeleted() != uOld.isSoftDeleted()) {
             mods.add(new Modification(ModificationType.REPLACE,
                 GlobalConstants.ATTR_SOFT_DELETED, String.valueOf(uNew
-                    .getSoftDeleted())));
+                    .isSoftDeleted())));
         }
 
         if (uNew.getNastId() != null) {

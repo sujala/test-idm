@@ -175,14 +175,14 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             atts.add(new Attribute(ATTR_CLIENT_SECRET, client.getClientSecret()));
         }
 
-        if (client.getIsLocked() != null) {
+        if (client.isLocked() != null) {
             atts.add(new Attribute(ATTR_LOCKED, String.valueOf(client
-                .getIsLocked())));
+                .isLocked())));
         }
 
-        if (client.getSoftDeleted() != null) {
+        if (client.isSoftDeleted() != null) {
             atts.add(new Attribute(GlobalConstants.ATTR_SOFT_DELETED, String
-                .valueOf(client.getSoftDeleted())));
+                .valueOf(client.isSoftDeleted())));
         }
 
         if (client.getPermissions() != null
@@ -499,7 +499,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     public void setAllClientLocked(String customerId, boolean locked) {
         List<Client> clients = this.getByCustomerId(customerId);
         for (Client client : clients) {
-            client.setIsLocked(locked);
+            client.setLocked(locked);
             this.save(client);
         }
     }
@@ -542,10 +542,10 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             }
         }
 
-        if (cNew.getIsLocked() != null
-            && cNew.getIsLocked() != cOld.getIsLocked()) {
+        if (cNew.isLocked() != null
+            && cNew.isLocked() != cOld.isLocked()) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_LOCKED,
-                String.valueOf(cNew.getIsLocked())));
+                String.valueOf(cNew.isLocked())));
         }
 
         if (cNew.getStatus() != null
@@ -574,11 +574,11 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             }
         }
 
-        if (cNew.getSoftDeleted() != null
-            && cNew.getSoftDeleted() != cOld.getSoftDeleted()) {
+        if (cNew.isSoftDeleted() != null
+            && cNew.isSoftDeleted() != cOld.isSoftDeleted()) {
             mods.add(new Modification(ModificationType.REPLACE,
                 GlobalConstants.ATTR_SOFT_DELETED, String.valueOf(cNew
-                    .getSoftDeleted())));
+                    .isSoftDeleted())));
         }
 
         if (cNew.getPermissions() != null
@@ -654,7 +654,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         String locked = resultEntry.getAttributeValue(ATTR_LOCKED);
         if (locked != null) {
-            client.setIsLocked(resultEntry
+            client.setLocked(resultEntry
                 .getAttributeValueAsBoolean(ATTR_LOCKED));
         }
 

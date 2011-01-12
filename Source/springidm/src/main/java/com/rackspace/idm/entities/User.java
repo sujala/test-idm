@@ -23,7 +23,7 @@ public class User extends BaseUser {
     private String displayName = null;
     private String inum = null;
     private String iname = null;
-    private Boolean isLocked = null;
+    private Boolean locked = null;
     private String orgInum = null;
     private String apiKey = null;
     private UserStatus status = null;
@@ -110,7 +110,7 @@ public class User extends BaseUser {
         }
     }
 
-    public Boolean getSoftDeleted() {
+    public Boolean isSoftDeleted() {
         return softDeleted;
     }
 
@@ -141,12 +141,12 @@ public class User extends BaseUser {
         }
     }
 
-    public Boolean getIsLocked() {
-        return isLocked;
+    public Boolean isLocked() {
+        return locked;
     }
 
-    public void setIsLocked(Boolean isLocked) {
-        this.isLocked = isLocked;
+    public void setLocked(Boolean isLocked) {
+        this.locked = isLocked;
     }
 
     public String getOrgInum() {
@@ -378,8 +378,8 @@ public class User extends BaseUser {
     
     public boolean isDisabled() {
         boolean disabled = false;
-        disabled = this.getIsLocked() == null ? disabled : disabled || this.getIsLocked().booleanValue();
-        disabled = this.getSoftDeleted() == null ? disabled : disabled || this.getSoftDeleted().booleanValue();
+        disabled = this.isLocked() == null ? disabled : disabled || this.isLocked().booleanValue();
+        disabled = this.isSoftDeleted() == null ? disabled : disabled || this.isSoftDeleted().booleanValue();
         disabled = this.getStatus() == null ? disabled : disabled || this.getStatus().equals(UserStatus.INACTIVE);
         return disabled;
     }
@@ -403,7 +403,7 @@ public class User extends BaseUser {
             this.setTimeZone(GlobalConstants.USER_TIME_ZONE_DEFAULT);
         }
 
-        this.setIsLocked(false);
+        this.setLocked(false);
         this.setSoftDeleted(false);
         this.setStatus(UserStatus.ACTIVE);
     }
@@ -478,7 +478,7 @@ public class User extends BaseUser {
         result = prime * result + ((iname == null) ? 0 : iname.hashCode());
         result = prime * result + ((inum == null) ? 0 : inum.hashCode());
         result = prime * result
-            + ((isLocked == null) ? 0 : isLocked.hashCode());
+            + ((locked == null) ? 0 : locked.hashCode());
         result = prime * result + ((mossoId == null) ? 0 : mossoId.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((nastId == null) ? 0 : nastId.hashCode());
@@ -566,11 +566,11 @@ public class User extends BaseUser {
         } else if (!inum.equals(other.inum)) {
             return false;
         }
-        if (isLocked == null) {
-            if (other.isLocked != null) {
+        if (locked == null) {
+            if (other.locked != null) {
                 return false;
             }
-        } else if (!isLocked.equals(other.isLocked)) {
+        } else if (!locked.equals(other.locked)) {
             return false;
         }
         if (mossoId == null) {
@@ -662,7 +662,7 @@ public class User extends BaseUser {
             + ", personId=" + personId + ", uniqueId=" + uniqueId + ", name="
             + name + ", preference=" + preference + ", country=" + country
             + ", displayName=" + displayName + ", inum=" + inum + ", iname="
-            + iname + ", isLocked=" + isLocked + ", orgInum=" + orgInum
+            + iname + ", isLocked=" + locked + ", orgInum=" + orgInum
             + ", apiKey=" + apiKey + ", status=" + status + ", seeAlso="
             + seeAlso + ", softDeleted=" + softDeleted + ", region=" + region
             + ", nastId=" + nastId + ", mossoId=" + mossoId + ", created="
@@ -738,7 +738,7 @@ public class User extends BaseUser {
 
         public Builder setFlags(UserStatus status, boolean isLocked) {
             user.status = status;
-            user.isLocked = isLocked;
+            user.locked = isLocked;
 
             return this;
         }

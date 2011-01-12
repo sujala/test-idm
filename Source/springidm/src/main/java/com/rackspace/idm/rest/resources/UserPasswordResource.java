@@ -325,7 +325,7 @@ public class UserPasswordResource {
             throw new ForbiddenException(errorMsg);
         }
 
-        if (user.getIsLocked()) {
+        if (user.isLocked()) {
             String errorMsg = "User is locked";
             logger.error(errorMsg);
 
@@ -393,7 +393,7 @@ public class UserPasswordResource {
             throw new ForbiddenException(errorMsg);
         }
 
-        if (user.getIsLocked()) {
+        if (user.isLocked()) {
             String errorMsg = "User is locked";
             logger.error(errorMsg);
             throw new ForbiddenException(errorMsg);

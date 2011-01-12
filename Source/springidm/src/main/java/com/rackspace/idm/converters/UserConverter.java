@@ -31,7 +31,7 @@ public class UserConverter {
         user.setFirstname(jaxbUser.getFirstName());
         user.setIname(jaxbUser.getIname());
         user.setInum(jaxbUser.getInum());
-        user.setIsLocked(jaxbUser.isLocked());
+        user.setLocked(jaxbUser.isLocked());
 
         user.setLastname(jaxbUser.getLastName());
         user.setMiddlename(jaxbUser.getMiddleName());
@@ -115,13 +115,13 @@ public class UserConverter {
 
     public com.rackspace.idm.jaxb.User toUserWithOnlyLockJaxb(User user) {
         com.rackspace.idm.jaxb.User returnedUser = of.createUser();
-        returnedUser.setLocked(user.getIsLocked());
+        returnedUser.setLocked(user.isLocked());
         return returnedUser;
     }
 
     public com.rackspace.idm.jaxb.User toUserWithOnlySoftDeletedJaxb(User user) {
         com.rackspace.idm.jaxb.User returnedUser = of.createUser();
-        returnedUser.setSoftDeleted(user.getSoftDeleted());
+        returnedUser.setSoftDeleted(user.isSoftDeleted());
         return returnedUser;
     }
 
@@ -141,7 +141,7 @@ public class UserConverter {
         returnedUser.setEmail(user.getEmail());
         returnedUser.setIname(user.getIname());
         returnedUser.setInum(user.getInum());
-        returnedUser.setLocked(user.getIsLocked());
+        returnedUser.setLocked(user.isLocked());
         returnedUser.setFirstName(user.getFirstname());
         returnedUser.setLastName(user.getLastname());
         returnedUser.setMiddleName(user.getMiddlename());
@@ -152,7 +152,7 @@ public class UserConverter {
         returnedUser.setStatus(Enum.valueOf(
             com.rackspace.idm.jaxb.UserStatus.class, status));
         returnedUser.setUsername(user.getUsername());
-        returnedUser.setSoftDeleted(user.getSoftDeleted());
+        returnedUser.setSoftDeleted(user.isSoftDeleted());
         returnedUser.setMossoId(user.getMossoId());
         returnedUser.setNastId(user.getNastId());
 

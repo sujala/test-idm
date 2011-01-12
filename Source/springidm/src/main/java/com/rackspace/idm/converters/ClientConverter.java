@@ -35,7 +35,7 @@ public class ClientConverter {
         client.setIname(jaxbClient.getIname());
         client.setInum(jaxbClient.getInum());
 
-        client.setIsLocked(jaxbClient.isLocked());
+        client.setLocked(jaxbClient.isLocked());
 
         client.setName(jaxbClient.getName());
 
@@ -94,9 +94,9 @@ public class ClientConverter {
         returnedClient.setCustomerId(client.getCustomerId());
         returnedClient.setIname(client.getIname());
         returnedClient.setInum(client.getInum());
-        returnedClient.setLocked(client.getIsLocked());
+        returnedClient.setLocked(client.isLocked());
         returnedClient.setName(client.getName());
-        returnedClient.setSoftDeleted(client.getSoftDeleted());
+        returnedClient.setSoftDeleted(client.isSoftDeleted());
 
         if (client.getStatus() != null) {
             returnedClient.setStatus(Enum.valueOf(

@@ -380,8 +380,8 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldRetrieveAllRecords() {
         User user = addNewTestUser();
-        List<User> users = repo.findAll();
-        Assert.assertTrue(users.size() > 1);
+        Users users = repo.findAll(0,100);
+        Assert.assertTrue(users.getUsers().size() > 1);
         repo.delete(user.getUsername());
     }
 
@@ -461,7 +461,7 @@ public class LdapUserRepositoryTest {
         repo.setAllUsersLocked(newUser.getCustomerId(), true);
 
         User changedUser = repo.findByUsername(newUser.getUsername());
-        Assert.assertEquals(changedUser.getIsLocked(), true);
+        Assert.assertEquals(changedUser.isLocked(), true);
 
         repo.delete(newUser.getUsername());
     }

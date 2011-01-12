@@ -22,7 +22,7 @@ public class Client extends BaseClient {
     private String uniqueId = null;
     private String inum = null;
     private String iname = null;
-    private Boolean isLocked = null;
+    private Boolean locked = null;
     private String seeAlso = null;
     private Boolean softDeleted = null;
     private String owner = null;
@@ -113,7 +113,7 @@ public class Client extends BaseClient {
         }
     }
 
-    public Boolean getSoftDeleted() {
+    public Boolean isSoftDeleted() {
         return softDeleted;
     }
 
@@ -121,12 +121,12 @@ public class Client extends BaseClient {
         this.softDeleted = softDeleted;
     }
 
-    public Boolean getIsLocked() {
-        return isLocked;
+    public Boolean isLocked() {
+        return locked;
     }
 
-    public void setIsLocked(Boolean isLocked) {
-        this.isLocked = isLocked;
+    public void setLocked(Boolean isLocked) {
+        this.locked = isLocked;
     }
 
     public String getOwner() {
@@ -169,7 +169,7 @@ public class Client extends BaseClient {
     }
 
     public void setDefaults() {
-        this.setIsLocked(false);
+        this.setLocked(false);
         this.setSoftDeleted(false);
         this.setStatus(ClientStatus.ACTIVE);
     }
@@ -193,7 +193,7 @@ public class Client extends BaseClient {
         result = prime * result + ((iname == null) ? 0 : iname.hashCode());
         result = prime * result + ((inum == null) ? 0 : inum.hashCode());
         result = prime * result
-                + ((isLocked == null) ? 0 : isLocked.hashCode());
+                + ((locked == null) ? 0 : locked.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((owner == null) ? 0 : owner.hashCode());
         result = prime * result + ((seeAlso == null) ? 0 : seeAlso.hashCode());
@@ -238,11 +238,11 @@ public class Client extends BaseClient {
         } else if (!inum.equals(other.inum)) {
             return false;
         }
-        if (isLocked == null) {
-            if (other.isLocked != null) {
+        if (locked == null) {
+            if (other.locked != null) {
                 return false;
             }
-        } else if (!isLocked.equals(other.isLocked)) {
+        } else if (!locked.equals(other.locked)) {
             return false;
         }
         if (name == null) {
@@ -290,7 +290,7 @@ public class Client extends BaseClient {
     public String toString() {
         return "Client [clientSecret=" + clientSecret + ", name=" + name
                 + ", status=" + status + ", uniqueId=" + uniqueId + ", inum="
-                + inum + ", iname=" + iname + ", isLocked=" + isLocked
+                + inum + ", iname=" + iname + ", isLocked=" + locked
                 + ", seeAlso=" + seeAlso + ", softDeleted=" + softDeleted
                 + ", owner=" + owner + "]";
     }
