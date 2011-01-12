@@ -4,12 +4,12 @@ public class UserAuthenticationResult extends AuthenticationResult {
 
     private User user;
 
+    public UserAuthenticationResult(User user, boolean authenticated) {
+        super(authenticated);
+        this.user = user;
+    }
     public User getUser() {
         return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
     }
 
     @Override
@@ -42,9 +42,5 @@ public class UserAuthenticationResult extends AuthenticationResult {
         return true;
     }
 
-    @Override
-    public String toString() {
-        return "UserAuthenticationResult [user=" + user + ", authenticated="
-            + authenticated + "]";
-    }
+
 }

@@ -3,6 +3,11 @@ package com.rackspace.idm.entities;
 public class ClientAuthenticationResult extends AuthenticationResult {
 
     private Client client;
+    
+    public ClientAuthenticationResult(Client client, boolean authenticated) {
+        super(authenticated);
+        this.client = client;
+    }
 
     public Client getClient() {
         return client;

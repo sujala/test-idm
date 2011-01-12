@@ -3,13 +3,13 @@ package com.rackspace.idm.entities;
 public abstract class AuthenticationResult {
 
     protected boolean authenticated = false;
+    
+    public AuthenticationResult(boolean authenticated) {
+        this.authenticated = authenticated;
+    }
 
     public boolean isAuthenticated() {
         return authenticated;
-    }
-
-    public void setAuthenticated(boolean authenticated) {
-        this.authenticated = authenticated;
     }
 
     @Override

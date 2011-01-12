@@ -375,6 +375,14 @@ public class User extends BaseUser {
     public void setUpdated(DateTime updated) {
         this.updated = updated;
     }
+    
+    public boolean isDisabled() {
+        boolean disabled = false;
+        disabled = this.getIsLocked() == null ? disabled : disabled || this.getIsLocked().booleanValue();
+        disabled = this.getSoftDeleted() == null ? disabled : disabled || this.getSoftDeleted().booleanValue();
+        disabled = this.getStatus() == null ? disabled : disabled || this.getStatus().equals(UserStatus.INACTIVE);
+        return disabled;
+    }
 
     @Override
     public void setCustomerId(String customerId) {
