@@ -328,6 +328,23 @@ seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
 softDeleted: FALSE
 userPassword: password
 
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rackspaceApplication
+displayName: Cloud Auth Service
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9
+locked: FALSE
+owner: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
+rackspaceCustomerNumber: RACKSPACE
+rackspaceApiKey: bde1268ebabeeabb70a0e702a4626977c331d5c4
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithUsernameAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithMossoIdAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithNastIdAndApiKey
+status: ACTIVE
+seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
+softDeleted: FALSE
+userPassword: password
+
 dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rackspaceApplication
@@ -373,6 +390,13 @@ permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::SetCustomerUser
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddFirstUser
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::ValidateToken
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::RevokeToken
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithUsernameAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithMossoIdAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithNastIdAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByUsername
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByMossoId
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByNastId
+
 rackspaceCustomerNumber: RACKSPACE
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 status: ACTIVE
@@ -409,6 +433,61 @@ softDeleted: FALSE
 userPassword: password
 
 ######################################## Permissions #######################################
+
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithUsernameAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithMossoIdAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithNastIdAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByUsername
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByMossoId
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByNastId
+
+dn: cn=AuthWithUsernameAndApiKey,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: AuthWithUsernameAndApiKey
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: POST auth
+
+dn: cn=AuthWithMossoIdAndApiKey,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: AuthWithMossoIdAndApiKey
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: POST auth/mosso
+
+dn: cn=AuthWithNastIdAndApiKey,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: AuthWithNastIdAndApiKey
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: POST auth/nast
+
+dn: cn=GetUserByUsername,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: GetUserByUsername
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: GET users/[^/]+
+
+dn: cn=GetUserByMossoId,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: GetUserByMossoId
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: GET mosso/[^/]+
+
+dn: cn=AuthWithNastIdAndApiKey,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: AuthWithNastIdAndApiKey
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: GET nast/[^/]+
 
 dn: cn=AddCustomer,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
