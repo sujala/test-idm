@@ -1,6 +1,7 @@
 package com.rackspace.idm.services;
 
 import com.rackspace.idm.entities.User;
+import com.rackspace.idm.entities.UserAuthenticationResult;
 import com.rackspace.idm.entities.Users;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.jaxb.PasswordRecovery;
@@ -11,11 +12,11 @@ public interface UserService {
 
     boolean authenticate(String username, String password);
 
-    boolean authenticateWithApiKey(String username, String apiKey);
+    UserAuthenticationResult authenticateWithApiKey(String username, String apiKey);
     
-    boolean authenticateWithNastIdAndApiKey(String nastId, String apiKey);
+    UserAuthenticationResult authenticateWithNastIdAndApiKey(String nastId, String apiKey);
     
-    boolean authenticateWithMossoIdAndApiKey(int mossoId, String apiKey);
+    UserAuthenticationResult authenticateWithMossoIdAndApiKey(int mossoId, String apiKey);
 
     void deleteUser(String username);
 

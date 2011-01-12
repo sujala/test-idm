@@ -14,7 +14,6 @@ import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.util.AuthHeaderHelper;
-import com.rackspace.idm.validation.ApiCredentialsCheck;
 import com.rackspace.idm.validation.BasicCredentialsCheck;
 import com.rackspace.idm.validation.InputValidator;
 import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
@@ -266,10 +265,6 @@ public class TokenResource {
     }
 
     private ApiError validate(AuthCredentials trParam, OAuthGrantType grantType) {
-        if (OAuthGrantType.API_CREDENTIALS == grantType) {
-            return inputValidator.validate(trParam, Default.class,
-                ApiCredentialsCheck.class);
-        }
 
         if (OAuthGrantType.PASSWORD == grantType) {
             return inputValidator.validate(trParam, Default.class,

@@ -28,6 +28,7 @@ import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.entities.CustomerStatus;
 import com.rackspace.idm.entities.Password;
 import com.rackspace.idm.entities.User;
+import com.rackspace.idm.entities.UserAuthenticationResult;
 import com.rackspace.idm.entities.UserCredential;
 import com.rackspace.idm.entities.UserHumanName;
 import com.rackspace.idm.entities.UserLocale;
@@ -70,7 +71,7 @@ public class UserServiceTests {
 
     String tokenString = "XXXX";
     String callbackUrl = "www.cp.com";
-    
+
     String nastId = "nastId";
     int mossoId = 6676;
 
@@ -93,7 +94,7 @@ public class UserServiceTests {
         userService = new DefaultUserService(mockUserDao, mockRackerDao,
             mockCustomerDao, mockTokenDao, mockRefreshTokenDao, mockClientDao,
             mockEmailService, mockRoleService, false, new StubLogger());
-        
+
         trustedUserService = new DefaultUserService(mockUserDao, mockRackerDao,
             mockCustomerDao, mockTokenDao, mockRefreshTokenDao, mockClientDao,
             mockEmailService, mockRoleService, true, new StubLogger());
@@ -163,7 +164,7 @@ public class UserServiceTests {
         Assert.assertTrue(retrievedUser.getUsername().equals(username));
         EasyMock.verify(mockUserDao);
     }
-    
+
     @Test
     public void shouldGetUserByNastId() {
         User user = getFakeUser();
@@ -176,7 +177,7 @@ public class UserServiceTests {
         Assert.assertTrue(retrievedUser.getUsername().equals(username));
         EasyMock.verify(mockUserDao);
     }
-    
+
     @Test
     public void shouldGetUserByMossoId() {
         User user = getFakeUser();
@@ -233,8 +234,7 @@ public class UserServiceTests {
         User user = getFakeUser();
 
         Map<String, String> userStatusMap = new HashMap<String, String>();
-        userStatusMap.put(GlobalConstants.ATTR_SOFT_DELETED,
-            "TRUE");
+        userStatusMap.put(GlobalConstants.ATTR_SOFT_DELETED, "TRUE");
 
         mockUserDao.saveRestoredUser(user, userStatusMap);
         EasyMock.replay(mockUserDao);
@@ -287,8 +287,8 @@ public class UserServiceTests {
         EasyMock.expect(mockRackerDao.authenticate("racker", password))
             .andReturn(true);
         EasyMock.replay(mockRackerDao);
-        boolean authenticated = trustedUserService.authenticate(
-            "racker", password);
+        boolean authenticated = trustedUserService.authenticate("racker",
+            password);
         Assert.assertTrue(authenticated);
         EasyMock.verify(mockRackerDao);
     }
@@ -296,39 +296,41 @@ public class UserServiceTests {
     @Test
     public void shouldAuthenticateUserByApiKey() {
         EasyMock.expect(mockUserDao.authenticateByAPIKey(username, apiKey))
-            .andReturn(true);
+            .andReturn(getTrueAuthenticationResult());
         EasyMock.replay(mockUserDao);
 
-        boolean authenticated = userService.authenticateWithApiKey(username,
-            apiKey);
+        UserAuthenticationResult authenticated = userService
+            .authenticateWithApiKey(username, apiKey);
 
-        Assert.assertTrue(authenticated);
+        Assert.assertTrue(authenticated.isAuthenticated());
         EasyMock.verify(mockUserDao);
     }
-    
+
     @Test
     public void shouldAuthenticateUserByNastIdApiKey() {
-        EasyMock.expect(mockUserDao.authenticateByNastIdAndAPIKey(nastId, apiKey))
-            .andReturn(true);
+        EasyMock.expect(
+            mockUserDao.authenticateByNastIdAndAPIKey(nastId, apiKey))
+            .andReturn(getTrueAuthenticationResult());
         EasyMock.replay(mockUserDao);
 
-        boolean authenticated = userService.authenticateWithNastIdAndApiKey(nastId,
-            apiKey);
+        UserAuthenticationResult authenticated = userService
+            .authenticateWithNastIdAndApiKey(nastId, apiKey);
 
-        Assert.assertTrue(authenticated);
+        Assert.assertTrue(authenticated.isAuthenticated());
         EasyMock.verify(mockUserDao);
     }
-    
+
     @Test
     public void shouldAuthenticateUserByMossoIdApiKey() {
-        EasyMock.expect(mockUserDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey))
-            .andReturn(true);
+        EasyMock.expect(
+            mockUserDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey))
+            .andReturn(getTrueAuthenticationResult());
         EasyMock.replay(mockUserDao);
 
-        boolean authenticated = userService.authenticateWithMossoIdAndApiKey(mossoId,
-            apiKey);
+        UserAuthenticationResult authenticated = userService
+            .authenticateWithMossoIdAndApiKey(mossoId, apiKey);
 
-        Assert.assertTrue(authenticated);
+        Assert.assertTrue(authenticated.isAuthenticated());
         EasyMock.verify(mockUserDao);
     }
 
@@ -444,5 +446,13 @@ public class UserServiceTests {
         clients.add(client2);
 
         return clients;
+    }
+
+    private UserAuthenticationResult getTrueAuthenticationResult() {
+        return new UserAuthenticationResult(getFakeUser(), true);
+    }
+
+    private UserAuthenticationResult getFalseAuthenticationResult() {
+        return new UserAuthenticationResult(null, false);
     }
 }

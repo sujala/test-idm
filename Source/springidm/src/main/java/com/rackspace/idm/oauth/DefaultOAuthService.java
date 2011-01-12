@@ -1,9 +1,10 @@
 package com.rackspace.idm.oauth;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.AuthData;
+import com.rackspace.idm.entities.BaseClient;
 import com.rackspace.idm.entities.RefreshToken;
+import com.rackspace.idm.entities.UserAuthenticationResult;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.RefreshTokenService;
@@ -17,7 +18,8 @@ public class DefaultOAuthService implements OAuthService {
     private RefreshTokenService refreshTokenService;
     private Logger logger;
 
-    public DefaultOAuthService(UserService userService, AccessTokenService accessTokenService,
+    public DefaultOAuthService(UserService userService,
+        AccessTokenService accessTokenService,
         RefreshTokenService refreshTokenService, Logger logger) {
 
         this.userService = userService;
@@ -43,7 +45,7 @@ public class DefaultOAuthService implements OAuthService {
 
     @Override
     public AuthData getTokens(OAuthGrantType grantType,
-                              AuthCredentials credentials, int expirationSeconds, DateTime currentTime) {
+        AuthCredentials credentials, int expirationSeconds, DateTime currentTime) {
 
         String clientId = credentials.getClientId();
         String username = credentials.getUsername();
@@ -54,13 +56,6 @@ public class DefaultOAuthService implements OAuthService {
         RefreshToken refreshToken = null;
 
         switch (grantType) {
-            case API_CREDENTIALS:
-                accessToken = getTokenByApiCredentials(clientId, username,
-                    userpasswd, expirationSeconds, currentTime);
-                refreshToken = getRefreshTokenForUser(username, clientId,
-                    currentTime);
-                break;
-
             case PASSWORD:
                 accessToken = getTokenByBasicCredentials(clientId, username,
                     userpasswd, expirationSeconds, currentTime);
@@ -90,22 +85,47 @@ public class DefaultOAuthService implements OAuthService {
         return authData;
     }
 
-    // private funcs
-    private AccessToken getTokenByApiCredentials(String clientId,
-        String username, String userpasswd, int expirationSeconds,
+    public AccessToken getTokenByUsernameAndApiCredentials(BaseClient client,
+        String username, String apiKey, int expirationSeconds,
         DateTime currentTime) {
 
-        if (!clientId.equals(GlobalConstants.RESTRICTED_CLIENT_ID)) {
-            throwNotAuthenticatedException(String.format(
-                "Unauthorized Client For: %s", clientId));
-        }
+        UserAuthenticationResult authResult = userService
+            .authenticateWithApiKey(username, apiKey);
 
-        boolean authenticated = userService.authenticateWithApiKey(username,
-            userpasswd);
-        if (!authenticated) {
-            throwNotAuthenticatedException(String.format(
-                "Incorrect Credentials For: %s", username));
+        return getTokenByApiCredentials(client,authResult, expirationSeconds, currentTime);
+    }
+    
+    public AccessToken getTokenByNastIdAndApiCredentials(BaseClient client,
+        String nastId, String apiKey, int expirationSeconds,
+        DateTime currentTime) {
+
+        UserAuthenticationResult authResult = userService
+            .authenticateWithNastIdAndApiKey(nastId, apiKey);
+
+        return getTokenByApiCredentials(client,authResult, expirationSeconds, currentTime);
+    }
+    
+    public AccessToken getTokenByMossoIdAndApiCredentials(BaseClient client,
+        int mossoId, String apiKey, int expirationSeconds,
+        DateTime currentTime) {
+
+        UserAuthenticationResult authResult = userService
+            .authenticateWithMossoIdAndApiKey(mossoId, apiKey);
+
+        return getTokenByApiCredentials(client,authResult, expirationSeconds, currentTime);
+    }
+
+    // private funcs
+    private AccessToken getTokenByApiCredentials(BaseClient client,
+        UserAuthenticationResult authResult, int expirationSeconds,
+        DateTime currentTime) {
+
+        if (!authResult.isAuthenticated()) {
+            throwNotAuthenticatedException("Incorrect Credentials");
         }
+        
+        String username = authResult.getUser().getUsername();
+        String clientId = client.getClientId();
 
         AccessToken token = accessTokenService.getAccessTokenForUser(username,
             clientId, currentTime);
@@ -120,7 +140,8 @@ public class DefaultOAuthService implements OAuthService {
         }
         return token;
     }
-
+    
+    
     private AccessToken getTokenByBasicCredentials(String clientId,
         String username, String userpasswd, int expirationSeconds,
         DateTime currentTime) {
@@ -182,8 +203,8 @@ public class DefaultOAuthService implements OAuthService {
         String requestor = refreshToken.getRequestor();
 
         AccessToken token = accessTokenService.createAccessTokenForUser(owner,
-                requestor, expirationSeconds);
-        
+            requestor, expirationSeconds);
+
         return token;
     }
 

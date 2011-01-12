@@ -1,23 +1,33 @@
 package com.rackspace.idm.rest.resources;
 
-import com.rackspace.idm.config.LoggerFactoryWrapper;
-import com.rackspace.idm.converters.UserConverter;
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.User;
-import com.rackspace.idm.exceptions.ForbiddenException;
-import com.rackspace.idm.exceptions.NotAuthenticatedException;
-import com.rackspace.idm.jaxb.Credentials;
-import com.rackspace.idm.jaxb.MossoCredentials;
-import com.rackspace.idm.jaxb.NastCredentials;
-import com.rackspace.idm.services.AccessTokenService;
-import com.rackspace.idm.services.AuthorizationService;
-import com.rackspace.idm.services.UserService;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import com.rackspace.idm.config.LoggerFactoryWrapper;
+import com.rackspace.idm.converters.TokenConverter;
+import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.exceptions.BadRequestException;
+import com.rackspace.idm.exceptions.ForbiddenException;
+import com.rackspace.idm.jaxb.MossoCredentials;
+import com.rackspace.idm.jaxb.Credentials;
+import com.rackspace.idm.jaxb.NastCredentials;
+import com.rackspace.idm.oauth.OAuthService;
+import com.rackspace.idm.services.AccessTokenService;
+import com.rackspace.idm.services.AuthorizationService;
 
 /**
  * Backward Compatible Auth Methods
@@ -29,18 +39,18 @@ import javax.ws.rs.core.*;
 public class AuthResource {
 
     private AccessTokenService accessTokenService;
-    private UserService userService;
-    private UserConverter userConverter;
+    private TokenConverter tokenConverter;
     private AuthorizationService authorizationService;
+    private OAuthService oauthService;
     private Logger logger;
 
     @Autowired
-    public AuthResource(UserService userService, UserConverter userConverter,
-        AuthorizationService authorizationService,
+    public AuthResource(TokenConverter tokenConverter,
+        AuthorizationService authorizationService, OAuthService oauthService,
         AccessTokenService accessTokenService, LoggerFactoryWrapper logger) {
-        this.userConverter = userConverter;
-        this.userService = userService;
+        this.tokenConverter = tokenConverter;
         this.authorizationService = authorizationService;
+        this.oauthService = oauthService;
         this.accessTokenService = accessTokenService;
         this.logger = logger.getLogger(this.getClass());
     }
@@ -48,11 +58,11 @@ public class AuthResource {
     /**
      * Gets an Access Token for Auth with Username and Api Key
      * 
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}auth
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}accessToken
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
      * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userDisabled
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      * 
@@ -63,8 +73,9 @@ public class AuthResource {
     public Response getUsernameAuth(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, Credentials creds) {
-        
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token,
@@ -76,29 +87,34 @@ public class AuthResource {
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
-        
-        boolean authenticated = this.userService.authenticateWithApiKey(creds.getUsername(), creds.getKey());
-        
-        if (!authenticated) {
-            String errorMsg = String.format("", creds.getUsername());
-            logger.error(errorMsg);
-            throw new NotAuthenticatedException(errorMsg);
-        }
-        
-        User user = this.userService.getUser(creds.getUsername());
-        
 
-        return Response.noContent().build();
+        String username = creds.getUsername();
+        String apiKey = creds.getKey();
+
+        if (StringUtils.isBlank(username) || StringUtils.isBlank(apiKey)) {
+            String errMsg = "Blank Value passed in for username or key";
+            logger.error(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+
+        int expirationSeconds = accessTokenService
+            .getCloudAuthDefaultTokenExpirationSeconds();
+
+        AccessToken userToken = this.oauthService
+            .getTokenByUsernameAndApiCredentials(token.getTokenClient(),
+                username, apiKey, expirationSeconds, new DateTime());
+
+        return Response.ok(tokenConverter.toAccessTokenJaxb(userToken)).build();
     }
 
     /**
      * Gets an Access Token for Auth with MossoId and Api Key
      * 
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}auth
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}accessToken
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
      * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userDisabled
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      * 
@@ -110,8 +126,9 @@ public class AuthResource {
     public Response getMossoAuth(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, MossoCredentials creds) {
-        
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token,
@@ -124,17 +141,33 @@ public class AuthResource {
             throw new ForbiddenException(errMsg);
         }
 
-        return Response.noContent().build();
+        int mossoId = creds.getMossoId();
+        String apiKey = creds.getKey();
+
+        if (StringUtils.isBlank(apiKey)) {
+            String errMsg = "Blank Value passed in for key";
+            logger.error(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+
+        int expirationSeconds = accessTokenService
+            .getCloudAuthDefaultTokenExpirationSeconds();
+
+        AccessToken userToken = this.oauthService
+            .getTokenByMossoIdAndApiCredentials(token.getTokenClient(),
+                mossoId, apiKey, expirationSeconds, new DateTime());
+
+        return Response.ok(tokenConverter.toAccessTokenJaxb(userToken)).build();
     }
 
     /**
      * Gets an Access Token for Auth with NastId and Api Key
      * 
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}auth
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}accessToken
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
      * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userDisabled
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      * 
@@ -146,8 +179,9 @@ public class AuthResource {
     public Response getNastAuth(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, NastCredentials creds) {
-        
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token,
@@ -160,6 +194,21 @@ public class AuthResource {
             throw new ForbiddenException(errMsg);
         }
 
-        return Response.noContent().build();
+        String nastId = creds.getNastId();
+        String apiKey = creds.getKey();
+
+        if (StringUtils.isBlank(nastId) || StringUtils.isBlank(apiKey)) {
+            String errMsg = "Blank Value passed in for nastId or key";
+            logger.error(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+
+        int expirationSeconds = accessTokenService.getCloudAuthDefaultTokenExpirationSeconds();
+
+        AccessToken userToken = this.oauthService
+            .getTokenByNastIdAndApiCredentials(token.getTokenClient(), nastId,
+                apiKey, expirationSeconds, new DateTime());
+
+        return Response.ok(tokenConverter.toAccessTokenJaxb(userToken)).build();
     }
 }

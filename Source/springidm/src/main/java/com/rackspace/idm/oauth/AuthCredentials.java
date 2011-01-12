@@ -4,7 +4,6 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
-import com.rackspace.idm.validation.ApiCredentialsCheck;
 import com.rackspace.idm.validation.BasicCredentialsCheck;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
@@ -16,14 +15,12 @@ public class AuthCredentials {
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String grantType;
 
-    @NotNull(groups = {ApiCredentialsCheck.class, BasicCredentialsCheck.class})
-    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY, groups = {
-        ApiCredentialsCheck.class, BasicCredentialsCheck.class})
+    @NotNull(groups = {BasicCredentialsCheck.class})
+    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY, groups = {BasicCredentialsCheck.class})
     private String username;
 
-    @NotNull(groups = {ApiCredentialsCheck.class, BasicCredentialsCheck.class})
-    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY, groups = {
-        ApiCredentialsCheck.class, BasicCredentialsCheck.class})
+    @NotNull(groups = {BasicCredentialsCheck.class})
+    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY, groups = {BasicCredentialsCheck.class})
     private String password;
 
     @NotNull

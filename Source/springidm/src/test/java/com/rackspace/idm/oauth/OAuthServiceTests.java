@@ -106,49 +106,6 @@ public class OAuthServiceTests {
     }
 
     @Test
-    public void shouldGetTokenWithGrantTypeApiCredentials() {
-
-        OAuthGrantType grantType = OAuthGrantType.API_CREDENTIALS;
-        AuthCredentials authCredentials = getTestAuthCredentials();
-        authCredentials.setGrantType("api-credentials");
-        authCredentials.setClientId(GlobalConstants.RESTRICTED_CLIENT_ID);
-
-        AccessToken testAccessToken = getFakeAccessToken();
-        RefreshToken testRefreshToken = getFakeRefreshToken();
-        DateTime currentTime = new DateTime();
-
-        EasyMock.expect(
-                mockUserService.authenticateWithApiKey(authCredentials
-                        .getUsername(), userpass.getValue())).andReturn(true);
-        EasyMock.replay(mockUserService);
-
-        EasyMock.expect(
-                mockAccessTokenService.getAccessTokenForUser(authCredentials
-                        .getUsername(), authCredentials.getClientId(), currentTime))
-                .andReturn(testAccessToken);
-        EasyMock.replay(mockAccessTokenService);
-
-        EasyMock.expect(
-                mockRefreshTokenService.getRefreshTokenByUserAndClient(
-                        authCredentials.getUsername(), authCredentials.getClientId(),
-                        currentTime)).andReturn(null);
-        EasyMock.expect(
-                mockRefreshTokenService.createRefreshTokenForUser(authCredentials
-                        .getUsername(), authCredentials.getClientId())).andReturn(
-                testRefreshToken);
-        EasyMock.replay(mockRefreshTokenService);
-
-        AuthData authData = oauthService.getTokens(grantType, authCredentials,
-                expireInSeconds, currentTime);
-
-        Assert.assertNotNull(authData.getAccessToken());
-        Assert.assertNotNull(authData.getRefreshToken());
-
-        EasyMock.verify(mockUserService);
-        EasyMock.verify(mockAccessTokenService);
-    }
-
-    @Test
     public void shouldGetTokenWithGrantTypeBasicCredentials() {
 
         OAuthGrantType grantType = OAuthGrantType.PASSWORD;
@@ -304,96 +261,6 @@ public class OAuthServiceTests {
         EasyMock.verify(mockAccessTokenService);
     }
 
-    @Test
-    public void shouldCreateNewAccessTokenWhenExpiredWithApiKey()
-            throws Exception {
-
-        OAuthGrantType grantType = OAuthGrantType.API_CREDENTIALS;
-        AuthCredentials authCredentials = getTestAuthCredentials();
-        authCredentials.setGrantType("api-credentials");
-        authCredentials.setClientId(GlobalConstants.RESTRICTED_CLIENT_ID);
-
-        RefreshToken testRefreshToken = getFakeRefreshToken();
-        AccessToken testAccessToken = getFakeAccessToken();
-        testAccessToken
-                .setExpirationTime(MemcachedAccessTokenRepository.DATE_PARSER
-                        .parseDateTime("20000101000000.300Z"));
-        DateTime currentTime = new DateTime();
-
-        EasyMock.expect(
-                mockUserService.authenticateWithApiKey(authCredentials
-                        .getUsername(), userpass.getValue())).andReturn(true);
-        EasyMock.replay(mockUserService);
-
-        EasyMock.expect(
-                mockAccessTokenService.getAccessTokenForUser(authCredentials
-                        .getUsername(), authCredentials.getClientId(), currentTime))
-                .andReturn(testAccessToken);
-        EasyMock
-                .expect(
-                        mockAccessTokenService.createAccessTokenForUser(authCredentials
-                                .getUsername(), authCredentials.getClientId(),
-                                expireInSeconds)).andReturn(testAccessToken);
-        EasyMock.replay(mockAccessTokenService);
-
-        EasyMock.expect(
-                mockRefreshTokenService.getRefreshTokenByUserAndClient(
-                        authCredentials.getUsername(), authCredentials.getClientId(),
-                        currentTime)).andReturn(null);
-        EasyMock.expect(
-                mockRefreshTokenService.createRefreshTokenForUser(authCredentials
-                        .getUsername(), authCredentials.getClientId())).andReturn(
-                testRefreshToken);
-        EasyMock.replay(mockRefreshTokenService);
-
-        AuthData authData = oauthService.getTokens(grantType, authCredentials,
-                expireInSeconds, currentTime);
-
-        Assert.assertNotNull(authData.getAccessToken());
-        Assert.assertNotNull(authData.getRefreshToken());
-
-        EasyMock.verify(mockUserService);
-        EasyMock.verify(mockAccessTokenService);
-    }
-
-    @Test(expected = NotAuthenticatedException.class)
-    public void shouldNotGetAccessTokenIfFailClientAuthWithGrantTypeApiCred()
-            throws Exception {
-
-        OAuthGrantType grantType = OAuthGrantType.API_CREDENTIALS;
-        AuthCredentials authCredentials = getTestAuthCredentials();
-        authCredentials.setGrantType("api-credentials");
-        authCredentials.setClientId(GlobalConstants.RESTRICTED_CLIENT_ID);
-
-        DateTime currentTime = new DateTime();
-
-        EasyMock.expect(
-                mockUserService.authenticateWithApiKey(authCredentials
-                        .getUsername(), userpass.getValue())).andReturn(false);
-        EasyMock.replay(mockUserService);
-
-        AuthData authData = oauthService.getTokens(grantType, authCredentials,
-                expireInSeconds, currentTime);
-
-        Assert.assertNull(authData);
-        EasyMock.verify(mockUserService);
-    }
-
-    @Test(expected = NotAuthenticatedException.class)
-    public void shouldNotGetAccessTokenIfNotRestrictedClient() throws Exception {
-
-        OAuthGrantType grantType = OAuthGrantType.API_CREDENTIALS;
-        AuthCredentials authCredentials = getTestAuthCredentials();
-        authCredentials.setGrantType("api-credentials");
-        authCredentials.setClientId("Not_restricted_client");
-
-        DateTime currentTime = new DateTime();
-        AuthData authData = oauthService.getTokens(grantType, authCredentials,
-                expireInSeconds, currentTime);
-
-        Assert.assertNull(authData);
-    }
-
     @Test(expected = NotAuthenticatedException.class)
     public void shouldNotGetAccessTokenIfFailUserAuthentication()
             throws Exception {
@@ -410,29 +277,6 @@ public class OAuthServiceTests {
         EasyMock.expect(
                 mockUserService.authenticate(authCredentials.getUsername(),
                         userpass.getValue())).andReturn(false);
-        EasyMock.replay(mockUserService);
-
-        AuthData authData = oauthService.getTokens(grantType, authCredentials,
-                expireInSeconds, currentTime);
-
-        Assert.assertNull(authData);
-        EasyMock.verify(mockUserService);
-    }
-
-    @Test(expected = NotAuthenticatedException.class)
-    public void shouldNotGetAccessTokenIfFailUserAuthenticationByApiKey()
-            throws Exception {
-
-        OAuthGrantType grantType = OAuthGrantType.API_CREDENTIALS;
-        AuthCredentials authCredentials = getTestAuthCredentials();
-        authCredentials.setGrantType("api-credentials");
-        authCredentials.setClientId(GlobalConstants.RESTRICTED_CLIENT_ID);
-
-        DateTime currentTime = new DateTime();
-
-        EasyMock.expect(
-                mockUserService.authenticateWithApiKey(authCredentials
-                        .getUsername(), userpass.getValue())).andReturn(false);
         EasyMock.replay(mockUserService);
 
         AuthData authData = oauthService.getTokens(grantType, authCredentials,

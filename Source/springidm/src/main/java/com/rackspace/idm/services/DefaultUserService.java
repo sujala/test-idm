@@ -29,6 +29,7 @@ import com.rackspace.idm.dao.UserDao;
 import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.entities.User;
+import com.rackspace.idm.entities.UserAuthenticationResult;
 import com.rackspace.idm.entities.UserStatus;
 import com.rackspace.idm.entities.Users;
 import com.rackspace.idm.exceptions.DuplicateException;
@@ -135,27 +136,34 @@ public class DefaultUserService implements UserService {
         return authenticated;
     }
 
-    public boolean authenticateWithApiKey(String username, String apiKey) {
+    public UserAuthenticationResult authenticateWithApiKey(String username,
+        String apiKey) {
         logger.debug("Authenticating User: {} by API Key", username);
-        boolean authenticated = userDao.authenticateByAPIKey(username, apiKey);
+        UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(
+            username, apiKey);
         logger.debug("Authenticated User: {} by API Key - {}", username,
             authenticated);
         return authenticated;
     }
-    
-    public boolean authenticateWithNastIdAndApiKey(String nastId, String apiKey) {
+
+    public UserAuthenticationResult authenticateWithNastIdAndApiKey(
+        String nastId, String apiKey) {
         logger.debug("Authenticating User with NastId {} and API Key", nastId);
-        boolean authenticated = userDao.authenticateByNastIdAndAPIKey(nastId, apiKey);
-        logger.debug("Authenticated User with NastId {} and API Key - {}", nastId,
-            authenticated);
+        UserAuthenticationResult authenticated = userDao
+            .authenticateByNastIdAndAPIKey(nastId, apiKey);
+        logger.debug("Authenticated User with NastId {} and API Key - {}",
+            nastId, authenticated);
         return authenticated;
     }
-    
-    public boolean authenticateWithMossoIdAndApiKey(int mossoId, String apiKey) {
-        logger.debug("Authenticating User with MossoId {} and Api Key", mossoId);
-        boolean authenticated = userDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey);
-        logger.debug("Authenticated User with MossoId {} and API Key - {}", mossoId,
-            authenticated);
+
+    public UserAuthenticationResult authenticateWithMossoIdAndApiKey(
+        int mossoId, String apiKey) {
+        logger
+            .debug("Authenticating User with MossoId {} and Api Key", mossoId);
+        UserAuthenticationResult authenticated = userDao
+            .authenticateByMossoIdAndAPIKey(mossoId, apiKey);
+        logger.debug("Authenticated User with MossoId {} and API Key - {}",
+            mossoId, authenticated);
         return authenticated;
     }
 
@@ -191,7 +199,9 @@ public class DefaultUserService implements UserService {
     public User getUser(String username) {
         logger.debug("Getting User: {}", username);
         User user = userDao.findByUsername(username);
-        user.setRoles(roleService.getRolesForUser(username));
+        if (user != null) {
+            user.setRoles(roleService.getRolesForUser(user.getUsername()));
+        }
         logger.debug("Got User: {}", user);
         return user;
     }
@@ -199,7 +209,9 @@ public class DefaultUserService implements UserService {
     public User getUserByNastId(String nastId) {
         logger.debug("Getting User: {}", nastId);
         User user = userDao.findByNastId(nastId);
-        user.setRoles(roleService.getRolesForUser(nastId));
+        if (user != null) {
+            user.setRoles(roleService.getRolesForUser(user.getUsername()));
+        }
         logger.debug("Got User: {}", user);
         return user;
     }
@@ -207,7 +219,9 @@ public class DefaultUserService implements UserService {
     public User getUserByMossoId(int mossoId) {
         logger.debug("Getting User: {}", mossoId);
         User user = userDao.findByMossoId(mossoId);
-        user.setRoles(roleService.getRolesForUser(user.getUsername()));
+        if (user != null) {
+            user.setRoles(roleService.getRolesForUser(user.getUsername()));
+        }
         logger.debug("Got User: {}", user);
         return user;
     }

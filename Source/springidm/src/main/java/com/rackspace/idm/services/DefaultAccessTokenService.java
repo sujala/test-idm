@@ -29,6 +29,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
     private Logger logger;
     private UserService userService;
     private int defaultTokenExpirationSeconds;
+    private int defaultCloudAuthTokenExpirationSeconds;
     private String dataCenterPrefix;
     private boolean isTrustedServer;
     private AuthHeaderHelper authHeaderHelper;
@@ -45,6 +46,8 @@ public class DefaultAccessTokenService implements AccessTokenService {
         this.logger = logger;
         this.defaultTokenExpirationSeconds = defaultAttributes
             .getExpirationSeconds();
+        this.defaultCloudAuthTokenExpirationSeconds = defaultAttributes
+        .getCloudAuthExpirationSeconds();
         this.dataCenterPrefix = defaultAttributes.getDataCenterPrefix();
         this.isTrustedServer = defaultAttributes.getIsTrustedServer();
         this.authHeaderHelper = authHeaderHelper;
@@ -200,6 +203,10 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
     public int getDefaultTokenExpirationSeconds() {
         return this.defaultTokenExpirationSeconds;
+    }
+    
+    public int getCloudAuthDefaultTokenExpirationSeconds() {
+        return this.defaultCloudAuthTokenExpirationSeconds;
     }
 
     public AccessToken getAccessTokenForUser(String username, String clientId,

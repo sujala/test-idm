@@ -4,17 +4,18 @@ import java.util.List;
 import java.util.Map;
 
 import com.rackspace.idm.entities.User;
+import com.rackspace.idm.entities.UserAuthenticationResult;
 import com.rackspace.idm.entities.Users;
 
 public interface UserDao {
 
     boolean authenticate(String userName, String password);
 
-    boolean authenticateByAPIKey(String username, String apiKey);
+    UserAuthenticationResult authenticateByAPIKey(String username, String apiKey);
 
-    boolean authenticateByNastIdAndAPIKey(String nastId, String apiKey);
+    UserAuthenticationResult authenticateByNastIdAndAPIKey(String nastId, String apiKey);
 
-    boolean authenticateByMossoIdAndAPIKey(int mossoId, String apiKey);
+    UserAuthenticationResult authenticateByMossoIdAndAPIKey(int mossoId, String apiKey);
 
     void add(User user, String customerDN);
 

@@ -69,6 +69,8 @@ public class ServiceConfiguration {
     public AccessTokenService tokenService() {
         int defaultTokenExpirationSeconds = config
             .getInt("token.expirationSeconds");
+        int cloudAuthDefaultExpirationSeconds = config
+            .getInt("token.cloudAuthExpirationSeconds");
         int maxTokenExpirationSeconds = config
             .getInt("token.maxExpirationSeconds");
         int minTokenExpirationSeconds = config
@@ -78,8 +80,9 @@ public class ServiceConfiguration {
             false);
 
         TokenDefaultAttributes defaultAttributes = new TokenDefaultAttributes(
-            defaultTokenExpirationSeconds, maxTokenExpirationSeconds,
-            minTokenExpirationSeconds, dataCenterPrefix, isTrustedServer);
+            defaultTokenExpirationSeconds, cloudAuthDefaultExpirationSeconds,
+            maxTokenExpirationSeconds, minTokenExpirationSeconds,
+            dataCenterPrefix, isTrustedServer);
 
         Logger logger = LoggerFactory
             .getLogger(DefaultAccessTokenService.class);

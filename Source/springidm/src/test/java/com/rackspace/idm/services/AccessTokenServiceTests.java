@@ -61,6 +61,7 @@ public class AccessTokenServiceTests {
     String clientIname = "@Rackspace.TestClient";
 
     int defaultTokenExpirationSeconds = 3600;
+    int cloudAuthExpirationSeconds = 86400;
     int maxTokenExpirationSeconds = 86400;
     int minTokenExpirationSeconds = 10;
     String dataCenterPrefix = "DFW";
@@ -74,8 +75,9 @@ public class AccessTokenServiceTests {
         mockClientDao = EasyMock.createMock(ClientDao.class);
         mockUserService = EasyMock.createMock(UserService.class);
         defaultAttributes = new TokenDefaultAttributes(
-            defaultTokenExpirationSeconds, maxTokenExpirationSeconds,
-            minTokenExpirationSeconds, dataCenterPrefix, isTrustedServer);
+            defaultTokenExpirationSeconds, cloudAuthExpirationSeconds,
+            maxTokenExpirationSeconds, minTokenExpirationSeconds,
+            dataCenterPrefix, isTrustedServer);
         tokenService = new DefaultAccessTokenService(defaultAttributes,
             mockTokenDao, mockRefreshTokenDao, mockClientDao, mockUserService,
             new AuthHeaderHelper(), new StubLogger());

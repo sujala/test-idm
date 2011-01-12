@@ -17,6 +17,7 @@ import com.rackspace.idm.config.LdapConfiguration;
 import com.rackspace.idm.config.PropertyFileConfiguration;
 import com.rackspace.idm.entities.Password;
 import com.rackspace.idm.entities.User;
+import com.rackspace.idm.entities.UserAuthenticationResult;
 import com.rackspace.idm.entities.UserCredential;
 import com.rackspace.idm.entities.UserHumanName;
 import com.rackspace.idm.entities.UserLocale;
@@ -400,26 +401,26 @@ public class LdapUserRepositoryTest {
 
     @Test
     public void shouldAuthenticateByAPIKey() {
-        boolean authenticated = repo.authenticateByAPIKey("mkovacs",
+        UserAuthenticationResult authenticated = repo.authenticateByAPIKey("mkovacs",
             "1234567890");
-        Assert.assertTrue(authenticated);
+        Assert.assertTrue(authenticated.isAuthenticated());
     }
 
     @Test
     public void shouldAuthenticateByNastIdAndAPIKey() {
         User newUser = addNewTestUser();
-        boolean authenticated = repo.authenticateByNastIdAndAPIKey(
+        UserAuthenticationResult authenticated = repo.authenticateByNastIdAndAPIKey(
             "TESTNASTID", "XXX");
-        Assert.assertTrue(authenticated);
+        Assert.assertTrue(authenticated.isAuthenticated());
         repo.delete(newUser.getUsername());
     }
 
     @Test
     public void shouldAuthenticateByMossoIdAndAPIKey() {
         User newUser = addNewTestUser();
-        boolean authenticated = repo.authenticateByMossoIdAndAPIKey(88888,
+        UserAuthenticationResult authenticated = repo.authenticateByMossoIdAndAPIKey(88888,
             "XXX");
-        Assert.assertTrue(authenticated);
+        Assert.assertTrue(authenticated.isAuthenticated());
         repo.delete(newUser.getUsername());
     }
 
@@ -431,9 +432,9 @@ public class LdapUserRepositoryTest {
 
     @Test
     public void shouldNotAuthenticateWithBadApiKey() {
-        boolean authenticated = repo.authenticateByAPIKey("mkovacs",
+        UserAuthenticationResult authenticated = repo.authenticateByAPIKey("mkovacs",
             "BadApiKey");
-        Assert.assertFalse(authenticated);
+        Assert.assertFalse(authenticated.isAuthenticated());
     }
 
     @Test
