@@ -2,7 +2,7 @@ package com.rackspace.idm.entities;
 
 public abstract class AuthenticationResult {
 
-    protected boolean authenticated;
+    protected boolean authenticated = false;
 
     public boolean isAuthenticated() {
         return authenticated;
