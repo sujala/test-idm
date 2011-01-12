@@ -1,7 +1,5 @@
 package com.rackspace.idm;
 
-import java.util.regex.Pattern;
-
 /**
  * Add globally-used constants here.
  * 
@@ -15,12 +13,8 @@ public final class GlobalConstants {
     public static final String RACKSPACE_CUSTOMER_ID = "RACKSPACE";
     public static final String NO_REPLY_EMAIL = "no-reply@idm.rackspace.com";
     public static final String API_NAMESPACE_LOCATION = "http://docs.rackspacecloud.com/idm/api/v1.0";
-    public static final String RESTRICTED_CLIENT_ID = "1183ca858a25100bd8bbd68f5f82ebe2ec8dfa87";
 
     public static final String INUM_PREFIX = "inum=";
-    // Match /users/username/password URI
-    // public static final Pattern PASSWORD_URI_PATTERN = Pattern
-    // .compile("^/(?i:users)/.+/(?i:password)$");
 
     public static final int LDAP_PAGING_DEFAULT_OFFSET = 0;
     public static final int LDAP_PAGING_DEFAULT_LIMIT = 25;
