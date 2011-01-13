@@ -14,6 +14,7 @@ import com.rackspace.idm.dao.CustomerDao;
 import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.ClientSecret;
 import com.rackspace.idm.entities.ClientStatus;
+import com.rackspace.idm.entities.Clients;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.entities.CustomerStatus;
 import com.rackspace.idm.entities.Permission;
@@ -206,17 +207,23 @@ public class ClientServiceTests {
     }
     
     @Test
-    public void shouldGetUsersByCustomerId() {
-        List<Client> clients = new ArrayList<Client>();
-        clients.add(getFakeClient());
-        clients.add(getFakeClient());
+    public void shouldGetClientByCustomerId() {
+        List<Client> clientList = new ArrayList<Client>();
+        clientList.add(getFakeClient());
+        clientList.add(getFakeClient());
         
-        EasyMock.expect(mockClientDao.getByCustomerId(customerId)).andReturn(clients);
+        Clients clients = new Clients();
+        clients.setClients(clientList);
+        clients.setLimit(100);
+        clients.setOffset(0);
+        clients.setTotalRecords(2);
+        
+        EasyMock.expect(mockClientDao.getByCustomerId(customerId, 0, 100)).andReturn(clients);
         EasyMock.replay(mockClientDao);
         
-        List<Client> returned = clientService.getByCustomerId(customerId);
+        Clients returned = clientService.getByCustomerId(customerId, 0, 100);
         
-        Assert.assertTrue(returned.size() == 2);
+        Assert.assertTrue(returned.getClients().size() == 2);
         EasyMock.verify(mockClientDao);
     }
     
