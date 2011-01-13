@@ -171,6 +171,9 @@
 				maxOccurs="unbounded">
 			</element>
 		</sequence>
+		<attribute name="totalRecords" type="xsd:int"></attribute>
+		<attribute name="offset" type="xsd:int"></attribute>
+		<attribute name="limit" type="xsd:int"></attribute>
 	</complexType>
 
 	<complexType name="ClientCredentials">

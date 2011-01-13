@@ -9,7 +9,6 @@
 	targetNamespace="http://docs.rackspacecloud.com/idm/api/v1.0">
 
 	<include schemaLocation="role.xsd"></include>
-	<include schemaLocation="link.xsd"></include>
 	<annotation>
 		<xsd:appinfo xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
 			<xsdxt:title>Users</xsdxt:title>
@@ -388,7 +387,6 @@
 		<sequence>
 			<element name="user" type="idm:User" minOccurs="0" maxOccurs="unbounded">
 			</element>
-			<element name="link" type="idm:Link" minOccurs="0" maxOccurs="3"></element>
 		</sequence>
 		<attribute name="totalRecords" type="xsd:int" use="optional"></attribute>
 		<attribute name="offset" type="xsd:int" use="optional"></attribute>
