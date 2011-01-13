@@ -224,6 +224,8 @@ sn: Tester
 timeZone: America/Chicago
 uid: qauser
 userPassword: password
+rsMossoId: 999112358
+rsNastId: nastid-qauser
 
 dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!10002,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -250,6 +252,8 @@ sn: Tester
 timeZone: America/Chicago
 uid: qaadmin
 userPassword: password
+rsMossoId: 99911235813
+rsNastId: nastid-qaadmin
 
 ######################################## Applications #######################################
 
@@ -396,7 +400,6 @@ permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithNastIdA
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByUsername
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByMossoId
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByNastId
-
 rackspaceCustomerNumber: RACKSPACE
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 status: ACTIVE
@@ -433,13 +436,6 @@ softDeleted: FALSE
 userPassword: password
 
 ######################################## Permissions #######################################
-
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithUsernameAndApiKey
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithMossoIdAndApiKey
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithNastIdAndApiKey
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByUsername
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByMossoId
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByNastId
 
 dn: cn=AuthWithUsernameAndApiKey,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -481,10 +477,10 @@ rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
 blob: GET mosso/[^/]+
 
-dn: cn=AuthWithNastIdAndApiKey,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=GetUserByNastId,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: AuthWithNastIdAndApiKey
+cn: GetUserByNastId
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
 blob: GET nast/[^/]+
