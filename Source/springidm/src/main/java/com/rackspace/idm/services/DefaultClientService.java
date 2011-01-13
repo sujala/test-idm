@@ -10,6 +10,7 @@ import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.CustomerDao;
 import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.ClientSecret;
+import com.rackspace.idm.entities.Clients;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.exceptions.DuplicateException;
@@ -67,49 +68,6 @@ public class DefaultClientService implements ClientService {
         logger.info("Added Client: {}", client);
     }
 
-    public boolean authenticate(String clientId, String clientSecret) {
-        return clientDao.authenticate(clientId, clientSecret);
-    }
-
-    public void delete(String clientId) {
-        clientDao.delete(clientId);
-    }
-
-    public List<Client> getByCustomerId(String customerId) {
-        return clientDao.getByCustomerId(customerId);
-    }
-
-    public Client getById(String clientId) {
-        return clientDao.findByClientId(clientId);
-    }
-
-    public Client getByName(String clientName) {
-        return clientDao.findByClientname(clientName);
-    }
-
-    public void save(Client client) {
-        clientDao.save(client);
-    }
-    
-    public void softDelete(String clientId) {
-        logger.info("Soft Deleting client: {}", clientId);
-        Client client = this.clientDao.findByClientId(clientId);
-        client.setSoftDeleted(true);
-        this.clientDao.save(client);
-        logger.info("Soft Deleted cilent: {}", clientId);
-    }
-
-    public Permission getDefinedPermissionByClientIdAndPermissionId(String clientId,
-        String permissionId) {
-        Permission permission = clientDao.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId);
-        return permission;
-    }
-
-    public List<Permission> getDefinedPermissionsByClientId(String clientId) {
-        List<Permission> permissions = clientDao.getDefinedPermissionsByClientId(clientId);
-        return permissions;
-    }
-
     public void addDefinedPermission(Permission permission) {
         
         Customer customer = customerDao
@@ -144,8 +102,64 @@ public class DefaultClientService implements ClientService {
         clientDao.addDefinedPermission(permission);
     }
 
+    public boolean authenticate(String clientId, String clientSecret) {
+        return clientDao.authenticate(clientId, clientSecret);
+    }
+
+    public void delete(String clientId) {
+        clientDao.delete(clientId);
+    }
+
     public void deleteDefinedPermission(Permission permission) {
         clientDao.deleteDefinedPermission(permission);
+    }
+
+    public Clients getByCustomerId(String customerId, int offset, int limit) {
+        // FIXME: read the default offset and limit from config file
+        // instead of the Constants class.
+
+        if (offset < GlobalConstants.LDAP_PAGING_DEFAULT_OFFSET) {
+            offset = GlobalConstants.LDAP_PAGING_DEFAULT_OFFSET;
+        }
+
+        if (limit < 1) {
+            limit = GlobalConstants.LDAP_PAGING_DEFAULT_LIMIT;
+        } else if (limit > GlobalConstants.LDAP_PAGING_MAX_LIMIT) {
+            limit = GlobalConstants.LDAP_PAGING_MAX_LIMIT;
+        }
+        
+        return clientDao.getByCustomerId(customerId, offset, limit);
+    }
+
+    public Client getById(String clientId) {
+        return clientDao.findByClientId(clientId);
+    }
+    
+    public Client getByName(String clientName) {
+        return clientDao.findByClientname(clientName);
+    }
+
+    public Permission getDefinedPermissionByClientIdAndPermissionId(String clientId,
+        String permissionId) {
+        Permission permission = clientDao.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId);
+        return permission;
+    }
+
+    public List<Permission> getDefinedPermissionsByClientId(String clientId) {
+        List<Permission> permissions = clientDao.getDefinedPermissionsByClientId(clientId);
+        return permissions;
+    }
+
+    public void save(Client client) {
+        clientDao.save(client);
+    }
+
+    public void softDelete(String clientId) {
+        logger.info("Soft Deleting client: {}", clientId);
+        Client client = this.clientDao.findByClientId(clientId);
+        client.setSoftDeleted(true);
+        this.clientDao.save(client);
+        logger.info("Soft Deleted cilent: {}", clientId);
     }
 
     public void updateDefinedPermission(Permission permission) {

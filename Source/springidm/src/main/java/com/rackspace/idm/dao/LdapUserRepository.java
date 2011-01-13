@@ -600,7 +600,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         if (users.getTotalRecords() > 0) {
             this.setAllUsersLocked(customerId, isLocked);
         }
-
     }
 
     private UserAuthenticationResult authenticateUserByApiKey(User user,
@@ -784,7 +783,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         String[] searchAttributes, int offset, int limit) {
 
         ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
-            new SortKey("uid"));
+            new SortKey(ATTR_UID));
 
         // In the constructor below we're adding one to the offset because the
         // Rackspace API standard calls for a 0 based offset while LDAP uses a

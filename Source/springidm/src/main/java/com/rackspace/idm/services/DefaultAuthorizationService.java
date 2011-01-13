@@ -98,12 +98,14 @@ public class DefaultAuthorizationService implements AuthorizationService {
         List<String> uris = new ArrayList<String>();
 
         for (Permission perm : permissions) {
-            // TODO: Refactor for pulling from cache first
-            Permission p = clientDao
-                .getDefinedPermissionByClientIdAndPermissionId(
-                    perm.getClientId(), perm.getPermissionId());
-            if (p != null) {
-                uris.add(p.getValue());
+            if (perm.getClientId().equals(GlobalConstants.IDM_CLIENT_ID)) {
+                // TODO: Refactor for pulling from cache first
+                Permission p = clientDao
+                    .getDefinedPermissionByClientIdAndPermissionId(
+                        perm.getClientId(), perm.getPermissionId());
+                if (p != null) {
+                    uris.add(p.getValue());
+                }
             }
         }
 

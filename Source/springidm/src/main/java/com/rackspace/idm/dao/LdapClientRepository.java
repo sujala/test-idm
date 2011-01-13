@@ -10,19 +10,26 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.ClientSecret;
 import com.rackspace.idm.entities.ClientStatus;
+import com.rackspace.idm.entities.Clients;
 import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
+import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
 import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
+import com.unboundid.ldap.sdk.controls.SortKey;
+import com.unboundid.ldap.sdk.controls.VirtualListViewRequestControl;
+import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
 
 public class LdapClientRepository extends LdapRepository implements ClientDao {
 
@@ -59,71 +66,13 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     private static final String CLIENT_FIND_BY_CLIENTID_STRING_NOT_DELETED = "(&(objectClass=rackspaceApplication)(rackspaceApiKey=%s)(softDeleted=FALSE))";
     private static final String CLIENT_FIND_BY_CUSTOMERID_STRING_NOT_DELETED = "(&(objectClass=rackspaceApplication)(rackspaceCustomerNumber=%s)(softDeleted=FALSE))";
 
+    private static final String CLIENT_FIND_BY_CUSTOMERID_AND_LOCK_STRING = "(&(objectClass=rackspaceApplication)(rackspaceCustomerNumber=%s)(locked=%s)(softDeleted=FALSE))";
+
     private static final String PERMISSION_FIND_BY_CLIENTID = "(objectClass=clientPermission)";
     private static final String PERMISSION_FIND_BY_ID = "(&(cn=%s)(objectClass=clientPermission))";
 
     public LdapClientRepository(LdapConnectionPools connPools, Logger logger) {
         super(connPools, logger);
-    }
-
-    public void addDefinedPermission(Permission permission) {
-        getLogger().info("Adding Permission {}", permission);
-        if (permission == null) {
-            getLogger().error("Null instance of Permission was passed");
-            throw new IllegalArgumentException(
-                "Null instance of Permission was passed.");
-        }
-
-        List<Attribute> atts = new ArrayList<Attribute>();
-
-        atts.add(new Attribute(ATTR_OBJECT_CLASS,
-            ATTR_PERMISSION_OBJECT_CLASS_VALUES));
-
-        if (!StringUtils.isBlank(permission.getCustomerId())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, permission
-                .getCustomerId()));
-        }
-        if (!StringUtils.isBlank(permission.getClientId())) {
-            atts.add(new Attribute(ATTR_CLIENT_ID, permission.getClientId()));
-        }
-        if (!StringUtils.isBlank(permission.getPermissionId())) {
-            atts.add(new Attribute(ATTR_NAME, permission.getPermissionId()));
-        }
-        if (!StringUtils.isBlank(permission.getValue())) {
-            atts.add(new Attribute(ATTR_BLOB, permission.getValue()));
-        }
-        if (!StringUtils.isBlank(permission.getType())) {
-            atts.add(new Attribute(ATTR_PERMISSION_TYPE, permission.getType()));
-        }
-
-        String clientDN = this.getClientDnByClientId(permission.getClientId());
-
-        String permissionDN = "cn=" + permission.getPermissionId() + ","
-            + clientDN;
-
-        permission.setUniqueId(permissionDN);
-
-        LDAPResult result;
-
-        try {
-            result = getAppConnPool().add(permissionDN, atts);
-        } catch (LDAPException ldapEx) {
-            getLogger().error("Error adding permission {} - {}", permission,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            getLogger().error("Error adding permission {} - {}",
-                permission.getPermissionId(), result.getResultCode());
-            throw new IllegalStateException(
-                String.format(
-                    "LDAP error encountered when adding permission: %s - %s",
-                    permission.getPermissionId(), result.getResultCode()
-                        .toString()));
-        }
-
-        getLogger().debug("Added permission {}", permission);
     }
 
     public void add(Client client) {
@@ -228,6 +177,83 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().debug("Added client {}", client);
     }
 
+    public void addDefinedPermission(Permission permission) {
+        getLogger().info("Adding Permission {}", permission);
+        if (permission == null) {
+            getLogger().error("Null instance of Permission was passed");
+            throw new IllegalArgumentException(
+                "Null instance of Permission was passed.");
+        }
+
+        List<Attribute> atts = new ArrayList<Attribute>();
+
+        atts.add(new Attribute(ATTR_OBJECT_CLASS,
+            ATTR_PERMISSION_OBJECT_CLASS_VALUES));
+
+        if (!StringUtils.isBlank(permission.getCustomerId())) {
+            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, permission
+                .getCustomerId()));
+        }
+        if (!StringUtils.isBlank(permission.getClientId())) {
+            atts.add(new Attribute(ATTR_CLIENT_ID, permission.getClientId()));
+        }
+        if (!StringUtils.isBlank(permission.getPermissionId())) {
+            atts.add(new Attribute(ATTR_NAME, permission.getPermissionId()));
+        }
+        if (!StringUtils.isBlank(permission.getValue())) {
+            atts.add(new Attribute(ATTR_BLOB, permission.getValue()));
+        }
+        if (!StringUtils.isBlank(permission.getType())) {
+            atts.add(new Attribute(ATTR_PERMISSION_TYPE, permission.getType()));
+        }
+
+        String clientDN = this.getClientDnByClientId(permission.getClientId());
+
+        String permissionDN = "cn=" + permission.getPermissionId() + ","
+            + clientDN;
+
+        permission.setUniqueId(permissionDN);
+
+        LDAPResult result;
+
+        try {
+            result = getAppConnPool().add(permissionDN, atts);
+        } catch (LDAPException ldapEx) {
+            getLogger().error("Error adding permission {} - {}", permission,
+                ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            getLogger().error("Error adding permission {} - {}",
+                permission.getPermissionId(), result.getResultCode());
+            throw new IllegalStateException(
+                String.format(
+                    "LDAP error encountered when adding permission: %s - %s",
+                    permission.getPermissionId(), result.getResultCode()
+                        .toString()));
+        }
+
+        getLogger().debug("Added permission {}", permission);
+    }
+
+    public boolean authenticate(String clientId, String clientSecret) {
+        BindResult result = null;
+        try {
+            result = getBindConnPool().bind(getClientDnByClientId(clientId),
+                clientSecret);
+        } catch (LDAPException e) {
+            if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
+                return false;
+            }
+            getLogger().error("Error authenticating for clientId {} - {}",
+                clientId, e);
+            throw new IllegalStateException(CONNECT_ERROR_STRING, e);
+        }
+
+        return ResultCode.SUCCESS.equals(result.getResultCode());
+    }
+
     public void delete(String clientId) {
         getLogger().info("Deleting client {}", clientId);
         if (StringUtils.isBlank(clientId)) {
@@ -288,64 +314,29 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
     public List<Client> findAll() {
         getLogger().debug("Search all clients");
-        SearchResult searchResult = null;
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                CLIENT_FIND_ALL_STRING_NOT_DELETED);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error(
-                "Error searching for all clients under DN {} - {}", BASE_DN,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+
+        String searchFilter = CLIENT_FIND_ALL_STRING_NOT_DELETED;
 
         List<Client> clients = new ArrayList<Client>();
-        for (SearchResultEntry e : searchResult.getSearchEntries()) {
-            Client client = getClient(e);
-            clients.add(client);
-        }
-
-        getLogger().debug("Found {} clients under DN {}", clients.size(),
-            BASE_DN);
-        return clients;
-    }
-
-    public Client findByClientname(String clientName) {
-        getLogger().debug("Searching for client {}", clientName);
-
-        if (StringUtils.isBlank(clientName)) {
-            getLogger().error("Null or Empty client name parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty client name parameter.");
-        }
-
-        Client client = null;
         SearchResult searchResult = null;
         try {
-            searchResult = getAppConnPool().search(
-                BASE_DN,
-                SearchScope.SUB,
-                String.format(CLIENT_FIND_BY_NAME_STRING_NOT_DELETED,
-                    clientName));
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for client {} - {}", clientName,
-                ldapEx);
+            SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
+                searchFilter);
+            searchResult = getAppConnPool().search(request);
+        } catch (LDAPException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
         }
 
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            client = getClient(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error("More than one entry was found for client {}",
-                clientName);
-            throw new IllegalStateException(
-                "More than one entry was found for this client name");
+        if (searchResult.getEntryCount() > 0) {
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                clients.add(getClient(entry));
+            }
         }
 
-        getLogger().debug("Found client - {}", client);
+        getLogger().debug("Found clients {}", clients);
 
-        return client;
+        return clients;
     }
 
     public Client findByClientId(String clientId) {
@@ -357,18 +348,27 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 "Null or Empty clientId parameter.");
         }
 
-        Client client = null;
-        SearchResult searchResult = getClientSearchResult(clientId);
+        String searchFilter = String.format(
+            CLIENT_FIND_BY_CLIENTID_STRING_NOT_DELETED, clientId);
+        Client client = getSingleClient(searchFilter);
 
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            client = getClient(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error("More than one entry was found for clientId {}",
-                clientId);
-            throw new IllegalStateException(
-                "More than one entry was found for this clientId");
+        getLogger().debug("Found client - {}", client);
+
+        return client;
+    }
+
+    public Client findByClientname(String clientName) {
+        getLogger().debug("Searching for client {}", clientName);
+
+        if (StringUtils.isBlank(clientName)) {
+            getLogger().error("Null or Empty client name parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty client name parameter.");
         }
+
+        String searchFilter = String.format(
+            CLIENT_FIND_BY_NAME_STRING_NOT_DELETED, clientName);
+        Client client = getSingleClient(searchFilter);
 
         getLogger().debug("Found client - {}", client);
 
@@ -383,29 +383,121 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             throw new IllegalArgumentException("Null or Empty Inum parameter.");
         }
 
-        Client client = null;
+        String searchFilter = String.format(CLIENT_FIND_BY_INUM_STRING, inum);
+        Client client = getSingleClient(searchFilter);
+
+        getLogger().debug("Found client - {}", client);
+
+        return client;
+    }
+
+    public Clients getByCustomerId(String customerId, int offset, int limit) {
+        getLogger().debug("Doing search for customerId {}", customerId);
+
+        if (StringUtils.isBlank(customerId)) {
+            getLogger().error("Null or Empty customerId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty customerId parameter.");
+        }
+
+        String searchFilter = String.format(
+            CLIENT_FIND_BY_CUSTOMERID_STRING_NOT_DELETED, customerId);
+        Clients clients = getMultipleClients(searchFilter, offset, limit);
+
+        getLogger().debug("Found clients {} for customer {}", clients,
+            customerId);
+
+        return clients;
+    }
+
+    public String getClientDnByClientId(String clientId) {
+        getLogger().debug("Doing search for clientId {}", clientId);
+
+        String dn = null;
+
+        if (StringUtils.isBlank(clientId)) {
+            getLogger().error("Null or Empty clientId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty clientId parameter.");
+        }
+
+        String searchFilter = String.format(
+            CLIENT_FIND_BY_CLIENTID_STRING_NOT_DELETED, clientId);
+        Client client = getSingleClient(searchFilter);
+
+        getLogger().debug("Found client - {}", client);
+
+        if (client != null) {
+            dn = client.getUniqueId();
+        }
+
+        return dn;
+    }
+
+    public Permission getDefinedPermissionByClientIdAndPermissionId(
+        String clientId, String permissionId) {
+        String clientDN = this.findByClientId(clientId).getUniqueId();
+
+        Permission permission = null;
         SearchResult searchResult = null;
         try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(CLIENT_FIND_BY_INUM_STRING, inum));
+            searchResult = getAppConnPool().search(clientDN, SearchScope.ONE,
+                String.format(PERMISSION_FIND_BY_ID, permissionId));
         } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for Inum {} - {}", inum, ldapEx);
+            getLogger().error("Error searching for permissionId {} - {}",
+                clientId, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (searchResult.getEntryCount() == 1) {
             SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            client = getClient(e);
+            permission = getPermission(e);
         } else if (searchResult.getEntryCount() > 1) {
-            getLogger()
-                .error("More than one entry was found for Inum {}", inum);
+            getLogger().error(
+                "More than one entry was found for permissionId {}", clientId);
             throw new IllegalStateException(
-                "More than one entry was found for this Inum");
+                "More than one entry was found for this permissionId");
         }
 
-        getLogger().debug("Found client - {}", client);
+        return permission;
+    }
 
-        return client;
+    public List<Permission> getDefinedPermissionsByClientId(String clientId) {
+        String clientDN = this.findByClientId(clientId).getUniqueId();
+
+        List<Permission> permissions = new ArrayList<Permission>();
+        SearchResult searchResult = null;
+
+        String[] Attributes = {ATTR_NAME, ATTR_CLIENT_ID,
+            ATTR_RACKSPACE_CUSTOMER_NUMBER};
+
+        try {
+            searchResult = getAppConnPool().search(clientDN, SearchScope.ONE,
+                PERMISSION_FIND_BY_CLIENTID, Attributes);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("Error searching for clientId {} - {}", clientId,
+                ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() > 0) {
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                permissions.add(getPermission(entry));
+            }
+        }
+        return permissions;
+    }
+
+    public String getUnusedClientInum(String customerInum) {
+        // TODO: We might may this call to the XDI server in the future.
+        Client client = null;
+        String inum = "";
+        do {
+            inum = customerInum + InumHelper.getRandomInum(1);
+            client = findByInum(inum);
+        } while (client != null);
+
+        return inum;
     }
 
     public void save(Client client) {
@@ -452,6 +544,20 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().debug("Updated client {}", client.getName());
     }
 
+    public void setAllClientLocked(String customerId, boolean locked) {
+        Clients clients = this.findFirst100ByCustomerIdAndLock(customerId,
+            !locked);
+        if (clients.getClients() != null && clients.getClients().size() > 0) {
+            for (Client client : clients.getClients()) {
+                client.setLocked(locked);
+                this.save(client);
+            }
+        }
+        if (clients.getTotalRecords() > 0) {
+            this.setAllClientLocked(customerId, locked);
+        }
+    }
+
     public void updateDefinedPermission(Permission permission) {
         getLogger().debug("Updating permission {}", permission);
         if (permission == null || StringUtils.isBlank(permission.getClientId())) {
@@ -496,33 +602,166 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().debug("Updated permission {}", permission);
     }
 
-    public void setAllClientLocked(String customerId, boolean locked) {
-        List<Client> clients = this.getByCustomerId(customerId);
-        for (Client client : clients) {
-            client.setLocked(locked);
-            this.save(client);
-        }
+    private Clients findFirst100ByCustomerIdAndLock(String customerId,
+        boolean isLocked) {
+        getLogger().debug("Doing search for customerId {}", customerId);
+
+        int limit = 100;
+        int offset = 1;
+
+        String searchFilter = String.format(
+            CLIENT_FIND_BY_CUSTOMERID_AND_LOCK_STRING, customerId, isLocked);
+        Clients clients = getMultipleClients(searchFilter, offset, limit);
+
+        getLogger().debug("Found Users - {}", clients);
+
+        return clients;
     }
 
-    List<Modification> getPermissionModifications(Permission rOld,
-        Permission rNew) {
-        List<Modification> mods = new ArrayList<Modification>();
-        if (!StringUtils.equals(rOld.getValue(), rNew.getValue())) {
-            if (!StringUtils.isBlank(rNew.getValue())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_BLOB,
-                    rNew.getValue()));
+    private Client getClient(SearchResultEntry resultEntry) {
+        Client client = new Client();
+        client.setUniqueId(resultEntry.getDN());
+        client.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
+        ClientSecret secret = ClientSecret.existingInstance(resultEntry
+            .getAttributeValue(ATTR_CLIENT_SECRET));
+        client.setClientSecretObj(secret);
+        client.setName(resultEntry.getAttributeValue(ATTR_DISPLAY_NAME));
+        client.setInum(resultEntry.getAttributeValue(ATTR_INUM));
+        client.setIname(resultEntry.getAttributeValue(ATTR_INAME));
+
+        client.setCustomerId(resultEntry
+            .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
+
+        String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
+        if (statusStr != null) {
+            client.setStatus(Enum.valueOf(ClientStatus.class,
+                statusStr.toUpperCase()));
+        }
+        client.setSeeAlso(resultEntry.getAttributeValue(ATTR_SEE_ALSO));
+        client.setOwner(resultEntry.getAttributeValue(ATTR_OWNER));
+
+        String deleted = resultEntry.getAttributeValue(ATTR_SOFT_DELETED);
+        if (deleted != null) {
+            client.setSoftDeleted(resultEntry
+                .getAttributeValueAsBoolean(ATTR_SOFT_DELETED));
+        }
+
+        String locked = resultEntry.getAttributeValue(ATTR_LOCKED);
+        if (locked != null) {
+            client.setLocked(resultEntry
+                .getAttributeValueAsBoolean(ATTR_LOCKED));
+        }
+
+        String[] permissions = resultEntry.getAttributeValues(ATTR_PERMISSION);
+
+        List<Permission> perms = new ArrayList<Permission>();
+
+        if (permissions != null && permissions.length > 0) {
+            for (String s : permissions) {
+                String[] split = s.split(Permission.LDAP_SEPERATOR);
+
+                if (split.length == 3) {
+                    perms
+                        .add(new Permission(split[0], split[1], split[2], null));
+                }
+            }
+            client.setPermissions(perms);
+        }
+
+        return client;
+    }
+
+    private Clients getMultipleClients(String searchFilter, int offset,
+        int limit) {
+
+        ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
+            new SortKey(ATTR_NAME));
+
+        // In the constructor below we're adding one to the offset because the
+        // Rackspace API standard calls for a 0 based offset while LDAP uses a
+        // 1 based offset.
+        VirtualListViewRequestControl vlvRequest = new VirtualListViewRequestControl(
+            offset + 1, 0, limit - 1, 0, null);
+
+        int contentCount = 0;
+
+        List<Client> clientList = new ArrayList<Client>();
+        SearchResult searchResult = null;
+        try {
+
+            SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
+                searchFilter);
+
+            request.setControls(new Control[]{sortRequest, vlvRequest});
+            searchResult = getAppConnPool().search(request);
+
+            for (Control c : searchResult.getResponseControls()) {
+                if (c instanceof VirtualListViewResponseControl) {
+                    VirtualListViewResponseControl vlvResponse = (VirtualListViewResponseControl) c;
+                    contentCount = vlvResponse.getContentCount();
+                }
+            }
+
+        } catch (LDAPException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() > 0) {
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                clientList.add(getClient(entry));
             }
         }
-        if (!StringUtils.equals(rOld.getType(), rNew.getType())) {
-            if (!StringUtils.isBlank(rNew.getType())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_PERMISSION_TYPE, rNew.getType()));
-            } else {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_PERMISSION_TYPE));
-            }
+
+        getLogger().debug("Found clients {}", clientList);
+
+        Clients clients = new Clients();
+
+        clients.setLimit(limit);
+        clients.setOffset(offset);
+        clients.setTotalRecords(contentCount);
+        clients.setClients(clientList);
+
+        return clients;
+    }
+
+    private Permission getPermission(SearchResultEntry resultEntry) {
+        Permission permission = new Permission();
+        permission.setUniqueId(resultEntry.getDN());
+        permission.setCustomerId(resultEntry
+            .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
+        permission.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
+        permission.setPermissionId(resultEntry.getAttributeValue(ATTR_NAME));
+        permission.setType(resultEntry.getAttributeValue(ATTR_PERMISSION_TYPE));
+        permission.setValue(resultEntry.getAttributeValue(ATTR_BLOB));
+        return permission;
+    }
+
+    private Client getSingleClient(String searchFilter) {
+        Client client = null;
+        SearchResult searchResult = null;
+        try {
+            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
+                searchFilter);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
         }
-        return mods;
+
+        if (searchResult.getEntryCount() == 1) {
+            SearchResultEntry e = searchResult.getSearchEntries().get(0);
+            client = getClient(e);
+        } else if (searchResult.getEntryCount() > 1) {
+            String errMsg = String.format(
+                "More than one entry was found for client search - %s",
+                searchFilter);
+            getLogger().error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
+        getLogger().debug("Found Client - {}", client);
+
+        return client;
     }
 
     List<Modification> getModifications(Client cOld, Client cNew) {
@@ -542,8 +781,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             }
         }
 
-        if (cNew.isLocked() != null
-            && cNew.isLocked() != cOld.isLocked()) {
+        if (cNew.isLocked() != null && cNew.isLocked() != cOld.isLocked()) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_LOCKED,
                 String.valueOf(cNew.isLocked())));
         }
@@ -612,217 +850,24 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return mods;
     }
 
-    private Permission getPermission(SearchResultEntry resultEntry) {
-        Permission permission = new Permission();
-        permission.setUniqueId(resultEntry.getDN());
-        permission.setCustomerId(resultEntry
-            .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
-        permission.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
-        permission.setPermissionId(resultEntry.getAttributeValue(ATTR_NAME));
-        permission.setType(resultEntry.getAttributeValue(ATTR_PERMISSION_TYPE));
-        permission.setValue(resultEntry.getAttributeValue(ATTR_BLOB));
-        return permission;
-    }
-
-    private Client getClient(SearchResultEntry resultEntry) {
-        Client client = new Client();
-        client.setUniqueId(resultEntry.getDN());
-        client.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
-        ClientSecret secret = ClientSecret.existingInstance(resultEntry
-            .getAttributeValue(ATTR_CLIENT_SECRET));
-        client.setClientSecretObj(secret);
-        client.setName(resultEntry.getAttributeValue(ATTR_DISPLAY_NAME));
-        client.setInum(resultEntry.getAttributeValue(ATTR_INUM));
-        client.setIname(resultEntry.getAttributeValue(ATTR_INAME));
-
-        client.setCustomerId(resultEntry
-            .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
-
-        String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
-        if (statusStr != null) {
-            client.setStatus(Enum.valueOf(ClientStatus.class,
-                statusStr.toUpperCase()));
-        }
-        client.setSeeAlso(resultEntry.getAttributeValue(ATTR_SEE_ALSO));
-        client.setOwner(resultEntry.getAttributeValue(ATTR_OWNER));
-
-        String deleted = resultEntry.getAttributeValue(ATTR_SOFT_DELETED);
-        if (deleted != null) {
-            client.setSoftDeleted(resultEntry
-                .getAttributeValueAsBoolean(ATTR_SOFT_DELETED));
-        }
-
-        String locked = resultEntry.getAttributeValue(ATTR_LOCKED);
-        if (locked != null) {
-            client.setLocked(resultEntry
-                .getAttributeValueAsBoolean(ATTR_LOCKED));
-        }
-
-        String[] permissions = resultEntry.getAttributeValues(ATTR_PERMISSION);
-
-        List<Permission> perms = new ArrayList<Permission>();
-
-        if (permissions != null && permissions.length > 0) {
-            for (String s : permissions) {
-                String[] split = s.split(Permission.LDAP_SEPERATOR);
-
-                if (split.length == 3) {
-                    perms
-                        .add(new Permission(split[0], split[1], split[2], null));
-                }
-            }
-            client.setPermissions(perms);
-        }
-
-        return client;
-    }
-
-    public String getClientDnByClientId(String clientId) {
-        String dn = null;
-        SearchResult searchResult = getClientSearchResult(clientId);
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            dn = e.getDN();
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error("More than one entry was found for clientId {}",
-                clientId);
-            throw new IllegalStateException(
-                "More than one entry was found for this clientId");
-        }
-        return dn;
-    }
-
-    private SearchResult getClientSearchResult(String clientId) {
-        SearchResult searchResult = null;
-        try {
-            searchResult = getAppConnPool().search(
-                BASE_DN,
-                SearchScope.SUB,
-                String.format(CLIENT_FIND_BY_CLIENTID_STRING_NOT_DELETED,
-                    clientId));
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for clientId {} - {}", clientId,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-        return searchResult;
-    }
-
-    public String getUnusedClientInum(String customerInum) {
-        // TODO: We might may this call to the XDI server in the future.
-        Client client = null;
-        String inum = "";
-        do {
-            inum = customerInum + InumHelper.getRandomInum(1);
-            client = findByInum(inum);
-        } while (client != null);
-
-        return inum;
-    }
-
-    public boolean authenticate(String clientId, String clientSecret) {
-        BindResult result = null;
-        try {
-            result = getBindConnPool().bind(getClientDnByClientId(clientId),
-                clientSecret);
-        } catch (LDAPException e) {
-            if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
-                return false;
-            }
-            getLogger().error("Error authenticating for clientId {} - {}",
-                clientId, e);
-            throw new IllegalStateException(CONNECT_ERROR_STRING, e);
-        }
-
-        return ResultCode.SUCCESS.equals(result.getResultCode());
-    }
-
-    public List<Client> getByCustomerId(String customerId) {
-        getLogger().debug("Doing search for customerId {}", customerId);
-
-        if (StringUtils.isBlank(customerId)) {
-            getLogger().error("Null or Empty customerId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty customerId parameter.");
-        }
-
-        List<Client> clients = new ArrayList<Client>();
-        SearchResult searchResult = null;
-        try {
-            searchResult = getAppConnPool().search(
-                BASE_DN,
-                SearchScope.SUB,
-                String.format(CLIENT_FIND_BY_CUSTOMERID_STRING_NOT_DELETED,
-                    customerId));
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for Clients CustomerId {} - {}",
-                customerId, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() > 0) {
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
-                clients.add(getClient(entry));
+    List<Modification> getPermissionModifications(Permission rOld,
+        Permission rNew) {
+        List<Modification> mods = new ArrayList<Modification>();
+        if (!StringUtils.equals(rOld.getValue(), rNew.getValue())) {
+            if (!StringUtils.isBlank(rNew.getValue())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_BLOB,
+                    rNew.getValue()));
             }
         }
-
-        getLogger().debug("Found clients {} for customer {}", clients,
-            customerId);
-
-        return clients;
-    }
-
-    public Permission getDefinedPermissionByClientIdAndPermissionId(
-        String clientId, String permissionId) {
-        String clientDN = this.findByClientId(clientId).getUniqueId();
-
-        Permission permission = null;
-        SearchResult searchResult = null;
-        try {
-            searchResult = getAppConnPool().search(clientDN, SearchScope.ONE,
-                String.format(PERMISSION_FIND_BY_ID, permissionId));
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for permissionId {} - {}",
-                clientId, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            permission = getPermission(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error(
-                "More than one entry was found for permissionId {}", clientId);
-            throw new IllegalStateException(
-                "More than one entry was found for this permissionId");
-        }
-
-        return permission;
-    }
-
-    public List<Permission> getDefinedPermissionsByClientId(String clientId) {
-        String clientDN = this.findByClientId(clientId).getUniqueId();
-
-        List<Permission> permissions = new ArrayList<Permission>();
-        SearchResult searchResult = null;
-
-        String[] Attributes = {ATTR_NAME, ATTR_CLIENT_ID,
-            ATTR_RACKSPACE_CUSTOMER_NUMBER};
-
-        try {
-            searchResult = getAppConnPool().search(clientDN, SearchScope.ONE,
-                PERMISSION_FIND_BY_CLIENTID, Attributes);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for clientId {} - {}", clientId,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() > 0) {
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
-                permissions.add(getPermission(entry));
+        if (!StringUtils.equals(rOld.getType(), rNew.getType())) {
+            if (!StringUtils.isBlank(rNew.getType())) {
+                mods.add(new Modification(ModificationType.REPLACE,
+                    ATTR_PERMISSION_TYPE, rNew.getType()));
+            } else {
+                mods.add(new Modification(ModificationType.DELETE,
+                    ATTR_PERMISSION_TYPE));
             }
         }
-        return permissions;
+        return mods;
     }
 }

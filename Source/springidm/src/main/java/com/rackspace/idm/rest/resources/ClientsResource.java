@@ -12,6 +12,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
@@ -26,6 +27,7 @@ import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.ClientConverter;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Client;
+import com.rackspace.idm.entities.Clients;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.errors.ApiError;
 import com.rackspace.idm.exceptions.BadRequestException;
@@ -92,7 +94,8 @@ public class ClientsResource {
     public Response getClients(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId) {
+        @PathParam("customerId") String customerId,
+        @QueryParam("offset") int offset, @QueryParam("limit") int limit) {
 
         logger.debug("Getting Customer Clients: {}", customerId);
 
@@ -122,7 +125,7 @@ public class ClientsResource {
             throw new NotFoundException(errorMsg);
         }
 
-        List<Client> clients = clientService.getByCustomerId(customerId);
+        Clients clients = clientService.getByCustomerId(customerId, offset, limit);
 
         logger.debug("Got Customer Clients:{}", clients);
 
@@ -169,14 +172,7 @@ public class ClientsResource {
             throw new ForbiddenException(errMsg);
         }
 
-        if (!client.getCustomerId().toLowerCase()
-            .equals(customerId.toLowerCase())) {
-            String errorMsg = String.format(
-                "Client's customerId (%s) does not match customerId (%s)",
-                client.getCustomerId(), customerId);
-            logger.error(errorMsg);
-            throw new CustomerConflictException(errorMsg);
-        }
+        client.setCustomerId(customerId);
 
         Client clientDO = clientConverter.toClientDO(client);
         clientDO.setDefaults();

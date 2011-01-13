@@ -1,7 +1,5 @@
 package com.rackspace.idm.converters;
 
-import java.util.List;
-
 import org.apache.commons.lang.StringUtils;
 
 import com.rackspace.idm.entities.BaseClient;
@@ -70,18 +68,22 @@ public class ClientConverter {
         return toClientJaxb(client, true, true);
     }
 
-    public Clients toClientListJaxb(List<Client> clients) {
+    public Clients toClientListJaxb(com.rackspace.idm.entities.Clients clients) {
 
-        if (clients == null || clients.size() < 1) {
+        if (clients == null || clients.getClients().size() < 1) {
             return null;
         }
 
         Clients returnedClients = of.createClients();
 
-        for (Client client : clients) {
+        for (Client client : clients.getClients()) {
             returnedClients.getClients().add(
                 toClientJaxbWithoutPermissionsOrCredentials(client));
         }
+        
+        returnedClients.setLimit(clients.getLimit());
+        returnedClients.setOffset(clients.getOffset());
+        returnedClients.setTotalRecords(clients.getTotalRecords());
 
         return returnedClients;
     }
