@@ -13,6 +13,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.rackspace.idm.exceptions.*;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -27,12 +28,6 @@ import com.rackspace.idm.entities.Password;
 import com.rackspace.idm.entities.Role;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.errors.ApiError;
-import com.rackspace.idm.exceptions.BadRequestException;
-import com.rackspace.idm.exceptions.CustomerConflictException;
-import com.rackspace.idm.exceptions.DuplicateException;
-import com.rackspace.idm.exceptions.DuplicateUsernameException;
-import com.rackspace.idm.exceptions.ForbiddenException;
-import com.rackspace.idm.exceptions.PasswordValidationException;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.CustomerService;
@@ -226,8 +221,7 @@ public class UsersResource {
         AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
 
-        // Racker's, Rackspace Clients, Specific Clients, Admins and User's are
-        // authorized
+        // Rackers, Rackspace Clients, Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
             || authorizationService.authorizeClient(token, request.getMethod(),
@@ -242,6 +236,13 @@ public class UsersResource {
 
         logger.debug("Getting User: {}", username);
         User user = this.userService.getUser(username);
+
+        if (user == null) {
+            String errorMsg = String.format("User not found: %s",
+                username);
+            logger.error(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
 
         logger.debug("Got User :{}", user);
         return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
