@@ -1,38 +1,27 @@
 package com.rackspace.idm.rest.resources;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import com.rackspace.idm.ErrorMsg;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.CustomerConverter;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.errors.ApiError;
-import com.rackspace.idm.exceptions.ApiException;
 import com.rackspace.idm.exceptions.BadRequestException;
+import com.rackspace.idm.exceptions.CustomerConflictException;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.CustomerService;
 import com.rackspace.idm.validation.InputValidator;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * Rackspace Customers.
@@ -117,8 +106,7 @@ public class CustomersResource {
                 "A customer with that customerId already exists: %s",
                 customer.getCustomerId());
             logger.error(errorMsg);
-            throw new ApiException(HttpServletResponse.SC_BAD_REQUEST,
-                ErrorMsg.BAD_REQUEST, errorMsg);
+            throw new CustomerConflictException(errorMsg);
         }
 
         logger.info("Added Customer: {}", customer);
