@@ -1,12 +1,16 @@
 package com.rackspace.idm.services;
 
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.config.MemcachedConfiguration;
+import com.rackspace.idm.config.PropertyFileConfiguration;
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.entities.*;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import junit.framework.Assert;
+import net.spy.memcached.MemcachedClient;
+
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -26,7 +30,7 @@ public class AuthorizationServiceTests {
 
     String customerId = "RACKSPACE";
     String otherCustomerId = "RCN-000-000-000";
-    String clientId = "ABCDEF";
+    String clientId = GlobalConstants.IDM_CLIENT_ID;
 
     String username = "username";
 
@@ -65,7 +69,10 @@ public class AuthorizationServiceTests {
     @Before
     public void setUp() throws Exception {
         mockClientDao = EasyMock.createMock(ClientDao.class);
-        service = new DefaultAuthorizationService(mockClientDao, new StubLogger());
+        MemcachedClient mclient = new MemcachedConfiguration(
+            new PropertyFileConfiguration().getConfigFromClasspath(),
+            new StubLogger()).memcacheClient();
+        service = new DefaultAuthorizationService(mockClientDao, mclient,new StubLogger());
         setUpObjects();
     }
 
@@ -110,7 +117,6 @@ public class AuthorizationServiceTests {
         boolean authorized = service.authorizeClient(authorizedClientToken, verb, uri);
 
         Assert.assertTrue(authorized);
-        EasyMock.verify(mockClientDao);
     }
 
     @Test
