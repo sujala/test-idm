@@ -9,6 +9,7 @@ import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.*;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.InputValidator;
+import net.spy.memcached.MemcachedClient;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -43,6 +44,8 @@ public class ServiceConfiguration {
     private RoleDao roleDao;
     @Autowired
     private AuthDao authDao;
+    @Autowired
+    private MemcachedClient memcached;
 
     @Autowired
     private Configuration config;
@@ -195,6 +198,6 @@ public class ServiceConfiguration {
     public AuthorizationService authorizationService() {
         Logger logger = LoggerFactory
             .getLogger(DefaultAuthorizationService.class);
-        return new DefaultAuthorizationService(clientDao, logger);
+        return new DefaultAuthorizationService(clientDao, memcached, logger);
     }
 }

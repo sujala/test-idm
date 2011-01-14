@@ -651,7 +651,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Doing search for customerId {}", customerId);
 
         int limit = 100;
-        int offset = 1;
+        int offset = 0;
 
         String searchFilter = String.format(
             USER_FIND_BY_CUSTOMERID_AND_LOCK_STRING, customerId, isLocked);

@@ -607,7 +607,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().debug("Doing search for customerId {}", customerId);
 
         int limit = 100;
-        int offset = 1;
+        int offset = 0;
 
         String searchFilter = String.format(
             CLIENT_FIND_BY_CUSTOMERID_AND_LOCK_STRING, customerId, isLocked);
@@ -781,7 +781,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             }
         }
 
-        if (cNew.isLocked() != null && cNew.isLocked() != cOld.isLocked()) {
+        if (cNew.isLocked() != null && !cNew.isLocked().equals(cOld.isLocked())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_LOCKED,
                 String.valueOf(cNew.isLocked())));
         }

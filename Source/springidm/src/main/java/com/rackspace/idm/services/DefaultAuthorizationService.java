@@ -1,22 +1,24 @@
 package com.rackspace.idm.services;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.rackspace.idm.dao.ClientDao;
-import org.slf4j.Logger;
-
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.entities.Role;
+import net.spy.memcached.MemcachedClient;
+import org.slf4j.Logger;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DefaultAuthorizationService implements AuthorizationService {
 
+    private MemcachedClient memcached;
     private ClientDao clientDao;
     private Logger logger;
 
-    public DefaultAuthorizationService(ClientDao clientDao, Logger logger) {
+    public DefaultAuthorizationService(ClientDao clientDao, MemcachedClient memcached, Logger logger) {
+        this.memcached = memcached;
         this.clientDao = clientDao;
         this.logger = logger;
     }
@@ -27,7 +29,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     public boolean authorizeRackspaceClient(AccessToken token) {
         return token.isClientToken()
-            && token.getTokenClient().getCustomerId()
+                && token.getTokenClient().getCustomerId()
                 .equals(GlobalConstants.RACKSPACE_CUSTOMER_ID);
     }
 
@@ -38,21 +40,21 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         List<String> allowedActions = getAllowedMethodsFromPermissions(token
-            .getTokenClient().getPermissions());
+                .getTokenClient().getPermissions());
 
         return checkPermissions(allowedActions, verb, uri);
     }
 
     public boolean authorizeUser(AccessToken token, String customerId,
-        String username) {
+                                 String username) {
 
         if (token.isClientToken()) {
             return false;
         }
 
         boolean authorized = token.getTokenUser().getUsername()
-            .equals(username)
-            && token.getTokenUser().getCustomerId().equals(customerId);
+                .equals(username)
+                && token.getTokenUser().getCustomerId().equals(customerId);
 
         return authorized;
     }
@@ -64,7 +66,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         boolean authorized = token.getTokenUser().getCustomerId()
-            .equals(customerId);
+                .equals(customerId);
 
         return authorized;
     }
@@ -72,7 +74,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     public boolean authorizeAdmin(AccessToken token, String customerId) {
 
         if (!token.hasUserRoles()
-            || !token.getTokenUser().getCustomerId().equals(customerId)) {
+                || !token.getTokenUser().getCustomerId().equals(customerId)) {
             return false;
         }
 
@@ -80,7 +82,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
         for (Role r : token.getTokenUser().getRoles()) {
             if (r.getName().toLowerCase()
-                .equals(GlobalConstants.IDM_ADMIN_ROLE_NAME.toLowerCase())) {
+                    .equals(GlobalConstants.IDM_ADMIN_ROLE_NAME.toLowerCase())) {
                 authorized = true;
             }
         }
@@ -89,7 +91,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     private List<String> getAllowedMethodsFromPermissions(
-        List<Permission> permissions) {
+            List<Permission> permissions) {
 
         if (permissions == null || permissions.size() < 1) {
             return null;
@@ -99,10 +101,13 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
         for (Permission perm : permissions) {
             if (perm.getClientId().equals(GlobalConstants.IDM_CLIENT_ID)) {
-                // TODO: Refactor for pulling from cache first
-                Permission p = clientDao
-                    .getDefinedPermissionByClientIdAndPermissionId(
-                        perm.getClientId(), perm.getPermissionId());
+                Permission p = (Permission) memcached.get(perm.getPermissionId());
+                if (p == null) {
+                    p = clientDao.getDefinedPermissionByClientIdAndPermissionId(perm.getClientId(), perm.getPermissionId());
+                    if (p != null) {
+                        memcached.set(p.getPermissionId(), 3600, p);
+                    }
+                }
                 if (p != null) {
                     uris.add(p.getValue());
                 }
@@ -110,18 +115,17 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         return uris;
-
     }
 
     private boolean checkPermissions(List<String> allowedActions, String verb,
-        String uri) {
+                                     String uri) {
 
         String requestedActionURI = verb + " " + uri;
         requestedActionURI = requestedActionURI.toLowerCase();
 
         boolean result = false;
 
-        if (allowedActions == null) {
+        if (allowedActions == null || allowedActions.size() == 0) {
             logger.debug("Empty Permission List.");
             return false;
         }
@@ -135,7 +139,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     private boolean checkPermission(String actionURIRegex,
-        String actionURIRequest) {
+                                    String actionURIRequest) {
 
         if (actionURIRegex == null)
             return false;
