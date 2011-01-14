@@ -1,6 +1,7 @@
 package com.rackspace.idm.entities;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.Stack;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -12,9 +13,13 @@ import org.apache.commons.lang.StringUtils;
 import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
+import sun.misc.Regexp;
 
 @XmlRootElement
 public final class Password {
+
+    public static final String ValidNonAlphaChars = "!@#$%^+=?:";
+
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String value = null;
@@ -84,8 +89,45 @@ public final class Password {
     public static Password generateRandom() {
 
         try {
+
             String randomPassword = HashHelper.getRandomSha1();
             randomPassword = randomPassword.substring(0, 10);
+            char[] pw = randomPassword.toCharArray();
+
+            Stack <Integer> usedIndexes = new Stack <Integer>();
+            int randomIndex = (int)(Math.random() * randomPassword.length());
+            usedIndexes.push(randomIndex);
+
+            // insert random number
+            char randomNumeric = (char)('0' + (int)(Math.random() * 10));
+            pw[randomIndex] = randomNumeric;
+
+
+            // insert random upper case letter
+            while (usedIndexes.contains(randomIndex)) {
+                randomIndex = (int)(Math.random() * randomPassword.length());
+            }
+            char randomUpper = (char)('A' +  (int)(Math.random() * 26));
+            pw[randomIndex] = randomUpper;
+            usedIndexes.push(randomIndex);
+
+            // insert random lower case letter
+            while (usedIndexes.contains(randomIndex)) {
+                randomIndex = (int)(Math.random() * randomPassword.length());
+            }
+            char randomLower = (char)('a' +  (int)(Math.random() * 26));
+            pw[randomIndex] = randomLower;
+            usedIndexes.push(randomIndex);
+
+            // insert random non-alphanumeric
+            while (usedIndexes.contains(randomIndex)) {
+                randomIndex = (int)(Math.random() * randomPassword.length());
+            }
+            int randomInt = (int)(Math.random() * ValidNonAlphaChars.length());
+            int randomNonAlpha = ValidNonAlphaChars.charAt(randomInt);
+            pw[randomIndex] = (char)randomNonAlpha;
+
+            randomPassword = new String(pw);
 
             return new Password(randomPassword, true);
         } catch (NoSuchAlgorithmException e) {

@@ -5,8 +5,20 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import com.rackspace.idm.entities.Password;
+import sun.misc.Regexp;
 
 public class PasswordTest {
+
+    @Test
+    public void shouldGenerateRandomPassword() {
+        Password randomPassword = Password.generateRandom();
+        String passwordValue = randomPassword.getValue();
+
+        String regexpPattern = "^.*(?=.{10,})(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^+=?:]).*$";
+
+        Assert.assertNotNull(randomPassword);
+        Assert.assertTrue(passwordValue.matches(regexpPattern));
+    }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldNotAllowNullValueForExistingPassword() {
