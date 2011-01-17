@@ -3,16 +3,25 @@ package com.rackspace.idm.entities;
 import java.util.List;
 import java.util.Locale;
 
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import com.rackspace.idm.GlobalConstants;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
 public class User extends BaseUser {
     private static final long serialVersionUID = 1347677880811855274L;
 
+    @NotNull
+    @Pattern(regexp = RegexPatterns.EMAIL_ADDRESS, message = MessageTexts.EMAIL)
     private String email = null;
+
+
     protected UserCredential credential = new UserCredential();
     private String personId = null;
 

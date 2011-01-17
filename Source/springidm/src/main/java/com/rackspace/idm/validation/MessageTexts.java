@@ -5,4 +5,5 @@ public class MessageTexts {
 
     public static final String NOT_EMPTY = "may not be blank";
     public static final String USERNAME = "may not be blank, start with a number, or end with @rackspace.com";
+    public static final String EMAIL = "provide a valid email address format";
 }
