@@ -11,10 +11,12 @@ import org.springframework.context.annotation.Configuration;
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.CustomerDao;
+import com.rackspace.idm.dao.EndpointDao;
 import com.rackspace.idm.dao.LdapClientRepository;
 import com.rackspace.idm.dao.LdapConnectionPools;
 import com.rackspace.idm.dao.LdapCustomerRepository;
 import com.rackspace.idm.dao.LdapAuthRepository;
+import com.rackspace.idm.dao.LdapEndpointRepository;
 import com.rackspace.idm.dao.LdapRefreshTokenRepository;
 import com.rackspace.idm.dao.LdapRoleRepository;
 import com.rackspace.idm.dao.LdapUserRepository;
@@ -88,5 +90,11 @@ public class RepositoryConfiguration {
         Logger logger = LoggerFactory.getLogger(LdapAuthRepository.class);
         return new LdapAuthRepository(authReposConnPool, 
             startTLSExtendedRequest, logger);
+    }
+    
+    @Bean
+    public EndpointDao endpointDao() {
+        Logger logger = LoggerFactory.getLogger(LdapRoleRepository.class);
+        return new LdapEndpointRepository(connPools, logger);
     }
 }
