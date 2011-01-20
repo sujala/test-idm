@@ -26,12 +26,15 @@ import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.EndPointConverter;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.CloudBaseUrl;
+import com.rackspace.idm.errors.ApiError;
+import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.jaxb.BaseURL;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.EndpointService;
+import com.rackspace.idm.validation.InputValidator;
 
 /**
  * A Cloud Auth BaseUrl
@@ -46,17 +49,19 @@ public class BaseUrlsResource {
     private AuthorizationService authorizationService;
     private EndpointService endpointService;
     private EndPointConverter endpointConverter;
+    private InputValidator inputValidator;
     private Logger logger;
 
     @Autowired
     public BaseUrlsResource(AccessTokenService accessTokenService,
         AuthorizationService authorizationService,
         EndpointService endpointService, EndPointConverter endpointConverter,
-        LoggerFactoryWrapper logger) {
+        InputValidator inputValidator, LoggerFactoryWrapper logger) {
         this.accessTokenService = accessTokenService;
         this.authorizationService = authorizationService;
         this.endpointConverter = endpointConverter;
         this.endpointService = endpointService;
+        this.inputValidator = inputValidator;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -129,6 +134,11 @@ public class BaseUrlsResource {
         }
 
         CloudBaseUrl url = this.endpointConverter.toBaseUrlDO(baseUrl);
+
+        ApiError err = inputValidator.validate(url);
+        if (err != null) {
+            throw new BadRequestException(err.getMessage());
+        }
 
         this.endpointService.addBaseUrl(url);
 
