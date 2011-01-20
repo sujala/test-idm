@@ -98,7 +98,7 @@ def main():
         do_post('/customers/RACKSPACE/users/', json.dumps(user), hdrs)
         
         # Authenticate the test user and validate his token
-        hdrs = auth_header(client_cred, hdr)
+        hdrs = auth_header(client_cred, hdrs)
         do_get('/token/%s' % ctoken, hdrs)
         
         # Clean up by deleting the test user
