@@ -186,26 +186,6 @@ public class DefaultAccessTokenService implements AccessTokenService {
         return accessToken;
     }
 
-    public AccessToken createAccessTokenForClient(String clientId) {
-
-        return createAccessTokenForClient(clientId, this.defaultTokenExpirationSeconds);
-    }
-
-    public AccessToken createAccessTokenForClient(String clientId, int expirationTimeInSeconds) {
-        logger.debug("Creating Access Token For Client: {}", clientId);
-        String tokenString;
-
-        tokenString = generateTokenWithDcPrefix();
-
-        Client owner = clientDao.findByClientId(clientId);
-        AccessToken accessToken =
-                new AccessToken(tokenString, new DateTime().plusSeconds(expirationTimeInSeconds), null,
-                        owner.getBaseClient(), IDM_SCOPE.FULL);
-        tokenDao.save(accessToken);
-        logger.debug("Created Access Token For Client: {} : {}", clientId, accessToken);
-        return accessToken;
-    }
-
     public AccessToken createAccessTokenForUser(String username, String clientId) {
         return createAccessTokenForUser(username, clientId, this.defaultTokenExpirationSeconds);
     }
@@ -253,84 +233,12 @@ public class DefaultAccessTokenService implements AccessTokenService {
         return accessToken;
     }
 
-    @Deprecated
-    public AccessToken createPasswordResetAccessTokenForUser(String username, String clientId) {
-        return createPasswordResetAccessTokenForUser(username, clientId, this.defaultTokenExpirationSeconds);
-    }
-
-    @Deprecated
-    public AccessToken createPasswordResetAccessTokenForUser(String username, String clientId,
-                                                             int expirationTimeInSeconds) {
-
-        logger.debug("Creating Password Reset Access Token For User: {}", username);
-
-        String tokenString = generateTokenWithDcPrefix();
-
-        User tokenOwner = userService.getUser(username);
-        if (tokenOwner == null) {
-            String error = "No entry found for username " + username;
-            logger.debug(error);
-            throw new IllegalStateException(error);
-        }
-
-        String owner = tokenOwner.getUsername();
-        if (StringUtils.isBlank(owner)) {
-            throw new IllegalArgumentException(String.format("User %s is missing i-number", username));
-        }
-
-        Client tokenRequestor = clientDao.findByClientId(clientId);
-        if (tokenRequestor == null) {
-            String error = "No entry found for clientId " + clientId;
-            logger.debug(error);
-            throw new IllegalStateException(error);
-        }
-
-        if (StringUtils.isBlank(tokenRequestor.getInum())) {
-            throw new IllegalArgumentException(String.format("Client %s is missing i-number", clientId));
-        }
-
-        AccessToken accessToken = new AccessToken(tokenString, new DateTime().plusSeconds(expirationTimeInSeconds),
-                tokenOwner.getBaseUser(), tokenRequestor.getBaseClientWithoutClientPerms(), IDM_SCOPE.SET_PASSWORD);
-        tokenDao.save(accessToken);
-        logger.debug("Created Password Reset Access Token For User: {} : {}", username, accessToken);
-        return accessToken;
-    }
-
     public int getDefaultTokenExpirationSeconds() {
         return this.defaultTokenExpirationSeconds;
     }
 
     public int getCloudAuthDefaultTokenExpirationSeconds() {
         return this.defaultCloudAuthTokenExpirationSeconds;
-    }
-
-    public AccessToken getAccessTokenForUser(String username, String clientId, DateTime expiresAfter) {
-        logger.debug("Getting Token For User: {}", username);
-
-        Client client = clientDao.findByClientId(clientId);
-        if (client == null) {
-            String error = "No entry found for clientId " + clientId;
-            logger.debug(error);
-            throw new IllegalStateException(error);
-        }
-
-        AccessToken token = null;
-        if (isTrustedServer) {
-            token = tokenDao.findTokenForOwner(username, client.getClientId());
-            logger.debug("Got Token For Racker: {} - {}", username, token);
-            return token;
-        }
-
-        User user = userService.getUser(username);
-        if (user == null) {
-            String error = "No entry found for username " + username;
-            logger.debug(error);
-            throw new IllegalStateException(error);
-        }
-
-        token = tokenDao.findTokenForOwner(username, client.getClientId());
-        logger.debug("Got Token For User: {} - {}", username, token);
-        return token;
     }
 
     public AccessToken getAccessTokenForClient(String clientId, DateTime expiresAfter) {

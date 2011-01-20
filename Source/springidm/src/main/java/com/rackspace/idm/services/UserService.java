@@ -10,15 +10,12 @@ public interface UserService {
 
     void addUser(User user) throws DuplicateException;
 
-    @Deprecated
-    boolean authenticateDeprecated(String username, String password);
-
     UserAuthenticationResult authenticate(String userId, String password);
 
     UserAuthenticationResult authenticateWithApiKey(String username, String apiKey);
-    
+
     UserAuthenticationResult authenticateWithNastIdAndApiKey(String nastId, String apiKey);
-    
+
     UserAuthenticationResult authenticateWithMossoIdAndApiKey(int mossoId, String apiKey);
 
     void deleteUser(String username);
@@ -28,19 +25,18 @@ public interface UserService {
     String generateApiKey();
 
     User getUser(String username);
-    
+
     User getUserByNastId(String natsId);
-    
+
     User getUserByMossoId(int mossoId);
-    
+
     User getUser(String customerId, String username);
-    
+
     User getSoftDeletedUser(String customerId, String username);
-    
+
     boolean isUsernameUnique(String username);
 
-    void sendRecoveryEmail(String username, String userEmail,
-        PasswordRecovery recoveryParam, String tokenString);
+    void sendRecoveryEmail(String username, String userEmail, PasswordRecovery recoveryParam, String tokenString);
 
     void softDeleteUser(String username);
 

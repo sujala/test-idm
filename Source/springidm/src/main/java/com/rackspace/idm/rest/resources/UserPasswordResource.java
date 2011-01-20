@@ -21,7 +21,6 @@ import java.util.regex.Pattern;
 
 /**
  * User Password.
- *
  */
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -39,11 +38,10 @@ public class UserPasswordResource {
     String errorMsg = String.format("Authorization Failed");
 
     @Autowired
-    public UserPasswordResource(AccessTokenService accessTokenService,
-        UserService userService, ClientService clientService,
-        PasswordComplexityService passwordComplexityService,
-        PasswordConverter passwordConverter, TokenConverter tokenConverter,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+    public UserPasswordResource(AccessTokenService accessTokenService, UserService userService,
+                                ClientService clientService, PasswordComplexityService passwordComplexityService,
+                                PasswordConverter passwordConverter, TokenConverter tokenConverter,
+                                AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.accessTokenService = accessTokenService;
         this.userService = userService;
         this.clientService = clientService;
@@ -56,7 +54,10 @@ public class UserPasswordResource {
 
     /**
      * Gets the user's password.
-     * 
+     *
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username   username
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userPassword
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -64,43 +65,37 @@ public class UserPasswordResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param customerId RCN
-     * @param username username
      */
     @GET
-    public Response getUserPassword(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("username") String username) {
+    public Response getUserPassword(@Context Request request, @Context UriInfo uriInfo,
+                                    @HeaderParam("Authorization") String authHeader,
+                                    @PathParam("customerId") String customerId,
+                                    @PathParam("username") String username) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         User user = checkAndGetUser(customerId, username);
 
-        Password password = Password.existingInstance(user
-            .getPasswordNoPrefix());
+        Password password = Password.existingInstance(user.getPasswordNoPrefix());
 
         return Response.ok(passwordConverter.toJaxb(password)).build();
     }
 
     /**
      * Resets a user's password.
-     * 
+     *
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username   username
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userPassword
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -108,31 +103,23 @@ public class UserPasswordResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param customerId RCN
-     * @param username username
      */
     @POST
-    public Response resetUserPassword(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("username") String username) {
+    public Response resetUserPassword(@Context Request request, @Context UriInfo uriInfo,
+                                      @HeaderParam("Authorization") String authHeader,
+                                      @PathParam("customerId") String customerId,
+                                      @PathParam("username") String username) {
         logger.info("Reseting Password for User: {}", username);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
-        boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
-            || authorizationService.authorizeAdmin(token, customerId);
+        boolean authorized = authorizationService.authorizeRacker(token) ||
+                authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath()) ||
+                authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -149,7 +136,12 @@ public class UserPasswordResource {
 
     /**
      * Sets a user's password.
-     * 
+     *
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username   username
+     * @param userCred   The user's current password and new password.
+     * @param isRecovery If true, this request is a password reset attempt.
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userCredentials
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userCredentials
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -158,43 +150,30 @@ public class UserPasswordResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param customerId RCN
-     * @param username username
-     * @param userCred The user's current password and new password.
-     * @param isRecovery If true, this request is a password reset attempt.
      */
     @PUT
-    public Response setUserPassword(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("username") String username,
-        com.rackspace.idm.jaxb.UserCredentials userCred,
-        @QueryParam("recovery") boolean isRecovery) {
+    public Response setUserPassword(@Context Request request, @Context UriInfo uriInfo,
+                                    @HeaderParam("Authorization") String authHeader,
+                                    @PathParam("customerId") String customerId, @PathParam("username") String username,
+                                    com.rackspace.idm.jaxb.UserCredentials userCred,
+                                    @QueryParam("recovery") boolean isRecovery) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients, Admins and User's are authorized
-        boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
-            || authorizationService.authorizeAdmin(token, customerId)
-            || authorizationService.authorizeUser(token, customerId, username);
+        boolean authorized = authorizationService.authorizeRacker(token) ||
+                authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath()) ||
+                authorizationService.authorizeAdmin(token, customerId) ||
+                authorizationService.authorizeUser(token, customerId, username);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
-        if (!passwordComplexityService.checkPassword(
-            userCred.getNewPassword().getPassword()).isValidPassword()) {
-            String errorMsg = String.format("Invalid password %s", userCred
-                .getNewPassword().getPassword());
+        if (!passwordComplexityService.checkPassword(userCred.getNewPassword().getPassword()).isValidPassword()) {
+            String errorMsg = String.format("Invalid password %s", userCred.getNewPassword().getPassword());
             logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
         }
@@ -206,20 +185,16 @@ public class UserPasswordResource {
             // Check for restricted token
             logger.debug("Evaluating auth header {}", authHeader);
 
-            String tokenString = authHeaderHelper.parseTokenParams(authHeader)
-                .get("token");
+            String tokenString = authHeaderHelper.parseTokenParams(authHeader).get("token");
             if (StringUtils.isBlank(tokenString)) {
-                String errorMsg = String.format(
-                    "No token string found for Authorization %s", authHeader);
+                String errorMsg = String.format("No token string found for Authorization %s", authHeader);
                 logger.error(errorMsg);
                 throw new NotAuthorizedException(errorMsg);
             }
 
-            AccessToken resettoken = accessTokenService
-                .getAccessTokenByTokenString(tokenString);
+            AccessToken resettoken = accessTokenService.getAccessTokenByTokenString(tokenString);
             if (resettoken == null) {
-                String errorMsg = String.format("No token found for %s",
-                    tokenString);
+                String errorMsg = String.format("No token found for %s", tokenString);
                 logger.error(errorMsg);
                 throw new NotAuthorizedException(errorMsg);
             }
@@ -231,20 +206,16 @@ public class UserPasswordResource {
             if (resettoken.isRestrictedToSetPassword()) {
                 if (!username.equalsIgnoreCase(tokenUser)) {
                     // Restricted token trying to reset another user's password
-                    String errorMsg = String
-                        .format(
-                            "Restricted token %s can only reset its user's password",
-                            tokenString);
+                    String errorMsg =
+                            String.format("Restricted token %s can only reset its user's password", tokenString);
                     logger.error(errorMsg);
                     throw new NotAuthorizedException(errorMsg);
                 }
             } else {
                 if (username.equalsIgnoreCase(tokenUser)) {
                     // Normal user token trying to reset own user's password
-                    String errorMsg = String
-                        .format(
-                            "Unrestricted user token %s cannot reset its user's password",
-                            tokenString);
+                    String errorMsg =
+                            String.format("Unrestricted user token %s cannot reset its user's password", tokenString);
                     logger.error(errorMsg);
                     throw new NotAuthorizedException(errorMsg);
                 }
@@ -254,18 +225,18 @@ public class UserPasswordResource {
             // okay, if the token owner is the password user's admin.
 
         } else {
-            if (userCred.getCurrentPassword() == null
-                || StringUtils.isBlank(userCred.getCurrentPassword()
-                    .getPassword())) {
+            if (userCred.getCurrentPassword() == null ||
+                    StringUtils.isBlank(userCred.getCurrentPassword().getPassword())) {
                 String errMsg = "Value for oldPassword cannot be blank";
                 logger.error(errMsg);
                 throw new BadRequestException(errMsg);
             }
 
             // authenticate using old password
-            if (!this.userService.authenticateDeprecated(username, userCred.getCurrentPassword().getPassword())) {
-                String errorMsg = String.format("Bad credential for user: %s",
-                    username);
+            UserAuthenticationResult uaResult =
+                    this.userService.authenticate(username, userCred.getCurrentPassword().getPassword());
+            if (!uaResult.isAuthenticated()) {
+                String errorMsg = String.format("Bad credential for user: %s", username);
                 logger.debug(errorMsg);
                 throw new NotAuthenticatedException(errorMsg);
             }
@@ -273,8 +244,7 @@ public class UserPasswordResource {
 
         User user = checkAndGetUser(customerId, username);
 
-        user.setPasswordObj(Password.newInstance(userCred.getNewPassword()
-            .getPassword()));
+        user.setPasswordObj(Password.newInstance(userCred.getNewPassword().getPassword()));
         this.userService.updateUser(user);
         logger.info("Updated password for user: {}", user);
         return Response.ok(userCred).build();
@@ -282,7 +252,10 @@ public class UserPasswordResource {
 
     /**
      * Gets a token restricted to resetting a user's password.
-     * 
+     *
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username   username
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}token
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -290,31 +263,22 @@ public class UserPasswordResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}severError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param customerId RCN
-     * @param username username
      */
     @POST
     @Path("recoverytoken")
-    public Response getPasswordResetToken(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("username") String username) {
+    public Response getPasswordResetToken(@Context Request request, @Context UriInfo uriInfo,
+                                          @HeaderParam("Authorization") String authHeader,
+                                          @PathParam("customerId") String customerId,
+                                          @PathParam("username") String username) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Rackspace Clients and Specific Clients are authorized
-        boolean authorized = authorizationService
-            .authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeRackspaceClient(token) ||
+                authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -336,18 +300,20 @@ public class UserPasswordResource {
 
         String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
         String clientId = getClientIdByTokenString(tokenStr);
-        AccessToken resetToken = accessTokenService
-            .createPasswordResetAccessTokenForUser(user, clientId);
+        AccessToken resetToken = accessTokenService.createPasswordResetAccessTokenForUser(user, clientId);
 
         logger.debug("Got Password Reset Token for User :{}", user);
 
-        return Response.ok(tokenConverter.toAccessTokenJaxb(resetToken))
-            .build();
+        return Response.ok(tokenConverter.toAccessTokenJaxb(resetToken)).build();
     }
 
     /**
      * Sends an email to a user to allow the user to reset their password.
-     * 
+     *
+     * @param authHeader    HTTP Authorization header for authenticating the caller.
+     * @param customerId    RCN
+     * @param username      username
+     * @param recoveryParam Password recovery email parameters
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}passwordRecovery
      * @response.representation.204.doc Successful request
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -356,33 +322,23 @@ public class UserPasswordResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param customerId RCN
-     * @param username username
-     * @param recoveryParam Password recovery email parameters
      */
     @POST
     @Path("recoveryemail")
-    public Response sendRecoveryEmail(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("username") String username, PasswordRecovery recoveryParam) {
+    public Response sendRecoveryEmail(@Context Request request, @Context UriInfo uriInfo,
+                                      @HeaderParam("Authorization") String authHeader,
+                                      @PathParam("customerId") String customerId,
+                                      @PathParam("username") String username, PasswordRecovery recoveryParam) {
 
         logger.info("Sending password recovery email for User: {}", username);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
-        boolean authorized = authorizationService
-            .authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeRackspaceClient(token) ||
+                authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -442,12 +398,10 @@ public class UserPasswordResource {
         String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
         String clientId = getClientIdByTokenString(tokenStr);
 
-        AccessToken resetToken = accessTokenService
-            .createPasswordResetAccessTokenForUser(user, clientId);
+        AccessToken resetToken = accessTokenService.createPasswordResetAccessTokenForUser(user, clientId);
 
         try {
-            userService.sendRecoveryEmail(username, user.getEmail(),
-                recoveryParam, resetToken.getTokenString());
+            userService.sendRecoveryEmail(username, user.getEmail(), recoveryParam, resetToken.getTokenString());
         } catch (IllegalStateException ise) {
             String errorMsg = "Could not send password recovery email.";
             logger.error(errorMsg);
@@ -468,16 +422,14 @@ public class UserPasswordResource {
     }
 
     private void handleUserNotFoundError(String customerId, String username) {
-        String errorMsg = String.format("User not found: %s - %s", customerId,
-            username);
+        String errorMsg = String.format("User not found: %s - %s", customerId, username);
         logger.error(errorMsg);
         throw new NotFoundException(errorMsg);
     }
 
     private String getUsernameByTokenString(String tokenString) {
         logger.debug("Getting Username From Token: {}", tokenString);
-        AccessToken token = accessTokenService
-            .getAccessTokenByTokenString(tokenString);
+        AccessToken token = accessTokenService.getAccessTokenByTokenString(tokenString);
         if (token == null) {
             return null;
         }
@@ -492,8 +444,7 @@ public class UserPasswordResource {
 
         if (user != null) {
             String username = user.getUsername();
-            logger.debug("Got Username From Token: {} : {}", tokenString,
-                username);
+            logger.debug("Got Username From Token: {} : {}", tokenString, username);
             return username;
         }
         logger.debug("No User Associated With Token: {}", tokenString);
@@ -502,8 +453,7 @@ public class UserPasswordResource {
 
     private String getClientIdByTokenString(String tokenString) {
         logger.debug("Getting ClientId From Token: {}", tokenString);
-        AccessToken token = accessTokenService
-            .getAccessTokenByTokenString(tokenString);
+        AccessToken token = accessTokenService.getAccessTokenByTokenString(tokenString);
         if (token == null) {
             return null;
         }
@@ -514,8 +464,7 @@ public class UserPasswordResource {
 
         if (client != null) {
             String clientId = client.getClientId();
-            logger.debug("Got clientId From Token: {} : {}", tokenString,
-                clientId);
+            logger.debug("Got clientId From Token: {} : {}", tokenString, clientId);
             return clientId;
         }
         logger.debug("No Client Associated With Token: {}", tokenString);

@@ -1,7 +1,9 @@
 package com.rackspace.idm.services;
 
-import com.rackspace.idm.entities.*;
-import com.rackspace.idm.exceptions.NotAuthorizedException;
+import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.entities.BaseClient;
+import com.rackspace.idm.entities.BaseUser;
+import com.rackspace.idm.entities.User;
 import org.joda.time.DateTime;
 
 public interface AccessTokenService {
@@ -38,28 +40,10 @@ public interface AccessTokenService {
     AccessToken createAccessTokenForClient(BaseClient client);
 
     AccessToken createAccessTokenForClient(BaseClient client, int expirationSeconds);
-    
+
     AccessToken createAccessTokenForUser(String username, String clientId);
 
     AccessToken createAccessTokenForUser(String username, String clientId, int expirationSeconds);
-
-    @Deprecated
-    AccessToken getAccessTokenForUser(String username, String clientId, DateTime expiresAfter);
-
-    @Deprecated
-    AccessToken getAccessTokenForClient(String clientId, DateTime expiresAfter);
-
-    @Deprecated
-    AccessToken createPasswordResetAccessTokenForUser(String username, String clientId);
-
-    @Deprecated
-    AccessToken createPasswordResetAccessTokenForUser(String username, String clientId, int expirationTimeInSeconds);
-
-    @Deprecated
-    AccessToken createAccessTokenForClient(String clientId);
-
-    @Deprecated
-    AccessToken createAccessTokenForClient(String clientId, int expirationSeconds);
 
     int getDefaultTokenExpirationSeconds();
 

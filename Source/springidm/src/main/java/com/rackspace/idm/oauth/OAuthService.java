@@ -16,8 +16,4 @@ public interface OAuthService {
             NotAuthenticatedException;
 
     void revokeToken(String tokenStringRequestingDelete, String tokenToDelete) throws NotAuthorizedException;
-
-    @Deprecated
-    AuthData getTokensDeprecated(OAuthGrantType grantType, AuthCredentials trParam, int expirationSeconds,
-                                 DateTime currentTime);
 }

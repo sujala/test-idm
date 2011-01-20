@@ -252,8 +252,8 @@ public class UserServiceTests {
         EasyMock.expect(mockUserDao.bindUser(username, password))
             .andReturn(true);
         EasyMock.replay(mockUserDao);
-        boolean authenticated = userService.authenticateDeprecated(username, password);
-        Assert.assertTrue(authenticated);
+        UserAuthenticationResult uaResult = userService.authenticate(username, password);
+        Assert.assertTrue(uaResult.isAuthenticated());
         EasyMock.verify(mockUserDao);
     }
 
@@ -265,9 +265,9 @@ public class UserServiceTests {
             .andReturn(null);
         EasyMock.replay(mockUserDao);
 
-        Boolean authenticated = userService.authenticateDeprecated(badUsername, "badpassword");
+        UserAuthenticationResult uaResult = userService.authenticate(badUsername, "badpassword");
 
-        Assert.assertTrue(!authenticated);
+        Assert.assertTrue(!uaResult.isAuthenticated());
         EasyMock.verify(mockUserDao);
     }
 
@@ -276,8 +276,8 @@ public class UserServiceTests {
         EasyMock.expect(mockRackerDao.authenticate("racker", password))
             .andReturn(true);
         EasyMock.replay(mockRackerDao);
-        boolean authenticated = trustedUserService.authenticateDeprecated("racker", password);
-        Assert.assertTrue(authenticated);
+        UserAuthenticationResult uaResult = trustedUserService.authenticate("racker", password);
+        Assert.assertTrue(uaResult.isAuthenticated());
         EasyMock.verify(mockRackerDao);
     }
 

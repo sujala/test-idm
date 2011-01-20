@@ -8,7 +8,6 @@ import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.services.RefreshTokenService;
 import com.rackspace.idm.services.UserService;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -25,16 +24,6 @@ public class DefaultOAuthService implements OAuthService {
     private RefreshTokenService refreshTokenService;
     private Logger logger;
 
-    @Deprecated
-    public DefaultOAuthService(UserService userService, AccessTokenService accessTokenService,
-                               RefreshTokenService refreshTokenService, Logger logger) {
-
-        this.userService = userService;
-        this.accessTokenService = accessTokenService;
-        this.refreshTokenService = refreshTokenService;
-        this.logger = logger;
-    }
-
     public DefaultOAuthService(UserService userService, ClientService clientService,
                                AccessTokenService accessTokenService, RefreshTokenService refreshTokenService,
                                Logger logger) {
@@ -44,37 +33,6 @@ public class DefaultOAuthService implements OAuthService {
         this.accessTokenService = accessTokenService;
         this.refreshTokenService = refreshTokenService;
         this.logger = logger;
-    }
-
-    @Override
-    @Deprecated
-    public AuthData getTokensDeprecated(OAuthGrantType grantType, AuthCredentials trParam, int expirationSeconds,
-                                        DateTime currentTime) {
-        /*AccessToken accessToken = null;
-        RefreshToken refreshToken = null;
-
-        switch (grantType) {
-            case PASSWORD:
-                accessToken = accessTokenService.getTokenByBasicCredentials(client, user, expirationSeconds,
-                        currentTime);
-                refreshToken = getRefreshTokenForUser(user.getUsername(), client.getClientId(), currentTime);
-                break;
-
-            case REFRESH_TOKEN:
-                accessToken = getTokenByRefreshToken(trParam.getRefreshToken(), expirationSeconds, currentTime);
-                refreshToken = refreshTokenService.getRefreshTokenByTokenString(trParam.getRefreshToken());
-                break;
-
-            case NONE:
-                accessToken = getTokenByNoCredentials(client, expirationSeconds, currentTime);
-                break;
-
-            default:
-                throwNotAuthenticatedException(String.format("Unsupported GrantType: %s", grantType));
-        }
-
-        return new AuthData(accessToken, refreshToken);*/
-        throw new NotImplementedException("Method to be removed");
     }
 
     @Override
@@ -118,61 +76,6 @@ public class DefaultOAuthService implements OAuthService {
         // The execution never gets here since the line above throws an exception. But the compiler no likey.
         return null;
     }
-
-    /*@Override
-    public boolean authenticateAccessToken(String accessTokenStr) {
-        logger.debug("Authorizing Token: {}", accessTokenStr);
-        Boolean authenticated = false;
-
-        // check token is valid and not expired
-        AccessToken accessToken = accessTokenService
-            .getAccessTokenByTokenString(accessTokenStr);
-        if (accessToken != null && !accessToken.isExpired(new DateTime())) {
-            authenticated = true;
-        }
-        logger.debug("Authorized Token: {} : {}", accessTokenStr, authenticated);
-        return authenticated;
-    }*/
-
-    /* @Override
-    public AuthData getTokens(OAuthGrantType grantType,
-        AuthCredentials credentials, int expirationSeconds, DateTime currentTime) {
-
-        String clientId = credentials.getClientId();
-        String username = credentials.getUsername();
-        String userpasswd = credentials.getPassword();
-        String refreshTokenStr = credentials.getRefreshToken();
-
-        AccessToken accessToken = null;
-        RefreshToken refreshToken = null;
-
-        switch (grantType) {
-            case PASSWORD:
-                accessToken = getTokenByBasicCredentials(clientId, username,
-                    userpasswd, expirationSeconds, currentTime);
-                refreshToken = getRefreshTokenForUser(username, clientId,
-                    currentTime);
-                break;
-
-            case REFRESH_TOKEN:
-                accessToken = getTokenByRefreshToken(refreshTokenStr,
-                    expirationSeconds, currentTime);
-                refreshToken = refreshTokenService
-                    .getRefreshTokenByTokenString(credentials.getRefreshToken());
-                break;
-
-            case NONE:
-                accessToken = getTokenByNoCredentials(clientId,
-                    expirationSeconds, currentTime);
-                break;
-
-            default:
-                throwNotAuthenticatedException(String.format(
-                    "Unsupported GrantType: %s", grantType));
-        }
-
-        return new AuthData(accessToken, refreshToken);
-    }*/
 
     @Override
     public void revokeToken(String tokenStringRequestingDelete, String tokenToDelete) {

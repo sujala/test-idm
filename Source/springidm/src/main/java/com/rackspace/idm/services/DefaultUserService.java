@@ -83,35 +83,6 @@ public class DefaultUserService implements UserService {
         logger.info("Added User: {}", user);
     }
 
-    public boolean authenticateDeprecated(String username, String password) {
-        if (StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
-            throw new IllegalArgumentException("username or password parameter is null or blank.");
-        }
-
-        logger.debug("Authenticating User: {}", username);
-        boolean authenticated = false;
-        if (isTrustedServer) {
-            authenticated = authDao.authenticate(username, password);
-            logger.debug("Authenticated Racker {} : {}", username, authenticated);
-            return authenticated;
-        }
-
-        User user = userDao.findByUsername(username);
-        if (user == null) {
-            logger.debug("User {} not found.", username);
-            return false;
-        }
-
-        if (!UserStatus.ACTIVE.equals(user.getStatus())) {
-            logger.debug("User {} is not active: ", username);
-            return false;
-        }
-
-        authenticated = userDao.bindUser(username, password);
-        logger.debug("Authenticated User: {} : {}", username, authenticated);
-        return authenticated;
-    }
-
     @Override
     public UserAuthenticationResult authenticate(String username, String password) {
         if (StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
