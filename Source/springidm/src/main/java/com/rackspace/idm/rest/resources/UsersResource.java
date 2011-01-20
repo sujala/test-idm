@@ -289,6 +289,7 @@ public class UsersResource {
     /**
      * Adds a baseUrl to a user.
      *
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}baseUrlRef
      * @response.representation.201.doc Successful request
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
