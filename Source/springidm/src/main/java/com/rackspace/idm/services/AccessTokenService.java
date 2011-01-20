@@ -2,20 +2,36 @@ package com.rackspace.idm.services;
 
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.BaseClient;
-import com.rackspace.idm.entities.Client;
+import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.exceptions.NotAuthorizedException;
 import org.joda.time.DateTime;
 
 public interface AccessTokenService {
+
+    boolean authenticateAccessToken(String accessTokenStr);
+
+    AccessToken getTokenByUsernameAndApiCredentials(BaseClient client, String username, String apiKey,
+                                                    int expirationSeconds, DateTime currentTime);
+
+    AccessToken getTokenByNastIdAndApiCredentials(BaseClient client, String nastId, String apiKey,
+                                                  int expirationSeconds, DateTime currentTime);
+
+    AccessToken getTokenByMossoIdAndApiCredentials(BaseClient client, int mossoId, String apiKey, int expirationSeconds,
+                                                   DateTime currentTime);
+
+    AccessToken getTokenByBasicCredentials(BaseClient client, BaseUser user, int expirationSeconds,
+                                           DateTime currentTime);
+
+
     AccessToken getAccessTokenByAuthHeader(String authHeader);
 
     AccessToken getAccessTokenByTokenString(String tokenString);
 
-    AccessToken getAccessTokenForUser(String username, BaseClient client, DateTime expiresAfter);
+    AccessToken getAccessTokenForUser(BaseUser user, BaseClient client, DateTime expiresAfter);
 
     AccessToken getAccessTokenForClient(BaseClient client, DateTime expiresAfter);
 
-    AccessToken createAccessTokenForUser(String username, BaseClient client, int expirationSeconds);
+    AccessToken createAccessTokenForUser(BaseUser user, BaseClient client, int expirationSeconds);
 
     AccessToken createPasswordResetAccessTokenForUser(String username, BaseClient client);
 
@@ -34,7 +50,6 @@ public interface AccessTokenService {
     @Deprecated
     AccessToken createAccessTokenForUser(String username, String clientId);
 
-    @Deprecated
     AccessToken createAccessTokenForUser(String username, String clientId, int expirationSeconds);
 
     @Deprecated
@@ -56,4 +71,6 @@ public interface AccessTokenService {
     void revokeToken(String tokenStringRequestingDelete, String tokenToDelete) throws NotAuthorizedException;
 
     AccessToken validateToken(String tokenString);
+
+    void delete(String tokenString);
 }

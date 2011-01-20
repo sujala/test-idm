@@ -3,15 +3,11 @@ package com.rackspace.idm.dao;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.rackspace.idm.entities.*;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 
 import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.entities.Client;
-import com.rackspace.idm.entities.ClientSecret;
-import com.rackspace.idm.entities.ClientStatus;
-import com.rackspace.idm.entities.Clients;
-import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
@@ -237,7 +233,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().debug("Added permission {}", permission);
     }
 
-    public boolean authenticate(String clientId, String clientSecret) {
+    public boolean authenticateDeprecated(String clientId, String clientSecret) {
         BindResult result = null;
         try {
             result = getBindConnPool().bind(getClientDnByClientId(clientId),
@@ -252,6 +248,28 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         return ResultCode.SUCCESS.equals(result.getResultCode());
+    }
+
+    @Override
+    public ClientAuthenticationResult authenticate(String clientId, String clientSecret) {
+        BindResult result;
+        Client client = findByClientId(clientId);
+        if (client == null) {
+            return new ClientAuthenticationResult(null, false);
+        }
+        try {
+            result = getBindConnPool().bind(getClientDnByClientId(clientId),
+                clientSecret);
+        } catch (LDAPException e) {
+            if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
+                return new ClientAuthenticationResult(client, false);
+            }
+            getLogger().error("Error authenticating for clientId {} - {}",
+                clientId, e);
+            throw new IllegalStateException(CONNECT_ERROR_STRING, e);
+        }
+
+        return new ClientAuthenticationResult(client, ResultCode.SUCCESS.equals(result.getResultCode()));
     }
 
     public void delete(String clientId) {

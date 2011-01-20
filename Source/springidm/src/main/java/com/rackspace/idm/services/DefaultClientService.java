@@ -75,46 +75,11 @@ public class DefaultClientService implements ClientService {
 
     @Override
     public ClientAuthenticationResult authenticate(String clientId, String clientSecret) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return clientDao.authenticate(clientId, clientSecret);
     }
 
     public void delete(String clientId) {
         clientDao.delete(clientId);
-    }
-
-    public List<Client> getByCustomerId(String customerId) {
-        return clientDao.getByCustomerId(customerId);
-    }
-
-    public Client getById(String clientId) {
-        return clientDao.findByClientId(clientId);
-    }
-
-    public Client getByName(String clientName) {
-        return clientDao.findByClientname(clientName);
-    }
-
-    public void save(Client client) {
-        clientDao.save(client);
-    }
-    
-    public void softDelete(String clientId) {
-        logger.info("Soft Deleting client: {}", clientId);
-        Client client = this.clientDao.findByClientId(clientId);
-        client.setSoftDeleted(true);
-        this.clientDao.save(client);
-        logger.info("Soft Deleted cilent: {}", clientId);
-    }
-
-    public Permission getDefinedPermissionByClientIdAndPermissionId(String clientId,
-        String permissionId) {
-        Permission permission = clientDao.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId);
-        return permission;
-    }
-
-    public List<Permission> getDefinedPermissionsByClientId(String clientId) {
-        List<Permission> permissions = clientDao.getDefinedPermissionsByClientId(clientId);
-        return permissions;
     }
 
     public void addDefinedPermission(Permission permission) {
@@ -151,14 +116,14 @@ public class DefaultClientService implements ClientService {
         clientDao.addDefinedPermission(permission);
     }
 
-    public boolean authenticate(String clientId, String clientSecret) {
+    /*public boolean authenticateDeprecated(String clientId, String clientSecret) {
         return clientDao.authenticate(clientId, clientSecret);
     }
-
     public void delete(String clientId) {
         clientDao.delete(clientId);
     }
 
+*/
     public void deleteDefinedPermission(Permission permission) {
         clientDao.deleteDefinedPermission(permission);
     }

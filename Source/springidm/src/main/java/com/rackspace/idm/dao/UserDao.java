@@ -10,7 +10,9 @@ public interface UserDao {
 
     void add(User user, String customerDN);
 
-    boolean authenticate(String userName, String password);
+    boolean bindUser(String userName, String password);
+
+    UserAuthenticationResult authenticate(String userName, String password);
 
     UserAuthenticationResult authenticateByAPIKey(String username, String apiKey);
 

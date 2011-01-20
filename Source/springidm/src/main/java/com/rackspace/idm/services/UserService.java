@@ -13,7 +13,7 @@ public interface UserService {
     @Deprecated
     boolean authenticateDeprecated(String username, String password);
 
-    UserAuthenticationResult authenticate(String username, String password);
+    UserAuthenticationResult authenticate(String userId, String password);
 
     UserAuthenticationResult authenticateWithApiKey(String username, String apiKey);
     

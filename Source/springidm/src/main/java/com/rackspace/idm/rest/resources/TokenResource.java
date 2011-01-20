@@ -3,7 +3,8 @@ package com.rackspace.idm.rest.resources;
 import com.rackspace.idm.ErrorMsg;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.AuthConverter;
-import com.rackspace.idm.entities.*;
+import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.entities.AuthData;
 import com.rackspace.idm.errors.ApiError;
 import com.rackspace.idm.exceptions.*;
 import com.rackspace.idm.oauth.AuthCredentials;
@@ -31,7 +32,6 @@ import java.util.Map;
 
 /**
  * Management of OAuth 2.0 token used by IDM.
- * 
  */
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -48,15 +48,11 @@ public class TokenResource {
     private Logger logger;
 
     @Autowired(required = true)
-    public TokenResource(AccessTokenService tokenService, OAuthService oauthService,
-        ClientService clientService, UserService userService, AuthHeaderHelper authHeaderHelper,
-        InputValidator inputValidator, AuthConverter authConverter,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
-
+    public TokenResource(AccessTokenService tokenService, OAuthService oauthService, AuthHeaderHelper authHeaderHelper,
+                         InputValidator inputValidator, AuthConverter authConverter,
+                         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.tokenService = tokenService;
         this.oauthService = oauthService;
-        this.clientService = clientService;
-        this.userService = userService;
         this.authHeaderHelper = authHeaderHelper;
         this.inputValidator = inputValidator;
         this.authConverter = authConverter;
@@ -66,10 +62,9 @@ public class TokenResource {
 
     @Deprecated
     @Autowired(required = true)
-    public TokenResource(AccessTokenService tokenService, OAuthService oauthService,
-        ClientService clientService, AuthHeaderHelper authHeaderHelper,
-        InputValidator inputValidator, AuthConverter authConverter,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+    public TokenResource(AccessTokenService tokenService, OAuthService oauthService, ClientService clientService,
+                         AuthHeaderHelper authHeaderHelper, InputValidator inputValidator, AuthConverter authConverter,
+                         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
 
         this.tokenService = tokenService;
         this.oauthService = oauthService;
@@ -84,7 +79,9 @@ public class TokenResource {
     /**
      * Gets an instance of an access token, a refresh token, and their TTLs.
      * Will return the current access token if it has not expired.
-     * 
+     *
+     * @param authHeader HTTP Authorization header for authenticating the calling client.
+     * @param creds      AuthCredentials for authenticating the token request.
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}authCredentials
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}auth
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -92,14 +89,10 @@ public class TokenResource {
      * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the calling client.
-     * @param creds AuthCredentials for authenticating the token request.
      */
     @POST
-    public Response getAccessToken(
-        @HeaderParam("Authorization") String authHeader,
-        com.rackspace.idm.jaxb.AuthCredentials creds) {
+    public Response getAccessToken(@HeaderParam("Authorization") String authHeader,
+                                   com.rackspace.idm.jaxb.AuthCredentials creds) {
         AuthCredentials trParam = new AuthCredentials();
         trParam.setClientId(creds.getClientId());
         trParam.setClientSecret(creds.getClientSecret());
@@ -108,58 +101,37 @@ public class TokenResource {
         trParam.setRefreshToken(creds.getRefreshToken());
         trParam.setUsername(creds.getUsername());
 
-        int expirationSeconds = tokenService.getDefaultTokenExpirationSeconds();
-
         // if request includes an authHeader then the values for clientId and
         // clientSecret need to be parsed out. Also, the AuthHeader values will
         // override the values for client_id and client_secret passed in the
         // request
         if (!StringUtils.isBlank(authHeader)) {
-            Map<String, String> authParams = authHeaderHelper
-                .parseBasicParams(authHeader);
+            Map<String, String> authParams = authHeaderHelper.parseBasicParams(authHeader);
             if (authParams != null) {
                 trParam.setClientId(authParams.get("username"));
                 trParam.setClientSecret(authParams.get("password"));
             }
         }
 
-        String clientId = trParam.getClientId();
-        String clientSecret = trParam.getClientSecret();
-        String grantTypeStrVal = trParam.getGrantType();
-
-        OAuthGrantType grantType = getGrantType(grantTypeStrVal);
-
+        OAuthGrantType grantType = getGrantType(trParam.getGrantType());
         ApiError err = validate(trParam, grantType);
         if (err != null) {
-            throw new BadRequestException(err.getMessage());
+            String msg = String.format("Bad request parameters: %s", err.getMessage());
+            logger.debug(msg);
+            throw new BadRequestException(msg);
         }
 
-        boolean isAuthenticated = clientService.authenticateDeprecated(clientId, clientSecret);
-        if (!isAuthenticated) {
-            String errorMsg = String.format("Unauthorized Client For: %s",
-                trParam.getClientId());
-            logger.error(errorMsg);
-            throw new NotAuthorizedException(errorMsg);
-        }
-
-        AuthData authData;
-        try {
-            DateTime currentTime = this.getCurrentTime();
-            authData = oauthService.getTokens(grantType, trParam,
-                expirationSeconds, currentTime);
-        } catch (NotAuthenticatedException e) {
-            String errorMsg = String.format("Unauthorized User For: %s",
-                trParam.getUsername());
-            logger.error(errorMsg);
-            throw new NotAuthenticatedException(errorMsg);
-        }
+        DateTime currentTime = this.getCurrentTime();
+        AuthData authData = oauthService.getTokens(grantType, trParam, currentTime);
         return Response.ok(authConverter.toAuthDataJaxb(authData)).build();
     }
 
 
     /**
      * Validates token and then, if valid, returns the access token and its ttl.
-     * 
+     *
+     * @param authHeader  HTTP Authorization header for authenticating the calling client.
+     * @param tokenString Token to be validated.
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}authCredentials
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}auth
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -170,31 +142,24 @@ public class TokenResource {
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      * @response.representation.503.doc Service could not be reached. See the error message for details.
-     *  
-     * @param authHeader HTTP Authorization header for authenticating the calling client.
-     * @param tokenString Token to be validated.
      */
     @GET
     @Path("{tokenString}")
-    public Response validateAccessToken(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("tokenString") String tokenString) {
+    public Response validateAccessToken(@Context Request request, @Context UriInfo uriInfo,
+                                        @HeaderParam("Authorization") String authHeader,
+                                        @PathParam("tokenString") String tokenString) {
 
         logger.debug("Validating Access Token: {}", tokenString);
-        
-        AccessToken authToken = this.tokenService
-        .getAccessTokenByAuthHeader(authHeader);
+
+        AccessToken authToken = this.tokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Rackers, Rackspace Clients and Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeRacker(authToken)
-            || authorizationService.authorizeRackspaceClient(authToken)
-            || authorizationService.authorizeClient(authToken,
-                request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeRacker(authToken) ||
+                authorizationService.authorizeRackspaceClient(authToken) ||
+                authorizationService.authorizeClient(authToken, request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                authToken);
+            String errMsg = String.format("Token %s Forbidden from this call", authToken);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -204,8 +169,7 @@ public class TokenResource {
         // Validate Token exists and is valid
         AccessToken token = tokenService.validateToken(tokenString);
         if (token == null) {
-            String errorMsg = String
-                .format("Token not found : %s", tokenString);
+            String errorMsg = String.format("Token not found : %s", tokenString);
             logger.error(errorMsg);
             throw new NotFoundException(errorMsg);
         }
@@ -221,7 +185,9 @@ public class TokenResource {
 
     /**
      * Removes the token from IDM.
-     * 
+     *
+     * @param authHeader  HTTP Authorization header for authenticating the calling client.
+     * @param tokenString Token to be revoked.
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}authCredentials
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -230,43 +196,33 @@ public class TokenResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     *  
-     * @param authHeader HTTP Authorization header for authenticating the calling client.
-     * @param tokenString Token to be revoked.
      */
     @DELETE
     @Path("{tokenString}")
-    public Response revokeAccessToken(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("tokenString") String tokenString) {
+    public Response revokeAccessToken(@Context Request request, @Context UriInfo uriInfo,
+                                      @HeaderParam("Authorization") String authHeader,
+                                      @PathParam("tokenString") String tokenString) {
 
         logger.debug("Revoking Token: {}", tokenString);
 
         try {
             logger.debug("Parsing Auth Header");
-            String authTokenString = authHeaderHelper
-                .getTokenFromAuthHeader(authHeader);
+            String authTokenString = authHeaderHelper.getTokenFromAuthHeader(authHeader);
             logger.debug("Parsed Auth Header - Token: {}", authTokenString);
 
-            tokenService.revokeToken(authTokenString, tokenString);
+            oauthService.revokeToken(authTokenString, tokenString);
 
             logger.info("Revoked Token: {}", tokenString);
 
         } catch (TokenExpiredException ex) {
-            String errorMsg = String.format(
-                "Authorization failed, token is expired: %s", authHeader);
+            String errorMsg = String.format("Authorization failed, token is expired: %s", authHeader);
             logger.error(errorMsg);
-            throw new ApiException(HttpServletResponse.SC_UNAUTHORIZED,
-                ErrorMsg.UNAUTHORIZED, errorMsg);
+            throw new ApiException(HttpServletResponse.SC_UNAUTHORIZED, ErrorMsg.UNAUTHORIZED, errorMsg);
 
         } catch (IllegalStateException ex) {
-            String errorMsg = String
-                .format("IllegalState encountered when revoking token: %s",
-                    tokenString);
+            String errorMsg = String.format("IllegalState encountered when revoking token: %s", tokenString);
             logger.error(errorMsg);
-            throw new ApiException(HttpServletResponse.SC_BAD_REQUEST,
-                ErrorMsg.BAD_REQUEST, errorMsg);
+            throw new ApiException(HttpServletResponse.SC_BAD_REQUEST, ErrorMsg.BAD_REQUEST, errorMsg);
 
         }
 
@@ -279,8 +235,7 @@ public class TokenResource {
     }
 
     private OAuthGrantType getGrantType(String grantTypeStrVal) {
-        OAuthGrantType grantType = OAuthGrantType.valueOf(grantTypeStrVal
-            .replace("-", "_").toUpperCase());
+        OAuthGrantType grantType = OAuthGrantType.valueOf(grantTypeStrVal.replace("-", "_").toUpperCase());
         logger.debug("Verified GrantType: {}", grantTypeStrVal);
         return grantType;
     }
@@ -288,13 +243,11 @@ public class TokenResource {
     private ApiError validate(AuthCredentials trParam, OAuthGrantType grantType) {
 
         if (OAuthGrantType.PASSWORD == grantType) {
-            return inputValidator.validate(trParam, Default.class,
-                BasicCredentialsCheck.class);
+            return inputValidator.validate(trParam, Default.class, BasicCredentialsCheck.class);
         }
 
         if (OAuthGrantType.REFRESH_TOKEN == grantType) {
-            return inputValidator.validate(trParam, Default.class,
-                RefreshTokenCredentialsCheck.class);
+            return inputValidator.validate(trParam, Default.class, RefreshTokenCredentialsCheck.class);
         }
 
         return inputValidator.validate(trParam);

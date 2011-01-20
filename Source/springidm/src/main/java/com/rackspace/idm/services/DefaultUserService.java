@@ -126,7 +126,7 @@ public class DefaultUserService implements UserService {
             return false;
         }
 
-        authenticated = userDao.authenticate(username, password);
+        authenticated = userDao.bindUser(username, password);
         logger.debug("Authenticated User: {} : {}", username, authenticated);
         return authenticated;
     }
@@ -158,7 +158,7 @@ public class DefaultUserService implements UserService {
             return new UserAuthenticationResult(user, false);
         }
 
-        authenticated = userDao.authenticate(username, password);
+        authenticated = userDao.bindUser(username, password);
         logger.debug("Authenticated User: {} : {}", username, authenticated);
         return new UserAuthenticationResult(user, authenticated);
     }

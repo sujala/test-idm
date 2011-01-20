@@ -1,11 +1,11 @@
 package com.rackspace.idm.dao;
 
-import java.util.List;
-
 import com.rackspace.idm.entities.Client;
-import com.rackspace.idm.entities.Clients;
 import com.rackspace.idm.entities.ClientAuthenticationResult;
+import com.rackspace.idm.entities.Clients;
 import com.rackspace.idm.entities.Permission;
+
+import java.util.List;
 
 public interface ClientDao {
 
@@ -13,7 +13,9 @@ public interface ClientDao {
 
     void addDefinedPermission(Permission permission);
 
-    boolean authenticate(String clientId, String clientSecret);
+    boolean authenticateDeprecated(String clientId, String clientSecret);
+
+    ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 
     void delete(String clientId);
 
@@ -31,14 +33,13 @@ public interface ClientDao {
 
     String getClientDnByClientId(String clientId);
 
-    Permission getDefinedPermissionByClientIdAndPermissionId(String clientId,
-        String permissionId);
+    Permission getDefinedPermissionByClientIdAndPermissionId(String clientId, String permissionId);
 
     List<Permission> getDefinedPermissionsByClientId(String clientId);
 
     String getUnusedClientInum(String customerInum);
 
-    boolean authenticate(String clientId, String clientSecret);
+    void save(Client client);
 
     void setAllClientLocked(String customerId, boolean locked);
 

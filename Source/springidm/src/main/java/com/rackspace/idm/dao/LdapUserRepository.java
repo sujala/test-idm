@@ -23,7 +23,6 @@ import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Control;
-import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
@@ -145,11 +144,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Added user {}", user);
     }
 
-    public boolean authenticate(String userName, String password) {
+    public boolean bindUser(String userName, String password) {
         getLogger().debug("Authenticating user {}", userName);
-        BindResult result = null;
+        BindResult result;
         try {
-            result = ((LDAPConnectionPool) getBindConnPool()).bind(
+            result = getBindConnPool().bind(
                 getUserDnByUsername(userName), password);
         } catch (LDAPException e) {
             if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
@@ -165,6 +164,19 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         getLogger().debug(result.toString());
         return ResultCode.SUCCESS.equals(result.getResultCode());
+    }
+
+    @Override
+    public UserAuthenticationResult authenticate(String userName, String password) {
+         getLogger().debug("Authenticating User {} by API Key ", userName);
+        if (StringUtils.isBlank(userName)) {
+            getLogger().error("Null or Empty username parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty username parameter.");
+        }
+
+        User user = findByUsername(userName);
+        return authenticateByPassword(user, password);
     }
 
     public UserAuthenticationResult authenticateByAPIKey(String username,
@@ -602,6 +614,28 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
+    private UserAuthenticationResult authenticateByPassword(User user, String password) {
+        if (user == null) {
+            return new UserAuthenticationResult(null, false);
+        }
+
+        boolean authenticated = bindUser(user.getUsername(), password);
+        UserAuthenticationResult authResult = validateUserStatus(user, authenticated);
+        getLogger().debug("Authenticated User by password");
+        return authResult;
+    }
+
+    private UserAuthenticationResult validateUserStatus(User user, boolean isAuthenticated) {
+        if (isAuthenticated && user.isDisabled()) {
+            String errMsg = String.format("User %s is disabled.",
+                user.getUsername());
+            getLogger().error(errMsg);
+            throw new UserDisabledException(errMsg);
+        }
+
+        return new UserAuthenticationResult(user, isAuthenticated);
+    }
+
     private UserAuthenticationResult authenticateUserByApiKey(User user,
         String apiKey) {
 
@@ -609,19 +643,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             return new UserAuthenticationResult(null, false);
         }
 
-        Boolean authenticated = !StringUtils.isBlank(user.getApiKey())
+        boolean authenticated = !StringUtils.isBlank(user.getApiKey())
             && user.getApiKey().equals(apiKey);
 
-        if (authenticated && user.isDisabled()) {
-            String errMsg = String.format("User %s is disabled.",
-                user.getUsername());
-            getLogger().error(errMsg);
-            throw new UserDisabledException(errMsg);
-        }
-
-        UserAuthenticationResult authResult = new UserAuthenticationResult(
-            user, authenticated);
-
+        UserAuthenticationResult authResult = validateUserStatus(user, authenticated);
         getLogger().debug("Authenticated User by API Key - {}", authResult);
 
         return authResult;

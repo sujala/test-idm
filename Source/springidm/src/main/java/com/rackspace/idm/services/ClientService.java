@@ -13,9 +13,9 @@ public interface ClientService {
 
     void addDefinedPermission(Permission permission);
 
-    boolean authenticate(String clientId, String clientSecret);
-    boolean authenticate(String clientId, String clientSecret);
-    //ClientAuthenticationResult authenticate(String clientId, String clientSecret);
+    boolean authenticateDeprecated(String clientId, String clientSecret);
+
+    ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 
     void delete(String clientId);
 

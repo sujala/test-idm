@@ -1,6 +1,7 @@
 package com.rackspace.idm.oauth;
 
 import com.rackspace.idm.entities.*;
+import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.exceptions.NotAuthorizedException;
 import org.joda.time.DateTime;
 
@@ -11,24 +12,19 @@ import org.joda.time.DateTime;
  */
 public interface OAuthService {
 
-    int getCloudAuthDefaultTokenExpirationSeconds();
+    AuthData getTokens(OAuthGrantType grantType, AuthCredentials trParam, DateTime currentTime) throws
+            NotAuthenticatedException;
 
-
-
-    RefreshToken createRefreshTokenForUser(String username, String clientId);
-
-    RefreshToken getRefreshTokenByUserAndClient(String username, String clientId, DateTime validAfter);
-
-    void resetTokenExpiration(RefreshToken token);
-
-
-    //TODO Move this to OAuthService
     void revokeToken(String tokenStringRequestingDelete, String tokenToDelete) throws NotAuthorizedException;
-    AuthData getTokens(OAuthGrantType grantType, BaseUser user, BaseClient client, String refreshTokenStr, int expirationSeconds, DateTime currentTime);
+
+
+    @Deprecated
+    AuthData getTokensDeprecated(OAuthGrantType grantType, AuthCredentials trParam, int expirationSeconds,
+                                 DateTime currentTime);
 
 
     //TODO Move this to AccessTokenService?
-    boolean authenticateAccessToken(String accessTokenStr);
+    /*boolean authenticateAccessToken(String accessTokenStr);
 
     AccessToken getTokenByUsernameAndApiCredentials(BaseClient client, String username, String apiKey,
                                                     int expirationSeconds, DateTime currentTime);
@@ -41,8 +37,6 @@ public interface OAuthService {
 
     AccessToken getTokenByBasicCredentials(BaseClient client, BaseUser user, int expirationSeconds,
                                            DateTime currentTime);
-
-    RefreshToken getRefreshTokenForUser(BaseUser user, BaseClient client, DateTime currentTime);
-
-    AccessToken getTokenByRefreshToken(String refreshTokenStr, int expirationSeconds, DateTime currentTime);
+*/
+    //RefreshToken getRefreshTokenForUser(BaseUser user, BaseClient client, DateTime currentTime);
 }

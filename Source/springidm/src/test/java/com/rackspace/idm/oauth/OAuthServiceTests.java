@@ -135,8 +135,7 @@ public class OAuthServiceTests {
                 testRefreshToken);
         EasyMock.replay(mockRefreshTokenService);
 
-        AuthData authData = oauthService.getTokens(grantType, authCredentials,
-                expireInSeconds, currentTime);
+        AuthData authData = oauthService.getTokensDeprecated(grantType, authCredentials, expireInSeconds, currentTime);
 
         Assert.assertNotNull(authData.getAccessToken());
         Assert.assertNotNull(authData.getRefreshToken());
@@ -161,8 +160,7 @@ public class OAuthServiceTests {
                         .getClientId(), currentTime)).andReturn(testAccessToken);
         EasyMock.replay(mockAccessTokenService);
 
-        AuthData authData = oauthService.getTokens(grantType, authCredentials,
-                expireInSeconds, currentTime);
+        AuthData authData = oauthService.getTokensDeprecated(grantType, authCredentials, expireInSeconds, currentTime);
 
         Assert.assertNotNull(authData.getAccessToken());
         Assert.assertNull(authData.getRefreshToken());
@@ -199,8 +197,7 @@ public class OAuthServiceTests {
                                 expireInSeconds)).andReturn(testAccessToken);
         EasyMock.replay(mockAccessTokenService);
 
-        AuthData authData = oauthService.getTokens(grantType, authCredentials,
-                expireInSeconds, currentTime);
+        AuthData authData = oauthService.getTokensDeprecated(grantType, authCredentials, expireInSeconds, currentTime);
 
         Assert.assertNotNull(authData.getAccessToken());
         Assert.assertNotNull(authData.getRefreshToken());
@@ -248,8 +245,7 @@ public class OAuthServiceTests {
                 testRefreshToken);
         EasyMock.replay(mockRefreshTokenService);
 
-        AuthData authData = oauthService.getTokens(grantType, authCredentials,
-                expireInSeconds, currentTime);
+        AuthData authData = oauthService.getTokensDeprecated(grantType, authCredentials, expireInSeconds, currentTime);
 
         Assert.assertNotNull(authData.getAccessToken());
         Assert.assertNotNull(authData.getRefreshToken());
@@ -275,8 +271,7 @@ public class OAuthServiceTests {
                 mockUserService.authenticateDeprecated(authCredentials.getUsername(), userpass.getValue())).andReturn(false);
         EasyMock.replay(mockUserService);
 
-        AuthData authData = oauthService.getTokens(grantType, authCredentials,
-                expireInSeconds, currentTime);
+        AuthData authData = oauthService.getTokensDeprecated(grantType, authCredentials, expireInSeconds, currentTime);
 
         Assert.assertNull(authData);
         EasyMock.verify(mockUserService);
@@ -296,8 +291,7 @@ public class OAuthServiceTests {
                         .getRefreshTokenByTokenString(refreshTokenVal)).andReturn(null);
         EasyMock.replay(mockRefreshTokenService);
 
-        AuthData authData = oauthService.getTokens(grantType, authCredentials,
-                expireInSeconds, currentTime);
+        AuthData authData = oauthService.getTokensDeprecated(grantType, authCredentials, expireInSeconds, currentTime);
 
         Assert.assertNull(authData);
         EasyMock.verify(mockRefreshTokenService);
@@ -322,8 +316,7 @@ public class OAuthServiceTests {
                 testRefreshToken);
         EasyMock.replay(mockRefreshTokenService);
 
-        AuthData authData = oauthService.getTokens(grantType, authCredentials,
-                expireInSeconds, currentTime);
+        AuthData authData = oauthService.getTokensDeprecated(grantType, authCredentials, expireInSeconds, currentTime);
 
         Assert.assertNull(authData);
         EasyMock.verify(mockRefreshTokenService);

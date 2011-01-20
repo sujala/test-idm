@@ -1,26 +1,20 @@
 package com.rackspace.idm.services;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
-
+import com.rackspace.idm.dao.AccessTokenDao;
+import com.rackspace.idm.dao.ClientDao;
+import com.rackspace.idm.dao.RefreshTokenDao;
+import com.rackspace.idm.entities.*;
+import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
+import com.rackspace.idm.exceptions.NotAuthenticatedException;
+import com.rackspace.idm.exceptions.NotAuthorizedException;
+import com.rackspace.idm.util.AuthHeaderHelper;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 
-import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.dao.AccessTokenDao;
-import com.rackspace.idm.dao.ClientDao;
-import com.rackspace.idm.dao.RefreshTokenDao;
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.Client;
-import com.rackspace.idm.entities.BaseClient;
-import com.rackspace.idm.entities.TokenDefaultAttributes;
-import com.rackspace.idm.entities.BaseUser;
-import com.rackspace.idm.entities.User;
-import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
-import com.rackspace.idm.exceptions.ForbiddenException;
-import com.rackspace.idm.util.AuthHeaderHelper;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 public class DefaultAccessTokenService implements AccessTokenService {
     private AccessTokenDao tokenDao;
@@ -34,28 +28,25 @@ public class DefaultAccessTokenService implements AccessTokenService {
     private boolean isTrustedServer;
     private AuthHeaderHelper authHeaderHelper;
 
-    public DefaultAccessTokenService(TokenDefaultAttributes defaultAttributes,
-        AccessTokenDao tokenDao, RefreshTokenDao refreshTokenDao,
-        ClientDao clientDao, UserService userService,AuthHeaderHelper authHeaderHelper,
-        Logger logger) {
+    public DefaultAccessTokenService(TokenDefaultAttributes defaultAttributes, AccessTokenDao tokenDao,
+                                     RefreshTokenDao refreshTokenDao, ClientDao clientDao, UserService userService,
+                                     AuthHeaderHelper authHeaderHelper, Logger logger) {
 
         this.tokenDao = tokenDao;
         this.refreshTokenDao = refreshTokenDao;
         this.clientDao = clientDao;
         this.userService = userService;
         this.logger = logger;
-        this.defaultTokenExpirationSeconds = defaultAttributes
-            .getExpirationSeconds();
-        this.defaultCloudAuthTokenExpirationSeconds = defaultAttributes
-        .getCloudAuthExpirationSeconds();
+        this.defaultTokenExpirationSeconds = defaultAttributes.getExpirationSeconds();
+        this.defaultCloudAuthTokenExpirationSeconds = defaultAttributes.getCloudAuthExpirationSeconds();
         this.dataCenterPrefix = defaultAttributes.getDataCenterPrefix();
         this.isTrustedServer = defaultAttributes.getIsTrustedServer();
         this.authHeaderHelper = authHeaderHelper;
     }
-    
+
     public AccessToken getAccessTokenByAuthHeader(String authHeader) {
         String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
-        return (AccessToken) tokenDao.findByTokenString(tokenStr);
+        return tokenDao.findByTokenString(tokenStr);
     }
 
     public AccessToken getAccessTokenByTokenString(String tokenString) {
@@ -63,93 +54,104 @@ public class DefaultAccessTokenService implements AccessTokenService {
     }
 
     @Override
-    public AccessToken getAccessTokenForUser(String username, BaseClient client, DateTime expiresAfter) {
+    public AccessToken getAccessTokenForUser(BaseUser user, BaseClient client, DateTime expiresAfter) {
         if (client == null) {
-            String error = "No client given for username " + username;
+            String error = "No client given.";
+            logger.debug(error);
+            throw new IllegalArgumentException(error);
+        }
+
+        if (user == null) {
+            String error = "No user given.";
             logger.debug(error);
             throw new IllegalArgumentException(error);
         }
 
         AccessToken token = null;
         if (isTrustedServer) {
-            token = tokenDao.findTokenForOwner(username, client.getClientId());
-            logger.debug("Got Token For Racker: {} - {}", username, token);
+            token = tokenDao.findTokenForOwner(user.getUsername(), client.getClientId());
+            logger.debug("Got Token For Racker: {} - {}", user.getUsername(), token);
             return token;
         }
 
-        User user = userService.getUser(username);
-        if (user == null) {
-            String error = "No entry found for username " + username;
-            logger.debug(error);
-            throw new IllegalStateException(error);
-        }
-
-        token = tokenDao.findTokenForOwner(username, client.getClientId());
-        logger.debug("Got Token For User: {} - {}", username, token);
+        token = tokenDao.findTokenForOwner(user.getUsername(), client.getClientId());
+        logger.debug("Got Token For User: {} - {}", user.getUsername(), token);
         return token;
     }
 
     @Override
     public AccessToken getAccessTokenForClient(BaseClient client, DateTime expiresAfter) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        logger.debug("Getting Token For Client: {}", client);
+        if (client == null) {
+            String error = "No client given";
+            logger.debug(error);
+            throw new IllegalArgumentException(error);
+        }
+        AccessToken token = tokenDao.findTokenForOwner(client.getClientId(), client.getClientId());
+        logger.debug("Got Token For Client: {} - {}", client.getClientId(), token);
+        return token;
     }
 
     @Override
-    public AccessToken createAccessTokenForUser(String username, BaseClient client, int expirationSeconds) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+    public AccessToken createAccessTokenForUser(BaseUser user, BaseClient client, int expirationSeconds) {
+        logger.debug("Creating Access Token For User: {}", user);
+        if (client == null) {
+            String error = "No client given";
+            logger.debug(error);
+            throw new IllegalArgumentException(error);
+        }
 
-    @Override
-    public AccessToken createPasswordResetAccessTokenForUser(String username, BaseClient client) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+        if (user == null) {
+            String error = "No user given";
+            logger.debug(error);
+            throw new IllegalArgumentException(error);
+        }
 
-    @Override
-    public AccessToken createPasswordResetAccessTokenForUser(String username, BaseClient client, int expirationTimeInSeconds) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+        String requestor = client.getClientId();
+        if (StringUtils.isBlank(requestor)) {
+            throw new IllegalArgumentException(String.format("Client %s is missing i-number", requestor));
+        }
 
-    @Override
-    public AccessToken createAccessTokenForClient(BaseClient client) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return createToken(user, client, expirationSeconds);
     }
 
     @Override
     public AccessToken createAccessTokenForClient(BaseClient client, int expirationSeconds) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        logger.debug("Creating Access Token For Client: {}", client);
+        String tokenString = generateTokenWithDcPrefix();
+        AccessToken accessToken =
+                new AccessToken(tokenString, new DateTime().plusSeconds(expirationSeconds), null,
+                        client, IDM_SCOPE.FULL);
+        tokenDao.save(accessToken);
+        logger.debug("Created Access Token For Client: {} : {}", client.getClientId(), accessToken);
+        return accessToken;
     }
 
     public AccessToken createAccessTokenForClient(String clientId) {
 
-        return createAccessTokenForClient(clientId,
-            this.defaultTokenExpirationSeconds);
+        return createAccessTokenForClient(clientId, this.defaultTokenExpirationSeconds);
     }
 
-    public AccessToken createAccessTokenForClient(String clientId,
-        int expirationTimeInSeconds) {
+    public AccessToken createAccessTokenForClient(String clientId, int expirationTimeInSeconds) {
         logger.debug("Creating Access Token For Client: {}", clientId);
         String tokenString;
 
         tokenString = generateTokenWithDcPrefix();
 
         Client owner = clientDao.findByClientId(clientId);
-        AccessToken accessToken = new AccessToken(tokenString,
-            new DateTime().plusSeconds(expirationTimeInSeconds), null,
-            owner.getBaseClient(), IDM_SCOPE.FULL);
+        AccessToken accessToken =
+                new AccessToken(tokenString, new DateTime().plusSeconds(expirationTimeInSeconds), null,
+                        owner.getBaseClient(), IDM_SCOPE.FULL);
         tokenDao.save(accessToken);
-        logger.debug("Created Access Token For Client: {} : {}", clientId,
-            accessToken);
+        logger.debug("Created Access Token For Client: {} : {}", clientId, accessToken);
         return accessToken;
-
     }
 
     public AccessToken createAccessTokenForUser(String username, String clientId) {
-        return createAccessTokenForUser(username, clientId,
-            this.defaultTokenExpirationSeconds);
+        return createAccessTokenForUser(username, clientId, this.defaultTokenExpirationSeconds);
     }
 
-    public AccessToken createAccessTokenForUser(String username,
-        String clientId, int expirationTimeInSeconds) {
+    public AccessToken createAccessTokenForUser(String username, String clientId, int expirationTimeInSeconds) {
         logger.debug("Creating Access Token For User: {}", username);
 
         Client tokenRequestor = clientDao.findByClientId(clientId);
@@ -161,15 +163,13 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
         String requestor = tokenRequestor.getClientId();
         if (StringUtils.isBlank(requestor)) {
-            throw new IllegalArgumentException(String.format(
-                "Client %s is missing i-number", clientId));
+            throw new IllegalArgumentException(String.format("Client %s is missing i-number", clientId));
         }
 
-        BaseUser tokenOwner = null;
+        BaseUser tokenOwner;
         if (isTrustedServer) {
-            //TODO Find out what to do here. Nothing to do if a BaseUser instance comes in as a param
-        }
-        else {
+            tokenOwner = new BaseUser(username);
+        } else {
             tokenOwner = userService.getUser(username);
             if (tokenOwner == null) {
                 String error = "No entry found for username " + username;
@@ -183,40 +183,25 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
     private AccessToken createToken(BaseUser user, BaseClient client, int expirationTimeInSeconds) {
         String tokenString = generateTokenWithDcPrefix();
-
-        /*
-
-        TODO Make sure this is implemented by the calling code or is unnecessary
-
-        if (isTrustedServer) {
-            user = new BaseUser(username);
-        } else {
-            user = userService.getUser(username).getBaseUser();
-        }*/
-
-        AccessToken accessToken = new AccessToken(tokenString,
-            new DateTime().plusSeconds(expirationTimeInSeconds), user, client,
-            IDM_SCOPE.FULL, isTrustedServer);
+        AccessToken accessToken =
+                new AccessToken(tokenString, new DateTime().plusSeconds(expirationTimeInSeconds), user, client,
+                        IDM_SCOPE.FULL, isTrustedServer);
 
         tokenDao.save(accessToken);
 
-        logger.debug("Created Access Token For User: {} : {}", user.getUsername(),
-            accessToken);
+        logger.debug("Created Access Token For User: {} : {}", user.getUsername(), accessToken);
 
         return accessToken;
     }
 
-    public AccessToken createPasswordResetAccessTokenForUser(String username,
-        String clientId) {
-        return createPasswordResetAccessTokenForUser(username, clientId,
-            this.defaultTokenExpirationSeconds);
+    public AccessToken createPasswordResetAccessTokenForUser(String username, String clientId) {
+        return createPasswordResetAccessTokenForUser(username, clientId, this.defaultTokenExpirationSeconds);
     }
 
-    public AccessToken createPasswordResetAccessTokenForUser(String username,
-        String clientId, int expirationTimeInSeconds) {
+    public AccessToken createPasswordResetAccessTokenForUser(String username, String clientId,
+                                                             int expirationTimeInSeconds) {
 
-        logger.debug("Creating Password Reset Access Token For User: {}",
-            username);
+        logger.debug("Creating Password Reset Access Token For User: {}", username);
 
         String tokenString = generateTokenWithDcPrefix();
 
@@ -229,8 +214,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
         String owner = tokenOwner.getUsername();
         if (StringUtils.isBlank(owner)) {
-            throw new IllegalArgumentException(String.format(
-                "User %s is missing i-number", username));
+            throw new IllegalArgumentException(String.format("User %s is missing i-number", username));
         }
 
         Client tokenRequestor = clientDao.findByClientId(clientId);
@@ -241,30 +225,30 @@ public class DefaultAccessTokenService implements AccessTokenService {
         }
 
         if (StringUtils.isBlank(tokenRequestor.getInum())) {
-            throw new IllegalArgumentException(String.format(
-                "Client %s is missing i-number", clientId));
+            throw new IllegalArgumentException(String.format("Client %s is missing i-number", clientId));
         }
 
-        AccessToken accessToken = new AccessToken(tokenString,
-            new DateTime().plusSeconds(expirationTimeInSeconds),
-            tokenOwner.getBaseUser(), tokenRequestor.getBaseClientWithoutClientPerms(),
-            IDM_SCOPE.SET_PASSWORD);
+        AccessToken accessToken = new AccessToken(tokenString, new DateTime().plusSeconds(expirationTimeInSeconds),
+                tokenOwner.getBaseUser(), tokenRequestor.getBaseClientWithoutClientPerms(), IDM_SCOPE.SET_PASSWORD);
         tokenDao.save(accessToken);
-        logger.debug("Created Password Reset Access Token For User: {} : {}",
-            username, accessToken);
+        logger.debug("Created Password Reset Access Token For User: {} : {}", username, accessToken);
         return accessToken;
     }
 
     public int getDefaultTokenExpirationSeconds() {
         return this.defaultTokenExpirationSeconds;
     }
-    
+
     public int getCloudAuthDefaultTokenExpirationSeconds() {
         return this.defaultCloudAuthTokenExpirationSeconds;
     }
 
-    public AccessToken getAccessTokenForUser(String username, String clientId,
-        DateTime expiresAfter) {
+    @Override
+    public void revokeToken(String tokenStringRequestingDelete, String tokenToDelete) throws NotAuthorizedException {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public AccessToken getAccessTokenForUser(String username, String clientId, DateTime expiresAfter) {
         logger.debug("Getting Token For User: {}", username);
 
         Client client = clientDao.findByClientId(clientId);
@@ -293,8 +277,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
         return token;
     }
 
-    public AccessToken getAccessTokenForClient(String clientId,
-        DateTime expiresAfter) {
+    public AccessToken getAccessTokenForClient(String clientId, DateTime expiresAfter) {
         logger.debug("Getting Token For Client: {}", clientId);
         Client client = clientDao.findByClientId(clientId);
         if (client == null) {
@@ -302,13 +285,84 @@ public class DefaultAccessTokenService implements AccessTokenService {
             logger.debug(error);
             throw new IllegalStateException(error);
         }
-        AccessToken token = tokenDao.findTokenForOwner(client.getClientId(),
-            client.getClientId());
+        AccessToken token = tokenDao.findTokenForOwner(client.getClientId(), client.getClientId());
         logger.debug("Got Token For Client: {} - {}", clientId, token);
         return token;
     }
 
-    public void revokeToken(String tokenStringRequestingDelete,
+    @Override
+    public boolean authenticateAccessToken(String accessTokenStr) {
+        logger.debug("Authorizing Token: {}", accessTokenStr);
+        Boolean authenticated = false;
+
+        // check token is valid and not expired
+        AccessToken accessToken = getAccessTokenByTokenString(accessTokenStr);
+        if (accessToken != null && !accessToken.isExpired(new DateTime())) {
+            authenticated = true;
+        }
+        logger.debug("Authorized Token: {} : {}", accessTokenStr, authenticated);
+        return authenticated;
+    }
+
+    public AccessToken getTokenByBasicCredentials(BaseClient client, BaseUser user, int expirationSeconds,
+                                                  DateTime currentTime) {
+        AccessToken token = getAccessTokenForUser(user, client, currentTime);
+
+        if (token == null || token.isExpired(currentTime)) {
+            token = createAccessTokenForUser(user, client, expirationSeconds);
+
+            logger.debug(String.format("Access Token Created For User: %s : %s", user.getUsername(), token));
+        } else {
+            logger.debug(String.format("Access Token Found For User: %s by Client : %s", user.getUsername(), token));
+        }
+        return token;
+    }
+
+
+    public AccessToken getTokenByUsernameAndApiCredentials(BaseClient client, String username, String apiKey,
+                                                           int expirationSeconds, DateTime currentTime) {
+
+        UserAuthenticationResult authResult = userService.authenticateWithApiKey(username, apiKey);
+
+        return getTokenByApiCredentials(client, authResult, expirationSeconds, currentTime);
+    }
+
+    public AccessToken getTokenByNastIdAndApiCredentials(BaseClient client, String nastId, String apiKey,
+                                                         int expirationSeconds, DateTime currentTime) {
+
+        UserAuthenticationResult authResult = userService.authenticateWithNastIdAndApiKey(nastId, apiKey);
+
+        return getTokenByApiCredentials(client, authResult, expirationSeconds, currentTime);
+    }
+
+    public AccessToken getTokenByMossoIdAndApiCredentials(BaseClient client, int mossoId, String apiKey,
+                                                          int expirationSeconds, DateTime currentTime) {
+
+        UserAuthenticationResult authResult = userService.authenticateWithMossoIdAndApiKey(mossoId, apiKey);
+
+        return getTokenByApiCredentials(client, authResult, expirationSeconds, currentTime);
+    }
+
+
+    private AccessToken getTokenByApiCredentials(BaseClient client, UserAuthenticationResult authResult,
+                                                 int expirationSeconds, DateTime currentTime) {
+
+        if (!authResult.isAuthenticated()) {
+            logger.error("Incorrect Credentials");
+            throw new NotAuthenticatedException("Incorrect Credentials");
+        }
+
+        AccessToken token = getAccessTokenForUser(authResult.getUser(), client, currentTime);
+        if (token == null || token.isExpired(currentTime)) {
+            token = createAccessTokenForUser(authResult.getUser(), client, expirationSeconds);
+            logger.debug("Access Token Created For User: {} : {}", authResult.getUser().getUsername(), token);
+        } else {
+            logger.debug("Access Token Found For User: {} by Client : {}", authResult.getUser().getUsername(), token);
+        }
+        return token;
+    }
+
+    /*public void revokeToken(String tokenStringRequestingDelete,
         String tokenToDelete) {
 
         logger.info("Deleting Token {}", tokenToDelete);
@@ -367,14 +421,13 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
         tokenDao.delete(deletingToken.getTokenString());
         logger.info("Deleted Token {}", deletingToken);
-    }
+    }*/
 
     public AccessToken validateToken(String tokenString) {
 
         logger.debug("Validating Token: {}", tokenString);
 
-        AccessToken token = tokenDao
-            .findByTokenString(tokenString);
+        AccessToken token = tokenDao.findByTokenString(tokenString);
 
         // Check if token is from other data center. Leaving this here.
         // We may need it later. - Dev, October 20, 2010.
@@ -392,6 +445,12 @@ public class DefaultAccessTokenService implements AccessTokenService {
         return token;
     }
 
+    @Override
+    public void delete(String tokenString) {
+        tokenDao.delete(tokenString);
+    }
+
+    @Deprecated
     private void deleteRefreshTokenByAccessToken(AccessToken accessToken) {
 
         // Clients do not get Refresh Tokens so there is no need to
@@ -421,8 +480,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
         if (tokenUser != null) {
             username = tokenUser.getUsername();
         }
-        Client tokenClient = clientDao.findByClientId(accessToken
-            .getRequestor());
+        Client tokenClient = clientDao.findByClientId(accessToken.getRequestor());
         if (tokenClient != null) {
             clientId = tokenClient.getClientId();
         }
@@ -435,8 +493,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
     private String generateTokenWithDcPrefix() {
         String token = UUID.randomUUID().toString().replace("-", "");
-        String tokenString = String.format("%s-%s", this.dataCenterPrefix,
-                token);
+        String tokenString = String.format("%s-%s", this.dataCenterPrefix, token);
         return tokenString;
     }
 }

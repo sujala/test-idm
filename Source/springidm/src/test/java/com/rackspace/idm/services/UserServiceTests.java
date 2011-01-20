@@ -259,7 +259,7 @@ public class UserServiceTests {
     public void shouldAuthenticateUser() {
         EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(
             getFakeUser());
-        EasyMock.expect(mockUserDao.authenticate(username, password))
+        EasyMock.expect(mockUserDao.bindUser(username, password))
             .andReturn(true);
         EasyMock.replay(mockUserDao);
         boolean authenticated = userService.authenticateDeprecated(username, password);

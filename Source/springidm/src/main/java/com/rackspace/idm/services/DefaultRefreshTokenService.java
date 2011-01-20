@@ -1,5 +1,6 @@
 package com.rackspace.idm.services;
 
+import java.util.Set;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
@@ -81,7 +82,12 @@ public class DefaultRefreshTokenService implements RefreshTokenService {
         refreshTokenDao.updateToken(token);
         logger.debug("done resetting refresh token expiration: {}", token);
     }
-    
+
+    @Override
+    public void deleteAllTokensForUser(String username, Set<String> tokenRequestors) {
+        refreshTokenDao.deleteAllTokensForUser(username, tokenRequestors);
+    }
+
     // private
     private String generateToken() {
         return UUID.randomUUID().toString().replace("-", "");
