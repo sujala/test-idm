@@ -50,7 +50,7 @@ public class ConverterConfiguration {
     CustomerConverter customerConverter() {
         return new CustomerConverter();
     }
-    
+
     @Bean
     EndPointConverter endpointConverter() {
         return new EndPointConverter();
@@ -64,6 +64,6 @@ public class ConverterConfiguration {
     @Bean
     AuthConverter authConverter() {
         return new AuthConverter(tokenConverter(), permissionConverter(),
-            clientConverter(), userConverter());
+            clientConverter(), userConverter(), endpointConverter());
     }
 }

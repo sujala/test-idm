@@ -1,7 +1,13 @@
 package com.rackspace.idm.converters;
 
+import java.util.List;
+
+import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.AuthData;
+import com.rackspace.idm.entities.CloudEndpoint;
+import com.rackspace.idm.jaxb.CloudAuth;
 import com.rackspace.idm.jaxb.ObjectFactory;
+import com.rackspace.idm.jaxb.ServiceCatalog;
 
 public class AuthConverter {
 
@@ -9,16 +15,19 @@ public class AuthConverter {
     private ClientConverter clientConverter;
     private PermissionConverter permissionConverter;
     private TokenConverter tokenConverter;
+    private EndPointConverter endpointConverter;
 
     protected ObjectFactory of = new ObjectFactory();
 
     public AuthConverter(TokenConverter tokenConverter,
         PermissionConverter permissionConverter,
-        ClientConverter clientConverter, UserConverter userConverter) {
+        ClientConverter clientConverter, UserConverter userConverter,
+        EndPointConverter endpointConverter) {
         this.tokenConverter = tokenConverter;
         this.permissionConverter = permissionConverter;
         this.clientConverter = clientConverter;
         this.userConverter = userConverter;
+        this.endpointConverter = endpointConverter;
     }
 
     public com.rackspace.idm.jaxb.Auth toAuthDataJaxb(AuthData auth) {
@@ -35,8 +44,8 @@ public class AuthConverter {
         }
 
         if (auth.getClient() != null) {
-            authJaxb.setClient(clientConverter
-                .toClientJaxbFromBaseClient(auth.getClient()));
+            authJaxb.setClient(clientConverter.toClientJaxbFromBaseClient(auth
+                .getClient()));
         }
 
         if (auth.getUser() != null) {
@@ -45,11 +54,28 @@ public class AuthConverter {
         }
 
         if (auth.getPermissions() != null) {
-            authJaxb.setPermissions(permissionConverter.toPermissionListJaxb(auth
-                .getPermissions()));
+            authJaxb.setPermissions(permissionConverter
+                .toPermissionListJaxb(auth.getPermissions()));
         }
 
         return authJaxb;
     }
 
+    public CloudAuth toCloudAuthJaxb(AccessToken accessToken, List<CloudEndpoint> endpoints) {
+        CloudAuth auth = of.createCloudAuth();
+        
+        if (accessToken != null) {
+            com.rackspace.idm.jaxb.Token token = of.createToken();
+            token.setExpiresIn(accessToken.getExpiration());
+            token.setId(accessToken.getTokenString());
+            auth.setToken(token);
+        }
+        
+        if (endpoints != null && endpoints.size() > 0) {
+            ServiceCatalog catalog = this.endpointConverter.toServiceCatalog(endpoints);
+            auth.setServiceCatalog(catalog);
+        }
+        
+        return auth;
+    }
 }
