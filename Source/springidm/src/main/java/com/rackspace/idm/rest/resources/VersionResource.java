@@ -29,14 +29,14 @@ public class VersionResource {
     private NastUserResource nastUserResource;
     private PasswordRulesResource passwordRulesResource;
     private TokenResource tokenResource;
-    private XsdResource xsdResource;
+    private BaseUrlsResource baseUrlsResource;
 
     @Autowired
-    public VersionResource(AuthResource authResource, UsersResource usersResource,
-        CustomersResource customersResource,
+    public VersionResource(AuthResource authResource,
+        UsersResource usersResource, CustomersResource customersResource,
         MossoUserResource mossoUserResource, NastUserResource nastUserResource,
         PasswordRulesResource passwordRulesResource,
-        TokenResource tokenResource, XsdResource xsdResource) {
+        TokenResource tokenResource, BaseUrlsResource baseUrlsResource) {
         this.authResource = authResource;
         this.usersResource = usersResource;
         this.customersResource = customersResource;
@@ -44,7 +44,7 @@ public class VersionResource {
         this.nastUserResource = nastUserResource;
         this.passwordRulesResource = passwordRulesResource;
         this.tokenResource = tokenResource;
-        this.xsdResource = xsdResource;
+        this.baseUrlsResource = baseUrlsResource;
     }
 
     /**
@@ -106,8 +106,8 @@ public class VersionResource {
         return tokenResource;
     }
 
-    @Path("xsd")
-    public XsdResource getXsdResource() {
-        return xsdResource;
+    @Path("baseurls")
+    public BaseUrlsResource getBaseUrlsResource() {
+        return baseUrlsResource;
     }
 }

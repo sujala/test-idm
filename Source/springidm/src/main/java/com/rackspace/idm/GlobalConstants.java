@@ -25,7 +25,6 @@ public final class GlobalConstants {
     public static final String DFW_DC = "DFW";
     public static final String LONDON_DC = "LON";
 
-
     // Values to return for the version request
     public static final String DOC_URL = "http://172.17.16.85:8080/idm-docs/idm-devguide-20101111.pdf";
     public static final String WADL_URL = "http://172.17.16.85:8080/idm-docs/idm-api.wadl";
@@ -38,4 +37,6 @@ public final class GlobalConstants {
     // IdM Specific values
     public static final String IDM_ADMIN_ROLE_NAME = "Idm Admin";
     public static final String IDM_CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221";
+    
+    public static final String BASE_URL_REF_STRING = "https://idm.rackspace.com/v" + VERSION +"/baseurls/%s";
 }

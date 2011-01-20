@@ -14,6 +14,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import com.rackspace.idm.exceptions.*;
+
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -21,16 +22,20 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
+import com.rackspace.idm.converters.EndPointConverter;
 import com.rackspace.idm.converters.UserConverter;
 import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.entities.CloudEndpoint;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.entities.Password;
 import com.rackspace.idm.entities.Role;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.errors.ApiError;
+import com.rackspace.idm.jaxb.BaseURLRef;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.CustomerService;
+import com.rackspace.idm.services.EndpointService;
 import com.rackspace.idm.services.PasswordComplexityService;
 import com.rackspace.idm.services.RoleService;
 import com.rackspace.idm.services.UserService;
@@ -53,6 +58,8 @@ public class UsersResource {
     private UserConverter userConverter;
     private PasswordComplexityService passwordComplexityService;
     private AuthorizationService authorizationService;
+    private EndpointService endpointService;
+    private EndPointConverter endpointConverter;
     private Logger logger;
 
     @Autowired
@@ -61,7 +68,8 @@ public class UsersResource {
         RoleService roleService, InputValidator inputValidator,
         UserConverter userConverter,
         PasswordComplexityService passwordComplexityService,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService,
+        EndpointService endpointService, EndPointConverter endpointConverter,LoggerFactoryWrapper logger) {
         this.accessTokenService = accessTokenService;
         this.customerService = customerService;
         this.userService = userService;
@@ -70,6 +78,8 @@ public class UsersResource {
         this.userConverter = userConverter;
         this.passwordComplexityService = passwordComplexityService;
         this.authorizationService = authorizationService;
+        this.endpointService = endpointService;
+        this.endpointConverter=endpointConverter;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -199,6 +209,212 @@ public class UsersResource {
     }
 
     /**
+     * Gets a list of serviceCatalog for a user.
+     *
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceCatalog
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     *
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param username username
+     */
+    @GET
+    @Path("{username}/servicecatalog")
+    public Response getServiceCatalog(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("username") String username) {
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+        
+        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(username);
+
+        return Response.ok(this.endpointConverter.toServiceCatalog(endpoints)).build();
+    }
+
+    /**
+     * Gets a list of baseUrlRefs for a user.
+     *
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}baseURLRefs
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     *
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param username username
+     */
+    @GET
+    @Path("{username}/baseurlrefs")
+    public Response getBaseUrlRefs(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("username") String username) {
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+        
+        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(username);
+
+        return Response.ok(this.endpointConverter.toBaseUrlRefs(endpoints)).build();
+    }
+
+    /**
+     * Adds a baseUrl to a user.
+     *
+     * @response.representation.201.doc Successful request
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     *
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param username username
+     * @param baseUrlRef baseUrlRef
+     */
+    @PUT
+    @Path("{username}/baseurlrefs")
+    public Response addBaseUrlRef(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("username") String username, BaseURLRef baseUrlRef) {
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+        
+        this.endpointService.addBaseUrlToUser(baseUrlRef.getId(), baseUrlRef.isV1Default(), username);
+
+        return Response.ok().status(HttpServletResponse.SC_CREATED).build();
+    }
+
+    /**
+     * Gets a baseUrlRef for a user.
+     *
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}baseURLRef
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     *
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param username username
+     * @param baseUrlId baseUrlId
+     */
+    @GET
+    @Path("{username}/baseurlrefs/{baseUrlId}")
+    public Response getBaseUrlRef(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("username") String username,
+        @PathParam("baseUrlId") int baseUrlId) {
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+        
+        CloudEndpoint endpoint = this.endpointService.getEndpointForUser(username, baseUrlId);
+        
+        if (endpoint == null) {
+            String errMsg = String.format("BaseUrlId %s not found for user %s", baseUrlId, username);
+            logger.error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        return Response.ok(this.endpointConverter.toBaseUrlRef(endpoint)).build();
+    }
+
+    /**
+     * Removes a baseUrl from a user.
+     *
+     * @response.representation.204.doc Successful request
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     *
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param username username
+     * @param baseUrlId baseUrlId
+     */
+    @DELETE
+    @Path("{username}/baseurlrefs/{baseUrlId}")
+    public Response deleteBaseUrlRef(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("username") String username,
+        @PathParam("baseUrlId") int baseUrlId) {
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+        
+        this.endpointService.removeBaseUrlFromUser(baseUrlId, username);
+
+        return Response.noContent().build();
+    }
+
+    /**
      * Gets a user.
      *
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
@@ -238,8 +454,7 @@ public class UsersResource {
         User user = this.userService.getUser(username);
 
         if (user == null) {
-            String errorMsg = String.format("User not found: %s",
-                username);
+            String errorMsg = String.format("User not found: %s", username);
             logger.error(errorMsg);
             throw new NotFoundException(errorMsg);
         }

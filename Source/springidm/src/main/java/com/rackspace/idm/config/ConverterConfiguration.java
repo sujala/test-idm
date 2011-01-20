@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import com.rackspace.idm.converters.AuthConverter;
 import com.rackspace.idm.converters.ClientConverter;
 import com.rackspace.idm.converters.CustomerConverter;
+import com.rackspace.idm.converters.EndPointConverter;
 import com.rackspace.idm.converters.PasswordConverter;
 import com.rackspace.idm.converters.PasswordRulesConverter;
 import com.rackspace.idm.converters.PermissionConverter;
@@ -48,6 +49,11 @@ public class ConverterConfiguration {
     @Bean
     CustomerConverter customerConverter() {
         return new CustomerConverter();
+    }
+    
+    @Bean
+    EndPointConverter endpointConverter() {
+        return new EndPointConverter();
     }
 
     @Bean
