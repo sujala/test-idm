@@ -23,8 +23,8 @@ import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.jaxb.MossoCredentials;
-import com.rackspace.idm.jaxb.Credentials;
 import com.rackspace.idm.jaxb.NastCredentials;
+import com.rackspace.idm.jaxb.UsernameCredentials;
 import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
@@ -58,6 +58,7 @@ public class AuthResource {
     /**
      * Gets an Access Token for Auth with Username and Api Key
      * 
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}usernameCredentials
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}accessToken
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -72,7 +73,7 @@ public class AuthResource {
     @POST
     public Response getUsernameAuth(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, Credentials creds) {
+        @HeaderParam("Authorization") String authHeader, UsernameCredentials creds) {
 
         AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
@@ -110,6 +111,7 @@ public class AuthResource {
     /**
      * Gets an Access Token for Auth with MossoId and Api Key
      * 
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}mossoCredentials
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}accessToken
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -163,6 +165,7 @@ public class AuthResource {
     /**
      * Gets an Access Token for Auth with NastId and Api Key
      * 
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}nastCredentials
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}accessToken
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
