@@ -21,7 +21,6 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.AuthConverter;
-import com.rackspace.idm.converters.TokenConverter;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.CloudEndpoint;
 import com.rackspace.idm.exceptions.BadRequestException;
@@ -29,7 +28,6 @@ import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.jaxb.MossoCredentials;
 import com.rackspace.idm.jaxb.NastCredentials;
 import com.rackspace.idm.jaxb.UsernameCredentials;
-import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.EndpointService;
