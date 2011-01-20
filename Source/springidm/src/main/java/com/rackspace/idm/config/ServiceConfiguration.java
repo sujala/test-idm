@@ -46,6 +46,8 @@ public class ServiceConfiguration {
     private AuthDao authDao;
     @Autowired
     private MemcachedClient memcached;
+    @Autowired
+    private EndpointDao endpointDao;
 
     @Autowired
     private Configuration config;
@@ -104,6 +106,12 @@ public class ServiceConfiguration {
     public ClientService clientService() {
         Logger logger = LoggerFactory.getLogger(DefaultClientService.class);
         return new DefaultClientService(clientDao, customerDao, logger);
+    }
+    
+    @Bean
+    public EndpointService endpointService() {
+        Logger logger = LoggerFactory.getLogger(DefaultEndpointService.class);
+        return new DefaultEndpointService(endpointDao, logger);
     }
 
     @Bean
