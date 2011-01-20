@@ -17,6 +17,9 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class OAuthServiceTests {
 
     UserService mockUserService;
@@ -35,6 +38,7 @@ public class OAuthServiceTests {
     String lastname = "Smith";
     String useremail = "someuser@example.com";
     String tokenVal = "asdf1234";
+    String requestorToken = "requestortoken5678";
     String refreshTokenVal = "somerefreshtoken1234";
     int expireInSeconds = 3600;
 
@@ -294,83 +298,64 @@ public class OAuthServiceTests {
         EasyMock.verify(mockRefreshTokenService, mockClientService);
     }
 
-    @Ignore
     @Test
     public void shouldRevokeToken() {
-        //TODO Moved from AccessTokenService
+        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(tokenVal)).andReturn(getFakeAccessToken());
+        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(requestorToken)).andReturn(getFakeAccessToken());
+        mockAccessTokenService.delete(tokenVal);
+        EasyMock.expectLastCall();
 
-        /*User testUser = getFakeUser();
-        Client testClient = getFakeClient();
-
-        AccessToken userToken = getFakeUserToken();
-        userToken.setTokenClient(testClient);
-        AccessToken clientToken = getFakeClientToken();
-        clientToken.setTokenUser(testUser);
-
-        EasyMock.expect(
-            mockTokenDao.findByTokenString(userToken.getTokenString()))
-            .andReturn(userToken);
-        EasyMock.expect(
-            mockTokenDao.findByTokenString(userToken.getTokenString()))
-            .andReturn(clientToken);
-        mockTokenDao.delete(userToken.getTokenString());
-        EasyMock.replay(mockTokenDao);
-
-        EasyMock.expect(mockUserService.getUser(testUser.getUsername()))
-            .andReturn(testUser);
-        EasyMock.replay(mockUserService);
-
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
-            testClient);
-        EasyMock.replay(mockClientDao);
-
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(getFakeUser());
+        EasyMock.expect(mockClientService.getById(clientId)).andReturn(getTestClient());
         Set<String> tokenRequestors = new HashSet<String>();
-        tokenRequestors.add(testClient.getClientId());
-        mockRefreshTokenDao.deleteAllTokensForUser(testUser.getUsername(),
-            tokenRequestors);
-        EasyMock.replay(mockRefreshTokenDao);
+            tokenRequestors.add(clientId);
+        mockRefreshTokenService.deleteAllTokensForUser(username, tokenRequestors);
 
-        tokenService.revokeToken(clientToken.getTokenString(),
-            userToken.getTokenString());
+        EasyMock.replay(mockAccessTokenService, mockUserService, mockClientService, mockRefreshTokenService);
 
-        EasyMock.verify(mockTokenDao);*/
+        oauthService.revokeToken(requestorToken, tokenVal);
+
+        EasyMock.verify(mockAccessTokenService, mockUserService, mockClientService, mockRefreshTokenService);
     }
 
-    @Ignore
     @Test(expected = IllegalStateException.class)
     public void shouldNotRevokeTokenForTokenNotFound() {
-        //TODO Moved from AccessTokenService
+        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(tokenVal)).andReturn(null);
+        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(requestorToken)).andReturn(getFakeAccessToken());
+        mockAccessTokenService.delete(tokenVal);
+        EasyMock.expectLastCall();
 
-        /*AccessToken userToken = getFakeUserToken();
-        AccessToken clientToken = getFakeClientToken();
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(null);
+        EasyMock.expect(mockClientService.getById(clientId)).andReturn(getTestClient());
+        Set<String> tokenRequestors = new HashSet<String>();
+            tokenRequestors.add(clientId);
+        mockRefreshTokenService.deleteAllTokensForUser(username, tokenRequestors);
 
-        EasyMock.expect(
-            mockTokenDao.findByTokenString(userToken.getTokenString()))
-            .andReturn(null);
-        EasyMock.expect(
-            mockTokenDao.findByTokenString(clientToken.getTokenString()))
-            .andReturn(clientToken);
-        mockTokenDao.delete(userToken.getTokenString());
-        EasyMock.replay(mockTokenDao);
+        EasyMock.replay(mockAccessTokenService, mockUserService, mockClientService, mockRefreshTokenService);
 
-        tokenService.revokeToken(clientToken.getTokenString(),
-            userToken.getTokenString());*/
+        oauthService.revokeToken(requestorToken, tokenVal);
+
+        EasyMock.verify(mockAccessTokenService, mockUserService, mockClientService, mockRefreshTokenService);
     }
 
-    @Ignore
     @Test(expected = IllegalStateException.class)
     public void shouldNotRevokeTokenForTokenThatDoesNotExist() {
-        //TODO Moved from AccessTokenService
-        /*AccessToken userToken = getFakeUserToken();
-        AccessToken clientToken = getFakeClientToken();
+        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(tokenVal)).andReturn(getFakeAccessToken());
+        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(requestorToken)).andReturn(null);
+        mockAccessTokenService.delete(tokenVal);
+        EasyMock.expectLastCall();
 
-        EasyMock.expect(
-            mockTokenDao.findByTokenString(clientToken.getTokenString()))
-            .andReturn(null);
-        EasyMock.replay(mockTokenDao);
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(getFakeUser());
+        EasyMock.expect(mockClientService.getById(clientId)).andReturn(null);
+        Set<String> tokenRequestors = new HashSet<String>();
+            tokenRequestors.add(clientId);
+        mockRefreshTokenService.deleteAllTokensForUser(username, tokenRequestors);
 
-        tokenService.revokeToken(clientToken.getTokenString(),
-            userToken.getTokenString());*/
+        EasyMock.replay(mockAccessTokenService, mockUserService, mockClientService, mockRefreshTokenService);
+
+        oauthService.revokeToken(requestorToken, tokenVal);
+
+        EasyMock.verify(mockAccessTokenService, mockUserService, mockClientService, mockRefreshTokenService);
     }
 
     // helpers
