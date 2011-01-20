@@ -42,7 +42,7 @@ public class DefaultEndpointService implements EndpointService {
     public CloudEndpoint getEndpointForUser(String username, int baseUrlId) {
         List<CloudEndpoint> endpoints = this.getEndpointsForUser(username);
         CloudEndpoint endpoint = null;
-        if (endpoints != null && endpoints.size() > 1) {
+        if (endpoints != null && endpoints.size() > 0) {
             for (CloudEndpoint e : endpoints) {
                 if (e.getBaseUrl().getBaseUrlId() == baseUrlId) {
                     endpoint = e;
