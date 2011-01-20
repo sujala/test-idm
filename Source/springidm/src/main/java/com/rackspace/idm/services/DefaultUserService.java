@@ -1,5 +1,17 @@
 package com.rackspace.idm.services;
 
+import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.dao.*;
+import com.rackspace.idm.entities.*;
+import com.rackspace.idm.exceptions.DuplicateException;
+import com.rackspace.idm.jaxb.CustomParam;
+import com.rackspace.idm.jaxb.PasswordRecovery;
+import com.rackspace.idm.util.HashHelper;
+import com.rackspace.idm.util.TemplateProcessor;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.mail.EmailException;
+import org.slf4j.Logger;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,31 +19,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.rackspace.idm.entities.*;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.mail.EmailException;
-import org.slf4j.Logger;
-
-import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.dao.AccessTokenDao;
-import com.rackspace.idm.dao.AuthDao;
-import com.rackspace.idm.dao.ClientDao;
-import com.rackspace.idm.dao.CustomerDao;
-import com.rackspace.idm.dao.RefreshTokenDao;
-import com.rackspace.idm.dao.UserDao;
-import com.rackspace.idm.exceptions.DuplicateException;
-import com.rackspace.idm.jaxb.CustomParam;
-import com.rackspace.idm.jaxb.PasswordRecovery;
-import com.rackspace.idm.util.HashHelper;
-import com.rackspace.idm.util.TemplateProcessor;
+import java.util.*;
 
 public class DefaultUserService implements UserService {
 
@@ -50,11 +38,9 @@ public class DefaultUserService implements UserService {
     private Logger logger;
     private boolean isTrustedServer;
 
-    public DefaultUserService(UserDao userDao, AuthDao rackerDao,
-        CustomerDao customerDao, AccessTokenDao tokenDao,
-        RefreshTokenDao refreshTokenDao, ClientDao clientDao,
-        EmailService emailService, RoleService roleService, boolean isTrusted,
-        Logger logger) {
+    public DefaultUserService(UserDao userDao, AuthDao rackerDao, CustomerDao customerDao, AccessTokenDao tokenDao,
+                              RefreshTokenDao refreshTokenDao, ClientDao clientDao, EmailService emailService,
+                              RoleService roleService, boolean isTrusted, Logger logger) {
 
         this.userDao = userDao;
         this.authDao = rackerDao;
@@ -76,17 +62,14 @@ public class DefaultUserService implements UserService {
         boolean isUsernameUnique = userDao.isUsernameUnique(user.getUsername());
 
         if (!isUsernameUnique) {
-            logger.warn("Couldn't add user {} because username already taken",
-                user);
-            throw new DuplicateException(String.format(
-                "Username %s already exists", user.getUsername()));
+            logger.warn("Couldn't add user {} because username already taken", user);
+            throw new DuplicateException(String.format("Username %s already exists", user.getUsername()));
         }
 
         Customer customer = customerDao.findByCustomerId(customerId);
 
         if (customer == null) {
-            logger.warn("Couldn't add user {} because customer doesn't exist",
-                user);
+            logger.warn("Couldn't add user {} because customer doesn't exist", user);
             throw new IllegalStateException("Customer doesn't exist");
         }
 
@@ -102,16 +85,14 @@ public class DefaultUserService implements UserService {
 
     public boolean authenticateDeprecated(String username, String password) {
         if (StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
-            throw new IllegalArgumentException(
-                "username or password parameter is null or blank.");
+            throw new IllegalArgumentException("username or password parameter is null or blank.");
         }
 
         logger.debug("Authenticating User: {}", username);
         boolean authenticated = false;
         if (isTrustedServer) {
             authenticated = authDao.authenticate(username, password);
-            logger.debug("Authenticated Racker {} : {}", username,
-                authenticated);
+            logger.debug("Authenticated Racker {} : {}", username, authenticated);
             return authenticated;
         }
 
@@ -134,16 +115,14 @@ public class DefaultUserService implements UserService {
     @Override
     public UserAuthenticationResult authenticate(String username, String password) {
         if (StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
-            throw new IllegalArgumentException(
-                "username or password parameter is null or blank.");
+            throw new IllegalArgumentException("username or password parameter is null or blank.");
         }
 
         logger.debug("Authenticating User: {}", username);
         boolean authenticated;
         if (isTrustedServer) {
             authenticated = authDao.authenticate(username, password);
-            logger.debug("Authenticated Racker {} : {}", username,
-                authenticated);
+            logger.debug("Authenticated Racker {} : {}", username, authenticated);
             return new UserAuthenticationResult(new BaseUser(username), authenticated);
         }
 
@@ -163,34 +142,24 @@ public class DefaultUserService implements UserService {
         return new UserAuthenticationResult(user, authenticated);
     }
 
-    public UserAuthenticationResult authenticateWithApiKey(String username,
-        String apiKey) {
+    public UserAuthenticationResult authenticateWithApiKey(String username, String apiKey) {
         logger.debug("Authenticating User: {} by API Key", username);
-        UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(
-            username, apiKey);
-        logger.debug("Authenticated User: {} by API Key - {}", username,
-            authenticated);
+        UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(username, apiKey);
+        logger.debug("Authenticated User: {} by API Key - {}", username, authenticated);
         return authenticated;
     }
 
-    public UserAuthenticationResult authenticateWithNastIdAndApiKey(
-        String nastId, String apiKey) {
+    public UserAuthenticationResult authenticateWithNastIdAndApiKey(String nastId, String apiKey) {
         logger.debug("Authenticating User with NastId {} and API Key", nastId);
-        UserAuthenticationResult authenticated = userDao
-            .authenticateByNastIdAndAPIKey(nastId, apiKey);
-        logger.debug("Authenticated User with NastId {} and API Key - {}",
-            nastId, authenticated);
+        UserAuthenticationResult authenticated = userDao.authenticateByNastIdAndAPIKey(nastId, apiKey);
+        logger.debug("Authenticated User with NastId {} and API Key - {}", nastId, authenticated);
         return authenticated;
     }
 
-    public UserAuthenticationResult authenticateWithMossoIdAndApiKey(
-        int mossoId, String apiKey) {
-        logger
-            .debug("Authenticating User with MossoId {} and Api Key", mossoId);
-        UserAuthenticationResult authenticated = userDao
-            .authenticateByMossoIdAndAPIKey(mossoId, apiKey);
-        logger.debug("Authenticated User with MossoId {} and API Key - {}",
-            mossoId, authenticated);
+    public UserAuthenticationResult authenticateWithMossoIdAndApiKey(int mossoId, String apiKey) {
+        logger.debug("Authenticating User with MossoId {} and Api Key", mossoId);
+        UserAuthenticationResult authenticated = userDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey);
+        logger.debug("Authenticated User with MossoId {} and API Key - {}", mossoId, authenticated);
         return authenticated;
     }
 
@@ -226,9 +195,18 @@ public class DefaultUserService implements UserService {
     public User getUser(String username) {
         logger.debug("Getting User: {}", username);
         User user = userDao.findByUsername(username);
-        if (user != null) {
-            user.setRoles(roleService.getRolesForUser(user.getUsername()));
+        if (user == null) {
+            logger.debug("No user found for user name {}", username);
+            return null;
         }
+
+        if (StringUtils.isBlank(user.getInum())) {
+            String msg = String.format("User %s is missing iNum.", username);
+            logger.debug(msg);
+            throw new IllegalStateException(msg);
+        }
+
+        user.setRoles(roleService.getRolesForUser(user.getUsername()));
         logger.debug("Got User: {}", user);
         return user;
     }
@@ -285,26 +263,22 @@ public class DefaultUserService implements UserService {
         Map<String, String> userStatusMap = new HashMap<String, String>();
         userStatusMap.put(GlobalConstants.ATTR_SOFT_DELETED, "TRUE");
         this.userDao.saveRestoredUser(user, userStatusMap);
-        logger
-            .info("Restoring Soft Deleted User done.: {}", user.getUsername());
+        logger.info("Restoring Soft Deleted User done.: {}", user.getUsername());
     }
 
-    public void sendRecoveryEmail(String username, String userEmail,
-        PasswordRecovery recoveryParam, String tokenString) {
+    public void sendRecoveryEmail(String username, String userEmail, PasswordRecovery recoveryParam,
+                                  String tokenString) {
         logger.debug("Sending password recovery email for User: {}", username);
 
         List<String> recipients = new ArrayList<String>();
         recipients.add(userEmail);
 
-        String link = String.format(PASSWORD_RECOVERY_URL,
-            recoveryParam.getCallbackUrl(), username, tokenString);
+        String link = String.format(PASSWORD_RECOVERY_URL, recoveryParam.getCallbackUrl(), username, tokenString);
         String message = getEmailMessageBody(link, recoveryParam);
         try {
-            emailService.sendEmail(recipients, recoveryParam.getFrom(),
-                recoveryParam.getSubject(), message);
+            emailService.sendEmail(recipients, recoveryParam.getFrom(), recoveryParam.getSubject(), message);
         } catch (EmailException e) {
-            logger.error("Could not send password recovery email for "
-                + username, e);
+            logger.error("Could not send password recovery email for " + username, e);
             throw new IllegalStateException("Could not send email!", e);
         }
 
@@ -312,10 +286,8 @@ public class DefaultUserService implements UserService {
 
     }
 
-    private String getEmailMessageBody(String recoveryUrl,
-        PasswordRecovery recoveryParam) {
-        String message = String.format("Here's your recovery link: %s",
-            recoveryUrl);
+    private String getEmailMessageBody(String recoveryUrl, PasswordRecovery recoveryParam) {
+        String message = String.format("Here's your recovery link: %s", recoveryUrl);
         String templateUrl = recoveryParam.getTemplateUrl();
         if (StringUtils.isBlank(templateUrl)) {
             return message;
@@ -342,8 +314,7 @@ public class DefaultUserService implements UserService {
             }
             return sb.toString();
         } catch (MalformedURLException mue) {
-            logger.error("Could not retrieve template from URL " + templateUrl,
-                mue);
+            logger.error("Could not retrieve template from URL " + templateUrl, mue);
             // Just use the default message body
             return message;
         } catch (IOException ie) {
@@ -353,8 +324,7 @@ public class DefaultUserService implements UserService {
         }
     }
 
-    private Map<String, String> getCustomParamsMap(
-        PasswordRecovery recoveryParam) {
+    private Map<String, String> getCustomParamsMap(PasswordRecovery recoveryParam) {
         List<CustomParam> customParams = null;
         if (recoveryParam.getCustomParams() == null) {
             customParams = new ArrayList<CustomParam>();
@@ -363,8 +333,7 @@ public class DefaultUserService implements UserService {
         }
         Map<String, String> params = new HashMap<String, String>();
         for (CustomParam param : customParams) {
-            if (StringUtils.isBlank(param.getName())
-                || StringUtils.isBlank(param.getValue())) {
+            if (StringUtils.isBlank(param.getName()) || StringUtils.isBlank(param.getValue())) {
                 continue;
             }
             params.put(param.getName(), param.getValue());
@@ -387,11 +356,9 @@ public class DefaultUserService implements UserService {
             allClientInums.add(client.getInum());
             allClientIds.add(client.getClientId());
         }
-        tokenDao.deleteAllTokensForOwner(owner,
-            Collections.unmodifiableSet(allClientInums));
+        tokenDao.deleteAllTokensForOwner(owner, Collections.unmodifiableSet(allClientInums));
 
-        refreshTokenDao.deleteAllTokensForUser(username,
-            Collections.unmodifiableSet(allClientIds));
+        refreshTokenDao.deleteAllTokensForUser(username, Collections.unmodifiableSet(allClientIds));
 
         logger.info("Soft Deleted User: {}", username);
     }
@@ -404,8 +371,7 @@ public class DefaultUserService implements UserService {
 
     public void updateUserStatus(User user, String statusStr) {
 
-        UserStatus status = Enum.valueOf(UserStatus.class,
-            statusStr.toUpperCase());
+        UserStatus status = Enum.valueOf(UserStatus.class, statusStr.toUpperCase());
         user.setStatus(status);
         this.userDao.save(user);
 
@@ -418,8 +384,7 @@ public class DefaultUserService implements UserService {
             for (Client client : clientDao.findAll()) {
                 allClientInums.add(client.getInum());
             }
-            tokenDao.deleteAllTokensForOwner(owner,
-                Collections.unmodifiableSet(allClientInums));
+            tokenDao.deleteAllTokensForOwner(owner, Collections.unmodifiableSet(allClientInums));
         }
     }
 
@@ -427,8 +392,7 @@ public class DefaultUserService implements UserService {
         try {
             return HashHelper.getRandomSha1();
         } catch (NoSuchAlgorithmException e) {
-            throw new UnsupportedOperationException(
-                "The JVM does not support the algorithm needed.", e);
+            throw new UnsupportedOperationException("The JVM does not support the algorithm needed.", e);
         }
     }
 

@@ -61,7 +61,6 @@ public class TokenResource {
     }
 
     @Deprecated
-    @Autowired(required = true)
     public TokenResource(AccessTokenService tokenService, OAuthService oauthService, ClientService clientService,
                          AuthHeaderHelper authHeaderHelper, InputValidator inputValidator, AuthConverter authConverter,
                          AuthorizationService authorizationService, LoggerFactoryWrapper logger) {

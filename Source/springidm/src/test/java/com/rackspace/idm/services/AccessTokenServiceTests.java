@@ -135,20 +135,15 @@ public class AccessTokenServiceTests {
         AccessToken token = getFakeUserToken();
         EasyMock.expect(mockUserService.getUser(username)).andReturn(
             getFakeUser());
-        EasyMock.expect(mockUserService.getUser(username)).andReturn(
-            getFakeUser());
         EasyMock.replay(mockUserService);
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
-            getFakeClient());
         EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
             getFakeClient());
         EasyMock.replay(mockClientDao);
 
         mockTokenDao.save(token);
 
-        AccessToken returnToken = tokenService.createAccessTokenForUser(
-            username, clientId);
+        AccessToken returnToken = tokenService.createAccessTokenForUser(username, clientId);
 
         Assert.assertTrue(returnToken.getOwner().equals(username));
 
@@ -272,21 +267,6 @@ public class AccessTokenServiceTests {
         mockTokenDao.save(token);
 
         tokenService.createAccessTokenForUser(username, clientId);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void shouldThrowErrorIfInumNullCreateAccessTokenForUser() {
-        User user = getFakeUser();
-        user.setInum("");
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
-            getFakeClient());
-        EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
-        EasyMock.replay(mockClientDao, mockUserService);
-
-        AccessToken token = tokenService.createAccessTokenForUser(username,
-            clientId);
-
-        Assert.assertNull(token);
     }
 
     @Test

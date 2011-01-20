@@ -38,6 +38,8 @@ public interface AccessTokenService {
     AccessToken createAccessTokenForClient(BaseClient client);
 
     AccessToken createAccessTokenForClient(BaseClient client, int expirationSeconds);
+    
+    AccessToken createAccessTokenForUser(String username, String clientId);
 
     AccessToken createAccessTokenForUser(String username, String clientId, int expirationSeconds);
 
@@ -46,9 +48,6 @@ public interface AccessTokenService {
 
     @Deprecated
     AccessToken getAccessTokenForClient(String clientId, DateTime expiresAfter);
-
-    @Deprecated
-    AccessToken createAccessTokenForUser(String username, String clientId);
 
     @Deprecated
     AccessToken createPasswordResetAccessTokenForUser(String username, String clientId);

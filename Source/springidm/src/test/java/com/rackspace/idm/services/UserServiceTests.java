@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import com.rackspace.idm.entities.*;
 import junit.framework.Assert;
 
 import org.apache.commons.mail.EmailException;
@@ -23,17 +24,6 @@ import com.rackspace.idm.dao.CustomerDao;
 import com.rackspace.idm.dao.AuthDao;
 import com.rackspace.idm.dao.RefreshTokenDao;
 import com.rackspace.idm.dao.UserDao;
-import com.rackspace.idm.entities.Client;
-import com.rackspace.idm.entities.Customer;
-import com.rackspace.idm.entities.CustomerStatus;
-import com.rackspace.idm.entities.Password;
-import com.rackspace.idm.entities.User;
-import com.rackspace.idm.entities.UserAuthenticationResult;
-import com.rackspace.idm.entities.UserCredential;
-import com.rackspace.idm.entities.UserHumanName;
-import com.rackspace.idm.entities.UserLocale;
-import com.rackspace.idm.entities.UserStatus;
-import com.rackspace.idm.entities.Users;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.jaxb.CustomParamsList;
 import com.rackspace.idm.jaxb.PasswordRecovery;
@@ -410,6 +400,17 @@ public class UserServiceTests {
         recoveryParam.setTemplateUrl("");
         userService.sendRecoveryEmail(subject, email, recoveryParam,
             tokenString);
+    }
+
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldThrowErrorIfInumNullCreateAccessTokenForUser() {
+        User user = getFakeUser();
+        user.setInum("");
+
+        EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(user);
+        EasyMock.replay(mockUserDao);
+        userService.getUser(username);
     }
 
     private User getFakeUser() {
