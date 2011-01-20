@@ -132,26 +132,32 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
 
         String newEndpoint = def ? "+" : "-";
         newEndpoint = newEndpoint + String.valueOf(baseUrlId);
+        
+        EndPoints oldEndpoints = this.getRawEndpointsForUser(username);
 
-        EndPoints endpoints = this.getRawEndpointsForUser(username);
-
-        if (endpoints.getEndpoints().contains(newEndpoint)) {
+        if (oldEndpoints.getEndpoints().contains(newEndpoint)) {
             return;
         }
+        
+        List<String> endpoints = new ArrayList<String>();
+        
+        for (String s : oldEndpoints.getEndpoints()) {
+            endpoints.add(s);
+        }
 
-        endpoints.getEndpoints().add(newEndpoint);
+        endpoints.add(newEndpoint);
 
         List<Modification> mods = new ArrayList<Modification>();
 
-        String[] points = endpoints.getEndpoints().toArray(
-            new String[endpoints.getEndpoints().size()]);
+        String[] points = endpoints.toArray(
+            new String[endpoints.size()]);
 
         mods.add(new Modification(ModificationType.REPLACE, ATTR_ENDPOINT,
             points));
 
         LDAPResult result = null;
         try {
-            result = getAppConnPool().modify(endpoints.getUserDN(), mods);
+            result = getAppConnPool().modify(oldEndpoints.getUserDN(), mods);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating user {} endpoints - {}",
                 username, ldapEx);
