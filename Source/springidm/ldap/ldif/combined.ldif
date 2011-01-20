@@ -20,6 +20,35 @@ objectClass: organization
 objectClass: extensibleObject
 o: rackspace
 
+dn: ou=BaseUrls,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+objectClass: extensibleObject
+ou: BaseUrls
+
+######################################## BaseUrls #######################################
+
+dn:baseUrlId=111111,ou=BaseUrls,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+objectClass: extensibleObject
+baseUrlId: 111111
+baseUrlType: NAST
+service: cloudFiles
+def: TRUE
+rackspaceRegion: DFW
+publicUrl: https://storage.clouddrive.com/v1
+internalUrl: https://storage-snet.clouddrive.com/v1
+
+dn:baseUrlId=222222,ou=BaseUrls,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+objectClass: extensibleObject
+baseUrlId: 222222
+baseUrlType: MOSSO
+service: cloudServers
+def: TRUE
+publicUrl: https://servers.api.rackspacecloud.com/v1.0
 
 ######################################## Customers #######################################
 
@@ -127,6 +156,8 @@ objectClass: top
 objectClass: rackspacePerson
 c: USA
 displayName: Matt Kovacs
+endpoint: +111111
+endpoint: -222222
 givenName: Matt
 iname: @Rackspace.TestCustomer*Matt
 inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111
@@ -147,6 +178,8 @@ sn: Kovacs
 timeZone: America/Chicago
 uid: mkovacs
 userPassword: password
+rsMossoId: 90000
+rsNastId: KovacsNastId
 
 dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!7777,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -400,6 +433,15 @@ permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithNastIdA
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByUsername
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByMossoId
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByNastId
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetBaseUrls
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetBaseUrl
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddBaseUrl
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteBaseUrl
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserServiceCatalog
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlRefs
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddUserBaseUrlRef
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteUserBaseUrlRef
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlRef
 rackspaceCustomerNumber: RACKSPACE
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 status: ACTIVE
@@ -436,6 +478,78 @@ softDeleted: FALSE
 userPassword: password
 
 ######################################## Permissions #######################################
+
+dn: cn=GetUserServiceCatalog,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: GetUserServiceCatalog
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: GET users/[^/]+/servicecatalog
+
+dn: cn=GetUserBaseUrlRefs,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: GetUserBaseUrlRefs
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: GET users/[^/]+/baseurlrefs
+
+dn: cn=AddUserBaseUrlRef,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: AddUserBaseUrlRef
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: PUT users/[^/]+/baseurlrefs
+
+dn: cn=DeleteUserBaseUrlRef,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: DeleteUserBaseUrlRef
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: DELETE users/[^/]+/baseurlrefs/[^/]+
+
+dn: cn=GetUserBaseUrlRef,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: GetUserBaseUrlRef
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: GET users/[^/]+/baseurlrefs/[^/]+
+
+dn: cn=GetBaseUrls,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: GetBaseUrls
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: GET baseurls
+
+dn: cn=AddBaseUrl,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: AddBaseUrl
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: POST baseurls
+
+dn: cn=GetBaseUrl,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: GetBaseUrl
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: GET baseurls/[^/]+
+
+dn: cn=DeleteBaseUrl,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: DeleteBaseUrl
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: DELETE baseurls/[^/]+
 
 dn: cn=AuthWithUsernameAndApiKey,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
