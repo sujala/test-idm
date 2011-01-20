@@ -1,10 +1,25 @@
 package com.rackspace.idm.entities;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
+
 public class CloudBaseUrl {
     private Integer baseUrlId = null;
+    
+    @NotNull
+    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String baseUrlType = null;
     private String region = null;
+    
+    @NotNull
+    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String service = null;
+    
+    @NotNull
+    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String publicUrl = null;
     private String internalUrl = null;
     private String adminUrl = null;
