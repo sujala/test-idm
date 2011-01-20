@@ -377,6 +377,15 @@ rackspaceApiKey: bde1268ebabeeabb70a0e702a4626977c331d5c4
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithUsernameAndApiKey
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithMossoIdAndApiKey
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithNastIdAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetBaseUrls
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetBaseUrl
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddBaseUrl
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteBaseUrl
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserServiceCatalog
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlRefs
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddUserBaseUrlRef
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteUserBaseUrlRef
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlRef
 status: ACTIVE
 seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
 softDeleted: FALSE
