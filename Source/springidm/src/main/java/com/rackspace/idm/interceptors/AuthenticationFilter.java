@@ -2,6 +2,7 @@ package com.rackspace.idm.interceptors;
 
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.oauth.OAuthService;
+import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
@@ -24,7 +25,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         ApplicationContextAware {
     private static final Pattern PASSWORD_CHANGE_PATTERN = Pattern
             .compile("^customers/.+/users/.+/password$");
-    private OAuthService oauthService;
+    private AccessTokenService accessTokenService;
     private AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private Logger logger;
 
@@ -34,8 +35,13 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         logger = LoggerFactory.getLogger(AuthenticationFilter.class);
     }
 
-    AuthenticationFilter(OAuthService oauthService, Logger logger) {
-        this.oauthService = oauthService;
+    AuthenticationFilter(AccessTokenService accessTokenService, Logger logger) {
+        this.accessTokenService = accessTokenService;
+        this.logger = logger;
+    }
+
+    @Deprecated
+    AuthenticationFilter(OAuthService accessTokenService, Logger logger) {
         this.logger = logger;
     }
 
@@ -74,7 +80,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         }
         String tokenString = authHeaderHelper
                 .getTokenFromAuthHeader(authHeader);
-        boolean authResult = getOauthService().authenticateAccessToken(tokenString);
+        boolean authResult = getAccessTokenService().authenticateAccessToken(tokenString);
 
         if (authResult) {
             // Authenticated
@@ -92,12 +98,12 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         springCtx = applicationContext;
     }
 
-    private OAuthService getOauthService() {
-        if (oauthService == null) {
-            oauthService = springCtx
-                    .getBean(OAuthService.class);
+    private AccessTokenService getAccessTokenService() {
+        if (accessTokenService == null) {
+            accessTokenService = springCtx
+                    .getBean(AccessTokenService.class);
         }
 
-        return oauthService;
+        return accessTokenService;
     }
 }

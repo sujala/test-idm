@@ -2,6 +2,7 @@ package com.rackspace.idm.interceptors;
 
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.oauth.OAuthService;
+import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.sun.jersey.spi.container.ContainerRequest;
 import org.easymock.EasyMock;
@@ -13,14 +14,14 @@ import javax.ws.rs.core.HttpHeaders;
 
 public class AuthenticationFilterTests {
 
-    private OAuthService oauthService;
+    private AccessTokenService oauthService;
     private AuthenticationFilter authFilter;
     private ContainerRequest request;
 
     @Before
     public void setUp() {
         oauthService = EasyMock
-                .createNiceMock(OAuthService.class);
+                .createNiceMock(AccessTokenService.class);
         Logger logger = new StubLogger();
         authFilter = new AuthenticationFilter(oauthService, logger);
         request = EasyMock.createNiceMock(ContainerRequest.class);

@@ -101,7 +101,7 @@ public class AuthResource {
         int expirationSeconds = accessTokenService
             .getCloudAuthDefaultTokenExpirationSeconds();
 
-        AccessToken userToken = this.oauthService
+        AccessToken userToken = accessTokenService
             .getTokenByUsernameAndApiCredentials(token.getTokenClient(),
                 username, apiKey, expirationSeconds, new DateTime());
 
@@ -155,7 +155,7 @@ public class AuthResource {
         int expirationSeconds = accessTokenService
             .getCloudAuthDefaultTokenExpirationSeconds();
 
-        AccessToken userToken = this.oauthService
+        AccessToken userToken = accessTokenService
             .getTokenByMossoIdAndApiCredentials(token.getTokenClient(),
                 mossoId, apiKey, expirationSeconds, new DateTime());
 
@@ -208,7 +208,7 @@ public class AuthResource {
 
         int expirationSeconds = accessTokenService.getCloudAuthDefaultTokenExpirationSeconds();
 
-        AccessToken userToken = this.oauthService
+        AccessToken userToken = accessTokenService
             .getTokenByNastIdAndApiCredentials(token.getTokenClient(), nastId,
                 apiKey, expirationSeconds, new DateTime());
 
