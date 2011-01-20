@@ -3,6 +3,7 @@ package com.rackspace.idm.services;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
+import com.rackspace.idm.entities.*;
 import org.slf4j.Logger;
 
 import com.rackspace.idm.GlobalConstants;
@@ -66,6 +67,54 @@ public class DefaultClientService implements ClientService {
 
         clientDao.add(client);
         logger.info("Added Client: {}", client);
+    }
+
+    public boolean authenticateDeprecated(String clientId, String clientSecret) {
+        return clientDao.authenticateDeprecated(clientId, clientSecret);
+    }
+
+    @Override
+    public ClientAuthenticationResult authenticate(String clientId, String clientSecret) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void delete(String clientId) {
+        clientDao.delete(clientId);
+    }
+
+    public List<Client> getByCustomerId(String customerId) {
+        return clientDao.getByCustomerId(customerId);
+    }
+
+    public Client getById(String clientId) {
+        return clientDao.findByClientId(clientId);
+    }
+
+    public Client getByName(String clientName) {
+        return clientDao.findByClientname(clientName);
+    }
+
+    public void save(Client client) {
+        clientDao.save(client);
+    }
+    
+    public void softDelete(String clientId) {
+        logger.info("Soft Deleting client: {}", clientId);
+        Client client = this.clientDao.findByClientId(clientId);
+        client.setSoftDeleted(true);
+        this.clientDao.save(client);
+        logger.info("Soft Deleted cilent: {}", clientId);
+    }
+
+    public Permission getDefinedPermissionByClientIdAndPermissionId(String clientId,
+        String permissionId) {
+        Permission permission = clientDao.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId);
+        return permission;
+    }
+
+    public List<Permission> getDefinedPermissionsByClientId(String clientId) {
+        List<Permission> permissions = clientDao.getDefinedPermissionsByClientId(clientId);
+        return permissions;
     }
 
     public void addDefinedPermission(Permission permission) {

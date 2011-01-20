@@ -2,13 +2,13 @@ package com.rackspace.idm.entities;
 
 public class UserAuthenticationResult extends AuthenticationResult {
 
-    private User user;
+    private BaseUser user;
 
-    public UserAuthenticationResult(User user, boolean authenticated) {
+    public UserAuthenticationResult(BaseUser user, boolean authenticated) {
         super(authenticated);
         this.user = user;
     }
-    public User getUser() {
+    public BaseUser getUser() {
         return user;
     }
 

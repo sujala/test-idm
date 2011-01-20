@@ -263,8 +263,7 @@ public class UserPasswordResource {
             }
 
             // authenticate using old password
-            if (!this.userService.authenticate(username, userCred
-                .getCurrentPassword().getPassword())) {
+            if (!this.userService.authenticateDeprecated(username, userCred.getCurrentPassword().getPassword())) {
                 String errorMsg = String.format("Bad credential for user: %s",
                     username);
                 logger.debug(errorMsg);

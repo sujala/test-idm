@@ -3,8 +3,7 @@ package com.rackspace.idm.rest.resources;
 import com.rackspace.idm.ErrorMsg;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.AuthConverter;
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.AuthData;
+import com.rackspace.idm.entities.*;
 import com.rackspace.idm.errors.ApiError;
 import com.rackspace.idm.exceptions.*;
 import com.rackspace.idm.oauth.AuthCredentials;
@@ -13,6 +12,7 @@ import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
+import com.rackspace.idm.services.UserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.BasicCredentialsCheck;
 import com.rackspace.idm.validation.InputValidator;
@@ -40,12 +40,31 @@ public class TokenResource {
     private AccessTokenService tokenService;
     private OAuthService oauthService;
     private ClientService clientService;
+    private UserService userService;
     private AuthHeaderHelper authHeaderHelper;
     private InputValidator inputValidator;
     private AuthConverter authConverter;
     private AuthorizationService authorizationService;
     private Logger logger;
 
+    @Autowired(required = true)
+    public TokenResource(AccessTokenService tokenService, OAuthService oauthService,
+        ClientService clientService, UserService userService, AuthHeaderHelper authHeaderHelper,
+        InputValidator inputValidator, AuthConverter authConverter,
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+
+        this.tokenService = tokenService;
+        this.oauthService = oauthService;
+        this.clientService = clientService;
+        this.userService = userService;
+        this.authHeaderHelper = authHeaderHelper;
+        this.inputValidator = inputValidator;
+        this.authConverter = authConverter;
+        this.authorizationService = authorizationService;
+        this.logger = logger.getLogger(this.getClass());
+    }
+
+    @Deprecated
     @Autowired(required = true)
     public TokenResource(AccessTokenService tokenService, OAuthService oauthService,
         ClientService clientService, AuthHeaderHelper authHeaderHelper,
@@ -115,14 +134,15 @@ public class TokenResource {
             throw new BadRequestException(err.getMessage());
         }
 
-        if (!clientService.authenticate(clientId, clientSecret)) {
+        boolean isAuthenticated = clientService.authenticateDeprecated(clientId, clientSecret);
+        if (!isAuthenticated) {
             String errorMsg = String.format("Unauthorized Client For: %s",
                 trParam.getClientId());
             logger.error(errorMsg);
             throw new NotAuthorizedException(errorMsg);
         }
 
-        AuthData authData = null;
+        AuthData authData;
         try {
             DateTime currentTime = this.getCurrentTime();
             authData = oauthService.getTokens(grantType, trParam,
@@ -135,6 +155,7 @@ public class TokenResource {
         }
         return Response.ok(authConverter.toAuthDataJaxb(authData)).build();
     }
+
 
     /**
      * Validates token and then, if valid, returns the access token and its ttl.

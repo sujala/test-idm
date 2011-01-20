@@ -64,7 +64,7 @@ public class AuthenticationFilterTests {
         String header = "OAuth " + tokenString;
         EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
                 .andReturn(header);
-        EasyMock.expect(oauthService.authenticateToken(tokenString)).andReturn(
+        EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
                 true);
         replayAndRunFilter();
     }
@@ -77,7 +77,7 @@ public class AuthenticationFilterTests {
         String header = "OAuth " + tokenString;
         EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
                 .andReturn(header);
-        EasyMock.expect(oauthService.authenticateToken(tokenString)).andReturn(
+        EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
                 true);
         replayAndRunFilter();
     }
@@ -90,7 +90,7 @@ public class AuthenticationFilterTests {
         String header = "OAuth " + tokenString;
         EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
                 .andReturn(header);
-        EasyMock.expect(oauthService.authenticateToken(tokenString)).andReturn(
+        EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
                 false);
         replayAndRunFilter();
     }

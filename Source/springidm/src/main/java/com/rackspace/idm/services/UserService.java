@@ -10,7 +10,10 @@ public interface UserService {
 
     void addUser(User user) throws DuplicateException;
 
-    boolean authenticate(String username, String password);
+    @Deprecated
+    boolean authenticateDeprecated(String username, String password);
+
+    UserAuthenticationResult authenticate(String username, String password);
 
     UserAuthenticationResult authenticateWithApiKey(String username, String apiKey);
     

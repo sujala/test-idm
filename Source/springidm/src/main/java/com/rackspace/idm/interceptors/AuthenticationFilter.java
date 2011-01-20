@@ -74,8 +74,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         }
         String tokenString = authHeaderHelper
                 .getTokenFromAuthHeader(authHeader);
-        boolean authResult = getOauthService().authenticateToken(
-                tokenString);
+        boolean authResult = getOauthService().authenticateAccessToken(tokenString);
 
         if (authResult) {
             // Authenticated

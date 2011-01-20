@@ -1,10 +1,6 @@
 package com.rackspace.idm.oauth;
 
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.AuthData;
-import com.rackspace.idm.entities.BaseClient;
-import com.rackspace.idm.entities.RefreshToken;
-import com.rackspace.idm.entities.UserAuthenticationResult;
+import com.rackspace.idm.entities.*;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.RefreshTokenService;
@@ -29,17 +25,50 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     @Override
-    public boolean authenticateToken(String token) {
-        logger.debug("Authorizing Token: {}", token);
+    public AccessToken getTokenByBasicCredentials(BaseClient client, BaseUser user, int expirationSeconds,
+                                                  DateTime currentTime) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+
+    public AuthData getTokens(OAuthGrantType grantType, BaseUser user, BaseClient client, String refreshTokenStr, int expirationSeconds, DateTime currentTime) {
+        AccessToken accessToken = null;
+        RefreshToken refreshToken = null;
+
+        switch (grantType) {
+            case PASSWORD:
+                accessToken = getTokenByBasicCredentials(client, user, expirationSeconds, currentTime);
+                refreshToken = getRefreshTokenForUser(user, client, currentTime);
+                break;
+
+            case REFRESH_TOKEN:
+                accessToken = getTokenByRefreshToken(refreshTokenStr, expirationSeconds, currentTime);
+                refreshToken = refreshTokenService.getRefreshTokenByTokenString(refreshTokenStr);
+                break;
+
+            case NONE:
+                accessToken = getTokenByNoCredentials(client, expirationSeconds, currentTime);
+                break;
+
+            default:
+                throwNotAuthenticatedException(String.format("Unsupported GrantType: %s", grantType));
+        }
+
+        return new AuthData(accessToken, refreshToken);
+    }
+
+    @Override
+    public boolean authenticateAccessToken(String accessTokenStr) {
+        logger.debug("Authorizing Token: {}", accessTokenStr);
         Boolean authenticated = false;
 
         // check token is valid and not expired
         AccessToken accessToken = accessTokenService
-            .getAccessTokenByTokenString(token);
+            .getAccessTokenByTokenString(accessTokenStr);
         if (accessToken != null && !accessToken.isExpired(new DateTime())) {
             authenticated = true;
         }
-        logger.debug("Authorized Token: {} : {}", token, authenticated);
+        logger.debug("Authorized Token: {} : {}", accessTokenStr, authenticated);
         return authenticated;
     }
 
@@ -80,9 +109,7 @@ public class DefaultOAuthService implements OAuthService {
                     "Unsupported GrantType: %s", grantType));
         }
 
-        AuthData authData = new AuthData(accessToken, refreshToken);
-
-        return authData;
+        return new AuthData(accessToken, refreshToken);
     }
 
     public AccessToken getTokenByUsernameAndApiCredentials(BaseClient client,
@@ -128,10 +155,10 @@ public class DefaultOAuthService implements OAuthService {
         String clientId = client.getClientId();
 
         AccessToken token = accessTokenService.getAccessTokenForUser(username,
-            clientId, currentTime);
+            client, currentTime);
         if (token == null || token.isExpired(currentTime)) {
             token = accessTokenService.createAccessTokenForUser(username,
-                clientId, expirationSeconds);
+                client, expirationSeconds);
             logger.debug("Access Token Created For User: {} : {}", username,
                 token);
         } else {
@@ -146,7 +173,7 @@ public class DefaultOAuthService implements OAuthService {
         String username, String userpasswd, int expirationSeconds,
         DateTime currentTime) {
 
-        boolean authenticated = userService.authenticate(username, userpasswd);
+        boolean authenticated = userService.authenticateDeprecated(username, userpasswd);
         if (!authenticated) {
             throwNotAuthenticatedException(String.format(
                 "User failed authentication: %s", username));

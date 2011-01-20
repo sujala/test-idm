@@ -18,11 +18,8 @@ import com.rackspace.idm.entities.Clients;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.entities.CustomerStatus;
 import com.rackspace.idm.entities.Permission;
-import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.NotFoundException;
-import com.rackspace.idm.services.ClientService;
-import com.rackspace.idm.services.DefaultClientService;
 import com.rackspace.idm.test.stub.StubLogger;
 
 public class ClientServiceTests {
@@ -113,12 +110,12 @@ public class ClientServiceTests {
     @Test
     public void shouldAuthenticateClient() {
         EasyMock.expect(
-            mockClientDao.authenticate(clientId, clientSecret.getValue()))
+            mockClientDao.authenticateDeprecated(clientId, clientSecret.getValue()))
             .andReturn(true);
         EasyMock.replay(mockClientDao);
 
-        boolean authenticated = clientService.authenticate(clientId,
-            clientSecret.getValue());
+        boolean authenticated = clientService.authenticateDeprecated(clientId,
+                clientSecret.getValue());
 
         Assert.assertTrue(authenticated);
         EasyMock.verify(mockClientDao);

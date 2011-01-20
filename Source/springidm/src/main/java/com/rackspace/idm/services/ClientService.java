@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.Clients;
+import com.rackspace.idm.entities.ClientAuthenticationResult;
 import com.rackspace.idm.entities.Permission;
 
 public interface ClientService {
@@ -13,6 +14,8 @@ public interface ClientService {
     void addDefinedPermission(Permission permission);
 
     boolean authenticate(String clientId, String clientSecret);
+    boolean authenticate(String clientId, String clientSecret);
+    //ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 
     void delete(String clientId);
 

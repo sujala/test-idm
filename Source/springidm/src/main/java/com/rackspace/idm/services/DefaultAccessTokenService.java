@@ -62,6 +62,63 @@ public class DefaultAccessTokenService implements AccessTokenService {
         return tokenDao.findByTokenString(tokenString);
     }
 
+    @Override
+    public AccessToken getAccessTokenForUser(String username, BaseClient client, DateTime expiresAfter) {
+        if (client == null) {
+            String error = "No client given for username " + username;
+            logger.debug(error);
+            throw new IllegalArgumentException(error);
+        }
+
+        AccessToken token = null;
+        if (isTrustedServer) {
+            token = tokenDao.findTokenForOwner(username, client.getClientId());
+            logger.debug("Got Token For Racker: {} - {}", username, token);
+            return token;
+        }
+
+        User user = userService.getUser(username);
+        if (user == null) {
+            String error = "No entry found for username " + username;
+            logger.debug(error);
+            throw new IllegalStateException(error);
+        }
+
+        token = tokenDao.findTokenForOwner(username, client.getClientId());
+        logger.debug("Got Token For User: {} - {}", username, token);
+        return token;
+    }
+
+    @Override
+    public AccessToken getAccessTokenForClient(BaseClient client, DateTime expiresAfter) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public AccessToken createAccessTokenForUser(String username, BaseClient client, int expirationSeconds) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public AccessToken createPasswordResetAccessTokenForUser(String username, BaseClient client) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public AccessToken createPasswordResetAccessTokenForUser(String username, BaseClient client, int expirationTimeInSeconds) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public AccessToken createAccessTokenForClient(BaseClient client) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public AccessToken createAccessTokenForClient(BaseClient client, int expirationSeconds) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
     public AccessToken createAccessTokenForClient(String clientId) {
 
         return createAccessTokenForClient(clientId,
@@ -108,37 +165,34 @@ public class DefaultAccessTokenService implements AccessTokenService {
                 "Client %s is missing i-number", clientId));
         }
 
-        String owner = username;
-        if (!isTrustedServer) {
-            User tokenOwner = userService.getUser(username);
+        BaseUser tokenOwner = null;
+        if (isTrustedServer) {
+            //TODO Find out what to do here. Nothing to do if a BaseUser instance comes in as a param
+        }
+        else {
+            tokenOwner = userService.getUser(username);
             if (tokenOwner == null) {
                 String error = "No entry found for username " + username;
                 logger.debug(error);
                 throw new IllegalStateException(error);
             }
-            if (StringUtils.isEmpty(tokenOwner.getInum())) {
-                String error = "Inum for user is null: " + username;
-                logger.debug(error);
-                throw new IllegalStateException(error);
-            }
-
-            owner = tokenOwner.getUsername();
         }
 
-        AccessToken accessToken = createToken(username, requestor,
-            expirationTimeInSeconds);
-        return accessToken;
+        return createToken(tokenOwner, tokenRequestor, expirationTimeInSeconds);
     }
 
-    private AccessToken createToken(String username, String requestor, int expirationTimeInSeconds) {
+    private AccessToken createToken(BaseUser user, BaseClient client, int expirationTimeInSeconds) {
         String tokenString = generateTokenWithDcPrefix();
-        BaseClient client = clientDao.findByClientId(requestor).getBaseClientWithoutClientPerms();
-        BaseUser user;
+
+        /*
+
+        TODO Make sure this is implemented by the calling code or is unnecessary
+
         if (isTrustedServer) {
             user = new BaseUser(username);
         } else {
             user = userService.getUser(username).getBaseUser();
-        }
+        }*/
 
         AccessToken accessToken = new AccessToken(tokenString,
             new DateTime().plusSeconds(expirationTimeInSeconds), user, client,
@@ -146,7 +200,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
         tokenDao.save(accessToken);
 
-        logger.debug("Created Access Token For User: {} : {}", username,
+        logger.debug("Created Access Token For User: {} : {}", user.getUsername(),
             accessToken);
 
         return accessToken;

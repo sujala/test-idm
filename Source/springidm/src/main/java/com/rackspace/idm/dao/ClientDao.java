@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.Clients;
+import com.rackspace.idm.entities.ClientAuthenticationResult;
 import com.rackspace.idm.entities.Permission;
 
 public interface ClientDao {
@@ -37,7 +38,7 @@ public interface ClientDao {
 
     String getUnusedClientInum(String customerInum);
 
-    void save(Client client);
+    boolean authenticate(String clientId, String clientSecret);
 
     void setAllClientLocked(String customerId, boolean locked);
 

@@ -200,7 +200,7 @@ public class LdapClientRepositoryTest {
 
     @Test
     public void shouldAuthenticateForCorrectCredentials() {
-        boolean authenticated = repo.authenticate("ABCDEF", "password");
+        boolean authenticated = repo.authenticateDeprecated("ABCDEF", "password");
         Assert.assertTrue(authenticated);
     }
 

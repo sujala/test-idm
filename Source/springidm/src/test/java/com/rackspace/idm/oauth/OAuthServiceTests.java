@@ -1,6 +1,5 @@
 package com.rackspace.idm.oauth;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.dao.MemcachedAccessTokenRepository;
 import com.rackspace.idm.entities.*;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
@@ -57,7 +56,7 @@ public class OAuthServiceTests {
         EasyMock.expect(
                 mockAccessTokenService.getAccessTokenByTokenString(tokenVal)).andReturn(accessToken);
         EasyMock.replay(mockAccessTokenService);
-        Boolean authenticated = oauthService.authenticateToken(tokenVal);
+        Boolean authenticated = oauthService.authenticateAccessToken(tokenVal);
         Assert.assertTrue(authenticated);
         EasyMock.verify(mockAccessTokenService);
     }
@@ -70,7 +69,7 @@ public class OAuthServiceTests {
                         .getTokenString())).andReturn(accessToken);
         EasyMock.replay(mockAccessTokenService);
 
-        Boolean authenticated = oauthService.authenticateToken(tokenVal);
+        Boolean authenticated = oauthService.authenticateAccessToken(tokenVal);
 
         Assert.assertTrue(authenticated);
         EasyMock.verify(mockAccessTokenService);
@@ -84,7 +83,7 @@ public class OAuthServiceTests {
                 .andReturn(null);
         EasyMock.replay(mockAccessTokenService);
 
-        Boolean authenticated = oauthService.authenticateToken(badToken);
+        Boolean authenticated = oauthService.authenticateAccessToken(badToken);
 
         Assert.assertTrue(!authenticated);
         EasyMock.verify(mockAccessTokenService);
@@ -117,8 +116,7 @@ public class OAuthServiceTests {
         DateTime currentTime = new DateTime();
 
         EasyMock.expect(
-                mockUserService.authenticate(authCredentials.getUsername(),
-                        userpass.getValue())).andReturn(true);
+                mockUserService.authenticateDeprecated(authCredentials.getUsername(), userpass.getValue())).andReturn(true);
         EasyMock.replay(mockUserService);
 
         EasyMock.expect(
@@ -226,8 +224,7 @@ public class OAuthServiceTests {
         DateTime currentTime = new DateTime();
 
         EasyMock.expect(
-                mockUserService.authenticate(authCredentials.getUsername(),
-                        userpass.getValue())).andReturn(true);
+                mockUserService.authenticateDeprecated(authCredentials.getUsername(), userpass.getValue())).andReturn(true);
         EasyMock.replay(mockUserService);
 
         EasyMock.expect(
@@ -275,8 +272,7 @@ public class OAuthServiceTests {
         EasyMock.expect(mockUserService.getUser(authCredentials.getUsername()))
                 .andReturn(testuser);
         EasyMock.expect(
-                mockUserService.authenticate(authCredentials.getUsername(),
-                        userpass.getValue())).andReturn(false);
+                mockUserService.authenticateDeprecated(authCredentials.getUsername(), userpass.getValue())).andReturn(false);
         EasyMock.replay(mockUserService);
 
         AuthData authData = oauthService.getTokens(grantType, authCredentials,

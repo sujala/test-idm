@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.rackspace.idm.entities.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.mail.EmailException;
 import org.slf4j.Logger;
@@ -26,12 +27,6 @@ import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.CustomerDao;
 import com.rackspace.idm.dao.RefreshTokenDao;
 import com.rackspace.idm.dao.UserDao;
-import com.rackspace.idm.entities.Client;
-import com.rackspace.idm.entities.Customer;
-import com.rackspace.idm.entities.User;
-import com.rackspace.idm.entities.UserAuthenticationResult;
-import com.rackspace.idm.entities.UserStatus;
-import com.rackspace.idm.entities.Users;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.jaxb.CustomParam;
 import com.rackspace.idm.jaxb.PasswordRecovery;
@@ -105,7 +100,7 @@ public class DefaultUserService implements UserService {
         logger.info("Added User: {}", user);
     }
 
-    public boolean authenticate(String username, String password) {
+    public boolean authenticateDeprecated(String username, String password) {
         if (StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
             throw new IllegalArgumentException(
                 "username or password parameter is null or blank.");
@@ -134,6 +129,38 @@ public class DefaultUserService implements UserService {
         authenticated = userDao.authenticate(username, password);
         logger.debug("Authenticated User: {} : {}", username, authenticated);
         return authenticated;
+    }
+
+    @Override
+    public UserAuthenticationResult authenticate(String username, String password) {
+        if (StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
+            throw new IllegalArgumentException(
+                "username or password parameter is null or blank.");
+        }
+
+        logger.debug("Authenticating User: {}", username);
+        boolean authenticated;
+        if (isTrustedServer) {
+            authenticated = authDao.authenticate(username, password);
+            logger.debug("Authenticated Racker {} : {}", username,
+                authenticated);
+            return new UserAuthenticationResult(new BaseUser(username), authenticated);
+        }
+
+        User user = userDao.findByUsername(username);
+        if (user == null) {
+            logger.debug("User {} not found.", username);
+            return new UserAuthenticationResult(null, false);
+        }
+
+        if (!UserStatus.ACTIVE.equals(user.getStatus())) {
+            logger.debug("User {} is not active: ", username);
+            return new UserAuthenticationResult(user, false);
+        }
+
+        authenticated = userDao.authenticate(username, password);
+        logger.debug("Authenticated User: {} : {}", username, authenticated);
+        return new UserAuthenticationResult(user, authenticated);
     }
 
     public UserAuthenticationResult authenticateWithApiKey(String username,
