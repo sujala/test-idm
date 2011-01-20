@@ -1,7 +1,5 @@
 package com.rackspace.idm.dao;
 
-import com.rackspace.idm.entities.BaseClient;
-import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.entities.RefreshToken;
 import org.joda.time.DateTime;
 
@@ -15,7 +13,4 @@ public interface RefreshTokenDao extends GenericTokenDao<RefreshToken> {
     void updateToken(RefreshToken refreshToken);
 
     void deleteAllTokensForUser(String user, Set<String> tokenRequestors);
-
-    //TODO
-    RefreshToken getRefreshTokenForUser(BaseUser user, BaseClient client, DateTime currentTime);
 }

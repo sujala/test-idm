@@ -1,6 +1,6 @@
 package com.rackspace.idm.oauth;
 
-import com.rackspace.idm.entities.*;
+import com.rackspace.idm.entities.AuthData;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.exceptions.NotAuthorizedException;
 import org.joda.time.DateTime;
@@ -17,26 +17,7 @@ public interface OAuthService {
 
     void revokeToken(String tokenStringRequestingDelete, String tokenToDelete) throws NotAuthorizedException;
 
-
     @Deprecated
     AuthData getTokensDeprecated(OAuthGrantType grantType, AuthCredentials trParam, int expirationSeconds,
                                  DateTime currentTime);
-
-
-    //TODO Move this to AccessTokenService?
-    /*boolean authenticateAccessToken(String accessTokenStr);
-
-    AccessToken getTokenByUsernameAndApiCredentials(BaseClient client, String username, String apiKey,
-                                                    int expirationSeconds, DateTime currentTime);
-
-    AccessToken getTokenByNastIdAndApiCredentials(BaseClient client, String nastId, String apiKey,
-                                                  int expirationSeconds, DateTime currentTime);
-
-    AccessToken getTokenByMossoIdAndApiCredentials(BaseClient client, int mossoId, String apiKey, int expirationSeconds,
-                                                   DateTime currentTime);
-
-    AccessToken getTokenByBasicCredentials(BaseClient client, BaseUser user, int expirationSeconds,
-                                           DateTime currentTime);
-*/
-    //RefreshToken getRefreshTokenForUser(BaseUser user, BaseClient client, DateTime currentTime);
 }

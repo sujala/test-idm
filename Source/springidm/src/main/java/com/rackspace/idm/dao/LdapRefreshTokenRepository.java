@@ -1,7 +1,5 @@
 package com.rackspace.idm.dao;
 
-import com.rackspace.idm.entities.BaseClient;
-import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.entities.RefreshToken;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.lang.StringUtils;
@@ -139,11 +137,6 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         }
 
         getLogger().debug("{} refreshTokens were deleted for user {}", delCount, username);
-    }
-
-    @Override
-    public RefreshToken getRefreshTokenForUser(BaseUser user, BaseClient client, DateTime currentTime) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public List<RefreshToken> findAll() {

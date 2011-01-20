@@ -337,7 +337,7 @@ public class UserPasswordResource {
         String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
         String clientId = getClientIdByTokenString(tokenStr);
         AccessToken resetToken = accessTokenService
-            .createPasswordResetAccessTokenForUser(username, clientId);
+            .createPasswordResetAccessTokenForUser(user, clientId);
 
         logger.debug("Got Password Reset Token for User :{}", user);
 
@@ -443,7 +443,7 @@ public class UserPasswordResource {
         String clientId = getClientIdByTokenString(tokenStr);
 
         AccessToken resetToken = accessTokenService
-            .createPasswordResetAccessTokenForUser(username, clientId);
+            .createPasswordResetAccessTokenForUser(user, clientId);
 
         try {
             userService.sendRecoveryEmail(username, user.getEmail(),

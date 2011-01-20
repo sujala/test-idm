@@ -1,8 +1,6 @@
 package com.rackspace.idm.services;
 
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.BaseClient;
-import com.rackspace.idm.entities.BaseUser;
+import com.rackspace.idm.entities.*;
 import com.rackspace.idm.exceptions.NotAuthorizedException;
 import org.joda.time.DateTime;
 
@@ -33,13 +31,15 @@ public interface AccessTokenService {
 
     AccessToken createAccessTokenForUser(BaseUser user, BaseClient client, int expirationSeconds);
 
-    AccessToken createPasswordResetAccessTokenForUser(String username, BaseClient client);
+    AccessToken createPasswordResetAccessTokenForUser(User user, String clientId);
 
-    AccessToken createPasswordResetAccessTokenForUser(String username, BaseClient client, int expirationTimeInSeconds);
+    AccessToken createPasswordResetAccessTokenForUser(User user, String clientId, int expirationTimeInSeconds);
 
     AccessToken createAccessTokenForClient(BaseClient client);
 
     AccessToken createAccessTokenForClient(BaseClient client, int expirationSeconds);
+
+    AccessToken createAccessTokenForUser(String username, String clientId, int expirationSeconds);
 
     @Deprecated
     AccessToken getAccessTokenForUser(String username, String clientId, DateTime expiresAfter);
@@ -49,8 +49,6 @@ public interface AccessTokenService {
 
     @Deprecated
     AccessToken createAccessTokenForUser(String username, String clientId);
-
-    AccessToken createAccessTokenForUser(String username, String clientId, int expirationSeconds);
 
     @Deprecated
     AccessToken createPasswordResetAccessTokenForUser(String username, String clientId);
@@ -67,8 +65,6 @@ public interface AccessTokenService {
     int getDefaultTokenExpirationSeconds();
 
     int getCloudAuthDefaultTokenExpirationSeconds();
-
-    void revokeToken(String tokenStringRequestingDelete, String tokenToDelete) throws NotAuthorizedException;
 
     AccessToken validateToken(String tokenString);
 

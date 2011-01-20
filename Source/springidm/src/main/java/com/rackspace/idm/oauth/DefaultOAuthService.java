@@ -360,9 +360,7 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     private RefreshToken getRefreshTokenForUser(String username, String clientId, DateTime currentTime) {
-
         RefreshToken refreshToken = refreshTokenService.getRefreshTokenByUserAndClient(username, clientId, currentTime);
-
         if (refreshToken == null) {
             refreshToken = refreshTokenService.createRefreshTokenForUser(username, clientId);
         } else {

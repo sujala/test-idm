@@ -6,14 +6,11 @@ import com.rackspace.idm.dao.RefreshTokenDao;
 import com.rackspace.idm.entities.*;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
-import com.rackspace.idm.exceptions.NotAuthorizedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 public class DefaultAccessTokenService implements AccessTokenService {
@@ -28,6 +25,21 @@ public class DefaultAccessTokenService implements AccessTokenService {
     private boolean isTrustedServer;
     private AuthHeaderHelper authHeaderHelper;
 
+    public DefaultAccessTokenService(TokenDefaultAttributes defaultAttributes, AccessTokenDao tokenDao,
+                                     ClientDao clientDao, UserService userService, AuthHeaderHelper authHeaderHelper,
+                                     Logger logger) {
+        this.tokenDao = tokenDao;
+        this.clientDao = clientDao;
+        this.userService = userService;
+        this.logger = logger;
+        this.defaultTokenExpirationSeconds = defaultAttributes.getExpirationSeconds();
+        this.defaultCloudAuthTokenExpirationSeconds = defaultAttributes.getCloudAuthExpirationSeconds();
+        this.dataCenterPrefix = defaultAttributes.getDataCenterPrefix();
+        this.isTrustedServer = defaultAttributes.getIsTrustedServer();
+        this.authHeaderHelper = authHeaderHelper;
+    }
+
+    @Deprecated
     public DefaultAccessTokenService(TokenDefaultAttributes defaultAttributes, AccessTokenDao tokenDao,
                                      RefreshTokenDao refreshTokenDao, ClientDao clientDao, UserService userService,
                                      AuthHeaderHelper authHeaderHelper, Logger logger) {
@@ -116,12 +128,59 @@ public class DefaultAccessTokenService implements AccessTokenService {
     }
 
     @Override
+    public AccessToken createPasswordResetAccessTokenForUser(User user, String clientId) {
+        return createPasswordResetAccessTokenForUser(user, clientId, defaultTokenExpirationSeconds);
+    }
+
+    @Override
+    public AccessToken createPasswordResetAccessTokenForUser(User user, String clientId, int expirationTimeInSeconds) {
+        logger.debug("Creating Password Reset Access Token For User: {}", user);
+
+        if (user == null) {
+            String error = "No user given.";
+            logger.debug(error);
+            throw new IllegalStateException(error);
+        }
+
+        String tokenString = generateTokenWithDcPrefix();
+
+        String owner = user.getUsername();
+        if (StringUtils.isBlank(owner)) {
+            throw new IllegalArgumentException(String.format("User %s is missing i-number", owner));
+        }
+
+        Client tokenRequestor = clientDao.findByClientId(clientId);
+        if (tokenRequestor == null) {
+            String error = "No entry found for clientId " + clientId;
+            logger.debug(error);
+            throw new IllegalStateException(error);
+        }
+
+        if (StringUtils.isBlank(tokenRequestor.getInum())) {
+            throw new IllegalArgumentException(
+                    String.format("Client %s is missing i-number", tokenRequestor.getClientId()));
+        }
+
+        AccessToken accessToken =
+                new AccessToken(tokenString, new DateTime().plusSeconds(expirationTimeInSeconds), user,
+                        tokenRequestor.getBaseClientWithoutClientPerms(), IDM_SCOPE.SET_PASSWORD);
+        tokenDao.save(accessToken);
+        logger.debug("Created Password Reset Access Token For User: {} : {}", owner, accessToken);
+        return accessToken;
+    }
+
+    @Override
+    public AccessToken createAccessTokenForClient(BaseClient client) {
+        return createAccessTokenForClient(client, defaultTokenExpirationSeconds);
+    }
+
+    @Override
     public AccessToken createAccessTokenForClient(BaseClient client, int expirationSeconds) {
         logger.debug("Creating Access Token For Client: {}", client);
         String tokenString = generateTokenWithDcPrefix();
         AccessToken accessToken =
-                new AccessToken(tokenString, new DateTime().plusSeconds(expirationSeconds), null,
-                        client, IDM_SCOPE.FULL);
+                new AccessToken(tokenString, new DateTime().plusSeconds(expirationSeconds), null, client,
+                        IDM_SCOPE.FULL);
         tokenDao.save(accessToken);
         logger.debug("Created Access Token For Client: {} : {}", client.getClientId(), accessToken);
         return accessToken;
@@ -194,10 +253,12 @@ public class DefaultAccessTokenService implements AccessTokenService {
         return accessToken;
     }
 
+    @Deprecated
     public AccessToken createPasswordResetAccessTokenForUser(String username, String clientId) {
         return createPasswordResetAccessTokenForUser(username, clientId, this.defaultTokenExpirationSeconds);
     }
 
+    @Deprecated
     public AccessToken createPasswordResetAccessTokenForUser(String username, String clientId,
                                                              int expirationTimeInSeconds) {
 
@@ -241,11 +302,6 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
     public int getCloudAuthDefaultTokenExpirationSeconds() {
         return this.defaultCloudAuthTokenExpirationSeconds;
-    }
-
-    @Override
-    public void revokeToken(String tokenStringRequestingDelete, String tokenToDelete) throws NotAuthorizedException {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public AccessToken getAccessTokenForUser(String username, String clientId, DateTime expiresAfter) {
@@ -362,67 +418,6 @@ public class DefaultAccessTokenService implements AccessTokenService {
         return token;
     }
 
-    /*public void revokeToken(String tokenStringRequestingDelete,
-        String tokenToDelete) {
-
-        logger.info("Deleting Token {}", tokenToDelete);
-
-        AccessToken deletingToken = tokenDao
-            .findByTokenString(tokenToDelete);
-        if (deletingToken == null) {
-            String error = "No entry found for token " + deletingToken;
-            logger.debug(error);
-            throw new IllegalStateException(error);
-        }
-
-        AccessToken requestingToken = tokenDao
-            .findByTokenString(tokenStringRequestingDelete);
-        if (requestingToken == null) {
-            String error = "No entry found for token "
-                + tokenStringRequestingDelete;
-            logger.debug(error);
-            throw new IllegalStateException(error);
-        }
-
-        // Only CustomerIdm Client and Client that got token or the user of the
-        // toke are authorized to revoke token
-
-        boolean isCustomerIdm = requestingToken.isClientToken()
-            && requestingToken.getTokenClient().getClientId()
-                .equals(GlobalConstants.IDM_CLIENT_ID);
-        
-        boolean isRequestor = requestingToken.isClientToken()
-            && requestingToken.getTokenClient().getClientId()
-                .equals(deletingToken.getTokenClient().getClientId());
-        
-        boolean isOwner = requestingToken.getTokenUser() != null
-            && deletingToken.getTokenUser() != null
-            && requestingToken.getTokenUser().getUsername()
-                .equals(deletingToken.getTokenUser().getUsername());
-
-        boolean authorized = isCustomerIdm || isRequestor || isOwner;
-
-        if (!authorized) {
-            String errMsg = String.format(
-                "Requesting token %s not authorized to revoke token %s",
-                tokenStringRequestingDelete, tokenToDelete);
-            logger.error(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-
-        if (deletingToken.getRequestor() == null) {
-            String error = String.format("Token %s does not have a requestor",
-                deletingToken.getTokenString());
-            logger.debug(error);
-            throw new IllegalStateException(error);
-        }
-
-        deleteRefreshTokenByAccessToken(deletingToken);
-
-        tokenDao.delete(deletingToken.getTokenString());
-        logger.info("Deleted Token {}", deletingToken);
-    }*/
-
     public AccessToken validateToken(String tokenString) {
 
         logger.debug("Validating Token: {}", tokenString);
@@ -450,50 +445,8 @@ public class DefaultAccessTokenService implements AccessTokenService {
         tokenDao.delete(tokenString);
     }
 
-    @Deprecated
-    private void deleteRefreshTokenByAccessToken(AccessToken accessToken) {
-
-        // Clients do not get Refresh Tokens so there is no need to
-        // revoke one if the access token is for a client
-        if (accessToken.isClientToken()) {
-            return;
-        }
-
-        // FIXME: With the new AccessToken that includes user and client
-        // info we no longer need to do a lot of these calls.
-        // So ... Here's the new method we should use
-        //
-        // String username = accessToken.getOwner();
-        // String clientId = accessToken.getRequestor();
-        //
-        // if (!StringUtils.isEmpty(accessToken.getOwner())
-        // && !StringUtils.isEmpty(accessToken.getRequestor())) {
-        // Set<String> tokenRequestors = new HashSet<String>();
-        // tokenRequestors.add(clientId);
-        // refreshTokenDao.deleteAllTokensForUser(username, tokenRequestors);
-        // }
-
-        String username = StringUtils.EMPTY;
-        String clientId = StringUtils.EMPTY;
-
-        User tokenUser = userService.getUser(accessToken.getOwner());
-        if (tokenUser != null) {
-            username = tokenUser.getUsername();
-        }
-        Client tokenClient = clientDao.findByClientId(accessToken.getRequestor());
-        if (tokenClient != null) {
-            clientId = tokenClient.getClientId();
-        }
-        if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(clientId)) {
-            Set<String> tokenRequestors = new HashSet<String>();
-            tokenRequestors.add(clientId);
-            refreshTokenDao.deleteAllTokensForUser(username, tokenRequestors);
-        }
-    }
-
     private String generateTokenWithDcPrefix() {
         String token = UUID.randomUUID().toString().replace("-", "");
-        String tokenString = String.format("%s-%s", this.dataCenterPrefix, token);
-        return tokenString;
+        return String.format("%s-%s", this.dataCenterPrefix, token);
     }
 }

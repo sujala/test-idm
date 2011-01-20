@@ -93,7 +93,7 @@ public class ServiceConfiguration {
             .getLogger(DefaultAccessTokenService.class);
 
         return new DefaultAccessTokenService(defaultAttributes, accessTokenDao,
-            refreshTokenDao, clientDao, userService(), authHeaderHelper(),
+            clientDao, userService(), authHeaderHelper(),
             logger);
     }
 
@@ -198,7 +198,7 @@ public class ServiceConfiguration {
     @Bean
     public OAuthService oauthService() {
         Logger logger = LoggerFactory.getLogger(DefaultOAuthService.class);
-        return new DefaultOAuthService(userService(), tokenService(),
+        return new DefaultOAuthService(userService(), clientService(), tokenService(),
             refreshTokenService(), logger);
     }
 
