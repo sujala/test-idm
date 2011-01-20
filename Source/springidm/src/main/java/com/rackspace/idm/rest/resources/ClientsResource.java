@@ -2,7 +2,6 @@ package com.rackspace.idm.rest.resources;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
@@ -32,7 +31,6 @@ import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.errors.ApiError;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ClientConflictException;
-import com.rackspace.idm.exceptions.CustomerConflictException;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
