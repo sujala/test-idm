@@ -26,7 +26,7 @@
 		</xsd:documentation>
 	</annotation>
 
-	<element name="credentials" type="idm:UsernameCredentials">
+	<element name="usernameCredentials" type="idm:UsernameCredentials">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
 				xmlns="http://www.w3.org/1999/xhtml">
@@ -91,75 +91,75 @@
 
 
 	<!-- Complex Types -->
-
-	<complexType name="UsernameCredentials">
-		<attribute name="username" type="xsd:string" use="required">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>
-						The name of the user authenticated.
-                                 </p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-		<attribute name="key" type="xsd:string" use="required">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>
-						The API key.
+	
+	         <complexType name="Credentials" abstract="true">
+             <attribute name="key" type="xsd:string" use="required">
+                 <annotation>
+                     <xsd:documentation
+                             xml:lang="EN"
+                             xmlns="http://www.w3.org/1999/xhtml">
+                         <p>
+                             The API key.
                          </p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-	</complexType>
-
-	<complexType name="NastCredentials">
-		<attribute name="nastId" type="xsd:string" use="required">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>
-						Nast Id used to identify the user.
+                     </xsd:documentation>
+                 </annotation>
+             </attribute>
+         </complexType>
+	
+	         <complexType name="UsernameCredentials">
+             <complexContent>
+                 <extension base="idm:Credentials">
+                     <attribute name="username" type="xsd:string" use="required">
+                         <annotation>
+                             <xsd:documentation
+                                     xml:lang="EN"
+                                     xmlns="http://www.w3.org/1999/xhtml">
+                                 <p>
+                                     The name of the user authenticated.
                                  </p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-		<attribute name="key" type="xsd:string" use="required">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>
-						The API key.
-                         </p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-	</complexType>
-
-	<complexType name="MossoCredentials">
-		<attribute name="mossoId" type="xsd:int" use="required">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>
-						Mosso account used to identify the user.
+                             </xsd:documentation>
+                         </annotation>
+                     </attribute>
+                 </extension>
+             </complexContent>
+         </complexType>
+	
+	         <complexType name="NastCredentials">
+             <complexContent>
+                 <extension base="idm:Credentials">
+                     <attribute name="nastId" type="xsd:string" use="required">
+                         <annotation>
+                             <xsd:documentation
+                                     xml:lang="EN"
+                                     xmlns="http://www.w3.org/1999/xhtml">
+                                 <p>
+                                     Nast Id used to identify the user.
                                  </p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-		<attribute name="key" type="xsd:string" use="required">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>
-						The API key.
-                         </p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-	</complexType>
+                             </xsd:documentation>
+                         </annotation>
+                     </attribute>
+                 </extension>
+             </complexContent>
+         </complexType>
+     
+         <complexType name="MossoCredentials">
+             <complexContent>
+                 <extension base="idm:Credentials">
+                     <attribute name="mossoId" type="xsd:int" use="required">
+                         <annotation>
+                             <xsd:documentation
+                                     xml:lang="EN"
+                                     xmlns="http://www.w3.org/1999/xhtml">
+                                 <p>
+                                     Mosso account used to identify the user.
+                                 </p>
+                             </xsd:documentation>
+                         </annotation>
+                     </attribute>
+                 </extension>
+             </complexContent>
+         </complexType>
+	
 
 </schema>
 
