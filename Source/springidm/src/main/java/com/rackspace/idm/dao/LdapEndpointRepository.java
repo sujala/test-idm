@@ -22,7 +22,8 @@ import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 
-public class LdapEndpointRepository extends LdapRepository implements EndpointDao {
+public class LdapEndpointRepository extends LdapRepository implements
+    EndpointDao {
 
     private static final String ATTR_OBJECT_CLASS = "objectClass";
     private static final String[] ATTR_OBJECT_CLASS_VALUES = {"top", "baseUrl"};
@@ -35,7 +36,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
     private static final String ATTR_ADMIN_URL = "adminUrl";
     private static final String ATTR_DEF = "def";
     private static final String ATTR_ENDPOINT = "endpoint";
-    
+
     private static final String ATTR_UID = "uid";
     private static final String ATTR_NAST_ID = "rsNastId";
     private static final String ATTR_MOSSO_ID = "rsMossoId";
@@ -132,16 +133,15 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
 
         String newEndpoint = def ? "+" : "-";
         newEndpoint = newEndpoint + String.valueOf(baseUrlId);
-        
+
         EndPoints oldEndpoints = this.getRawEndpointsForUser(username);
 
-        if (oldEndpoints.getEndpoints().contains(newEndpoint)) {
-            return;
-        }
-        
         List<String> endpoints = new ArrayList<String>();
-        
+
         for (String s : oldEndpoints.getEndpoints()) {
+            if (s.equals(newEndpoint)) {
+                return;
+            }
             endpoints.add(s);
         }
 
@@ -149,8 +149,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
 
         List<Modification> mods = new ArrayList<Modification>();
 
-        String[] points = endpoints.toArray(
-            new String[endpoints.size()]);
+        String[] points = endpoints.toArray(new String[endpoints.size()]);
 
         mods.add(new Modification(ModificationType.REPLACE, ATTR_ENDPOINT,
             points));
@@ -347,10 +346,12 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         Integer mossoId = null;
         SearchResult searchResult = null;
         try {
-            searchResult = getAppConnPool().search(USER_BASE_DN,
+            searchResult = getAppConnPool().search(
+                USER_BASE_DN,
                 SearchScope.SUB,
                 String.format(USER_FIND_BY_USERNAME_BASESTRING, username),
-                new String[]{ATTR_ENDPOINT, ATTR_UID, ATTR_NAST_ID, ATTR_MOSSO_ID});
+                new String[]{ATTR_ENDPOINT, ATTR_UID, ATTR_NAST_ID,
+                    ATTR_MOSSO_ID});
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for baseUrls - {}", ldapEx);
             throw new IllegalStateException(ldapEx);
