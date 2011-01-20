@@ -132,7 +132,10 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
         for (String action : allowedActions) {
 
-            result = result || checkPermission(action, requestedActionURI);
+            if (checkPermission(action,requestedActionURI)) {
+                result = true;
+                break;
+            }
 
         }
         return result;
