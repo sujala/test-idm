@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -169,7 +170,7 @@ public class BaseUrlsResource {
      * @param baseUrlId baseUrlId
      */
     @GET
-    @Path("baseUrlId")
+    @Path("{baseUrlId}")
     public Response getBaseUrl(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
@@ -198,7 +199,18 @@ public class BaseUrlsResource {
             throw new NotFoundException(errMsg);
         }
 
-        return Response.ok(this.endpointConverter.toBaseUrl(url)).build();
+        String location = uriInfo.getPath()
+            + String.valueOf(url.getBaseUrlId());
+
+        URI uri = null;
+        try {
+            uri = new URI(location);
+        } catch (URISyntaxException e) {
+            logger.error("Client Location URI error");
+        }
+
+        return Response.ok(this.endpointConverter.toBaseUrl(url)).location(uri)
+            .status(HttpServletResponse.SC_CREATED).build();
     }
 
     /**
@@ -215,7 +227,7 @@ public class BaseUrlsResource {
      * @param baseUrlId baseUrlId
      */
     @DELETE
-    @Path("baseUrlId")
+    @Path("{baseUrlId}")
     public Response deleteBaseUrl(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
