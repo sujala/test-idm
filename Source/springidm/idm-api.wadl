@@ -6,11 +6,39 @@
   <resources base="http://172.17.16.85:8080">
     <resource id="version" path="v1.0">
       <method href="#getVersionInfo"/>
+      <resource path="auth" id="auth">
+        <method href="#getUsernameAuth"/>
+        <resource path="nast" id="nastAuth">
+              <method href="#getNastAuth"/>
+        </resource>
+        <resource path="mosso" id="mossoAuth">
+              <method href="#getMossoAuth"/>
+        </resource>
+      </resource>
+      <resource path="baseurls" id="baseurls">
+        <method href="#getBaseUrls"/>
+        <method href="#addBaseUrl"/>
+        <resource path="{baseUrlId}" id="baseUrl">
+          <method href="#getBaseUrl"/>
+          <method href="#deleteBaseUrl"/>
+        </resource>
+      </resource>
       <resource path="users" id="users">
         <method href="#addFirstUser"/>
         <resource path="{username}" id="user">
               <param name="username" type="xsd:string" required="true" style="template"/>
               <method href="#getUserByUsername"/>
+              <resource path="servicecatalog" id="servicecatalog">
+                  <method href="#getServiceCatalog"/>
+              </resource>
+              <resource path="baseurlrefs" id="baseurlrefs">
+                  <method href="#getBaseUrlRefs"/>
+                  <method href="#addBaseUrlRef"/>
+                  <resource path="{baseUrlId}" id="baseUrl">
+                      <method href="#getBaseUrlRef"/>
+                      <method href="#deleteBaseUrlRef"/>
+                  </resource>
+              </resource>
         </resource>
       </resource>
       <resource path="nast" id="nastUsers">
@@ -43,6 +71,9 @@
               <param name="clientId" type="xsd:string" required="true" style="template"/>
               <method href="#getClient"/>
               <method href="#deleteClient"/>
+              <resource path="secret" id="clientSecret">
+                <method href="#resetClientSecret"/>
+              </resource>
               <resource path="permissions" id="clientPermissions">
                 <method href="#getClientPermissions"/>
                 <resource path="granted" id="grantedPermissions">
@@ -177,7 +208,92 @@
       <representation mediaType="application/json"/>
     </response>
   </method>
-    <!--Mosso Methods-->
+  <!-- auth methods -->
+  <method name="POST" id="getUsernameAuth">
+    <request>
+      <representation mediaType="application/xml" element="idm:UsernameCredentials"/>
+      <representation mediaType="application/json"/>
+    </request>
+    <response status="200">
+      <representation mediaType="application/xml" element="idm:CloudAuthData"/>
+      <representation mediaType="application/json"/>
+    </response>
+    <response status="400">
+      <representation mediaType="application/xml" element="idm:badRequest"/>
+    </response>
+    <response status="401">
+      <representation mediaType="application/xml" element="idm:unauthorized"/>
+    </response>
+    <response status="403">
+      <representation mediaType="application/xml" element="idm:forbidden"/>
+    </response>
+    <response status="500">
+      <representation mediaType="application/xml" element="idm:idmFault"/>
+    </response>
+    <response status="503">
+      <representation mediaType="application/xml" element="idm:serviceUnavailable"/>
+    </response>
+    <response status="400 401 403 500 503">
+      <representation mediaType="application/json"/>
+    </response>
+  </method>
+  <method name="POST" id="getNastAuth">
+    <request>
+      <representation mediaType="application/xml" element="idm:NastCredentials"/>
+      <representation mediaType="application/json"/>
+    </request>
+    <response status="200">
+      <representation mediaType="application/xml" element="idm:CloudAuthData"/>
+      <representation mediaType="application/json"/>
+    </response>
+    <response status="400">
+      <representation mediaType="application/xml" element="idm:badRequest"/>
+    </response>
+    <response status="401">
+      <representation mediaType="application/xml" element="idm:unauthorized"/>
+    </response>
+    <response status="403">
+      <representation mediaType="application/xml" element="idm:forbidden"/>
+    </response>
+    <response status="500">
+      <representation mediaType="application/xml" element="idm:idmFault"/>
+    </response>
+    <response status="503">
+      <representation mediaType="application/xml" element="idm:serviceUnavailable"/>
+    </response>
+    <response status="400 401 403 500 503">
+      <representation mediaType="application/json"/>
+    </response>
+  </method>
+  <method name="POST" id="getMossoAuth">
+    <request>
+      <representation mediaType="application/xml" element="idm:MossoCredentials"/>
+      <representation mediaType="application/json"/>
+    </request>
+    <response status="200">
+      <representation mediaType="application/xml" element="idm:CloudAuthData"/>
+      <representation mediaType="application/json"/>
+    </response>
+    <response status="400">
+      <representation mediaType="application/xml" element="idm:badRequest"/>
+    </response>
+    <response status="401">
+      <representation mediaType="application/xml" element="idm:unauthorized"/>
+    </response>
+    <response status="403">
+      <representation mediaType="application/xml" element="idm:forbidden"/>
+    </response>
+    <response status="500">
+      <representation mediaType="application/xml" element="idm:idmFault"/>
+    </response>
+    <response status="503">
+      <representation mediaType="application/xml" element="idm:serviceUnavailable"/>
+    </response>
+    <response status="400 401 403 500 503">
+      <representation mediaType="application/json"/>
+    </response>
+  </method>
+  <!--Mosso Methods-->
   <method name="GET" id="getUserByMossoId">
     <request>
       <param name="Authorization" style="header" required="true"/>
@@ -654,6 +770,36 @@
     </request>
     <response status="200">
       <representation mediaType="application/xml" element="idm:resource"/>
+      <representation mediaType="application/json"/>
+    </response>
+    <response status="400">
+      <representation mediaType="application/xml" element="idm:badRequest"/>
+    </response>
+    <response status="401">
+      <representation mediaType="application/xml" element="idm:unauthorized"/>
+    </response>
+    <response status="403">
+      <representation mediaType="application/xml" element="idm:forbidden"/>
+    </response>
+    <response status="404">
+      <representation mediaType="application/xml" element="idm:itemNotFound"/>
+    </response>
+    <response status="500">
+      <representation mediaType="application/xml" element="idm:idmFault"/>
+    </response>
+    <response status="503">
+      <representation mediaType="application/xml" element="idm:serviceUnavailable"/>
+    </response>
+    <response status="400 401 403 404 500 503">
+      <representation mediaType="application/json"/>
+    </response>
+  </method>
+  <method name="POST" id="resetClientSecret">
+    <request>
+      <param name="Authorization" style="header" required="true"/>
+    </request>
+    <response status="200">
+      <representation mediaType="application/xml" element="idm:ClientCredentials"/>
       <representation mediaType="application/json"/>
     </response>
     <response status="400">
@@ -1549,6 +1695,273 @@
       <representation mediaType="application/xml" element="idm:permissions"/>
       <representation mediaType="application/json"/>
     </response>
+    <response status="400">
+      <representation mediaType="application/xml" element="idm:badRequest"/>
+    </response>
+    <response status="401">
+      <representation mediaType="application/xml" element="idm:unauthorized"/>
+    </response>
+    <response status="403">
+      <representation mediaType="application/xml" element="idm:forbidden"/>
+    </response>
+    <response status="404">
+      <representation mediaType="application/xml" element="idm:itemNotFound"/>
+    </response>
+    <response status="500">
+      <representation mediaType="application/xml" element="idm:idmFault"/>
+    </response>
+    <response status="503">
+      <representation mediaType="application/xml" element="idm:serviceUnavailable"/>
+    </response>
+    <response status="400 401 403 404 500 503">
+      <representation mediaType="application/json"/>
+    </response>
+  </method>
+  <!-- servicecatalog, baseUrls, and endpoints -->
+  <method name="GET" id="getServiceCatalog">
+    <request>
+      <param name="Authorization" style="header" required="true"/>
+    </request>
+    <response status="200">
+      <representation mediaType="application/xml" element="idm:ServiceCatalog"/>
+      <representation mediaType="application/json"/>
+    </response>
+    <response status="400">
+      <representation mediaType="application/xml" element="idm:badRequest"/>
+    </response>
+    <response status="401">
+      <representation mediaType="application/xml" element="idm:unauthorized"/>
+    </response>
+    <response status="403">
+      <representation mediaType="application/xml" element="idm:forbidden"/>
+    </response>
+    <response status="404">
+      <representation mediaType="application/xml" element="idm:itemNotFound"/>
+    </response>
+    <response status="500">
+      <representation mediaType="application/xml" element="idm:idmFault"/>
+    </response>
+    <response status="503">
+      <representation mediaType="application/xml" element="idm:serviceUnavailable"/>
+    </response>
+    <response status="400 401 403 404 500 503">
+      <representation mediaType="application/json"/>
+    </response>
+  </method>
+  <method name="GET" id="getBaseUrlRefs">
+    <request>
+      <param name="Authorization" style="header" required="true"/>
+    </request>
+    <response status="200">
+      <representation mediaType="application/xml" element="idm:BaseURLRefList"/>
+      <representation mediaType="application/json"/>
+    </response>
+    <response status="400">
+      <representation mediaType="application/xml" element="idm:badRequest"/>
+    </response>
+    <response status="401">
+      <representation mediaType="application/xml" element="idm:unauthorized"/>
+    </response>
+    <response status="403">
+      <representation mediaType="application/xml" element="idm:forbidden"/>
+    </response>
+    <response status="404">
+      <representation mediaType="application/xml" element="idm:itemNotFound"/>
+    </response>
+    <response status="500">
+      <representation mediaType="application/xml" element="idm:idmFault"/>
+    </response>
+    <response status="503">
+      <representation mediaType="application/xml" element="idm:serviceUnavailable"/>
+    </response>
+    <response status="400 401 403 404 500 503">
+      <representation mediaType="application/json"/>
+    </response>
+  </method>
+  <method name="PUT" id="addBaseUrlRef">
+    <request>
+      <param name="Authorization" style="header" required="true"/>
+      <representation mediaType="application/xml" element="idm:BaseURLRef"/>
+      <representation mediaType="application/json"/>
+    </request>
+    <response status="201"/>
+    <response status="400">
+      <representation mediaType="application/xml" element="idm:badRequest"/>
+    </response>
+    <response status="401">
+      <representation mediaType="application/xml" element="idm:unauthorized"/>
+    </response>
+    <response status="403">
+      <representation mediaType="application/xml" element="idm:forbidden"/>
+    </response>
+    <response status="404">
+      <representation mediaType="application/xml" element="idm:itemNotFound"/>
+    </response>
+    <response status="500">
+      <representation mediaType="application/xml" element="idm:idmFault"/>
+    </response>
+    <response status="503">
+      <representation mediaType="application/xml" element="idm:serviceUnavailable"/>
+    </response>
+    <response status="400 401 403 404 500 503">
+      <representation mediaType="application/json"/>
+    </response>
+  </method>
+  <method name="GET" id="getBaseUrlRef">
+    <request>
+      <param name="Authorization" style="header" required="true"/>
+    </request>
+    <response status="200">
+      <representation mediaType="application/xml" element="idm:BaseURLRef"/>
+      <representation mediaType="application/json"/>
+    </response>
+    <response status="400">
+      <representation mediaType="application/xml" element="idm:badRequest"/>
+    </response>
+    <response status="401">
+      <representation mediaType="application/xml" element="idm:unauthorized"/>
+    </response>
+    <response status="403">
+      <representation mediaType="application/xml" element="idm:forbidden"/>
+    </response>
+    <response status="404">
+      <representation mediaType="application/xml" element="idm:itemNotFound"/>
+    </response>
+    <response status="500">
+      <representation mediaType="application/xml" element="idm:idmFault"/>
+    </response>
+    <response status="503">
+      <representation mediaType="application/xml" element="idm:serviceUnavailable"/>
+    </response>
+    <response status="400 401 403 404 500 503">
+      <representation mediaType="application/json"/>
+    </response>
+  </method>
+  <method name="DELETE" id="deleteBaseUrlRef">
+    <request>
+      <param name="Authorization" style="header" required="true"/>
+    </request>
+    <response status="204"/>
+    <response status="400">
+      <representation mediaType="application/xml" element="idm:badRequest"/>
+    </response>
+    <response status="401">
+      <representation mediaType="application/xml" element="idm:unauthorized"/>
+    </response>
+    <response status="403">
+      <representation mediaType="application/xml" element="idm:forbidden"/>
+    </response>
+    <response status="404">
+      <representation mediaType="application/xml" element="idm:itemNotFound"/>
+    </response>
+    <response status="500">
+      <representation mediaType="application/xml" element="idm:idmFault"/>
+    </response>
+    <response status="503">
+      <representation mediaType="application/xml" element="idm:serviceUnavailable"/>
+    </response>
+    <response status="400 401 403 404 500 503">
+      <representation mediaType="application/json"/>
+    </response>
+  </method>
+  <method name="GET" id="getBaseUrls">
+    <request>
+      <param name="Authorization" style="header" required="true"/>
+    </request>
+    <response status="200">
+      <representation mediaType="application/xml" element="idm:BaseURLList"/>
+      <representation mediaType="application/json"/>
+    </response>
+    <response status="400">
+      <representation mediaType="application/xml" element="idm:badRequest"/>
+    </response>
+    <response status="401">
+      <representation mediaType="application/xml" element="idm:unauthorized"/>
+    </response>
+    <response status="403">
+      <representation mediaType="application/xml" element="idm:forbidden"/>
+    </response>
+    <response status="404">
+      <representation mediaType="application/xml" element="idm:itemNotFound"/>
+    </response>
+    <response status="500">
+      <representation mediaType="application/xml" element="idm:idmFault"/>
+    </response>
+    <response status="503">
+      <representation mediaType="application/xml" element="idm:serviceUnavailable"/>
+    </response>
+    <response status="400 401 403 404 500 503">
+      <representation mediaType="application/json"/>
+    </response>
+  </method>
+  <method name="POST" id="addBaseUrl">
+    <request>
+      <param name="Authorization" style="header" required="true"/>
+      <representation mediaType="application/xml" element="idm:BaseURL"/>
+      <representation mediaType="application/json"/>
+    </request>
+    <response status="201" />
+    <response status="400">
+      <representation mediaType="application/xml" element="idm:badRequest"/>
+      <representation mediaType="application/xml" element="idm:passwordValidation"/>
+    </response>
+    <response status="401">
+      <representation mediaType="application/xml" element="idm:unauthorized"/>
+    </response>
+    <response status="403">
+      <representation mediaType="application/xml" element="idm:forbidden"/>
+    </response>
+    <response status="404">
+      <representation mediaType="application/xml" element="idm:itemNotFound"/>
+    </response>
+    <response status="409">
+      <representation mediaType="application/xml" element="idm:usernameConflict"/>
+    </response>
+    <response status="500">
+      <representation mediaType="application/xml" element="idm:idmFault"/>
+    </response>
+    <response status="503">
+      <representation mediaType="application/xml" element="idm:serviceUnavailable"/>
+    </response>
+    <response status="400 401 403 404 409 500 503">
+      <representation mediaType="application/json"/>
+    </response>
+  </method>
+  <method name="GET" id="getBaseUrl">
+    <request>
+      <param name="Authorization" style="header" required="true"/>
+    </request>
+    <response status="200">
+      <representation mediaType="application/xml" element="idm:BaseURL"/>
+      <representation mediaType="application/json"/>
+    </response>
+    <response status="400">
+      <representation mediaType="application/xml" element="idm:badRequest"/>
+    </response>
+    <response status="401">
+      <representation mediaType="application/xml" element="idm:unauthorized"/>
+    </response>
+    <response status="403">
+      <representation mediaType="application/xml" element="idm:forbidden"/>
+    </response>
+    <response status="404">
+      <representation mediaType="application/xml" element="idm:itemNotFound"/>
+    </response>
+    <response status="500">
+      <representation mediaType="application/xml" element="idm:idmFault"/>
+    </response>
+    <response status="503">
+      <representation mediaType="application/xml" element="idm:serviceUnavailable"/>
+    </response>
+    <response status="400 401 403 404 500 503">
+      <representation mediaType="application/json"/>
+    </response>
+  </method>
+  <method name="DELETE" id="deleteBaseUrl">
+    <request>
+      <param name="Authorization" style="header" required="true"/>
+    </request>
+    <response status="204"/>
     <response status="400">
       <representation mediaType="application/xml" element="idm:badRequest"/>
     </response>
