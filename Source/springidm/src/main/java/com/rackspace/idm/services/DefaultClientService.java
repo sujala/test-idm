@@ -164,6 +164,25 @@ public class DefaultClientService implements ClientService {
         return permissions;
     }
 
+    public ClientSecret resetClientSecret(Client client) {
+
+        if (client == null) {
+            throw new IllegalArgumentException();
+        }
+
+        ClientSecret clientSecret = null;
+        try {
+             clientSecret =
+                    ClientSecret.newInstance(HashHelper.getRandomSha1());
+            client.setClientSecretObj(clientSecret);
+            clientDao.save(client);
+        } catch (NoSuchAlgorithmException e) {
+            logger.error("Unsupported hashing algorithm - {}", e);
+            throw new IllegalStateException("Unsupported hashing algorithm", e);
+        }
+        return clientSecret;
+    }
+
     public void save(Client client) {
         clientDao.save(client);
     }

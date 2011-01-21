@@ -3,6 +3,7 @@ package com.rackspace.idm.services;
 import java.util.List;
 
 import com.rackspace.idm.entities.Client;
+import com.rackspace.idm.entities.ClientSecret;
 import com.rackspace.idm.entities.Clients;
 import com.rackspace.idm.entities.ClientAuthenticationResult;
 import com.rackspace.idm.entities.Permission;
@@ -31,6 +32,8 @@ public interface ClientService {
         String permissionId);
 
     List<Permission> getDefinedPermissionsByClientId(String clientId);
+
+    ClientSecret resetClientSecret(Client client);
 
     void save(Client client);
 

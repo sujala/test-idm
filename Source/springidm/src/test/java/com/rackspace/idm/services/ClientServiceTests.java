@@ -356,6 +356,27 @@ public class ClientServiceTests {
         EasyMock.verify(mockClientDao);
     }
 
+    @Test
+    public void shouldResetClientSecret() {
+
+        Client client = getFakeClient();
+        String oldSecret = client.getClientSecret();
+
+        mockClientDao.save(client);
+        EasyMock.replay(mockClientDao);
+
+        ClientSecret clientSecret = clientService.resetClientSecret(client);
+
+        Assert.assertNotSame(oldSecret, clientSecret.getValue());
+        EasyMock.verify(mockClientDao);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotResetClientSecretIfNull() {
+        Client client = null;
+        ClientSecret clientSecret = clientService.resetClientSecret(client);
+    }
+
     private Client getFakeClient() {
         return new Client(clientId, clientSecret, name, inum, iname,
             customerId, status, seeAlso, owner);

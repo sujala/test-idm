@@ -4,8 +4,11 @@ import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.ClientConverter;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Client;
+import com.rackspace.idm.entities.ClientSecret;
 import com.rackspace.idm.exceptions.ForbiddenException;
+import com.rackspace.idm.exceptions.IdmException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.jaxb.ClientCredentials;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
@@ -101,6 +104,64 @@ public class ClientResource {
 
         return Response.ok(returnedClient).build();
     }
+
+    @Path("secret")
+    @POST
+    public Response resetClientSecret(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId) {
+
+         AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Rackers and Admins are authorized
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeAdmin(token, customerId);
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
+        Client client = this.clientService.getById(clientId);
+
+        if (client == null
+            || !client.getCustomerId().toLowerCase()
+                .equals(customerId.toLowerCase())) {
+            String errorMsg = String.format("Client Not Found: %s", clientId);
+            logger.error(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+
+        logger.debug("Got Client: {}", client);
+
+        ClientSecret clientSecret = null;
+        try {
+            clientSecret = clientService.resetClientSecret(client);
+        }
+        catch (IllegalArgumentException e) {
+            String errorMsg = String.format("Invalid client: %s", clientId);
+            logger.error(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+        catch (IllegalStateException e) {
+            String errorMsg = String.format("Error generating secret for client: %s", clientId);
+            logger.error(errorMsg);
+            throw new IdmException(e);
+        }
+
+        ClientCredentials clientCredentials =
+                new ClientCredentials();
+        clientCredentials.setClientSecret(clientSecret.getValue());
+
+        return Response.ok(clientCredentials).build();
+
+    }
+
 
     @Path("permissions")
     public PermissionsResource getPermissionsResource() {
