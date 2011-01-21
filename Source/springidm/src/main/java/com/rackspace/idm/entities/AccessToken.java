@@ -29,8 +29,16 @@ public final class AccessToken extends Token implements Serializable {
     public AccessToken(String tokenString, DateTime tokenExpiration,
         BaseUser user, BaseClient client, IDM_SCOPE idmScope) {
         super(tokenString, tokenExpiration);
-        this.user = user;
-        this.client = client;
+        if (user instanceof User) {
+            this.user = ((User) user).getBaseUser();
+        } else {
+            this.user = user;
+        }
+        if (client instanceof Client) {
+            this.client = ((Client) client).getBaseClient();
+        } else {
+            this.client = client;
+        }
         this.idmScope = idmScope;
     }
 
@@ -54,7 +62,11 @@ public final class AccessToken extends Token implements Serializable {
     }
 
     public void setTokenUser(BaseUser user) {
-        this.user = user;
+        if (user instanceof User) {
+            this.user = ((User) user).getBaseUser();
+        } else {
+            this.user = user;
+        }
     }
 
     public BaseClient getTokenClient() {
@@ -62,7 +74,11 @@ public final class AccessToken extends Token implements Serializable {
     }
 
     public void setTokenClient(BaseClient client) {
-        this.client = client;
+        if (client instanceof Client) {
+            this.client = ((Client) client).getBaseClient();
+        } else {
+            this.client = client;
+        }
     }
 
     public String getRequestor() {
