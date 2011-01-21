@@ -70,9 +70,7 @@ public final class ClientSecret {
         ClientSecret other = (ClientSecret) obj;
         // If the secret has been saved, it has been hashed. Thus the values
         // between pre-save and post-save secrets cannot be compared.
-        if (isNew != other.isNew) {
-            return false;
-        } else {
+        if (isNew == other.isNew) {
             if (value == null) {
                 if (other.value != null) {
                     return false;

@@ -109,6 +109,9 @@ public class DefaultUserService implements UserService {
         }
 
         authenticated = userDao.bindUser(username, password);
+        if (authenticated) {
+           user.setRoles(this.roleService.getRolesForUser(user.getUsername()));
+        }
         logger.debug("Authenticated User: {} : {}", username, authenticated);
         return new UserAuthenticationResult(user, authenticated);
     }
@@ -116,6 +119,11 @@ public class DefaultUserService implements UserService {
     public UserAuthenticationResult authenticateWithApiKey(String username, String apiKey) {
         logger.debug("Authenticating User: {} by API Key", username);
         UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(username, apiKey);
+        if (authenticated.isAuthenticated()) {
+            List<Role> roles = this.roleService.getRolesForUser(authenticated.getUser().getUsername());
+            BaseUser user = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser().getCustomerId(), roles);
+            authenticated = new UserAuthenticationResult(user, authenticated.isAuthenticated()); 
+        }
         logger.debug("Authenticated User: {} by API Key - {}", username, authenticated);
         return authenticated;
     }
@@ -123,6 +131,11 @@ public class DefaultUserService implements UserService {
     public UserAuthenticationResult authenticateWithNastIdAndApiKey(String nastId, String apiKey) {
         logger.debug("Authenticating User with NastId {} and API Key", nastId);
         UserAuthenticationResult authenticated = userDao.authenticateByNastIdAndAPIKey(nastId, apiKey);
+        if (authenticated.isAuthenticated()) {
+            List<Role> roles = this.roleService.getRolesForUser(authenticated.getUser().getUsername());
+            BaseUser user = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser().getCustomerId(), roles);
+            authenticated = new UserAuthenticationResult(user, authenticated.isAuthenticated()); 
+        }
         logger.debug("Authenticated User with NastId {} and API Key - {}", nastId, authenticated);
         return authenticated;
     }
@@ -130,6 +143,11 @@ public class DefaultUserService implements UserService {
     public UserAuthenticationResult authenticateWithMossoIdAndApiKey(int mossoId, String apiKey) {
         logger.debug("Authenticating User with MossoId {} and Api Key", mossoId);
         UserAuthenticationResult authenticated = userDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey);
+        if (authenticated.isAuthenticated()) {
+            List<Role> roles = this.roleService.getRolesForUser(authenticated.getUser().getUsername());
+            BaseUser user = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser().getCustomerId(), roles);
+            authenticated = new UserAuthenticationResult(user, authenticated.isAuthenticated()); 
+        }
         logger.debug("Authenticated User with MossoId {} and API Key - {}", mossoId, authenticated);
         return authenticated;
     }

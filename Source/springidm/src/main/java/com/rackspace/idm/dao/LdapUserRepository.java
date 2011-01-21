@@ -645,6 +645,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         boolean authenticated = !StringUtils.isBlank(user.getApiKey())
             && user.getApiKey().equals(apiKey);
+        
+        if (user.isDisabled()) {
+            throw new UserDisabledException();
+        }
 
         UserAuthenticationResult authResult = validateUserStatus(user, authenticated);
         getLogger().debug("Authenticated User by API Key - {}", authResult);
