@@ -11,7 +11,7 @@ root = Resource(url)
 admin_cred = {'password':'password', 'username':'mkovacs', 'client_secret':'password',
     'client_id':'ABCDEF', 'grant_type':'PASSWORD'}
 client_cred = {'client_secret':'password',
-    'client_id':'ABCDEF', 'grant_type':'NONE'}
+    'client_id':'18e7a7032733486cd32f472d7bd58f709ac0d221', 'grant_type':'NONE'}
 
 
 def show_response(resp):
@@ -58,7 +58,7 @@ def auth_header(cred, headers={}):
     atoken = auth[u'access_token'][u'id']
     headers['Authorization'] = 'OAuth %s' % atoken
     print("Header: %s" % headers)
-    return headers
+    return headers, atoken
 
 
 def main():
@@ -67,7 +67,7 @@ def main():
         do_get('/')
         
         # Get an access token
-        hdrs = auth_header(admin_cred)
+        hdrs, token = auth_header(admin_cred)
         hdrs.update(def_hdrs)
         
         # Test user
@@ -84,7 +84,7 @@ def main():
         if userResp:
             user = json.loads(userResp)
             if user['username'] == 'john.eo':
-                hdrs = auth_header(client_cred, hdrs)
+                hdrs, token = auth_header(client_cred, hdrs)
                 do_delete(user_res, hdrs)
         
         # Add a user
@@ -94,15 +94,15 @@ def main():
             'secret':{'secretQuestion':'What is your favourite colour?',
                 'secretAnswer':'Yellow. No, blue!'},
             'prefLanguage':'en_US', 'timeZone':'America/Chicago'}
-        hdrs = auth_header(admin_cred, hdrs)
+        hdrs, token = auth_header(admin_cred, hdrs)
         do_post('/customers/RACKSPACE/users/', json.dumps(user), hdrs)
         
         # Authenticate the test user and validate his token
-        hdrs = auth_header(client_cred, hdrs)
-        do_get('/token/%s' % ctoken, hdrs)
+        hdrs, token = auth_header(client_cred, hdrs)
+        do_get('/token/%s' % token, hdrs)
         
         # Clean up by deleting the test user
-        do_delete(user_res, hdrs)
+        do_delete(client_cred, hdrs)
     except ResourceError as e:
         print("Request failed: %s" % e)
 

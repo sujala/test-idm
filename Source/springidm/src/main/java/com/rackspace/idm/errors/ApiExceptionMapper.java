@@ -5,37 +5,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import com.rackspace.idm.exceptions.*;
+import com.rackspace.idm.jaxb.*;
 import org.omg.CORBA.portable.ApplicationException;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.ErrorMsg;
-import com.rackspace.idm.exceptions.BadRequestException;
-import com.rackspace.idm.exceptions.ClientConflictException;
-import com.rackspace.idm.exceptions.CustomerConflictException;
-import com.rackspace.idm.exceptions.DuplicateClientException;
-import com.rackspace.idm.exceptions.DuplicateUsernameException;
-import com.rackspace.idm.exceptions.ForbiddenException;
-import com.rackspace.idm.exceptions.IdmException;
-import com.rackspace.idm.exceptions.NotAuthenticatedException;
-import com.rackspace.idm.exceptions.NotAuthorizedException;
-import com.rackspace.idm.exceptions.NotFoundException;
-import com.rackspace.idm.exceptions.PasswordValidationException;
-import com.rackspace.idm.exceptions.PermissionConflictException;
-import com.rackspace.idm.exceptions.UserDisabledException;
-import com.rackspace.idm.jaxb.BadRequest;
-import com.rackspace.idm.jaxb.ClientnameConflict;
-import com.rackspace.idm.jaxb.CustomerIdConflict;
-import com.rackspace.idm.jaxb.Forbidden;
-import com.rackspace.idm.jaxb.IdmFault;
-import com.rackspace.idm.jaxb.ItemNotFound;
-import com.rackspace.idm.jaxb.MethodNotAllowed;
-import com.rackspace.idm.jaxb.PasswordValidationFault;
-import com.rackspace.idm.jaxb.PermissionIdConflict;
-import com.rackspace.idm.jaxb.ServiceUnavailable;
-import com.rackspace.idm.jaxb.ServerError;
-import com.rackspace.idm.jaxb.Unauthorized;
-import com.rackspace.idm.jaxb.UserDisabled;
-import com.rackspace.idm.jaxb.UsernameConflict;
 
 @Component
 @Provider
@@ -62,6 +37,9 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         }
         if (e instanceof PasswordValidationException) {
             return toResponse(new PasswordValidationFault(), e, 400);
+        }
+        if (e instanceof StalePasswordException) {
+            return toResponse(new StalePasswordFault(), e, 409);
         }
         if (e instanceof NotAuthenticatedException
             || e instanceof NotAuthorizedException) {

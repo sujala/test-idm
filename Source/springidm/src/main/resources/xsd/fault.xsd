@@ -330,7 +330,30 @@
 					</xsdxt:sample>
 					<xsdxt:sample>
 						<xsdxt:code type="application/json"
-							href="../samples/passwordvalidationfault.json" />
+							href="../samples/.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+    <element name="stalePasswordFault" type="idm:StalePasswordFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					The password failed validation.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml"
+							href="../samples/statlepasswordfault.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json"
+							href="../samples/stalepasswordfault.json" />
 					</xsdxt:sample>
 				</xsdxt:samples>
 			</xsd:appinfo>
@@ -509,6 +532,12 @@
 	</complexType>
 
 	<complexType name="PasswordValidationFault">
+		<complexContent>
+			<extension base="idm:IdmFault"></extension>
+		</complexContent>
+	</complexType>
+
+    <complexType name="StalePasswordFault">
 		<complexContent>
 			<extension base="idm:IdmFault"></extension>
 		</complexContent>
