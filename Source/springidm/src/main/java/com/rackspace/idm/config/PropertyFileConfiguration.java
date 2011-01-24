@@ -1,6 +1,8 @@
 package com.rackspace.idm.config;
 
 import java.io.File;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
@@ -41,6 +43,12 @@ public class PropertyFileConfiguration {
             "No config file found at %s. Loding from the classpath",
             EXTERNAL_CONFIG_FILE_PATH));
         return readConfigFile(CONFIG_FILE_NAME);
+    }
+
+
+    @Bean
+    ResourceBundle faultMessageBundle() {
+        return ResourceBundle.getBundle("fault_messages", Locale.ENGLISH);
     }
 
     /**

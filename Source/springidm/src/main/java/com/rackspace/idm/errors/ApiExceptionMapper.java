@@ -5,16 +5,30 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.exceptions.*;
 import com.rackspace.idm.jaxb.*;
+import org.apache.commons.lang.StringUtils;
 import org.omg.CORBA.portable.ApplicationException;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.ErrorMsg;
 
+import java.util.ResourceBundle;
+
 @Component
 @Provider
 public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
+    private ResourceBundle faultMessageConfig;
+    private Logger logger;
+
+    @Autowired
+    public ApiExceptionMapper(ResourceBundle faultMessageConfig, LoggerFactoryWrapper loggerWrapper) {
+        this.faultMessageConfig = faultMessageConfig;
+        this.logger = loggerWrapper.getLogger(getClass());
+    }
 
     public Response toResponse(Throwable thrown) {
         Throwable e = thrown;
@@ -107,20 +121,40 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
     }
 
     private Response toResponse(IdmFault fault, Throwable t, int code) {
-        if ((t != null) && (t.getMessage() != null)) {
-            fault.setMessage(t.getMessage());
-        } else {
-            fault.setMessage(fault.getClass().getSimpleName());
-        }
         fault.setCode(code);
 
-        if (t != null) {
-            fault.setMessage(t.getMessage());
-            fault.setDetails(t.getMessage());
-        } else {
-            fault.setMessage(ErrorMsg.SERVER_ERROR);
-            fault.setDetails(ErrorMsg.SERVER_ERROR);
+        String msg = null;
+        String dtl = null;
+        String faultClassName = fault.getClass().getSimpleName();
+        try {
+            msg = faultMessageConfig.getString(faultClassName + ".msg");
+            dtl = faultMessageConfig.getString(faultClassName + ".dtl");
+        } catch (Exception e) {
+            // Unable to load the message or details! Most likey no entry has been made
+            logger.error("Could not load fault message resource for {}:\n{}", faultClassName, e);
         }
+
+        if (StringUtils.isBlank(msg)) {
+            if (t == null) {
+                msg = ErrorMsg.SERVER_ERROR;
+            } else if (StringUtils.isBlank(t.getMessage())){
+                msg = faultClassName;
+            } else {
+                msg = t.getMessage();
+            }
+        }
+
+        if (StringUtils.isBlank(dtl)) {
+            if (t == null) {
+                dtl = ErrorMsg.SERVER_ERROR;
+            } else {
+                dtl = t.getMessage();
+            }
+        }
+
+        fault.setMessage(msg);
+        fault.setDetails(dtl);
+
         return Response.status(code).entity(fault).build();
     }
 }
