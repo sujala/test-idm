@@ -13,7 +13,6 @@ import org.apache.commons.lang.StringUtils;
 import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
-import sun.misc.Regexp;
 
 @XmlRootElement
 public final class Password {
