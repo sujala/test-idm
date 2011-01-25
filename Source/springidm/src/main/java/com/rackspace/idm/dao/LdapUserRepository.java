@@ -356,6 +356,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         String searchString = buildSearchString(USER_FIND_BY_CUSTOMER_NUMBER_STRING, userStatusMap);
+        
+        searchString = String.format(searchString, customerId, username);
 
         User user = getSingleUser(searchString, ATTR_SEARCH_ATTRIBUTES);
 
@@ -459,7 +461,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         LDAPResult result = null;
         try {
-            result = getAppConnPool().modify(getUserDnByUsername(user.getUsername()), mods);
+            result = getAppConnPool().modify(oldUser.getUniqueId(), mods);
         } catch (LDAPException ldapEx) {
             if (ResultCode.UNWILLING_TO_PERFORM.equals(ldapEx.getResultCode()) &&
                     STALE_PASSWORD_MESSAGE.equals(ldapEx.getMessage())) {
@@ -579,10 +581,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         boolean authenticated = !StringUtils.isBlank(user.getApiKey()) && user.getApiKey().equals(apiKey);
-
-        if (user.isDisabled()) {
-            throw new UserDisabledException();
-        }
 
         UserAuthenticationResult authResult = validateUserStatus(user, authenticated);
         getLogger().debug("Authenticated User by API Key - {}", authResult);
