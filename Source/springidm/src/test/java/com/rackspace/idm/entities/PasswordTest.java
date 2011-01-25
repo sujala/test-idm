@@ -5,7 +5,6 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import com.rackspace.idm.entities.Password;
-import sun.misc.Regexp;
 
 public class PasswordTest {
 
