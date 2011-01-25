@@ -1,6 +1,5 @@
 package com.rackspace.idm.services;
 
-import java.util.Set;
 import java.util.UUID;
 
 import org.joda.time.DateTime;

@@ -3,8 +3,6 @@ package com.rackspace.idm.services;
 import com.rackspace.idm.entities.RefreshToken;
 import org.joda.time.DateTime;
 
-import java.util.Set;
-
 public interface RefreshTokenService {
 
     RefreshToken createRefreshTokenForUser(String username, String clientId);
