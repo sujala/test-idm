@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<user username="qauser" customerId="RCN-QATestingCustomer" customerInum="@!FFFF.FFFF.FFFF.FFFF!EEEE.999" email="quauser@example.com" personId="RPN-qauser-000-10001" firstName="qauser" middleName="none" lastName="Tester" displayName="qauser" prefLanguage="en-us" inum="@!FFFF.FFFF.FFFF.FFFF!EEEE.999!10001" iname="@Rackspace.TestCustomer*QATester" status="ACTIVE" locked="false" softDeleted="false" country="USA" timeZone="America/Chicago" mossoId="999112358" nastId="nastid-qauser" xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"/>
