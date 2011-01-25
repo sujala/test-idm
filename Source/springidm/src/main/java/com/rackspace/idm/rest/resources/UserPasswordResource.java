@@ -8,7 +8,6 @@ import com.rackspace.idm.exceptions.*;
 import com.rackspace.idm.jaxb.PasswordRecovery;
 import com.rackspace.idm.services.*;
 import com.rackspace.idm.util.AuthHeaderHelper;
-import com.rackspace.idm.validation.RegexPatterns;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +15,6 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * User Password.
@@ -369,32 +366,6 @@ public class UserPasswordResource {
             throw new BadRequestException(errorMsg);
         }
 
-        // validate from address
-        String fromEmail = recoveryParam.getFrom();
-        Pattern p = Pattern.compile(RegexPatterns.EMAIL_ADDRESS);
-        Matcher m = p.matcher(fromEmail);
-        boolean matchFound = m.matches();
-        if (!matchFound) {
-            String errorMsg = "Invalid from address";
-            logger.error(errorMsg);
-            throw new BadRequestException(errorMsg);
-        }
-
-        // validate reply-to address
-        String replyToEmail = recoveryParam.getReplyTo();
-        if (replyToEmail == null) {
-            replyToEmail = fromEmail;
-            recoveryParam.setReplyTo(replyToEmail);
-        }
-
-        Matcher replyToMatcher = p.matcher(replyToEmail);
-        matchFound = replyToMatcher.matches();
-        if (!matchFound) {
-            String errorMsg = "Invalid reply-to address";
-            logger.error(errorMsg);
-            throw new BadRequestException(errorMsg);
-        }
-
         String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
         String clientId = getClientIdByTokenString(tokenStr);
 
@@ -402,6 +373,10 @@ public class UserPasswordResource {
 
         try {
             userService.sendRecoveryEmail(username, user.getEmail(), recoveryParam, resetToken.getTokenString());
+        } catch (IllegalArgumentException e) {
+            String errorMsg = e.getMessage();
+            logger.error(errorMsg);
+            throw new BadRequestException(errorMsg);
         } catch (IllegalStateException ise) {
             String errorMsg = "Could not send password recovery email.";
             logger.error(errorMsg);

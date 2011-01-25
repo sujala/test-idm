@@ -8,6 +8,7 @@ import com.rackspace.idm.jaxb.CustomParam;
 import com.rackspace.idm.jaxb.PasswordRecovery;
 import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.util.TemplateProcessor;
+import com.rackspace.idm.validation.RegexPatterns;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.mail.EmailException;
 import org.slf4j.Logger;
@@ -20,11 +21,14 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DefaultUserService implements UserService {
 
     private static final String PASSWORD_RECOVERY_URL = "%s?username=%s&token=%s";
     private static final String NEWLINE = System.getProperty("line.separator");
+    private static final Pattern emailPattern = Pattern.compile(RegexPatterns.EMAIL_ADDRESS);
 
     private UserDao userDao;
     private AuthDao authDao;
@@ -258,6 +262,31 @@ public class DefaultUserService implements UserService {
     public void sendRecoveryEmail(String username, String userEmail, PasswordRecovery recoveryParam,
                                   String tokenString) {
         logger.debug("Sending password recovery email for User: {}", username);
+
+        // validate from address
+        String fromEmail = recoveryParam.getFrom();
+        Matcher m = emailPattern.matcher(fromEmail);
+        boolean matchFound = m.matches();
+        if (!matchFound) {
+            String errorMsg = "Invalid from address";
+            logger.error(errorMsg);
+            throw new IllegalArgumentException(errorMsg);
+        }
+
+        // validate reply-to address
+        String replyToEmail = recoveryParam.getReplyTo();
+        if (replyToEmail == null) {
+            replyToEmail = fromEmail;
+            recoveryParam.setReplyTo(replyToEmail);
+        }
+
+        Matcher replyToMatcher = emailPattern.matcher(replyToEmail);
+        matchFound = replyToMatcher.matches();
+        if (!matchFound) {
+            String errorMsg = "Invalid reply-to address";
+            logger.error(errorMsg);
+            throw new IllegalArgumentException(errorMsg);
+        }
 
         List<String> recipients = new ArrayList<String>();
         recipients.add(userEmail);
