@@ -231,7 +231,7 @@ public class LdapUserRepositoryTest {
         User newUser = addNewTestUser();
         User checkuser = repo.findByUsername(newUser.getUsername());
         Assert.assertNotNull(checkuser);
-        cleanUpData();
+        repo.delete(newUser.getUsername());
     }
 
     @Test
@@ -283,29 +283,19 @@ public class LdapUserRepositoryTest {
         newUser.setEmail("new.email@deleteme.com");
         newUser.setFirstname("new_first_name");
         newUser.setLastname("new_last_name");
+        
+        newUser.setPasswordObj(Password.existingInstance("password"));
 
         try {
             repo.save(newUser);
         } catch (IllegalStateException e) {
+            repo.delete(newUser.getUsername());
             Assert.fail("Could not save the record: " + e.getMessage());
         }
 
         User changedUser = repo.findByUsername(userName);
         Assert.assertNotNull(changedUser);
         Assert.assertFalse(changedUser.getPasswordObj().isNew());
-
-        // Update only one attribute
-        String firstname = "anickname";
-        newUser.setFirstname(firstname);
-
-        try {
-            repo.save(newUser);
-        } catch (IllegalStateException e) {
-            Assert.fail("Could not save the record: " + e.getMessage());
-        }
-
-        changedUser = repo.findByUsername(userName);
-        Assert.assertEquals(newUser.getFirstname(), changedUser.getFirstname());
 
         repo.delete(newUser.getUsername());
     }
@@ -316,12 +306,6 @@ public class LdapUserRepositoryTest {
         // create new user
         User newUser = addNewTestUser();
         String userName = newUser.getUsername();
-
-        try {
-            repo.save(newUser);
-        } catch (IllegalStateException e) {
-            Assert.fail("Could not save the record: " + e.getMessage());
-        }
 
         // get user
         User changedUser = repo.findByUsername(userName);
@@ -336,6 +320,7 @@ public class LdapUserRepositoryTest {
         try {
             repo.save(changedUser);
         } catch (IllegalStateException e) {
+            repo.delete(newUser.getUsername());
             Assert.fail("Could not save the record: " + e.getMessage());
         }
 
@@ -392,14 +377,6 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
-    public void shouldAuthenricateManyTimes() {
-        for (int i = 0; i < 99; i++) {
-            shouldAuthenticateForCorrectCredentials();
-            System.out.println("auth count: " + (i + 1));
-        }
-    }
-
-    @Test
     public void shouldAuthenticateByAPIKey() {
         UserAuthenticationResult authenticated = repo.authenticateByAPIKey("mkovacs",
             "1234567890");
@@ -443,7 +420,7 @@ public class LdapUserRepositoryTest {
         repo.add(newUser, testCustomerDN);
         User checkuser = repo.findByUsername(newUser.getUsername());
         Assert.assertNotNull(checkuser);
-        cleanUpData();
+        repo.delete(newUser.getUsername());
     }
 
     @Test
@@ -452,7 +429,7 @@ public class LdapUserRepositoryTest {
         repo.add(newUser, testCustomerDN);
         User checkuser = repo.findByUsername(newUser.getUsername());
         Assert.assertNotNull(checkuser);
-        cleanUpData();
+        repo.delete(newUser.getUsername());
     }
 
     @Test

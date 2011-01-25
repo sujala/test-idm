@@ -305,17 +305,13 @@ public class OAuthServiceTests {
         mockAccessTokenService.delete(tokenVal);
         EasyMock.expectLastCall();
 
-        EasyMock.expect(mockUserService.getUser(username)).andReturn(getFakeUser());
-        EasyMock.expect(mockClientService.getById(clientId)).andReturn(getTestClient());
-        Set<String> tokenRequestors = new HashSet<String>();
-            tokenRequestors.add(clientId);
-        mockRefreshTokenService.deleteAllTokensForUser(username, tokenRequestors);
+        mockRefreshTokenService.deleteTokenForUserByClientId(username, clientId);
 
-        EasyMock.replay(mockAccessTokenService, mockUserService, mockClientService, mockRefreshTokenService);
+        EasyMock.replay(mockAccessTokenService, mockRefreshTokenService);
 
         oauthService.revokeToken(requestorToken, tokenVal);
 
-        EasyMock.verify(mockAccessTokenService, mockUserService, mockClientService, mockRefreshTokenService);
+        EasyMock.verify(mockAccessTokenService, mockRefreshTokenService);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -327,9 +323,8 @@ public class OAuthServiceTests {
 
         EasyMock.expect(mockUserService.getUser(username)).andReturn(null);
         EasyMock.expect(mockClientService.getById(clientId)).andReturn(getTestClient());
-        Set<String> tokenRequestors = new HashSet<String>();
-            tokenRequestors.add(clientId);
-        mockRefreshTokenService.deleteAllTokensForUser(username, tokenRequestors);
+
+        mockRefreshTokenService.deleteAllTokensForUser(username);
 
         EasyMock.replay(mockAccessTokenService, mockUserService, mockClientService, mockRefreshTokenService);
 
@@ -347,9 +342,8 @@ public class OAuthServiceTests {
 
         EasyMock.expect(mockUserService.getUser(username)).andReturn(getFakeUser());
         EasyMock.expect(mockClientService.getById(clientId)).andReturn(null);
-        Set<String> tokenRequestors = new HashSet<String>();
-            tokenRequestors.add(clientId);
-        mockRefreshTokenService.deleteAllTokensForUser(username, tokenRequestors);
+
+        mockRefreshTokenService.deleteAllTokensForUser(username);
 
         EasyMock.replay(mockAccessTokenService, mockUserService, mockClientService, mockRefreshTokenService);
 

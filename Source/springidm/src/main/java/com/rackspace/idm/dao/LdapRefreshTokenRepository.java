@@ -30,8 +30,9 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
 
     private static final String TOKEN_FIND_ALL_STRING = "(objectClass=rackspaceToken)";
     private static final String TOKEN_FIND_BY_TOKENSTRING_STRING = "(&(objectClass=rackspaceToken)(o=%s))";
-    private static final String TOKEN_FIND_BY_OWNER_STRING = "(&(objectClass=rackspaceToken)(tokenOwner=%s)(expiration>=%s))";
-    private static final String TOKEN_FIND_BY_OWNER_AND_REQUESTOR_STRING = "(&(objectClass=rackspaceToken)(tokenOwner=%s)(tokenRequestor=%s)(expiration>=%s))";
+    private static final String TOKEN_FIND_BY_OWNER_STRING = "(&(objectClass=rackspaceToken)(tokenOwner=%s))";
+    private static final String TOKEN_FIND_BY_OWNER_AND_REQUESTOR_STRING = "(&(objectClass=rackspaceToken)(tokenOwner=%s)(tokenRequestor=%s))";
+    private static final String TOKEN_FIND_VALID_BY_OWNER_AND_REQUESTOR_STRING = "(&(objectClass=rackspaceToken)(tokenOwner=%s)(tokenRequestor=%s)(expiration>=%s))";
 
     public LdapRefreshTokenRepository(LdapConnectionPools connPools,
         Logger logger) {
@@ -115,27 +116,73 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         getLogger().info("Deleted token - {}", tokenString);
     }
 
-    public void deleteAllTokensForUser(String username,
-        Set<String> tokenRequestors) {
-        if (StringUtils.isBlank(username) || tokenRequestors == null
-            || tokenRequestors.isEmpty()) {
-            getLogger().error("Given parameters are null or empty");
+    public void deleteAllTokensForUser(String username) {
+        if (StringUtils.isBlank(username)) {
+            getLogger().error("Username cannot be blank.");
             throw new IllegalArgumentException(
-                "Given parameters are null or empty");
+                "Username cannot be blank.");
         }
-        getLogger().debug("Deleting refresh token with user {} and requestors {}", 
-            username, tokenRequestors);
+        getLogger().debug("Deleting all refresh tokens for user {}", 
+            username);
         int delCount = 0;
-        DateTime currentTime = new DateTime();
-        for (String requestor : tokenRequestors) {
-            RefreshToken token = this.findTokenForOwner(username,
-                requestor, currentTime);
-            if (token != null) {
-                this.delete(token.getTokenString());
-                delCount++;
-            }
+        
+        SearchResult searchResult = null;
+        try {
+            searchResult = getAppConnPool().search(
+                BASE_DN,
+                SearchScope.ONE,
+                String.format(TOKEN_FIND_BY_OWNER_STRING, username));
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("Error searching for refreshToken for Owner: {} - {}",
+                username, ldapEx);
+            throw new IllegalStateException(ldapEx);
         }
 
+        if (searchResult.getEntryCount() > 0) {      
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                RefreshToken rToken = this.getToken(entry);
+                if (rToken != null) {
+                    this.delete(rToken.getTokenString());
+                    delCount++;
+                }
+            }
+        }
+        
+        getLogger().debug("{} refreshTokens were deleted for user {}", delCount, username);
+    }
+    
+    public void deleteTokenForUserByClientId(String username, String clientId) {
+        if (StringUtils.isBlank(username) || StringUtils.isBlank(clientId)) {
+            getLogger().error("Username and ClientId cannot be blank.");
+            throw new IllegalArgumentException(
+                "Username and ClientId cannot be blank.");
+        }
+        getLogger().debug("Deleting all refresh tokens for user {} and client {}", 
+            username, clientId);
+        int delCount = 0;
+        
+        SearchResult searchResult = null;
+        try {
+            searchResult = getAppConnPool().search(
+                BASE_DN,
+                SearchScope.ONE,
+                String.format(TOKEN_FIND_BY_OWNER_AND_REQUESTOR_STRING, username, clientId));
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("Error searching for refreshToken for Owner: {} - {}",
+                username, ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() > 0) {      
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                RefreshToken rToken = this.getToken(entry);
+                if (rToken != null) {
+                    this.delete(rToken.getTokenString());
+                    delCount++;
+                }
+            }
+        }
+        
         getLogger().debug("{} refreshTokens were deleted for user {}", delCount, username);
     }
 
@@ -215,7 +262,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
             searchResult = getAppConnPool().search(
                 BASE_DN,
                 SearchScope.ONE,
-                String.format(TOKEN_FIND_BY_OWNER_AND_REQUESTOR_STRING, owner,
+                String.format(TOKEN_FIND_VALID_BY_OWNER_AND_REQUESTOR_STRING, owner,
                     requestor, DATE_PARSER.print(validAfter)));
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for refreshToken for Onwer: {} - {}",
@@ -223,14 +270,13 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
             throw new IllegalStateException(ldapEx);
         }
 
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            token = getToken(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error("More than one entry was found for refreshToken for {}",
-                owner);
-            throw new IllegalStateException(
-                "More than one entry was found for this token");
+        if (searchResult.getEntryCount() > 0) {      
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                RefreshToken rToken = this.getToken(entry);
+                if (token == null || rToken.getExpirationTime().isAfter(token.getExpirationTime())) {
+                    token = rToken;
+                }
+            }
         }
         getLogger().debug("Found refreshToken for Owner: {} - {}", owner, token);
 

@@ -145,7 +145,7 @@ public class LdapClientRepositoryTest {
         Client checkClient = repo.findByClientId(newClient.getClientId());
         Assert.assertNotNull(checkClient);
         Assert.assertEquals("DELETE_My_Name", checkClient.getName());
-        cleanUpData();
+        repo.delete(newClient.getClientId());
     }
 
     @Test
@@ -168,23 +168,12 @@ public class LdapClientRepositoryTest {
         try {
             repo.save(newClient);
         } catch (IllegalStateException e) {
+            repo.delete(newClient.getClientId());
             Assert.fail("Could not save the record: " + e.getMessage());
         }
 
         Client changedClient = repo.findByClientId(clientId);
-        Assert.assertEquals(newClient, changedClient);
-
-        // Update only one attribute
-        newClient.setStatus(ClientStatus.ACTIVE);
-
-        try {
-            repo.save(newClient);
-        } catch (IllegalStateException e) {
-            Assert.fail("Could not save the record: " + e.getMessage());
-        }
-
-        changedClient = repo.findByClientId(clientId);
-        Assert.assertEquals(newClient, changedClient);
+        Assert.assertTrue(changedClient.equals(newClient));
 
         repo.delete(newClient.getClientId());
     }
@@ -251,7 +240,7 @@ public class LdapClientRepositoryTest {
                 "DELETE_My_ClientId", "DELETE_My_Permission");
         Assert.assertTrue(checkPermission.getValue().equals("Some Value"));
         repo.deleteDefinedPermission(checkPermission);
-        cleanUpData();
+        repo.delete(testClient.getClientId());
     }
 
     @Test
@@ -269,7 +258,7 @@ public class LdapClientRepositoryTest {
         Assert
             .assertTrue(checkPermission.getValue().equals("Some Other Value"));
         repo.deleteDefinedPermission(checkPermission);
-        cleanUpData();
+        repo.delete(testClient.getClientId());
     }
 
     @Test
@@ -280,7 +269,7 @@ public class LdapClientRepositoryTest {
             .getDefinedPermissionsByClientId("DELETE_My_ClientId");
         Assert.assertTrue(resources.size() >= 1);
         repo.deleteDefinedPermission(testPermission);
-        cleanUpData();
+        repo.delete(testClient.getClientId());
     }
 
     @After

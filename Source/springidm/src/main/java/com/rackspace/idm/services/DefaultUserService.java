@@ -376,7 +376,7 @@ public class DefaultUserService implements UserService {
         }
         tokenDao.deleteAllTokensForOwner(owner, Collections.unmodifiableSet(allClientInums));
 
-        refreshTokenDao.deleteAllTokensForUser(username, Collections.unmodifiableSet(allClientIds));
+        refreshTokenDao.deleteAllTokensForUser(username);
 
         logger.info("Soft Deleted User: {}", username);
     }

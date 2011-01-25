@@ -210,8 +210,7 @@ public class UserServiceTests {
         mockTokenDao.deleteAllTokensForOwner(user.getInum(), allClientInums);
         EasyMock.replay(mockTokenDao);
 
-        mockRefreshTokenDao.deleteAllTokensForUser(user.getUsername(),
-            allClientIds);
+        mockRefreshTokenDao.deleteAllTokensForUser(user.getUsername());
         EasyMock.replay(mockRefreshTokenDao);
 
         userService.softDeleteUser(username);

@@ -149,9 +149,6 @@ public class RefreshTokenRepositoryTest {
 
         String clientId1 = "DELETE_THIS_TOKEN_CLIENT_1";
         String clientId2 = "DELETE_THIS_TOKEN_CLIENT_2";
-        Set<String> allClientIds = new HashSet<String>();
-        allClientIds.add(clientId1);
-        allClientIds.add(clientId2);
 
         RefreshToken newToken1 = createTestTokenInstance();
         newToken1.setTokenString("DELETE_THIS_TOKEN_1");
@@ -163,7 +160,7 @@ public class RefreshTokenRepositoryTest {
         newToken2.setRequestor(clientId2);
         repo.save(newToken2);
 
-        repo.deleteAllTokensForUser(owner, allClientIds);
+        repo.deleteAllTokensForUser(owner);
 
         DateTime validAfter = new DateTime();
         RefreshToken token1 = repo.findTokenForOwner(owner, clientId1,
@@ -177,23 +174,8 @@ public class RefreshTokenRepositoryTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldNotDeleteAllForUserIfEmptyUsername() {
-        String clientId1 = "DELETE_THIS_TOKEN_CLIENT_1";
-        String clientId2 = "DELETE_THIS_TOKEN_CLIENT_2";
-        Set<String> allClientIds = new HashSet<String>();
-        allClientIds.add(clientId1);
-        allClientIds.add(clientId2);
 
-        repo.deleteAllTokensForUser(StringUtils.EMPTY, allClientIds);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldNotDeleteAllForUserIfNullClientList() {
-        repo.deleteAllTokensForUser(owner, null);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldNotDeleteAllForUserIfEmptyClientList() {
-        repo.deleteAllTokensForUser(owner, new HashSet<String>());
+        repo.deleteAllTokensForUser(StringUtils.EMPTY);
     }
 
     @Test

@@ -15,5 +15,7 @@ public interface RefreshTokenService {
 
     void resetTokenExpiration(RefreshToken token);
 
-    void deleteAllTokensForUser(String username, Set<String> tokenRequestors);
+    void deleteAllTokensForUser(String username);
+    
+    void deleteTokenForUserByClientId(String username, String clientId);
 }

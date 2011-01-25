@@ -11,6 +11,8 @@ public interface RefreshTokenDao extends GenericTokenDao<RefreshToken> {
                                    DateTime expiredAfter);
 
     void updateToken(RefreshToken refreshToken);
+    
+    void deleteTokenForUserByClientId(String username, String clientId);
 
-    void deleteAllTokensForUser(String user, Set<String> tokenRequestors);
+    void deleteAllTokensForUser(String username);
 }

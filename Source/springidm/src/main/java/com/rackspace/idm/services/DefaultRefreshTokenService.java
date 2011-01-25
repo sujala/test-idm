@@ -83,9 +83,16 @@ public class DefaultRefreshTokenService implements RefreshTokenService {
         logger.debug("done resetting refresh token expiration: {}", token);
     }
 
-    @Override
-    public void deleteAllTokensForUser(String username, Set<String> tokenRequestors) {
-        refreshTokenDao.deleteAllTokensForUser(username, tokenRequestors);
+    public void deleteAllTokensForUser(String username) {
+        logger.info("Deleting all refresh tokens for user {}", username);
+        refreshTokenDao.deleteAllTokensForUser(username);
+        logger.info("Deleted all refresh tokens for user {}", username);
+    }
+    
+    public void deleteTokenForUserByClientId(String username, String clientId) {
+        logger.info("Deleting all refresh tokens for user {} and client {}", username, clientId);
+        refreshTokenDao.deleteTokenForUserByClientId(username, clientId);
+        logger.info("Deleted all refresh tokens for user {} and client {}", username, clientId);
     }
 
     // private
