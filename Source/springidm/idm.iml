@@ -9,10 +9,6 @@
         <webroots>
           <root url="file://$MODULE_DIR$/src/main/webapp" relative="/" />
         </webroots>
-        <sourceRoots>
-          <root url="file://$MODULE_DIR$/src/main/java" />
-          <root url="file://$MODULE_DIR$/src/main/resources" />
-        </sourceRoots>
       </configuration>
     </facet>
   </component>
@@ -88,6 +84,84 @@
     <orderEntry type="library" name="Maven: javax.validation:validation-api:1.0.0.GA" level="project" />
     <orderEntry type="library" name="Maven: spy:memcached:2.5" level="project" />
     <orderEntry type="library" name="Maven: org.aspectj:aspectjtools:1.6.10" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: eviware:maven-soapui-pro-plugin:3.6.2-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.apache.maven:maven-plugin-api:2.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: wsdl4j:wsdl4j:1.6.2-fixed" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: license4j:license4j:1.3" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jgoodies:looks:2.2.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jgoodies:binding:2.0.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jgoodies:forms:1.0.7" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: opencsv:opencsv:1.8" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: fife:rsyntaxtextarea:1.3.4" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jcalendar:jcalendar:1.3.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: commons-httpclient:commons-httpclient:3.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: commons-cli:commons-cli:1.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: commons-io:commons-io:1.3.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: json:json-lib:2.2.2-jdk15" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: ezmorph:ezmorph:1.0.5" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: xom:xom:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: xerces:xmlParserAPIs:2.6.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: xerces:xercesImpl:2.9.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: xalan:xalan:2.7.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: xml-apis:xml-apis:1.3.04" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jaxen:jaxen:1.1-beta-8" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: dom4j:dom4j:1.6.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jdom:jdom:1.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: l2fprod:l2fprod-common-fontchooser:7.3" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: xmlbeans:xbean:fixed-2.4.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: xmlbeans:xbean_xpath:2.4.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: xmlbeans:xmlpublic:2.4.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: xmlbeans:jsr173:xmlbeans-2.4.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: eviware:soapui-xmlbeans:3.6.2-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: eviware:ext-xmlbeans:1.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: eviware:soap-xmlbeans:1.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: eviware:soapui-coverage-xmlbeans:3.6.2-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: eviware:policy-xmlbeans:1.5" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: eviware:j2ee-xmlbeans:1.4" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: eviware:soapui-pro:3.6.2-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: eviware:soapui:3.6.2-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: saxon:saxon:9.1.0.8j" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: saxon:saxon-dom:9.1.0.8j" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: groovy:groovy-all:1.7.5" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: rhino:js:1.7R2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: xmlunit:xmlunit:1.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: xml-security:xmlsec:1.4.3" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: xalan:serializer:2.7.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jtidy:jtidy:r820" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: net-components:netcomponents:1.3.8a" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: wss4j:wss4j:1.5.8" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: opensaml:opensaml:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jetty:jetty:6.1.22" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jetty:jetty-util:6.1.22" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jetty:servlet-api:2.5-20081211" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jxl:jxl:2.6.12" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: bouncycastle:bcprov-jdk15:143" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: commons-ssl:not-yet-commons-ssl:0.3.11" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: idw:idw:1.6.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jasperreports:jasperreports:3.6.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.lowagie:itext:2.1.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: bouncycastle:bcmail-jdk14:136" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: bouncycastle:bcprov-jdk14:136" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jfree:jcommon:1.0.15" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jfree:jfreechart:1.0.12" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: eclipse:jdtcore:3.1.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jfreechart:jfreechart:1.0.13" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jfreechart:jcommon:1.0.16" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: swingx:swingx:soapui" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: amf:flex-messaging-common:1.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: amf:flex-messaging-core:1.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: amf:flex-messaging-opt:1.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: amf:flex-messaging-proxy:1.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: amf:flex-messaging-remoting:1.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: thoughtworks:xstream:1.3.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: javax.jms:jms:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: hermesjms:hermes:1.14" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: activesoap:jaxb-impl:1.5" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: net.sourceforge.htmlunit:htmlunit:2.7" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: net.sourceforge.htmlunit:htmlunit-core-js:2.7" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: net.sourceforge.nekohtml:nekohtml:1.9.14" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: net.sourceforge.cssparser:cssparser:0.9.5" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.w3c.css:sac:1.3" level="project" />
   </component>
 </module>
 
