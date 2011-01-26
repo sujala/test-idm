@@ -544,28 +544,6 @@
                     </wadlGenerators>
                 </configuration>
             </plugin>
-            <!--
-                        <plugin>
-                            <groupId>eviware</groupId>
-                            <artifactId>maven-soapui-pro-plugin</artifactId>
-                            <version>3.6.2-SNAPSHOT</version>
-                            <executions>
-                                <execution>
-                                    <id>qatest</id>
-                                    <goals>
-                                        <goal>
-                                            integration-test
-                                        </goal>
-                                    </goals>
-                                    <phase>integration-test</phase>
-                                </execution>
-                            </executions>
-                            <configuration>
-                                <projectFile>soapUiProject-idm-dev.xml</projectFile>
-                                <host>http://10.127.7.164:8080/v1.0</host>
-                            </configuration>
-                        </plugin>
-            -->
             <plugin>
                 <groupId>eviware</groupId>
                 <artifactId>maven-soapui-pro-plugin</artifactId>
@@ -575,20 +553,12 @@
                     <junitReport>true</junitReport>
                     <outputFolder>soapui/test-results</outputFolder>
                     <testFailIgnore>false</testFailIgnore>
-                    <!--
-                    <soapuiProperties>
-                        <property>
-                            <name>soapui.home</name>
-                            <value>bin</value>
-                        </property>
-                    </soapuiProperties>
-                    -->
                 </configuration>
                 <executions>
                     <execution>
                         <id>soapUI</id>
-                        <!--Run as part of the test phase in the Maven lifecycle-->
-                        <phase>test</phase>
+                        <!--Run as part of the integration-test phase in the Maven lifecycle-->
+                        <phase>integration-test</phase>
                         <goals>
                             <!--Run the test phase of eviware:maven-soapui-plugin-->
                             <goal>test</goal>
