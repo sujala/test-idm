@@ -535,6 +535,40 @@
           badRequest (<errorcode>400</errorcode>), idmFault (<errorcode>500</errorcode>),
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
       </section>
+      
+      
+      <section>
+          <title>Reset client secret</title>
+          <informaltable rules="all">
+            &LONG_URI_REFHEAD;
+            <tbody>
+              <tr>
+                <td colspan="1"> &POST; </td>
+                <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/secret</td>
+                <td colspan="3">Reset client secret.</td>         
+              </tr>
+            </tbody>
+          </informaltable>
+          <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+          <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+            &NO_REQUEST;
+          <example>     
+            <title>XML Response</title>
+            <programlisting language="xml">
+<xi:include href="../../formattedsamples/client-credentials-response.xml" parse="text"/>
+</programlisting>
+          </example>
+          <example>
+            <title>JSON Response</title>
+            <programlisting language="javascript">
+<xi:include href="../../formattedsamples/client-credentials-response.json" parse="text"/>
+</programlisting>
+          </example>       
+        </section>
     </section>
     <section>
       <title>User Operations</title>
@@ -667,6 +701,102 @@
 <xi:include href="../../formattedsamples/getuser.json" parse="text"/>
 </programlisting>
         </example>
+      </section>
+      <section>
+        <title>Get a User by Mosso ID</title>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &GET; </td>
+              <td colspan="4"
+                >/mosso/<parameter>mossoId</parameter></td>
+              <td colspan="3">Get a user with mossoId. </td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+          (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+          (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+          serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+        <example>
+          <title>XML User Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/getuser-with-mosso-id.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON User Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/getuser-with-mosso-id.json" parse="text"/>
+</programlisting>
+        </example>       
+      </section>
+      <section>
+        <title>Get a User by NAST ID</title>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &GET; </td>
+              <td colspan="4"
+                >/nast/<parameter>nastId</parameter></td>
+              <td colspan="3">Get a user with a nastId. </td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+          (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+          (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+          serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+        <example>
+          <title>XML User Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/getuser-with-nast-id.xml" parse="text"/>
+          </programlisting>
+        </example>
+        <example>
+          <title>JSON User Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/getuser-with-nast-id.json" parse="text"/>
+</programlisting>
+        </example>       
+      </section>
+      <section>
+        <title>Get a User by UserName</title>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &GET; </td>
+              <td colspan="4"
+                >/users/<parameter>username</parameter></td>
+              <td colspan="3">Get a user with a username. </td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+          (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+          (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+          serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+        <example>
+          <title>XML User Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/getuser-with-username.xml" parse="text"/>
+          </programlisting>
+        </example>
+        <example>
+          <title>JSON User Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/getuser-with-username.json" parse="text"/>
+</programlisting>
+        </example>       
       </section>
       <section>
         <title>Update a User</title>
@@ -1215,6 +1345,129 @@
       </section>
     </section>
     <section>
+      <title> Authentication Operations </title>
+      
+      <section>
+        <title>Authenticate a user by Mosso ID</title>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &POST; </td>
+              <td colspan="4"
+                >/auth/mosso</td>
+              <td colspan="3">Authenticate a user by mosso Id. Pass in the mosso credentials shown below.</td>         
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+          (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+          (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+          serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        
+        <example>
+          <title>Mosso Credentials</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/mossoCredentials.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>     
+          <title>XML Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/mosso-id-authentication-response.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/mosso-id-authentication-response.json" parse="text"/>
+</programlisting>
+        </example>       
+      </section>
+      
+      <section>
+        <title>Authenticate a user by NAST ID</title>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &POST; </td>
+              <td colspan="4"
+                >/auth/nast</td>
+              <td colspan="3">Authenticate a user by nast Id. Pass in the nast credentials shown below.</td>         
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+          (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+          (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+          serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        
+        <example>
+          <title>NAST Credentials</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/nastCredentials.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>     
+          <title>XML Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/mosso-id-authentication-response.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/mosso-id-authentication-response.json" parse="text"/>
+</programlisting>
+        </example>       
+      </section>
+      
+      <section>
+        <title>Authenticate a user by Username</title>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &POST; </td>
+              <td colspan="4"
+                >/auth</td>
+              <td colspan="3">Authenticate a user by username. Pass in the username credentials shown below.</td>         
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+          (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+          (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+          serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        
+        <example>
+          <title>User Data</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/usernameCredentials.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>     
+          <title>XML Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/mosso-id-authentication-response.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/mosso-id-authentication-response.json" parse="text"/>
+</programlisting>
+        </example>       
+      </section>    
+    </section>
+    
+    
+    
+    <section>
       <title>Customer Application Operations </title>
       <section>
         <title>Add a Customer Application</title>
@@ -1685,6 +1938,41 @@
 </programlisting>
         </example>
       </section>
+ 
+      <section>
+        <title>Admin Operations </title>
+        <section>
+          <title>Get Base URLs</title>
+          <informaltable rules="all">
+            &LONG_URI_REFHEAD;
+            <tbody>
+              <tr>
+                <td colspan="1"> &GET; </td>
+                <td colspan="4">/baseurls</td>
+                <td colspan="3">Get base urls</td>
+              </tr>
+            </tbody>
+          </informaltable>
+          <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+          <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), idmFault
+            (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>)</simpara>
+          <example>
+            <title>XML Get BaseURLs Response</title>
+            <programlisting language="xml">
+<xi:include href="../../formattedsamples/base_urls_response.xml" parse="text"/>
+</programlisting>
+          </example>
+          <example>
+            <title>JSON Get Password Rules Response</title>
+            <programlisting language="javascript">
+<xi:include href="../../formattedsamples/base_urls_response.json" parse="text"/>
+</programlisting>
+          </example>
+        </section>
+      </section>
     </section>
+    
   </chapter>
 </book>
