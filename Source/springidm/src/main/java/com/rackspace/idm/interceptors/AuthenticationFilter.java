@@ -64,11 +64,6 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             return request;
         }
 
-        if ("PUT".equals(method)
-                && PASSWORD_CHANGE_PATTERN.matcher(path).matches()) {
-            return request;
-        }
-
         if ("POST".equals(method) && "token".equals(path)) {
             return request;
         }
