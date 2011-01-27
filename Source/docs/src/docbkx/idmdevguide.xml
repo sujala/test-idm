@@ -1938,8 +1938,9 @@
 </programlisting>
         </example>
       </section>
- 
-      <section>
+    </section>
+    
+    <section>
         <title>Admin Operations </title>
         <section>
           <title>Get Base URLs</title>
@@ -1971,8 +1972,224 @@
 </programlisting>
           </example>
         </section>
-      </section>
+      
+        <section>
+          <title>Add Base URL</title>
+          <informaltable rules="all">
+            &LONG_URI_REFHEAD;
+            <tbody>
+              <tr>
+                <td colspan="1"> &POST; </td>
+                <td colspan="4">/baseurls</td>
+                <td colspan="3">Add base urls. Pass the base url data (shown below).</td>
+              </tr>
+            </tbody>
+          </informaltable>
+          <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+          <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), idmFault
+            (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>)</simpara>
+          <example>
+            <title>Data to be passed in</title>
+            <programlisting language="xml">
+<xi:include href="../../formattedsamples/add-baseurl-input.xml" parse="text"/>
+</programlisting>
+          </example>
+        </section>
+        
+        <section>
+          <title>Get a Base URL</title>
+          <informaltable rules="all">
+            &LONG_URI_REFHEAD;
+            <tbody>
+              <tr>
+                <td colspan="1"> &GET; </td>
+                <td colspan="4">/baseurls/<parameter>baseUrlId</parameter></td>
+                <td colspan="3">Get a base url</td>
+              </tr>
+            </tbody>
+          </informaltable>
+          <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+          <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), idmFault
+            (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>)</simpara>
+          <example>
+            <title>XML Response</title>
+            <programlisting language="xml">
+                  <xi:include href="../../formattedsamples/base_url_response.xml" parse="text"/>
+            </programlisting>
+          </example>
+          <example>
+            <title>JSON Response</title>
+            <programlisting language="xml">
+                  <xi:include href="../../formattedsamples/base_url_response.json" parse="text"/>
+            </programlisting>
+          </example>
+        </section>
+        
+        <section>
+          <title>Delete a Base URL</title>
+          <informaltable rules="all">
+            &LONG_URI_REFHEAD;
+            <tbody>
+              <tr>
+                <td colspan="1"> &DELETE; </td>
+                <td colspan="4">/baseurls/<parameter>baseUrlId</parameter></td>
+                <td colspan="3">Delete a base url</td>
+              </tr>
+            </tbody>
+          </informaltable>
+          <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+          <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), idmFault
+            (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>)</simpara>
+        </section>
+        
+        
+        <section>
+          <title>Get Base Url Refs</title>
+          <informaltable rules="all">
+            &LONG_URI_REFHEAD;
+            <tbody>
+              <tr>
+                <td colspan="1"> &GET; </td>
+                <td colspan="4">/users/<parameter>username</parameter>/baseurlrefs</td>
+              </tr>
+            </tbody>
+          </informaltable>
+          <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+          <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), idmFault
+            (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>)</simpara>
+          <example>
+            <title>XML response</title>
+            <programlisting language="xml">
+<xi:include href="../../formattedsamples/baseURLRefs.xml" parse="text"/>
+</programlisting>
+          </example>
+          <example>
+            <title>JSON response</title>
+            <programlisting language="xml">
+<xi:include href="../../formattedsamples/baseURLRefs.json" parse="text"/>
+</programlisting>
+          </example>
+        </section>
+        
+        <section>
+          <title>Add Base URL Ref</title>
+          <informaltable rules="all">
+            &LONG_URI_REFHEAD;
+            <tbody>
+              <tr>
+                <td colspan="1"> &PUT; </td>
+                <td colspan="4">/users/<parameter>username</parameter>/baseurlrefs</td>
+                <td colspan="3">Add base url Ref. Pass the base url ref data (shown below).</td>
+              </tr>
+            </tbody>
+          </informaltable>
+          <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+          <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), idmFault
+            (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>)</simpara>
+          <example>
+            <title>Data to be passed in</title>
+            <programlisting language="xml">
+<xi:include href="../../formattedsamples/add-baseurlRef-input.xml" parse="text"/>
+</programlisting>
+          </example>
+        </section>
+        
+        <section>
+          <title>Get Base URL Ref</title>
+          <informaltable rules="all">
+            &LONG_URI_REFHEAD;
+            <tbody>
+              <tr>
+                <td colspan="1"> &GET; </td>
+                <td colspan="4">/users/<parameter>username</parameter>/baseurlrefs/<parameter>baseUrlId</parameter></td>
+                <td colspan="3">Get a base url.</td>
+              </tr>
+            </tbody>
+          </informaltable>
+          <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+          <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), idmFault
+            (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>)</simpara>
+          <example>
+            <title>XML Response</title>
+            <programlisting language="xml">
+<xi:include href="../../formattedsamples/base_url_ref_response.xml" parse="text"/>
+</programlisting>
+          </example>
+          
+          <example>
+            <title>JSON Response</title>
+            <programlisting language="xml">
+<xi:include href="../../formattedsamples/base_url_ref_response.json" parse="text"/>
+</programlisting>
+          </example>
+        
+        </section>
+        
+        <section>
+          <title>Delete a Base URL Ref</title>
+          <informaltable rules="all">
+            &LONG_URI_REFHEAD;
+            <tbody>
+              <tr>
+                <td colspan="1"> &DELETE; </td>
+                <td colspan="4">/users/<parameter>username</parameter>/baseurls/<parameter>baseUrlId</parameter></td>
+                <td colspan="3">Delete a base url ref</td>
+              </tr>
+            </tbody>
+          </informaltable>
+          <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+          <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), idmFault
+            (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>)</simpara>
+        </section>        
+      
+        <section>
+          <title>Get Service catalog for user</title>
+          <informaltable rules="all">
+            &LONG_URI_REFHEAD;
+            <tbody>
+              <tr>
+                <td colspan="1"> &GET; </td>
+                <td colspan="4">/users/<parameter>username</parameter>/servicecatalog</td>
+                <td colspan="3">Get Service Catalog for users.</td>
+              </tr>
+            </tbody>
+          </informaltable>
+          <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+          <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), idmFault
+            (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>)</simpara>
+          <example>
+            <title>XML Response</title>
+            <programlisting language="xml">
+<xi:include href="../../formattedsamples/service-catalog-response.xml" parse="text"/>
+</programlisting>
+          </example>
+          
+          <example>
+            <title>JSON Response</title>
+            <programlisting language="xml">
+<xi:include href="../../formattedsamples/service-catalog-response.json" parse="text"/>
+</programlisting>
+          </example>
+          
+        </section>
+          
+      
     </section>
-    
   </chapter>
 </book>
