@@ -2057,7 +2057,7 @@
               <tr>
                 <td colspan="1"> &GET; </td>
                 <td colspan="4">/users/<parameter>username</parameter>/baseurlrefs</td>
-                <td colspan="3">Gets a base url</td>
+                <td colspan="3">Gets a base url reference</td>
               </tr>
             </tbody>
           </informaltable>
