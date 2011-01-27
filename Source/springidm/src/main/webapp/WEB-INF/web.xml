@@ -30,7 +30,6 @@
 			<param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
 			<param-value>
 				com.rackspace.idm.interceptors.AuthenticationFilter;
-				com.rackspace.idm.interceptors.PasswordChangeFilter;
 				com.sun.jersey.api.container.filter.GZIPContentEncodingFilter
 			</param-value>
 		</init-param>

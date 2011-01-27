@@ -48,7 +48,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     public boolean authorizeUser(AccessToken token, String customerId,
                                  String username) {
 
-        if (token.isClientToken()) {
+        if (token.isClientToken() || token.isRestrictedToSetPassword()) {
             return false;
         }
 
