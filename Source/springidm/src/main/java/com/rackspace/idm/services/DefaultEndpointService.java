@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import com.rackspace.idm.dao.EndpointDao;
 import com.rackspace.idm.entities.CloudBaseUrl;
 import com.rackspace.idm.entities.CloudEndpoint;
+import com.rackspace.idm.exceptions.BaseUrlConflictException;
+import com.rackspace.idm.exceptions.DuplicateException;
 
 public class DefaultEndpointService implements EndpointService {
 
@@ -19,8 +21,16 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     public void addBaseUrl(CloudBaseUrl baseUrl) {
+        
+        CloudBaseUrl exists = this.endpointDao.getBaseUrlById(baseUrl.getBaseUrlId());
+        
+        if (exists != null) {
+            String errMsg = String.format("An Endpoint with Id=%s already exists", baseUrl.getBaseUrlId());
+            logger.warn(errMsg);
+            throw new BaseUrlConflictException(errMsg);
+        }
+        
         this.endpointDao.addBaseUrl(baseUrl);
-
     }
 
     public void addBaseUrlToUser(int baseUrlId, boolean def, String username) {

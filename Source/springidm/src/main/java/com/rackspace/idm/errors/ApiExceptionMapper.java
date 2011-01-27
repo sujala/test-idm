@@ -40,6 +40,9 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         if (e instanceof PermissionConflictException) {
             return toResponse(new PermissionIdConflict(), e, 409);
         }
+        if (e instanceof BaseUrlConflictException) {
+            return toResponse(new BaseUrlIdConflict(), e, 409);
+        }
         if (e instanceof CustomerConflictException) {
             return toResponse(new CustomerIdConflict(), e, 409);
         }

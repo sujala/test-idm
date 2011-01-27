@@ -199,18 +199,7 @@ public class BaseUrlsResource {
             throw new NotFoundException(errMsg);
         }
 
-        String location = uriInfo.getPath()
-            + String.valueOf(url.getBaseUrlId());
-
-        URI uri = null;
-        try {
-            uri = new URI(location);
-        } catch (URISyntaxException e) {
-            logger.error("Client Location URI error");
-        }
-
-        return Response.ok(this.endpointConverter.toBaseUrl(url)).location(uri)
-            .status(HttpServletResponse.SC_CREATED).build();
+        return Response.ok(this.endpointConverter.toBaseUrl(url)).build();
     }
 
     /**

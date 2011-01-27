@@ -293,6 +293,26 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+	<element name="baseUrlIdConflict" type="idm:BaseUrlIdConflictFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					A baseUrl with that id already exists.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../samples/baseurl_conflict.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/baseurl_conflict.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
 	<element name="serviceUnavailable" type="idm:ServiceUnavailableFault">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -329,15 +349,14 @@
 							href="../samples/passwordvalidationfault.xml" />
 					</xsdxt:sample>
 					<xsdxt:sample>
-						<xsdxt:code type="application/json"
-							href="../samples/.json" />
+						<xsdxt:code type="application/json" href="../samples/.json" />
 					</xsdxt:sample>
 				</xsdxt:samples>
 			</xsd:appinfo>
 		</annotation>
 	</element>
 
-    <element name="stalePasswordFault" type="idm:StalePasswordFault">
+	<element name="stalePasswordFault" type="idm:StalePasswordFault">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
 				xmlns="http://www.w3.org/1999/xhtml">
@@ -348,12 +367,10 @@
 			<xsd:appinfo>
 				<xsdxt:samples>
 					<xsdxt:sample>
-						<xsdxt:code type="application/xml"
-							href="../samples/statlepasswordfault.xml" />
+						<xsdxt:code type="application/xml" href="../samples/statlepasswordfault.xml" />
 					</xsdxt:sample>
 					<xsdxt:sample>
-						<xsdxt:code type="application/json"
-							href="../samples/stalepasswordfault.json" />
+						<xsdxt:code type="application/json" href="../samples/stalepasswordfault.json" />
 					</xsdxt:sample>
 				</xsdxt:samples>
 			</xsd:appinfo>
@@ -381,28 +398,27 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
-	
-	   <element name="serverError" type="idm:ServerErrorFault">
-        <annotation>
-            <xsd:documentation xml:lang="EN"
-                xmlns="http://www.w3.org/1999/xhtml">
-                <p>
-                    An erorr occured on the server.
+
+	<element name="serverError" type="idm:ServerErrorFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					An erorr occured on the server.
              </p>
-            </xsd:documentation>
-            <xsd:appinfo>
-                <xsdxt:samples>
-                    <xsdxt:sample>
-                        <xsdxt:code type="application/xml" href="../samples/servererror.xml" />
-                    </xsdxt:sample>
-                    <xsdxt:sample>
-                        <xsdxt:code type="application/json"
-                            href="../samples/servererror.json" />
-                    </xsdxt:sample>
-                </xsdxt:samples>
-            </xsd:appinfo>
-        </annotation>
-    </element>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../samples/servererror.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/servererror.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
 
 	<!-- Complex Types -->
 	<complexType name="IdmFault">
@@ -517,6 +533,13 @@
 		</complexContent>
 	</complexType>
 
+	<complexType name="BaseUrlIdConflictFault">
+		<complexContent>
+			<extension base="idm:IdmFault">
+			</extension>
+		</complexContent>
+	</complexType>
+
 	<complexType name="ClientnameConflictFault">
 		<complexContent>
 			<extension base="idm:IdmFault">
@@ -537,7 +560,7 @@
 		</complexContent>
 	</complexType>
 
-    <complexType name="StalePasswordFault">
+	<complexType name="StalePasswordFault">
 		<complexContent>
 			<extension base="idm:IdmFault"></extension>
 		</complexContent>
