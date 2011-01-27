@@ -12,6 +12,7 @@ import org.junit.Test;
 import com.rackspace.idm.dao.EndpointDao;
 import com.rackspace.idm.entities.CloudBaseUrl;
 import com.rackspace.idm.entities.CloudEndpoint;
+import com.rackspace.idm.exceptions.BaseUrlConflictException;
 import com.rackspace.idm.test.stub.StubLogger;
 
 public class EndpointServiceTests {
@@ -73,12 +74,21 @@ public class EndpointServiceTests {
     
     @Test
     public void shouldAddBaseUrl() {
+        EasyMock.expect(mockEndpointDao.getBaseUrlById(baseUrlId)).andReturn(null);
         mockEndpointDao.addBaseUrl(baseUrl);
         EasyMock.replay(mockEndpointDao);
         
         endpointService.addBaseUrl(baseUrl);
         
         EasyMock.verify(mockEndpointDao);
+    }
+    
+    @Test(expected = BaseUrlConflictException.class)
+    public void shouldNotAddBaseUrlForIdThatAlreadyExists() {
+        EasyMock.expect(mockEndpointDao.getBaseUrlById(baseUrlId)).andReturn(baseUrl);
+        EasyMock.replay(mockEndpointDao);
+        
+        endpointService.addBaseUrl(baseUrl);
     }
     
     @Test
