@@ -5,21 +5,21 @@ import java.io.IOException;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 
-import com.rackspace.idm.faults.BadRequest;
-import com.rackspace.idm.faults.CustomerIdConflict;
-import com.rackspace.idm.faults.EmailConflict;
-import com.rackspace.idm.faults.Forbidden;
-import com.rackspace.idm.faults.IdmFault;
-import com.rackspace.idm.faults.ItemNotFound;
-import com.rackspace.idm.faults.PasswordValidationFault;
-import com.rackspace.idm.faults.ServiceUnavailable;
-import com.rackspace.idm.faults.Unauthorized;
-import com.rackspace.idm.faults.UserDisabled;
-import com.rackspace.idm.faults.UsernameConflict;
+import com.rackspace.idm.jaxb.BadRequest;
+import com.rackspace.idm.jaxb.CustomerIdConflict;
+import com.rackspace.idm.jaxb.EmailConflict;
+import com.rackspace.idm.jaxb.Forbidden;
+import com.rackspace.idm.jaxb.IdmFault;
+import com.rackspace.idm.jaxb.ItemNotFound;
+import com.rackspace.idm.jaxb.PasswordValidationFault;
+import com.rackspace.idm.jaxb.ServiceUnavailable;
+import com.rackspace.idm.jaxb.Unauthorized;
+import com.rackspace.idm.jaxb.UserDisabled;
+import com.rackspace.idm.jaxb.UsernameConflict;
 
 public class FaultSampleGenerator extends SampleGenerator {
     private FaultSampleGenerator() {
-        super();
+        super(); 
     }
 
     public static void main(String[] args) throws JAXBException, IOException {

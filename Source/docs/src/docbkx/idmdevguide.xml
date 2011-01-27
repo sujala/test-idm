@@ -57,9 +57,9 @@
       <year>2010</year>
       <holder>Rackspace Hosting, Inc.</holder>
     </copyright>
-    <releaseinfo>API v1.0.2010.10</releaseinfo>
+    <releaseinfo>API v1.0.2010.12</releaseinfo>
     <productname>Identity Management (IdM)</productname>
-    <pubdate>12/1/10</pubdate>
+    <pubdate>1/27/11</pubdate>
     <abstract>
       <para> This document is intended for software developers interested in developing applications
         which utilizes Customer Identity Management System as the authentication engine. It includes
@@ -2057,6 +2057,7 @@
               <tr>
                 <td colspan="1"> &GET; </td>
                 <td colspan="4">/users/<parameter>username</parameter>/baseurlrefs</td>
+                <td colspan="3">Gets a base url</td>
               </tr>
             </tbody>
           </informaltable>
