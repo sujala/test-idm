@@ -235,6 +235,17 @@ public class BaseUrlsResource {
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
+        
+        CloudBaseUrl url = this.endpointService.getBaseUrlById(baseUrlId);
+        
+        if (url == null) {
+            String errMsg = String.format("BaseUrlId %s not found",
+                baseUrlId);
+            logger.error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
+        this.endpointService.deleteBaseUrl(baseUrlId);
 
         return Response.noContent().build();
     }
