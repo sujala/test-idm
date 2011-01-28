@@ -28,7 +28,8 @@ public class DefaultUserService implements UserService {
 
     private static final String PASSWORD_RECOVERY_URL = "%s?username=%s&token=%s";
     private static final String NEWLINE = System.getProperty("line.separator");
-    private static final Pattern emailPattern = Pattern.compile(RegexPatterns.EMAIL_ADDRESS);
+    private static final Pattern emailPattern = Pattern
+        .compile(RegexPatterns.EMAIL_ADDRESS);
 
     private UserDao userDao;
     private AuthDao authDao;
@@ -42,9 +43,11 @@ public class DefaultUserService implements UserService {
     private Logger logger;
     private boolean isTrustedServer;
 
-    public DefaultUserService(UserDao userDao, AuthDao rackerDao, CustomerDao customerDao, AccessTokenDao tokenDao,
-                              RefreshTokenDao refreshTokenDao, ClientDao clientDao, EmailService emailService,
-                              RoleService roleService, boolean isTrusted, Logger logger) {
+    public DefaultUserService(UserDao userDao, AuthDao rackerDao,
+        CustomerDao customerDao, AccessTokenDao tokenDao,
+        RefreshTokenDao refreshTokenDao, ClientDao clientDao,
+        EmailService emailService, RoleService roleService, boolean isTrusted,
+        Logger logger) {
 
         this.userDao = userDao;
         this.authDao = rackerDao;
@@ -66,14 +69,17 @@ public class DefaultUserService implements UserService {
         boolean isUsernameUnique = userDao.isUsernameUnique(user.getUsername());
 
         if (!isUsernameUnique) {
-            logger.warn("Couldn't add user {} because username already taken", user);
-            throw new DuplicateException(String.format("Username %s already exists", user.getUsername()));
+            logger.warn("Couldn't add user {} because username already taken",
+                user);
+            throw new DuplicateException(String.format(
+                "Username %s already exists", user.getUsername()));
         }
 
         Customer customer = customerDao.findByCustomerId(customerId);
 
         if (customer == null) {
-            logger.warn("Couldn't add user {} because customer doesn't exist", user);
+            logger.warn("Couldn't add user {} because customer doesn't exist",
+                user);
             throw new IllegalStateException("Customer doesn't exist");
         }
 
@@ -87,72 +93,85 @@ public class DefaultUserService implements UserService {
         logger.info("Added User: {}", user);
     }
 
-    @Override
-    public UserAuthenticationResult authenticate(String username, String password) {
-        if (StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
-            throw new IllegalArgumentException("username or password parameter is null or blank.");
-        }
-
+    public UserAuthenticationResult authenticate(String username,
+        String password) {
         logger.debug("Authenticating User: {}", username);
-        boolean authenticated;
+
         if (isTrustedServer) {
-            authenticated = authDao.authenticate(username, password);
-            logger.debug("Authenticated Racker {} : {}", username, authenticated);
-            return new UserAuthenticationResult(new BaseUser(username), authenticated);
+            boolean authenticated = authDao.authenticate(username, password);
+            logger.debug("Authenticated Racker {} : {}", username,
+                authenticated);
+            return new UserAuthenticationResult(new BaseUser(username),
+                authenticated);
         }
 
-        User user = userDao.findByUsername(username);
-        if (user == null) {
-            logger.debug("User {} not found.", username);
-            return new UserAuthenticationResult(null, false);
-        }
+        UserAuthenticationResult result = userDao.authenticate(username,
+            password);
 
-        if (!UserStatus.ACTIVE.equals(user.getStatus())) {
-            logger.debug("User {} is not active: ", username);
-            return new UserAuthenticationResult(user, false);
+        if (result.isAuthenticated()) {
+            List<Role> roles = this.roleService.getRolesForUser(result
+                .getUser().getUsername());
+            BaseUser user = new BaseUser(result.getUser().getUsername(), result
+                .getUser().getCustomerId(), roles);
+            result = new UserAuthenticationResult(user,
+                result.isAuthenticated());
         }
-
-        authenticated = userDao.bindUser(username, password);
-        if (authenticated) {
-           user.setRoles(this.roleService.getRolesForUser(user.getUsername()));
-        }
-        logger.debug("Authenticated User: {} : {}", username, authenticated);
-        return new UserAuthenticationResult(user, authenticated);
+        logger.debug("Authenticated User: {} : {}", username, result);
+        return result;
     }
 
-    public UserAuthenticationResult authenticateWithApiKey(String username, String apiKey) {
+    public UserAuthenticationResult authenticateWithApiKey(String username,
+        String apiKey) {
         logger.debug("Authenticating User: {} by API Key", username);
-        UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(username, apiKey);
+        UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(
+            username, apiKey);
         if (authenticated.isAuthenticated()) {
-            List<Role> roles = this.roleService.getRolesForUser(authenticated.getUser().getUsername());
-            BaseUser user = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser().getCustomerId(), roles);
-            authenticated = new UserAuthenticationResult(user, authenticated.isAuthenticated()); 
+            List<Role> roles = this.roleService.getRolesForUser(authenticated
+                .getUser().getUsername());
+            BaseUser user = new BaseUser(authenticated.getUser().getUsername(),
+                authenticated.getUser().getCustomerId(), roles);
+            authenticated = new UserAuthenticationResult(user,
+                authenticated.isAuthenticated());
         }
-        logger.debug("Authenticated User: {} by API Key - {}", username, authenticated);
+        logger.debug("Authenticated User: {} by API Key - {}", username,
+            authenticated);
         return authenticated;
     }
 
-    public UserAuthenticationResult authenticateWithNastIdAndApiKey(String nastId, String apiKey) {
+    public UserAuthenticationResult authenticateWithMossoIdAndApiKey(
+        int mossoId, String apiKey) {
+        logger
+            .debug("Authenticating User with MossoId {} and Api Key", mossoId);
+        UserAuthenticationResult authenticated = userDao
+            .authenticateByMossoIdAndAPIKey(mossoId, apiKey);
+        if (authenticated.isAuthenticated()) {
+            List<Role> roles = this.roleService.getRolesForUser(authenticated
+                .getUser().getUsername());
+            BaseUser user = new BaseUser(authenticated.getUser().getUsername(),
+                authenticated.getUser().getCustomerId(), roles);
+            authenticated = new UserAuthenticationResult(user,
+                authenticated.isAuthenticated());
+        }
+        logger.debug("Authenticated User with MossoId {} and API Key - {}",
+            mossoId, authenticated);
+        return authenticated;
+    }
+
+    public UserAuthenticationResult authenticateWithNastIdAndApiKey(
+        String nastId, String apiKey) {
         logger.debug("Authenticating User with NastId {} and API Key", nastId);
-        UserAuthenticationResult authenticated = userDao.authenticateByNastIdAndAPIKey(nastId, apiKey);
+        UserAuthenticationResult authenticated = userDao
+            .authenticateByNastIdAndAPIKey(nastId, apiKey);
         if (authenticated.isAuthenticated()) {
-            List<Role> roles = this.roleService.getRolesForUser(authenticated.getUser().getUsername());
-            BaseUser user = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser().getCustomerId(), roles);
-            authenticated = new UserAuthenticationResult(user, authenticated.isAuthenticated()); 
+            List<Role> roles = this.roleService.getRolesForUser(authenticated
+                .getUser().getUsername());
+            BaseUser user = new BaseUser(authenticated.getUser().getUsername(),
+                authenticated.getUser().getCustomerId(), roles);
+            authenticated = new UserAuthenticationResult(user,
+                authenticated.isAuthenticated());
         }
-        logger.debug("Authenticated User with NastId {} and API Key - {}", nastId, authenticated);
-        return authenticated;
-    }
-
-    public UserAuthenticationResult authenticateWithMossoIdAndApiKey(int mossoId, String apiKey) {
-        logger.debug("Authenticating User with MossoId {} and Api Key", mossoId);
-        UserAuthenticationResult authenticated = userDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey);
-        if (authenticated.isAuthenticated()) {
-            List<Role> roles = this.roleService.getRolesForUser(authenticated.getUser().getUsername());
-            BaseUser user = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser().getCustomerId(), roles);
-            authenticated = new UserAuthenticationResult(user, authenticated.isAuthenticated()); 
-        }
-        logger.debug("Authenticated User with MossoId {} and API Key - {}", mossoId, authenticated);
+        logger.debug("Authenticated User with NastId {} and API Key - {}",
+            nastId, authenticated);
         return authenticated;
     }
 
@@ -160,6 +179,15 @@ public class DefaultUserService implements UserService {
         logger.info("Deleting User: {}", username);
         this.userDao.delete(username);
         logger.info("Deleted User: {}", username);
+    }
+
+    public String generateApiKey() {
+        try {
+            return HashHelper.getRandomSha1();
+        } catch (NoSuchAlgorithmException e) {
+            throw new UnsupportedOperationException(
+                "The JVM does not support the algorithm needed.", e);
+        }
     }
 
     public Users getByCustomerId(String customerId, int offset, int limit) {
@@ -185,6 +213,20 @@ public class DefaultUserService implements UserService {
         return users;
     }
 
+    public User getSoftDeletedUser(String customerId, String username) {
+
+        logger.debug("Getting User: {} - {}", customerId, username);
+
+        Map<String, String> userStatusMap = new HashMap<String, String>();
+        userStatusMap.put(GlobalConstants.ATTR_SOFT_DELETED, "TRUE");
+
+        User user = userDao.findUser(customerId, username, userStatusMap);
+
+        logger.debug("Got User: {}", user);
+
+        return user;
+    }
+
     public User getUser(String username) {
         logger.debug("Getting User: {}", username);
         User user = userDao.findByUsername(username);
@@ -204,12 +246,13 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-    public User getUserByNastId(String nastId) {
-        logger.debug("Getting User: {}", nastId);
-        User user = userDao.findByNastId(nastId);
-        if (user != null) {
-            user.setRoles(roleService.getRolesForUser(user.getUsername()));
+    public User getUser(String customerId, String username) {
+        logger.debug("Getting User: {} - {}", customerId, username);
+        User user = userDao.findUser(customerId, username);
+        if (user == null) {
+            return null;
         }
+        user.setRoles(roleService.getRolesForUser(username));
         logger.debug("Got User: {}", user);
         return user;
     }
@@ -224,29 +267,18 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-    public User getUser(String customerId, String username) {
-        logger.debug("Getting User: {} - {}", customerId, username);
-        User user = userDao.findUser(customerId, username);
-        if (user == null) {
-            return null;
+    public User getUserByNastId(String nastId) {
+        logger.debug("Getting User: {}", nastId);
+        User user = userDao.findByNastId(nastId);
+        if (user != null) {
+            user.setRoles(roleService.getRolesForUser(user.getUsername()));
         }
-        user.setRoles(roleService.getRolesForUser(username));
         logger.debug("Got User: {}", user);
         return user;
     }
 
-    public User getSoftDeletedUser(String customerId, String username) {
-
-        logger.debug("Getting User: {} - {}", customerId, username);
-
-        Map<String, String> userStatusMap = new HashMap<String, String>();
-        userStatusMap.put(GlobalConstants.ATTR_SOFT_DELETED, "TRUE");
-
-        User user = userDao.findUser(customerId, username, userStatusMap);
-
-        logger.debug("Got User: {}", user);
-
-        return user;
+    public boolean isUsernameUnique(String username) {
+        return userDao.isUsernameUnique(username);
     }
 
     public void restoreSoftDeletedUser(User user) {
@@ -256,11 +288,12 @@ public class DefaultUserService implements UserService {
         Map<String, String> userStatusMap = new HashMap<String, String>();
         userStatusMap.put(GlobalConstants.ATTR_SOFT_DELETED, "TRUE");
         this.userDao.saveRestoredUser(user, userStatusMap);
-        logger.info("Restoring Soft Deleted User done.: {}", user.getUsername());
+        logger
+            .info("Restoring Soft Deleted User done.: {}", user.getUsername());
     }
 
-    public void sendRecoveryEmail(String username, String userEmail, PasswordRecovery recoveryParam,
-                                  String tokenString) {
+    public void sendRecoveryEmail(String username, String userEmail,
+        PasswordRecovery recoveryParam, String tokenString) {
         logger.debug("Sending password recovery email for User: {}", username);
 
         // validate from address
@@ -291,12 +324,15 @@ public class DefaultUserService implements UserService {
         List<String> recipients = new ArrayList<String>();
         recipients.add(userEmail);
 
-        String link = String.format(PASSWORD_RECOVERY_URL, recoveryParam.getCallbackUrl(), username, tokenString);
+        String link = String.format(PASSWORD_RECOVERY_URL,
+            recoveryParam.getCallbackUrl(), username, tokenString);
         String message = getEmailMessageBody(link, recoveryParam);
         try {
-            emailService.sendEmail(recipients, recoveryParam.getFrom(), recoveryParam.getSubject(), message);
+            emailService.sendEmail(recipients, recoveryParam.getFrom(),
+                recoveryParam.getSubject(), message);
         } catch (EmailException e) {
-            logger.error("Could not send password recovery email for " + username, e);
+            logger.error("Could not send password recovery email for "
+                + username, e);
             throw new IllegalStateException("Could not send email!", e);
         }
 
@@ -304,8 +340,79 @@ public class DefaultUserService implements UserService {
 
     }
 
-    private String getEmailMessageBody(String recoveryUrl, PasswordRecovery recoveryParam) {
-        String message = String.format("Here's your recovery link: %s", recoveryUrl);
+    public void softDeleteUser(String username) {
+        logger.info("Soft Deleting User: {}", username);
+        User user = this.userDao.findByUsername(username);
+        user.setSoftDeleted(true);
+        this.userDao.save(user);
+
+        // revoke user's tokens
+        String owner = user.getInum();
+        Set<String> allClientInums = new HashSet<String>();
+        Set<String> allClientIds = new HashSet<String>();
+
+        for (Client client : clientDao.findAll()) {
+            allClientInums.add(client.getInum());
+            allClientIds.add(client.getClientId());
+        }
+        tokenDao.deleteAllTokensForOwner(owner,
+            Collections.unmodifiableSet(allClientInums));
+
+        refreshTokenDao.deleteAllTokensForUser(username);
+
+        logger.info("Soft Deleted User: {}", username);
+    }
+
+    public void updateUser(User user) {
+        logger.info("Updating User: {}", user);
+        this.userDao.save(user);
+        logger.info("Updated User: {}", user);
+    }
+
+    public void updateUserStatus(User user, String statusStr) {
+
+        UserStatus status = Enum.valueOf(UserStatus.class,
+            statusStr.toUpperCase());
+        user.setStatus(status);
+        this.userDao.save(user);
+
+        logger.info("Updated User's status: {}, {}", user, status);
+
+        // revoke user's token if disabling
+        if (status.equals(UserStatus.INACTIVE)) {
+            String owner = user.getInum();
+            Set<String> allClientInums = new HashSet<String>();
+            for (Client client : clientDao.findAll()) {
+                allClientInums.add(client.getInum());
+            }
+            tokenDao.deleteAllTokensForOwner(owner,
+                Collections.unmodifiableSet(allClientInums));
+        }
+    }
+
+    private Map<String, String> getCustomParamsMap(
+        PasswordRecovery recoveryParam) {
+        List<CustomParam> customParams = null;
+        if (recoveryParam.getCustomParams() == null) {
+            customParams = new ArrayList<CustomParam>();
+        } else {
+            customParams = recoveryParam.getCustomParams().getParams();
+        }
+        Map<String, String> params = new HashMap<String, String>();
+        for (CustomParam param : customParams) {
+            if (StringUtils.isBlank(param.getName())
+                || StringUtils.isBlank(param.getValue())) {
+                continue;
+            }
+            params.put(param.getName(), param.getValue());
+        }
+        return params;
+    }
+
+    private String getEmailMessageBody(String recoveryUrl,
+        PasswordRecovery recoveryParam) {
+        String message = String.format("Here's your recovery link: %s",
+            recoveryUrl);
         String templateUrl = recoveryParam.getTemplateUrl();
         if (StringUtils.isBlank(templateUrl)) {
             return message;
@@ -332,7 +439,8 @@ public class DefaultUserService implements UserService {
             }
             return sb.toString();
         } catch (MalformedURLException mue) {
-            logger.error("Could not retrieve template from URL " + templateUrl, mue);
+            logger.error("Could not retrieve template from URL " + templateUrl,
+                mue);
             // Just use the default message body
             return message;
         } catch (IOException ie) {
@@ -340,81 +448,5 @@ public class DefaultUserService implements UserService {
             // Just use the default message body
             return message;
         }
-    }
-
-    private Map<String, String> getCustomParamsMap(PasswordRecovery recoveryParam) {
-        List<CustomParam> customParams = null;
-        if (recoveryParam.getCustomParams() == null) {
-            customParams = new ArrayList<CustomParam>();
-        } else {
-            customParams = recoveryParam.getCustomParams().getParams();
-        }
-        Map<String, String> params = new HashMap<String, String>();
-        for (CustomParam param : customParams) {
-            if (StringUtils.isBlank(param.getName()) || StringUtils.isBlank(param.getValue())) {
-                continue;
-            }
-            params.put(param.getName(), param.getValue());
-        }
-        return params;
-    }
-
-    public void softDeleteUser(String username) {
-        logger.info("Soft Deleting User: {}", username);
-        User user = this.userDao.findByUsername(username);
-        user.setSoftDeleted(true);
-        this.userDao.save(user);
-
-        // revoke user's tokens
-        String owner = user.getInum();
-        Set<String> allClientInums = new HashSet<String>();
-        Set<String> allClientIds = new HashSet<String>();
-
-        for (Client client : clientDao.findAll()) {
-            allClientInums.add(client.getInum());
-            allClientIds.add(client.getClientId());
-        }
-        tokenDao.deleteAllTokensForOwner(owner, Collections.unmodifiableSet(allClientInums));
-
-        refreshTokenDao.deleteAllTokensForUser(username);
-
-        logger.info("Soft Deleted User: {}", username);
-    }
-
-    public void updateUser(User user) {
-        logger.info("Updating User: {}", user);
-        this.userDao.save(user);
-        logger.info("Updated User: {}", user);
-    }
-
-    public void updateUserStatus(User user, String statusStr) {
-
-        UserStatus status = Enum.valueOf(UserStatus.class, statusStr.toUpperCase());
-        user.setStatus(status);
-        this.userDao.save(user);
-
-        logger.info("Updated User's status: {}, {}", user, status);
-
-        // revoke user's token if disabling
-        if (status.equals(UserStatus.INACTIVE)) {
-            String owner = user.getInum();
-            Set<String> allClientInums = new HashSet<String>();
-            for (Client client : clientDao.findAll()) {
-                allClientInums.add(client.getInum());
-            }
-            tokenDao.deleteAllTokensForOwner(owner, Collections.unmodifiableSet(allClientInums));
-        }
-    }
-
-    public String generateApiKey() {
-        try {
-            return HashHelper.getRandomSha1();
-        } catch (NoSuchAlgorithmException e) {
-            throw new UnsupportedOperationException("The JVM does not support the algorithm needed.", e);
-        }
-    }
-
-    public boolean isUsernameUnique(String username) {
-        return userDao.isUsernameUnique(username);
     }
 }

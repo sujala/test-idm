@@ -372,8 +372,8 @@ public class LdapUserRepositoryTest {
 
     // @Test
     public void shouldAuthenticateForCorrectCredentials() {
-        boolean authenticated = repo.bindUser("mkovacs", "password");
-        Assert.assertTrue(authenticated);
+        UserAuthenticationResult result = repo.authenticate("mkovacs", "password");
+        Assert.assertTrue(result.isAuthenticated());
     }
 
     @Test
@@ -403,8 +403,8 @@ public class LdapUserRepositoryTest {
 
     @Test
     public void shouldNotAuthenticateForBadCredentials() {
-        boolean authenticated = repo.bindUser("mkovacs", "bad password!");
-        Assert.assertFalse(authenticated);
+        UserAuthenticationResult result = repo.authenticate("mkovacs", "bad password");
+        Assert.assertFalse(result.isAuthenticated());
     }
 
     @Test

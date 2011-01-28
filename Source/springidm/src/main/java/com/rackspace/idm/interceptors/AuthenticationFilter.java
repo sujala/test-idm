@@ -14,7 +14,6 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.HttpHeaders;
-import java.util.regex.Pattern;
 
 /**
  * @author john.eo Apply token-based authentication to all calls except the
@@ -23,8 +22,6 @@ import java.util.regex.Pattern;
 @Component
 public class AuthenticationFilter implements ContainerRequestFilter,
         ApplicationContextAware {
-    private static final Pattern PASSWORD_CHANGE_PATTERN = Pattern
-            .compile("^customers/.+/users/.+/password$");
     private AccessTokenService accessTokenService;
     private AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private Logger logger;

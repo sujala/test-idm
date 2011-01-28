@@ -246,27 +246,27 @@ public class UserServiceTests {
 
     @Test
     public void shouldAuthenticateUser() {
-        EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(
-            getFakeUser());
-        EasyMock.expect(mockUserDao.bindUser(username, password))
-            .andReturn(true);
+        EasyMock.expect(mockUserDao.authenticate(username, password)).andReturn(
+            this.getTrueAuthenticationResult());
         EasyMock.replay(mockUserDao);
+        EasyMock.expect(mockRoleService.getRolesForUser(username)).andReturn(null);
+        EasyMock.replay(mockRoleService);
         UserAuthenticationResult uaResult = userService.authenticate(username, password);
         Assert.assertTrue(uaResult.isAuthenticated());
         EasyMock.verify(mockUserDao);
+        EasyMock.verify(mockRoleService);
     }
 
     @Test
     public void shouldNotAuthenticateUserThatDoestNotExist() {
         String badUsername = "badusername";
-
-        EasyMock.expect(mockUserDao.findByUsername(badUsername))
-            .andReturn(null);
+        
+        EasyMock.expect(mockUserDao.authenticate(badUsername, password)).andReturn(
+            this.getFalseAuthenticationResult());
         EasyMock.replay(mockUserDao);
 
-        UserAuthenticationResult uaResult = userService.authenticate(badUsername, "badpassword");
-
-        Assert.assertTrue(!uaResult.isAuthenticated());
+        UserAuthenticationResult uaResult = userService.authenticate(badUsername, password);
+        Assert.assertFalse(uaResult.isAuthenticated());
         EasyMock.verify(mockUserDao);
     }
 
