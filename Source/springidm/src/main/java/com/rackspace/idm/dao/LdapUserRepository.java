@@ -134,6 +134,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     private boolean bindUser(User user, String password) {
         getLogger().debug("Authenticating user {}", user.getUsername());
+        
+        if (user == null || user.getUniqueId() == null) {
+            throw new IllegalStateException("User cannot be null and must have a unique Id");
+        }
+        
         BindResult result;
         try {
             result = getBindConnPool().bind(user.getUniqueId(), password);
