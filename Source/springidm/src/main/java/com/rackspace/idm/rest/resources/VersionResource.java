@@ -1,8 +1,17 @@
 package com.rackspace.idm.rest.resources;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -109,5 +118,56 @@ public class VersionResource {
     @Path("baseurls")
     public BaseUrlsResource getBaseUrlsResource() {
         return baseUrlsResource;
+    }
+
+    @GET
+    @Path("xsd/{fileName}")
+    public Response getXSD(@PathParam("fileName") String fileName) {
+
+        InputStream stream = getClass().getResourceAsStream("/xsd/" + fileName);
+
+        if (stream == null) {
+            return Response.noContent().build();
+        }
+
+        String myString = null;
+        try {
+            myString = convertStreamToString(stream);
+        } catch (IOException e) {
+            // NOOP
+        }
+
+        return Response.ok(myString).build();
+    }
+
+    @GET
+    @Path("xslt/{fileName}")
+    public Response getXSLT(@PathParam("fileName") String fileName) {
+
+        String myString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"></xsl:stylesheet>";
+
+        return Response.ok(myString).build();
+    }
+
+    private String convertStreamToString(InputStream is) throws IOException {
+
+        if (is != null) {
+            Writer writer = new StringWriter();
+
+            char[] buffer = new char[1024];
+            try {
+                Reader reader = new BufferedReader(new InputStreamReader(is,
+                    "UTF-8"));
+                int n;
+                while ((n = reader.read(buffer)) != -1) {
+                    writer.write(buffer, 0, n);
+                }
+            } finally {
+                is.close();
+            }
+            return writer.toString();
+        } else {
+            return "";
+        }
     }
 }
