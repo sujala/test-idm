@@ -31,6 +31,10 @@ public class ServiceCatalogFactory {
         String accountId = getAccountIdForUrl(endPoint.getBaseUrl()
             .getBaseUrlType(), endPoint.getUsername(), endPoint.getNastId(),
             endPoint.getMossoId());
+        
+        if (accountId == null) {
+            return;
+        }
 
         Endpoint endpoint = new Endpoint();
         endpoint.setAdminURL(endPoint.getBaseUrl().getAdminUrl());
@@ -79,7 +83,7 @@ public class ServiceCatalogFactory {
 
         switch (type) {
             case MOSSO:
-                accountId = String.valueOf(mossoId);
+                accountId = mossoId > 0 ? String.valueOf(mossoId) : null;
                 break;
             case CLOUD:
                 accountId = username;
