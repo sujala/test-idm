@@ -35,14 +35,6 @@ public class AuthenticationFilterTests {
     }
 
     @Test
-    public void shouldIgnorePasswordChangeRequest() {
-        EasyMock.expect(request.getPath()).andReturn(
-                "customers/RCN-000-000-000/users/foobar/password");
-        EasyMock.expect(request.getMethod()).andReturn("PUT");
-        replayAndRunFilter();
-    }
-
-    @Test
     public void shouldIgnoreRootPath() {
         EasyMock.expect(request.getPath()).andReturn("");
         EasyMock.expect(request.getMethod()).andReturn("GET");
