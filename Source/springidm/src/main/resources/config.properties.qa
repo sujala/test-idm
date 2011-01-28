@@ -41,4 +41,4 @@ token.cloudAuthExpirationSeconds=86400
 token.maxExpirationSeconds=86400
 token.minExpirationSeconds=10
 token.refreshTokenExpirationSeconds=86400
-token.dataCenterPrefix=DFW
+token.dataCenterPrefix=QA
