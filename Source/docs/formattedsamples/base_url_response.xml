@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Response xmlns="http://10.127.7.164/v1.0/baseurls/111111">
-   <adminURL null="true"/>
-   <default>true</default>
-   <id>111111</id>
-   <internalURL>https://storage-snet.clouddrive.com/v1</internalURL>
-   <publicURL>https://storage.clouddrive.com/v1</publicURL>
-   <region>DFW</region>
-   <serviceName>cloudFiles</serviceName>
-   <userType>NAST</userType>
-</Response>
+<Response xmlns="http://10.127.7.164/v1.0/baseurls/111111"
+    adminURL="https://storage-snet.clouddrive.com/v1"
+    default="true"
+    id="111111"
+    internalURL="https://storage-snet.clouddrive.com/v1"
+    publicURL="https://storage.clouddrive.com/v1"
+    region="DFW"
+    serviceName="cloudFiles"
+    userType="NAST"/>
+   
