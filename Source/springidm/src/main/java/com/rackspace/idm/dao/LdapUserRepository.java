@@ -961,13 +961,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Date passwordFailureDate = resultEntry
             .getAttributeValueAsDate(ATTR_PWD_ACCOUNT_LOCKOUT_TIME);
+        
+        boolean passwordFailureLocked = false;
         if (passwordFailureDate != null) {
             DateTime passwordFailureDateTime = new DateTime(passwordFailureDate)
                 .plusMinutes(GlobalConstants.PASSWORD_FAILURE_LOCKOUT_MIN);
-            if (passwordFailureDateTime.isAfterNow()) {
-                user.setPasswordFailueLocked(true);
-            }
+            passwordFailureLocked = passwordFailureDateTime.isAfterNow();
         }
+        user.setPasswordFailueLocked(passwordFailureLocked);
 
         return user;
     }
