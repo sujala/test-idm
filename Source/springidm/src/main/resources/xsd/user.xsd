@@ -381,6 +381,7 @@
 		<attribute name="nastId" type="xsd:string"></attribute>
 		<attribute name="created" type="xsd:dateTime"></attribute>
 		<attribute name="updated" type="xsd:dateTime"></attribute>
+		<attribute name="passwordFailureLocked" type="xsd:boolean"></attribute>
 	</complexType>
 
 	<complexType name="UserList">

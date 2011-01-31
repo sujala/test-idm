@@ -46,6 +46,8 @@ public class UserConverter {
             user.setStatus(Enum.valueOf(UserStatus.class, jaxbUser.getStatus()
                 .value().toUpperCase()));
         }
+        
+        user.setPasswordFailueLocked(jaxbUser.isPasswordFailureLocked());
 
         user.setNastId(jaxbUser.getNastId());
         user.setMossoId(jaxbUser.getMossoId());
@@ -155,6 +157,7 @@ public class UserConverter {
         returnedUser.setSoftDeleted(user.isSoftDeleted());
         returnedUser.setMossoId(user.getMossoId());
         returnedUser.setNastId(user.getNastId());
+        returnedUser.setPasswordFailureLocked(user.isPasswordFailureLocked());
 
         try {
             if (user.getCreated() != null) {

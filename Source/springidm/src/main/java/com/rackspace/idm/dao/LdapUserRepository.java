@@ -58,9 +58,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     private static final String ATTR_CREATED_DATE = "createTimestamp";
     private static final String ATTR_UPDATED_DATE = "modifyTimestamp";
+    private static final String ATTR_PWD_ACCOUNT_LOCKOUT_TIME = "pwdAccountLockedTime";
 
     private static final String[] ATTR_SEARCH_ATTRIBUTES = {"*",
-        ATTR_CREATED_DATE, ATTR_UPDATED_DATE};
+        ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
 
     private static final String[] ATTR_OBJECT_CLASS_VALUES = {"top",
         "rackspacePerson"};
@@ -134,11 +135,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     private boolean bindUser(User user, String password) {
         getLogger().debug("Authenticating user {}", user.getUsername());
-        
+
         if (user == null || user.getUniqueId() == null) {
-            throw new IllegalStateException("User cannot be null and must have a unique Id");
+            throw new IllegalStateException(
+                "User cannot be null and must have a unique Id");
         }
-        
+
         BindResult result;
         try {
             result = getBindConnPool().bind(user.getUniqueId(), password);
@@ -952,9 +954,19 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         Date updated = resultEntry.getAttributeValueAsDate(ATTR_UPDATED_DATE);
-        if (created != null) {
+        if (updated != null) {
             DateTime updatedDate = new DateTime(updated);
             user.setUpdated(updatedDate);
+        }
+
+        Date passwordFailureDate = resultEntry
+            .getAttributeValueAsDate(ATTR_PWD_ACCOUNT_LOCKOUT_TIME);
+        if (passwordFailureDate != null) {
+            DateTime passwordFailureDateTime = new DateTime(passwordFailureDate)
+                .plusMinutes(GlobalConstants.PASSWORD_FAILURE_LOCKOUT_MIN);
+            if (passwordFailureDateTime.isAfterNow()) {
+                user.setPasswordFailueLocked(true);
+            }
         }
 
         return user;

@@ -46,6 +46,8 @@ public class User extends BaseUser {
     
     private DateTime created;
     private DateTime updated;
+    
+    private Boolean passwordFailureLocked = null;
 
     public User() {
         // Needed by JAX-RS
@@ -156,6 +158,14 @@ public class User extends BaseUser {
 
     public void setLocked(Boolean isLocked) {
         this.locked = isLocked;
+    }
+    
+    public Boolean isPasswordFailureLocked() {
+        return passwordFailureLocked;
+    }
+    
+    public void setPasswordFailueLocked(Boolean passwordFailureLocked) {
+        this.passwordFailureLocked = passwordFailureLocked;
     }
 
     public String getOrgInum() {
@@ -486,12 +496,15 @@ public class User extends BaseUser {
         result = prime * result + ((email == null) ? 0 : email.hashCode());
         result = prime * result + ((iname == null) ? 0 : iname.hashCode());
         result = prime * result + ((inum == null) ? 0 : inum.hashCode());
-        result = prime * result
-            + ((locked == null) ? 0 : locked.hashCode());
+        result = prime * result + ((locked == null) ? 0 : locked.hashCode());
         result = prime * result + ((mossoId == null) ? 0 : mossoId.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((nastId == null) ? 0 : nastId.hashCode());
         result = prime * result + ((orgInum == null) ? 0 : orgInum.hashCode());
+        result = prime
+            * result
+            + ((passwordFailureLocked == null) ? 0 : passwordFailureLocked
+                .hashCode());
         result = prime * result
             + ((personId == null) ? 0 : personId.hashCode());
         result = prime * result
@@ -610,6 +623,13 @@ public class User extends BaseUser {
         } else if (!orgInum.equals(other.orgInum)) {
             return false;
         }
+        if (passwordFailureLocked == null) {
+            if (other.passwordFailureLocked != null) {
+                return false;
+            }
+        } else if (!passwordFailureLocked.equals(other.passwordFailureLocked)) {
+            return false;
+        }
         if (personId == null) {
             if (other.personId != null) {
                 return false;
@@ -671,11 +691,12 @@ public class User extends BaseUser {
             + ", personId=" + personId + ", uniqueId=" + uniqueId + ", name="
             + name + ", preference=" + preference + ", country=" + country
             + ", displayName=" + displayName + ", inum=" + inum + ", iname="
-            + iname + ", isLocked=" + locked + ", orgInum=" + orgInum
+            + iname + ", locked=" + locked + ", orgInum=" + orgInum
             + ", apiKey=" + apiKey + ", status=" + status + ", seeAlso="
             + seeAlso + ", softDeleted=" + softDeleted + ", region=" + region
             + ", nastId=" + nastId + ", mossoId=" + mossoId + ", created="
-            + created + ", updated=" + updated + ", username=" + username
+            + created + ", updated=" + updated + ", passwordFailureLocked="
+            + passwordFailureLocked + ", username=" + username
             + ", customerId=" + customerId + ", roles=" + roles + "]";
     }
 
