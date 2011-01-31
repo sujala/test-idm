@@ -2189,8 +2189,29 @@
           </example>
           
         </section>
-          
-      
     </section>
+  </chapter>
+  
+  <chapter>
+      <title>Code Examples</title>
+      <section>
+      <title>PHP Sample</title>
+      <example>
+        <title>IdmService.php</title>
+        <programlisting language="php"><xi:include href="../../code-samples/idm-service.php" parse="text" /></programlisting>
+      </example>
+      </section>
+    
+      <section>
+        <title>Java Sample</title>
+        <example>
+          <title>HttpClientService.java</title>
+          <programlisting language="php"><xi:include href="../../code-samples/HttpClientService.java" parse="text" /></programlisting>
+        </example>
+        <example>
+          <title>IdmService.java</title>
+          <programlisting language="php"><xi:include href="../../code-samples/IdmService.java" parse="text" /></programlisting>
+        </example>
+      </section>
   </chapter>
 </book>
