@@ -12,11 +12,9 @@ import org.junit.Test;
 import com.rackspace.idm.config.DataCenterClient;
 import com.rackspace.idm.config.DataCenterEndpoints;
 import com.rackspace.idm.config.MemcachedConfiguration;
-import com.rackspace.idm.config.PropertyFileConfiguration;
 import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.BaseClient;
-import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
+import com.rackspace.idm.entities.BaseClient;
 import com.rackspace.idm.jaxb.AuthCredentials;
 import com.rackspace.idm.jaxb.AuthGrantType;
 import com.rackspace.idm.test.stub.StubLogger;
@@ -32,11 +30,8 @@ public class WebClientAccessTokenRepositoryTest {
     public void setUp() {
         WebResource wrqa = c.resource("http://10.127.7.164:8080/v1.0");
         DataCenterClient qaServer = new DataCenterClient("QAM", wrqa);
-        WebResource wrdev = c.resource("http://10.127.7.166:8080/v1.0");
-        DataCenterClient devServer = new DataCenterClient("DEV", wrdev);
         DataCenterEndpoints endpoints = new DataCenterEndpoints();
         endpoints.put(qaServer);
-        endpoints.put(devServer);
 
         // Credentials for Customer IDM
         AuthCredentials creds = new AuthCredentials();
@@ -57,9 +52,9 @@ public class WebClientAccessTokenRepositoryTest {
             new StubLogger()).memcacheClient();
         AccessToken token = getNewToken(60);
         // Add a token to a "cross-data-center" location
-        mclient.set(QA_TOKEN_STRING, 60, token);
+        mclient.set(QA_TOKEN_STRING, 600, token);
         // TODO The token storage scheme will change
-        mclient.set(token.getOwner() + "_" + token.getRequestor(), 60, token);
+        mclient.set(token.getOwner() + "_" + token.getRequestor(), 600, token);
 
         // Now attempt a lookup from the local DAO
         AccessToken remoteToken = repo.findByTokenString(QA_TOKEN_STRING);
