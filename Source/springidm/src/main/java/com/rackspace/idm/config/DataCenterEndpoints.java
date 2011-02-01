@@ -3,16 +3,14 @@ package com.rackspace.idm.config;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.sun.jersey.api.client.WebResource;
-
 public class DataCenterEndpoints {
-    private Map<String, WebResource> endPoints = new HashMap<String, WebResource>();
+    private Map<String, DataCenterClient> endPoints = new HashMap<String, DataCenterClient>();
 
-    void put(String dc, WebResource wr) {
-        endPoints.put(dc, wr);
+    public void put(DataCenterClient client) {
+        endPoints.put(client.getDcPrefix(), client);
     }
     
-    public WebResource get(String dc) {
+    public DataCenterClient get(String dc) {
         return endPoints.get(dc);
     }
 }
