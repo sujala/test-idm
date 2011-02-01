@@ -20,7 +20,7 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 
 public class WebClientAccessTokenRepository implements
-    GenericTokenDao<AccessToken> {
+    TokenGetterDao<AccessToken> {
     private static final String TOKEN_RESOURCE_PATH = "token";
     private DataCenterEndpoints endpoints;
     private AuthCredentials idmCreds;
@@ -50,7 +50,8 @@ public class WebClientAccessTokenRepository implements
                     "OAuth " + getMyAccessToken(dc).getTokenString())
                 .get(ClientResponse.class);
         } catch (UniformInterfaceException e) {
-            throw getClientCallException(e);
+            handleClientCallException(e);
+            return null;
         }
 
         return getClientCallResponse(resp);
@@ -69,6 +70,7 @@ public class WebClientAccessTokenRepository implements
             return client.getAccessToken();
         }
 
+        logger.debug("Requesting client access token for Customer IDM");
         ClientResponse resp;
         try {
             resp = client.getResource().path(TOKEN_RESOURCE_PATH)
@@ -76,19 +78,21 @@ public class WebClientAccessTokenRepository implements
                 .type(MediaType.APPLICATION_XML).entity(idmCreds)
                 .post(ClientResponse.class);
         } catch (UniformInterfaceException e) {
-            throw getClientCallException(e);
+            handleClientCallException(e);
+            return null;
         }
 
         return getClientCallResponse(resp);
     }
 
-    private RuntimeException getClientCallException(UniformInterfaceException e) {
+    private void handleClientCallException(UniformInterfaceException e) {
+        logger.warn("Client call to another DC failed.", e);
         ClientResponse resp = e.getResponse();
-        if (resp == null) {
-            return new IllegalStateException("Request failed:\n" + e);
+        if (resp != null) {
+            IdmFault fault = resp.getEntity(IdmFault.class);
+            logger.warn("Cause -> {}: {}", fault.getMessage(),
+                fault.getDetails());
         }
-        return new IllegalStateException(resp.getEntity(IdmFault.class)
-            .getMessage());
     }
 
     private AccessToken getClientCallResponse(ClientResponse resp) {
@@ -98,8 +102,10 @@ public class WebClientAccessTokenRepository implements
         } else {
             // Something's wrong. Try to get the fault.
             IdmFault fault = resp.getEntity(IdmFault.class);
-            logger.warn(fault.getMessage() + ": " + fault.getDetails());
-            throw new IllegalStateException(fault.getMessage());
+            logger.warn(
+                "Client call to another DC returned an IDM fault.\n{}: {}",
+                fault.getMessage(), fault.getDetails());
+            return null;
         }
     }
 }

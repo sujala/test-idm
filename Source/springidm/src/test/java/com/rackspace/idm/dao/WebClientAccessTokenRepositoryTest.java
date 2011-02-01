@@ -24,14 +24,14 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 
 public class WebClientAccessTokenRepositoryTest {
-    private static final String QA_TOKEN_STRING = "QA-xdctesttokenstring";
+    private static final String QA_TOKEN_STRING = "QAM-xdctesttokenstring";
     private Client c = Client.create();
     private WebClientAccessTokenRepository repo;
 
     @Before
     public void setUp() {
         WebResource wrqa = c.resource("http://10.127.7.164:8080/v1.0");
-        DataCenterClient qaServer = new DataCenterClient("QA", wrqa);
+        DataCenterClient qaServer = new DataCenterClient("QAM", wrqa);
         WebResource wrdev = c.resource("http://10.127.7.166:8080/v1.0");
         DataCenterClient devServer = new DataCenterClient("DEV", wrdev);
         DataCenterEndpoints endpoints = new DataCenterEndpoints();
@@ -74,7 +74,7 @@ public class WebClientAccessTokenRepositoryTest {
 
     @Test
     public void shouldGetClientToken() {
-        AccessToken idmTk = repo.getMyAccessToken("QA");
+        AccessToken idmTk = repo.getMyAccessToken("QAM");
         Assert.assertNotNull(idmTk);
     }
 

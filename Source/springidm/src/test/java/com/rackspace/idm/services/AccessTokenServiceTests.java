@@ -1,21 +1,34 @@
 package com.rackspace.idm.services;
 
-import com.rackspace.idm.dao.AccessTokenDao;
-import com.rackspace.idm.dao.ClientDao;
-import com.rackspace.idm.dao.MemcachedAccessTokenRepository;
-import com.rackspace.idm.dao.RefreshTokenDao;
-import com.rackspace.idm.entities.*;
-import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
-import com.rackspace.idm.test.stub.StubLogger;
-import com.rackspace.idm.util.AuthHeaderHelper;
+import java.util.Locale;
+
 import junit.framework.Assert;
+
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Locale;
+import com.rackspace.idm.dao.AccessTokenDao;
+import com.rackspace.idm.dao.ClientDao;
+import com.rackspace.idm.dao.MemcachedAccessTokenRepository;
+import com.rackspace.idm.dao.RefreshTokenDao;
+import com.rackspace.idm.dao.TokenGetterDao;
+import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
+import com.rackspace.idm.entities.Client;
+import com.rackspace.idm.entities.ClientSecret;
+import com.rackspace.idm.entities.ClientStatus;
+import com.rackspace.idm.entities.Password;
+import com.rackspace.idm.entities.TokenDefaultAttributes;
+import com.rackspace.idm.entities.User;
+import com.rackspace.idm.entities.UserCredential;
+import com.rackspace.idm.entities.UserHumanName;
+import com.rackspace.idm.entities.UserLocale;
+import com.rackspace.idm.entities.UserStatus;
+import com.rackspace.idm.test.stub.StubLogger;
+import com.rackspace.idm.util.AuthHeaderHelper;
 
 public class AccessTokenServiceTests {
 
@@ -24,13 +37,15 @@ public class AccessTokenServiceTests {
     ClientDao mockClientDao;
     UserService mockUserService;
     AccessTokenService tokenService;
+    TokenGetterDao<AccessToken> mockWebClientAccessTokenDao;
 
     TokenDefaultAttributes defaultAttributes;
 
     String username = "mkovacs";
     String tokenString = "XXXXXX";
     String authHeader = "OAuth " + tokenString;
-    DateTime tokenExpiration = MemcachedAccessTokenRepository.DATE_PARSER.parseDateTime("20201231210627.3Z");
+    DateTime tokenExpiration = MemcachedAccessTokenRepository.DATE_PARSER
+        .parseDateTime("20201231210627.3Z");
     // String tokenOwner = "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111";
     String tokenOwner = "mkovacs";
     String clientId = "SomeClientId";
@@ -68,20 +83,27 @@ public class AccessTokenServiceTests {
         mockRefreshTokenDao = EasyMock.createMock(RefreshTokenDao.class);
         mockClientDao = EasyMock.createMock(ClientDao.class);
         mockUserService = EasyMock.createMock(UserService.class);
-        defaultAttributes = new TokenDefaultAttributes(defaultTokenExpirationSeconds, cloudAuthExpirationSeconds,
-                maxTokenExpirationSeconds, minTokenExpirationSeconds, dataCenterPrefix, isTrustedServer);
-        tokenService = new DefaultAccessTokenService(defaultAttributes, mockTokenDao, mockClientDao, mockUserService,
-                new AuthHeaderHelper(), new StubLogger());
+        mockWebClientAccessTokenDao = EasyMock.createMock(TokenGetterDao.class);
+        defaultAttributes = new TokenDefaultAttributes(
+            defaultTokenExpirationSeconds, cloudAuthExpirationSeconds,
+            maxTokenExpirationSeconds, minTokenExpirationSeconds,
+            dataCenterPrefix, isTrustedServer);
+        tokenService = new DefaultAccessTokenService(defaultAttributes,
+            mockTokenDao, mockClientDao, mockUserService,
+            mockWebClientAccessTokenDao, new AuthHeaderHelper(),
+            new StubLogger());
     }
 
     @Test
     public void shouldGetTokenByTokenString() {
 
         AccessToken token = getFakeUserToken();
-        EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(token);
+        EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(
+            token);
         EasyMock.replay(mockTokenDao);
 
-        AccessToken retrievedToken = tokenService.getAccessTokenByTokenString(tokenString);
+        AccessToken retrievedToken = tokenService
+            .getAccessTokenByTokenString(tokenString);
 
         Assert.assertTrue(retrievedToken.getTokenString().equals(tokenString));
         EasyMock.verify(mockTokenDao);
@@ -89,10 +111,12 @@ public class AccessTokenServiceTests {
 
     @Test
     public void shouldReturnNullForNonExistentTokenString() {
-        EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(null);
+        EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(
+            null);
         EasyMock.replay(mockTokenDao);
 
-        AccessToken retrievedToken = tokenService.getAccessTokenByTokenString(tokenString);
+        AccessToken retrievedToken = tokenService
+            .getAccessTokenByTokenString(tokenString);
 
         Assert.assertTrue(retrievedToken == null);
         EasyMock.verify(mockTokenDao);
@@ -105,7 +129,8 @@ public class AccessTokenServiceTests {
 
         mockTokenDao.save(token);
 
-        AccessToken returnToken = tokenService.createAccessTokenForClient(client);
+        AccessToken returnToken = tokenService
+            .createAccessTokenForClient(client);
 
         Assert.assertTrue(returnToken.getOwner().equals(clientId));
 
@@ -116,15 +141,18 @@ public class AccessTokenServiceTests {
     @Test
     public void shouldCreateAccessTokenForUser() {
         AccessToken token = getFakeUserToken();
-        EasyMock.expect(mockUserService.getUser(username)).andReturn(getFakeUser());
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(
+            getFakeUser());
         EasyMock.replay(mockUserService);
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(getFakeClient());
+        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
+            getFakeClient());
         EasyMock.replay(mockClientDao);
 
         mockTokenDao.save(token);
 
-        AccessToken returnToken = tokenService.createAccessTokenForUser(username, clientId);
+        AccessToken returnToken = tokenService.createAccessTokenForUser(
+            username, clientId);
 
         Assert.assertTrue(returnToken.getOwner().equals(username));
 
@@ -142,12 +170,14 @@ public class AccessTokenServiceTests {
 
         User user = getFakeUser();
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(getFakeClient());
+        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
+            getFakeClient());
         EasyMock.replay(mockClientDao);
 
         mockTokenDao.save(token);
 
-        AccessToken returnToken = tokenService.createPasswordResetAccessTokenForUser(user, clientId);
+        AccessToken returnToken = tokenService
+            .createPasswordResetAccessTokenForUser(user, clientId);
 
         Assert.assertTrue(returnToken.getOwner().equals(tokenOwner));
         EasyMock.verify(mockClientDao);
@@ -190,17 +220,20 @@ public class AccessTokenServiceTests {
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowErrorForClientInumNullCreateRestricedAccessTokenForUser() {
         AccessToken token = getFakeUserToken();
-        EasyMock.expect(mockUserService.getUser(username)).andReturn(getFakeUser());
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(
+            getFakeUser());
         EasyMock.replay(mockUserService);
 
         Client client = getFakeClient();
         client.setInum("");
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(client);
+        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
+            client);
         EasyMock.replay(mockClientDao);
 
         mockTokenDao.save(token);
 
-        tokenService.createPasswordResetAccessTokenForUser(getFakeUser(), clientId);
+        tokenService.createPasswordResetAccessTokenForUser(getFakeUser(),
+            clientId);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -214,7 +247,8 @@ public class AccessTokenServiceTests {
     @Test(expected = IllegalStateException.class)
     public void shouldThrowErrorForClientNullCreateAccessTokenForUser() {
         AccessToken token = getFakeUserToken();
-        EasyMock.expect(mockUserService.getUser(username)).andReturn(getFakeUser());
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(
+            getFakeUser());
         EasyMock.replay(mockUserService);
 
         EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(null);
@@ -228,12 +262,14 @@ public class AccessTokenServiceTests {
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowErrorForClientIdNullCreateAccessTokenForUser() {
         AccessToken token = getFakeUserToken();
-        EasyMock.expect(mockUserService.getUser(username)).andReturn(getFakeUser());
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(
+            getFakeUser());
         EasyMock.replay(mockUserService);
 
         Client client = getFakeClient();
         client.setClientId("");
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(client);
+        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
+            client);
         EasyMock.replay(mockClientDao);
 
         mockTokenDao.save(token);
@@ -247,10 +283,12 @@ public class AccessTokenServiceTests {
         User user = getFakeUser();
         DateTime current = new DateTime();
 
-        EasyMock.expect(mockTokenDao.findTokenForOwner(username, clientId)).andReturn(token);
+        EasyMock.expect(mockTokenDao.findTokenForOwner(username, clientId))
+            .andReturn(token);
         EasyMock.replay(mockTokenDao);
 
-        AccessToken retrievedToken = tokenService.getAccessTokenForUser(user, getFakeClient(), current);
+        AccessToken retrievedToken = tokenService.getAccessTokenForUser(user,
+            getFakeClient(), current);
         Assert.assertTrue(retrievedToken.getTokenString().equals(tokenString));
         EasyMock.verify(mockTokenDao);
     }
@@ -260,10 +298,12 @@ public class AccessTokenServiceTests {
         User user = getFakeUser();
         DateTime current = new DateTime();
 
-        EasyMock.expect(mockTokenDao.findTokenForOwner(username, clientId)).andReturn(null);
+        EasyMock.expect(mockTokenDao.findTokenForOwner(username, clientId))
+            .andReturn(null);
         EasyMock.replay(mockTokenDao);
 
-        AccessToken retrievedToken = tokenService.getAccessTokenForUser(user, getFakeClient(), current);
+        AccessToken retrievedToken = tokenService.getAccessTokenForUser(user,
+            getFakeClient(), current);
         Assert.assertNull(retrievedToken);
         EasyMock.verify(mockTokenDao);
     }
@@ -274,10 +314,13 @@ public class AccessTokenServiceTests {
         Client client = getFakeClient();
         DateTime current = new DateTime();
 
-        EasyMock.expect(mockTokenDao.findTokenForOwner(EasyMock.eq(clientId), EasyMock.eq(clientId))).andReturn(token);
+        EasyMock.expect(
+            mockTokenDao.findTokenForOwner(EasyMock.eq(clientId),
+                EasyMock.eq(clientId))).andReturn(token);
         EasyMock.replay(mockTokenDao);
 
-        AccessToken retrievedToken = tokenService.getAccessTokenForClient(client, current);
+        AccessToken retrievedToken = tokenService.getAccessTokenForClient(
+            client, current);
         Assert.assertTrue(retrievedToken.getTokenString().equals(tokenString));
         EasyMock.verify(mockTokenDao);
     }
@@ -286,10 +329,13 @@ public class AccessTokenServiceTests {
     public void shouldNotGetTokenForClient() {
         DateTime current = new DateTime();
 
-        EasyMock.expect(mockTokenDao.findTokenForOwner(EasyMock.eq(clientId), EasyMock.eq(clientId))).andReturn(null);
+        EasyMock.expect(
+            mockTokenDao.findTokenForOwner(EasyMock.eq(clientId),
+                EasyMock.eq(clientId))).andReturn(null);
         EasyMock.replay(mockTokenDao);
 
-        AccessToken retrievedToken = tokenService.getAccessTokenForClient(getFakeClient(), current);
+        AccessToken retrievedToken = tokenService.getAccessTokenForClient(
+            getFakeClient(), current);
         Assert.assertNull(retrievedToken);
         EasyMock.verify(mockTokenDao);
     }
@@ -325,17 +371,18 @@ public class AccessTokenServiceTests {
         EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(null);
         EasyMock.replay(mockClientDao);
 
-        AccessToken retrievedToken = tokenService.getAccessTokenForClient(null, current);
+        AccessToken retrievedToken = tokenService.getAccessTokenForClient(null,
+            current);
         Assert.assertNull(retrievedToken);
         EasyMock.verify(mockClientDao);
     }
 
-
     @Test
     public void shouldValidateToken() {
         AccessToken userToken = getFakeUserToken();
-        EasyMock.expect(mockTokenDao.findByTokenString(userToken.getTokenString())).andReturn(userToken);
-
+        EasyMock.expect(
+            mockTokenDao.findByTokenString(userToken.getTokenString()))
+            .andReturn(userToken);
         EasyMock.replay(mockTokenDao);
         AccessToken token = tokenService.validateToken(tokenString);
 
@@ -345,7 +392,9 @@ public class AccessTokenServiceTests {
     @Test
     public void shouldNotValidateNonExistentToken() {
         AccessToken userToken = getFakeUserToken();
-        EasyMock.expect(mockTokenDao.findByTokenString(userToken.getTokenString())).andReturn(null);
+        EasyMock.expect(
+            mockTokenDao.findByTokenString(userToken.getTokenString()))
+            .andReturn(null);
         EasyMock.replay(mockTokenDao);
 
         AccessToken token = tokenService.validateToken(tokenString);
@@ -360,7 +409,9 @@ public class AccessTokenServiceTests {
         AccessToken userToken = getFakeUserToken();
         userToken.setExpiration(-3600);
 
-        EasyMock.expect(mockTokenDao.findByTokenString(userToken.getTokenString())).andReturn(userToken);
+        EasyMock.expect(
+            mockTokenDao.findByTokenString(userToken.getTokenString()))
+            .andReturn(userToken);
         EasyMock.replay(mockTokenDao);
 
         AccessToken token = tokenService.validateToken(tokenString);
@@ -372,7 +423,8 @@ public class AccessTokenServiceTests {
 
     @Test
     public void shouldAuthenticateHeaderWithFlowTypeToken() {
-        EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
+        EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(
+            getFakeUserToken());
         EasyMock.replay(mockTokenDao);
 
         AccessToken token = tokenService.getAccessTokenByAuthHeader(authHeader);
@@ -383,10 +435,12 @@ public class AccessTokenServiceTests {
 
     @Test
     public void shouldAuthenticateToken() throws Exception {
-        EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
+        EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(
+            getFakeUserToken());
         EasyMock.replay(mockTokenDao);
 
-        boolean isAuthenticated = tokenService.authenticateAccessToken(tokenString);
+        boolean isAuthenticated = tokenService
+            .authenticateAccessToken(tokenString);
         Assert.assertTrue(isAuthenticated);
 
         EasyMock.verify(mockTokenDao);
@@ -396,29 +450,34 @@ public class AccessTokenServiceTests {
     public void shouldNotAuthenticateTokenThatDoesNotExist() throws Exception {
         String badToken = "badtoken";
 
-        EasyMock.expect(mockTokenDao.findByTokenString(badToken)).andReturn(null);
+        EasyMock.expect(mockTokenDao.findByTokenString(badToken)).andReturn(
+            null);
         EasyMock.replay(mockTokenDao);
 
-        boolean isAuthenticated = tokenService.authenticateAccessToken(badToken);
+        boolean isAuthenticated = tokenService
+            .authenticateAccessToken(badToken);
         Assert.assertFalse(isAuthenticated);
 
         EasyMock.verify(mockTokenDao);
     }
 
-
     private AccessToken getFakeUserToken() {
-        return new AccessToken(tokenString, tokenExpiration, getFakeUser(), getFakeClient(), IDM_SCOPE.FULL);
+        return new AccessToken(tokenString, tokenExpiration, getFakeUser(),
+            getFakeClient(), IDM_SCOPE.FULL);
     }
 
     private AccessToken getFakeClientToken() {
-        return new AccessToken(tokenString, tokenExpiration, null, getFakeClient(), IDM_SCOPE.FULL);
+        return new AccessToken(tokenString, tokenExpiration, null,
+            getFakeClient(), IDM_SCOPE.FULL);
     }
 
     private User getFakeUser() {
 
         UserHumanName name = new UserHumanName(firstname, middlename, lastname);
-        UserLocale pref = new UserLocale(new Locale(preferredLang), DateTimeZone.forID(timeZone));
-        UserCredential cred = new UserCredential(userpass, secretQuestion, secretAnswer);
+        UserLocale pref = new UserLocale(new Locale(preferredLang),
+            DateTimeZone.forID(timeZone));
+        UserCredential cred = new UserCredential(userpass, secretQuestion,
+            secretAnswer);
         User user = new User(username, customerId, email, name, pref, cred);
         user.setInum(userInum);
         user.setStatus(UserStatus.ACTIVE);
@@ -426,9 +485,10 @@ public class AccessTokenServiceTests {
     }
 
     private Client getFakeClient() {
-        Client client =
-                new Client(clientId, ClientSecret.newInstance(clientSecret), clientName, clientInum, clientIname,
-                        "RCN-123-456-789", ClientStatus.ACTIVE, "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111", userInum);
+        Client client = new Client(clientId,
+            ClientSecret.newInstance(clientSecret), clientName, clientInum,
+            clientIname, "RCN-123-456-789", ClientStatus.ACTIVE,
+            "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111", userInum);
         return client;
     }
 }

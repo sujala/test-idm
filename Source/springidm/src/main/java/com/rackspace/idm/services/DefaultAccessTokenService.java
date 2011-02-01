@@ -2,7 +2,7 @@ package com.rackspace.idm.services;
 
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
-import com.rackspace.idm.dao.GenericTokenDao;
+import com.rackspace.idm.dao.TokenGetterDao;
 import com.rackspace.idm.dao.RefreshTokenDao;
 import com.rackspace.idm.dao.WebClientAccessTokenRepository;
 import com.rackspace.idm.entities.*;
@@ -17,8 +17,7 @@ import java.util.UUID;
 
 public class DefaultAccessTokenService implements AccessTokenService {
     private AccessTokenDao tokenDao;
-    private GenericTokenDao<AccessToken> xdcTokenDao = new WebClientAccessTokenRepository(
-        null, null, null); // TODO
+    private TokenGetterDao<AccessToken> xdcTokenDao;
     private ClientDao clientDao;
     private Logger logger;
     private UserService userService;
@@ -30,10 +29,12 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
     public DefaultAccessTokenService(TokenDefaultAttributes defaultAttributes,
         AccessTokenDao tokenDao, ClientDao clientDao, UserService userService,
+        TokenGetterDao<AccessToken> xdcTokenDao,
         AuthHeaderHelper authHeaderHelper, Logger logger) {
         this.tokenDao = tokenDao;
         this.clientDao = clientDao;
         this.userService = userService;
+        this.xdcTokenDao = xdcTokenDao;
         this.logger = logger;
         this.defaultTokenExpirationSeconds = defaultAttributes
             .getExpirationSeconds();
@@ -361,11 +362,9 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
         // Check if token is from other data center.
         if (token == null && !tokenString.startsWith(myDcPrefix)) {
-            try {
-                token = xdcTokenDao.findByTokenString(tokenString);
-                // TODO Save to the local memcached
-            } catch (Exception e) {
-                // TODO
+            token = xdcTokenDao.findByTokenString(tokenString);
+            if (token != null) {
+                tokenDao.save(token);
             }
         }
 

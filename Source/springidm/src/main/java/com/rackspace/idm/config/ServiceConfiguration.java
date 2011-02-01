@@ -1,6 +1,7 @@
 package com.rackspace.idm.config;
 
 import com.rackspace.idm.dao.*;
+import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.EmailSettings;
 import com.rackspace.idm.entities.RefreshTokenDefaultAttributes;
 import com.rackspace.idm.entities.TokenDefaultAttributes;
@@ -16,6 +17,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
 import javax.validation.Validation;
@@ -48,6 +50,8 @@ public class ServiceConfiguration {
     private MemcachedClient memcached;
     @Autowired
     private EndpointDao endpointDao;
+    @Autowired
+    private TokenGetterDao<AccessToken> xdcTokenDao;
 
     @Autowired
     private Configuration config;
@@ -93,8 +97,7 @@ public class ServiceConfiguration {
             .getLogger(DefaultAccessTokenService.class);
 
         return new DefaultAccessTokenService(defaultAttributes, accessTokenDao,
-            clientDao, userService(), authHeaderHelper(),
-            logger);
+            clientDao, userService(), xdcTokenDao, authHeaderHelper(), logger);
     }
 
     @Bean
@@ -107,7 +110,7 @@ public class ServiceConfiguration {
         Logger logger = LoggerFactory.getLogger(DefaultClientService.class);
         return new DefaultClientService(clientDao, customerDao, logger);
     }
-    
+
     @Bean
     public EndpointService endpointService() {
         Logger logger = LoggerFactory.getLogger(DefaultEndpointService.class);
@@ -198,8 +201,8 @@ public class ServiceConfiguration {
     @Bean
     public OAuthService oauthService() {
         Logger logger = LoggerFactory.getLogger(DefaultOAuthService.class);
-        return new DefaultOAuthService(userService(), clientService(), tokenService(),
-            refreshTokenService(), logger);
+        return new DefaultOAuthService(userService(), clientService(),
+            tokenService(), refreshTokenService(), logger);
     }
 
     @Bean
