@@ -47,7 +47,7 @@ public class UserConverter {
                 .value().toUpperCase()));
         }
         
-        user.setPasswordFailueLocked(jaxbUser.isPasswordFailureLocked());
+        user.setMaxLoginFailuresExceded(jaxbUser.isMaxLoginFailuresExceded());
 
         user.setNastId(jaxbUser.getNastId());
         user.setMossoId(jaxbUser.getMossoId());
@@ -157,7 +157,7 @@ public class UserConverter {
         returnedUser.setSoftDeleted(user.isSoftDeleted());
         returnedUser.setMossoId(user.getMossoId());
         returnedUser.setNastId(user.getNastId());
-        returnedUser.setPasswordFailureLocked(user.isPasswordFailureLocked());
+        returnedUser.setMaxLoginFailuresExceded(user.isMaxLoginFailuresExceded());
 
         try {
             if (user.getCreated() != null) {

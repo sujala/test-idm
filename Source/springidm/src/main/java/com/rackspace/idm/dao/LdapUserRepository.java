@@ -968,7 +968,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 .plusMinutes(GlobalConstants.PASSWORD_FAILURE_LOCKOUT_MIN);
             passwordFailureLocked = passwordFailureDateTime.isAfterNow();
         }
-        user.setPasswordFailueLocked(passwordFailureLocked);
+        user.setMaxLoginFailuresExceded(passwordFailureLocked);
 
         return user;
     }

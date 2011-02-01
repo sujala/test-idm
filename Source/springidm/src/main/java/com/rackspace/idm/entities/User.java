@@ -47,7 +47,7 @@ public class User extends BaseUser {
     private DateTime created;
     private DateTime updated;
     
-    private Boolean passwordFailureLocked = null;
+    private Boolean maxLoginFailuresExceded = null;
 
     public User() {
         // Needed by JAX-RS
@@ -160,12 +160,12 @@ public class User extends BaseUser {
         this.locked = isLocked;
     }
     
-    public Boolean isPasswordFailureLocked() {
-        return passwordFailureLocked;
+    public Boolean isMaxLoginFailuresExceded() {
+        return maxLoginFailuresExceded;
     }
     
-    public void setPasswordFailueLocked(Boolean passwordFailureLocked) {
-        this.passwordFailureLocked = passwordFailureLocked;
+    public void setMaxLoginFailuresExceded(Boolean maxLoginFailuresExceded) {
+        this.maxLoginFailuresExceded = maxLoginFailuresExceded;
     }
 
     public String getOrgInum() {
@@ -503,7 +503,7 @@ public class User extends BaseUser {
         result = prime * result + ((orgInum == null) ? 0 : orgInum.hashCode());
         result = prime
             * result
-            + ((passwordFailureLocked == null) ? 0 : passwordFailureLocked
+            + ((maxLoginFailuresExceded == null) ? 0 : maxLoginFailuresExceded
                 .hashCode());
         result = prime * result
             + ((personId == null) ? 0 : personId.hashCode());
@@ -623,11 +623,11 @@ public class User extends BaseUser {
         } else if (!orgInum.equals(other.orgInum)) {
             return false;
         }
-        if (passwordFailureLocked == null) {
-            if (other.passwordFailureLocked != null) {
+        if (maxLoginFailuresExceded == null) {
+            if (other.maxLoginFailuresExceded != null) {
                 return false;
             }
-        } else if (!passwordFailureLocked.equals(other.passwordFailureLocked)) {
+        } else if (!maxLoginFailuresExceded.equals(other.maxLoginFailuresExceded)) {
             return false;
         }
         if (personId == null) {
@@ -696,7 +696,7 @@ public class User extends BaseUser {
             + seeAlso + ", softDeleted=" + softDeleted + ", region=" + region
             + ", nastId=" + nastId + ", mossoId=" + mossoId + ", created="
             + created + ", updated=" + updated + ", passwordFailureLocked="
-            + passwordFailureLocked + ", username=" + username
+            + maxLoginFailuresExceded + ", username=" + username
             + ", customerId=" + customerId + ", roles=" + roles + "]";
     }
 
