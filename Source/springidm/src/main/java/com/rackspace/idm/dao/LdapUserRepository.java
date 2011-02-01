@@ -27,46 +27,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public static final DateTimeFormatter DATE_PARSER = DateTimeFormat
         .forPattern("yyyyMMddHHmmss.SSS'Z");
 
-    private static final String ATTR_C = "c";
-    private static final String ATTR_DISPLAY_NAME = "displayName";
-    private static final String ATTR_GIVEN_NAME = "givenName";
-    private static final String ATTR_INAME = "iname";
-    private static final String ATTR_INUM = "inum";
-    private static final String ATTR_LOCKED = "locked";
-    private static final String ATTR_MAIL = "mail";
-    private static final String ATTR_MIDDLE_NAME = "middleName";
-    private static final String ATTR_MEMBER_OF = "isMemberOf";
-    private static final String ATTR_O = "o";
-    private static final String ATTR_OBJECT_CLASS = "objectClass";
-    private static final String ATTR_LANG = "preferredLanguage";
-    private static final String ATTR_RACKSPACE_CUSTOMER_NUMBER = "rackspaceCustomerNumber";
-    private static final String ATTR_RACKSPACE_PERSON_NUMBER = "rackspacePersonNumber";
-    private static final String ATTR_RACKSPACE_API_KEY = "rackspaceApiKey";
-    private static final String ATTR_RACKSPACE_REGION = "rackspaceRegion";
-    private static final String ATTR_PASSWORD_SECRET_A = "secretAnswer";
-    private static final String ATTR_PASSWORD_SECRET_Q = "secretQuestion";
-    private static final String ATTR_STATUS = "status";
-    private static final String ATTR_SEE_ALSO = "seeAlso";
-
-    private static final String ATTR_SN = "sn";
-    private static final String ATTR_TIME_ZONE = "timeZone";
-    private static final String ATTR_UID = "uid";
-    private static final String ATTR_PASSWORD = "userPassword";
-
-    private static final String ATTR_MOSSO_ID = "rsMossoId";
-    private static final String ATTR_NAST_ID = "rsNastId";
-
-    private static final String ATTR_CREATED_DATE = "createTimestamp";
-    private static final String ATTR_UPDATED_DATE = "modifyTimestamp";
-    private static final String ATTR_PWD_ACCOUNT_LOCKOUT_TIME = "pwdAccountLockedTime";
-
     private static final String[] ATTR_SEARCH_ATTRIBUTES = {"*",
         ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
-
-    private static final String[] ATTR_OBJECT_CLASS_VALUES = {"top",
-        "rackspacePerson"};
-
-    private static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
 
     private static final String USER_FIND_BY_EMAIL_STRING = "(&(objectClass=rackspacePerson)(mail=%s))";
     private static final String USER_FIND_BY_NAST_ID = "(&(objectClass=rackspacePerson)(rsNastId=%s))";
@@ -699,7 +661,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         List<Attribute> atts = new ArrayList<Attribute>();
 
-        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_VALUES));
+        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_USER_OBJECT_CLASS_VALUES));
 
         if (!StringUtils.isBlank(user.getCountry())) {
             atts.add(new Attribute(ATTR_C, user.getCountry()));

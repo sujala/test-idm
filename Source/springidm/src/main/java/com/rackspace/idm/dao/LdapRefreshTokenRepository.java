@@ -18,16 +18,6 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
     public static final DateTimeFormatter DATE_PARSER = DateTimeFormat
         .forPattern("yyyyMMddHHmmss.SSS'Z");
 
-    private static final String ATTR_OBJECT_CLASS = "objectClass";
-    private static final String[] ATTR_OBJECT_CLASS_VALUES = {"top",
-        "rackspaceToken"};
-    private static final String ATTR_O = "o";
-    private static final String ATTR_EXPIRATION = "expiration";
-    private static final String ATTR_OWNER = "tokenOwner";
-    private static final String ATTR_TOKEN_REQUESTOR = "tokenRequestor";
-
-    private static final String BASE_DN = "ou=Tokens,dc=rackspace,dc=com";
-
     private static final String TOKEN_FIND_ALL_STRING = "(objectClass=rackspaceToken)";
     private static final String TOKEN_FIND_BY_TOKENSTRING_STRING = "(&(objectClass=rackspaceToken)(o=%s))";
     private static final String TOKEN_FIND_BY_OWNER_STRING = "(&(objectClass=rackspaceToken)(tokenOwner=%s))";
@@ -49,7 +39,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
 
         List<Attribute> atts = new ArrayList<Attribute>();
 
-        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_VALUES));
+        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_TOKEN_OBJECT_CLASS_VALUES));
 
         if (!StringUtils.isBlank(refreshToken.getTokenString())) {
             atts.add(new Attribute(ATTR_O, refreshToken.getTokenString()));
@@ -59,7 +49,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
                 .getExpirationTime())));
         }
         if (!StringUtils.isBlank(refreshToken.getOwner())) {
-            atts.add(new Attribute(ATTR_OWNER, refreshToken.getOwner()));
+            atts.add(new Attribute(ATTR_TOKEN_OWNER, refreshToken.getOwner()));
         }
         if (!StringUtils.isBlank(refreshToken.getRequestor())) {
             atts.add(new Attribute(ATTR_TOKEN_REQUESTOR, refreshToken.getRequestor()));
@@ -67,7 +57,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
 
-        String tokenDN = "o=" + refreshToken.getTokenString() + "," + BASE_DN;
+        String tokenDN = "o=" + refreshToken.getTokenString() + "," + TOKEN_BASE_DN;
 
         LDAPResult result;
         try {
@@ -129,7 +119,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         SearchResult searchResult = null;
         try {
             searchResult = getAppConnPool().search(
-                BASE_DN,
+                TOKEN_BASE_DN,
                 SearchScope.ONE,
                 String.format(TOKEN_FIND_BY_OWNER_STRING, username));
         } catch (LDAPSearchException ldapEx) {
@@ -164,7 +154,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         SearchResult searchResult = null;
         try {
             searchResult = getAppConnPool().search(
-                BASE_DN,
+                TOKEN_BASE_DN,
                 SearchScope.ONE,
                 String.format(TOKEN_FIND_BY_OWNER_AND_REQUESTOR_STRING, username, clientId));
         } catch (LDAPSearchException ldapEx) {
@@ -190,13 +180,13 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         getLogger().debug("Search all refresh tokens");
         SearchResult searchResult = null;
         try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.ONE,
+            searchResult = getAppConnPool().search(TOKEN_BASE_DN, SearchScope.ONE,
                 TOKEN_FIND_ALL_STRING);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error(
-                "Error searching for all refresh tokens under DN {} - {}", BASE_DN,
+                "Error searching for all refresh tokens under DN {} - {}", TOKEN_BASE_DN,
                 ldapEx);
-            System.out.println("Could not perform search for DN " + BASE_DN);
+            System.out.println("Could not perform search for DN " + TOKEN_BASE_DN);
             throw new IllegalStateException(ldapEx);
         }
 
@@ -207,7 +197,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         }
 
         getLogger()
-            .debug("Found {} tokens under DN {}", tokens.size(), BASE_DN);
+            .debug("Found {} tokens under DN {}", tokens.size(), TOKEN_BASE_DN);
         return tokens;
     }
 
@@ -242,7 +232,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         String expirationStr = resultEntry.getAttributeValue(ATTR_EXPIRATION);
         DateTime expiration = DATE_PARSER.parseDateTime(expirationStr);
         token.setExpirationTime(expiration);
-        token.setOwner(resultEntry.getAttributeValue(ATTR_OWNER));
+        token.setOwner(resultEntry.getAttributeValue(ATTR_TOKEN_OWNER));
         token.setRequestor(resultEntry.getAttributeValue(ATTR_TOKEN_REQUESTOR));
         return token;
     }
@@ -260,7 +250,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         SearchResult searchResult = null;
         try {
             searchResult = getAppConnPool().search(
-                BASE_DN,
+                TOKEN_BASE_DN,
                 SearchScope.ONE,
                 String.format(TOKEN_FIND_VALID_BY_OWNER_AND_REQUESTOR_STRING, owner,
                     requestor, DATE_PARSER.print(validAfter)));
@@ -302,7 +292,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
     private SearchResult getTokenSearchResult(String tokenString) {
         SearchResult searchResult = null;
         try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
+            searchResult = getAppConnPool().search(TOKEN_BASE_DN, SearchScope.SUB,
                 String.format(TOKEN_FIND_BY_TOKENSTRING_STRING, tokenString));
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for token {} - {}", tokenString,
@@ -366,7 +356,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         SearchResult searchResult = null;
         try {
             searchResult = getAppConnPool().search(
-                BASE_DN,
+                TOKEN_BASE_DN,
                 SearchScope.SUB,
                 String.format(TOKEN_FIND_BY_TOKENSTRING_STRING,
                     tokenString));
@@ -393,7 +383,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
 
         if (!StringUtils.equals(tOld.getOwner(), tNew.getOwner())) {
             mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_OWNER, tNew.getOwner()));
+                ATTR_TOKEN_OWNER, tNew.getOwner()));
         }
         
         if (!StringUtils.equals(tOld.getRequestor(), tNew.getRequestor())) {

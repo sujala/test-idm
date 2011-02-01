@@ -26,24 +26,6 @@ import com.unboundid.ldap.sdk.controls.SubtreeDeleteRequestControl;
 public class LdapCustomerRepository extends LdapRepository implements
     CustomerDao {
 
-    private static final String ATTR_OBJECT_CLASS = "objectClass";
-    private static final String[] ATTR_OBJECT_CLASS_VALUES = {"top",
-        "rackspaceOrganization"};
-    private static final String[] ATTR_OBJECT_CLASS_OU_VALUES = {"top",
-        "organizationalUnit"};
-    private static final String ATTR_O = "o";
-    private static final String ATTR_OU = "ou";
-    private static final String ATTR_INAME = "iname";
-    private static final String ATTR_INUM = "inum";
-    private static final String ATTR_LOCKED = "locked";
-    private static final String ATTR_RACKSPACE_CUSTOMER_NUMBER = "rackspaceCustomerNumber";
-    private static final String ATTR_STATUS = "status";
-    private static final String ATTR_SEE_ALSO = "seeAlso";
-    private static final String ATTR_SOFT_DELETED = "softDeleted";
-    private static final String ATTR_OWNER = "owner";
-
-    private static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
-
     private static final String CUSTOMER_FIND_ALL_STRING_NOT_DELETED = "(&(objectClass=rackspaceOrganization)(softDeleted=FALSE))";
     private static final String CUSTOMER_FIND_BY_CUSTOMER_ID_STRING_NOT_DELETED = "(&(objectClass=rackspaceOrganization)(rackspaceCustomerNumber=%s)(softDeleted=FALSE))";
     private static final String CUSTOMER_FIND_BY_INUM_STRING = "(&(objectClass=rackspaceOrganization)(inum=%s))";
@@ -62,7 +44,7 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         List<Attribute> atts = new ArrayList<Attribute>();
 
-        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_VALUES));
+        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_CUSTOMER_OBJECT_CLASS_VALUES));
 
         if (!StringUtils.isBlank(customer.getIname())) {
             atts.add(new Attribute(ATTR_INAME, customer.getIname()));
