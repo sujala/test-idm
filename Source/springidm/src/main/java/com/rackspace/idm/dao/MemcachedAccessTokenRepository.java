@@ -31,7 +31,8 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
             logger.error("Token is null");
             throw new IllegalArgumentException("Token is null");
         }
-        if (StringUtils.isBlank(accessToken.getTokenString())
+        String tokenString = accessToken.getTokenString();
+		if (StringUtils.isBlank(tokenString)
             || accessToken.getExpirationTime() == null) {
             String errMsg = "Token string and/or expiration time values are not present in the given token.";
             logger.error(errMsg);
@@ -43,8 +44,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
         // add operation will make the two entries.
 
         // Try adding the token with the token string as the key
-        Future<Boolean> resultByTokenStr = memcached.set(accessToken
-            .getTokenString(), accessToken.getExpiration(), accessToken);
+        Future<Boolean> resultByTokenStr = memcached.set(tokenString, accessToken.getExpiration(), accessToken);
         boolean addedByTokenStr = evaluateCacheOperation(resultByTokenStr,
             "set token by token string", accessToken);
         if (!addedByTokenStr) {
@@ -55,16 +55,16 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
             throw new IllegalStateException(errMsg);
         }
 
-        // Try adding the token with the owner_requestor as the key
+        // Try adding the tokenString with the owner_requestor as the key
         Future<Boolean> resultByOwner = memcached.set(getKeyForFindByOwner(
             accessToken.getOwner(), accessToken.getRequestor()), accessToken
-            .getExpiration(), accessToken);
+            .getExpiration(), tokenString);
         boolean addedByOwner = evaluateCacheOperation(resultByOwner,
             "set token by owner", accessToken);
         if (!addedByOwner) {
             // Attempt a rollback of the previous operation before bailing with
             // an exception
-            memcached.delete(accessToken.getTokenString());
+            memcached.delete(tokenString);
             String errMsg = String.format(
                 "Failed to add token by owner with parameter %s", accessToken);
             logger.error(errMsg);
@@ -85,10 +85,12 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
             return;
         }
 
+        // delete primary token
         Future<Boolean> resultByTokenStr = memcached.delete(tokenString);
         boolean deletedByTokenStr = evaluateCacheOperation(resultByTokenStr,
             "delete token by token string", tokenString);
 
+        // delete pointer to token
         Future<Boolean> resultByOwner = memcached.delete(getKeyForFindByOwner(
             token.getOwner(), token.getRequestor()));
         boolean deletedByOwner = evaluateCacheOperation(resultByOwner,
@@ -121,7 +123,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
         // stored by owner_requestor.
         Object foundByOwner = memcached.get(getKeyForFindByOwner(token
             .getOwner(), token.getRequestor()));
-        if (token.equals(foundByOwner)) {
+        if (token.getTokenString().equals(foundByOwner)) {
             logger.debug("Found token with value {}", token);
             return token;
         }
@@ -147,8 +149,16 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
         }
         logger.debug("Finding token with owner {} and requestor {}", owner,
             requestor);
-        AccessToken token = (AccessToken) memcached.get(getKeyForFindByOwner(
+        String tokenString = (String) memcached.get(getKeyForFindByOwner(
             owner, requestor));
+        
+        if (StringUtils.isEmpty(tokenString)) {
+            logger.debug("No token found for owner {} and requestor {}", owner,
+                requestor);
+            return null;
+        }
+        
+        AccessToken token = (AccessToken) memcached.get(tokenString);
         if (token == null) {
             logger.debug("No token found for owner {} and requestor {}", owner,
                 requestor);
@@ -187,13 +197,12 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
         int delCount = 0;
         for (String requestor : tokenRequestors) {
             String ownerKey = getKeyForFindByOwner(owner, requestor);
-            AccessToken token = (AccessToken) memcached.get(ownerKey);
-            if (token == null) {
+            String tokenString = (String) memcached.get(ownerKey);
+            if (tokenString == null) {
                 continue;
             }
 
-            Future<Boolean> resultByTokenStr = memcached.delete(token
-                .getTokenString());
+            Future<Boolean> resultByTokenStr = memcached.delete(tokenString);
             boolean deletedByTokenStr = evaluateCacheOperation(
                 resultByTokenStr, "delete all tokens by token string", owner,
                 requestor);
