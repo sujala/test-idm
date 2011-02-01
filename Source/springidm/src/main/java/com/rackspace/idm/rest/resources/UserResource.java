@@ -187,7 +187,7 @@ public class UserResource {
 
         logger.info("Updated User: {}", user);
         return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
-    }
+    }  
 
     /**
      * Deletes a user.

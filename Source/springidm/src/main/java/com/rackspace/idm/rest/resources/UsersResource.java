@@ -43,425 +43,641 @@ import com.rackspace.idm.validation.InputValidator;
 
 /**
  * First user for a customer
- *
+ * 
  */
-@Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-@Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+@Consumes( { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
+@Produces( { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
 @Component
 public class UsersResource {
 
-    private AccessTokenService accessTokenService;
-    private CustomerService customerService;
-    private UserService userService;
-    private RoleService roleService;
-    private InputValidator inputValidator;
-    private UserConverter userConverter;
-    private PasswordComplexityService passwordComplexityService;
-    private AuthorizationService authorizationService;
-    private EndpointService endpointService;
-    private EndPointConverter endpointConverter;
-    private Logger logger;
+	private AccessTokenService accessTokenService;
+	private CustomerService customerService;
+	private UserService userService;
+	private RoleService roleService;
+	private InputValidator inputValidator;
+	private UserConverter userConverter;
+	private PasswordComplexityService passwordComplexityService;
+	private AuthorizationService authorizationService;
+	private EndpointService endpointService;
+	private EndPointConverter endpointConverter;
+	private Logger logger;
 
-    @Autowired
-    public UsersResource(AccessTokenService accessTokenService,
-        CustomerService customerService, UserService userService,
-        RoleService roleService, InputValidator inputValidator,
-        UserConverter userConverter,
-        PasswordComplexityService passwordComplexityService,
-        AuthorizationService authorizationService,
-        EndpointService endpointService, EndPointConverter endpointConverter,LoggerFactoryWrapper logger) {
-        this.accessTokenService = accessTokenService;
-        this.customerService = customerService;
-        this.userService = userService;
-        this.roleService = roleService;
-        this.inputValidator = inputValidator;
-        this.userConverter = userConverter;
-        this.passwordComplexityService = passwordComplexityService;
-        this.authorizationService = authorizationService;
-        this.endpointService = endpointService;
-        this.endpointConverter=endpointConverter;
-        this.logger = logger.getLogger(this.getClass());
-    }
+	@Autowired
+	public UsersResource(AccessTokenService accessTokenService,
+			CustomerService customerService, UserService userService,
+			RoleService roleService, InputValidator inputValidator,
+			UserConverter userConverter,
+			PasswordComplexityService passwordComplexityService,
+			AuthorizationService authorizationService,
+			EndpointService endpointService,
+			EndPointConverter endpointConverter, LoggerFactoryWrapper logger) {
+		this.accessTokenService = accessTokenService;
+		this.customerService = customerService;
+		this.userService = userService;
+		this.roleService = roleService;
+		this.inputValidator = inputValidator;
+		this.userConverter = userConverter;
+		this.passwordComplexityService = passwordComplexityService;
+		this.authorizationService = authorizationService;
+		this.endpointService = endpointService;
+		this.endpointConverter = endpointConverter;
+		this.logger = logger.getLogger(this.getClass());
+	}
 
-    /**
-     * Creates customer and adds first user.
-     * 
-     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.409.qname {http://docs.rackspacecloud.com/idm/api/v1.0}customerConflict
-     * @response.representation.409.qname {http://docs.rackspacecloud.com/idm/api/v1.0}usernameConflict
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}idmFault
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param user New User
-     */
-    @POST
-    public Response addFirstUser(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        com.rackspace.idm.jaxb.User user) {
+	/**
+	 * Creates customer and adds first user.
+	 * 
+	 * @request.representation.qname 
+	 *                               {http://docs.rackspacecloud.com/idm/api/v1.0
+	 *                               }user
+	 * @response.representation.200.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}user
+	 * @response.representation.400.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}badRequest
+	 * @response.representation.401.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}unauthorized
+	 * @response.representation.403.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}forbidden
+	 * @response.representation.404.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}itemNotFound
+	 * @response.representation.409.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}customerConflict
+	 * @response.representation.409.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}usernameConflict
+	 * @response.representation.500.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}idmFault
+	 * @response.representation.503.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}serviceUnavailable
+	 * 
+	 * @param authHeader
+	 *            HTTP Authorization header for authenticating the caller.
+	 * @param user
+	 *            New User
+	 */
+	@POST
+	public Response addFirstUser(@Context Request request,
+			@Context UriInfo uriInfo,
+			@HeaderParam("Authorization") String authHeader,
+			com.rackspace.idm.jaxb.User user) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+		AccessToken token = this.accessTokenService
+				.getAccessTokenByAuthHeader(authHeader);
 
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+		// Only Specific Clients are authorized
+		boolean authorized = authorizationService.authorizeClient(token,
+				request.getMethod(), uriInfo.getPath());
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
-            logger.error(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+		if (!authorized) {
+			String errMsg = String.format("Token %s Forbidden from this call",
+					token);
+			logger.error(errMsg);
+			throw new ForbiddenException(errMsg);
+		}
 
-        User userDO = userConverter.toUserDO(user);
-        userDO.setDefaults();
+		User userDO = userConverter.toUserDO(user);
+		userDO.setDefaults();
 
-        ApiError err = inputValidator.validate(userDO);
-        if (err != null) {
-            throw new BadRequestException(err.getMessage());
-        }
+		ApiError err = inputValidator.validate(userDO);
+		if (err != null) {
+			throw new BadRequestException(err.getMessage());
+		}
 
-        if (!this.userService.isUsernameUnique(userDO.getUsername())) {
-            String errorMsg = String.format(
-                "A user with username '%s' already exists.",
-                userDO.getUsername());
-            logger.error(errorMsg);
-            throw new DuplicateUsernameException(errorMsg);
-        }
+		if (!this.userService.isUsernameUnique(userDO.getUsername())) {
+			String errorMsg = String.format(
+					"A user with username '%s' already exists.", userDO
+							.getUsername());
+			logger.error(errorMsg);
+			throw new DuplicateUsernameException(errorMsg);
+		}
 
-        // If a blank or null password is passed into the method we
-        // generate a random password for the user else we check the password
-        // against our password complexity rules.
-        if (userDO.getPasswordObj() == null
-            || StringUtils.isBlank(userDO.getPasswordObj().getValue())) {
-            Password newpassword = Password.generateRandom();
-            userDO.setPasswordObj(newpassword);
-        } else {
-            String password = userDO.getPasswordObj().getValue();
-            if (!passwordComplexityService.checkPassword(password)
-                .isValidPassword()) {
-                String errorMsg = String
-                    .format("Invalid password %s", password);
-                logger.warn(errorMsg);
-                throw new PasswordValidationException(errorMsg);
-            }
-        }
+		// If a blank or null password is passed into the method we
+		// generate a random password for the user else we check the password
+		// against our password complexity rules.
+		if (userDO.getPasswordObj() == null
+				|| StringUtils.isBlank(userDO.getPasswordObj().getValue())) {
+			Password newpassword = Password.generateRandom();
+			userDO.setPasswordObj(newpassword);
+		} else {
+			String password = userDO.getPasswordObj().getValue();
+			if (!passwordComplexityService.checkPassword(password)
+					.isValidPassword()) {
+				String errorMsg = String
+						.format("Invalid password %s", password);
+				logger.warn(errorMsg);
+				throw new PasswordValidationException(errorMsg);
+			}
+		}
 
-        Customer customer = new Customer();
-        customer.setCustomerId(userDO.getCustomerId());
-        customer.setDefaults();
+		Customer customer = new Customer();
+		customer.setCustomerId(userDO.getCustomerId());
+		customer.setDefaults();
 
-        try {
-            this.customerService.addCustomer(customer);
-        } catch (DuplicateException ex) {
-            String errorMsg = String.format(
-                "A customer with customerId '%s' already exists.",
-                customer.getCustomerId());
-            logger.error(errorMsg);
-            throw new CustomerConflictException(errorMsg);
-        }
+		try {
+			this.customerService.addCustomer(customer);
+		} catch (DuplicateException ex) {
+			String errorMsg = String.format(
+					"A customer with customerId '%s' already exists.", customer
+							.getCustomerId());
+			logger.error(errorMsg);
+			throw new CustomerConflictException(errorMsg);
+		}
 
-        try {
-            this.userService.addUser(userDO);
-        } catch (DuplicateException ex) {
-            // Roll Back the Add Customer call
-            this.customerService.deleteCustomer(customer.getCustomerId());
-            // Then throw the error
-            String errorMsg = String.format(
-                "A user with username '%s' already exists.",
-                userDO.getUsername());
-            logger.error(errorMsg);
-            throw new DuplicateUsernameException(errorMsg);
-        }
+		try {
+			this.userService.addUser(userDO);
+		} catch (DuplicateException ex) {
+			// Roll Back the Add Customer call
+			this.customerService.deleteCustomer(customer.getCustomerId());
+			// Then throw the error
+			String errorMsg = String.format(
+					"A user with username '%s' already exists.", userDO
+							.getUsername());
+			logger.error(errorMsg);
+			throw new DuplicateUsernameException(errorMsg);
+		}
 
-        Role role = this.roleService.getRole(
-            GlobalConstants.IDM_ADMIN_ROLE_NAME, userDO.getCustomerId());
-        this.roleService.addUserToRole(userDO, role);
+		Role role = this.roleService.getRole(
+				GlobalConstants.IDM_ADMIN_ROLE_NAME, userDO.getCustomerId());
+		this.roleService.addUserToRole(userDO, role);
 
-        // Add the new Admin role to the User Object
-        List<Role> roles = new ArrayList<Role>();
-        roles.add(role);
-        userDO.setRoles(roles);
+		// Add the new Admin role to the User Object
+		List<Role> roles = new ArrayList<Role>();
+		roles.add(role);
+		userDO.setRoles(roles);
 
-        logger.info("Added User: {}", userDO);
+		logger.info("Added User: {}", userDO);
 
-        String locationUri = String.format("/customers/%s/users/%s",
-            customer.getCustomerId(), user.getUsername());
+		String locationUri = String.format("/customers/%s/users/%s", customer
+				.getCustomerId(), user.getUsername());
 
-        user = userConverter.toUserJaxb(userDO);
+		user = userConverter.toUserJaxb(userDO);
 
-        URI uri = null;
-        try {
-            uri = new URI(locationUri);
-        } catch (URISyntaxException e) {
-            logger.error("Customer Location URI error");
-        }
+		URI uri = null;
+		try {
+			uri = new URI(locationUri);
+		} catch (URISyntaxException e) {
+			logger.error("Customer Location URI error");
+		}
 
-        return Response.ok(user).location(uri)
-            .status(HttpServletResponse.SC_CREATED).build();
-    }
+		return Response.ok(user).location(uri).status(
+				HttpServletResponse.SC_CREATED).build();
+	}
 
-    /**
-     * Gets a list of serviceCatalog for a user.
-     *
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceCatalog
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     *
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param username username
-     */
-    @GET
-    @Path("{username}/servicecatalog")
-    public Response getServiceCatalog(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username) {
+	/**
+	 * Gets a list of serviceCatalog for a user.
+	 * 
+	 * @response.representation.200.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}serviceCatalog
+	 * @response.representation.400.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}badRequest
+	 * @response.representation.403.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}forbidden
+	 * @response.representation.404.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}itemNotFound
+	 * @response.representation.500.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}serverError
+	 * @response.representation.503.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}serviceUnavailable
+	 * 
+	 * @param authHeader
+	 *            HTTP Authorization header for authenticating the caller.
+	 * @param username
+	 *            username
+	 */
+	@GET
+	@Path("{username}/servicecatalog")
+	public Response getServiceCatalog(@Context Request request,
+			@Context UriInfo uriInfo,
+			@HeaderParam("Authorization") String authHeader,
+			@PathParam("username") String username) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+		AccessToken token = this.accessTokenService
+				.getAccessTokenByAuthHeader(authHeader);
 
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+		// Only Specific Clients are authorized
+		boolean authorized = authorizationService.authorizeClient(token,
+				request.getMethod(), uriInfo.getPath());
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
-            logger.error(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-        
-        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(username);
+		if (!authorized) {
+			String errMsg = String.format("Token %s Forbidden from this call",
+					token);
+			logger.error(errMsg);
+			throw new ForbiddenException(errMsg);
+		}
 
-        return Response.ok(this.endpointConverter.toServiceCatalog(endpoints)).build();
-    }
+		List<CloudEndpoint> endpoints = this.endpointService
+				.getEndpointsForUser(username);
 
-    /**
-     * Gets a list of baseUrlRefs for a user.
-     *
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}baseURLRefs
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     *
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param username username
-     */
-    @GET
-    @Path("{username}/baseurlrefs")
-    public Response getBaseUrlRefs(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username) {
+		return Response.ok(this.endpointConverter.toServiceCatalog(endpoints))
+				.build();
+	}
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+	/**
+	 * Gets a list of baseUrlRefs for a user.
+	 * 
+	 * @response.representation.200.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}baseURLRefs
+	 * @response.representation.400.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}badRequest
+	 * @response.representation.403.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}forbidden
+	 * @response.representation.404.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}itemNotFound
+	 * @response.representation.500.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}serverError
+	 * @response.representation.503.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}serviceUnavailable
+	 * 
+	 * @param authHeader
+	 *            HTTP Authorization header for authenticating the caller.
+	 * @param username
+	 *            username
+	 */
+	@GET
+	@Path("{username}/baseurlrefs")
+	public Response getBaseUrlRefs(@Context Request request,
+			@Context UriInfo uriInfo,
+			@HeaderParam("Authorization") String authHeader,
+			@PathParam("username") String username) {
 
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+		AccessToken token = this.accessTokenService
+				.getAccessTokenByAuthHeader(authHeader);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
-            logger.error(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-        
-        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(username);
+		// Only Specific Clients are authorized
+		boolean authorized = authorizationService.authorizeClient(token,
+				request.getMethod(), uriInfo.getPath());
 
-        return Response.ok(this.endpointConverter.toBaseUrlRefs(endpoints)).build();
-    }
+		if (!authorized) {
+			String errMsg = String.format("Token %s Forbidden from this call",
+					token);
+			logger.error(errMsg);
+			throw new ForbiddenException(errMsg);
+		}
 
-    /**
-     * Adds a baseUrl to a user.
-     *
-     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}baseUrlRef
-     * @response.representation.201.doc Successful request
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     *
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param username username
-     * @param baseUrlRef baseUrlRef
-     */
-    @PUT
-    @Path("{username}/baseurlrefs")
-    public Response addBaseUrlRef(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username, BaseURLRef baseUrlRef) {
+		List<CloudEndpoint> endpoints = this.endpointService
+				.getEndpointsForUser(username);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+		return Response.ok(this.endpointConverter.toBaseUrlRefs(endpoints))
+				.build();
+	}
 
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+	/**
+	 * Adds a baseUrl to a user.
+	 * 
+	 * @request.representation.qname 
+	 *                               {http://docs.rackspacecloud.com/idm/api/v1.0
+	 *                               }baseUrlRef
+	 * @response.representation.201.doc Successful request
+	 * @response.representation.400.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}badRequest
+	 * @response.representation.403.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}forbidden
+	 * @response.representation.404.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}itemNotFound
+	 * @response.representation.500.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}serverError
+	 * @response.representation.503.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}serviceUnavailable
+	 * 
+	 * @param authHeader
+	 *            HTTP Authorization header for authenticating the caller.
+	 * @param username
+	 *            username
+	 * @param baseUrlRef
+	 *            baseUrlRef
+	 */
+	@PUT
+	@Path("{username}/baseurlrefs")
+	public Response addBaseUrlRef(@Context Request request,
+			@Context UriInfo uriInfo,
+			@HeaderParam("Authorization") String authHeader,
+			@PathParam("username") String username, BaseURLRef baseUrlRef) {
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
-            logger.error(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-        
-        this.endpointService.addBaseUrlToUser(baseUrlRef.getId(), baseUrlRef.isV1Default(), username);
+		AccessToken token = this.accessTokenService
+				.getAccessTokenByAuthHeader(authHeader);
 
-        return Response.ok().status(HttpServletResponse.SC_CREATED).build();
-    }
+		// Only Specific Clients are authorized
+		boolean authorized = authorizationService.authorizeClient(token,
+				request.getMethod(), uriInfo.getPath());
 
-    /**
-     * Gets a baseUrlRef for a user.
-     *
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}baseURLRef
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     *
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param username username
-     * @param baseUrlId baseUrlId
-     */
-    @GET
-    @Path("{username}/baseurlrefs/{baseUrlId}")
-    public Response getBaseUrlRef(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username,
-        @PathParam("baseUrlId") int baseUrlId) {
+		if (!authorized) {
+			String errMsg = String.format("Token %s Forbidden from this call",
+					token);
+			logger.error(errMsg);
+			throw new ForbiddenException(errMsg);
+		}
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+		this.endpointService.addBaseUrlToUser(baseUrlRef.getId(), baseUrlRef
+				.isV1Default(), username);
 
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+		return Response.ok().status(HttpServletResponse.SC_CREATED).build();
+	}
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
-            logger.error(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-        
-        CloudEndpoint endpoint = this.endpointService.getEndpointForUser(username, baseUrlId);
-        
-        if (endpoint == null) {
-            String errMsg = String.format("BaseUrlId %s not found for user %s", baseUrlId, username);
-            logger.error(errMsg);
-            throw new NotFoundException(errMsg);
-        }
+	/**
+	 * Gets a baseUrlRef for a user.
+	 * 
+	 * @response.representation.200.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}baseURLRef
+	 * @response.representation.400.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}badRequest
+	 * @response.representation.403.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}forbidden
+	 * @response.representation.404.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}itemNotFound
+	 * @response.representation.500.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}serverError
+	 * @response.representation.503.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}serviceUnavailable
+	 * 
+	 * @param authHeader
+	 *            HTTP Authorization header for authenticating the caller.
+	 * @param username
+	 *            username
+	 * @param baseUrlId
+	 *            baseUrlId
+	 */
+	@GET
+	@Path("{username}/baseurlrefs/{baseUrlId}")
+	public Response getBaseUrlRef(@Context Request request,
+			@Context UriInfo uriInfo,
+			@HeaderParam("Authorization") String authHeader,
+			@PathParam("username") String username,
+			@PathParam("baseUrlId") int baseUrlId) {
 
-        return Response.ok(this.endpointConverter.toBaseUrlRef(endpoint)).build();
-    }
+		AccessToken token = this.accessTokenService
+				.getAccessTokenByAuthHeader(authHeader);
 
-    /**
-     * Removes a baseUrl from a user.
-     *
-     * @response.representation.204.doc Successful request
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     *
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param username username
-     * @param baseUrlId baseUrlId
-     */
-    @DELETE
-    @Path("{username}/baseurlrefs/{baseUrlId}")
-    public Response deleteBaseUrlRef(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username,
-        @PathParam("baseUrlId") int baseUrlId) {
+		// Only Specific Clients are authorized
+		boolean authorized = authorizationService.authorizeClient(token,
+				request.getMethod(), uriInfo.getPath());
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+		if (!authorized) {
+			String errMsg = String.format("Token %s Forbidden from this call",
+					token);
+			logger.error(errMsg);
+			throw new ForbiddenException(errMsg);
+		}
 
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+		CloudEndpoint endpoint = this.endpointService.getEndpointForUser(
+				username, baseUrlId);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
-            logger.error(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-        
-        this.endpointService.removeBaseUrlFromUser(baseUrlId, username);
+		if (endpoint == null) {
+			String errMsg = String.format("BaseUrlId %s not found for user %s",
+					baseUrlId, username);
+			logger.error(errMsg);
+			throw new NotFoundException(errMsg);
+		}
 
-        return Response.noContent().build();
-    }
+		return Response.ok(this.endpointConverter.toBaseUrlRef(endpoint))
+				.build();
+	}
 
-    /**
-     * Gets a user.
-     *
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     *
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param username username
-     */
-    @GET
-    @Path("{username}")
-    public Response getUser(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username) {
+	/**
+	 * Removes a baseUrl from a user.
+	 * 
+	 * @response.representation.204.doc Successful request
+	 * @response.representation.400.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}badRequest
+	 * @response.representation.403.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}forbidden
+	 * @response.representation.404.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}itemNotFound
+	 * @response.representation.500.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}serverError
+	 * @response.representation.503.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}serviceUnavailable
+	 * 
+	 * @param authHeader
+	 *            HTTP Authorization header for authenticating the caller.
+	 * @param username
+	 *            username
+	 * @param baseUrlId
+	 *            baseUrlId
+	 */
+	@DELETE
+	@Path("{username}/baseurlrefs/{baseUrlId}")
+	public Response deleteBaseUrlRef(@Context Request request,
+			@Context UriInfo uriInfo,
+			@HeaderParam("Authorization") String authHeader,
+			@PathParam("username") String username,
+			@PathParam("baseUrlId") int baseUrlId) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+		AccessToken token = this.accessTokenService
+				.getAccessTokenByAuthHeader(authHeader);
 
-        // Rackers, Rackspace Clients, Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath());
+		// Only Specific Clients are authorized
+		boolean authorized = authorizationService.authorizeClient(token,
+				request.getMethod(), uriInfo.getPath());
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
-            logger.error(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+		if (!authorized) {
+			String errMsg = String.format("Token %s Forbidden from this call",
+					token);
+			logger.error(errMsg);
+			throw new ForbiddenException(errMsg);
+		}
 
-        logger.debug("Getting User: {}", username);
-        User user = this.userService.getUser(username);
+		this.endpointService.removeBaseUrlFromUser(baseUrlId, username);
 
-        if (user == null) {
-            String errorMsg = String.format("User not found: %s", username);
-            logger.error(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
+		return Response.noContent().build();
+	}
 
-        logger.debug("Got User :{}", user);
-        return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
+	/**
+	 * Gets a user.
+	 * 
+	 * @response.representation.200.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}user
+	 * @response.representation.400.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}badRequest
+	 * @response.representation.401.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}unauthorized
+	 * @response.representation.403.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}forbidden
+	 * @response.representation.404.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}itemNotFound
+	 * @response.representation.500.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}serverError
+	 * @response.representation.503.qname 
+	 *                                    {http://docs.rackspacecloud.com/idm/api
+	 *                                    /v1.0}serviceUnavailable
+	 * 
+	 * @param authHeader
+	 *            HTTP Authorization header for authenticating the caller.
+	 * @param username
+	 *            username
+	 */
+	@GET
+	@Path("{username}")
+	public Response getUser(@Context Request request, @Context UriInfo uriInfo,
+			@HeaderParam("Authorization") String authHeader,
+			@PathParam("username") String username) {
 
-    }
+		AccessToken token = this.accessTokenService
+				.getAccessTokenByAuthHeader(authHeader);
+
+		// Rackers, Rackspace Clients, Specific Clients are authorized
+		boolean authorized = authorizationService.authorizeRacker(token)
+				|| authorizationService.authorizeRackspaceClient(token)
+				|| authorizationService.authorizeClient(token, request
+						.getMethod(), uriInfo.getPath());
+
+		if (!authorized) {
+			String errMsg = String.format("Token %s Forbidden from this call",
+					token);
+			logger.error(errMsg);
+			throw new ForbiddenException(errMsg);
+		}
+
+		logger.debug("Getting User: {}", username);
+
+		User user = checkAndGetUser(username);
+
+		logger.debug("Got User :{}", user);
+		return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
+
+	}
+
+	@PUT
+	@Path("{username}/mossoId")
+	public Response updateUserMossoId(@Context Request request,
+			@Context UriInfo uriInfo,
+			@HeaderParam("Authorization") String authHeader,
+			@PathParam("username") String username,
+			com.rackspace.idm.jaxb.User jaxbUser) {
+
+		AccessToken token = this.accessTokenService
+				.getAccessTokenByAuthHeader(authHeader);
+
+		// Specific clients are authorized
+		boolean authorized = authorizationService.authorizeClient(token,
+				request.getMethod(), uriInfo.getPath());
+
+		if (!authorized) {
+			String errMsg = String.format("Token %s Forbidden from this call",
+					token);
+			logger.error(errMsg);
+			throw new ForbiddenException(errMsg);
+		}
+
+		com.rackspace.idm.entities.User userDO = userConverter
+				.toUserDO(jaxbUser);
+
+		Integer mossoId = userDO.getMossoId();
+
+		if (mossoId.intValue() < 0) {
+			String errMsg = String.format("MossoId should be non-negative.");
+			logger.error(errMsg);
+			throw new BadRequestException(errMsg);
+
+		}
+
+		logger.info("Updating User MossoId: {}", username);
+
+		User user = checkAndGetUser(username);
+
+		user.setMossoId(mossoId);
+
+		this.userService.updateUser(user);
+
+		logger.info("Updated MossoId for User: {}", user);
+
+		return Response.ok(
+				userConverter.toUserJaxbWithoutAnyAdditionalElements(user))
+				.build();
+	}
+
+	@PUT
+	@Path("{username}/nastId")
+	public Response updateUserNastId(@Context Request request,
+			@Context UriInfo uriInfo,
+			@HeaderParam("Authorization") String authHeader,
+			@PathParam("username") String username,
+			com.rackspace.idm.jaxb.User jaxbUser) {
+
+		AccessToken token = this.accessTokenService
+				.getAccessTokenByAuthHeader(authHeader);
+
+		// Specific clients are authorized
+		boolean authorized = authorizationService.authorizeClient(token,
+				request.getMethod(), uriInfo.getPath());
+
+		if (!authorized) {
+			String errMsg = String.format("Token %s Forbidden from this call",
+					token);
+			logger.error(errMsg);
+			throw new ForbiddenException(errMsg);
+		}
+
+		com.rackspace.idm.entities.User userDO = userConverter
+				.toUserDO(jaxbUser);
+
+		String nastId = userDO.getNastId();
+
+		logger.info("Updating User Nast ID: {}", username);
+
+		User user = checkAndGetUser(username);
+
+		user.setNastId(nastId);
+
+		this.userService.updateUser(user);
+
+		logger.info("Updated NastID for User: {}", user);
+
+		return Response.ok(
+				userConverter.toUserJaxbWithoutAnyAdditionalElements(user))
+				.build();
+	}
+
+	private User checkAndGetUser(String username) {
+		User user = this.userService.getUser(username);
+
+		if (user == null) {
+			String errorMsg = String.format("User not found: %s", username);
+			logger.error(errorMsg);
+			throw new NotFoundException(errorMsg);
+		}
+
+		return user;
+	}
 }

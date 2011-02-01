@@ -77,6 +77,8 @@ public class UserConverter {
 
         return user;
     }
+    
+    
 
     public com.rackspace.idm.jaxb.Users toUserListJaxb(Users users) {
 
@@ -224,5 +226,5 @@ public class UserConverter {
 
         return returnedUser;
     }
-
+ 
 }
