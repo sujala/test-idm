@@ -44,31 +44,16 @@ public class WebClientAccessTokenRepository implements
         try {
             resp = client
                 .getResource()
-                .path(TOKEN_RESOURCE_PATH)
+                .path(TOKEN_RESOURCE_PATH + "/" + tokenString)
                 .accept(MediaType.APPLICATION_XML_TYPE)
                 .header(HttpHeaders.AUTHORIZATION,
                     "OAuth " + getMyAccessToken(dc).getTokenString())
                 .get(ClientResponse.class);
-
-            if (Response.Status.OK.getStatusCode() == resp.getStatus()) {
-                 return converter.toAccessTokenFromJaxb(resp
-                    .getEntity(Auth.class).getAccessToken());
-            } else {
-
-                // Something's wrong. Try to get the fault.
-                IdmFault fault = resp.getEntity(IdmFault.class);
-                logger.warn(fault.getMessage() + " " + fault.getDetails());
-                throw new IllegalStateException(fault.getMessage());
-            }
-
         } catch (UniformInterfaceException e) {
-            resp = e.getResponse();
-            if (resp == null) {
-                throw new IllegalStateException("Request failed:\n" + e);
-            }
-            throw new IllegalStateException(resp.getEntity(IdmFault.class)
-                .getMessage());
+            throw getClientCallException(e);
         }
+
+        return getClientCallResponse(resp);
     }
 
     /**
@@ -79,36 +64,42 @@ public class WebClientAccessTokenRepository implements
      */
     AccessToken getMyAccessToken(String dc) {
         DataCenterClient client = endpoints.get(dc);
-        if (client.getAccessToken() == null
-            || client.getAccessToken().isExpired(new DateTime())) {
-            ClientResponse resp;
-            try {
-
-                resp = client.getResource().path(TOKEN_RESOURCE_PATH)
-                    .accept(MediaType.APPLICATION_XML_TYPE)
-                    .type(MediaType.APPLICATION_XML).entity(idmCreds)
-                    .post(ClientResponse.class);
-                if (Response.Status.OK.getStatusCode() == resp.getStatus()) {
-                    AccessToken tk = converter.toAccessTokenFromJaxb(resp
-                        .getEntity(Auth.class).getAccessToken());
-                    client.setAccessToken(tk);
-                } else {
-
-                    // Something's wrong. Try to get the fault.
-                    IdmFault fault = resp.getEntity(IdmFault.class);
-                    logger.warn(fault.getMessage() + " " + fault.getDetails());
-                    throw new IllegalStateException(fault.getMessage());
-                }
-
-            } catch (UniformInterfaceException e) {
-                resp = e.getResponse();
-                if (resp == null) {
-                    throw new IllegalStateException("Request failed:\n" + e);
-                }
-                throw new IllegalStateException(resp.getEntity(IdmFault.class)
-                    .getMessage());
-            }
+        if (client.getAccessToken() != null
+            && !client.getAccessToken().isExpired(new DateTime())) {
+            return client.getAccessToken();
         }
-        return client.getAccessToken();
+
+        ClientResponse resp;
+        try {
+            resp = client.getResource().path(TOKEN_RESOURCE_PATH)
+                .accept(MediaType.APPLICATION_XML_TYPE)
+                .type(MediaType.APPLICATION_XML).entity(idmCreds)
+                .post(ClientResponse.class);
+        } catch (UniformInterfaceException e) {
+            throw getClientCallException(e);
+        }
+
+        return getClientCallResponse(resp);
+    }
+
+    private RuntimeException getClientCallException(UniformInterfaceException e) {
+        ClientResponse resp = e.getResponse();
+        if (resp == null) {
+            return new IllegalStateException("Request failed:\n" + e);
+        }
+        return new IllegalStateException(resp.getEntity(IdmFault.class)
+            .getMessage());
+    }
+
+    private AccessToken getClientCallResponse(ClientResponse resp) {
+        if (Response.Status.OK.getStatusCode() == resp.getStatus()) {
+            return converter.toAccessTokenFromJaxb(resp.getEntity(Auth.class)
+                .getAccessToken());
+        } else {
+            // Something's wrong. Try to get the fault.
+            IdmFault fault = resp.getEntity(IdmFault.class);
+            logger.warn(fault.getMessage() + ": " + fault.getDetails());
+            throw new IllegalStateException(fault.getMessage());
+        }
     }
 }

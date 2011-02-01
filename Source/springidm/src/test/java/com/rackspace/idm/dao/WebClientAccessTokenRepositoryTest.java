@@ -1,12 +1,22 @@
 package com.rackspace.idm.dao;
 
+import net.spy.memcached.MemcachedClient;
+
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.PropertiesConfiguration;
+import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.rackspace.idm.config.DataCenterClient;
 import com.rackspace.idm.config.DataCenterEndpoints;
+import com.rackspace.idm.config.MemcachedConfiguration;
+import com.rackspace.idm.config.PropertyFileConfiguration;
 import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.entities.BaseClient;
+import com.rackspace.idm.entities.BaseUser;
+import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.jaxb.AuthCredentials;
 import com.rackspace.idm.jaxb.AuthGrantType;
 import com.rackspace.idm.test.stub.StubLogger;
@@ -14,14 +24,18 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 
 public class WebClientAccessTokenRepositoryTest {
+    private static final String QA_TOKEN_STRING = "QA-xdctesttokenstring";
     private Client c = Client.create();
     private WebClientAccessTokenRepository repo;
 
     @Before
     public void setUp() {
-        WebResource wr = c.resource("http://10.127.7.166:8080/v1.0");
-        DataCenterClient devServer = new DataCenterClient("DEV", wr);
+        WebResource wrqa = c.resource("http://10.127.7.164:8080/v1.0");
+        DataCenterClient qaServer = new DataCenterClient("QA", wrqa);
+        WebResource wrdev = c.resource("http://10.127.7.166:8080/v1.0");
+        DataCenterClient devServer = new DataCenterClient("DEV", wrdev);
         DataCenterEndpoints endpoints = new DataCenterEndpoints();
+        endpoints.put(qaServer);
         endpoints.put(devServer);
 
         // Credentials for Customer IDM
@@ -35,15 +49,42 @@ public class WebClientAccessTokenRepositoryTest {
     }
 
     @Test
-    public void shouldGetClientToken() {
-        AccessToken idmTk = repo.getMyAccessToken("DEV");
-        Assert.assertNotNull(idmTk);
+    public void shouldLookForTokenAcrossDc() {
+        // Use the QA memcached server to simulated XDC token store
+        Configuration qaconfig = new PropertiesConfiguration();
+        qaconfig.addProperty("memcached.serverList", "10.127.7.165:11211");
+        MemcachedClient mclient = new MemcachedConfiguration(qaconfig,
+            new StubLogger()).memcacheClient();
+        AccessToken token = getNewToken(60);
+        // Add a token to a "cross-data-center" location
+        mclient.set(QA_TOKEN_STRING, 60, token);
+        // TODO The token storage scheme will change
+        mclient.set(token.getOwner() + "_" + token.getRequestor(), 60, token);
+
+        // Now attempt a lookup from the local DAO
+        AccessToken remoteToken = repo.findByTokenString(QA_TOKEN_STRING);
+        Assert.assertNotNull(remoteToken);
+
+        // Try multiple times to see if you get the same result;
+        remoteToken = repo.findByTokenString(QA_TOKEN_STRING);
+        Assert.assertNotNull(remoteToken);
+        remoteToken = repo.findByTokenString(QA_TOKEN_STRING);
+        Assert.assertNotNull(remoteToken);
     }
 
     @Test
-    public void shouldLookForTokenAccrossDc() {
-        AccessToken idmTk = repo.getMyAccessToken("DEV");
-        AccessToken foundTk = repo.findByTokenString(idmTk.getTokenString());
-        Assert.assertNotNull(foundTk);
+    public void shouldGetClientToken() {
+        AccessToken idmTk = repo.getMyAccessToken("QA");
+        Assert.assertNotNull(idmTk);
+    }
+
+    private AccessToken getNewToken(int expInSeconds) {
+        return new AccessToken(QA_TOKEN_STRING,
+            new DateTime().plusSeconds(expInSeconds), null, getTestClient(),
+            IDM_SCOPE.FULL);
+    }
+
+    private BaseClient getTestClient() {
+        return new BaseClient("controlpanel", "customerId");
     }
 }

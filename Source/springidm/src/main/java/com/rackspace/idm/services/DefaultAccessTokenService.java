@@ -363,6 +363,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
         if (token == null && !tokenString.startsWith(myDcPrefix)) {
             try {
                 token = xdcTokenDao.findByTokenString(tokenString);
+                // TODO Save to the local memcached
             } catch (Exception e) {
                 // TODO
             }
