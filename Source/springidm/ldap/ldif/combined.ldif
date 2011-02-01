@@ -386,6 +386,8 @@ permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlR
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddUserBaseUrlRef
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteUserBaseUrlRef
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlRef
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::UpdateUserMossoId
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::UpdateUserNastId
 status: ACTIVE
 seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
 softDeleted: FALSE
@@ -504,6 +506,22 @@ cn: GetUserServiceCatalog
 rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
 rackspaceCustomerNumber: RACKSPACE
 blob: GET users/[^/]+/servicecatalog
+
+dn: cn=UpdateUserMossoId,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: UpdateUserMossoId
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: PUT users/[^/]+/mossoId
+
+dn: cn=UpdateUserNastId,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: UpdateUserNastId
+rackspaceApiKey: 18e7a7032733486cd32f472d7bd58f709ac0d221
+rackspaceCustomerNumber: RACKSPACE
+blob: PUT users/[^/]+/nastId
 
 dn: cn=GetUserBaseUrlRefs,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
