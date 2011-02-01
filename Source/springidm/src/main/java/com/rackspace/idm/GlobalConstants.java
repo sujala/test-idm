@@ -39,5 +39,5 @@ public final class GlobalConstants {
     public static final String IDM_CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221";
     
     public static final String BASE_URL_REF_STRING = "https://idm.rackspace.com/v" + VERSION +"/baseurls/%s";
-    public static final int PASSWORD_FAILURE_LOCKOUT_MIN = 20;
+    public static final int PASSWORD_FAILURE_LOCKOUT_MIN = 30;
 }
