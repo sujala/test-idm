@@ -18,7 +18,7 @@ import java.util.UUID;
 public class DefaultAccessTokenService implements AccessTokenService {
     private AccessTokenDao tokenDao;
     private GenericTokenDao<AccessToken> xdcTokenDao = new WebClientAccessTokenRepository(
-        null, null); //TODO
+        null, null, null); // TODO
     private ClientDao clientDao;
     private Logger logger;
     private UserService userService;

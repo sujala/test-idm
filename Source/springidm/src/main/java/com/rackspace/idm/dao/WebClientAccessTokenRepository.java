@@ -23,13 +23,15 @@ public class WebClientAccessTokenRepository implements
     GenericTokenDao<AccessToken> {
     private static final String TOKEN_RESOURCE_PATH = "token";
     private DataCenterEndpoints endpoints;
+    private AuthCredentials idmCreds;
     private TokenConverter converter = new TokenConverter();
     private Logger logger;
 
     @Autowired
     public WebClientAccessTokenRepository(DataCenterEndpoints endpoints,
-        Logger logger) {
+        AuthCredentials idmCreds, Logger logger) {
         this.endpoints = endpoints;
+        this.idmCreds = idmCreds;
         this.logger = logger;
     }
 
@@ -48,13 +50,21 @@ public class WebClientAccessTokenRepository implements
                     "OAuth " + getMyAccessToken(dc).getTokenString())
                 .get(ClientResponse.class);
 
-            return converter.toAccessTokenFromJaxb(resp.getEntity(Auth.class)
-                .getAccessToken());
+            if (Response.Status.OK.getStatusCode() == resp.getStatus()) {
+                 return converter.toAccessTokenFromJaxb(resp
+                    .getEntity(Auth.class).getAccessToken());
+            } else {
+
+                // Something's wrong. Try to get the fault.
+                IdmFault fault = resp.getEntity(IdmFault.class);
+                logger.warn(fault.getMessage() + " " + fault.getDetails());
+                throw new IllegalStateException(fault.getMessage());
+            }
+
         } catch (UniformInterfaceException e) {
             resp = e.getResponse();
             if (resp == null) {
-                throw new IllegalStateException("Token find request failed:\n"
-                    + e);
+                throw new IllegalStateException("Request failed:\n" + e);
             }
             throw new IllegalStateException(resp.getEntity(IdmFault.class)
                 .getMessage());
@@ -73,10 +83,11 @@ public class WebClientAccessTokenRepository implements
             || client.getAccessToken().isExpired(new DateTime())) {
             ClientResponse resp;
             try {
+
                 resp = client.getResource().path(TOKEN_RESOURCE_PATH)
                     .accept(MediaType.APPLICATION_XML_TYPE)
-                    .type(MediaType.APPLICATION_XML)
-                    .entity(new AuthCredentials()).post(ClientResponse.class);
+                    .type(MediaType.APPLICATION_XML).entity(idmCreds)
+                    .post(ClientResponse.class);
                 if (Response.Status.OK.getStatusCode() == resp.getStatus()) {
                     AccessToken tk = converter.toAccessTokenFromJaxb(resp
                         .getEntity(Auth.class).getAccessToken());
@@ -84,8 +95,8 @@ public class WebClientAccessTokenRepository implements
                 } else {
 
                     // Something's wrong. Try to get the fault.
-                    // TODO surround with try/catch block
                     IdmFault fault = resp.getEntity(IdmFault.class);
+                    logger.warn(fault.getMessage() + " " + fault.getDetails());
                     throw new IllegalStateException(fault.getMessage());
                 }
 
