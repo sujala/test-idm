@@ -5,7 +5,7 @@ import org.joda.time.DateTime;
 
 import java.util.Set;
 
-public interface RefreshTokenDao extends GenericTokenDao<RefreshToken> {
+public interface RefreshTokenDao extends TokenCrudDao<RefreshToken> {
 
     RefreshToken findTokenForOwner(String owner, String requestor,
                                    DateTime expiredAfter);

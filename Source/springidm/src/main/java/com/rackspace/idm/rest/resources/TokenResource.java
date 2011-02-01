@@ -60,21 +60,6 @@ public class TokenResource {
         this.logger = logger.getLogger(this.getClass());
     }
 
-    @Deprecated
-    public TokenResource(AccessTokenService tokenService, OAuthService oauthService, ClientService clientService,
-                         AuthHeaderHelper authHeaderHelper, InputValidator inputValidator, AuthConverter authConverter,
-                         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
-
-        this.tokenService = tokenService;
-        this.oauthService = oauthService;
-        this.clientService = clientService;
-        this.authHeaderHelper = authHeaderHelper;
-        this.inputValidator = inputValidator;
-        this.authConverter = authConverter;
-        this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
-    }
-
     /**
      * Gets an instance of an access token, a refresh token, and their TTLs.
      * Will return the current access token if it has not expired.

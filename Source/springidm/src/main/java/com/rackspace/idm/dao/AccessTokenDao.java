@@ -4,7 +4,7 @@ import com.rackspace.idm.entities.AccessToken;
 
 import java.util.Set;
 
-public interface AccessTokenDao extends GenericTokenDao<AccessToken> {
+public interface AccessTokenDao extends TokenCrudDao<AccessToken> {
     AccessToken findTokenForOwner(String owner, String requestor);
 
     /**

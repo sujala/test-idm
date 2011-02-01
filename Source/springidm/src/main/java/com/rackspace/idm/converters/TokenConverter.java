@@ -24,7 +24,7 @@ public class TokenConverter {
         return jaxbToken;
     }
 
-    public static AccessToken toAccessTokenFromJaxb(
+    public AccessToken toAccessTokenFromJaxb(
         com.rackspace.idm.jaxb.Token JaxbToken) {
         AccessToken tokenToReturn = new AccessToken();
 
