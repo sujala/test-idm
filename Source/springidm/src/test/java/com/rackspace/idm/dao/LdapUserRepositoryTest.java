@@ -23,6 +23,7 @@ import com.rackspace.idm.entities.UserHumanName;
 import com.rackspace.idm.entities.UserLocale;
 import com.rackspace.idm.entities.UserStatus;
 import com.rackspace.idm.entities.Users;
+import com.rackspace.idm.jaxb.UserPassword;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.unboundid.ldap.sdk.Modification;
 
@@ -452,6 +453,22 @@ public class LdapUserRepositoryTest {
 
         Assert.assertTrue(users.getTotalRecords() >= 1);
         Assert.assertTrue(users.getUsers().size() >= 1);
+    }
+    
+    @Test
+    public void shouldReturnTrueForMaxLoginFailures() {
+        User newUser = addNewTestUser();
+        
+        for (int x = 1; x <= 10; x++) {
+            Password password = Password.generateRandom();
+            repo.authenticate(newUser.getUsername(), password.getValue());
+        }
+        
+        newUser = repo.findByUsername(newUser.getUsername());
+        
+        Assert.assertTrue(newUser.isMaxLoginFailuresExceded());
+        
+        repo.delete(newUser.getUsername());
     }
 
     private User addNewTestUser() {
