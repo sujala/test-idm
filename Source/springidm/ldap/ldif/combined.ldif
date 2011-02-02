@@ -171,6 +171,7 @@ rackspacePersonNumber: RPN-111-111-111
 rackspaceApiKey: 1234567890
 secretQuestion: What is the name of your employer?
 secretAnswer: Rackspace
+clearPassword: password
 softDeleted: FALSE
 status: ACTIVE
 seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111
@@ -199,6 +200,7 @@ rackspacePersonNumber: RPN-777-777-777
 rackspaceApiKey: 777777777
 secretQuestion: What is the name of your employer?
 secretAnswer: Rackspace
+clearPassword: P@ssw0rd
 softDeleted: FALSE
 status: ACTIVE
 seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!7777
@@ -224,6 +226,7 @@ rackspacePersonNumber: RPN-999-999-999
 rackspaceApiKey: 0987654321
 secretQuestion: What is the name of your employer?
 secretAnswer: Test Customer
+clearPassword: password
 softDeleted: FALSE
 status: ACTIVE
 seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000!1111
@@ -250,6 +253,7 @@ rackspacePersonNumber: RPN-qauser-000-10001
 rackspaceApiKey: qauser-000-001
 secretQuestion: What is the name of your employer?
 secretAnswer: Rackspace
+clearPassword: password
 softDeleted: FALSE
 status: ACTIVE
 seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!10001
@@ -278,6 +282,7 @@ rackspacePersonNumber: RPN-qauser-000-10002
 rackspaceApiKey: qaadmin-000-10002
 secretQuestion: What is the name of your employer?
 secretAnswer: Rackspace
+clearPassword: password
 softDeleted: FALSE
 status: ACTIVE
 seeAlso: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!10002
