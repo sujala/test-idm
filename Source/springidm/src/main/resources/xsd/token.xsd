@@ -111,6 +111,7 @@
 
 	<!-- Complex Types -->
 	<complexType name="Token">
+		<sequence></sequence>
 		<attribute name="id" type="xsd:string" use="required">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
@@ -127,6 +128,19 @@
 				</xsd:documentation>
 			</annotation>
 		</attribute>
+		<attribute name="is_trusted" type="xsd:boolean"
+			default="false">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>
+						If true, originates from an IDM instance that is
+						"trusted".
+					</p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+		<attribute name="idm_scope" type="idm:IdmScopeType"></attribute>
 	</complexType>
 
 	<complexType name="AuthData">
@@ -275,4 +289,25 @@
 		</restriction>
 	</simpleType>
 
+
+	<simpleType name="IdmScopeType">
+		<restriction base="xsd:string">
+			<enumeration value="FULL">
+				<annotation>
+					<xsd:documentation xml:lang="EN"
+						xmlns="http://www.w3.org/1999/xhtml">
+						<p>Full-access scope for the token.</p>
+					</xsd:documentation>
+				</annotation>
+			</enumeration>
+			<enumeration value="SET_PASSWORD">
+				<annotation>
+					<xsd:documentation xml:lang="EN"
+						xmlns="http://www.w3.org/1999/xhtml">
+						<p>Token scope limited to setting password.</p>
+					</xsd:documentation>
+				</annotation>
+			</enumeration>
+		</restriction>
+	</simpleType>
 </schema>

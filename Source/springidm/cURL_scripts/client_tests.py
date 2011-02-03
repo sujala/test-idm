@@ -4,7 +4,7 @@ from restkit import Resource
 from restkit.errors import ResourceError, ResourceNotFound
 import json
 
-url = 'http://localhost:8080/idm'
+url = 'http://localhost:8080/v1.0'
 def_hdrs = {'Content-Type':'application/json'}
 root = Resource(url)
 

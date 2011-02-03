@@ -11,7 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.rackspace.idm.config.DataCenterClient;
 import com.rackspace.idm.config.DataCenterEndpoints;
+import com.rackspace.idm.converters.ClientConverter;
+import com.rackspace.idm.converters.PermissionConverter;
+import com.rackspace.idm.converters.RoleConverter;
 import com.rackspace.idm.converters.TokenConverter;
+import com.rackspace.idm.converters.UserConverter;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.jaxb.Auth;
 import com.rackspace.idm.jaxb.AuthCredentials;
@@ -82,7 +86,11 @@ public class WebClientAccessTokenRepository implements
             return null;
         }
 
-        return getClientCallResponse(resp);
+        AccessToken myAToken = getClientCallResponse(resp);
+        if (myAToken != null) {
+            client.setAccessToken(myAToken);
+        }
+        return myAToken;
     }
 
     private void handleClientCallException(UniformInterfaceException e) {
@@ -97,8 +105,14 @@ public class WebClientAccessTokenRepository implements
 
     private AccessToken getClientCallResponse(ClientResponse resp) {
         if (Response.Status.OK.getStatusCode() == resp.getStatus()) {
-            return converter.toAccessTokenFromJaxb(resp.getEntity(Auth.class)
+            Auth auth = resp.getEntity(Auth.class);
+            AccessToken at = converter.toAccessTokenFromJaxb(auth
                 .getAccessToken());
+            at.setTokenClient(new ClientConverter(new PermissionConverter())
+                .toClientDO(auth.getClient()));
+            at.setTokenUser(new UserConverter(new RoleConverter(
+                new PermissionConverter())).toUserDO(auth.getUser()));
+            return at;
         } else {
             // Something's wrong. Try to get the fault.
             IdmFault fault = resp.getEntity(IdmFault.class);
