@@ -47,29 +47,29 @@ import com.rackspace.idm.validation.InputValidator;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class ClientsResource {
+public class CustomerClientsResource {
 
     private AccessTokenService accessTokenService;
     private CustomerService customerService;
     private InputValidator inputValidator;
     private ClientConverter clientConverter;
     private ClientService clientService;
-    private ClientResource clientResource;
+    private CustomerClientResource customerClientResource;
     private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
-    public ClientsResource(AccessTokenService accessTokenService,
+    public CustomerClientsResource(AccessTokenService accessTokenService,
         CustomerService customerService, InputValidator inputValidator,
         ClientConverter clientConverter, ClientService clientService,
-        ClientResource clientResource,
+        CustomerClientResource customerClientResource,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.accessTokenService = accessTokenService;
         this.customerService = customerService;
         this.clientService = clientService;
         this.clientConverter = clientConverter;
         this.inputValidator = inputValidator;
-        this.clientResource = clientResource;
+        this.customerClientResource = customerClientResource;
         this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
@@ -207,7 +207,7 @@ public class ClientsResource {
     }
 
     @Path("{clientId}")
-    public ClientResource getClientResource() {
-        return clientResource;
+    public CustomerClientResource getCustomerClientResource() {
+        return customerClientResource;
     }
 }

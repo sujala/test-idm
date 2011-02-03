@@ -37,7 +37,7 @@ import com.rackspace.idm.services.CustomerService;
 public class CustomerResource {
 
     private AccessTokenService accessTokenService;
-    private ClientsResource clientsResource;
+    private CustomerClientsResource customerClientsResource;
     private CustomerLockResource customerLockResource;
     private RolesResource rolesResource;
     private CustomerUsersResource customerUsersResource;
@@ -48,13 +48,13 @@ public class CustomerResource {
 
     @Autowired
     public CustomerResource(AccessTokenService accessTokenService,
-        ClientsResource clientsResource,
+        CustomerClientsResource customerClientsResource,
         CustomerLockResource customerLockResource, RolesResource rolesResource,
         CustomerUsersResource customerUsersResource,
         CustomerService customerService, CustomerConverter customerConverter,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.accessTokenService = accessTokenService;
-        this.clientsResource = clientsResource;
+        this.customerClientsResource = customerClientsResource;
         this.customerLockResource = customerLockResource;
         this.rolesResource = rolesResource;
         this.customerUsersResource = customerUsersResource;
@@ -175,8 +175,8 @@ public class CustomerResource {
     }
 
     @Path("clients")
-    public ClientsResource getClientsResource() {
-        return clientsResource;
+    public CustomerClientsResource getCustomerClientsResource() {
+        return customerClientsResource;
     }
 
     @Path("roles")

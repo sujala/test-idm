@@ -25,7 +25,7 @@ import javax.ws.rs.core.*;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class ClientResource {
+public class CustomerClientResource {
 
     private AccessTokenService accessTokenService;
     private ClientConverter clientConverter;
@@ -35,7 +35,7 @@ public class ClientResource {
     private Logger logger;
 
     @Autowired
-    public ClientResource(AccessTokenService accessTokenService,
+    public CustomerClientResource(AccessTokenService accessTokenService,
         ClientService clientService, ClientConverter clientConverter,
         PermissionsResource permissionsResource,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
@@ -105,6 +105,20 @@ public class ClientResource {
         return Response.ok(returnedClient).build();
     }
 
+    /**
+     * Reset the client secret
+     *
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param clientId   Client application ID
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}clientCredentials
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     */
     @Path("secret")
     @POST
     public Response resetClientSecret(@Context Request request,
@@ -113,11 +127,13 @@ public class ClientResource {
         @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
-         AccessToken token = this.accessTokenService
+        AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
 
-        // Rackers and Admins are authorized
+        // Rackers, Admins and specific clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
@@ -142,26 +158,23 @@ public class ClientResource {
         ClientSecret clientSecret = null;
         try {
             clientSecret = clientService.resetClientSecret(client);
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             String errorMsg = String.format("Invalid client: %s", clientId);
             logger.error(errorMsg);
             throw new NotFoundException(errorMsg);
-        }
-        catch (IllegalStateException e) {
-            String errorMsg = String.format("Error generating secret for client: %s", clientId);
+        } catch (IllegalStateException e) {
+            String errorMsg = String.format(
+                "Error generating secret for client: %s", clientId);
             logger.error(errorMsg);
             throw new IdmException(e);
         }
 
-        ClientCredentials clientCredentials =
-                new ClientCredentials();
+        ClientCredentials clientCredentials = new ClientCredentials();
         clientCredentials.setClientSecret(clientSecret.getValue());
 
         return Response.ok(clientCredentials).build();
 
     }
-
 
     @Path("permissions")
     public PermissionsResource getPermissionsResource() {
