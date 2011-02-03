@@ -87,41 +87,19 @@ public class UsersResource {
 	/**
 	 * Creates customer and adds first user.
 	 * 
-	 * @request.representation.qname 
-	 *                               {http://docs.rackspacecloud.com/idm/api/v1.0
-	 *                               }user
-	 * @response.representation.200.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}user
-	 * @response.representation.400.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}badRequest
-	 * @response.representation.401.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}unauthorized
-	 * @response.representation.403.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}forbidden
-	 * @response.representation.404.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}itemNotFound
-	 * @response.representation.409.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}customerConflict
-	 * @response.representation.409.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}usernameConflict
-	 * @response.representation.500.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}idmFault
-	 * @response.representation.503.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}serviceUnavailable
+	 * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
+	 * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
+	 * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+	 * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+	 * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+	 * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+	 * @response.representation.409.qname {http://docs.rackspacecloud.com/idm/api/v1.0}customerConflict
+	 * @response.representation.409.qname {http://docs.rackspacecloud.com/idm/api/v1.0}usernameConflict
+	 * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}idmFault
+	 * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
 	 * 
-	 * @param authHeader
-	 *            HTTP Authorization header for authenticating the caller.
-	 * @param user
-	 *            New User
+	 * @param authHeader HTTP Authorization header for authenticating the caller.
+	 * @param user New User
 	 */
 	@POST
 	public Response addFirstUser(@Context Request request,
@@ -234,29 +212,15 @@ public class UsersResource {
 	/**
 	 * Gets a list of serviceCatalog for a user.
 	 * 
-	 * @response.representation.200.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}serviceCatalog
-	 * @response.representation.400.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}badRequest
-	 * @response.representation.403.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}forbidden
-	 * @response.representation.404.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}itemNotFound
-	 * @response.representation.500.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}serverError
-	 * @response.representation.503.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}serviceUnavailable
+	 * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceCatalog
+	 * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+	 * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+	 * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+	 * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+	 * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
 	 * 
-	 * @param authHeader
-	 *            HTTP Authorization header for authenticating the caller.
-	 * @param username
-	 *            username
+	 * @param authHeader HTTP Authorization header for authenticating the caller.
+	 * @param username username
 	 */
 	@GET
 	@Path("{username}/servicecatalog")
@@ -289,29 +253,15 @@ public class UsersResource {
 	/**
 	 * Gets a list of baseUrlRefs for a user.
 	 * 
-	 * @response.representation.200.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}baseURLRefs
-	 * @response.representation.400.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}badRequest
-	 * @response.representation.403.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}forbidden
-	 * @response.representation.404.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}itemNotFound
-	 * @response.representation.500.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}serverError
-	 * @response.representation.503.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}serviceUnavailable
+	 * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}baseURLRefs
+	 * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+	 * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+	 * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+	 * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+	 * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
 	 * 
-	 * @param authHeader
-	 *            HTTP Authorization header for authenticating the caller.
-	 * @param username
-	 *            username
+	 * @param authHeader HTTP Authorization header for authenticating the caller.
+	 * @param username username
 	 */
 	@GET
 	@Path("{username}/baseurlrefs")
@@ -344,32 +294,17 @@ public class UsersResource {
 	/**
 	 * Adds a baseUrl to a user.
 	 * 
-	 * @request.representation.qname 
-	 *                               {http://docs.rackspacecloud.com/idm/api/v1.0
-	 *                               }baseUrlRef
+	 * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}baseUrlRef
 	 * @response.representation.201.doc Successful request
-	 * @response.representation.400.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}badRequest
-	 * @response.representation.403.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}forbidden
-	 * @response.representation.404.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}itemNotFound
-	 * @response.representation.500.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}serverError
-	 * @response.representation.503.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}serviceUnavailable
+	 * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+	 * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+	 * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+	 * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+	 * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
 	 * 
-	 * @param authHeader
-	 *            HTTP Authorization header for authenticating the caller.
-	 * @param username
-	 *            username
-	 * @param baseUrlRef
-	 *            baseUrlRef
+	 * @param authHeader HTTP Authorization header for authenticating the caller.
+	 * @param username username
+	 * @param baseUrlRef baseUrlRef
 	 */
 	@PUT
 	@Path("{username}/baseurlrefs")
@@ -401,31 +336,16 @@ public class UsersResource {
 	/**
 	 * Gets a baseUrlRef for a user.
 	 * 
-	 * @response.representation.200.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}baseURLRef
-	 * @response.representation.400.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}badRequest
-	 * @response.representation.403.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}forbidden
-	 * @response.representation.404.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}itemNotFound
-	 * @response.representation.500.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}serverError
-	 * @response.representation.503.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}serviceUnavailable
+	 * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}baseURLRef
+	 * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+	 * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+	 * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+	 * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+	 * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
 	 * 
-	 * @param authHeader
-	 *            HTTP Authorization header for authenticating the caller.
-	 * @param username
-	 *            username
-	 * @param baseUrlId
-	 *            baseUrlId
+	 * @param authHeader HTTP Authorization header for authenticating the caller.
+	 * @param username username
+	 * @param baseUrlId baseUrlId
 	 */
 	@GET
 	@Path("{username}/baseurlrefs/{baseUrlId}")
@@ -467,28 +387,15 @@ public class UsersResource {
 	 * Removes a baseUrl from a user.
 	 * 
 	 * @response.representation.204.doc Successful request
-	 * @response.representation.400.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}badRequest
-	 * @response.representation.403.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}forbidden
-	 * @response.representation.404.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}itemNotFound
-	 * @response.representation.500.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}serverError
-	 * @response.representation.503.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}serviceUnavailable
+	 * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+	 * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+	 * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+	 * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+	 * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
 	 * 
-	 * @param authHeader
-	 *            HTTP Authorization header for authenticating the caller.
-	 * @param username
-	 *            username
-	 * @param baseUrlId
-	 *            baseUrlId
+	 * @param authHeader HTTP Authorization header for authenticating the caller.
+	 * @param username username
+	 * @param baseUrlId baseUrlId
 	 */
 	@DELETE
 	@Path("{username}/baseurlrefs/{baseUrlId}")
@@ -520,32 +427,16 @@ public class UsersResource {
 	/**
 	 * Gets a user.
 	 * 
-	 * @response.representation.200.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}user
-	 * @response.representation.400.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}badRequest
-	 * @response.representation.401.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}unauthorized
-	 * @response.representation.403.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}forbidden
-	 * @response.representation.404.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}itemNotFound
-	 * @response.representation.500.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}serverError
-	 * @response.representation.503.qname 
-	 *                                    {http://docs.rackspacecloud.com/idm/api
-	 *                                    /v1.0}serviceUnavailable
+	 * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
+	 * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+	 * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+	 * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+	 * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+	 * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+	 * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
 	 * 
-	 * @param authHeader
-	 *            HTTP Authorization header for authenticating the caller.
-	 * @param username
-	 *            username
+	 * @param authHeader HTTP Authorization header for authenticating the caller.
+	 * @param username username
 	 */
 	@GET
 	@Path("{username}")
@@ -578,6 +469,21 @@ public class UsersResource {
 
 	}
 
+	/**
+     * Updates mossoId of an user.
+     * 
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param username username
+     */
 	@PUT
 	@Path("{username}/mossoId")
 	public Response updateUserMossoId(@Context Request request,
@@ -599,34 +505,35 @@ public class UsersResource {
 			logger.error(errMsg);
 			throw new ForbiddenException(errMsg);
 		}
-
-		com.rackspace.idm.entities.User userDO = userConverter
-				.toUserDO(jaxbUser);
-
-		Integer mossoId = userDO.getMossoId();
-
-		if (mossoId.intValue() < 0) {
-			String errMsg = String.format("MossoId should be non-negative.");
-			logger.error(errMsg);
-			throw new BadRequestException(errMsg);
-
-		}
-
+	
 		logger.info("Updating User MossoId: {}", username);
 
 		User user = checkAndGetUser(username);
 
-		user.setMossoId(mossoId);
+		user.setMossoId(jaxbUser.getMossoId());
 
 		this.userService.updateUser(user);
 
 		logger.info("Updated MossoId for User: {}", user);
 
-		return Response.ok(
-				userConverter.toUserJaxbWithoutAnyAdditionalElements(user))
-				.build();
+		return Response.ok(jaxbUser).build();
 	}
 
+	/**
+     * Updates nastId of an user.
+     * 
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param username username
+     */	
 	@PUT
 	@Path("{username}/nastId")
 	public Response updateUserNastId(@Context Request request,
@@ -649,24 +556,17 @@ public class UsersResource {
 			throw new ForbiddenException(errMsg);
 		}
 
-		com.rackspace.idm.entities.User userDO = userConverter
-				.toUserDO(jaxbUser);
-
-		String nastId = userDO.getNastId();
-
 		logger.info("Updating User Nast ID: {}", username);
 
 		User user = checkAndGetUser(username);
 
-		user.setNastId(nastId);
+		user.setNastId(jaxbUser.getNastId());
 
 		this.userService.updateUser(user);
 
 		logger.info("Updated NastID for User: {}", user);
 
-		return Response.ok(
-				userConverter.toUserJaxbWithoutAnyAdditionalElements(user))
-				.build();
+		return Response.ok(jaxbUser).build();
 	}
 
 	private User checkAndGetUser(String username) {
