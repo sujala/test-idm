@@ -309,6 +309,7 @@ public class Role implements Serializable {
      * I.e., this is what actually gets serialized.
      */
     private static class SerializationProxy implements Serializable {
+        private static final long serialVersionUID = -203040527475479181L;
         private String uniqueId = null;
         private String name = null;
         private String customerId = null;

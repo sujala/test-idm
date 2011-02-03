@@ -151,6 +151,7 @@ public class BaseUser implements Serializable {
      * I.e., this is what actually gets serialized.
      */
     private static class SerializationProxy implements Serializable {
+        private static final long serialVersionUID = -42555229195315854L;
         private String username;
         private String customerId;
         private List<Role> roles;

@@ -11,7 +11,6 @@ import javax.validation.constraints.Pattern;
 
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
-import org.joda.time.DateTime;
 
 public class BaseClient implements Serializable {
     private static final long serialVersionUID = -1260927822525896505L;
@@ -145,6 +144,7 @@ public class BaseClient implements Serializable {
      *
      */
     private static class SerializationProxy implements Serializable {
+        private static final long serialVersionUID = -5052183110369433550L;
         private String clientId;
         private String customerId;
         private List<Permission> permissions;

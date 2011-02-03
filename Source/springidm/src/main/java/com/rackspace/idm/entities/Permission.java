@@ -213,6 +213,7 @@ public class Permission implements Serializable {
      * I.e., this is what actually gets serialized.
      */
     private static class SerializationProxy implements Serializable {
+        private static final long serialVersionUID = 3124210168273666242L;
         private String permissionId;
         private String clientId;
         private String value;
