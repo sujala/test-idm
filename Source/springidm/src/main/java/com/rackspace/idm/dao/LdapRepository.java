@@ -78,6 +78,7 @@ public abstract class LdapRepository {
     protected static final String ATTR_TOKEN_REQUESTOR = "tokenRequestor";
     protected static final String ATTR_UID = "uid";
     protected static final String ATTR_UPDATED_DATE = "modifyTimestamp";
+    protected static final String ATTR_SOFT_DELETED_DATE = "softDeletedTimestamp";
     
     // Definitions for LDAP DNs
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";

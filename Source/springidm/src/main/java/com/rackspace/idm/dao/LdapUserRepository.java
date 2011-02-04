@@ -900,6 +900,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             user.setSoftDeleted(resultEntry
                 .getAttributeValueAsBoolean(GlobalConstants.ATTR_SOFT_DELETED));
         }
+        
+        String softDeletedTimestamp = resultEntry.getAttributeValue(ATTR_SOFT_DELETED_DATE);
+        if (softDeletedTimestamp != null) {
+            user.setSoftDeletedTimestamp(new DateTime(resultEntry.getAttributeValueAsDate(ATTR_SOFT_DELETED_DATE)));
+        }
 
         String locked = resultEntry.getAttributeValue(ATTR_LOCKED);
         if (locked != null) {
@@ -1095,6 +1100,13 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             mods.add(new Modification(ModificationType.REPLACE,
                 GlobalConstants.ATTR_SOFT_DELETED, String.valueOf(uNew
                     .isSoftDeleted())));
+            
+            if (uNew.isSoftDeleted()) {
+                mods.add(new Modification(ModificationType.ADD,ATTR_SOFT_DELETED_DATE,String.valueOf(uNew.getSoftDeleteTimestamp())));
+            }
+            else {
+                mods.add(new Modification(ModificationType.DELETE,ATTR_SOFT_DELETED_DATE));
+            }
         }
 
         if (uNew.getNastId() != null) {
