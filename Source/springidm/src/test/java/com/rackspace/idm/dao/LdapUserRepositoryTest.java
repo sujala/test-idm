@@ -1,10 +1,12 @@
 package com.rackspace.idm.dao;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.After;
 import org.junit.Assert;
@@ -262,6 +264,41 @@ public class LdapUserRepositoryTest {
         User deletedUser = repo.findUser(newUser.getCustomerId(),
             newUser.getUsername(), userStatusMap);
     }
+    
+    @Test
+    public void shouldAddTimeStampWhenUserIsSoftDeleted() {
+
+        User newUser = addNewTestUser();
+        newUser.setPassword("Dum dum diga diga");
+        newUser.setSoftDeleted(true);
+        
+        DateTime softDeletedTimestamp = new DateTime(new Date());
+        newUser.setSoftDeletedTimestamp(softDeletedTimestamp);
+        
+        repo.save(newUser);
+        
+        Map<String, String> userStatusMap = new HashMap<String, String>();
+        userStatusMap.put(GlobalConstants.ATTR_SOFT_DELETED, "TRUE");
+
+        User softDeletedUser = repo.findUser(newUser.getCustomerId(),
+            newUser.getUsername(), userStatusMap);        
+
+        Assert.assertNotNull(softDeletedUser.getSoftDeleteTimestamp());
+        
+        softDeletedUser.setSoftDeleted(false);
+        
+        repo.saveRestoredUser(softDeletedUser, userStatusMap);
+        
+        userStatusMap = new HashMap<String, String>();
+        userStatusMap.put(GlobalConstants.ATTR_SOFT_DELETED, "FALSE");
+        
+        User unSoftDeletedUser = repo.findUser(newUser.getCustomerId(),
+            newUser.getUsername(), userStatusMap);        
+      
+        Assert.assertNull(unSoftDeletedUser.getSoftDeleteTimestamp());
+        
+        repo.delete(newUser.getUsername());
+    }   
 
     @Test
     public void shouldReturnTrueForIsUsernameUnique() {
@@ -478,7 +515,8 @@ public class LdapUserRepositoryTest {
     }
 
     private User createTestUserInstance() {
-        Password pwd = Password.newInstance("delete_my_password");
+        //Password pwd = Password.newInstance("password_to_delete");
+        Password pwd = Password.generateRandom();
         User newUser = new User("deleteme", "RCN-DELETE-ME_NOW",
             "bademail@example.com", new UserHumanName("delete_my_firstname",
                 "delete_my_middlename", "delete_my_lastname"), new UserLocale(

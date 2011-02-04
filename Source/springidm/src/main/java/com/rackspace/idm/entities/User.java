@@ -47,6 +47,8 @@ public class User extends BaseUser {
     private DateTime created;
     private DateTime updated;
     
+    private DateTime softDeletedTimestamp;
+    
     private Boolean maxLoginFailuresExceded = null;
 
     public User() {
@@ -387,6 +389,14 @@ public class User extends BaseUser {
         this.created = created;
     }
 
+    public DateTime getSoftDeleteTimestamp() {
+        return softDeletedTimestamp;
+    }
+
+    public void setSoftDeletedTimestamp(DateTime softDeletedTimestamp) {
+        this.softDeletedTimestamp = softDeletedTimestamp;
+    }
+    
     public DateTime getUpdated() {
         return updated;
     }
@@ -394,6 +404,7 @@ public class User extends BaseUser {
     public void setUpdated(DateTime updated) {
         this.updated = updated;
     }
+    
     
     public boolean isDisabled() {
         boolean disabled = false;

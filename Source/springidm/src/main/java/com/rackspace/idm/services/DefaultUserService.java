@@ -23,6 +23,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 public class DefaultUserService implements UserService {
 
@@ -344,6 +346,10 @@ public class DefaultUserService implements UserService {
         logger.info("Soft Deleting User: {}", username);
         User user = this.userDao.findByUsername(username);
         user.setSoftDeleted(true);
+        
+        DateTime softDeletedTimestamp = new DateTime(new Date());
+        user.setSoftDeletedTimestamp(softDeletedTimestamp);
+        
         this.userDao.save(user);
 
         // revoke user's tokens
