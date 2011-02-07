@@ -205,7 +205,7 @@ public class TokenResource {
         }
 
         // Validate Token exists and is valid
-        AccessToken token = tokenService.getAccessTokenByTokenString(tokenString);
+        AccessToken token = tokenService.validateToken(tokenString);
         if (token == null) {
             logger.info("Token not found : {}", tokenString);
             return null;

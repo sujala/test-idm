@@ -119,7 +119,7 @@ public class RepositoryConfiguration {
         DataCenterEndpoints endpoints = new DataCenterEndpoints();
         Client jclient = Client.create();
         for (String dc : dcs) {
-            String[] dcData = dc.split("|");
+            String[] dcData = dc.split("\\|");
             WebResource resource = jclient.resource(dcData[1]);
             DataCenterClient client = new DataCenterClient(dcData[0], resource);
             endpoints.put(client);
