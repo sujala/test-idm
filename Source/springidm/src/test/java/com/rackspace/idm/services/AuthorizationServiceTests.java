@@ -72,7 +72,7 @@ public class AuthorizationServiceTests {
         MemcachedClient mclient = new MemcachedConfiguration(
             new PropertyFileConfiguration().getConfigFromClasspath(),
             new StubLogger()).memcacheClient();
-        service = new DefaultAuthorizationService(mockClientDao, mclient,new StubLogger());
+        service = new DefaultAuthorizationService(mockClientDao, mclient, "idmClientId", new StubLogger());
         setUpObjects();
     }
 

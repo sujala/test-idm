@@ -1,5 +1,8 @@
 package com.rackspace.idm.dao;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.spy.memcached.MemcachedClient;
 
 import org.apache.commons.configuration.Configuration;
@@ -15,6 +18,10 @@ import com.rackspace.idm.config.MemcachedConfiguration;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.entities.BaseClient;
+import com.rackspace.idm.entities.BaseUser;
+import com.rackspace.idm.entities.Permission;
+import com.rackspace.idm.entities.Role;
+import com.rackspace.idm.entities.RoleStatus;
 import com.rackspace.idm.jaxb.AuthCredentials;
 import com.rackspace.idm.jaxb.AuthGrantType;
 import com.rackspace.idm.test.stub.StubLogger;
@@ -28,7 +35,7 @@ public class WebClientAccessTokenRepositoryTest {
 
     @Before
     public void setUp() {
-        WebResource wrqa = c.resource("http://10.127.7.164:8080/v1.0");
+        WebResource wrqa = c.resource("http://172.17.16.85:8080/v1.0");
         DataCenterClient qaServer = new DataCenterClient("QAM", wrqa);
         DataCenterEndpoints endpoints = new DataCenterEndpoints();
         endpoints.put(qaServer);
@@ -47,7 +54,7 @@ public class WebClientAccessTokenRepositoryTest {
     public void shouldLookForTokenAcrossDc() {
         // Use the QA memcached server to simulated XDC token store
         Configuration qaconfig = new PropertiesConfiguration();
-        qaconfig.addProperty("memcached.serverList", "10.127.7.165:11211");
+        qaconfig.addProperty("memcached.serverList", "172.17.16.84:11211");
         MemcachedClient mclient = new MemcachedConfiguration(qaconfig,
             new StubLogger()).memcacheClient();
         AccessToken token = getNewToken(60);
@@ -59,12 +66,8 @@ public class WebClientAccessTokenRepositoryTest {
         // Now attempt a lookup from the local DAO
         AccessToken remoteToken = repo.findByTokenString(QA_TOKEN_STRING);
         Assert.assertNotNull(remoteToken);
-
-        // Try multiple times to see if you get the same result;
-        remoteToken = repo.findByTokenString(QA_TOKEN_STRING);
-        Assert.assertNotNull(remoteToken);
-        remoteToken = repo.findByTokenString(QA_TOKEN_STRING);
-        Assert.assertNotNull(remoteToken);
+        Assert.assertNotNull(remoteToken.getTokenUser());
+        Assert.assertNotNull(remoteToken.getTokenClient());
     }
 
     @Test
@@ -75,11 +78,23 @@ public class WebClientAccessTokenRepositoryTest {
 
     private AccessToken getNewToken(int expInSeconds) {
         return new AccessToken(QA_TOKEN_STRING,
-            new DateTime().plusSeconds(expInSeconds), null, getTestClient(),
-            IDM_SCOPE.FULL);
+            new DateTime().plusSeconds(expInSeconds), getTestUser(),
+            getTestClient(), IDM_SCOPE.FULL);
+    }
+
+    private BaseUser getTestUser() {
+        Role role = new Role("uniqueId", "name", "customerId", "country",
+            "inum", "iname", "orgInum", "owner", RoleStatus.ACTIVE, "seeAlso",
+            "type");
+        List<Role> roles = new ArrayList<Role>();
+        roles.add(role);
+        return new BaseUser("userTested", "customerId", roles);
     }
 
     private BaseClient getTestClient() {
-        return new BaseClient("controlpanel", "customerId");
+        Permission perm = new Permission("foo", "bar", "baz", "what");
+        List<Permission> perms = new ArrayList<Permission>();
+        perms.add(perm);
+        return new BaseClient("controlpanel", "customerId", perms);
     }
 }

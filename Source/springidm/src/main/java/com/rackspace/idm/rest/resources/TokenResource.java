@@ -1,12 +1,41 @@
 package com.rackspace.idm.rest.resources;
 
+import java.util.Map;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.groups.Default;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import org.apache.commons.lang.SerializationUtils;
+import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.ErrorMsg;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.AuthConverter;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.AuthData;
 import com.rackspace.idm.errors.ApiError;
-import com.rackspace.idm.exceptions.*;
+import com.rackspace.idm.exceptions.ApiException;
+import com.rackspace.idm.exceptions.BadRequestException;
+import com.rackspace.idm.exceptions.ForbiddenException;
+import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.exceptions.TokenExpiredException;
 import com.rackspace.idm.oauth.AuthCredentials;
 import com.rackspace.idm.oauth.OAuthGrantType;
 import com.rackspace.idm.oauth.OAuthService;
@@ -18,17 +47,6 @@ import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.BasicCredentialsCheck;
 import com.rackspace.idm.validation.InputValidator;
 import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
-import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.groups.Default;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-import java.util.Map;
 
 /**
  * Management of OAuth 2.0 token used by IDM.
@@ -39,8 +57,6 @@ import java.util.Map;
 public class TokenResource {
     private AccessTokenService tokenService;
     private OAuthService oauthService;
-    private ClientService clientService;
-    private UserService userService;
     private AuthHeaderHelper authHeaderHelper;
     private InputValidator inputValidator;
     private AuthConverter authConverter;
@@ -48,9 +64,9 @@ public class TokenResource {
     private Logger logger;
 
     @Autowired(required = true)
-    public TokenResource(AccessTokenService tokenService, OAuthService oauthService, AuthHeaderHelper authHeaderHelper,
-                         InputValidator inputValidator, AuthConverter authConverter,
-                         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+    public TokenResource(AccessTokenService tokenService, OAuthService oauthService,
+        AuthHeaderHelper authHeaderHelper, InputValidator inputValidator, AuthConverter authConverter,
+        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.tokenService = tokenService;
         this.oauthService = oauthService;
         this.authHeaderHelper = authHeaderHelper;
@@ -76,7 +92,7 @@ public class TokenResource {
      */
     @POST
     public Response getAccessToken(@HeaderParam("Authorization") String authHeader,
-                                   com.rackspace.idm.jaxb.AuthCredentials creds) {
+        com.rackspace.idm.jaxb.AuthCredentials creds) {
         AuthCredentials trParam = new AuthCredentials();
         trParam.setClientId(creds.getClientId());
         trParam.setClientSecret(creds.getClientSecret());
@@ -110,7 +126,6 @@ public class TokenResource {
         return Response.ok(authConverter.toAuthDataJaxb(authData)).build();
     }
 
-
     /**
      * Validates token and then, if valid, returns the access token and its ttl.
      *
@@ -130,17 +145,16 @@ public class TokenResource {
     @GET
     @Path("{tokenString}")
     public Response validateAccessToken(@Context Request request, @Context UriInfo uriInfo,
-                                        @HeaderParam("Authorization") String authHeader,
-                                        @PathParam("tokenString") String tokenString) {
+        @HeaderParam("Authorization") String authHeader, @PathParam("tokenString") String tokenString) {
 
         logger.debug("Validating Access Token: {}", tokenString);
 
         AccessToken authToken = this.tokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Rackers, Rackspace Clients and Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeRacker(authToken) ||
-                authorizationService.authorizeRackspaceClient(authToken) ||
-                authorizationService.authorizeClient(authToken, request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeRacker(authToken)
+            || authorizationService.authorizeRackspaceClient(authToken)
+            || authorizationService.authorizeClient(authToken, request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call", authToken);
@@ -168,6 +182,40 @@ public class TokenResource {
     }
 
     /**
+     * !!! ONLY OTHER IDM INSTANCES CAN CALL THIS !!!
+     * For cross-data-center token replication.
+     */
+    @GET
+    @Path("{tokenString}")
+    @Produces({MediaType.APPLICATION_OCTET_STREAM})
+    public Response getAccessTokenObj(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("tokenString") String tokenString) {
+        logger.debug("Retrieving XDC Access Token: {}", tokenString);
+
+        AccessToken callingToken = this.tokenService.getAccessTokenByAuthHeader(authHeader);
+
+        // Only Another IDM instance is authorized.
+        boolean authorized = authorizationService.authorizeCustomerIdm(callingToken, request.getMethod(),
+            uriInfo.getPath());
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call", callingToken);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
+        // Validate Token exists and is valid
+        AccessToken token = tokenService.getAccessTokenByTokenString(tokenString);
+        if (token == null) {
+            logger.info("Token not found : {}", tokenString);
+            return null;
+        }
+
+        logger.debug("Retrieved XDC Access Token: {}", tokenString);
+        return Response.ok(SerializationUtils.serialize(token)).build();
+    }
+
+    /**
      * Removes the token from IDM.
      *
      * @param authHeader  HTTP Authorization header for authenticating the calling client.
@@ -184,8 +232,7 @@ public class TokenResource {
     @DELETE
     @Path("{tokenString}")
     public Response revokeAccessToken(@Context Request request, @Context UriInfo uriInfo,
-                                      @HeaderParam("Authorization") String authHeader,
-                                      @PathParam("tokenString") String tokenString) {
+        @HeaderParam("Authorization") String authHeader, @PathParam("tokenString") String tokenString) {
 
         logger.debug("Revoking Token: {}", tokenString);
 

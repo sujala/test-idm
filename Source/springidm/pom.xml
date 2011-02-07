@@ -214,6 +214,12 @@
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-validator</artifactId>
             <version>4.0.2.GA</version>
+            <exclusions>
+            	<exclusion>
+            		<artifactId>stax-api</artifactId>
+            		<groupId>javax.xml.stream</groupId>
+            	</exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>spy</groupId>
@@ -230,6 +236,16 @@
             <artifactId>maven-soapui-pro-plugin</artifactId>
             <version>3.6.2-SNAPSHOT</version>
             <scope>test</scope>
+            <exclusions>
+            	<exclusion>
+            		<artifactId>servlet-api</artifactId>
+            		<groupId>jetty</groupId>
+            	</exclusion>
+            	<exclusion>
+            		<artifactId>jaxb-impl</artifactId>
+            		<groupId>activesoap</groupId>
+            	</exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>eviware</groupId>
