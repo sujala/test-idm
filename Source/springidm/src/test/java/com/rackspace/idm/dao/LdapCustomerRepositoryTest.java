@@ -32,11 +32,13 @@ public class LdapCustomerRepositoryTest {
 
     @BeforeClass
     public static void cleanUpData() {
-        LdapCustomerRepository cleanUpRepo = getRepo(getConnPools());
+        final LdapConnectionPools pools = getConnPools();
+        LdapCustomerRepository cleanUpRepo = getRepo(pools);
         Customer deleteme = cleanUpRepo.findByCustomerId(customerId);
         if (deleteme != null) {
             cleanUpRepo.delete(customerId);
         }
+        pools.close();
     }
 
     private static LdapCustomerRepository getRepo(LdapConnectionPools connPools) {
@@ -59,8 +61,8 @@ public class LdapCustomerRepositoryTest {
 
     @After
     public void tearDown() {
-        cleanUpData();
         connPools.close();
+        cleanUpData();
     }
 
     @Test
@@ -172,7 +174,6 @@ public class LdapCustomerRepositoryTest {
     @Test
     public void shouldUpdateNonDnAttrOfCustomer() {
         Customer testCustomer = repo.findByCustomerId(customerId);
-        String customerId = testCustomer.getCustomerId();
 
         // Update all non-DN attributes
         testCustomer.setIname("My_New_Iname");

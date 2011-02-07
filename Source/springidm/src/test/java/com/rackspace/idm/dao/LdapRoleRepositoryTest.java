@@ -1,5 +1,6 @@
 package com.rackspace.idm.dao;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +35,12 @@ public class LdapRoleRepositoryTest {
     public void setUp() {
         connPools = getConnPools();
         repo = getRepo(connPools);
+    }
+    
+    
+    @After
+    public void tearDown() {
+    	connPools.close();
     }
 
     @Test

@@ -32,11 +32,13 @@ public class LdapClientRepositoryTest {
 
     @BeforeClass
     public static void cleanUpData() {
-        LdapClientRepository cleanUpRepo = getRepo(getConnPools());
+        final LdapConnectionPools pools = getConnPools();
+        LdapClientRepository cleanUpRepo = getRepo(pools);
         Client deleteme = cleanUpRepo.findByClientId("DELETE_My_ClientId");
         if (deleteme != null) {
             cleanUpRepo.delete("DELETE_My_ClientId");
         }
+        pools.close();
     }
 
     private static LdapClientRepository getRepo(LdapConnectionPools connPools) {

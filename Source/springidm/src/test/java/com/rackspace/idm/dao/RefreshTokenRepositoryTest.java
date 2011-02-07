@@ -27,12 +27,14 @@ public class RefreshTokenRepositoryTest {
 
     @BeforeClass
     public static void cleanUpData() {
-        LdapRefreshTokenRepository cleanUpRepo = getRepo(getConnPools());
+        final LdapConnectionPools pools = getConnPools();
+        LdapRefreshTokenRepository cleanUpRepo = getRepo(pools);
         RefreshToken deleteme = cleanUpRepo
             .findByTokenString("DELETE_My_Token");
         if (deleteme != null) {
             cleanUpRepo.delete("DELETE_My_Token");
         }
+        pools.close();
     }
 
     private static LdapRefreshTokenRepository getRepo(

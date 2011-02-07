@@ -38,7 +38,8 @@ public class LdapUserRepositoryTest {
 
     @BeforeClass
     public static void cleanUpData() {
-        LdapUserRepository cleanUpRepo = getRepo(getConnPools());
+        final LdapConnectionPools pools = getConnPools();
+        LdapUserRepository cleanUpRepo = getRepo(pools);
         User deleteme = cleanUpRepo.findByUsername("deleteme");
         if (deleteme != null) {
             cleanUpRepo.delete("deleteme");
@@ -51,6 +52,7 @@ public class LdapUserRepositoryTest {
         if (deleteme3 != null) {
             cleanUpRepo.delete("delete,me");
         }
+        pools.close();
     }
 
     private static LdapUserRepository getRepo(LdapConnectionPools connPools) {
