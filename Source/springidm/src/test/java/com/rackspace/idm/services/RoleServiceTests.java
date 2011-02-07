@@ -201,7 +201,7 @@ public class RoleServiceTests {
     public void shouldGetRolesForUser() {
         String[] roleIds = new String[] {roleDN};
         
-        EasyMock.expect(mockUserDao.getRoleIdsForUser(testUser.getUsername())).andReturn(roleIds);
+        EasyMock.expect(mockUserDao.getGroupIdsForUser(testUser.getUsername())).andReturn(roleIds);
         EasyMock.replay(mockUserDao);
         
         EasyMock.expect(mockRoleDao.findByInum(inum)).andReturn(testRole);
@@ -215,7 +215,7 @@ public class RoleServiceTests {
     
     @Test
     public void shouldGetNullRolesForUser() {
-        EasyMock.expect(mockUserDao.getRoleIdsForUser(testUser.getUsername())).andReturn(null);
+        EasyMock.expect(mockUserDao.getGroupIdsForUser(testUser.getUsername())).andReturn(null);
         EasyMock.replay(mockUserDao);
         
         List<Role> roles = roleService.getRolesForUser(testUser.getUsername());

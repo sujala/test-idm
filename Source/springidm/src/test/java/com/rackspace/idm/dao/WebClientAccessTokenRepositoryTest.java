@@ -10,6 +10,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.rackspace.idm.config.DataCenterClient;
@@ -19,6 +20,7 @@ import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.entities.BaseClient;
 import com.rackspace.idm.entities.BaseUser;
+import com.rackspace.idm.entities.ClientGroup;
 import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.entities.Role;
 import com.rackspace.idm.entities.RoleStatus;
@@ -28,6 +30,7 @@ import com.rackspace.idm.test.stub.StubLogger;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 
+@Ignore("Rackspace Dev and QA servers are down, testing locally")
 public class WebClientAccessTokenRepositoryTest {
     private static final String QA_TOKEN_STRING = "QAM-xdctesttokenstring";
     private Client c = Client.create();
@@ -83,12 +86,12 @@ public class WebClientAccessTokenRepositoryTest {
     }
 
     private BaseUser getTestUser() {
-        Role role = new Role("uniqueId", "name", "customerId", "country",
-            "inum", "iname", "orgInum", "owner", RoleStatus.ACTIVE, "seeAlso",
-            "type");
-        List<Role> roles = new ArrayList<Role>();
-        roles.add(role);
-        return new BaseUser("userTested", "customerId", roles);
+        
+        ClientGroup group = new ClientGroup("customerId", "clientId", "name");
+        List<ClientGroup> groups = new ArrayList<ClientGroup>();
+        groups.add(group);
+
+        return new BaseUser("userTested", "customerId", groups);
     }
 
     private BaseClient getTestClient() {

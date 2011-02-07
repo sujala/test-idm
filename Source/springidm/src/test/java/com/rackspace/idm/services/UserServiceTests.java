@@ -40,7 +40,7 @@ public class UserServiceTests {
     UserService trustedUserService;
     EmailService mockEmailService;
     AuthDao mockRackerDao;
-    RoleService mockRoleService;
+    ClientService mockClientService;
 
     String customerId = "123456";
     String username = "testuser";
@@ -79,15 +79,15 @@ public class UserServiceTests {
         mockClientDao = EasyMock.createMock(ClientDao.class);
         mockEmailService = EasyMock.createMock(EmailService.class);
         mockRackerDao = EasyMock.createMock(AuthDao.class);
-        mockRoleService = EasyMock.createMock(RoleService.class);
+        mockClientService = EasyMock.createMock(ClientService.class);
 
         userService = new DefaultUserService(mockUserDao, mockRackerDao,
             mockCustomerDao, mockTokenDao, mockRefreshTokenDao, mockClientDao,
-            mockEmailService, mockRoleService, false, new StubLogger());
+            mockEmailService, mockClientService, false, new StubLogger());
 
         trustedUserService = new DefaultUserService(mockUserDao, mockRackerDao,
             mockCustomerDao, mockTokenDao, mockRefreshTokenDao, mockClientDao,
-            mockEmailService, mockRoleService, true, new StubLogger());
+            mockEmailService, mockClientService, true, new StubLogger());
     }
 
     @Test
@@ -249,12 +249,12 @@ public class UserServiceTests {
         EasyMock.expect(mockUserDao.authenticate(username, password)).andReturn(
             this.getTrueAuthenticationResult());
         EasyMock.replay(mockUserDao);
-        EasyMock.expect(mockRoleService.getRolesForUser(username)).andReturn(null);
-        EasyMock.replay(mockRoleService);
+        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(null);
+        EasyMock.replay(mockClientService);
         UserAuthenticationResult uaResult = userService.authenticate(username, password);
         Assert.assertTrue(uaResult.isAuthenticated());
         EasyMock.verify(mockUserDao);
-        EasyMock.verify(mockRoleService);
+        EasyMock.verify(mockClientService);
     }
 
     @Test

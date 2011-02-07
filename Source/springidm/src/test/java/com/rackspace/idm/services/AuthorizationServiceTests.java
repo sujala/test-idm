@@ -52,8 +52,8 @@ public class AuthorizationServiceTests {
 
     Permission perm;
     List<Permission> permissions;
-    Role admin;
-    List<Role> roles;
+    ClientGroup admin;
+    List<ClientGroup> groups;
 
     String adminRoleName = GlobalConstants.IDM_ADMIN_ROLE_NAME;
 
@@ -189,11 +189,13 @@ public class AuthorizationServiceTests {
         permissions = new ArrayList<Permission>();
         permissions.add(perm);
 
-        admin = new Role();
+        admin = new ClientGroup();
         admin.setName(adminRoleName);
+        admin.setClientId(clientId);
+        admin.setCustomerId(customerId);
 
-        roles = new ArrayList<Role>();
-        roles.add(admin);
+        groups = new ArrayList<ClientGroup>();
+        groups.add(admin);
 
         authorizedClient = new BaseClient(clientId, customerId, permissions);
         notAuthorizedClient = new BaseClient(clientId, customerId);
@@ -201,8 +203,8 @@ public class AuthorizationServiceTests {
 
         authorizedUser = new BaseUser(username, customerId);
         otherCompanyUser = new BaseUser(username, otherCustomerId);
-        authorizedAdmin = new BaseUser(username, customerId, roles);
-        otherCompanyAdmin = new BaseUser(username, otherCustomerId, roles);
+        authorizedAdmin = new BaseUser(username, customerId, groups);
+        otherCompanyAdmin = new BaseUser(username, otherCustomerId, groups);
 
         tokenExpiration = new DateTime();
 

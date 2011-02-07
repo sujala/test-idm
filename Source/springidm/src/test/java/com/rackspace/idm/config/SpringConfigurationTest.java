@@ -18,10 +18,10 @@ public class SpringConfigurationTest {
         ApiKeyResource apiKeyResource = ctx.getBean(ApiKeyResource.class);
         Assert.assertNotNull(apiKeyResource);
         
-        ClientResource clientResource = ctx.getBean(ClientResource.class);
+        CustomerClientResource clientResource = ctx.getBean(CustomerClientResource.class);
         Assert.assertNotNull(clientResource);
         
-        ClientsResource clientsResource = ctx.getBean(ClientsResource.class);
+        CustomerClientsResource clientsResource = ctx.getBean(CustomerClientsResource.class);
         Assert.assertNotNull(clientsResource);
         
         CustomerLockResource customerLockResource = ctx.getBean(CustomerLockResource.class);
@@ -69,7 +69,7 @@ public class SpringConfigurationTest {
         UserRoleResource userRoleResource = ctx.getBean(UserRoleResource.class);
         Assert.assertNotNull(userRoleResource);
         
-        UserRolesResource userRolesResource = ctx.getBean(UserRolesResource.class);
+        UserGroupsResource userRolesResource = ctx.getBean(UserGroupsResource.class);
         Assert.assertNotNull(userRolesResource);
         
         UserSecretResource userSecretResource = ctx.getBean(UserSecretResource.class);

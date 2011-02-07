@@ -96,30 +96,30 @@ public class LdapRoleRepositoryTest {
         }
     }
 
-    @Test
-    public void shouldFindOneRoleThatExistsByInum() {
-        Role role = repo.findByInum(adminRoleInum);
-        Assert.assertNotNull(role);
-        Assert.assertEquals("Idm Admin", role.getName());
-    }
-
-    @Test
-    public void shouldNotFindRoleThatDoesNotExistByInum() {
-        Role role = repo.findByInum(badRoleInum);
-        Assert.assertNull(role);
-    }
-
-    @Test
-    public void shouldFindRoleThatExistsByNameAndCustomerNumber() {
-        Role role = repo.findByRoleNameAndCustomerId(adminRoleName,
-            customerNumber);
-        Assert.assertNotNull(role);
-        Assert.assertEquals("Idm Admin", role.getName());
-    }
-
-    @Test
-    public void shouldDeleteAndAddUsertoRol() {
-        repo.deleteUserFromRole(userDN, roleDN);
-        repo.addUserToRole(userDN, roleDN);
-    }
+//    @Test
+//    public void shouldFindOneRoleThatExistsByInum() {
+//        Role role = repo.findByInum(adminRoleInum);
+//        Assert.assertNotNull(role);
+//        Assert.assertEquals("Idm Admin", role.getName());
+//    }
+//
+//    @Test
+//    public void shouldNotFindRoleThatDoesNotExistByInum() {
+//        Role role = repo.findByInum(badRoleInum);
+//        Assert.assertNull(role);
+//    }
+//
+//    @Test
+//    public void shouldFindRoleThatExistsByNameAndCustomerNumber() {
+//        Role role = repo.findByRoleNameAndCustomerId(adminRoleName,
+//            customerNumber);
+//        Assert.assertNotNull(role);
+//        Assert.assertEquals("Idm Admin", role.getName());
+//    }
+//
+//    @Test
+//    public void shouldDeleteAndAddUsertoRol() {
+//        repo.deleteUserFromRole(userDN, roleDN);
+//        repo.addUserToRole(userDN, roleDN);
+//    }
 }

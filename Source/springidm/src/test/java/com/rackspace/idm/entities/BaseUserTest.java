@@ -15,14 +15,11 @@ import java.util.List;
 public class BaseUserTest {
     @Test
     public void shouldSerializeAndDeserialzie() {
-        Permission perm = new Permission("customerId", "clientId", "permissionId", "value");
-        List<Permission> perms = new ArrayList<Permission>();
-        perms.add(perm);
-        Role role = new Role("uniqueId", "name", "customerId", "country", "inum", "iname", "orgInum", "owner", RoleStatus.ACTIVE, "seeAlso", "type");
-        role.setPermissions(perms);
-        List<Role> roles = new ArrayList<Role>();
-        roles.add(role);
-        BaseUser bu = new BaseUser("username", "customerId", roles);
+
+        ClientGroup group = new ClientGroup("clientId", "customerId", "groupName");
+        List<ClientGroup> groups = new ArrayList<ClientGroup>();
+        groups.add(group);
+        BaseUser bu = new BaseUser("username", "customerId", groups);
         byte[] serialized = SerializationUtils.serialize(bu);
         BaseUser dsbu = (BaseUser) SerializationUtils.deserialize(serialized);
         Assert.assertEquals(bu, dsbu);

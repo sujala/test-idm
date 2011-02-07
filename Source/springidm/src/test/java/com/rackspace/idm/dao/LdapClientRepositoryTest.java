@@ -12,9 +12,14 @@ import org.junit.Test;
 import com.rackspace.idm.config.LdapConfiguration;
 import com.rackspace.idm.config.PropertyFileConfiguration;
 import com.rackspace.idm.entities.Client;
+import com.rackspace.idm.entities.ClientGroup;
 import com.rackspace.idm.entities.ClientSecret;
 import com.rackspace.idm.entities.ClientStatus;
 import com.rackspace.idm.entities.Permission;
+import com.rackspace.idm.entities.User;
+import com.rackspace.idm.exceptions.DuplicateClientGroupException;
+import com.rackspace.idm.exceptions.DuplicateException;
+import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.unboundid.ldap.sdk.Modification;
 
@@ -22,6 +27,8 @@ public class LdapClientRepositoryTest {
 
     private LdapClientRepository repo;
     private LdapConnectionPools connPools;
+    
+    String userDN = "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com";
 
     @BeforeClass
     public static void cleanUpData() {
@@ -271,6 +278,309 @@ public class LdapClientRepositoryTest {
         repo.deleteDefinedPermission(testPermission);
         repo.delete(testClient.getClientId());
     }
+    
+    @Test
+    public void shouldAddClientGroup() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        repo.addClientGroup(group);
+        ClientGroup returnedGroup = repo.getClientGroupByClientIdAndGroupName(group.getClientId(), group.getName());
+        Assert.assertNotNull(returnedGroup);
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldNotAddClientGroupForNonExistentClient() {
+        ClientGroup group = new ClientGroup("SOMEBADCLIENTID", "RACKSPACE", "NEWGROUP");
+        
+        try {
+            repo.addClientGroup(group);
+            Assert.fail("Shouldn't Have added Group");
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof NotFoundException);
+        }
+    }
+    
+    @Test
+    public void shouldNotAddClientGroupForDuplicate() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        repo.addClientGroup(group);
+        ClientGroup returnedGroup = repo.getClientGroupByClientIdAndGroupName(group.getClientId(), group.getName());
+        Assert.assertNotNull(returnedGroup);
+        try {
+            repo.addClientGroup(group);
+            Assert.fail("Shouldn't Have added Group");
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof DuplicateClientGroupException);
+        }
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldDeleteClientGroup() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        repo.addClientGroup(group);
+        ClientGroup returnedGroup = repo.getClientGroupByClientIdAndGroupName(group.getClientId(), group.getName());
+        Assert.assertNotNull(returnedGroup);
+        repo.deleteClientGroup(group.getClientId(), group.getName());
+        returnedGroup = repo.getClientGroupByClientIdAndGroupName(group.getClientId(), group.getName());
+        Assert.assertNull(returnedGroup);
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldThrowErrorForDeleteClientGroupForNonExistentClient() {
+        
+        try {
+            repo.deleteClientGroup("BADCLIENTNAME", "GROUPNAME");
+            Assert.fail("Shouldn't have Deleted Group");
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof NotFoundException);
+        }
+    }
+    
+    @Test
+    public void shouldThrowErrorForNonExistentClientGroup() {
+        Client testClient = addNewTestClient();
+        try {
+            repo.deleteClientGroup(testClient.getClientId(), "GROUPNAME");
+            Assert.fail("Shouldn't have Deleted Group");
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof NotFoundException);
+        }
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldGetClientGroup() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        repo.addClientGroup(group);
+        ClientGroup returnedGroup = repo.getClientGroupByClientIdAndGroupName(group.getClientId(), group.getName());
+        Assert.assertNotNull(returnedGroup);
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldGetClientGroups() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        repo.addClientGroup(group);
+        group.setName("NEWGROUPNAME");
+        repo.addClientGroup(group);
+        List<ClientGroup> groups = repo.getClientGroupsByClientId(testClient.getClientId());
+        Assert.assertTrue(groups.size() == 2);
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test 
+    public void shouldThowNotFoundErrorForNonExistentClient() {
+        try {
+        repo.getClientGroupsByClientId("SOMEBADCLIENTID");
+        Assert.fail();
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof NotFoundException);
+        }
+    }
+    
+    @Test 
+    public void shouldNotGetClientGroupForNonExistenClient() {
+        try {
+        ClientGroup returnedGorup = repo.getClientGroupByClientIdAndGroupName("BADCLIENTNAME", "name");
+        Assert.fail("Shouldn't have found client");
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof NotFoundException);
+        }
+    }
+    
+    @Test
+    public void shouldReturnNullForGetClientGroupForNonExistentGroup() {
+        Client testClient = addNewTestClient();
+        ClientGroup returnedGroup = repo.getClientGroupByClientIdAndGroupName(testClient.getClientId(), "SOMEBADNAME");
+        Assert.assertNull(returnedGroup);
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldAddUserToClientGroup() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        repo.addClientGroup(group);
+        repo.addUserToClientGroup(createTestUser(), group);
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldNotAddUserToClientGroupIfAlreadyInGroup() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        repo.addClientGroup(group);
+        repo.addUserToClientGroup(createTestUser(), group);
+        try {
+            repo.addUserToClientGroup(createTestUser(), group);
+            Assert.fail();
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof DuplicateException);
+        }
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldNotAddUserToClientGroupForNullUser() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        try {
+        repo.addUserToClientGroup(null, group);
+        Assert.fail();
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof IllegalArgumentException);
+        }
+        
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldNotAddUserToClientGroupForUserWithBlankUniqueID() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        try {
+        repo.addUserToClientGroup(new User(), group);
+        Assert.fail();
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof IllegalArgumentException);
+        }
+        
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldNotAddUserToClientGroupForNullGroup() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        try {
+        repo.addUserToClientGroup(createTestUser(), null);
+        Assert.fail();
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof IllegalArgumentException);
+        }
+        
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldNotAddUserToClientGroupForGroupWithBlankUniqueID() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        group.setUniqueId(null);
+        try {
+        repo.addUserToClientGroup(createTestUser(), group);
+        Assert.fail();
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof IllegalArgumentException);
+        }
+        
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldRemoveUserFromClientGroup() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        repo.addClientGroup(group);
+        User user = createTestUser();
+        repo.addUserToClientGroup(user, group);
+        repo.removeUserFromGroup(user, group);
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldNotRemoveUserFromClientGroupIfUserNotInGroup() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        repo.addClientGroup(group);
+        User user = createTestUser();
+        try {
+        repo.removeUserFromGroup(user, group);
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof NotFoundException);
+        }
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldNotRemoveUserFromClientGroupForNullUser() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        try {
+        repo.removeUserFromGroup(null, group);
+        Assert.fail();
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof IllegalArgumentException);
+        }
+        
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldNotRemoveUserFromClientGroupForUserWithBlankUniqueID() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        try {
+        repo.removeUserFromGroup(new User(), group);
+        Assert.fail();
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof IllegalArgumentException);
+        }
+        
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldNotRemoveUserFromClientGroupForNullGroup() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        try {
+        repo.removeUserFromGroup(createTestUser(), null);
+        Assert.fail();
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof IllegalArgumentException);
+        }
+        
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldNotRemoveUserFromClientGroupForGroupWithBlankUniqueID() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        group.setUniqueId(null);
+        try {
+        repo.removeUserFromGroup(createTestUser(), group);
+        Assert.fail();
+        }
+        catch (Exception ex) {
+            Assert.assertTrue(ex instanceof IllegalArgumentException);
+        }
+        
+        repo.delete(testClient.getClientId());
+    }
 
     @After
     public void tearDown() {
@@ -281,6 +591,10 @@ public class LdapClientRepositoryTest {
         Client newClient = createTestClientInstance();
         repo.add(newClient);
         return newClient;
+    }
+    
+    private ClientGroup createNewTestClientGroup(Client client) {
+        return new ClientGroup (client.getClientId(), client.getCustomerId(), "New Group");
     }
 
     private Client createTestClientInstance() {
@@ -307,5 +621,11 @@ public class LdapClientRepositoryTest {
         res.setPermissionId("DELETE_My_Permission");
         res.setValue("Some Value");
         return res;
+    }
+    
+    private User createTestUser() {
+        User user = new User();
+        user.setUniqueId(userDN);
+        return user;
     }
 }
