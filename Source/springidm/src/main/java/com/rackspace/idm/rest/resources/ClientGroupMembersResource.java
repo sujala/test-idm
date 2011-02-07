@@ -96,7 +96,7 @@ public class ClientGroupMembersResource {
     }
     
     /**
-     * Adds a user to a client group.
+     * Removes a user from a client group.
      * 
      * @response.representation.204.doc
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
