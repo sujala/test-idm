@@ -5,6 +5,11 @@ import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import com.rackspace.idm.rest.resources.ApiKeyResource;
+import com.rackspace.idm.rest.resources.AuthResource;
+import com.rackspace.idm.rest.resources.BaseUrlsResource;
+import com.rackspace.idm.rest.resources.ClientGroupMembersResource;
+import com.rackspace.idm.rest.resources.ClientGroupResource;
+import com.rackspace.idm.rest.resources.ClientGroupsResource;
 import com.rackspace.idm.rest.resources.CustomerClientResource;
 import com.rackspace.idm.rest.resources.CustomerClientsResource;
 import com.rackspace.idm.rest.resources.CustomerLockResource;
@@ -14,6 +19,8 @@ import com.rackspace.idm.rest.resources.CustomersResource;
 import com.rackspace.idm.rest.resources.DefinedPermissionResource;
 import com.rackspace.idm.rest.resources.DefinedPermissionsResource;
 import com.rackspace.idm.rest.resources.GrantedPermissionsResource;
+import com.rackspace.idm.rest.resources.MossoUserResource;
+import com.rackspace.idm.rest.resources.NastUserResource;
 import com.rackspace.idm.rest.resources.PasswordRulesResource;
 import com.rackspace.idm.rest.resources.PermissionsResource;
 import com.rackspace.idm.rest.resources.RolesResource;
@@ -40,6 +47,21 @@ public class SpringConfigurationTest {
         ApiKeyResource apiKeyResource = ctx.getBean(ApiKeyResource.class);
         Assert.assertNotNull(apiKeyResource);
         
+        AuthResource authResource = ctx.getBean(AuthResource.class);
+        Assert.assertNotNull(authResource);
+        
+        BaseUrlsResource baseUrlsResource = ctx.getBean(BaseUrlsResource.class);
+        Assert.assertNotNull(baseUrlsResource);
+        
+        ClientGroupMembersResource clientGroupMembersResource = ctx.getBean(ClientGroupMembersResource.class);
+        Assert.assertNotNull(clientGroupMembersResource);
+        
+        ClientGroupResource clientGroupResource = ctx.getBean(ClientGroupResource.class);
+        Assert.assertNotNull(clientGroupResource);
+        
+        ClientGroupsResource clientGroupsResource = ctx.getBean(ClientGroupsResource.class);
+        Assert.assertNotNull(clientGroupsResource);
+        
         CustomerClientResource clientResource = ctx.getBean(CustomerClientResource.class);
         Assert.assertNotNull(clientResource);
         
@@ -60,6 +82,12 @@ public class SpringConfigurationTest {
         
         DefinedPermissionsResource definedPermissionsResource = ctx.getBean(DefinedPermissionsResource.class);
         Assert.assertNotNull(definedPermissionsResource);
+        
+        MossoUserResource mossoUserResource = ctx.getBean(MossoUserResource.class);
+        Assert.assertNotNull(mossoUserResource);
+        
+        NastUserResource nastUserResource = ctx.getBean(NastUserResource.class);
+        Assert.assertNotNull(nastUserResource);
         
         UsersResource firstUserResource = ctx.getBean(UsersResource.class);
         Assert.assertNotNull(firstUserResource);
@@ -91,8 +119,8 @@ public class SpringConfigurationTest {
         UserRoleResource userRoleResource = ctx.getBean(UserRoleResource.class);
         Assert.assertNotNull(userRoleResource);
         
-        UserGroupsResource userRolesResource = ctx.getBean(UserGroupsResource.class);
-        Assert.assertNotNull(userRolesResource);
+        UserGroupsResource userGroupsResource = ctx.getBean(UserGroupsResource.class);
+        Assert.assertNotNull(userGroupsResource);
         
         UserSecretResource userSecretResource = ctx.getBean(UserSecretResource.class);
         Assert.assertNotNull(userSecretResource);
