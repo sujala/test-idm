@@ -55,7 +55,7 @@ public class ClientGroupResource {
     }
 
     /**
-     * Deletes a Client defined permission.
+     * Deletes a Client groups
      * 
      * @response.representation.204.doc
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -99,7 +99,7 @@ public class ClientGroupResource {
     }
 
     /**
-     * Gets a Client defined permission.
+     * Gets a Client group.
      * 
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}clientGroup
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
