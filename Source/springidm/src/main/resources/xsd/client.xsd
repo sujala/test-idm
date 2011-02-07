@@ -220,4 +220,20 @@
 		</restriction>
 	</simpleType>
 
+
+	<complexType name="ClientGroup">
+		<attribute name="customerId" type="xsd:string"></attribute>
+		<attribute name="clientId" type="xsd:string"></attribute>
+		<attribute name="name" type="xsd:string"></attribute>
+	</complexType>
+
+	<complexType name="ClientGroupList">
+		<sequence>
+			<element name="clientGroup" type="idm:ClientGroup" minOccurs="0" maxOccurs="unbounded"></element>
+		</sequence>
+	</complexType>
+
+	<element name="clientGroup" type="idm:ClientGroup"></element>
+
+	<element name="clientGroups" type="idm:ClientGroupList"></element>
 </schema>

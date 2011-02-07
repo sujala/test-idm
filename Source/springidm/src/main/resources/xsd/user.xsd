@@ -3,14 +3,18 @@
 
 	<!-- (C) 2010 Rackspace Hosting, All Rights Reserved -->
 
-<schema elementFormDefault="qualified" attributeFormDefault="unqualified"
-	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
-	xmlns:idm="http://docs.rackspacecloud.com/idm/api/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+<schema elementFormDefault="qualified"
+	attributeFormDefault="unqualified"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:idm="http://docs.rackspacecloud.com/idm/api/v1.0"
+	xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
 	targetNamespace="http://docs.rackspacecloud.com/idm/api/v1.0">
 
-	<include schemaLocation="role.xsd"></include>
+	<include schemaLocation="client.xsd"></include>
 	<annotation>
-		<xsd:appinfo xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+		<xsd:appinfo xml:lang="EN"
+			xmlns="http://www.w3.org/1999/xhtml">
 			<xsdxt:title>Users</xsdxt:title>
 			<xsdxt:link rel="index" href="idmapi.xsd" />
 		</xsd:appinfo>
@@ -20,7 +24,7 @@
 		</xsd:documentation>
 	</annotation>
 
-	<!-- Elements --> 
+	<!-- Elements -->
 	<element name="userCredentials" type="idm:UserCredentials">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -30,10 +34,12 @@
 			<xsd:appinfo>
 				<xsdxt:samples>
 					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../samples/user_credentials.xml" />
+						<xsdxt:code type="application/xml"
+							href="../samples/user_credentials.xml" />
 					</xsdxt:sample>
 					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../samples/user_credentials.json" />
+						<xsdxt:code type="application/json"
+							href="../samples/user_credentials.json" />
 					</xsdxt:sample>
 				</xsdxt:samples>
 			</xsd:appinfo>
@@ -49,10 +55,12 @@
 			<xsd:appinfo>
 				<xsdxt:samples>
 					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../samples/user_api_key.xml" />
+						<xsdxt:code type="application/xml"
+							href="../samples/user_api_key.xml" />
 					</xsdxt:sample>
 					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../samples/user_api_key.json" />
+						<xsdxt:code type="application/json"
+							href="../samples/user_api_key.json" />
 					</xsdxt:sample>
 				</xsdxt:samples>
 			</xsd:appinfo>
@@ -68,10 +76,12 @@
 			<xsd:appinfo>
 				<xsdxt:samples>
 					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../samples/user_api_key.xml" />
+						<xsdxt:code type="application/xml"
+							href="../samples/user_api_key.xml" />
 					</xsdxt:sample>
 					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../samples/user_api_key.json" />
+						<xsdxt:code type="application/json"
+							href="../samples/user_api_key.json" />
 					</xsdxt:sample>
 				</xsdxt:samples>
 			</xsd:appinfo>
@@ -87,10 +97,12 @@
 			<xsd:appinfo>
 				<xsdxt:samples>
 					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../samples/user.xml" />
+						<xsdxt:code type="application/xml"
+							href="../samples/user.xml" />
 					</xsdxt:sample>
 					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../samples/user.json" />
+						<xsdxt:code type="application/json"
+							href="../samples/user.json" />
 					</xsdxt:sample>
 				</xsdxt:samples>
 			</xsd:appinfo>
@@ -106,10 +118,12 @@
 			<xsd:appinfo>
 				<xsdxt:samples>
 					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../samples/users.xml" />
+						<xsdxt:code type="application/xml"
+							href="../samples/users.xml" />
 					</xsdxt:sample>
 					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../samples/users.json" />
+						<xsdxt:code type="application/json"
+							href="../samples/users.json" />
 					</xsdxt:sample>
 				</xsdxt:samples>
 			</xsd:appinfo>
@@ -125,10 +139,12 @@
 			<xsd:appinfo>
 				<xsdxt:samples>
 					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../samples/user_secret.xml" />
+						<xsdxt:code type="application/xml"
+							href="../samples/user_secret.xml" />
 					</xsdxt:sample>
 					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../samples/user_secret.json" />
+						<xsdxt:code type="application/json"
+							href="../samples/user_secret.json" />
 					</xsdxt:sample>
 				</xsdxt:samples>
 			</xsd:appinfo>
@@ -211,7 +227,7 @@
 					</xsd:documentation>
 				</annotation>
 			</element>
-			<element name="roles" type="idm:RoleList" minOccurs="0"
+			<element name="groups" type="idm:ClientGroupList" minOccurs="0"
 				maxOccurs="1">
 				<annotation>
 					<xsd:documentation xml:lang="EN"
@@ -386,7 +402,8 @@
 
 	<complexType name="UserList">
 		<sequence>
-			<element name="user" type="idm:User" minOccurs="0" maxOccurs="unbounded">
+			<element name="user" type="idm:User" minOccurs="0"
+				maxOccurs="unbounded">
 			</element>
 		</sequence>
 		<attribute name="totalRecords" type="xsd:int" use="optional"></attribute>
