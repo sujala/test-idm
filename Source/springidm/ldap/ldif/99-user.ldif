@@ -39,9 +39,10 @@ objectClasses: ( 1.3.6.1.4.1.20988.2.2.5 NAME 'rackspacePerson' SUP top STRUCTUR
 objectClasses: ( 1.3.6.1.4.1.20988.2.2.6 NAME 'rackspaceOrganization' SUP top STRUCTURAL MUST inum MAY ( iname $ locked $ o $ owner $ rackspaceCustomerNumber $ status $ seeAlso $ softDeleted ) X-ORIGIN 'RFC 4519' )
 objectClasses: ( 1.3.6.1.4.1.20988.2.2.3 NAME 'rackspaceApplication' SUP top STRUCTURAL MUST ( displayName $ inum $ rackspaceApiKey $ userPassword ) MAY ( iname $ locked $ owner $ permission $ rackspaceCustomerNumber $ status $ seeAlso $ softDeleted ) X-ORIGIN 'RFC 4519' )
 objectClasses: ( 1.3.6.1.4.1.20988.2.2.4 NAME 'rackspaceToken' SUP top STRUCTURAL MUST o MAY ( expiration $ status $ seeAlso $ tokenOwner $ tokenRequestor) X-ORIGIN 'RFC 4519' )
-objectClasses: ( 1.3.6.1.4.1.20988.2.2.40 NAME 'rackspaceGroup' SUP groupOfUniqueNames STRUCTURAL MUST ( inum ) MAY ( c $ displayName $ groupType $ iname $ permission $ rackspaceCustomerNumber $ status $ softDeleted ) )
+objectClasses: ( 1.3.6.1.4.1.20988.2.2.40 NAME 'rackspaceGroup' SUP groupOfNames STRUCTURAL MUST ( inum ) MAY ( c $ displayName $ groupType $ iname $ permission $ rackspaceCustomerNumber $ status $ softDeleted ) )
 objectClasses: ( 1.3.6.1.4.1.20988.2.2.60 NAME 'clientPermission' SUP top STRUCTURAL MUST ( cn $ rackspaceApiKey $ rackspaceCustomerNumber $ blob ) MAY ( permissionType ) )
 objectClasses: ( 1.3.6.1.4.1.20988.2.2.80 NAME 'baseUrl' SUP top STRUCTURAL MUST ( baseUrlId $ baseUrlType $ service $ def ) MAY ( rackspaceRegion $ publicUrl $ internalUrl $ adminUrl ) )
+objectClasses: ( 1.3.6.1.4.1.20988.2.2.90 NAME 'clientGroup' SUP groupOfNames STRUCTURAL MUST ( cn $ rackspaceApiKey $ rackspaceCustomerNumber ) MAY ( c $ displayName $ permission ) )
 ds-update-time:: AAABKLZPnxA=
 modifiersname: cn=Directory Manager,cn=Root DNs,cn=config
 
