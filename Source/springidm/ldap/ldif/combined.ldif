@@ -189,7 +189,6 @@ secretQuestion: What is the name of your employer?
 secretAnswer: Rackspace
 clearPassword: P@ssw0rd
 softDeleted: FALSE
-softDeletedTimestamp: none
 status: ACTIVE
 sn: Ly
 timeZone: America/Chicago
