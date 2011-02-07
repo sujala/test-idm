@@ -1,5 +1,8 @@
 package com.rackspace.idm.dao;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -95,8 +98,14 @@ public class WebClientAccessTokenRepository implements TokenGetterDao<AccessToke
         logger.warn("Client call to another DC failed.", e);
         ClientResponse resp = e.getResponse();
         if (resp != null) {
-            IdmFault fault = resp.getEntity(IdmFault.class);
-            logger.warn("Cause -> {}: {}", fault.getMessage(), fault.getDetails());
+            try {
+                ByteArrayInputStream out = resp.getEntity(ByteArrayInputStream.class);
+                Object responseObj = SerializationUtils.deserialize(out);
+                logger.warn("Error response -> {}", responseObj);
+            } catch (Exception ex) {
+                IdmFault fault = resp.getEntity(IdmFault.class);
+                logger.warn("Cause -> {}: {}", fault.getMessage(), fault.getDetails());
+            }
         }
     }
 

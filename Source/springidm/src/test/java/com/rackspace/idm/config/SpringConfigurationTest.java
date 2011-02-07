@@ -1,11 +1,31 @@
 package com.rackspace.idm.config;
 
-import com.rackspace.idm.rest.resources.*;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
+import com.rackspace.idm.rest.resources.ApiKeyResource;
+import com.rackspace.idm.rest.resources.CustomerLockResource;
+import com.rackspace.idm.rest.resources.CustomerResource;
+import com.rackspace.idm.rest.resources.CustomerUsersResource;
+import com.rackspace.idm.rest.resources.CustomersResource;
+import com.rackspace.idm.rest.resources.DefinedPermissionResource;
+import com.rackspace.idm.rest.resources.DefinedPermissionsResource;
+import com.rackspace.idm.rest.resources.GrantedPermissionsResource;
+import com.rackspace.idm.rest.resources.PasswordRulesResource;
+import com.rackspace.idm.rest.resources.PermissionsResource;
+import com.rackspace.idm.rest.resources.RolesResource;
+import com.rackspace.idm.rest.resources.TokenResource;
+import com.rackspace.idm.rest.resources.UserLockResource;
+import com.rackspace.idm.rest.resources.UserPasswordResource;
+import com.rackspace.idm.rest.resources.UserResource;
+import com.rackspace.idm.rest.resources.UserRoleResource;
+import com.rackspace.idm.rest.resources.UserRolesResource;
+import com.rackspace.idm.rest.resources.UserSecretResource;
+import com.rackspace.idm.rest.resources.UserSoftDeleteResource;
+import com.rackspace.idm.rest.resources.UserStatusResource;
 import com.rackspace.idm.rest.resources.UsersResource;
+import com.rackspace.idm.rest.resources.VersionResource;
 
 public class SpringConfigurationTest {
 
@@ -18,10 +38,10 @@ public class SpringConfigurationTest {
         ApiKeyResource apiKeyResource = ctx.getBean(ApiKeyResource.class);
         Assert.assertNotNull(apiKeyResource);
         
-        CustomerClientResource clientResource = ctx.getBean(CustomerClientResource.class);
+        ClientResource clientResource = ctx.getBean(ClientResource.class);
         Assert.assertNotNull(clientResource);
         
-        CustomerClientsResource clientsResource = ctx.getBean(CustomerClientsResource.class);
+        ClientsResource clientsResource = ctx.getBean(ClientsResource.class);
         Assert.assertNotNull(clientsResource);
         
         CustomerLockResource customerLockResource = ctx.getBean(CustomerLockResource.class);
