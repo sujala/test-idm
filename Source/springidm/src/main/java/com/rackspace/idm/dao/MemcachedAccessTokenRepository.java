@@ -54,21 +54,23 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
             logger.error(errMsg);
             throw new IllegalStateException(errMsg);
         }
-
-        // Try adding the tokenString with the owner_requestor as the key
-        Future<Boolean> resultByOwner = memcached.set(getKeyForFindByOwner(
-            accessToken.getOwner(), accessToken.getRequestor()), accessToken
-            .getExpiration(), tokenString);
-        boolean addedByOwner = evaluateCacheOperation(resultByOwner,
-            "set token by owner", accessToken);
-        if (!addedByOwner) {
-            // Attempt a rollback of the previous operation before bailing with
-            // an exception
-            memcached.delete(tokenString);
-            String errMsg = String.format(
-                "Failed to add token by owner with parameter %s", accessToken);
-            logger.error(errMsg);
-            throw new IllegalStateException(errMsg);
+        // do not overwrite client token if password reset flow
+        if(!accessToken.isRestrictedToSetPassword()) {
+	        // Try adding the tokenString with the owner_requestor as the key
+	        Future<Boolean> resultByOwner = memcached.set(getKeyForFindByOwner(
+	            accessToken.getOwner(), accessToken.getRequestor()), accessToken
+	            .getExpiration(), tokenString);
+	        boolean addedByOwner = evaluateCacheOperation(resultByOwner,
+	            "set token by owner", accessToken);
+	        if (!addedByOwner) {
+	            // Attempt a rollback of the previous operation before bailing with
+	            // an exception
+	            memcached.delete(tokenString);
+	            String errMsg = String.format(
+	                "Failed to add token by owner with parameter %s", accessToken);
+	            logger.error(errMsg);
+	            throw new IllegalStateException(errMsg);
+        }
         }
         logger.debug("Added token: {}", accessToken);
     }
