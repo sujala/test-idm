@@ -162,6 +162,12 @@ public class MemcachedAccessTokenRepositoryTest {
         Assert.assertNull(repo.findTokenForOwner(owner, anotherRequestor));
     }
 
+    public void shouldNotOverwriteTokenOnPasswordReset() {
+        AccessToken resetToken = new AccessToken("reset me now", new DateTime().plusSeconds(60),
+                getTestUser(), getTestClient(), IDM_SCOPE.FULL);
+        repo.save(resetToken);
+        Assert.assertNotNull(repo.findByTokenString(token.getTokenString()));
+    }
     private AccessToken getNewToken(int expInSeconds) {
         return new AccessToken(TOKEN_STRING, new DateTime()
             .plusSeconds(expInSeconds), getTestUser(), getTestClient(), IDM_SCOPE.FULL);
