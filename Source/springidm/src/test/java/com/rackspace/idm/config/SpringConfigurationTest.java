@@ -5,6 +5,8 @@ import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import com.rackspace.idm.rest.resources.ApiKeyResource;
+import com.rackspace.idm.rest.resources.CustomerClientResource;
+import com.rackspace.idm.rest.resources.CustomerClientsResource;
 import com.rackspace.idm.rest.resources.CustomerLockResource;
 import com.rackspace.idm.rest.resources.CustomerResource;
 import com.rackspace.idm.rest.resources.CustomerUsersResource;
@@ -16,11 +18,11 @@ import com.rackspace.idm.rest.resources.PasswordRulesResource;
 import com.rackspace.idm.rest.resources.PermissionsResource;
 import com.rackspace.idm.rest.resources.RolesResource;
 import com.rackspace.idm.rest.resources.TokenResource;
+import com.rackspace.idm.rest.resources.UserGroupsResource;
 import com.rackspace.idm.rest.resources.UserLockResource;
 import com.rackspace.idm.rest.resources.UserPasswordResource;
 import com.rackspace.idm.rest.resources.UserResource;
 import com.rackspace.idm.rest.resources.UserRoleResource;
-import com.rackspace.idm.rest.resources.UserRolesResource;
 import com.rackspace.idm.rest.resources.UserSecretResource;
 import com.rackspace.idm.rest.resources.UserSoftDeleteResource;
 import com.rackspace.idm.rest.resources.UserStatusResource;
@@ -38,10 +40,10 @@ public class SpringConfigurationTest {
         ApiKeyResource apiKeyResource = ctx.getBean(ApiKeyResource.class);
         Assert.assertNotNull(apiKeyResource);
         
-        ClientResource clientResource = ctx.getBean(ClientResource.class);
+        CustomerClientResource clientResource = ctx.getBean(CustomerClientResource.class);
         Assert.assertNotNull(clientResource);
         
-        ClientsResource clientsResource = ctx.getBean(ClientsResource.class);
+        CustomerClientsResource clientsResource = ctx.getBean(CustomerClientsResource.class);
         Assert.assertNotNull(clientsResource);
         
         CustomerLockResource customerLockResource = ctx.getBean(CustomerLockResource.class);
