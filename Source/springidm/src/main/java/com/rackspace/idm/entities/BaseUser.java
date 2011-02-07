@@ -23,7 +23,7 @@ public class BaseUser implements Serializable {
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     protected String customerId = null;
-    protected List<Role> roles;
+    protected List<ClientGroup> groups;
 
     public BaseUser() {
         
@@ -33,10 +33,10 @@ public class BaseUser implements Serializable {
         this.username = username;
     }
 
-    public BaseUser(String username, String customerId, List<Role> roles) {
+    public BaseUser(String username, String customerId, List<ClientGroup> groups) {
         this.username = username;
         this.customerId = customerId;
-        this.roles = roles;
+        this.groups = groups;
     }
 
     public BaseUser(String username, String customerId) {
@@ -60,12 +60,12 @@ public class BaseUser implements Serializable {
         this.customerId = customerId;
     }
 
-    public List<Role> getRoles() {
-        return roles != null ? Collections.unmodifiableList(roles) : null;
+    public List<ClientGroup> getGroups() {
+        return groups != null ? Collections.unmodifiableList(groups) : null;
     }
 
-    protected void setRoles(List<Role> roles) {
-        this.roles = roles;
+    protected void setGroups(List<ClientGroup> groups) {
+        this.groups = groups;
     }
 
     @Override
@@ -74,7 +74,7 @@ public class BaseUser implements Serializable {
         int result = 1;
         result = prime * result
                 + ((customerId == null) ? 0 : customerId.hashCode());
-        result = prime * result + ((roles == null) ? 0 : roles.hashCode());
+        result = prime * result + ((groups == null) ? 0 : groups.hashCode());
         result = prime * result
                 + ((username == null) ? 0 : username.hashCode());
         return result;
@@ -99,11 +99,11 @@ public class BaseUser implements Serializable {
         } else if (!customerId.equals(other.customerId)) {
             return false;
         }
-        if (roles == null) {
-            if (other.roles != null) {
+        if (groups == null) {
+            if (other.groups != null) {
                 return false;
             }
-        } else if (!roles.equals(other.roles)) {
+        } else if (!groups.equals(other.groups)) {
             return false;
         }
         if (username == null) {
@@ -119,7 +119,7 @@ public class BaseUser implements Serializable {
     @Override
     public String toString() {
         return "TokenUser [username=" + username + ", customerId=" + customerId
-                + ", roles=" + roles + "]";
+                + ", roles=" + groups + "]";
     }
 
     /**
@@ -154,16 +154,16 @@ public class BaseUser implements Serializable {
         private static final long serialVersionUID = -42555229195315854L;
         private String username;
         private String customerId;
-        private List<Role> roles;
+        private List<ClientGroup> groups;
 
         SerializationProxy(BaseUser baseUser) {
             this.username = baseUser.username;
             this.customerId = baseUser.customerId;
-            this.roles = baseUser.roles;
+            this.groups = baseUser.groups;
         }
 
         private Object readResolve() {
-            return new BaseUser(username, customerId, roles);
+            return new BaseUser(username, customerId, groups);
         }
 
     }

@@ -31,19 +31,21 @@ public class CustomerClientResource {
     private ClientConverter clientConverter;
     private ClientService clientService;
     private PermissionsResource permissionsResource;
+    private ClientGroupsResource clientGroupsResource;
     private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
     public CustomerClientResource(AccessTokenService accessTokenService,
         ClientService clientService, ClientConverter clientConverter,
-        PermissionsResource permissionsResource,
+        PermissionsResource permissionsResource,ClientGroupsResource clientGroupsResource,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.accessTokenService = accessTokenService;
         this.clientService = clientService;
         this.clientConverter = clientConverter;
         this.permissionsResource = permissionsResource;
         this.authorizationService = authorizationService;
+        this.clientGroupsResource = clientGroupsResource;
         this.logger = logger.getLogger(this.getClass());
     }
 
@@ -174,6 +176,11 @@ public class CustomerClientResource {
 
         return Response.ok(clientCredentials).build();
 
+    }
+    
+    @Path("groups")
+    public ClientGroupsResource getClientGroupsResource() {
+        return clientGroupsResource;
     }
 
     @Path("permissions")

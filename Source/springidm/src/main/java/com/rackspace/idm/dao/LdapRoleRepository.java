@@ -26,25 +26,6 @@ import com.unboundid.ldap.sdk.SearchScope;
 
 public class LdapRoleRepository extends LdapRepository implements RoleDao {
 
-    private static final String ATTR_OBJECT_CLASS = "objectClass";
-    private static final String ATTR_C = "c";
-    private static final String ATTR_CN = "cn";
-    private static final String ATTR_GROUP_TYPE = "groupType";
-    private static final String ATTR_INAME = "iname";
-    private static final String ATTR_INUM = "inum";
-    private static final String ATTR_O = "o";
-    private static final String ATTR_MEMBER = "uniqueMember";
-    private static final String ATTR_PERMISSION = "permission";
-    private static final String ATTR_RACKSPACE_CUSTOMER_NUMBER = "rackspaceCustomerNumber";
-    private static final String ATTR_STATUS = "status";
-    private static final String ATTR_SEE_ALSO = "seeAlso";
-    private static final String ATTR_OWNER = "owner";
-
-    private static final String[] ATTR_OBJECT_CLASS_VALUES = {"top",
-        "rackspaceGroup"};
-
-    private static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
-
     private static final String ROLE_ADD_DN_STRING = "inum=%s,ou=groups,o=%s,"
         + BASE_DN;
 
@@ -65,10 +46,10 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
 
         List<Attribute> atts = new ArrayList<Attribute>();
 
-        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_VALUES));
+        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_ROLE_OBJECT_CLASS_VALUES));
 
         if (!StringUtils.isBlank(role.getName())) {
-            atts.add(new Attribute(ATTR_CN, role.getName()));
+            atts.add(new Attribute(ATTR_NAME, role.getName()));
         }
         if (!StringUtils.isBlank(role.getType())) {
             atts.add(new Attribute(ATTR_GROUP_TYPE, role.getType()));
@@ -293,7 +274,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         Role role = new Role();
 
         role.setUniqueId(resultEntry.getDN());
-        role.setName(resultEntry.getAttributeValue(ATTR_CN));
+        role.setName(resultEntry.getAttributeValue(ATTR_NAME));
         role.setCountry(resultEntry.getAttributeValue(ATTR_C));
         role.setCustomerId(resultEntry
             .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));

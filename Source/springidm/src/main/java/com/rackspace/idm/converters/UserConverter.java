@@ -13,11 +13,11 @@ import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class UserConverter {
 
-    private RoleConverter roleConverter;
+    private GroupConverter groupConverter;
     protected ObjectFactory of = new ObjectFactory();
 
-    public UserConverter(RoleConverter roleConverter) {
-        this.roleConverter = roleConverter;
+    public UserConverter(GroupConverter groupConverter) {
+        this.groupConverter = groupConverter;
     }
 
     public User toUserDO(com.rackspace.idm.jaxb.User jaxbUser) {
@@ -46,7 +46,7 @@ public class UserConverter {
             user.setStatus(Enum.valueOf(UserStatus.class, jaxbUser.getStatus()
                 .value().toUpperCase()));
         }
-        
+
         user.setMaxLoginFailuresExceded(jaxbUser.isMaxLoginFailuresExceded());
 
         user.setNastId(jaxbUser.getNastId());
@@ -70,15 +70,14 @@ public class UserConverter {
             user.setApiKey(jaxbUser.getApiKey().getApiKey());
         }
 
-        if (jaxbUser.getRoles() != null
-            && jaxbUser.getRoles().getRoles().size() > 0) {
-            user.setRoles(roleConverter.toRoleListDO((jaxbUser.getRoles())));
+        if (jaxbUser.getGroups() != null
+            && jaxbUser.getGroups().getClientGroups().size() > 0) {
+            user.setGroups(groupConverter.toClientGroupListDO((jaxbUser
+                .getGroups())));
         }
 
         return user;
     }
-    
-    
 
     public com.rackspace.idm.jaxb.Users toUserListJaxb(Users users) {
 
@@ -135,7 +134,7 @@ public class UserConverter {
     }
 
     private com.rackspace.idm.jaxb.User toUserJaxb(User user,
-        boolean includePassword, boolean includeSecret, boolean includeRoles) {
+        boolean includePassword, boolean includeSecret, boolean includeGroups) {
         com.rackspace.idm.jaxb.User returnedUser = of.createUser();
         returnedUser.setCountry(user.getCountry());
         returnedUser.setTimeZone(user.getTimeZone());
@@ -159,7 +158,8 @@ public class UserConverter {
         returnedUser.setSoftDeleted(user.isSoftDeleted());
         returnedUser.setMossoId(user.getMossoId());
         returnedUser.setNastId(user.getNastId());
-        returnedUser.setMaxLoginFailuresExceded(user.isMaxLoginFailuresExceded());
+        returnedUser.setMaxLoginFailuresExceded(user
+            .isMaxLoginFailuresExceded());
 
         try {
             if (user.getCreated() != null) {
@@ -199,13 +199,13 @@ public class UserConverter {
             returnedUser.setSecret(secret);
         }
 
-        if (includeRoles && user.getRoles() != null
-            && user.getRoles().size() > 0) {
+        if (includeGroups && user.getGroups() != null
+            && user.getGroups().size() > 0) {
 
-            com.rackspace.idm.jaxb.Roles roles = roleConverter.toRolesJaxb(user
-                .getRoles());
+            com.rackspace.idm.jaxb.ClientGroups groups = groupConverter
+                .toClientGroupsJaxb(user.getGroups());
 
-            returnedUser.setRoles(roles);
+            returnedUser.setGroups(groups);
         }
 
         return returnedUser;
@@ -216,15 +216,15 @@ public class UserConverter {
         returnedUser.setUsername(user.getUsername());
         returnedUser.setCustomerId(user.getCustomerId());
 
-        if (user.getRoles() != null && user.getRoles().size() > 0) {
+        if (user.getGroups() != null && user.getGroups().size() > 0) {
 
-            com.rackspace.idm.jaxb.Roles roles = roleConverter.toRolesJaxb(user
-                .getRoles());
+            com.rackspace.idm.jaxb.ClientGroups groups = groupConverter
+                .toClientGroupsJaxb(user.getGroups());
 
-            returnedUser.setRoles(roles);
+            returnedUser.setGroups(groups);
         }
 
         return returnedUser;
     }
- 
+
 }

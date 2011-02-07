@@ -40,7 +40,7 @@ public class DefaultUserService implements UserService {
     private RefreshTokenDao refreshTokenDao;
     private ClientDao clientDao;
     private EmailService emailService;
-    private RoleService roleService;
+    private ClientService clientService;
     private TemplateProcessor tproc = new TemplateProcessor();
     private Logger logger;
     private boolean isTrustedServer;
@@ -48,8 +48,8 @@ public class DefaultUserService implements UserService {
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
         CustomerDao customerDao, AccessTokenDao tokenDao,
         RefreshTokenDao refreshTokenDao, ClientDao clientDao,
-        EmailService emailService, RoleService roleService, boolean isTrusted,
-        Logger logger) {
+        EmailService emailService,
+        ClientService clientService, boolean isTrusted, Logger logger) {
 
         this.userDao = userDao;
         this.authDao = rackerDao;
@@ -58,8 +58,7 @@ public class DefaultUserService implements UserService {
         this.refreshTokenDao = refreshTokenDao;
         this.clientDao = clientDao;
         this.emailService = emailService;
-        this.roleService = roleService;
-
+        this.clientService = clientService;
         this.isTrustedServer = isTrusted;
         this.logger = logger;
     }
@@ -111,10 +110,10 @@ public class DefaultUserService implements UserService {
             password);
 
         if (result.isAuthenticated()) {
-            List<Role> roles = this.roleService.getRolesForUser(result
-                .getUser().getUsername());
+            List<ClientGroup> groups = this.clientService
+                .getClientGroupsForUser(result.getUser().getUsername());
             BaseUser user = new BaseUser(result.getUser().getUsername(), result
-                .getUser().getCustomerId(), roles);
+                .getUser().getCustomerId(), groups);
             result = new UserAuthenticationResult(user,
                 result.isAuthenticated());
         }
@@ -128,10 +127,10 @@ public class DefaultUserService implements UserService {
         UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(
             username, apiKey);
         if (authenticated.isAuthenticated()) {
-            List<Role> roles = this.roleService.getRolesForUser(authenticated
-                .getUser().getUsername());
+            List<ClientGroup> groups = this.clientService
+                .getClientGroupsForUser(authenticated.getUser().getUsername());
             BaseUser user = new BaseUser(authenticated.getUser().getUsername(),
-                authenticated.getUser().getCustomerId(), roles);
+                authenticated.getUser().getCustomerId(), groups);
             authenticated = new UserAuthenticationResult(user,
                 authenticated.isAuthenticated());
         }
@@ -147,10 +146,10 @@ public class DefaultUserService implements UserService {
         UserAuthenticationResult authenticated = userDao
             .authenticateByMossoIdAndAPIKey(mossoId, apiKey);
         if (authenticated.isAuthenticated()) {
-            List<Role> roles = this.roleService.getRolesForUser(authenticated
-                .getUser().getUsername());
+            List<ClientGroup> groups = this.clientService
+                .getClientGroupsForUser(authenticated.getUser().getUsername());
             BaseUser user = new BaseUser(authenticated.getUser().getUsername(),
-                authenticated.getUser().getCustomerId(), roles);
+                authenticated.getUser().getCustomerId(), groups);
             authenticated = new UserAuthenticationResult(user,
                 authenticated.isAuthenticated());
         }
@@ -165,10 +164,10 @@ public class DefaultUserService implements UserService {
         UserAuthenticationResult authenticated = userDao
             .authenticateByNastIdAndAPIKey(nastId, apiKey);
         if (authenticated.isAuthenticated()) {
-            List<Role> roles = this.roleService.getRolesForUser(authenticated
-                .getUser().getUsername());
+            List<ClientGroup> groups = this.clientService
+                .getClientGroupsForUser(authenticated.getUser().getUsername());
             BaseUser user = new BaseUser(authenticated.getUser().getUsername(),
-                authenticated.getUser().getCustomerId(), roles);
+                authenticated.getUser().getCustomerId(), groups);
             authenticated = new UserAuthenticationResult(user,
                 authenticated.isAuthenticated());
         }
@@ -243,7 +242,7 @@ public class DefaultUserService implements UserService {
             throw new IllegalStateException(msg);
         }
 
-        user.setRoles(roleService.getRolesForUser(user.getUsername()));
+        user.setGroups(clientService.getClientGroupsForUser(user.getUsername()));
         logger.debug("Got User: {}", user);
         return user;
     }
@@ -254,7 +253,7 @@ public class DefaultUserService implements UserService {
         if (user == null) {
             return null;
         }
-        user.setRoles(roleService.getRolesForUser(username));
+        user.setGroups(clientService.getClientGroupsForUser(user.getUsername()));
         logger.debug("Got User: {}", user);
         return user;
     }
@@ -263,7 +262,7 @@ public class DefaultUserService implements UserService {
         logger.debug("Getting User: {}", mossoId);
         User user = userDao.findByMossoId(mossoId);
         if (user != null) {
-            user.setRoles(roleService.getRolesForUser(user.getUsername()));
+            user.setGroups(clientService.getClientGroupsForUser(user.getUsername()));
         }
         logger.debug("Got User: {}", user);
         return user;
@@ -273,7 +272,7 @@ public class DefaultUserService implements UserService {
         logger.debug("Getting User: {}", nastId);
         User user = userDao.findByNastId(nastId);
         if (user != null) {
-            user.setRoles(roleService.getRolesForUser(user.getUsername()));
+            user.setGroups(clientService.getClientGroupsForUser(user.getUsername()));
         }
         logger.debug("Got User: {}", user);
         return user;

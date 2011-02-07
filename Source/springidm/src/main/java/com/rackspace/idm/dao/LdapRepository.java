@@ -5,26 +5,27 @@ import org.slf4j.Logger;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
 public abstract class LdapRepository {
-    
+
     // Definitions for LDAP Objectclasses
-    protected static final String[] ATTR_BASEURL_OBJECT_CLASS_VALUES = {"top", "baseUrl"};
+    protected static final String[] ATTR_BASEURL_OBJECT_CLASS_VALUES = {"top",
+        "baseUrl"};
     protected static final String[] ATTR_CLIENT_GROUP_OBJECT_CLASS_VALUES = {
-        "top", "clientGroup"};
+        "top", "groupOfNames", "clientGroup"};
     protected static final String[] ATTR_CLIENT_OBJECT_CLASS_VALUES = {"top",
-    "rackspaceApplication"};
+        "rackspaceApplication"};
     protected static final String[] ATTR_CUSTOMER_OBJECT_CLASS_VALUES = {"top",
-    "rackspaceOrganization"};
+        "rackspaceOrganization"};
     protected static final String[] ATTR_OBJECT_CLASS_OU_VALUES = {"top",
-    "organizationalUnit"};
+        "organizationalUnit"};
     protected static final String[] ATTR_PERMISSION_OBJECT_CLASS_VALUES = {
         "top", "clientPermission"};
     protected static final String[] ATTR_ROLE_OBJECT_CLASS_VALUES = {"top",
-    "rackspaceGroup"};
+        "groupOfNames", "rackspaceGroup"};
     protected static final String[] ATTR_TOKEN_OBJECT_CLASS_VALUES = {"top",
-    "rackspaceToken"};
+        "rackspaceToken"};
     protected static final String[] ATTR_USER_OBJECT_CLASS_VALUES = {"top",
-    "rackspacePerson"};
-    
+        "rackspacePerson"};
+
     // Definitions for LDAP Attributes
     protected static final String ATTR_ADMIN_URL = "adminUrl";
     protected static final String ATTR_BASEURL_ID = "baseUrlId";
@@ -79,7 +80,7 @@ public abstract class LdapRepository {
     protected static final String ATTR_UID = "uid";
     protected static final String ATTR_UPDATED_DATE = "modifyTimestamp";
     protected static final String ATTR_SOFT_DELETED_DATE = "softDeletedTimestamp";
-    
+
     // Definitions for LDAP DNs
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
     protected static final String BASEURL_BASE_DN = "ou=BaseUrls,dc=rackspace,dc=com";

@@ -7,7 +7,6 @@ import com.rackspace.idm.entities.*;
 import com.rackspace.idm.exceptions.*;
 import com.rackspace.idm.jaxb.PasswordRecovery;
 import com.rackspace.idm.services.*;
-import com.rackspace.idm.util.AuthHeaderHelper;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,24 +24,21 @@ import javax.ws.rs.core.*;
 public class UserPasswordResource {
     private AccessTokenService accessTokenService;
     private UserService userService;
-    private ClientService clientService;
     private PasswordComplexityService passwordComplexityService;
     private PasswordConverter passwordConverter;
     private TokenConverter tokenConverter;
-    private AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private AuthorizationService authorizationService;
     private Logger logger;
     String errorMsg = String.format("Authorization Failed");
 
     @Autowired
     public UserPasswordResource(AccessTokenService accessTokenService,
-        UserService userService, ClientService clientService,
+        UserService userService, 
         PasswordComplexityService passwordComplexityService,
         PasswordConverter passwordConverter, TokenConverter tokenConverter,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.accessTokenService = accessTokenService;
         this.userService = userService;
-        this.clientService = clientService;
         this.passwordComplexityService = passwordComplexityService;
         this.passwordConverter = passwordConverter;
         this.tokenConverter = tokenConverter;
@@ -284,10 +280,8 @@ public class UserPasswordResource {
             throw new UserDisabledException(errorMsg);
         }
 
-        String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
-        String clientId = getClientIdByTokenString(tokenStr);
         AccessToken resetToken = accessTokenService
-            .createPasswordResetAccessTokenForUser(user, clientId);
+            .createPasswordResetAccessTokenForUser(user, token.getTokenClient().getClientId());
 
         logger.debug("Got Password Reset Token for User :{}", user);
 
@@ -362,11 +356,8 @@ public class UserPasswordResource {
             throw new BadRequestException(errorMsg);
         }
 
-        String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
-        String clientId = getClientIdByTokenString(tokenStr);
-
         AccessToken resetToken = accessTokenService
-            .createPasswordResetAccessTokenForUser(user, clientId);
+            .createPasswordResetAccessTokenForUser(user, token.getTokenClient().getClientId());
 
         try {
             userService.sendRecoveryEmail(username, user.getEmail(),
@@ -399,53 +390,5 @@ public class UserPasswordResource {
             username);
         logger.error(errorMsg);
         throw new NotFoundException(errorMsg);
-    }
-
-    private String getUsernameByTokenString(String tokenString) {
-        logger.debug("Getting Username From Token: {}", tokenString);
-        AccessToken token = accessTokenService
-            .getAccessTokenByTokenString(tokenString);
-        if (token == null) {
-            return null;
-        }
-
-        // Get the Owner and filter out the inum= prefix
-        String ownerUsername = token.getOwner();
-        if (token.getIsTrusted()) {
-            return ownerUsername;
-        }
-
-        User user = userService.getUser(ownerUsername);
-
-        if (user != null) {
-            String username = user.getUsername();
-            logger.debug("Got Username From Token: {} : {}", tokenString,
-                username);
-            return username;
-        }
-        logger.debug("No User Associated With Token: {}", tokenString);
-        return null;
-    }
-
-    private String getClientIdByTokenString(String tokenString) {
-        logger.debug("Getting ClientId From Token: {}", tokenString);
-        AccessToken token = accessTokenService
-            .getAccessTokenByTokenString(tokenString);
-        if (token == null) {
-            return null;
-        }
-
-        // Get the Owner and filter out the inum= prefix
-        String requestor = token.getRequestor();
-        Client client = clientService.getById(requestor);
-
-        if (client != null) {
-            String clientId = client.getClientId();
-            logger.debug("Got clientId From Token: {} : {}", tokenString,
-                clientId);
-            return clientId;
-        }
-        logger.debug("No Client Associated With Token: {}", tokenString);
-        return null;
     }
 }

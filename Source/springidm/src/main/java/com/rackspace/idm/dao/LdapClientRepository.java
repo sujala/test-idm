@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.rackspace.idm.entities.*;
+import com.rackspace.idm.exceptions.DuplicateClientGroupException;
+import com.rackspace.idm.exceptions.DuplicateException;
+import com.rackspace.idm.exceptions.NotFoundException;
+
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 
@@ -12,6 +16,7 @@ import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Control;
+import com.unboundid.ldap.sdk.DeleteRequest;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
@@ -24,35 +29,16 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
+import com.unboundid.ldap.sdk.controls.SubtreeDeleteRequestControl;
 import com.unboundid.ldap.sdk.controls.VirtualListViewRequestControl;
 import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
 
 public class LdapClientRepository extends LdapRepository implements ClientDao {
 
-    private static final String ATTR_OBJECT_CLASS = "objectClass";
-    private static final String[] ATTR_OBJECT_CLASS_VALUES = {"top",
-        "rackspaceApplication"};
-    private static final String[] ATTR_PERMISSION_OBJECT_CLASS_VALUES = {"top",
-        "clientPermission"};
-    private static final String ATTR_BLOB = "blob";
-    private static final String ATTR_CLIENT_ID = "rackspaceApiKey";
-    private static final String ATTR_CLIENT_SECRET = "userPassword";
-    private static final String ATTR_DISPLAY_NAME = "displayName";
-    private static final String ATTR_INAME = "iname";
-    private static final String ATTR_INUM = "inum";
-    private static final String ATTR_LOCKED = "locked";
-    private static final String ATTR_NAME = "cn";
-    private static final String ATTR_PERMISSION = "permission";
-    private static final String ATTR_PERMISSION_TYPE = "permissionType";
-    private static final String ATTR_RACKSPACE_CUSTOMER_NUMBER = "rackspaceCustomerNumber";
-    private static final String ATTR_STATUS = "status";
-    private static final String ATTR_SEE_ALSO = "seeAlso";
-    private static final String ATTR_SOFT_DELETED = "softDeleted";
-    private static final String ATTR_OWNER = "owner";
+    private static final String ADD_PERMISSION_FORMAT_STRING = "cn=%s,ou=permissions,%s";
+    private static final String ADD_CLIENT_GROUP_FORMAT_STRING = "cn=%s,ou=groups,%s";
 
     private static final String CONNECT_ERROR_STRING = "Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct.";
-
-    private static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
 
     private static final String CLIENT_ADD_DN_STRING = "inum=%s,ou=applications,o=%s,"
         + BASE_DN;
@@ -66,6 +52,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
     private static final String PERMISSION_FIND_BY_CLIENTID = "(objectClass=clientPermission)";
     private static final String PERMISSION_FIND_BY_ID = "(&(cn=%s)(objectClass=clientPermission))";
+
+    private static final String GROUP_FIND_BY_CLIENTID = "(objectClass=clientGroup)";
+    private static final String GROUP_FIND_BY_ID = "(&(cn=%s)(objectClass=clientGroup))";
 
     public LdapClientRepository(LdapConnectionPools connPools, Logger logger) {
         super(connPools, logger);
@@ -81,7 +70,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         List<Attribute> atts = new ArrayList<Attribute>();
 
-        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_VALUES));
+        atts.add(new Attribute(ATTR_OBJECT_CLASS,
+            ATTR_CLIENT_OBJECT_CLASS_VALUES));
 
         if (!StringUtils.isBlank(client.getClientId())) {
             atts.add(new Attribute(ATTR_CLIENT_ID, client.getClientId()));
@@ -170,7 +160,117 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 client.getName(), result.getResultCode().toString()));
         }
 
+        String clientPermissionsDN = "ou=permissions," + clientDN;
+        String clientGroupsDN = "ou=groups," + clientDN;
+
+        // Add ou=permissions under new client entry
+        Attribute[] permissionAttributes = {
+            new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
+            new Attribute(ATTR_OU, "permissions")};
+
+        try {
+            result = getAppConnPool().add(clientPermissionsDN,
+                permissionAttributes);
+        } catch (LDAPException ldapEx) {
+            getLogger().error("Error adding client permission ou: {} - {}",
+                client.getClientId(), ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            String errMsg = String
+                .format(
+                    "LDAP error encountered when adding client permissions ou: %s - %s",
+                    client.getClientId(), result.getResultCode().toString());
+            getLogger().error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
+        // Add ou=groups under new client entry
+        Attribute[] groupAttributes = {
+            new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
+            new Attribute(ATTR_OU, "groups")};
+
+        try {
+            result = getAppConnPool().add(clientGroupsDN, groupAttributes);
+        } catch (LDAPException ldapEx) {
+            getLogger().error("Error adding client groups ou: {} - {}",
+                client.getClientId(), ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            String errMsg = String.format(
+                "LDAP error encountered when adding client groups ou: %s - %s",
+                client.getClientId(), result.getResultCode().toString());
+            getLogger().error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
         getLogger().debug("Added client {}", client);
+    }
+
+    public void addClientGroup(ClientGroup clientGroup) {
+        getLogger().info("Adding ClientGroup {}", clientGroup);
+        if (clientGroup == null) {
+            getLogger().error("Null instance of clientGroup was passed");
+            throw new IllegalArgumentException(
+                "Null instance of clientGroup was passed.");
+        }
+
+        Client client = this.findByClientId(clientGroup.getClientId());
+
+        if (client == null) {
+            throw new NotFoundException();
+        }
+
+        ClientGroup group = this.getClientGroupByClientIdAndGroupName(
+            clientGroup.getClientId(), clientGroup.getName());
+
+        if (group != null) {
+            throw new DuplicateClientGroupException();
+        }
+
+        List<Attribute> atts = new ArrayList<Attribute>();
+
+        atts.add(new Attribute(ATTR_OBJECT_CLASS,
+            ATTR_CLIENT_GROUP_OBJECT_CLASS_VALUES));
+
+        if (!StringUtils.isBlank(clientGroup.getCustomerId())) {
+            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, clientGroup
+                .getCustomerId()));
+        }
+        if (!StringUtils.isBlank(clientGroup.getClientId())) {
+            atts.add(new Attribute(ATTR_CLIENT_ID, clientGroup.getClientId()));
+        }
+        if (!StringUtils.isBlank(clientGroup.getName())) {
+            atts.add(new Attribute(ATTR_NAME, clientGroup.getName()));
+        }
+
+        String groupDN = String.format(ADD_CLIENT_GROUP_FORMAT_STRING,
+            clientGroup.getName(), client.getUniqueId());
+
+        clientGroup.setUniqueId(groupDN);
+
+        LDAPResult result;
+
+        try {
+            result = getAppConnPool().add(groupDN, atts);
+        } catch (LDAPException ldapEx) {
+            getLogger().error("Error adding client group {} - {}", clientGroup,
+                ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            getLogger().error("Error adding clientGroup {} - {}",
+                clientGroup.getName(), result.getResultCode());
+            throw new IllegalStateException(String.format(
+                "LDAP error encountered when adding clientGroup: %s - %s",
+                clientGroup.getName(), result.getResultCode().toString()));
+        }
+
+        getLogger().debug("Added clientGroup {}", clientGroup);
     }
 
     public void addDefinedPermission(Permission permission) {
@@ -205,8 +305,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         String clientDN = this.getClientDnByClientId(permission.getClientId());
 
-        String permissionDN = "cn=" + permission.getPermissionId() + ","
-            + clientDN;
+        String permissionDN = String.format(ADD_PERMISSION_FORMAT_STRING,
+            permission.getPermissionId(), clientDN);
 
         permission.setUniqueId(permissionDN);
 
@@ -233,25 +333,52 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().debug("Added permission {}", permission);
     }
 
-    public boolean authenticateDeprecated(String clientId, String clientSecret) {
-        BindResult result = null;
-        try {
-            result = getBindConnPool().bind(getClientDnByClientId(clientId),
-                clientSecret);
-        } catch (LDAPException e) {
-            if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
-                return false;
-            }
-            getLogger().error("Error authenticating for clientId {} - {}",
-                clientId, e);
-            throw new IllegalStateException(CONNECT_ERROR_STRING, e);
+    public void addUserToClientGroup(User user, ClientGroup group) {
+
+        getLogger().info("Adding user {} to {}", user, group);
+
+        if (user == null || StringUtils.isBlank(user.getUniqueId())) {
+            getLogger().error("Null user passed in or user uniqueId was blank");
+            throw new IllegalArgumentException(
+                "Null user passed in or user uniqueId was blank");
         }
 
-        return ResultCode.SUCCESS.equals(result.getResultCode());
+        if (group == null || StringUtils.isBlank(group.getUniqueId())) {
+            getLogger().error(
+                "Null group passed in or group uniqueId was blank");
+            throw new IllegalArgumentException(
+                "Null group passed in or group uniqueId was blank");
+        }
+
+        List<Modification> mods = new ArrayList<Modification>();
+        mods.add(new Modification(ModificationType.ADD, ATTR_MEMBER, user
+            .getUniqueId()));
+
+        LDAPResult result;
+        try {
+            result = getAppConnPool().modify(group.getUniqueId(), mods);
+        } catch (LDAPException ldapEx) {
+            getLogger().error("Error adding user to group {} - {}", group,
+                ldapEx);
+
+            if (ldapEx.getResultCode().equals(
+                ResultCode.ATTRIBUTE_OR_VALUE_EXISTS)) {
+                throw new DuplicateException("User already in group");
+            }
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            throw new IllegalStateException(String.format(
+                "LDAP error encountered when adding user to group: %s - %s",
+                group, result.getResultCode().toString()));
+        }
+
+        getLogger().info("Added user {} to group {}", user, group);
     }
 
-    @Override
-    public ClientAuthenticationResult authenticate(String clientId, String clientSecret) {
+    public ClientAuthenticationResult authenticate(String clientId,
+        String clientSecret) {
         BindResult result;
         Client client = findByClientId(clientId);
         if (client == null) {
@@ -269,7 +396,25 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             throw new IllegalStateException(CONNECT_ERROR_STRING, e);
         }
 
-        return new ClientAuthenticationResult(client, ResultCode.SUCCESS.equals(result.getResultCode()));
+        return new ClientAuthenticationResult(client,
+            ResultCode.SUCCESS.equals(result.getResultCode()));
+    }
+
+    public boolean authenticateDeprecated(String clientId, String clientSecret) {
+        BindResult result = null;
+        try {
+            result = getBindConnPool().bind(getClientDnByClientId(clientId),
+                clientSecret);
+        } catch (LDAPException e) {
+            if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
+                return false;
+            }
+            getLogger().error("Error authenticating for clientId {} - {}",
+                clientId, e);
+            throw new IllegalStateException(CONNECT_ERROR_STRING, e);
+        }
+
+        return ResultCode.SUCCESS.equals(result.getResultCode());
     }
 
     public void delete(String clientId) {
@@ -280,9 +425,13 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 "Null or Empty clientId parameter.");
         }
 
+        String clientDN = this.getClientDnByClientId(clientId);
+
         LDAPResult result = null;
         try {
-            result = getAppConnPool().delete(getClientDnByClientId(clientId));
+            DeleteRequest request = new DeleteRequest(clientDN);
+            request.addControl(new SubtreeDeleteRequestControl());
+            result = getAppConnPool().delete(request);
         } catch (LDAPException ldapEx) {
             getLogger().error("Could not perform delete for client {} - {}",
                 clientId, ldapEx);
@@ -297,6 +446,33 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 clientId, result.getResultCode().toString()));
         }
         getLogger().info("Deleted client {}", clientId);
+    }
+
+    public void deleteClientGroup(String clientId, String name) {
+        getLogger().info("Deleting clientGroup {}", name);
+        
+        if (StringUtils.isBlank(clientId) || StringUtils.isBlank(name)) {
+            throw new IllegalArgumentException();
+        }
+
+        ClientGroup group = this.getClientGroupByClientIdAndGroupName(
+            clientId, name);
+
+        if (group == null) {
+            throw new NotFoundException();
+        }
+
+        LDAPResult result = null;
+        try {
+            result = getAppConnPool().delete(group.getUniqueId());
+        } catch (LDAPException ldapEx) {
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            throw new IllegalStateException();
+        }
+        getLogger().info("Deleted clientGroup {}", group);
     }
 
     public void deleteDefinedPermission(Permission permission) {
@@ -392,6 +568,32 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         return client;
     }
+    
+    public ClientGroup findClientGroupByUniqueId(String uniqueId) {
+        ClientGroup group = null;
+        SearchResult searchResult = null;
+        try {
+            searchResult = getAppConnPool().search(uniqueId, SearchScope.BASE, GROUP_FIND_BY_CLIENTID);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() == 1) {
+            SearchResultEntry e = searchResult.getSearchEntries().get(0);
+            group = getClientGroup(e);
+        } else if (searchResult.getEntryCount() > 1) {
+            String errMsg = String.format(
+                "More than one entry was found for client search - %s",
+                uniqueId);
+            getLogger().error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
+        getLogger().debug("Found Client Group - {}", group);
+
+        return group;
+    }
 
     public Client findByInum(String inum) {
         getLogger().debug("Doing search for Inum {}", inum);
@@ -452,14 +654,82 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return dn;
     }
 
+    public ClientGroup getClientGroupByClientIdAndGroupName(String clientId,
+        String name) {
+        
+        Client client = this.findByClientId(clientId);
+        
+        if (client == null) {
+            throw new NotFoundException();
+        }
+
+        String searchDN = "ou=groups," + client.getUniqueId();
+
+        ClientGroup group = null;
+        SearchResult searchResult = null;
+        try {
+            searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
+                String.format(GROUP_FIND_BY_ID, name));
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("Error searching for clientGroup {} - {}", name,
+                ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() == 1) {
+            SearchResultEntry e = searchResult.getSearchEntries().get(0);
+            group = getClientGroup(e);
+        } else if (searchResult.getEntryCount() > 1) {
+            getLogger().error("More than one entry was found for group {}",
+                clientId);
+            throw new IllegalStateException(
+                "More than one entry was found for this group");
+        }
+
+        return group;
+    }
+
+    public List<ClientGroup> getClientGroupsByClientId(String clientId) {
+        
+        List<ClientGroup> groups = new ArrayList<ClientGroup>();
+        
+        Client client = this.findByClientId(clientId);
+        
+        if (client == null) {
+            throw new NotFoundException();
+        }
+
+        String searchDN = "ou=groups," + client.getUniqueId();
+        
+        SearchResult searchResult = null;
+
+        try {
+            searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
+                GROUP_FIND_BY_CLIENTID);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("Error searching for clientId {} - {}", clientId,
+                ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() > 0) {
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                groups.add(getClientGroup(entry));
+            }
+        }
+        return groups;
+    }
+
     public Permission getDefinedPermissionByClientIdAndPermissionId(
         String clientId, String permissionId) {
         String clientDN = this.findByClientId(clientId).getUniqueId();
 
+        String searchDN = "ou=permissions," + clientDN;
+
         Permission permission = null;
         SearchResult searchResult = null;
         try {
-            searchResult = getAppConnPool().search(clientDN, SearchScope.ONE,
+            searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
                 String.format(PERMISSION_FIND_BY_ID, permissionId));
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for permissionId {} - {}",
@@ -483,15 +753,14 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     public List<Permission> getDefinedPermissionsByClientId(String clientId) {
         String clientDN = this.findByClientId(clientId).getUniqueId();
 
+        String searchDN = "ou=permissions," + clientDN;
+
         List<Permission> permissions = new ArrayList<Permission>();
         SearchResult searchResult = null;
 
-        String[] Attributes = {ATTR_NAME, ATTR_CLIENT_ID,
-            ATTR_RACKSPACE_CUSTOMER_NUMBER};
-
         try {
-            searchResult = getAppConnPool().search(clientDN, SearchScope.ONE,
-                PERMISSION_FIND_BY_CLIENTID, Attributes);
+            searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
+                PERMISSION_FIND_BY_CLIENTID);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for clientId {} - {}", clientId,
                 ldapEx);
@@ -516,6 +785,51 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         } while (client != null);
 
         return inum;
+    }
+
+    public void removeUserFromGroup(User user, ClientGroup group) {
+        getLogger().info("Removing user {} from {}", user, group);
+
+        if (user == null || StringUtils.isBlank(user.getUniqueId())) {
+            getLogger().error("Null user passed in or user uniqueId was blank");
+            throw new IllegalArgumentException(
+                "Null user passed in or user uniqueId was blank");
+        }
+
+        if (group == null || StringUtils.isBlank(group.getUniqueId())) {
+            getLogger().error(
+                "Null group passed in or group uniqueId was blank");
+            throw new IllegalArgumentException(
+                "Null group passed in or group uniqueId was blank");
+        }
+
+        List<Modification> mods = new ArrayList<Modification>();
+        mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER, user
+            .getUniqueId()));
+
+        LDAPResult result;
+        try {
+            result = getAppConnPool().modify(group.getUniqueId(), mods);
+        } catch (LDAPException ldapEx) {
+            getLogger().error("Error deleting user from group {} - {}", group,
+                ldapEx);
+            if (ldapEx.getResultCode().equals(ResultCode.NO_SUCH_ATTRIBUTE)) {
+                throw new NotFoundException("User isn't in group");
+            }
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            getLogger().error("Error removing user from group {} - {}", group,
+                result.getResultCode());
+            throw new IllegalStateException(
+                String
+                    .format(
+                        "LDAP error encountered when removing user from group: %s - %s",
+                        group, result.getResultCode().toString()));
+        }
+
+        getLogger().info("Removed user {} from group {}", user, group);
     }
 
     public void save(Client client) {
@@ -689,6 +1003,16 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return client;
     }
 
+    private ClientGroup getClientGroup(SearchResultEntry resultEntry) {
+        ClientGroup clientGroup = new ClientGroup();
+        clientGroup.setUniqueId(resultEntry.getDN());
+        clientGroup.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
+        clientGroup.setName(resultEntry.getAttributeValue(ATTR_NAME));
+        clientGroup.setCustomerId(resultEntry
+            .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
+        return clientGroup;
+    }
+
     private Clients getMultipleClients(String searchFilter, int offset,
         int limit) {
 
@@ -842,8 +1166,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             if (cNew.getPermissions().size() == 0) {
                 // If the new list of permissions has zero permissions but the
                 // old list of permissions is greater than 0. Then we need to
-                // add
-                // a modification to delete the permissions
+                // add a modification to delete the permissions
                 mods.add(new Modification(ModificationType.DELETE,
                     ATTR_PERMISSION));
             } else {

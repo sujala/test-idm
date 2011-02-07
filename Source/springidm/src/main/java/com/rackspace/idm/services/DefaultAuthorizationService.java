@@ -10,8 +10,8 @@ import org.slf4j.Logger;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.entities.ClientGroup;
 import com.rackspace.idm.entities.Permission;
-import com.rackspace.idm.entities.Role;
 
 public class DefaultAuthorizationService implements AuthorizationService {
 
@@ -20,8 +20,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private String idmClientId;
     private Logger logger;
 
-    public DefaultAuthorizationService(ClientDao clientDao, MemcachedClient memcached, String idmClientId,
-        Logger logger) {
+    public DefaultAuthorizationService(ClientDao clientDao,
+        MemcachedClient memcached, String idmClientId, Logger logger) {
         this.memcached = memcached;
         this.clientDao = clientDao;
         this.idmClientId = idmClientId;
@@ -34,7 +34,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     public boolean authorizeRackspaceClient(AccessToken token) {
         return token.isClientToken()
-            && token.getTokenClient().getCustomerId().equals(GlobalConstants.RACKSPACE_CUSTOMER_ID);
+            && token.getTokenClient().getCustomerId()
+                .equals(GlobalConstants.RACKSPACE_CUSTOMER_ID);
     }
 
     public boolean authorizeClient(AccessToken token, String verb, String uri) {
@@ -43,19 +44,21 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
 
-        List<String> allowedActions = getAllowedMethodsFromPermissions(token.getTokenClient()
-            .getPermissions());
+        List<String> allowedActions = getAllowedMethodsFromPermissions(token
+            .getTokenClient().getPermissions());
 
         return checkPermissions(allowedActions, verb, uri);
     }
 
-    public boolean authorizeUser(AccessToken token, String customerId, String username) {
+    public boolean authorizeUser(AccessToken token, String customerId,
+        String username) {
 
         if (token.isClientToken() || token.isRestrictedToSetPassword()) {
             return false;
         }
 
-        boolean authorized = token.getTokenUser().getUsername().equals(username)
+        boolean authorized = token.getTokenUser().getUsername()
+            .equals(username)
             && token.getTokenUser().getCustomerId().equals(customerId);
 
         return authorized;
@@ -63,25 +66,30 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     public boolean authorizeCustomerUser(AccessToken token, String customerId) {
 
-        if (token.isClientToken()) {
+        if (token.isClientToken() || token.isRestrictedToSetPassword()) {
             return false;
         }
 
-        boolean authorized = token.getTokenUser().getCustomerId().equals(customerId);
+        boolean authorized = token.getTokenUser().getCustomerId()
+            .equals(customerId);
 
         return authorized;
     }
 
     public boolean authorizeAdmin(AccessToken token, String customerId) {
 
-        if (!token.hasUserRoles() || !token.getTokenUser().getCustomerId().equals(customerId)) {
+        if (token.isRestrictedToSetPassword() || !token.hasUserGroups()
+            || !token.getTokenUser().getCustomerId().equals(customerId)) {
+
             return false;
         }
 
         boolean authorized = false;
 
-        for (Role r : token.getTokenUser().getRoles()) {
-            if (r.getName().toLowerCase().equals(GlobalConstants.IDM_ADMIN_ROLE_NAME.toLowerCase())) {
+        for (ClientGroup r : token.getTokenUser().getGroups()) {
+            if (r.getClientId().equals(GlobalConstants.IDM_CLIENT_ID)
+                && r.getName().toLowerCase()
+                    .equals(GlobalConstants.IDM_ADMIN_ROLE_NAME.toLowerCase())) {
                 authorized = true;
             }
         }
@@ -90,14 +98,16 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeCustomerIdm(AccessToken authToken, String verb, String uri) {
+    public boolean authorizeCustomerIdm(AccessToken authToken, String verb,
+        String uri) {
         if (idmClientId.equals(authToken.getTokenClient().getClientId())) {
             return authorizeClient(authToken, verb, uri);
         }
         return false;
     }
 
-    private List<String> getAllowedMethodsFromPermissions(List<Permission> permissions) {
+    private List<String> getAllowedMethodsFromPermissions(
+        List<Permission> permissions) {
 
         if (permissions == null || permissions.size() < 1) {
             return null;
@@ -107,10 +117,12 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
         for (Permission perm : permissions) {
             if (perm.getClientId().equals(GlobalConstants.IDM_CLIENT_ID)) {
-                Permission p = (Permission) memcached.get(perm.getPermissionId());
+                Permission p = (Permission) memcached.get(perm
+                    .getPermissionId());
                 if (p == null) {
-                    p = clientDao.getDefinedPermissionByClientIdAndPermissionId(perm.getClientId(),
-                        perm.getPermissionId());
+                    p = clientDao
+                        .getDefinedPermissionByClientIdAndPermissionId(
+                            perm.getClientId(), perm.getPermissionId());
                     if (p != null) {
                         memcached.set(p.getPermissionId(), 3600, p);
                     }
@@ -124,7 +136,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return uris;
     }
 
-    private boolean checkPermissions(List<String> allowedActions, String verb, String uri) {
+    private boolean checkPermissions(List<String> allowedActions, String verb,
+        String uri) {
 
         String requestedActionURI = verb + " " + uri;
         requestedActionURI = requestedActionURI.toLowerCase();
@@ -147,7 +160,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return result;
     }
 
-    private boolean checkPermission(String actionURIRegex, String actionURIRequest) {
+    private boolean checkPermission(String actionURIRegex,
+        String actionURIRequest) {
 
         if (actionURIRegex == null)
             return false;

@@ -116,9 +116,9 @@ public final class AccessToken extends Token implements Serializable {
             && client.permissions.size() > 0;
     }
 
-    public boolean hasUserRoles() {
-        return !isClientToken() && user != null && user.roles != null
-            && user.roles.size() > 0;
+    public boolean hasUserGroups() {
+        return !isClientToken() && user != null && user.groups != null
+            && user.groups.size() > 0;
     }
 
     @Override

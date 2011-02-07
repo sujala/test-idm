@@ -420,8 +420,8 @@ public class User extends BaseUser {
     }
 
     @Override
-    public void setRoles(List<Role> roles) {
-        this.roles = roles;
+    public void setGroups(List<ClientGroup> groups) {
+        this.groups = groups;
     }
 
     public void setDefaults() {
@@ -442,7 +442,7 @@ public class User extends BaseUser {
         BaseUser baseUser = new BaseUser();
         baseUser.setCustomerId(this.customerId);
         baseUser.setUsername(this.username);
-        baseUser.setRoles(this.roles);
+        baseUser.setGroups(this.groups);
         return baseUser;
     }
 
@@ -708,7 +708,7 @@ public class User extends BaseUser {
             + ", nastId=" + nastId + ", mossoId=" + mossoId + ", created="
             + created + ", updated=" + updated + ", passwordFailureLocked="
             + maxLoginFailuresExceded + ", username=" + username
-            + ", customerId=" + customerId + ", roles=" + roles + "]";
+            + ", customerId=" + customerId + ", groups=" + groups + "]";
     }
 
     public static class Builder {

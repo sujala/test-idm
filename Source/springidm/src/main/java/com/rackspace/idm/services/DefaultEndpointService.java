@@ -8,7 +8,6 @@ import com.rackspace.idm.dao.EndpointDao;
 import com.rackspace.idm.entities.CloudBaseUrl;
 import com.rackspace.idm.entities.CloudEndpoint;
 import com.rackspace.idm.exceptions.BaseUrlConflictException;
-import com.rackspace.idm.exceptions.DuplicateException;
 
 public class DefaultEndpointService implements EndpointService {
 

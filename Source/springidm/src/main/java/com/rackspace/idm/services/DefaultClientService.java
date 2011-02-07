@@ -1,15 +1,19 @@
 package com.rackspace.idm.services;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.rackspace.idm.entities.*;
 import org.slf4j.Logger;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.CustomerDao;
+import com.rackspace.idm.dao.UserDao;
 import com.rackspace.idm.entities.Client;
+import com.rackspace.idm.entities.ClientGroup;
 import com.rackspace.idm.entities.ClientSecret;
 import com.rackspace.idm.entities.Clients;
 import com.rackspace.idm.entities.Customer;
@@ -22,12 +26,14 @@ public class DefaultClientService implements ClientService {
 
     private ClientDao clientDao;
     private CustomerDao customerDao;
+    private UserDao userDao;
     private Logger logger;
 
     public DefaultClientService(ClientDao clientDao, CustomerDao customerDao,
-        Logger logger) {
+        UserDao userDao, Logger logger) {
         this.clientDao = clientDao;
         this.customerDao = customerDao;
+        this.userDao = userDao;
         this.logger = logger;
     }
 
@@ -74,7 +80,8 @@ public class DefaultClientService implements ClientService {
     }
 
     @Override
-    public ClientAuthenticationResult authenticate(String clientId, String clientSecret) {
+    public ClientAuthenticationResult authenticate(String clientId,
+        String clientSecret) {
         return clientDao.authenticate(clientId, clientSecret);
     }
 
@@ -83,9 +90,9 @@ public class DefaultClientService implements ClientService {
     }
 
     public void addDefinedPermission(Permission permission) {
-        
-        Customer customer = customerDao
-            .findByCustomerId(permission.getCustomerId());
+
+        Customer customer = customerDao.findByCustomerId(permission
+            .getCustomerId());
 
         if (customer == null) {
             logger.warn(
@@ -95,7 +102,7 @@ public class DefaultClientService implements ClientService {
         }
 
         Client client = clientDao.findByClientId(permission.getClientId());
-        
+
         if (client == null) {
             logger.warn(
                 "Couldn't add permission {} because clientId doesn't exist",
@@ -103,12 +110,15 @@ public class DefaultClientService implements ClientService {
             throw new IllegalStateException("Client doesn't exist");
         }
 
-        Permission exists = clientDao.getDefinedPermissionByClientIdAndPermissionId(permission.getClientId(), permission.getPermissionId());
-        
+        Permission exists = clientDao
+            .getDefinedPermissionByClientIdAndPermissionId(
+                permission.getClientId(), permission.getPermissionId());
+
         if (exists != null) {
-            logger.warn(
-                "Couldn't add permission {} because permissionId already taken",
-                client);
+            logger
+                .warn(
+                    "Couldn't add permission {} because permissionId already taken",
+                    client);
             throw new DuplicateException(String.format(
                 "PermissionId %s already exists", client.getName()));
         }
@@ -116,14 +126,6 @@ public class DefaultClientService implements ClientService {
         clientDao.addDefinedPermission(permission);
     }
 
-    /*public boolean authenticateDeprecated(String clientId, String clientSecret) {
-        return clientDao.authenticate(clientId, clientSecret);
-    }
-    public void delete(String clientId) {
-        clientDao.delete(clientId);
-    }
-
-*/
     public void deleteDefinedPermission(Permission permission) {
         clientDao.deleteDefinedPermission(permission);
     }
@@ -141,26 +143,29 @@ public class DefaultClientService implements ClientService {
         } else if (limit > GlobalConstants.LDAP_PAGING_MAX_LIMIT) {
             limit = GlobalConstants.LDAP_PAGING_MAX_LIMIT;
         }
-        
+
         return clientDao.getByCustomerId(customerId, offset, limit);
     }
 
     public Client getById(String clientId) {
         return clientDao.findByClientId(clientId);
     }
-    
+
     public Client getByName(String clientName) {
         return clientDao.findByClientname(clientName);
     }
 
-    public Permission getDefinedPermissionByClientIdAndPermissionId(String clientId,
-        String permissionId) {
-        Permission permission = clientDao.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId);
+    public Permission getDefinedPermissionByClientIdAndPermissionId(
+        String clientId, String permissionId) {
+        Permission permission = clientDao
+            .getDefinedPermissionByClientIdAndPermissionId(clientId,
+                permissionId);
         return permission;
     }
 
     public List<Permission> getDefinedPermissionsByClientId(String clientId) {
-        List<Permission> permissions = clientDao.getDefinedPermissionsByClientId(clientId);
+        List<Permission> permissions = clientDao
+            .getDefinedPermissionsByClientId(clientId);
         return permissions;
     }
 
@@ -172,8 +177,7 @@ public class DefaultClientService implements ClientService {
 
         ClientSecret clientSecret = null;
         try {
-             clientSecret =
-                    ClientSecret.newInstance(HashHelper.getRandomSha1());
+            clientSecret = ClientSecret.newInstance(HashHelper.getRandomSha1());
             client.setClientSecretObj(clientSecret);
             clientDao.save(client);
         } catch (NoSuchAlgorithmException e) {
@@ -197,5 +201,97 @@ public class DefaultClientService implements ClientService {
 
     public void updateDefinedPermission(Permission permission) {
         clientDao.updateDefinedPermission(permission);
+    }
+
+    public void addClientGroup(ClientGroup clientGroup) {
+        clientDao.addClientGroup(clientGroup);
+    }
+
+    public void addUserToClientGroup(String username, ClientGroup clientGroup) {
+        if (StringUtils.isBlank(username)) {
+            throw new IllegalArgumentException("username cannot be blank");
+        }
+
+        if (clientGroup == null
+            || StringUtils.isBlank(clientGroup.getClientId())
+            || StringUtils.isBlank(clientGroup.getName())) {
+            throw new IllegalArgumentException(
+                "clientgroup cannot be null and must have non blank clientId and name");
+        }
+
+        User user = userDao.findByUsername(username);
+        if (user == null) {
+            throw new NotFoundException();
+        }
+
+        ClientGroup group = clientDao.getClientGroupByClientIdAndGroupName(
+            clientGroup.getClientId(), clientGroup.getName());
+        if (group == null) {
+            throw new NotFoundException();
+        }
+
+        clientDao.addUserToClientGroup(user, group);
+    }
+
+    public void deleteClientGroup(String clientId, String name) {
+        clientDao.deleteClientGroup(clientId, name);
+    }
+
+    public ClientGroup getClientGroupByClientIdAndGroupName(String clientId,
+        String name) {
+        ClientGroup group = clientDao.getClientGroupByClientIdAndGroupName(
+            clientId, name);
+        return group;
+    }
+
+    public List<ClientGroup> getClientGroupsByClientId(String clientId) {
+        List<ClientGroup> groups = clientDao
+            .getClientGroupsByClientId(clientId);
+        return groups;
+    }
+
+    public void removeUserFromClientGroup(String username,
+        ClientGroup clientGroup) {
+        if (StringUtils.isBlank(username)) {
+            throw new IllegalArgumentException("username cannot be blank");
+        }
+
+        if (clientGroup == null
+            || StringUtils.isBlank(clientGroup.getClientId())
+            || StringUtils.isBlank(clientGroup.getName())) {
+            throw new IllegalArgumentException(
+                "clientgroup cannot be null and must have non blank clientId and name");
+        }
+
+        User user = userDao.findByUsername(username);
+        if (user == null) {
+            throw new NotFoundException();
+        }
+
+        ClientGroup group = clientDao.getClientGroupByClientIdAndGroupName(
+            clientGroup.getClientId(), clientGroup.getName());
+        if (group == null) {
+            throw new NotFoundException();
+        }
+
+        clientDao.removeUserFromGroup(user, group);
+    }
+    
+    public List<ClientGroup> getClientGroupsForUser(String username) {
+        logger.info("Getting Groups for User: {}", username);
+        String[] groupIds = userDao.getGroupIdsForUser(username);
+
+        if (groupIds == null) {
+            return null;
+        }
+
+        List<ClientGroup> groups = new ArrayList<ClientGroup>();
+
+        for (String groupId : groupIds) {
+            groups.add(clientDao.findClientGroupByUniqueId(groupId));
+        }
+
+        logger.info("Got Groups for User: {} - {}", username, groups);
+        return groups;
     }
 }

@@ -39,7 +39,7 @@ public interface UserDao {
     User findUser(String customerId, String username,
         Map<String, String> userStatusMap);
 
-    String[] getRoleIdsForUser(String username);
+    String[] getGroupIdsForUser(String username);
 
     String getUnusedUserInum(String customerInum);
 

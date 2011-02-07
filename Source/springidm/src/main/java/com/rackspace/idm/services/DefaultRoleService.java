@@ -72,7 +72,7 @@ public class DefaultRoleService implements RoleService {
 
     public List<Role> getRolesForUser(String username) {
         logger.info("Getting Roles for User: {}", username);
-        String[] roleIds = userDao.getRoleIdsForUser(username);
+        String[] roleIds = userDao.getGroupIdsForUser(username);
 
         if (roleIds == null) {
             return null;

@@ -7,6 +7,7 @@ import com.rackspace.idm.converters.AuthConverter;
 import com.rackspace.idm.converters.ClientConverter;
 import com.rackspace.idm.converters.CustomerConverter;
 import com.rackspace.idm.converters.EndPointConverter;
+import com.rackspace.idm.converters.GroupConverter;
 import com.rackspace.idm.converters.PasswordConverter;
 import com.rackspace.idm.converters.PasswordRulesConverter;
 import com.rackspace.idm.converters.PermissionConverter;
@@ -40,10 +41,15 @@ public class ConverterConfiguration {
     ClientConverter clientConverter() {
         return new ClientConverter(permissionConverter());
     }
+    
+    @Bean
+    GroupConverter groupConverter() {
+        return new GroupConverter();
+    }
 
     @Bean
     UserConverter userConverter() {
-        return new UserConverter(roleConverter());
+        return new UserConverter(groupConverter());
     }
 
     @Bean

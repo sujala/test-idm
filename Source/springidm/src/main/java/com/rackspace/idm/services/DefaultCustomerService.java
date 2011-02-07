@@ -1,35 +1,27 @@
 package com.rackspace.idm.services;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.slf4j.Logger;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.CustomerDao;
-import com.rackspace.idm.dao.RoleDao;
 import com.rackspace.idm.dao.UserDao;
 import com.rackspace.idm.entities.Customer;
-import com.rackspace.idm.entities.Role;
 import com.rackspace.idm.exceptions.DuplicateException;
 
 public class DefaultCustomerService implements CustomerService {
 
     private ClientDao clientDao;
     private CustomerDao customerDao;
-    private RoleDao roleDao;
     private UserDao userDao;
     
     private Logger logger;
 
     public DefaultCustomerService(ClientDao clientDao,
-        CustomerDao customerDao, RoleDao roleDao, UserDao userDao,
+        CustomerDao customerDao, UserDao userDao,
         Logger logger) {
         
         this.clientDao = clientDao;
         this.customerDao = customerDao;
-        this.roleDao = roleDao;
         this.userDao = userDao;
         
         this.logger = logger;
@@ -52,10 +44,6 @@ public class DefaultCustomerService implements CustomerService {
         customer.setInum(customerDao.getUnusedCustomerInum());
 
         this.customerDao.add(customer);
-
-        for (Role role : getDefaultRoles(customer)) {
-            this.roleDao.add(role);
-        }
 
         logger.info("Added Customer: {}", customer);
     }
@@ -103,23 +91,5 @@ public class DefaultCustomerService implements CustomerService {
         logger.info("Updating Customer: {}", customer);
         this.customerDao.save(customer);
         logger.info("Updated Customer: {}", customer);
-    }
-
-    private List<Role> getDefaultRoles(Customer customer) {
-
-        List<Role> roles = new ArrayList<Role>();
-
-        // Default Admin Role
-        Role role = new Role();
-        role.setCustomerId(customer.getCustomerId());
-        role.setInum(customer.getInum() + "!0001");
-        role.setName(GlobalConstants.IDM_ADMIN_ROLE_NAME);
-        role.setOrgInum(customer.getInum());
-        role.setOwner(GlobalConstants.INUM_PREFIX + customer.getInum());
-         role.setType("rackspacePredefined");
-
-        roles.add(role);
-
-        return roles;
     }
 }

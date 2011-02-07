@@ -17,7 +17,6 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
 import javax.validation.Validation;
@@ -76,21 +75,28 @@ public class ServiceConfiguration {
 
     @Bean
     public AccessTokenService tokenService() {
-        int defaultTokenExpirationSeconds = config.getInt("token.expirationSeconds");
-        int cloudAuthDefaultExpirationSeconds = config.getInt("token.cloudAuthExpirationSeconds");
-        int maxTokenExpirationSeconds = config.getInt("token.maxExpirationSeconds");
-        int minTokenExpirationSeconds = config.getInt("token.minExpirationSeconds");
+        int defaultTokenExpirationSeconds = config
+            .getInt("token.expirationSeconds");
+        int cloudAuthDefaultExpirationSeconds = config
+            .getInt("token.cloudAuthExpirationSeconds");
+        int maxTokenExpirationSeconds = config
+            .getInt("token.maxExpirationSeconds");
+        int minTokenExpirationSeconds = config
+            .getInt("token.minExpirationSeconds");
         String dataCenterPrefix = config.getString("token.dataCenterPrefix");
-        boolean isTrustedServer = config.getBoolean("ldap.server.trusted", false);
+        boolean isTrustedServer = config.getBoolean("ldap.server.trusted",
+            false);
 
-        TokenDefaultAttributes defaultAttributes = new TokenDefaultAttributes(defaultTokenExpirationSeconds,
-            cloudAuthDefaultExpirationSeconds, maxTokenExpirationSeconds, minTokenExpirationSeconds,
+        TokenDefaultAttributes defaultAttributes = new TokenDefaultAttributes(
+            defaultTokenExpirationSeconds, cloudAuthDefaultExpirationSeconds,
+            maxTokenExpirationSeconds, minTokenExpirationSeconds,
             dataCenterPrefix, isTrustedServer);
 
-        Logger logger = LoggerFactory.getLogger(DefaultAccessTokenService.class);
+        Logger logger = LoggerFactory
+            .getLogger(DefaultAccessTokenService.class);
 
-        return new DefaultAccessTokenService(defaultAttributes, accessTokenDao, clientDao, userService(),
-            xdcTokenDao, authHeaderHelper(), logger);
+        return new DefaultAccessTokenService(defaultAttributes, accessTokenDao,
+            clientDao, userService(), xdcTokenDao, authHeaderHelper(), logger);
     }
 
     @Bean
@@ -101,7 +107,7 @@ public class ServiceConfiguration {
     @Bean
     public ClientService clientService() {
         Logger logger = LoggerFactory.getLogger(DefaultClientService.class);
-        return new DefaultClientService(clientDao, customerDao, logger);
+        return new DefaultClientService(clientDao, customerDao, userRepo, logger);
     }
 
     @Bean
@@ -113,7 +119,8 @@ public class ServiceConfiguration {
     @Bean
     public CustomerService customerService() {
         Logger logger = LoggerFactory.getLogger(DefaultCustomerService.class);
-        return new DefaultCustomerService(clientDao, customerDao, roleDao, userRepo, logger);
+        return new DefaultCustomerService(clientDao, customerDao,
+            userRepo, logger);
     }
 
     @Bean
@@ -126,7 +133,8 @@ public class ServiceConfiguration {
             config = new PropertiesConfiguration(propsFileLoc);
         } catch (ConfigurationException e) {
             e.printStackTrace();
-            throw new RuntimeException("Error encountered when loading the token config file.");
+            throw new RuntimeException(
+                "Error encountered when loading the token config file.");
         }
 
         int smtpPort = config.getInt("smtpPort");
@@ -137,35 +145,40 @@ public class ServiceConfiguration {
         boolean useSSL = config.getBoolean("SSL");
         boolean useTSL = config.getBoolean("TLS");
 
-        EmailSettings emailSettings = new EmailSettings(smtpPort, smtpHost, smtpUsername, smtpPassword,
-            debug, useSSL, useTSL);
+        EmailSettings emailSettings = new EmailSettings(smtpPort, smtpHost,
+            smtpUsername, smtpPassword, debug, useSSL, useTSL);
 
         return new DefaultEmailService(emailSettings);
     }
 
     @Bean
     public InputValidator inputValidator() {
-        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+        Validator validator = Validation.buildDefaultValidatorFactory()
+            .getValidator();
         return new InputValidator(validator);
     }
 
     @Bean
     public PasswordComplexityService passwordComplexityService() {
-        Logger logger = LoggerFactory.getLogger(DefaultPasswordComplexityService.class);
+        Logger logger = LoggerFactory
+            .getLogger(DefaultPasswordComplexityService.class);
         return new DefaultPasswordComplexityService(logger);
     }
 
     @Bean
     public RefreshTokenService refreshTokenService() {
-        int defaultTokenExpirationSeconds = config.getInt("token.refreshTokenExpirationSeconds");
+        int defaultTokenExpirationSeconds = config
+            .getInt("token.refreshTokenExpirationSeconds");
         String dataCenterPrefix = config.getString("token.dataCenterPrefix");
 
         RefreshTokenDefaultAttributes defaultAttributes = new RefreshTokenDefaultAttributes(
             defaultTokenExpirationSeconds, dataCenterPrefix);
 
-        Logger logger = LoggerFactory.getLogger(DefaultRefreshTokenService.class);
+        Logger logger = LoggerFactory
+            .getLogger(DefaultRefreshTokenService.class);
 
-        return new DefaultRefreshTokenService(defaultAttributes, refreshTokenDao, logger);
+        return new DefaultRefreshTokenService(defaultAttributes,
+            refreshTokenDao, logger);
     }
 
     @Bean
@@ -177,16 +190,18 @@ public class ServiceConfiguration {
     @Bean
     public UserService userService() {
         Logger logger = LoggerFactory.getLogger(DefaultUserService.class);
-        boolean isTrustedServer = config.getBoolean("ldap.server.trusted", false);
-        return new DefaultUserService(userRepo, authDao, customerDao, accessTokenDao, refreshTokenDao,
-            clientDao, emailService(), roleService(), isTrustedServer, logger);
+        boolean isTrustedServer = config.getBoolean("ldap.server.trusted",
+            false);
+        return new DefaultUserService(userRepo, authDao, customerDao,
+            accessTokenDao, refreshTokenDao, clientDao, emailService(),
+            clientService(), isTrustedServer, logger);
     }
 
     @Bean
     public OAuthService oauthService() {
         Logger logger = LoggerFactory.getLogger(DefaultOAuthService.class);
-        return new DefaultOAuthService(userService(), clientService(), tokenService(), refreshTokenService(),
-            logger);
+        return new DefaultOAuthService(userService(), clientService(),
+            tokenService(), refreshTokenService(), logger);
     }
 
     @Bean

@@ -368,8 +368,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
-    public String[] getRoleIdsForUser(String username) {
-        getLogger().debug("Getting RoleIds for User {}", username);
+    public String[] getGroupIdsForUser(String username) {
+        getLogger().debug("Getting GroupIds for User {}", username);
         if (StringUtils.isBlank(username)) {
             getLogger().error("Null or Empty username parameter");
             throw new IllegalArgumentException(
@@ -402,7 +402,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "More than one entry was found for this username");
         }
 
-        getLogger().debug("Got RoleIds for User {} - {}", username, roleIds);
+        getLogger().debug("Got GroupIds for User {} - {}", username, roleIds);
 
         return roleIds;
     }
