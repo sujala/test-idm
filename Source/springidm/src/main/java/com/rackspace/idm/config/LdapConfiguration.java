@@ -7,9 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
 import com.rackspace.idm.dao.LdapConnectionPools;
-import com.unboundid.ldap.sdk.LDAPConnection;
+import com.unboundid.ldap.sdk.BindRequest;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.RoundRobinServerSet;
+import com.unboundid.ldap.sdk.ServerSet;
+import com.unboundid.ldap.sdk.SimpleBindRequest;
+import org.apache.commons.lang.text.StrTokenizer;
 
 /**
  * @author john.eo <br/>
@@ -17,7 +21,7 @@ import com.unboundid.ldap.sdk.LDAPException;
  */
 @org.springframework.context.annotation.Configuration
 public class LdapConfiguration {
-    private static final int SERVER_PORT = 389;
+    private static final String SERVER_PORT = "389";
     private static final int SERVER_POOL_SIZE_INIT = 1;
     private static final int SERVER_POOL_SIZE_MAX = 100;
     private static final String CONNECT_ERROR_STRING = "Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct.";
@@ -47,15 +51,23 @@ public class LdapConfiguration {
      * @return
      */
     private LDAPConnectionPool connection() {
-        String address = config.getString("ldap.server.address");
-        int port = config.getInt("ldap.server.port", SERVER_PORT);
+        String[] addresses = config.getStringArray("ldap.server.address");
+        String[] portStrings = config.getStringArray("ldap.server.port");
+        if(addresses.length != portStrings.length){
+            throw new IllegalStateException("Check address and port configuration");
+        }
+        int[] ports = new int[portStrings.length];
+        int i=0;
+        for (String port : portStrings) {
+            ports[i++]=Integer.valueOf(port);
+        }
         int initPoolSize = config.getInt("ldap.server.pool.size.init",
             SERVER_POOL_SIZE_INIT);
         int maxPoolSize = config.getInt("ldap.server.pool.size.max",
             SERVER_POOL_SIZE_MAX);
         String bindDn = config.getString("ldap.bind.dn");
         String password = config.getString("ldap.bind.password");
-        Object[] params = {address, port, initPoolSize, maxPoolSize};
+        Object[] params = {addresses, ports, initPoolSize, maxPoolSize};
         logger
             .debug(
                 "LDAP Config [address={}, port={}, connection_pool_init={}, connection_pool_max={}",
@@ -63,11 +75,10 @@ public class LdapConfiguration {
 
         LDAPConnectionPool connPool = null;
         try {
-            LDAPConnection conn = new LDAPConnection(address, port, bindDn,
-                password);
-            connPool = new LDAPConnectionPool(conn, initPoolSize, maxPoolSize);
+            ServerSet serverSet = new RoundRobinServerSet(addresses, ports);
+            BindRequest bind = new SimpleBindRequest(bindDn, password);
+            connPool = new LDAPConnectionPool(serverSet, bind, initPoolSize, maxPoolSize);
         } catch (LDAPException e) {
-            System.out.println(e);
             logger.error(CONNECT_ERROR_STRING, e);
             throw new IllegalStateException(CONNECT_ERROR_STRING, e);
         }
