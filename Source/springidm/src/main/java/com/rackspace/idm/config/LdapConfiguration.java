@@ -13,7 +13,6 @@ import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.RoundRobinServerSet;
 import com.unboundid.ldap.sdk.ServerSet;
 import com.unboundid.ldap.sdk.SimpleBindRequest;
-import org.apache.commons.lang.text.StrTokenizer;
 
 /**
  * @author john.eo <br/>
