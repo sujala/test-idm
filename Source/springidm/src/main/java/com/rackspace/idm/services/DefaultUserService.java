@@ -67,7 +67,7 @@ public class DefaultUserService implements UserService {
         logger.info("Adding User: {}", user);
         String customerId = user.getCustomerId();
 
-        boolean isUsernameUnique = userDao.isUsernameUnique(user.getUsername());
+            boolean isUsernameUnique = userDao.isUsernameUnique(user.getUsername());
 
         if (!isUsernameUnique) {
             logger.warn("Couldn't add user {} because username already taken",

@@ -9,6 +9,10 @@
         <webroots>
           <root url="file://$MODULE_DIR$/src/main/webapp" relative="/" />
         </webroots>
+        <sourceRoots>
+          <root url="file://$MODULE_DIR$/src/main/java" />
+          <root url="file://$MODULE_DIR$/src/main/resources" />
+        </sourceRoots>
       </configuration>
     </facet>
     <facet type="Spring" name="Spring">
@@ -76,7 +80,6 @@
     <orderEntry type="library" name="Maven: stax:stax-api:1.0.1" level="project" />
     <orderEntry type="library" name="Maven: com.sun.xml.bind:jaxb-impl:2.1.12" level="project" />
     <orderEntry type="library" name="Maven: javax.xml.bind:jaxb-api:2.1" level="project" />
-    <orderEntry type="library" name="Maven: javax.xml.stream:stax-api:1.0-2" level="project" />
     <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-core-asl:1.5.5" level="project" />
     <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-mapper-asl:1.5.5" level="project" />
     <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-jaxrs:1.5.5" level="project" />
@@ -136,7 +139,6 @@
     <orderEntry type="library" scope="TEST" name="Maven: opensaml:opensaml:1.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: jetty:jetty:6.1.22" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: jetty:jetty-util:6.1.22" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: jetty:servlet-api:2.5-20081211" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: jxl:jxl:2.6.12" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: bouncycastle:bcprov-jdk15:143" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: commons-ssl:not-yet-commons-ssl:0.3.11" level="project" />
@@ -159,7 +161,6 @@
     <orderEntry type="library" scope="TEST" name="Maven: thoughtworks:xstream:1.3.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: javax.jms:jms:1.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: hermesjms:hermes:1.14" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: activesoap:jaxb-impl:1.5" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: net.sourceforge.htmlunit:htmlunit:2.7" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: net.sourceforge.htmlunit:htmlunit-core-js:2.7" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: net.sourceforge.nekohtml:nekohtml:1.9.14" level="project" />

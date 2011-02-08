@@ -58,6 +58,7 @@ public abstract class LdapRepository {
     protected static final String ATTR_OU = "ou";
     protected static final String ATTR_OWNER = "owner";
     protected static final String ATTR_PASSWORD = "userPassword";
+    protected static final String ATTR_CLEAR_PASSWORD = "clearPassword";
     protected static final String ATTR_PASSWORD_SECRET_A = "secretAnswer";
     protected static final String ATTR_PASSWORD_SECRET_Q = "secretQuestion";
     protected static final String ATTR_PERMISSION = "permission";

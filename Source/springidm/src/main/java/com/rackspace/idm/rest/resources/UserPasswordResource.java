@@ -83,8 +83,7 @@ public class UserPasswordResource {
 
         User user = checkAndGetUser(customerId, username);
 
-        Password password = Password.existingInstance(user
-            .getPasswordNoPrefix());
+        Password password = Password.existingInstance(user.getClearPassword());
 
         return Response.ok(passwordConverter.toJaxb(password)).build();
     }
@@ -129,12 +128,14 @@ public class UserPasswordResource {
 
         User user = checkAndGetUser(customerId, username);
 
-        Password newpassword = Password.generateRandom();
-        user.setPasswordObj(newpassword);
+        Password newPassword = Password.generateRandom();
+        user.setPasswordObj(newPassword);
         this.userService.updateUser(user);
         logger.info("Updated password for user: {}", user);
 
-        return Response.ok(passwordConverter.toJaxb(newpassword)).build();
+        Password password = Password.existingInstance(user.getClearPassword());
+
+        return Response.ok(passwordConverter.toJaxb(password)).build();
     }
 
     /**

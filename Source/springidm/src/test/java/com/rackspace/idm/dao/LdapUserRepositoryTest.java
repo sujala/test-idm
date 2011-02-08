@@ -391,7 +391,7 @@ public class LdapUserRepositoryTest {
 
         List<Modification> mods = repo.getModifications(user, cUser);
 
-        Assert.assertEquals(4, mods.size());
+        Assert.assertEquals(5, mods.size());
         Assert.assertEquals("changed_first_name", mods.get(0).getAttribute()
             .getValue());
         Assert.assertEquals("changed@deleteme.com", mods.get(1).getAttribute()

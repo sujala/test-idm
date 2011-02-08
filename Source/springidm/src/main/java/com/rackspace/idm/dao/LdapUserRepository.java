@@ -745,6 +745,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         if (!StringUtils.isBlank(user.getPasswordObj().getValue())) {
             atts.add(new Attribute(ATTR_PASSWORD, user.getPasswordObj()
                 .getValue()));
+            atts.add(new Attribute(ATTR_CLEAR_PASSWORD, user.getPassword()));
         }
 
         if (!StringUtils.isBlank(user.getRegion())) {
@@ -877,6 +878,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .getAttributeValue(ATTR_PASSWORD_SECRET_Q));
         user.setSecretAnswer(resultEntry
             .getAttributeValue(ATTR_PASSWORD_SECRET_A));
+        user.setClearPassword(resultEntry
+            .getAttributeValue(ATTR_CLEAR_PASSWORD));
 
         String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
         if (statusStr != null) {
@@ -1087,6 +1090,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         if (uNew.getPasswordObj().isNew()) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD,
+                uNew.getPasswordObj().getValue()));
+
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD,
                 uNew.getPasswordObj().getValue()));
         }
 

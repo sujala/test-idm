@@ -218,6 +218,15 @@
 					</xsd:documentation>
 				</annotation>
 			</element>
+            <element name="clearPassword" type="idm:ClearPassword"
+				minOccurs="0" maxOccurs="1">
+				<annotation>
+					<xsd:documentation xml:lang="EN"
+						xmlns="http://www.w3.org/1999/xhtml">
+						<p>A user's clear password.</p>
+					</xsd:documentation>
+				</annotation>
+			</element>
 			<element name="apiKey" type="idm:UserApiKey" minOccurs="0"
 				maxOccurs="1">
 				<annotation>
@@ -428,6 +437,17 @@
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
 					<p>A user's password.</p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+	</complexType>
+
+    <complexType name="ClearPassword">
+		<attribute name="clearPassword" type="string" use="optional">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>A user's clear password.</p>
 				</xsd:documentation>
 			</annotation>
 		</attribute>
