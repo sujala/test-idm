@@ -22,15 +22,12 @@ import com.rackspace.idm.entities.BaseClient;
 import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.entities.ClientGroup;
 import com.rackspace.idm.entities.Permission;
-import com.rackspace.idm.entities.Role;
-import com.rackspace.idm.entities.RoleStatus;
 import com.rackspace.idm.jaxb.AuthCredentials;
 import com.rackspace.idm.jaxb.AuthGrantType;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 
-@Ignore("Rackspace Dev and QA servers are down, testing locally")
 public class WebClientAccessTokenRepositoryTest {
     private static final String IDM_CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221";
     private static final String QA_TOKEN_STRING = "QA-xdctesttokenstring";
@@ -65,7 +62,6 @@ public class WebClientAccessTokenRepositoryTest {
     }
 
     @Test
-    @Ignore("Test cross-data-center call. Enable this once the support for call has been deployed to QA.")
     public void shouldLookForTokenAcrossDc() {
         putTokensInMemcached();
 
@@ -77,7 +73,7 @@ public class WebClientAccessTokenRepositoryTest {
     }
 
     @Test
-    //@Ignore("Inserts test token on the 'remote' server's memcached. Invoke manually for debugging the client service call.")
+    @Ignore("Inserts test token on the 'remote' server's memcached. Invoke manually for debugging the client service call.")
     public void putTokensInMemcached() {
         AccessToken token = getNewToken(600);
         // Add a token to a "cross-data-center" location
@@ -102,7 +98,7 @@ public class WebClientAccessTokenRepositoryTest {
     }
 
     private BaseUser getTestUser() {
-        
+
         ClientGroup group = new ClientGroup("customerId", "clientId", "name");
         List<ClientGroup> groups = new ArrayList<ClientGroup>();
         groups.add(group);

@@ -48,14 +48,21 @@ public class WebClientAccessTokenRepository implements TokenGetterDao<AccessToke
         logger.debug("Requesting token {}.", tokenString);
         String dc = StringUtils.split(tokenString, "-")[0];
         DataCenterClient client = endpoints.get(dc);
+        if (client == null) {
+            return null;
+        }
         byte[] tokenBytes;
         try {
             tokenBytes = client.getResource().path(TOKEN_RESOURCE_PATH + "/" + tokenString)
-                .accept(MediaType.APPLICATION_OCTET_STREAM)
+                .accept(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "OAuth " + getMyAccessToken(dc).getTokenString())
                 .get(byte[].class);
         } catch (UniformInterfaceException e) {
             handleClientCallException(e);
+            return null;
+        }
+        
+        if (tokenBytes == null || tokenBytes.length == 0) {
             return null;
         }
 
