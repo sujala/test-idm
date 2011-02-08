@@ -12,14 +12,13 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -43,8 +42,6 @@ import com.rackspace.idm.oauth.OAuthGrantType;
 import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
-import com.rackspace.idm.services.ClientService;
-import com.rackspace.idm.services.UserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.BasicCredentialsCheck;
 import com.rackspace.idm.validation.InputValidator;
@@ -203,14 +200,14 @@ public class TokenResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call", callingToken);
             logger.error(errMsg);
-            throw new ForbiddenException(errMsg);
+            return Response.status(Status.FORBIDDEN).build();
         }
 
         // Validate Token exists and is valid
         AccessToken token = tokenService.validateToken(tokenString);
         if (token == null) {
             logger.info("Token not found : {}", tokenString);
-            return null;
+            return Response.status(Status.NOT_FOUND).build();
         }
 
         logger.debug("Retrieved XDC Access Token: {}", tokenString);
@@ -260,15 +257,6 @@ public class TokenResource {
         }
 
         return Response.noContent().build();
-    }
-
-    @DELETE
-    @Path("{tokenString}")
-    public Response revokeTokenForUser(@Context Request request, @Context UriInfo uriInfo,@HeaderParam("Authorization") String authHeader,
-        @PathParam("{tokenString}") String tokenString, @QueryParam("username") String username) {
-        AccessToken callerToken = tokenService.getAccessTokenByAuthHeader(authHeader);
-        
-        throw new NotImplementedException();
     }
 
     // private funcs

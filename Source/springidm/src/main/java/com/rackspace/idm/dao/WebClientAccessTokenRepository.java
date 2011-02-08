@@ -1,11 +1,11 @@
 package com.rackspace.idm.dao;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang.SerializationException;
 import org.apache.commons.lang.SerializationUtils;
@@ -49,19 +49,27 @@ public class WebClientAccessTokenRepository implements TokenGetterDao<AccessToke
         String dc = StringUtils.split(tokenString, "-")[0];
         DataCenterClient client = endpoints.get(dc);
         if (client == null) {
+            logger.warn("Invalid prefix " + dc + " given");
             return null;
         }
         byte[] tokenBytes;
         try {
-            tokenBytes = client.getResource().path(TOKEN_RESOURCE_PATH + "/" + tokenString)
-                .accept(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, "OAuth " + getMyAccessToken(dc).getTokenString())
-                .get(byte[].class);
-        } catch (UniformInterfaceException e) {
-            handleClientCallException(e);
-            return null;
+            tokenBytes = getRemoteToken(tokenString, dc, client);
+        } catch (UniformInterfaceException ue1) {
+            if (ue1.getResponse().getStatus() == Status.UNAUTHORIZED.getStatusCode()) {
+                // Try again, client token might have just expired.
+                try {
+                    tokenBytes = getRemoteToken(tokenString, dc, client);
+                } catch (UniformInterfaceException ue2) {
+                    handleClientCallException(ue2);
+                    return null;
+                }
+            } else {
+                handleClientCallException(ue1);
+                return null;
+            }
         }
-        
+
         if (tokenBytes == null || tokenBytes.length == 0) {
             return null;
         }
@@ -76,6 +84,15 @@ public class WebClientAccessTokenRepository implements TokenGetterDao<AccessToke
         return token;
     }
 
+    private byte[] getRemoteToken(String tokenString, String dc, DataCenterClient client) {
+        byte[] tokenBytes;
+        tokenBytes = client.getResource().path(TOKEN_RESOURCE_PATH + "/" + tokenString)
+            .accept(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, "OAuth " + getMyAccessToken(dc).getTokenString())
+            .get(byte[].class);
+        return tokenBytes;
+    }
+
     /**
      * Retrieves client access token to be used by the local instance of IDM
      * service. The Token is then used to make client calls to IDM instances
@@ -84,8 +101,9 @@ public class WebClientAccessTokenRepository implements TokenGetterDao<AccessToke
      */
     AccessToken getMyAccessToken(String dc) {
         DataCenterClient client = endpoints.get(dc);
-        if (client.getAccessToken() != null && !client.getAccessToken().isExpired(new DateTime())) {
-            return client.getAccessToken();
+        AccessToken myToken = client.getAccessToken();
+        if (myToken != null && !myToken.isExpired(new DateTime())) {
+            return myToken;
         }
 
         logger.debug("Requesting client access token for Customer IDM");
@@ -98,7 +116,7 @@ public class WebClientAccessTokenRepository implements TokenGetterDao<AccessToke
             return null;
         }
 
-        return getClientCallResponse(resp);
+        return extractMyAccessToken(resp, client);
     }
 
     private void handleClientCallException(UniformInterfaceException e) {
@@ -116,9 +134,12 @@ public class WebClientAccessTokenRepository implements TokenGetterDao<AccessToke
         }
     }
 
-    private AccessToken getClientCallResponse(ClientResponse resp) {
+    private AccessToken extractMyAccessToken(ClientResponse resp, DataCenterClient client) {
         if (Response.Status.OK.getStatusCode() == resp.getStatus()) {
-            return converter.toAccessTokenFromJaxb(resp.getEntity(Auth.class).getAccessToken());
+            AccessToken myToken = converter
+                .toAccessTokenFromJaxb(resp.getEntity(Auth.class).getAccessToken());
+            client.setAccessToken(myToken);
+            return myToken;
         } else {
             // Something's wrong. Try to get the fault.
             IdmFault fault = resp.getEntity(IdmFault.class);

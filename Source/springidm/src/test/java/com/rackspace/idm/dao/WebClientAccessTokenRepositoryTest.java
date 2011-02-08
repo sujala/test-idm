@@ -29,10 +29,12 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 
 public class WebClientAccessTokenRepositoryTest {
+    private static final String TOKEN_OWNER = "userTested";
+    private static final String TOKEN_REQUESTOR = "controlpanel";
     private static final String IDM_CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221";
     private static final String QA_TOKEN_STRING = "QA-xdctesttokenstring";
     private Client c = Client.create();
-    private MemcachedClient mclient;
+    private MemcachedClient mcdRemote;
     private WebClientAccessTokenRepository repo;
 
     @Before
@@ -52,18 +54,35 @@ public class WebClientAccessTokenRepositoryTest {
         // Use the QA memcached server to simulated XDC token store
         Configuration qaconfig = new PropertiesConfiguration();
         qaconfig.addProperty("memcached.serverList", "10.127.7.165:11211");
-        mclient = new MemcachedConfiguration(qaconfig, new StubLogger()).memcacheClient();
+        mcdRemote = new MemcachedConfiguration(qaconfig, new StubLogger()).memcacheClient();
 
         // Delete any old token
-        mclient.delete(QA_TOKEN_STRING);
-        mclient.delete(getTokenKeyByClientId(IDM_CLIENT_ID, IDM_CLIENT_ID));
+        deleteUserTokenInMemcached();
 
         repo = new WebClientAccessTokenRepository(endpoints, creds, new StubLogger());
     }
 
     @Test
+    @Ignore("Inserts test token on the 'remote' server's memcached. Invoke manually for debugging the client service call.")
+    public void deleteUserTokenInMemcached() {
+        mcdRemote.delete(QA_TOKEN_STRING);
+        mcdRemote.delete(getTokenKeyByClientId(TOKEN_OWNER, TOKEN_REQUESTOR));
+    }
+
+    @Test
+    @Ignore("Inserts test token on the 'remote' server's memcached. Invoke manually for debugging the client service call.")
+    public void putUserTokenInMemcached() {
+        AccessToken token = getNewToken(600);
+        // Add a token to a "cross-data-center" location, with expiration set in
+        // seconds.
+        mcdRemote.set(QA_TOKEN_STRING, 600, token);
+        mcdRemote.set(getTokenKeyByClientId(token.getOwner(), token.getRequestor()), 600,
+            token.getTokenString());
+    }
+
+    @Test
     public void shouldLookForTokenAcrossDc() {
-        putTokensInMemcached();
+        putUserTokenInMemcached();
 
         // Now attempt a lookup from the local DAO
         AccessToken remoteToken = repo.findByTokenString(QA_TOKEN_STRING);
@@ -72,22 +91,12 @@ public class WebClientAccessTokenRepositoryTest {
         Assert.assertNotNull(remoteToken.getTokenClient());
     }
 
-    @Test
-    @Ignore("Inserts test token on the 'remote' server's memcached. Invoke manually for debugging the client service call.")
-    public void putTokensInMemcached() {
-        AccessToken token = getNewToken(600);
-        // Add a token to a "cross-data-center" location
-        mclient.set(QA_TOKEN_STRING, 600, token);
-        mclient.set(getTokenKeyByClientId(token.getOwner(), token.getRequestor()), 600,
-            token.getTokenString());
-    }
-
     private String getTokenKeyByClientId(String owner, String requestor) {
         return owner + "_" + requestor;
     }
 
     @Test
-    public void shouldGetClientToken() {
+    public void shouldGetMyToken() {
         AccessToken idmTk = repo.getMyAccessToken("QA");
         Assert.assertNotNull(idmTk);
     }
@@ -103,13 +112,13 @@ public class WebClientAccessTokenRepositoryTest {
         List<ClientGroup> groups = new ArrayList<ClientGroup>();
         groups.add(group);
 
-        return new BaseUser("userTested", "customerId", groups);
+        return new BaseUser(TOKEN_OWNER, "customerId", groups);
     }
 
     private BaseClient getTestClient() {
         Permission perm = new Permission("foo", "bar", "baz", "what");
         List<Permission> perms = new ArrayList<Permission>();
         perms.add(perm);
-        return new BaseClient("controlpanel", "customerId", perms);
+        return new BaseClient(TOKEN_REQUESTOR, "customerId", perms);
     }
 }
