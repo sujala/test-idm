@@ -34,6 +34,9 @@ import com.unboundid.ldap.sdk.controls.VirtualListViewRequestControl;
 import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
 
 public class LdapClientRepository extends LdapRepository implements ClientDao {
+    private static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {
+        ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_RACKSPACE_CUSTOMER_NUMBER,
+        ATTR_NAME};
 
     private static final String ADD_PERMISSION_FORMAT_STRING = "cn=%s,ou=permissions,%s";
     private static final String ADD_CLIENT_GROUP_FORMAT_STRING = "cn=%s,ou=groups,%s";
@@ -450,13 +453,13 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
     public void deleteClientGroup(String clientId, String name) {
         getLogger().info("Deleting clientGroup {}", name);
-        
+
         if (StringUtils.isBlank(clientId) || StringUtils.isBlank(name)) {
             throw new IllegalArgumentException();
         }
 
-        ClientGroup group = this.getClientGroupByClientIdAndGroupName(
-            clientId, name);
+        ClientGroup group = this.getClientGroupByClientIdAndGroupName(clientId,
+            name);
 
         if (group == null) {
             throw new NotFoundException();
@@ -568,12 +571,13 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         return client;
     }
-    
+
     public ClientGroup findClientGroupByUniqueId(String uniqueId) {
         ClientGroup group = null;
         SearchResult searchResult = null;
         try {
-            searchResult = getAppConnPool().search(uniqueId, SearchScope.BASE, GROUP_FIND_BY_CLIENTID);
+            searchResult = getAppConnPool().search(uniqueId, SearchScope.BASE,
+                GROUP_FIND_BY_CLIENTID);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
@@ -656,9 +660,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
     public ClientGroup getClientGroupByClientIdAndGroupName(String clientId,
         String name) {
-        
+
         Client client = this.findByClientId(clientId);
-        
+
         if (client == null) {
             throw new NotFoundException();
         }
@@ -669,7 +673,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         SearchResult searchResult = null;
         try {
             searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
-                String.format(GROUP_FIND_BY_ID, name));
+                String.format(GROUP_FIND_BY_ID, name), ATTR_GROUP_SEARCH_ATTRIBUTES);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for clientGroup {} - {}", name,
                 ldapEx);
@@ -690,22 +694,22 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     public List<ClientGroup> getClientGroupsByClientId(String clientId) {
-        
+
         List<ClientGroup> groups = new ArrayList<ClientGroup>();
-        
+
         Client client = this.findByClientId(clientId);
-        
+
         if (client == null) {
             throw new NotFoundException();
         }
 
         String searchDN = "ou=groups," + client.getUniqueId();
-        
+
         SearchResult searchResult = null;
 
         try {
             searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
-                GROUP_FIND_BY_CLIENTID);
+                GROUP_FIND_BY_CLIENTID, ATTR_GROUP_SEARCH_ATTRIBUTES);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for clientId {} - {}", clientId,
                 ldapEx);

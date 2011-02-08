@@ -30,26 +30,21 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     private static final String[] ATTR_SEARCH_ATTRIBUTES = {"*",
         ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
 
-    private static final String USER_FIND_BY_EMAIL_STRING = "(&(objectClass=rackspacePerson)(mail=%s))";
-    private static final String USER_FIND_BY_NAST_ID = "(&(objectClass=rackspacePerson)(rsNastId=%s))";
-    private static final String USER_FIND_BY_MOSSO_ID = "(&(objectClass=rackspacePerson)(rsMossoId=%s))";
-    private static final String USER_FIND_BY_USERNAME_STRING = "(&(objectClass=rackspacePerson)(uid=%s))";
-
-    private static final String USER_FIND_BY_USERNAME_BASESTRING = "(&(objectClass=rackspacePerson)(uid=%s)";
-
-    private static final String USER_FIND_BY_INUM_STRING = "(&(objectClass=rackspacePerson)(inum=%s))";
-
-    private static final String USER_FIND_BY_CUSTOMER_NUMBER_STRING = "(&(objectClass=rackspacePerson)(rackspaceCustomerNumber=%s)(uid=%s)";
-
-    private static final String USER_FIND_ALL_STRING_NOT_DELETED = "(&(objectClass=rackspacePerson)(softDeleted=FALSE))";
-    private static final String USER_FIND_BY_USERNAME_STRING_NOT_DELETED = "(&(objectClass=rackspacePerson)(uid=%s)(softDeleted=FALSE))";
-    private static final String USER_FIND_BY_CUSTOMERID_USERNAME_NOT_DELETED = "(&(objectClass=rackspacePerson)(rackspaceCustomerNumber=%s)(uid=%s)(softDeleted=FALSE))";
-    private static final String USER_FIND_BY_CUSTOMERID_STRING_NOT_DELETED = "(&(objectClass=rackspacePerson)(rackspaceCustomerNumber=%s)(softDeleted=FALSE))";
-    private static final String USER_FIND_BY_CUSTOMERID_AND_LOCK_STRING = "(&(objectClass=rackspacePerson)(rackspaceCustomerNumber=%s)(locked=%s)(softDeleted=FALSE))";
     // NOTE: This is pretty fragile way of handling the specific error, so we
-    // need to look into more
-    // reliable way of detecting this error.
+    // need to look into more reliable way of detecting this error.
     private static final String STALE_PASSWORD_MESSAGE = "The provided new password was found in the password history for the user";
+    private static final String USER_FIND_ALL_STRING_NOT_DELETED = "(&(objectClass=rackspacePerson)(softDeleted=FALSE))";
+    private static final String USER_FIND_BY_CUSTOMER_NUMBER_STRING = "(&(objectClass=rackspacePerson)(rackspaceCustomerNumber=%s)(uid=%s)";
+    private static final String USER_FIND_BY_CUSTOMERID_AND_LOCK_STRING = "(&(objectClass=rackspacePerson)(rackspaceCustomerNumber=%s)(locked=%s)(softDeleted=FALSE))";
+    private static final String USER_FIND_BY_CUSTOMERID_STRING_NOT_DELETED = "(&(objectClass=rackspacePerson)(rackspaceCustomerNumber=%s)(softDeleted=FALSE))";
+    private static final String USER_FIND_BY_CUSTOMERID_USERNAME_NOT_DELETED = "(&(objectClass=rackspacePerson)(rackspaceCustomerNumber=%s)(uid=%s)(softDeleted=FALSE))";
+    private static final String USER_FIND_BY_EMAIL_STRING = "(&(objectClass=rackspacePerson)(mail=%s))";
+    private static final String USER_FIND_BY_INUM_STRING = "(&(objectClass=rackspacePerson)(inum=%s))";
+    private static final String USER_FIND_BY_MOSSO_ID = "(&(objectClass=rackspacePerson)(rsMossoId=%s))";
+    private static final String USER_FIND_BY_NAST_ID = "(&(objectClass=rackspacePerson)(rsNastId=%s))";
+    private static final String USER_FIND_BY_USERNAME_BASESTRING = "(&(objectClass=rackspacePerson)(uid=%s)";
+    private static final String USER_FIND_BY_USERNAME_STRING = "(&(objectClass=rackspacePerson)(uid=%s))";
+    private static final String USER_FIND_BY_USERNAME_STRING_NOT_DELETED = "(&(objectClass=rackspacePerson)(uid=%s)(softDeleted=FALSE))";
 
     public LdapUserRepository(LdapConnectionPools connPools, Logger logger) {
         super(connPools, logger);
@@ -93,35 +88,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         getLogger().debug("Added user {}", user);
-    }
-
-    private boolean bindUser(User user, String password) {
-        getLogger().debug("Authenticating user {}", user.getUsername());
-
-        if (user == null || user.getUniqueId() == null) {
-            throw new IllegalStateException(
-                "User cannot be null and must have a unique Id");
-        }
-
-        BindResult result;
-        try {
-            result = getBindConnPool().bind(user.getUniqueId(), password);
-        } catch (LDAPException e) {
-            if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
-                getLogger().info(
-                    "Invalid login attempt by user {} with password {}.",
-                    user.getUsername(), password);
-                return false;
-            }
-            getLogger()
-                .error(
-                    "Bind operation on username " + user.getUsername()
-                        + " failed.", e);
-            throw new IllegalStateException(e);
-        }
-
-        getLogger().debug(result.toString());
-        return ResultCode.SUCCESS.equals(result.getResultCode());
     }
 
     public UserAuthenticationResult authenticate(String username,
@@ -592,18 +558,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return authResult;
     }
 
-    private UserAuthenticationResult validateUserStatus(User user,
-        boolean isAuthenticated) {
-        if (isAuthenticated && user.isDisabled()) {
-            String errMsg = String.format("User %s is disabled.",
-                user.getUsername());
-            getLogger().error(errMsg);
-            throw new UserDisabledException(errMsg);
-        }
-
-        return new UserAuthenticationResult(user, isAuthenticated);
-    }
-
     private UserAuthenticationResult authenticateUserByApiKey(User user,
         String apiKey) {
 
@@ -619,6 +573,35 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Authenticated User by API Key - {}", authResult);
 
         return authResult;
+    }
+
+    private boolean bindUser(User user, String password) {
+        getLogger().debug("Authenticating user {}", user.getUsername());
+
+        if (user == null || user.getUniqueId() == null) {
+            throw new IllegalStateException(
+                "User cannot be null and must have a unique Id");
+        }
+
+        BindResult result;
+        try {
+            result = getBindConnPool().bind(user.getUniqueId(), password);
+        } catch (LDAPException e) {
+            if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
+                getLogger().info(
+                    "Invalid login attempt by user {} with password {}.",
+                    user.getUsername(), password);
+                return false;
+            }
+            getLogger()
+                .error(
+                    "Bind operation on username " + user.getUsername()
+                        + " failed.", e);
+            throw new IllegalStateException(e);
+        }
+
+        getLogger().debug(result.toString());
+        return ResultCode.SUCCESS.equals(result.getResultCode());
     }
 
     private String buildSearchString(String baseString,
@@ -856,10 +839,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     private User getUser(SearchResultEntry resultEntry) {
-        User user = new User(resultEntry.getAttributeValue(ATTR_UID));
-
+        User user = new User();
         user.setUniqueId(resultEntry.getDN());
-
+        user.setUsername(resultEntry.getAttributeValue(ATTR_UID));
         user.setCountry(resultEntry.getAttributeValue(ATTR_C));
         user.setDisplayName(resultEntry.getAttributeValue(ATTR_DISPLAY_NAME));
         user.setFirstname(resultEntry.getAttributeValue(ATTR_GIVEN_NAME));
@@ -903,10 +885,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             user.setSoftDeleted(resultEntry
                 .getAttributeValueAsBoolean(GlobalConstants.ATTR_SOFT_DELETED));
         }
-        
-        String softDeletedTimestamp = resultEntry.getAttributeValue(ATTR_SOFT_DELETED_DATE);
+
+        String softDeletedTimestamp = resultEntry
+            .getAttributeValue(ATTR_SOFT_DELETED_DATE);
         if (softDeletedTimestamp != null) {
-            user.setSoftDeletedTimestamp(new DateTime(resultEntry.getAttributeValueAsDate(ATTR_SOFT_DELETED_DATE)));
+            user.setSoftDeletedTimestamp(new DateTime(resultEntry
+                .getAttributeValueAsDate(ATTR_SOFT_DELETED_DATE)));
         }
 
         String locked = resultEntry.getAttributeValue(ATTR_LOCKED);
@@ -931,7 +915,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Date passwordFailureDate = resultEntry
             .getAttributeValueAsDate(ATTR_PWD_ACCOUNT_LOCKOUT_TIME);
-        
+
         boolean passwordFailureLocked = false;
         if (passwordFailureDate != null) {
             DateTime passwordFailureDateTime = new DateTime(passwordFailureDate)
@@ -941,6 +925,18 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         user.setMaxLoginFailuresExceded(passwordFailureLocked);
 
         return user;
+    }
+
+    private UserAuthenticationResult validateUserStatus(User user,
+        boolean isAuthenticated) {
+        if (isAuthenticated && user.isDisabled()) {
+            String errMsg = String.format("User %s is disabled.",
+                user.getUsername());
+            getLogger().error(errMsg);
+            throw new UserDisabledException(errMsg);
+        }
+
+        return new UserAuthenticationResult(user, isAuthenticated);
     }
 
     List<Modification> getModifications(User uOld, User uNew) {
@@ -1106,12 +1102,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             mods.add(new Modification(ModificationType.REPLACE,
                 GlobalConstants.ATTR_SOFT_DELETED, String.valueOf(uNew
                     .isSoftDeleted())));
-            
+
             if (uNew.isSoftDeleted()) {
-                mods.add(new Modification(ModificationType.ADD,ATTR_SOFT_DELETED_DATE,String.valueOf(uNew.getSoftDeleteTimestamp())));
-            }
-            else {
-                mods.add(new Modification(ModificationType.DELETE,ATTR_SOFT_DELETED_DATE));
+                mods.add(new Modification(ModificationType.ADD,
+                    ATTR_SOFT_DELETED_DATE, String.valueOf(uNew
+                        .getSoftDeleteTimestamp())));
+            } else {
+                mods.add(new Modification(ModificationType.DELETE,
+                    ATTR_SOFT_DELETED_DATE));
             }
         }
 
