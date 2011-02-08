@@ -585,7 +585,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         if (searchResult.getEntryCount() == 1) {
             SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            group = getClientGroup(e);
+            if (e.getObjectClassAttribute().hasValue(OBJECTCLASS_CLIENTGROUP)) {
+                group = getClientGroup(e);
+            }
         } else if (searchResult.getEntryCount() > 1) {
             String errMsg = String.format(
                 "More than one entry was found for client search - %s",
@@ -673,7 +675,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         SearchResult searchResult = null;
         try {
             searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
-                String.format(GROUP_FIND_BY_ID, name), ATTR_GROUP_SEARCH_ATTRIBUTES);
+                String.format(GROUP_FIND_BY_ID, name),
+                ATTR_GROUP_SEARCH_ATTRIBUTES);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for clientGroup {} - {}", name,
                 ldapEx);
