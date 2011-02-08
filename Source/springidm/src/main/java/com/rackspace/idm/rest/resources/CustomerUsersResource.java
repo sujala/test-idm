@@ -163,12 +163,11 @@ public class CustomerUsersResource {
             .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
-        /*boolean authorized = authorizationService.authorizeRacker(token)
+        boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeClient(token, request.getMethod(),
                 uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
-         */
-        boolean authorized = true;
+
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
