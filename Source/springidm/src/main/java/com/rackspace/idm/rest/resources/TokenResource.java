@@ -12,12 +12,14 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -258,6 +260,15 @@ public class TokenResource {
         }
 
         return Response.noContent().build();
+    }
+
+    @DELETE
+    @Path("{tokenString}")
+    public Response revokeTokenForUser(@Context Request request, @Context UriInfo uriInfo,@HeaderParam("Authorization") String authHeader,
+        @PathParam("{tokenString}") String tokenString, @QueryParam("username") String username) {
+        AccessToken callerToken = tokenService.getAccessTokenByAuthHeader(authHeader);
+        
+        throw new NotImplementedException();
     }
 
     // private funcs

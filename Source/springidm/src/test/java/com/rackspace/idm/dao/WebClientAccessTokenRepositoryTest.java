@@ -33,16 +33,16 @@ import com.sun.jersey.api.client.WebResource;
 @Ignore("Rackspace Dev and QA servers are down, testing locally")
 public class WebClientAccessTokenRepositoryTest {
     private static final String IDM_CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221";
-    private static final String QA_TOKEN_STRING = "QAM-xdctesttokenstring";
+    private static final String QA_TOKEN_STRING = "QA-xdctesttokenstring";
     private Client c = Client.create();
     private MemcachedClient mclient;
     private WebClientAccessTokenRepository repo;
 
     @Before
     public void setUp() {
-        // Client for the "QAM" remote instance of IDM
+        // Client for the "QA" remote instance of IDM
         WebResource wrqa = c.resource("http://10.127.7.164:8080/v1.0");
-        DataCenterClient qaServer = new DataCenterClient("QAM", wrqa);
+        DataCenterClient qaServer = new DataCenterClient("QA", wrqa);
         DataCenterEndpoints endpoints = new DataCenterEndpoints();
         endpoints.put(qaServer);
 
@@ -77,7 +77,7 @@ public class WebClientAccessTokenRepositoryTest {
     }
 
     @Test
-    @Ignore("Inserts test token on the 'remote' server's memcached. Invoke manually for debugging the client service call.")
+    //@Ignore("Inserts test token on the 'remote' server's memcached. Invoke manually for debugging the client service call.")
     public void putTokensInMemcached() {
         AccessToken token = getNewToken(600);
         // Add a token to a "cross-data-center" location
@@ -92,7 +92,7 @@ public class WebClientAccessTokenRepositoryTest {
 
     @Test
     public void shouldGetClientToken() {
-        AccessToken idmTk = repo.getMyAccessToken("QAM");
+        AccessToken idmTk = repo.getMyAccessToken("QA");
         Assert.assertNotNull(idmTk);
     }
 
