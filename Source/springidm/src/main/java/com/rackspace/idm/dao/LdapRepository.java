@@ -1,5 +1,6 @@
 package com.rackspace.idm.dao;
 
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
@@ -7,24 +8,36 @@ import com.unboundid.ldap.sdk.LDAPConnectionPool;
 public abstract class LdapRepository {
 
     // Definitions for LDAP Objectclasses
-    protected static final String[] ATTR_BASEURL_OBJECT_CLASS_VALUES = {"top",
-        "baseUrl"};
+    protected static final String OBJECTCLASS_BASEURL = "baseUrl";
+    protected static final String OBJECTCLASS_CLIENTGROUP = "clientGroup";
+    protected static final String OBJECTCLASS_CLIENTPERMISSION = "clientPermission";
+    protected static final String OBJECTCLASS_GROUPOFNAMES = "groupOfNames";
+    protected static final String OBJECTCLASS_ORGANIZATIONALUNIT = "organizationalUnit";
+    protected static final String OBJECTCLASS_RACKSPACEAPPLICATION = "rackspaceApplication";
+    protected static final String OBJECTCLASS_RACKSPACEGROUP = "rackspaceGroup";
+    protected static final String OBJECTCLASS_RACKSPACEORGANIZATION = "rackspaceOrganization";
+    protected static final String OBJECTCLASS_RACKSPACEPERSON = "rackspacePerson";
+    protected static final String OBJECTCLASS_RACKSPACETOKEN = "rackspaceToken";
+    protected static final String OBJECTCLASS_TOP = "top";
+
+    protected static final String[] ATTR_BASEURL_OBJECT_CLASS_VALUES = {
+        OBJECTCLASS_TOP, OBJECTCLASS_BASEURL};
     protected static final String[] ATTR_CLIENT_GROUP_OBJECT_CLASS_VALUES = {
-        "top", "groupOfNames", "clientGroup"};
-    protected static final String[] ATTR_CLIENT_OBJECT_CLASS_VALUES = {"top",
-        "rackspaceApplication"};
-    protected static final String[] ATTR_CUSTOMER_OBJECT_CLASS_VALUES = {"top",
-        "rackspaceOrganization"};
-    protected static final String[] ATTR_OBJECT_CLASS_OU_VALUES = {"top",
-        "organizationalUnit"};
+        OBJECTCLASS_TOP, OBJECTCLASS_GROUPOFNAMES, OBJECTCLASS_CLIENTGROUP};
+    protected static final String[] ATTR_CLIENT_OBJECT_CLASS_VALUES = {
+        OBJECTCLASS_TOP, OBJECTCLASS_RACKSPACEAPPLICATION};
+    protected static final String[] ATTR_CUSTOMER_OBJECT_CLASS_VALUES = {
+        OBJECTCLASS_TOP, OBJECTCLASS_RACKSPACEORGANIZATION};
+    protected static final String[] ATTR_OBJECT_CLASS_OU_VALUES = {
+        OBJECTCLASS_TOP, OBJECTCLASS_ORGANIZATIONALUNIT};
     protected static final String[] ATTR_PERMISSION_OBJECT_CLASS_VALUES = {
-        "top", "clientPermission"};
-    protected static final String[] ATTR_ROLE_OBJECT_CLASS_VALUES = {"top",
-        "groupOfNames", "rackspaceGroup"};
-    protected static final String[] ATTR_TOKEN_OBJECT_CLASS_VALUES = {"top",
-        "rackspaceToken"};
-    protected static final String[] ATTR_USER_OBJECT_CLASS_VALUES = {"top",
-        "rackspacePerson"};
+        OBJECTCLASS_TOP, OBJECTCLASS_CLIENTPERMISSION};
+    protected static final String[] ATTR_ROLE_OBJECT_CLASS_VALUES = {
+        OBJECTCLASS_TOP, OBJECTCLASS_GROUPOFNAMES, OBJECTCLASS_RACKSPACEGROUP};
+    protected static final String[] ATTR_TOKEN_OBJECT_CLASS_VALUES = {
+        OBJECTCLASS_TOP, OBJECTCLASS_RACKSPACETOKEN};
+    protected static final String[] ATTR_USER_OBJECT_CLASS_VALUES = {
+        OBJECTCLASS_TOP, OBJECTCLASS_RACKSPACEPERSON};
 
     // Definitions for LDAP Attributes
     protected static final String ATTR_ADMIN_URL = "adminUrl";
@@ -87,12 +100,32 @@ public abstract class LdapRepository {
     protected static final String BASEURL_BASE_DN = "ou=BaseUrls,dc=rackspace,dc=com";
     protected static final String TOKEN_BASE_DN = "ou=Tokens,dc=rackspace,dc=com";
 
+    private static final int LDAP_PAGING_OFFSET_DEFAULT = 0;
+    private static final int LDAP_PAGING_LIMIT_DEFAULT = 25;
+    private static final int LDAP_PAGINGLIMIT_MAX = 1000;
+
+    private int ldapPagingOffsetDefault;
+    private int ldapPagingLimitDefault;
+    private int ldapPagingLimitMax;
+
     private LdapConnectionPools conn;
     private Logger logger;
 
     protected LdapRepository(LdapConnectionPools conn, Logger logger) {
         this.conn = conn;
         this.logger = logger;
+    }
+
+    protected LdapRepository(LdapConnectionPools conn, Configuration config,
+        Logger logger) {
+        this.conn = conn;
+        this.logger = logger;
+        this.ldapPagingOffsetDefault = config.getInt(
+            "ldap.paging.offset.default", LDAP_PAGING_OFFSET_DEFAULT);
+        this.ldapPagingLimitDefault = config.getInt(
+            "ldap.paging.limit.default", LDAP_PAGING_LIMIT_DEFAULT);
+        this.ldapPagingLimitMax = config.getInt("ldap.paging.limit.max",
+            LDAP_PAGINGLIMIT_MAX);
     }
 
     protected LDAPConnectionPool getAppConnPool() {
@@ -105,5 +138,17 @@ public abstract class LdapRepository {
 
     protected Logger getLogger() {
         return logger;
+    }
+
+    protected int getLdapPagingOffsetDefault() {
+        return ldapPagingOffsetDefault;
+    }
+
+    protected int getLdapPagingLimitDefault() {
+        return ldapPagingLimitDefault;
+    }
+
+    protected int getLdapPagingLimitMax() {
+        return ldapPagingLimitMax;
     }
 }
