@@ -19,7 +19,7 @@ attributeTypes: ( 1.3.6.1.4.1.20988.2.1.19 NAME 'tokenRequestor' DESC 'The XRI o
 attributeTypes: ( 1.3.6.1.4.1.20988.2.1.24 NAME 'tokenOwner' DESC 'The token owner' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
 attributeTypes: ( 1.3.6.1.4.1.20988.2.1.20 NAME 'secretQuestion' DESC 'Users secret question used to reset password' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
 attributeTypes: ( 1.3.6.1.4.1.20988.2.1.21 NAME 'secretAnswer' DESC 'Users secret answer used to reset password' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
-attributeTypes: ( 1.3.6.1.4.1.20988.2.1.25 NAME 'clearPassword' DESC 'Clear text password' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+attributeTypes: ( 1.3.6.1.4.1.20988.2.1.25 NAME 'clearPassword' DESC 'Clear text password' EQUALITY caseExactMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
 attributeTypes: (1.3.6.1.4.1.20988.2.1.6 NAME 'rackspaceCustomerNumber' DESC 'Property of an rackspaceUser denoting the Customer Id the the User is associated with' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
 attributeTypes: (1.3.6.1.4.1.20988.2.1.30 NAME 'rackspacePersonNumber' DESC 'Property of an rackspaceUser denoting the Person Id the the User is associated with' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
 attributeTypes: ( 1.3.6.1.4.1.20988.2.1.40 NAME 'permission' DESC 'A list of permissions' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )

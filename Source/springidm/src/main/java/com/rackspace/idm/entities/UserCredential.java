@@ -12,8 +12,6 @@ public class UserCredential {
 
     private String secretAnswer = null;
 
-    private String clearPassword = null;
-
     /**
      * Discourage the use of the default constructor outside User
      */
@@ -65,14 +63,6 @@ public class UserCredential {
      */
     public void setSecretAnswer(String secretAnswer) {
         this.secretAnswer = secretAnswer;
-    }
-
-    public void setClearPassword(String clearPassword) {
-        this.clearPassword = clearPassword;
-    }
-
-    public String getClearPassword() {
-        return clearPassword;
     }
 
     @Override

@@ -345,16 +345,6 @@ public class User extends BaseUser {
         }
     }
 
-    public String getClearPassword() {
-        return credential.getClearPassword();
-    }
-
-    public void setClearPassword(String clearPassword) {
-        if (clearPassword != null) {
-            this.credential.setClearPassword(clearPassword);
-        }
-    }
-
     public String getInum() {
         return inum;
     }

@@ -860,8 +860,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .getAttributeValue(ATTR_PASSWORD_SECRET_Q));
         user.setSecretAnswer(resultEntry
             .getAttributeValue(ATTR_PASSWORD_SECRET_A));
-        user.setClearPassword(resultEntry
-            .getAttributeValue(ATTR_CLEAR_PASSWORD));
 
         String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
         if (statusStr != null) {
@@ -873,8 +871,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         user.setLastname(resultEntry.getAttributeValue(ATTR_SN));
         user.setTimeZoneObj(DateTimeZone.forID(resultEntry
             .getAttributeValue(ATTR_TIME_ZONE)));
+
         Password pwd = Password.existingInstance(resultEntry
-            .getAttributeValue(ATTR_PASSWORD));
+            .getAttributeValue(ATTR_CLEAR_PASSWORD));
         user.setPasswordObj(pwd);
 
         user.setRegion(resultEntry.getAttributeValue(ATTR_RACKSPACE_REGION));
