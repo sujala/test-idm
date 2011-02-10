@@ -4,7 +4,6 @@ import com.rackspace.idm.dao.*;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.EmailSettings;
 import com.rackspace.idm.entities.RefreshTokenDefaultAttributes;
-import com.rackspace.idm.entities.TokenDefaultAttributes;
 import com.rackspace.idm.oauth.DefaultOAuthService;
 import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.*;
@@ -75,28 +74,10 @@ public class ServiceConfiguration {
 
     @Bean
     public AccessTokenService tokenService() {
-        int defaultTokenExpirationSeconds = config
-            .getInt("token.expirationSeconds");
-        int cloudAuthDefaultExpirationSeconds = config
-            .getInt("token.cloudAuthExpirationSeconds");
-        int maxTokenExpirationSeconds = config
-            .getInt("token.maxExpirationSeconds");
-        int minTokenExpirationSeconds = config
-            .getInt("token.minExpirationSeconds");
-        String dataCenterPrefix = config.getString("token.dataCenterPrefix");
-        boolean isTrustedServer = config.getBoolean("ldap.server.trusted",
-            false);
-
-        TokenDefaultAttributes defaultAttributes = new TokenDefaultAttributes(
-            defaultTokenExpirationSeconds, cloudAuthDefaultExpirationSeconds,
-            maxTokenExpirationSeconds, minTokenExpirationSeconds,
-            dataCenterPrefix, isTrustedServer);
-
         Logger logger = LoggerFactory
             .getLogger(DefaultAccessTokenService.class);
-
-        return new DefaultAccessTokenService(defaultAttributes, accessTokenDao,
-            clientDao, userService(), xdcTokenDao, authHeaderHelper(), logger);
+        return new DefaultAccessTokenService(accessTokenDao, clientDao,
+            userService(), xdcTokenDao, authHeaderHelper(), config, logger);
     }
 
     @Bean
@@ -107,7 +88,8 @@ public class ServiceConfiguration {
     @Bean
     public ClientService clientService() {
         Logger logger = LoggerFactory.getLogger(DefaultClientService.class);
-        return new DefaultClientService(clientDao, customerDao, userRepo, logger);
+        return new DefaultClientService(clientDao, customerDao, userRepo,
+            logger);
     }
 
     @Bean
@@ -119,8 +101,8 @@ public class ServiceConfiguration {
     @Bean
     public CustomerService customerService() {
         Logger logger = LoggerFactory.getLogger(DefaultCustomerService.class);
-        return new DefaultCustomerService(clientDao, customerDao,
-            userRepo, logger);
+        return new DefaultCustomerService(clientDao, customerDao, userRepo,
+            logger);
     }
 
     @Bean
@@ -201,13 +183,14 @@ public class ServiceConfiguration {
     public OAuthService oauthService() {
         Logger logger = LoggerFactory.getLogger(DefaultOAuthService.class);
         return new DefaultOAuthService(userService(), clientService(),
-            tokenService(), refreshTokenService(), logger);
+            tokenService(), refreshTokenService(), config, logger);
     }
 
     @Bean
     public AuthorizationService authorizationService() {
-        Logger logger = LoggerFactory.getLogger(DefaultAuthorizationService.class);
-        String idmClientId = config.getString("idm.clientId");
-        return new DefaultAuthorizationService(clientDao, memcached, idmClientId, logger);
+        Logger logger = LoggerFactory
+            .getLogger(DefaultAuthorizationService.class);
+        return new DefaultAuthorizationService(clientDao, memcached, config,
+            logger);
     }
 }

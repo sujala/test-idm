@@ -1,7 +1,8 @@
 package com.rackspace.idm.config;
 
+import org.apache.commons.configuration.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 import com.rackspace.idm.converters.AuthConverter;
 import com.rackspace.idm.converters.ClientConverter;
@@ -15,8 +16,11 @@ import com.rackspace.idm.converters.RoleConverter;
 import com.rackspace.idm.converters.TokenConverter;
 import com.rackspace.idm.converters.UserConverter;
 
-@Configuration
+@org.springframework.context.annotation.Configuration
 public class ConverterConfiguration {
+    @Autowired
+    private Configuration config;
+    
     @Bean
     public PermissionConverter permissionConverter() {
         return new PermissionConverter();
@@ -59,7 +63,7 @@ public class ConverterConfiguration {
 
     @Bean
     EndPointConverter endpointConverter() {
-        return new EndPointConverter();
+        return new EndPointConverter(config);
     }
 
     @Bean

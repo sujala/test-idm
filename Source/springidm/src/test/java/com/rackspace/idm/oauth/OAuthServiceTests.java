@@ -1,5 +1,6 @@
 package com.rackspace.idm.oauth;
 
+import com.rackspace.idm.config.PropertyFileConfiguration;
 import com.rackspace.idm.dao.MemcachedAccessTokenRepository;
 import com.rackspace.idm.entities.*;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
@@ -11,6 +12,8 @@ import com.rackspace.idm.services.UserService;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import junit.framework.Assert;
+
+import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -49,8 +52,9 @@ public class OAuthServiceTests {
         mockAccessTokenService = EasyMock.createMock(AccessTokenService.class);
         mockRefreshTokenService = EasyMock.createMock(RefreshTokenService.class);
         authHeaderHelper = new AuthHeaderHelper();
+        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
         oauthService = new DefaultOAuthService(mockUserService, mockClientService, mockAccessTokenService,
-                mockRefreshTokenService, new StubLogger());
+                mockRefreshTokenService, appConfig, new StubLogger());
     }
 
     @Test

@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.junit.After;
@@ -39,7 +40,8 @@ public class RefreshTokenRepositoryTest {
 
     private static LdapRefreshTokenRepository getRepo(
         LdapConnectionPools connPools) {
-        return new LdapRefreshTokenRepository(connPools, new StubLogger());
+        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        return new LdapRefreshTokenRepository(connPools, appConfig, new StubLogger());
     }
 
     private static LdapConnectionPools getConnPools() {

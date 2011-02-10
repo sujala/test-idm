@@ -3,6 +3,7 @@ package com.rackspace.idm.dao;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 
@@ -32,8 +33,8 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
     private static final String ROLE_FIND_BY_NAME_AND_CUSTOMER_NUMBER_STRING = "(&(objectClass=rackspaceGroup)(cn=%s)(rackspaceCustomerNumber=%s))";
     private static final String ROLE_FIND_BY_CUSTOMERID_STRING = "(&(objectClass=rackspaceGroup)(rackspaceCustomerNumber=%s))";
 
-    public LdapRoleRepository(LdapConnectionPools connPools, Logger logger) {
-        super(connPools, logger);
+    public LdapRoleRepository(LdapConnectionPools connPools, Configuration config, Logger logger) {
+        super(connPools, config, logger);
     }
 
     public void add(Role role) {

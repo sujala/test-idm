@@ -16,10 +16,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import com.rackspace.idm.GlobalConstants;
 
 /**
  * API Version
@@ -40,12 +39,15 @@ public class VersionResource {
     private TokenResource tokenResource;
     private BaseUrlsResource baseUrlsResource;
 
+    private Configuration config;
+
     @Autowired
     public VersionResource(AuthResource authResource,
         UsersResource usersResource, CustomersResource customersResource,
         MossoUserResource mossoUserResource, NastUserResource nastUserResource,
         PasswordRulesResource passwordRulesResource,
-        TokenResource tokenResource, BaseUrlsResource baseUrlsResource) {
+        TokenResource tokenResource, BaseUrlsResource baseUrlsResource,
+        Configuration config) {
         this.authResource = authResource;
         this.usersResource = usersResource;
         this.customersResource = customersResource;
@@ -54,6 +56,7 @@ public class VersionResource {
         this.passwordRulesResource = passwordRulesResource;
         this.tokenResource = tokenResource;
         this.baseUrlsResource = baseUrlsResource;
+        this.config = config;
     }
 
     /**
@@ -70,12 +73,12 @@ public class VersionResource {
     @GET
     public Response getVersionInfo() {
         com.rackspace.idm.jaxb.Version version = new com.rackspace.idm.jaxb.Version();
-        version.setDocURL(GlobalConstants.DOC_URL);
-        version.setId(GlobalConstants.VERSION);
+        version.setDocURL(config.getString("app.version.doc.url"));
+        version.setId(config.getString("app.version"));
         version.setStatus(Enum.valueOf(
             com.rackspace.idm.jaxb.VersionStatus.class,
-            GlobalConstants.VERSION_STATUS.toUpperCase()));
-        version.setWadl(GlobalConstants.WADL_URL);
+            config.getString("app.version.status").toUpperCase()));
+        version.setWadl(config.getString("app.version.wadl.url"));
 
         return Response.ok(version).build();
     }

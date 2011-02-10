@@ -59,32 +59,32 @@ public class RepositoryConfiguration {
     @Bean
     public UserDao ldapUserRepository() {
         Logger logger = LoggerFactory.getLogger(LdapUserRepository.class);
-        return new LdapUserRepository(connPools, logger);
+        return new LdapUserRepository(connPools, appConfig, logger);
     }
 
     @Bean
     public ClientDao ldapClientRepository() {
         Logger logger = LoggerFactory.getLogger(LdapClientRepository.class);
-        return new LdapClientRepository(connPools, logger);
+        return new LdapClientRepository(connPools, appConfig, logger);
     }
 
     @Bean
     public RefreshTokenDao refreshTokenRepository() {
         Logger logger = LoggerFactory
             .getLogger(LdapRefreshTokenRepository.class);
-        return new LdapRefreshTokenRepository(connPools, logger);
+        return new LdapRefreshTokenRepository(connPools, appConfig, logger);
     }
 
     @Bean
     public CustomerDao ldapCustomerRepository() {
         Logger logger = LoggerFactory.getLogger(LdapCustomerRepository.class);
-        return new LdapCustomerRepository(connPools, logger);
+        return new LdapCustomerRepository(connPools, appConfig, logger);
     }
 
     @Bean
     public RoleDao roleDao() {
         Logger logger = LoggerFactory.getLogger(LdapRoleRepository.class);
-        return new LdapRoleRepository(connPools, logger);
+        return new LdapRoleRepository(connPools, appConfig, logger);
     }
 
     @Bean
@@ -104,7 +104,7 @@ public class RepositoryConfiguration {
     @Bean
     public EndpointDao endpointDao() {
         Logger logger = LoggerFactory.getLogger(LdapRoleRepository.class);
-        return new LdapEndpointRepository(connPools, logger);
+        return new LdapEndpointRepository(connPools, appConfig, logger);
     }
 
     @Bean(name = "xdcTokenDao")

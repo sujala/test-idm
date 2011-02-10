@@ -16,12 +16,12 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.GroupConverter;
 import com.rackspace.idm.entities.AccessToken;
@@ -50,11 +50,12 @@ public class UserGroupsResource {
     private GroupConverter groupConverter;
     private AuthorizationService authorizationService;
     private Logger logger;
+    private Configuration config;
 
     @Autowired
     public UserGroupsResource(AccessTokenService accessTokenService,
         UserService userService, ClientService clientService,
-        GroupConverter groupConverter,
+        GroupConverter groupConverter, Configuration config,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.accessTokenService = accessTokenService;
         this.userService = userService;
@@ -62,6 +63,7 @@ public class UserGroupsResource {
         this.groupConverter = groupConverter;
         this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
+        this.config = config;
     }
 
     /**
@@ -138,7 +140,7 @@ public class UserGroupsResource {
      */
     @PUT
     @Path("{groupName}")
-    public Response setRole(@Context Request request, @Context UriInfo uriInfo,
+    public Response addUserToGroup(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username,
@@ -150,7 +152,7 @@ public class UserGroupsResource {
             throw new BadRequestException(errorMsg);
         }
 
-        logger.info("Setting group {} for User {}", groupName, username);
+        logger.info("Adding user {} to group {}", username, groupName);
 
         AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
@@ -173,25 +175,25 @@ public class UserGroupsResource {
 
         if (user == null) {
             String errorMsg = String.format(
-                "Set Role Failed - User not found: %s", username);
+                "Add User to Group Failed - User not found: %s", username);
             logger.error(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
         ClientGroup group = this.clientService
             .getClientGroupByClientIdAndGroupName(
-                GlobalConstants.IDM_CLIENT_ID, groupName);
+                getIdmClientId(), groupName);
 
         if (group == null) {
             String errorMsg = String.format(
-                "Set Group Failed - Group not found: {}", groupName);
+                "Add User to Group Failed - Group not found: {}", groupName);
             logger.error(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
         this.clientService.addUserToClientGroup(username, group);
 
-        logger.info("Set the group {} for user {}", group, user);
+        logger.info("Added user {} to group {}", user, group);
 
         return Response.noContent().build();
     }
@@ -214,14 +216,14 @@ public class UserGroupsResource {
      */
     @DELETE
     @Path("{groupName}")
-    public Response deleteRole(@Context Request request,
+    public Response removeUserFromGroup(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username,
         @PathParam("groupName") String groupName) {
 
-        logger.info("Deleting role for User: {}", username);
+        logger.info("Removing user {} from group {}", username, groupName);
 
         AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
@@ -244,25 +246,25 @@ public class UserGroupsResource {
 
         if (user == null) {
             String errorMsg = String.format(
-                "Set Role Failed - User not found: %s", username);
+                "Remove User From Group Failed - User not found: %s", username);
             logger.error(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
         ClientGroup group = this.clientService
             .getClientGroupByClientIdAndGroupName(
-                GlobalConstants.IDM_CLIENT_ID, groupName);
+                getIdmClientId(), groupName);
 
         if (group == null) {
             String errorMsg = String.format(
-                "Set Group Failed - Group not found: {}", groupName);
+                "Remove User From Group Failed - Group not found: {}", groupName);
             logger.error(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
         this.clientService.removeUserFromClientGroup(username, group);
 
-        logger.info("User {} deleted from group {}", user, group);
+        logger.info("User {} removed from group {}", user, group);
 
         return Response.noContent().build();
     }
@@ -273,6 +275,10 @@ public class UserGroupsResource {
             handleUserNotFoundError(customerId, username);
         }
         return user;
+    }
+    
+    private String getIdmClientId() {
+        return config.getString("idm.clientId");
     }
 
     private void handleUserNotFoundError(String customerId, String username) {

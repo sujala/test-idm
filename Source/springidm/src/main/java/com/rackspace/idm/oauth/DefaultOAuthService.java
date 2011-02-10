@@ -8,12 +8,10 @@ import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.services.RefreshTokenService;
 import com.rackspace.idm.services.UserService;
-import org.apache.commons.lang.StringUtils;
+
+import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
-
-import java.util.HashSet;
-import java.util.Set;
 
 import static com.rackspace.idm.oauth.OAuthGrantType.*;
 
@@ -23,16 +21,19 @@ public class DefaultOAuthService implements OAuthService {
     private AccessTokenService accessTokenService;
     private RefreshTokenService refreshTokenService;
     private Logger logger;
+    private Configuration config;
 
     public DefaultOAuthService(UserService userService,
         ClientService clientService, AccessTokenService accessTokenService,
-        RefreshTokenService refreshTokenService, Logger logger) {
+        RefreshTokenService refreshTokenService, Configuration config,
+        Logger logger) {
 
         this.userService = userService;
         this.clientService = clientService;
         this.accessTokenService = accessTokenService;
         this.refreshTokenService = refreshTokenService;
         this.logger = logger;
+        this.config = config;
     }
 
     @Override
@@ -107,7 +108,7 @@ public class DefaultOAuthService implements OAuthService {
         }
 
         // Only CustomerIdm Client and Client that got token or the user of the
-        // toke are authorized to revoke token
+        // token are authorized to revoke token
 
         boolean authorized = isAuthorized(deletingToken, requestingToken);
 
@@ -134,7 +135,7 @@ public class DefaultOAuthService implements OAuthService {
     private boolean isAuthorized(AccessToken deletingToken, AccessToken requestingToken) {
         boolean isCustomerIdm = requestingToken.isClientToken()
             && requestingToken.getTokenClient().getClientId()
-                .equals(GlobalConstants.IDM_CLIENT_ID);
+                .equals(getIdmClientId());
 
         boolean isRequestor = requestingToken.isClientToken()
             && requestingToken.getTokenClient().getClientId()
@@ -209,5 +210,9 @@ public class DefaultOAuthService implements OAuthService {
         throws NotAuthenticatedException {
         logger.error(errorMsg);
         throw new NotAuthenticatedException(errorMsg);
+    }
+
+    private String getIdmClientId() {
+        return config.getString("idm.clientId");
     }
 }

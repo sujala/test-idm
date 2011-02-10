@@ -100,32 +100,15 @@ public abstract class LdapRepository {
     protected static final String BASEURL_BASE_DN = "ou=BaseUrls,dc=rackspace,dc=com";
     protected static final String TOKEN_BASE_DN = "ou=Tokens,dc=rackspace,dc=com";
 
-    private static final int LDAP_PAGING_OFFSET_DEFAULT = 0;
-    private static final int LDAP_PAGING_LIMIT_DEFAULT = 25;
-    private static final int LDAP_PAGINGLIMIT_MAX = 1000;
-
-    private int ldapPagingOffsetDefault;
-    private int ldapPagingLimitDefault;
-    private int ldapPagingLimitMax;
-
     private LdapConnectionPools conn;
     private Logger logger;
-
-    protected LdapRepository(LdapConnectionPools conn, Logger logger) {
-        this.conn = conn;
-        this.logger = logger;
-    }
+    private Configuration config;
 
     protected LdapRepository(LdapConnectionPools conn, Configuration config,
         Logger logger) {
         this.conn = conn;
         this.logger = logger;
-        this.ldapPagingOffsetDefault = config.getInt(
-            "ldap.paging.offset.default", LDAP_PAGING_OFFSET_DEFAULT);
-        this.ldapPagingLimitDefault = config.getInt(
-            "ldap.paging.limit.default", LDAP_PAGING_LIMIT_DEFAULT);
-        this.ldapPagingLimitMax = config.getInt("ldap.paging.limit.max",
-            LDAP_PAGINGLIMIT_MAX);
+        this.config = config;
     }
 
     protected LDAPConnectionPool getAppConnPool() {
@@ -141,14 +124,22 @@ public abstract class LdapRepository {
     }
 
     protected int getLdapPagingOffsetDefault() {
-        return ldapPagingOffsetDefault;
+        return config.getInt("ldap.paging.offset.default");
     }
 
     protected int getLdapPagingLimitDefault() {
-        return ldapPagingLimitDefault;
+        return config.getInt("ldap.paging.limit.default");
     }
 
     protected int getLdapPagingLimitMax() {
-        return ldapPagingLimitMax;
+        return config.getInt("ldap.paging.limit.max");
+    }
+
+    protected int getLdapPasswordFailureLockoutMin() {
+        return config.getInt("ldap.password.failure.lockout.min");
+    }
+
+    protected String getRackspaceInumPrefix() {
+        return config.getString("rackspace.inum.prefix");
     }
 }

@@ -8,6 +8,7 @@ import com.rackspace.idm.exceptions.DuplicateClientGroupException;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.NotFoundException;
 
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 
@@ -59,8 +60,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     private static final String GROUP_FIND_BY_CLIENTID = "(objectClass=clientGroup)";
     private static final String GROUP_FIND_BY_ID = "(&(cn=%s)(objectClass=clientGroup))";
 
-    public LdapClientRepository(LdapConnectionPools connPools, Logger logger) {
-        super(connPools, logger);
+    public LdapClientRepository(LdapConnectionPools connPools, Configuration config, Logger logger) {
+        super(connPools, config, logger);
     }
 
     public void add(Client client) {
@@ -119,7 +120,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         if (client.isSoftDeleted() != null) {
-            atts.add(new Attribute(GlobalConstants.ATTR_SOFT_DELETED, String
+            atts.add(new Attribute(ATTR_SOFT_DELETED, String
                 .valueOf(client.isSoftDeleted())));
         }
 
@@ -1025,6 +1026,10 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
             new SortKey(ATTR_NAME));
+        
+        offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
+        limit = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
+        limit = limit > this.getLdapPagingLimitMax() ? this.getLdapPagingLimitMax() : limit;
 
         // In the constructor below we're adding one to the offset because the
         // Rackspace API standard calls for a 0 based offset while LDAP uses a
@@ -1164,7 +1169,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         if (cNew.isSoftDeleted() != null
             && cNew.isSoftDeleted() != cOld.isSoftDeleted()) {
             mods.add(new Modification(ModificationType.REPLACE,
-                GlobalConstants.ATTR_SOFT_DELETED, String.valueOf(cNew
+                ATTR_SOFT_DELETED, String.valueOf(cNew
                     .isSoftDeleted())));
         }
 

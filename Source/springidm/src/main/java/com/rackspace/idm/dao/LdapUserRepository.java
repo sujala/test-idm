@@ -10,6 +10,8 @@ import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
 import com.unboundid.ldap.sdk.controls.VirtualListViewRequestControl;
 import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
+
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -46,8 +48,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     private static final String USER_FIND_BY_USERNAME_STRING = "(&(objectClass=rackspacePerson)(uid=%s))";
     private static final String USER_FIND_BY_USERNAME_STRING_NOT_DELETED = "(&(objectClass=rackspacePerson)(uid=%s)(softDeleted=FALSE))";
 
-    public LdapUserRepository(LdapConnectionPools connPools, Logger logger) {
-        super(connPools, logger);
+    public LdapUserRepository(LdapConnectionPools connPools, Configuration config, Logger logger) {
+        super(connPools, config, logger);
     }
 
     public void add(User user, String customerDN) {
@@ -342,7 +344,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "Null or Empty username parameter.");
         }
 
-        String[] roleIds = null;
+        String[] groupIds = null;
 
         SearchResult searchResult = null;
 
@@ -360,7 +362,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         if (searchResult.getEntryCount() == 1) {
             SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            roleIds = e.getAttributeValues(ATTR_MEMBER_OF);
+            groupIds = e.getAttributeValues(ATTR_MEMBER_OF);
         } else if (searchResult.getEntryCount() > 1) {
             getLogger().error("More than one entry was found for username {}",
                 username);
@@ -368,9 +370,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "More than one entry was found for this username");
         }
 
-        getLogger().debug("Got GroupIds for User {} - {}", username, roleIds);
+        getLogger().debug("Got GroupIds for User {} - {}", username, groupIds);
 
-        return roleIds;
+        return groupIds;
     }
 
     public String getUnusedUserInum(String customerInum) {
@@ -611,8 +613,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         for (String key : userStatusMap.keySet()) {
             String value = userStatusMap.get(key);
 
-            if (key.equals(GlobalConstants.ATTR_SOFT_DELETED)) {
-                ldapSearchString += "(" + GlobalConstants.ATTR_SOFT_DELETED
+            if (key.equals(ATTR_SOFT_DELETED)) {
+                ldapSearchString += "(" + ATTR_SOFT_DELETED
                     + "=" + value + "))";
             }
 
@@ -740,7 +742,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (user.isSoftDeleted() != null) {
-            atts.add(new Attribute(GlobalConstants.ATTR_SOFT_DELETED, String
+            atts.add(new Attribute(ATTR_SOFT_DELETED, String
                 .valueOf(user.isSoftDeleted())));
         }
 
@@ -762,6 +764,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
             new SortKey(ATTR_UID));
+        
+        offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
+        limit = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
+        limit = limit > this.getLdapPagingLimitMax() ? this.getLdapPagingLimitMax() : limit;
+        
 
         // In the constructor below we're adding one to the offset because the
         // Rackspace API standard calls for a 0 based offset while LDAP uses a
@@ -879,10 +886,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         user.setRegion(resultEntry.getAttributeValue(ATTR_RACKSPACE_REGION));
 
         String deleted = resultEntry
-            .getAttributeValue(GlobalConstants.ATTR_SOFT_DELETED);
+            .getAttributeValue(ATTR_SOFT_DELETED);
         if (deleted != null) {
             user.setSoftDeleted(resultEntry
-                .getAttributeValueAsBoolean(GlobalConstants.ATTR_SOFT_DELETED));
+                .getAttributeValueAsBoolean(ATTR_SOFT_DELETED));
         }
 
         String softDeletedTimestamp = resultEntry
@@ -918,7 +925,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         boolean passwordFailureLocked = false;
         if (passwordFailureDate != null) {
             DateTime passwordFailureDateTime = new DateTime(passwordFailureDate)
-                .plusMinutes(GlobalConstants.PASSWORD_FAILURE_LOCKOUT_MIN);
+                .plusMinutes(this.getLdapPasswordFailureLockoutMin());
             passwordFailureLocked = passwordFailureDateTime.isAfterNow();
         }
         user.setMaxLoginFailuresExceded(passwordFailureLocked);
@@ -1099,7 +1106,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         if (uNew.isSoftDeleted() != null
             && uNew.isSoftDeleted() != uOld.isSoftDeleted()) {
             mods.add(new Modification(ModificationType.REPLACE,
-                GlobalConstants.ATTR_SOFT_DELETED, String.valueOf(uNew
+                ATTR_SOFT_DELETED, String.valueOf(uNew
                     .isSoftDeleted())));
 
             if (uNew.isSoftDeleted()) {

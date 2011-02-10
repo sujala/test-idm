@@ -2,6 +2,8 @@ package com.rackspace.idm.dao;
 
 import com.rackspace.idm.entities.RefreshToken;
 import com.unboundid.ldap.sdk.*;
+
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -24,9 +26,9 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
     private static final String TOKEN_FIND_BY_OWNER_AND_REQUESTOR_STRING = "(&(objectClass=rackspaceToken)(tokenOwner=%s)(tokenRequestor=%s))";
     private static final String TOKEN_FIND_VALID_BY_OWNER_AND_REQUESTOR_STRING = "(&(objectClass=rackspaceToken)(tokenOwner=%s)(tokenRequestor=%s)(expiration>=%s))";
 
-    public LdapRefreshTokenRepository(LdapConnectionPools connPools,
+    public LdapRefreshTokenRepository(LdapConnectionPools connPools, Configuration config,
         Logger logger) {
-        super(connPools, logger);
+        super(connPools, config, logger);
     }
 
     public void save(RefreshToken refreshToken) {

@@ -131,18 +131,6 @@ public class DefaultClientService implements ClientService {
     }
 
     public Clients getByCustomerId(String customerId, int offset, int limit) {
-        // FIXME: read the default offset and limit from config file
-        // instead of the Constants class.
-
-        if (offset < GlobalConstants.LDAP_PAGING_DEFAULT_OFFSET) {
-            offset = GlobalConstants.LDAP_PAGING_DEFAULT_OFFSET;
-        }
-
-        if (limit < 1) {
-            limit = GlobalConstants.LDAP_PAGING_DEFAULT_LIMIT;
-        } else if (limit > GlobalConstants.LDAP_PAGING_MAX_LIMIT) {
-            limit = GlobalConstants.LDAP_PAGING_MAX_LIMIT;
-        }
 
         return clientDao.getByCustomerId(customerId, offset, limit);
     }
@@ -276,7 +264,7 @@ public class DefaultClientService implements ClientService {
 
         clientDao.removeUserFromGroup(user, group);
     }
-    
+
     public List<ClientGroup> getClientGroupsForUser(String username) {
         logger.info("Getting Groups for User: {}", username);
         String[] groupIds = userDao.getGroupIdsForUser(username);
@@ -288,7 +276,10 @@ public class DefaultClientService implements ClientService {
         List<ClientGroup> groups = new ArrayList<ClientGroup>();
 
         for (String groupId : groupIds) {
-            groups.add(clientDao.findClientGroupByUniqueId(groupId));
+            ClientGroup group = clientDao.findClientGroupByUniqueId(groupId);
+            if (group != null) {
+                groups.add(group);
+            }
         }
 
         logger.info("Got Groups for User: {} - {}", username, groups);

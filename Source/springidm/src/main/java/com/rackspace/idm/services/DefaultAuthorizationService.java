@@ -5,9 +5,9 @@ import java.util.List;
 
 import net.spy.memcached.MemcachedClient;
 
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.ClientGroup;
@@ -17,15 +17,15 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     private MemcachedClient memcached;
     private ClientDao clientDao;
-    private String idmClientId;
     private Logger logger;
+    private Configuration config;
 
     public DefaultAuthorizationService(ClientDao clientDao,
-        MemcachedClient memcached, String idmClientId, Logger logger) {
+        MemcachedClient memcached, Configuration config, Logger logger) {
         this.memcached = memcached;
         this.clientDao = clientDao;
-        this.idmClientId = idmClientId;
         this.logger = logger;
+        this.config = config;
     }
 
     public boolean authorizeRacker(AccessToken token) {
@@ -35,7 +35,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     public boolean authorizeRackspaceClient(AccessToken token) {
         return token.isClientToken()
             && token.getTokenClient().getCustomerId()
-                .equals(GlobalConstants.RACKSPACE_CUSTOMER_ID);
+                .equals(getRackspaceCustomerId());
     }
 
     public boolean authorizeClient(AccessToken token, String verb, String uri) {
@@ -87,9 +87,9 @@ public class DefaultAuthorizationService implements AuthorizationService {
         boolean authorized = false;
 
         for (ClientGroup r : token.getTokenUser().getGroups()) {
-            if (r.getClientId().equals(GlobalConstants.IDM_CLIENT_ID)
+            if (r.getClientId().equals(getIdmClientId())
                 && r.getName().toLowerCase()
-                    .equals(GlobalConstants.IDM_ADMIN_ROLE_NAME.toLowerCase())) {
+                    .equals(getIdmAdminGroupName().toLowerCase())) {
                 authorized = true;
             }
         }
@@ -100,7 +100,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     @Override
     public boolean authorizeCustomerIdm(AccessToken authToken, String verb,
         String uri) {
-        if (idmClientId.equals(authToken.getTokenClient().getClientId())) {
+        if (getIdmClientId().equals(authToken.getTokenClient().getClientId())) {
             return authorizeClient(authToken, verb, uri);
         }
         return false;
@@ -116,7 +116,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         List<String> uris = new ArrayList<String>();
 
         for (Permission perm : permissions) {
-            if (perm.getClientId().equals(GlobalConstants.IDM_CLIENT_ID)) {
+            if (perm.getClientId().equals(getIdmClientId())) {
                 Permission p = (Permission) memcached.get(perm
                     .getPermissionId());
                 if (p == null) {
@@ -172,5 +172,17 @@ public class DefaultAuthorizationService implements AuthorizationService {
         actionURIRegex += "$";
 
         return actionURIRequest.matches(actionURIRegex);
+    }
+
+    private String getIdmAdminGroupName() {
+        return config.getString("idm.AdminGroupName");
+    }
+
+    private String getIdmClientId() {
+        return config.getString("idm.clientId");
+    }
+
+    private String getRackspaceCustomerId() {
+        return config.getString("rackspace.customerId");
     }
 }

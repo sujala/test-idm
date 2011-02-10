@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 
@@ -32,8 +33,8 @@ public class LdapEndpointRepository extends LdapRepository implements
 
     private static final String USER_FIND_BY_USERNAME_BASESTRING = "(&(objectClass=rackspacePerson)(uid=%s))";
 
-    public LdapEndpointRepository(LdapConnectionPools connPools, Logger logger) {
-        super(connPools, logger);
+    public LdapEndpointRepository(LdapConnectionPools connPools, Configuration config, Logger logger) {
+        super(connPools, config, logger);
     }
 
     public void addBaseUrl(CloudBaseUrl baseUrl) {

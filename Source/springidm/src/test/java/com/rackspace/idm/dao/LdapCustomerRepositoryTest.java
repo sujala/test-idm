@@ -2,6 +2,7 @@ package com.rackspace.idm.dao;
 
 import java.util.List;
 
+import org.apache.commons.configuration.Configuration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -42,7 +43,8 @@ public class LdapCustomerRepositoryTest {
     }
 
     private static LdapCustomerRepository getRepo(LdapConnectionPools connPools) {
-        return new LdapCustomerRepository(connPools, new StubLogger());
+        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        return new LdapCustomerRepository(connPools, appConfig, new StubLogger());
     }
 
     private static LdapConnectionPools getConnPools() {

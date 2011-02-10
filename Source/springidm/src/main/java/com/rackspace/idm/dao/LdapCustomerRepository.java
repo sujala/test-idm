@@ -3,6 +3,7 @@ package com.rackspace.idm.dao;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 
@@ -30,8 +31,8 @@ public class LdapCustomerRepository extends LdapRepository implements
     private static final String CUSTOMER_FIND_BY_CUSTOMER_ID_STRING_NOT_DELETED = "(&(objectClass=rackspaceOrganization)(rackspaceCustomerNumber=%s)(softDeleted=FALSE))";
     private static final String CUSTOMER_FIND_BY_INUM_STRING = "(&(objectClass=rackspaceOrganization)(inum=%s))";
 
-    public LdapCustomerRepository(LdapConnectionPools connPools, Logger logger) {
-        super(connPools, logger);
+    public LdapCustomerRepository(LdapConnectionPools connPools, Configuration config, Logger logger) {
+        super(connPools, config, logger);
     }
 
     public void add(Customer customer) {
@@ -413,7 +414,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         if (cNew.getSoftDeleted() != null
             && cNew.getSoftDeleted() != cOld.getSoftDeleted()) {
             mods.add(new Modification(ModificationType.REPLACE,
-                GlobalConstants.ATTR_SOFT_DELETED, String.valueOf(cNew
+                ATTR_SOFT_DELETED, String.valueOf(cNew
                     .getSoftDeleted())));
         }
 
@@ -472,7 +473,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         Customer customer = null;
         String inum = "";
         do {
-            inum = GlobalConstants.RACKSPACE_INUMBER_PREFIX
+            inum = this.getRackspaceInumPrefix()
                 + InumHelper.getRandomInum(2);
             customer = findByInum(inum);
         } while (customer != null);

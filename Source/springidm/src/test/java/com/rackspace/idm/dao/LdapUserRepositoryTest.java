@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.After;
@@ -56,7 +57,8 @@ public class LdapUserRepositoryTest {
     }
 
     private static LdapUserRepository getRepo(LdapConnectionPools connPools) {
-        return new LdapUserRepository(connPools, new StubLogger());
+        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        return new LdapUserRepository(connPools, appConfig, new StubLogger());
     }
 
     private static LdapConnectionPools getConnPools() {

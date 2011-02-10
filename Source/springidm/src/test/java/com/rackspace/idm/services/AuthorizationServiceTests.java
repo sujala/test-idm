@@ -11,6 +11,7 @@ import com.rackspace.idm.util.AuthHeaderHelper;
 import junit.framework.Assert;
 import net.spy.memcached.MemcachedClient;
 
+import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -30,7 +31,7 @@ public class AuthorizationServiceTests {
 
     String customerId = "RACKSPACE";
     String otherCustomerId = "RCN-000-000-000";
-    String clientId = GlobalConstants.IDM_CLIENT_ID;
+    String clientId = "18e7a7032733486cd32f472d7bd58f709ac0d221";
 
     String username = "username";
 
@@ -55,7 +56,7 @@ public class AuthorizationServiceTests {
     ClientGroup admin;
     List<ClientGroup> groups;
 
-    String adminRoleName = GlobalConstants.IDM_ADMIN_ROLE_NAME;
+    String adminRoleName = "Idm Admin";
 
     AccessToken trustedToken;
     AccessToken authorizedClientToken;
@@ -72,7 +73,9 @@ public class AuthorizationServiceTests {
         MemcachedClient mclient = new MemcachedConfiguration(
             new PropertyFileConfiguration().getConfigFromClasspath(),
             new StubLogger()).memcacheClient();
-        service = new DefaultAuthorizationService(mockClientDao, mclient, "idmClientId", new StubLogger());
+
+        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        service = new DefaultAuthorizationService(mockClientDao, mclient, appConfig, new StubLogger());
         setUpObjects();
     }
 

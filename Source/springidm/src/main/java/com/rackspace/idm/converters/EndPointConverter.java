@@ -2,6 +2,8 @@ package com.rackspace.idm.converters;
 
 import java.util.List;
 
+import org.apache.commons.configuration.Configuration;
+
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.entities.CloudBaseUrl;
 import com.rackspace.idm.entities.CloudEndpoint;
@@ -16,8 +18,33 @@ import com.rackspace.idm.util.ServiceCatalogFactory;
 
 public class EndPointConverter {
 
+    private Configuration config;
+
     protected ObjectFactory of = new ObjectFactory();
     protected ServiceCatalogFactory sf = new ServiceCatalogFactory();
+
+    public EndPointConverter(Configuration config) {
+        this.config = config;
+    }
+
+    public BaseURL toBaseUrl(CloudBaseUrl url) {
+        if (url == null) {
+            return null;
+        }
+        BaseURL baseUrl = of.createBaseURL();
+        baseUrl.setAdminURL(url.getAdminUrl());
+        baseUrl.setDefault(url.getDef());
+        baseUrl.setId(url.getBaseUrlId());
+        baseUrl.setInternalURL(url.getInternalUrl());
+        baseUrl.setPublicURL(url.getPublicUrl());
+        baseUrl.setRegion(url.getRegion());
+        baseUrl.setServiceName(url.getService());
+        if (url.getBaseUrlType() != null) {
+            baseUrl.setUserType(Enum.valueOf(UserType.class, url
+                .getBaseUrlType().toUpperCase()));
+        }
+        return baseUrl;
+    }
 
     public CloudBaseUrl toBaseUrlDO(BaseURL baseURL) {
         if (baseURL == null) {
@@ -44,14 +71,14 @@ public class EndPointConverter {
         BaseURLRef baseUrlRef = of.createBaseURLRef();
         baseUrlRef.setId(endpoint.getBaseUrl().getBaseUrlId());
         baseUrlRef.setV1Default(endpoint.isV1preferred());
-        baseUrlRef.setHref(String.format(GlobalConstants.BASE_URL_REF_STRING,
-            endpoint.getBaseUrl().getBaseUrlId()));
+        baseUrlRef.setHref(String.format(getBaseUrlReferenceString(),
+            getAppVersion(), endpoint.getBaseUrl().getBaseUrlId()));
         return baseUrlRef;
     }
 
     public BaseURLRefs toBaseUrlRefs(List<CloudEndpoint> endpoints) {
         BaseURLRefs refs = of.createBaseURLRefs();
-        
+
         if (endpoints == null || endpoints.size() == 0) {
             return refs;
         }
@@ -61,25 +88,7 @@ public class EndPointConverter {
         }
         return refs;
     }
-    
-    public BaseURL toBaseUrl(CloudBaseUrl url) {
-        if (url == null) {
-            return null;
-        }
-        BaseURL baseUrl = of.createBaseURL();
-        baseUrl.setAdminURL(url.getAdminUrl());
-        baseUrl.setDefault(url.getDef());
-        baseUrl.setId(url.getBaseUrlId());
-        baseUrl.setInternalURL(url.getInternalUrl());
-        baseUrl.setPublicURL(url.getPublicUrl());
-        baseUrl.setRegion(url.getRegion());
-        baseUrl.setServiceName(url.getService());
-        if (url.getBaseUrlType() != null) {
-        baseUrl.setUserType(Enum.valueOf(UserType.class, url.getBaseUrlType().toUpperCase()));
-        }
-        return baseUrl;
-    }
-    
+
     public BaseURLs toBaseUrls(List<CloudBaseUrl> urls) {
         BaseURLs baseUrls = of.createBaseURLs();
         if (urls == null || urls.size() == 0) {
@@ -93,7 +102,7 @@ public class EndPointConverter {
 
     public ServiceCatalog toServiceCatalog(List<CloudEndpoint> endpoints) {
         ServiceCatalog catalog = of.createServiceCatalog();
-        
+
         if (endpoints == null || endpoints.size() == 0) {
             return catalog;
         }
@@ -101,6 +110,14 @@ public class EndPointConverter {
         catalog = sf.createNew(endpoints);
 
         return catalog;
+    }
+
+    private String getAppVersion() {
+        return config.getString("app.version");
+    }
+
+    private String getBaseUrlReferenceString() {
+        return config.getString("cloud.baseurl.ref.string");
     }
 
 }

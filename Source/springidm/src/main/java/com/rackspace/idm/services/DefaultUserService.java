@@ -194,19 +194,6 @@ public class DefaultUserService implements UserService {
     public Users getByCustomerId(String customerId, int offset, int limit) {
         logger.debug("Getting Users for Cutomer: {}", customerId);
 
-        // FIXME: read the default offset and limit from config file
-        // instead of the Constants class.
-
-        if (offset < GlobalConstants.LDAP_PAGING_DEFAULT_OFFSET) {
-            offset = GlobalConstants.LDAP_PAGING_DEFAULT_OFFSET;
-        }
-
-        if (limit < 1) {
-            limit = GlobalConstants.LDAP_PAGING_DEFAULT_LIMIT;
-        } else if (limit > GlobalConstants.LDAP_PAGING_MAX_LIMIT) {
-            limit = GlobalConstants.LDAP_PAGING_MAX_LIMIT;
-        }
-
         Users users = this.userDao.findByCustomerId(customerId, offset, limit);
 
         logger.debug("Got Users for Customer: {}", customerId);

@@ -4,12 +4,14 @@ import java.util.Locale;
 
 import junit.framework.Assert;
 
+import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.rackspace.idm.config.PropertyFileConfiguration;
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.MemcachedAccessTokenRepository;
@@ -73,7 +75,7 @@ public class AccessTokenServiceTests {
     int cloudAuthExpirationSeconds = 86400;
     int maxTokenExpirationSeconds = 86400;
     int minTokenExpirationSeconds = 10;
-    String dataCenterPrefix = "DFW";
+    String dataCenterPrefix = "DEV";
     boolean isTrustedServer = false;
 
     @Before
@@ -88,9 +90,10 @@ public class AccessTokenServiceTests {
             defaultTokenExpirationSeconds, cloudAuthExpirationSeconds,
             maxTokenExpirationSeconds, minTokenExpirationSeconds,
             dataCenterPrefix, isTrustedServer);
-        tokenService = new DefaultAccessTokenService(defaultAttributes,
+        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        tokenService = new DefaultAccessTokenService(
             mockTokenDao, mockClientDao, mockUserService,
-            mockWebClientAccessTokenDao, new AuthHeaderHelper(),
+            mockWebClientAccessTokenDao, new AuthHeaderHelper(), appConfig,
             new StubLogger());
     }
 

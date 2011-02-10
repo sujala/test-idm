@@ -1,5 +1,6 @@
 package com.rackspace.idm.dao;
 
+import org.apache.commons.configuration.Configuration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,7 +23,8 @@ public class LdapRoleRepositoryTest {
     String userDN = "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com";
 
     private static LdapRoleRepository getRepo(LdapConnectionPools connPools) {
-        return new LdapRoleRepository(connPools, new StubLogger());
+        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        return new LdapRoleRepository(connPools, appConfig, new StubLogger());
     }
 
     private static LdapConnectionPools getConnPools() {
