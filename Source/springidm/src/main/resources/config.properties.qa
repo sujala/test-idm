@@ -14,8 +14,8 @@
 
 ldap.bind.dn=cn=Directory Manager
 ldap.bind.password=Esp$2t#
-ldap.server.address=10.127.7.165
-ldap.server.port=389
+# comma or space delimited list of server addresses in host:port format
+ldap.serverList=10.127.7.165:389
 ldap.server.trusted=false
 ldap.server.pool.size.init=10
 ldap.server.pool.size.max=1000

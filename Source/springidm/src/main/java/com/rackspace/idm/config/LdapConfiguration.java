@@ -13,6 +13,8 @@ import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.RoundRobinServerSet;
 import com.unboundid.ldap.sdk.ServerSet;
 import com.unboundid.ldap.sdk.SimpleBindRequest;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * @author john.eo <br/>
@@ -50,15 +52,20 @@ public class LdapConfiguration {
      * @return
      */
     private LDAPConnectionPool connection() {
-        String[] addresses = config.getStringArray("ldap.server.address");
-        String[] portStrings = config.getStringArray("ldap.server.port");
-        if(addresses.length != portStrings.length){
-            throw new IllegalStateException("Check address and port configuration");
-        }
-        int[] ports = new int[portStrings.length];
-        int i=0;
-        for (String port : portStrings) {
-            ports[i++]=Integer.valueOf(port);
+        String[] serverList = config.getStringArray("ldap.serverList");
+        String[] hosts = new String[0];
+        int[] ports = new int[0];
+
+        for(String server : serverList) {
+            // split on space and comma
+            String[] configAddresses = (String[]) server.split("[ ,]+");
+            for (String hostPort : configAddresses) {
+                String[] parts = hostPort.split(":");
+                hosts = (String[]) ArrayUtils.add(hosts, parts[0]);
+                // default LDAP port is 389
+                int port = parts.length > 1 && StringUtils.isNotBlank(parts[1]) ? Integer.valueOf(parts[1]) : 389;
+                ports = ArrayUtils.add(ports, port);
+            }
         }
         int initPoolSize = config.getInt("ldap.server.pool.size.init",
             SERVER_POOL_SIZE_INIT);
@@ -66,7 +73,7 @@ public class LdapConfiguration {
             SERVER_POOL_SIZE_MAX);
         String bindDn = config.getString("ldap.bind.dn");
         String password = config.getString("ldap.bind.password");
-        Object[] params = {addresses, ports, initPoolSize, maxPoolSize};
+        Object[] params = {hosts, ports, initPoolSize, maxPoolSize};
         logger
             .debug(
                 "LDAP Config [address={}, port={}, connection_pool_init={}, connection_pool_max={}",
@@ -74,7 +81,7 @@ public class LdapConfiguration {
 
         LDAPConnectionPool connPool = null;
         try {
-            ServerSet serverSet = new RoundRobinServerSet(addresses, ports);
+            ServerSet serverSet = new RoundRobinServerSet(hosts, ports);
             BindRequest bind = new SimpleBindRequest(bindDn, password);
             connPool = new LDAPConnectionPool(serverSet, bind, initPoolSize, maxPoolSize);
         } catch (LDAPException e) {
