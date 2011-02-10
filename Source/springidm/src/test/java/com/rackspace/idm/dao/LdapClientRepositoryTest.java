@@ -418,7 +418,7 @@ public class LdapClientRepositoryTest {
         Client testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group);
-        repo.addUserToClientGroup(createTestUser(), group);
+        repo.addUserToClientGroup(createTestUser().getUniqueId(), group);
         repo.delete(testClient.getClientId());
     }
     
@@ -427,9 +427,9 @@ public class LdapClientRepositoryTest {
         Client testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group);
-        repo.addUserToClientGroup(createTestUser(), group);
+        repo.addUserToClientGroup(createTestUser().getUniqueId(), group);
         try {
-            repo.addUserToClientGroup(createTestUser(), group);
+            repo.addUserToClientGroup(createTestUser().getUniqueId(), group);
             Assert.fail();
         }
         catch (Exception ex) {
@@ -458,7 +458,7 @@ public class LdapClientRepositoryTest {
         Client testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         try {
-        repo.addUserToClientGroup(new User(), group);
+        repo.addUserToClientGroup(new User().getUniqueId(), group);
         Assert.fail();
         }
         catch (Exception ex) {
@@ -473,7 +473,7 @@ public class LdapClientRepositoryTest {
         Client testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         try {
-        repo.addUserToClientGroup(createTestUser(), null);
+        repo.addUserToClientGroup(createTestUser().getUniqueId(), null);
         Assert.fail();
         }
         catch (Exception ex) {
@@ -489,7 +489,7 @@ public class LdapClientRepositoryTest {
         ClientGroup group = createNewTestClientGroup(testClient);
         group.setUniqueId(null);
         try {
-        repo.addUserToClientGroup(createTestUser(), group);
+        repo.addUserToClientGroup(createTestUser().getUniqueId(), group);
         Assert.fail();
         }
         catch (Exception ex) {
@@ -505,8 +505,8 @@ public class LdapClientRepositoryTest {
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group);
         User user = createTestUser();
-        repo.addUserToClientGroup(user, group);
-        repo.removeUserFromGroup(user, group);
+        repo.addUserToClientGroup(user.getUniqueId(), group);
+        repo.removeUserFromGroup(user.getUniqueId(), group);
         repo.delete(testClient.getClientId());
     }
     
@@ -517,7 +517,7 @@ public class LdapClientRepositoryTest {
         repo.addClientGroup(group);
         User user = createTestUser();
         try {
-        repo.removeUserFromGroup(user, group);
+        repo.removeUserFromGroup(user.getUniqueId(), group);
         }
         catch (Exception ex) {
             Assert.assertTrue(ex instanceof NotFoundException);
@@ -545,7 +545,7 @@ public class LdapClientRepositoryTest {
         Client testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         try {
-        repo.removeUserFromGroup(new User(), group);
+        repo.removeUserFromGroup(new User().getUniqueId(), group);
         Assert.fail();
         }
         catch (Exception ex) {
@@ -560,7 +560,7 @@ public class LdapClientRepositoryTest {
         Client testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         try {
-        repo.removeUserFromGroup(createTestUser(), null);
+        repo.removeUserFromGroup(createTestUser().getUniqueId(), null);
         Assert.fail();
         }
         catch (Exception ex) {
@@ -576,7 +576,7 @@ public class LdapClientRepositoryTest {
         ClientGroup group = createNewTestClientGroup(testClient);
         group.setUniqueId(null);
         try {
-        repo.removeUserFromGroup(createTestUser(), group);
+        repo.removeUserFromGroup(createTestUser().getUniqueId(), group);
         Assert.fail();
         }
         catch (Exception ex) {

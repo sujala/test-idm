@@ -337,14 +337,14 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().debug("Added permission {}", permission);
     }
 
-    public void addUserToClientGroup(User user, ClientGroup group) {
+    public void addUserToClientGroup(String userUniqueId, ClientGroup group) {
 
-        getLogger().info("Adding user {} to {}", user, group);
+        getLogger().info("Adding user {} to {}", userUniqueId, group);
 
-        if (user == null || StringUtils.isBlank(user.getUniqueId())) {
-            getLogger().error("Null user passed in or user uniqueId was blank");
+        if (StringUtils.isBlank(userUniqueId)) {
+            getLogger().error("User uniqueId was blank");
             throw new IllegalArgumentException(
-                "Null user passed in or user uniqueId was blank");
+                "User uniqueId was blank");
         }
 
         if (group == null || StringUtils.isBlank(group.getUniqueId())) {
@@ -355,8 +355,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.ADD, ATTR_MEMBER, user
-            .getUniqueId()));
+        mods.add(new Modification(ModificationType.ADD, ATTR_MEMBER, userUniqueId));
 
         LDAPResult result;
         try {
@@ -378,7 +377,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 group, result.getResultCode().toString()));
         }
 
-        getLogger().info("Added user {} to group {}", user, group);
+        getLogger().info("Added user {} to group {}", userUniqueId, group);
     }
 
     public ClientAuthenticationResult authenticate(String clientId,
@@ -795,10 +794,10 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return inum;
     }
 
-    public void removeUserFromGroup(User user, ClientGroup group) {
-        getLogger().info("Removing user {} from {}", user, group);
+    public void removeUserFromGroup(String userUniqueId, ClientGroup group) {
+        getLogger().info("Removing user {} from {}", userUniqueId, group);
 
-        if (user == null || StringUtils.isBlank(user.getUniqueId())) {
+        if (StringUtils.isBlank(userUniqueId)) {
             getLogger().error("Null user passed in or user uniqueId was blank");
             throw new IllegalArgumentException(
                 "Null user passed in or user uniqueId was blank");
@@ -812,8 +811,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER, user
-            .getUniqueId()));
+        mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER, userUniqueId));
 
         LDAPResult result;
         try {
@@ -837,7 +835,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                         group, result.getResultCode().toString()));
         }
 
-        getLogger().info("Removed user {} from group {}", user, group);
+        getLogger().info("Removed user {} from group {}", userUniqueId, group);
     }
 
     public void save(Client client) {

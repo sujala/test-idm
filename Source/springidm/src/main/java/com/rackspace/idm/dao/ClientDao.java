@@ -17,7 +17,7 @@ public interface ClientDao {
 
     void addDefinedPermission(Permission permission);
 
-    void addUserToClientGroup(User user, ClientGroup group);
+    void addUserToClientGroup(String userUniqueId, ClientGroup group);
 
     ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 
@@ -55,7 +55,7 @@ public interface ClientDao {
 
     String getUnusedClientInum(String customerInum);
 
-    void removeUserFromGroup(User user, ClientGroup group);
+    void removeUserFromGroup(String userUniqueId, ClientGroup group);
 
     void save(Client client);
 

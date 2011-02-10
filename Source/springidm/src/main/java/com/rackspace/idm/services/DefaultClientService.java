@@ -218,7 +218,7 @@ public class DefaultClientService implements ClientService {
             throw new NotFoundException();
         }
 
-        clientDao.addUserToClientGroup(user, group);
+        clientDao.addUserToClientGroup(user.getUniqueId(), group);
     }
 
     public void deleteClientGroup(String clientId, String name) {
@@ -262,7 +262,7 @@ public class DefaultClientService implements ClientService {
             throw new NotFoundException();
         }
 
-        clientDao.removeUserFromGroup(user, group);
+        clientDao.removeUserFromGroup(user.getUniqueId(), group);
     }
 
     public List<ClientGroup> getClientGroupsForUser(String username) {

@@ -418,7 +418,7 @@ public class ClientServiceTests {
         EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(user);
         EasyMock.replay(mockUserDao);
         EasyMock.expect(mockClientDao.getClientGroupByClientIdAndGroupName(clientId, groupName)).andReturn(group);
-        mockClientDao.addUserToClientGroup(user, group);
+        mockClientDao.addUserToClientGroup(user.getUniqueId(), group);
         EasyMock.replay(mockClientDao);
         clientService.addUserToClientGroup(username, group);
         EasyMock.verify(mockUserDao);
@@ -458,7 +458,7 @@ public class ClientServiceTests {
         EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(null);
         EasyMock.replay(mockUserDao);
         EasyMock.expect(mockClientDao.getClientGroupByClientIdAndGroupName(clientId, groupName)).andReturn(group);
-        mockClientDao.addUserToClientGroup(user, group);
+        mockClientDao.addUserToClientGroup(user.getUniqueId(), group);
         EasyMock.replay(mockClientDao);
         clientService.addUserToClientGroup(username, group);
         EasyMock.verify(mockUserDao);
@@ -472,7 +472,7 @@ public class ClientServiceTests {
         EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(user);
         EasyMock.replay(mockUserDao);
         EasyMock.expect(mockClientDao.getClientGroupByClientIdAndGroupName(clientId, groupName)).andReturn(null);
-        mockClientDao.addUserToClientGroup(user, group);
+        mockClientDao.addUserToClientGroup(user.getUniqueId(), group);
         EasyMock.replay(mockClientDao);
         clientService.addUserToClientGroup(username, group);
         EasyMock.verify(mockUserDao);
@@ -486,7 +486,7 @@ public class ClientServiceTests {
         EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(user);
         EasyMock.replay(mockUserDao);
         EasyMock.expect(mockClientDao.getClientGroupByClientIdAndGroupName(clientId, groupName)).andReturn(group);
-        mockClientDao.removeUserFromGroup(user, group);
+        mockClientDao.removeUserFromGroup(user.getUniqueId(), group);
         EasyMock.replay(mockClientDao);
         clientService.removeUserFromClientGroup(username, group);
         EasyMock.verify(mockUserDao);

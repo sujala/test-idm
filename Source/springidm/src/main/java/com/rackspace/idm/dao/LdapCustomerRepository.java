@@ -7,7 +7,6 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.entities.CustomerStatus;
 import com.rackspace.idm.util.InumHelper;
