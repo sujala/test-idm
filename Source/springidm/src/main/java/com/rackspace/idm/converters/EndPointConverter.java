@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.entities.CloudBaseUrl;
 import com.rackspace.idm.entities.CloudEndpoint;
 import com.rackspace.idm.jaxb.BaseURL;
