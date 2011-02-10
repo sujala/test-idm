@@ -78,6 +78,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         getLogger().info("Added token - {}", refreshToken);
     }
 
+    @Override
     public void delete(String tokenString) {
         getLogger().info("Deleting refresh token - {}", tokenString);
         if (StringUtils.isBlank(tokenString)) {

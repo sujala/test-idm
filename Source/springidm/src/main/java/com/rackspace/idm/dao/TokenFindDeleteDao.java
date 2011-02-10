@@ -2,9 +2,9 @@ package com.rackspace.idm.dao;
 
 import com.rackspace.idm.oauthAuthentication.Token;
 
-public interface TokenCrudDao<T extends Token> extends TokenGetterDao<T> {
+public interface TokenFindDeleteDao<T extends Token> {
 
-    void save(T token);
-
+    T findByTokenString(String tokenString);
+    
     void delete(String tokenString);
 }

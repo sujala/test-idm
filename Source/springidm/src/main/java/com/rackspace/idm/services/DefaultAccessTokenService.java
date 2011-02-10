@@ -2,9 +2,9 @@ package com.rackspace.idm.services;
 
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
-import com.rackspace.idm.dao.TokenGetterDao;
+import com.rackspace.idm.dao.TokenFindDeleteDao;
 import com.rackspace.idm.dao.RefreshTokenDao;
-import com.rackspace.idm.dao.WebClientAccessTokenRepository;
+import com.rackspace.idm.dao.HttpAccessTokenRepository;
 import com.rackspace.idm.entities.*;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
@@ -17,7 +17,7 @@ import java.util.UUID;
 
 public class DefaultAccessTokenService implements AccessTokenService {
     private AccessTokenDao tokenDao;
-    private TokenGetterDao<AccessToken> xdcTokenDao;
+    private TokenFindDeleteDao<AccessToken> xdcTokenDao;
     private ClientDao clientDao;
     private Logger logger;
     private UserService userService;
@@ -28,7 +28,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
     private AuthHeaderHelper authHeaderHelper;
 
     public DefaultAccessTokenService(TokenDefaultAttributes defaultAttributes, AccessTokenDao tokenDao,
-        ClientDao clientDao, UserService userService, TokenGetterDao<AccessToken> xdcTokenDao,
+        ClientDao clientDao, UserService userService, TokenFindDeleteDao<AccessToken> xdcTokenDao,
         AuthHeaderHelper authHeaderHelper, Logger logger) {
         this.tokenDao = tokenDao;
         this.clientDao = clientDao;

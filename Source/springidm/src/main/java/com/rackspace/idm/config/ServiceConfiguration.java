@@ -50,7 +50,7 @@ public class ServiceConfiguration {
     @Autowired
     private EndpointDao endpointDao;
     @Autowired
-    private TokenGetterDao<AccessToken> xdcTokenDao;
+    private TokenFindDeleteDao<AccessToken> xdcTokenDao;
 
     @Autowired
     private Configuration config;

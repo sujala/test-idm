@@ -24,9 +24,9 @@ import com.rackspace.idm.dao.MemcachedAccessTokenRepository;
 import com.rackspace.idm.dao.AuthDao;
 import com.rackspace.idm.dao.RefreshTokenDao;
 import com.rackspace.idm.dao.RoleDao;
-import com.rackspace.idm.dao.TokenGetterDao;
+import com.rackspace.idm.dao.TokenFindDeleteDao;
 import com.rackspace.idm.dao.UserDao;
-import com.rackspace.idm.dao.WebClientAccessTokenRepository;
+import com.rackspace.idm.dao.HttpAccessTokenRepository;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.jaxb.AuthCredentials;
 import com.rackspace.idm.jaxb.AuthGrantType;
@@ -108,9 +108,9 @@ public class RepositoryConfiguration {
     }
 
     @Bean(name = "xdcTokenDao")
-    public TokenGetterDao<AccessToken> xdcTokenDao() {
+    public TokenFindDeleteDao<AccessToken> xdcTokenDao() {
         Logger logger = LoggerFactory
-            .getLogger(WebClientAccessTokenRepository.class);
+            .getLogger(HttpAccessTokenRepository.class);
         AuthCredentials idmCreds = new AuthCredentials();
         idmCreds.setClientId(appConfig.getString("idm.clientId"));
         idmCreds.setClientSecret(appConfig.getString("idm.clientSecret"));
@@ -124,6 +124,6 @@ public class RepositoryConfiguration {
             DataCenterClient client = new DataCenterClient(dcData[0], resource);
             endpoints.put(client);
         }
-        return new WebClientAccessTokenRepository(endpoints, idmCreds, logger);
+        return new HttpAccessTokenRepository(endpoints, idmCreds, logger);
     }
 }

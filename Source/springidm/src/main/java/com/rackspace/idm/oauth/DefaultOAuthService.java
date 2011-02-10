@@ -109,20 +109,7 @@ public class DefaultOAuthService implements OAuthService {
         // Only CustomerIdm Client and Client that got token or the user of the
         // toke are authorized to revoke token
 
-        boolean isCustomerIdm = requestingToken.isClientToken()
-            && requestingToken.getTokenClient().getClientId()
-                .equals(GlobalConstants.IDM_CLIENT_ID);
-
-        boolean isRequestor = requestingToken.isClientToken()
-            && requestingToken.getTokenClient().getClientId()
-                .equals(deletingToken.getTokenClient().getClientId());
-
-        boolean isOwner = requestingToken.getTokenUser() != null
-            && deletingToken.getTokenUser() != null
-            && requestingToken.getTokenUser().getUsername()
-                .equals(deletingToken.getTokenUser().getUsername());
-
-        boolean authorized = isCustomerIdm || isRequestor || isOwner;
+        boolean authorized = isAuthorized(deletingToken, requestingToken);
 
         if (!authorized) {
             String errMsg = String.format(
@@ -142,6 +129,24 @@ public class DefaultOAuthService implements OAuthService {
         deleteRefreshTokenByAccessToken(deletingToken);
         accessTokenService.delete(deletingToken.getTokenString());
         logger.info("Deleted Token {}", deletingToken);
+    }
+
+    private boolean isAuthorized(AccessToken deletingToken, AccessToken requestingToken) {
+        boolean isCustomerIdm = requestingToken.isClientToken()
+            && requestingToken.getTokenClient().getClientId()
+                .equals(GlobalConstants.IDM_CLIENT_ID);
+
+        boolean isRequestor = requestingToken.isClientToken()
+            && requestingToken.getTokenClient().getClientId()
+                .equals(deletingToken.getTokenClient().getClientId());
+
+        boolean isOwner = requestingToken.getTokenUser() != null
+            && deletingToken.getTokenUser() != null
+            && requestingToken.getTokenUser().getUsername()
+                .equals(deletingToken.getTokenUser().getUsername());
+
+        boolean authorized = isCustomerIdm || isRequestor || isOwner;
+        return authorized;
     }
 
     private void deleteRefreshTokenByAccessToken(AccessToken accessToken) {

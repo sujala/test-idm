@@ -35,7 +35,7 @@ public class WebClientAccessTokenRepositoryTest {
     private static final String QA_TOKEN_STRING = "QA-xdctesttokenstring";
     private Client c = Client.create();
     private MemcachedClient mcdRemote;
-    private WebClientAccessTokenRepository repo;
+    private HttpAccessTokenRepository repo;
 
     @Before
     public void setUp() {
@@ -59,7 +59,7 @@ public class WebClientAccessTokenRepositoryTest {
         // Delete any old token
         deleteUserTokenInMemcached();
 
-        repo = new WebClientAccessTokenRepository(endpoints, creds, new StubLogger());
+        repo = new HttpAccessTokenRepository(endpoints, creds, new StubLogger());
     }
 
     @Test
