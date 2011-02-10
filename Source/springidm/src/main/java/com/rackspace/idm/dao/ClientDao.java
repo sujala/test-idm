@@ -5,7 +5,6 @@ import com.rackspace.idm.entities.ClientAuthenticationResult;
 import com.rackspace.idm.entities.ClientGroup;
 import com.rackspace.idm.entities.Clients;
 import com.rackspace.idm.entities.Permission;
-import com.rackspace.idm.entities.User;
 
 import java.util.List;
 
