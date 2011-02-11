@@ -39,14 +39,14 @@ public class ClientGroupMembersResource {
 
     @Autowired
     public ClientGroupMembersResource(AccessTokenService accessTokenService,
-        ClientService clientService,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        ClientService clientService, AuthorizationService authorizationService,
+        LoggerFactoryWrapper logger) {
         this.accessTokenService = accessTokenService;
         this.clientService = clientService;
         this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
     }
-    
+
     /**
      * Adds a user to a client group.
      * 
@@ -76,8 +76,10 @@ public class ClientGroupMembersResource {
         AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
 
-        // Racker's or the specified client are authorized
+        // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeCustomerIdm(token,
+                request.getMethod(), uriInfo.getPath())
             || (token.isClientToken() && token.getTokenClient().getClientId()
                 .equals(clientId));
 
@@ -87,14 +89,15 @@ public class ClientGroupMembersResource {
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
-        
-        ClientGroup group = this.clientService.getClientGroupByClientIdAndGroupName(clientId, groupName);
-        
+
+        ClientGroup group = this.clientService
+            .getClientGroupByClientIdAndGroupName(clientId, groupName);
+
         this.clientService.addUserToClientGroup(username, group);
 
         return Response.ok().build();
     }
-    
+
     /**
      * Removes a user from a client group.
      * 
@@ -124,8 +127,10 @@ public class ClientGroupMembersResource {
         AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
 
-        // Racker's or the specified client are authorized
+        // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeCustomerIdm(token,
+                request.getMethod(), uriInfo.getPath())
             || (token.isClientToken() && token.getTokenClient().getClientId()
                 .equals(clientId));
 
@@ -135,9 +140,10 @@ public class ClientGroupMembersResource {
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
-        
-        ClientGroup group = this.clientService.getClientGroupByClientIdAndGroupName(clientId, groupName);
-        
+
+        ClientGroup group = this.clientService
+            .getClientGroupByClientIdAndGroupName(clientId, groupName);
+
         this.clientService.removeUserFromClientGroup(username, group);
 
         return Response.noContent().build();

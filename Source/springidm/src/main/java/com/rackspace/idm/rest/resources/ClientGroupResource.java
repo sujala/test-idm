@@ -81,8 +81,10 @@ public class ClientGroupResource {
         AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
 
-        // Racker's or the specified client are authorized
+        // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeCustomerIdm(token,
+                request.getMethod(), uriInfo.getPath())
             || (token.isClientToken() && token.getTokenClient().getClientId()
                 .equals(clientId));
 
@@ -125,7 +127,7 @@ public class ClientGroupResource {
         AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
 
-        // Racker's, Rackspace Clients andSpecific Clients are
+        // Racker's, Rackspace Clients and Specific Clients are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
