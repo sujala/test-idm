@@ -285,7 +285,6 @@ public class LdapUserRepositoryTest {
     public void shouldAddTimeStampWhenUserIsSoftDeleted() {
 
         User newUser = addNewTestUser();
-        newUser.setPassword("Dum dum diga diga");
         newUser.setSoftDeleted(true);
         
         DateTime softDeletedTimestamp = new DateTime(new Date());

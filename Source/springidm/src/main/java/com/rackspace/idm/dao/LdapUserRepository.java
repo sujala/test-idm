@@ -71,6 +71,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "LDAP error encountered when adding user: %s - %s",
                 user.getUsername(), result.getResultCode().toString()));
         }
+        
+        // Now that its in LDAP we'll set the password to existing type
+        user.setPasswordObj(Password.existingInstance(user.getPassword()));
 
         getLogger().debug("Added user {}", user);
     }
@@ -516,6 +519,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "LDAP error encountered when updating user: %s - %s"
                     + user.getUsername(), result.getResultCode().toString()));
         }
+        
+        // Now that its in LDAP we'll set the password to existing type
+        user.setPasswordObj(Password.existingInstance(user.getPassword()));
 
         getLogger().info("Updated user - {}", user);
     }
