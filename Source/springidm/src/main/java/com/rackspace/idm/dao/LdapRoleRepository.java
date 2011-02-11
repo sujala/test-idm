@@ -88,7 +88,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
 
         String roleDN = new LdapDnBuilder().setBaseDn(customerUniqueId)
             .addAttriubte(ATTR_INUM, role.getInum())
-            .addAttriubte(ATTR_OU, "groups").build();
+            .addAttriubte(ATTR_OU, OU_GROUPS_NAME).build();
 
         role.setUniqueId(roleDN);
 

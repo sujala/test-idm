@@ -53,7 +53,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         String userDN = new LdapDnBuilder().setBaseDn(customerUniqueId)
             .addAttriubte(ATTR_INUM, user.getInum())
-            .addAttriubte(ATTR_OU, "people").build();
+            .addAttriubte(ATTR_OU, OU_PEOPLE_NAME).build();
 
         user.setUniqueId(userDN);
 

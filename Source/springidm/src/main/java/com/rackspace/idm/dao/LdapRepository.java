@@ -106,6 +106,12 @@ public abstract class LdapRepository {
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
     protected static final String BASEURL_BASE_DN = "ou=BaseUrls,dc=rackspace,dc=com";
     protected static final String TOKEN_BASE_DN = "ou=Tokens,dc=rackspace,dc=com";
+    
+    // Definitions for OU names
+    protected static final String OU_GROUPS_NAME = "groups";
+    protected static final String OU_PEOPLE_NAME = "people";
+    protected static final String OU_APPLICATIONS_NAME = "applications";
+    protected static final String OU_PERMISSIONS_NAME = "permissions";
 
     private LdapConnectionPools conn;
     private Logger logger;

@@ -125,11 +125,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         LDAPResult result;
 
-        String clientDN = new LdapDnBuilder()
-            .setBaseDn(customerUniqueId)
+        String clientDN = new LdapDnBuilder().setBaseDn(customerUniqueId)
             .addAttriubte(ATTR_INUM, client.getInum())
-            .addAttriubte(ATTR_OU, "people")
-            .build();
+            .addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME).build();
 
         client.setUniqueId(clientDN);
 
@@ -148,13 +146,16 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 client.getName(), result.getResultCode().toString()));
         }
 
-        String clientPermissionsDN = "ou=permissions," + clientDN;
-        String clientGroupsDN = "ou=groups," + clientDN;
+        String clientPermissionsDN = new LdapDnBuilder().setBaseDn(clientDN)
+            .addAttriubte(ATTR_OU, OU_PERMISSIONS_NAME).build();
+
+        String clientGroupsDN = new LdapDnBuilder().setBaseDn(clientDN)
+            .addAttriubte(ATTR_OU, OU_GROUPS_NAME).build();
 
         // Add ou=permissions under new client entry
         Attribute[] permissionAttributes = {
             new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
-            new Attribute(ATTR_OU, "permissions")};
+            new Attribute(ATTR_OU, OU_PERMISSIONS_NAME)};
 
         try {
             result = getAppConnPool().add(clientPermissionsDN,
@@ -177,7 +178,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         // Add ou=groups under new client entry
         Attribute[] groupAttributes = {
             new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
-            new Attribute(ATTR_OU, "groups")};
+            new Attribute(ATTR_OU, OU_GROUPS_NAME)};
 
         try {
             result = getAppConnPool().add(clientGroupsDN, groupAttributes);
@@ -237,7 +238,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         String groupDN = new LdapDnBuilder().setBaseDn(client.getUniqueId())
             .addAttriubte(ATTR_NAME, clientGroup.getName())
-            .addAttriubte(ATTR_OU, "groups").build();
+            .addAttriubte(ATTR_OU, OU_GROUPS_NAME).build();
 
         clientGroup.setUniqueId(groupDN);
 
@@ -296,7 +297,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         String permissionDN = new LdapDnBuilder().setBaseDn(clientDN)
             .addAttriubte(ATTR_NAME, permission.getPermissionId())
-            .addAttriubte(ATTR_OU, "permissions").build();
+            .addAttriubte(ATTR_OU, OU_PERMISSIONS_NAME).build();
 
         permission.setUniqueId(permissionDN);
 

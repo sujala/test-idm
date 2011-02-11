@@ -86,11 +86,11 @@ public class LdapCustomerRepository extends LdapRepository implements
         customer.setUniqueId(customerDN);
 
         String customerGroupsDN = new LdapDnBuilder().setBaseDn(customerDN)
-            .addAttriubte(ATTR_OU, "groups").build();
+            .addAttriubte(ATTR_OU, OU_GROUPS_NAME).build();
         String customerPeopleDN = new LdapDnBuilder().setBaseDn(customerDN)
-            .addAttriubte(ATTR_OU, "people").build();
+            .addAttriubte(ATTR_OU, OU_PEOPLE_NAME).build();
         String customerApplicationsDN = new LdapDnBuilder()
-            .setBaseDn(customerDN).addAttriubte(ATTR_OU, "applications")
+            .setBaseDn(customerDN).addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME)
             .build();
 
         try {
@@ -112,7 +112,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         // Add ou=groups under new customer entry
         Attribute[] groupAttributes = {
             new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
-            new Attribute(ATTR_OU, "groups")};
+            new Attribute(ATTR_OU, OU_GROUPS_NAME)};
 
         try {
             result = getAppConnPool().add(customerGroupsDN, groupAttributes);
@@ -137,7 +137,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         // Add ou=people under new customer entry
         Attribute[] peopleAttributes = {
             new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
-            new Attribute(ATTR_OU, "people")};
+            new Attribute(ATTR_OU, OU_PEOPLE_NAME)};
 
         try {
             result = getAppConnPool().add(customerPeopleDN, peopleAttributes);
@@ -352,14 +352,14 @@ public class LdapCustomerRepository extends LdapRepository implements
 
     public void save(Customer customer) {
         getLogger().debug("Updating customer {}", customer);
-        
+
         if (customer == null || StringUtils.isBlank(customer.getCustomerId())) {
             getLogger().error(
                 "Customer instance is null or its customerId has no value");
             throw new IllegalArgumentException(
                 "Bad parameter: The Customer instance either null or its customerId has no value.");
         }
-        
+
         Customer oldCustomer = findByCustomerId(customer.getCustomerId());
 
         if (oldCustomer == null) {
