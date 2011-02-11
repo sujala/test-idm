@@ -24,7 +24,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
 public class DefaultUserService implements UserService {
 
