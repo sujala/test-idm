@@ -22,13 +22,11 @@ import com.rackspace.idm.entities.BaseClient;
 import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.entities.ClientGroup;
 import com.rackspace.idm.entities.Permission;
-import com.rackspace.idm.jaxb.AuthCredentials;
-import com.rackspace.idm.jaxb.AuthGrantType;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 
-public class WebClientAccessTokenRepositoryTest {
+public class HttpAccessTokenRepositoryTest {
     private static final String TOKEN_OWNER = "userTested";
     private static final String TOKEN_REQUESTOR = "controlpanel";
     private static final String IDM_CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221";
@@ -45,12 +43,6 @@ public class WebClientAccessTokenRepositoryTest {
         DataCenterEndpoints endpoints = new DataCenterEndpoints();
         endpoints.put(qaServer);
 
-        // Credentials for Customer IDM
-        AuthCredentials creds = new AuthCredentials();
-        creds.setClientId(IDM_CLIENT_ID);
-        creds.setClientSecret("password");
-        creds.setGrantType(AuthGrantType.NONE);
-
         // Use the QA memcached server to simulated XDC token store
         Configuration qaconfig = new PropertiesConfiguration();
         qaconfig.addProperty("memcached.serverList", "10.127.7.165:11211");
@@ -59,7 +51,13 @@ public class WebClientAccessTokenRepositoryTest {
         // Delete any old token
         deleteUserTokenInMemcached();
 
-        repo = new HttpAccessTokenRepository(endpoints, creds, new StubLogger());
+        Configuration config = new PropertiesConfiguration();
+        config.addProperty("idm.clientId", IDM_CLIENT_ID);
+        config.addProperty("idm.clientSecret", "password");
+        String[] dcs = {"QA|http://10.127.7.164:8080/v1.0"};
+        config.addProperty("dc", dcs);
+
+        repo = new HttpAccessTokenRepository(config, new StubLogger());
     }
 
     @Test

@@ -4,6 +4,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 
@@ -13,19 +14,21 @@ import com.rackspace.idm.converters.TokenConverter;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.jaxb.Auth;
 import com.rackspace.idm.jaxb.AuthCredentials;
+import com.rackspace.idm.jaxb.AuthGrantType;
 import com.rackspace.idm.jaxb.IdmFault;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 
 public abstract class HttpRepository {
     protected static final String TOKEN_RESOURCE_PATH = "token";
-    protected DataCenterEndpoints endpoints;
-    protected AuthCredentials idmCreds;
+    protected Configuration config;
     protected TokenConverter converter = new TokenConverter();
 
-    public HttpRepository(DataCenterEndpoints endpoints, AuthCredentials idmCreds) {
-        this.endpoints = endpoints;
-        this.idmCreds = idmCreds;
+    private DataCenterEndpoints endpoints;
+    private AuthCredentials idmCreds;
+
+    public HttpRepository(Configuration config) {
+        this.config = config;
     }
 
     /**
@@ -35,7 +38,7 @@ public abstract class HttpRepository {
      * @return Access token that represents the local IDM instance.
      */
     protected AccessToken getMyAccessToken(String dc) {
-        DataCenterClient client = endpoints.get(dc);
+        DataCenterClient client = getEndpoints().get(dc);
         AccessToken myToken = client.getAccessToken();
         if (myToken != null && !myToken.isExpired(new DateTime())) {
             return myToken;
@@ -45,13 +48,37 @@ public abstract class HttpRepository {
         ClientResponse resp;
         try {
             resp = client.getResource().path(TOKEN_RESOURCE_PATH).accept(MediaType.APPLICATION_XML_TYPE)
-                .type(MediaType.APPLICATION_XML).entity(idmCreds).post(ClientResponse.class);
+                .type(MediaType.APPLICATION_XML).entity(getIdmCreds()).post(ClientResponse.class);
         } catch (UniformInterfaceException e) {
             handleHttpCallException(e);
             return null;
         }
 
         return extractMyAccessToken(resp, client);
+    }
+
+    private AuthCredentials getIdmCreds() {
+        String clientId = config.getString("idm.clientId");
+        String clientSecret = config.getString("idm.clientSecret");
+
+        if (idmCreds != null && idmCreds.getClientId().equals(clientId)
+            && idmCreds.getClientSecret().equals(clientSecret)) {
+            return idmCreds;
+        }
+
+        idmCreds = new AuthCredentials();
+        idmCreds.setClientId(clientId);
+        idmCreds.setClientSecret(clientSecret);
+        idmCreds.setGrantType(AuthGrantType.NONE);
+        return idmCreds;
+    }
+
+    protected DataCenterEndpoints getEndpoints() {
+        String[] dcs = config.getStringArray("dc");
+        if (endpoints == null) {
+            return DataCenterEndpoints.build(dcs);
+        }
+        return DataCenterEndpoints.refresh(endpoints, dcs);
     }
 
     protected AccessToken extractMyAccessToken(ClientResponse resp, DataCenterClient client) {
@@ -69,10 +96,8 @@ public abstract class HttpRepository {
         }
     }
 
-    protected abstract void handleHttpCallException(UniformInterfaceException e);
-
     protected <T> T makeHttpCall(HttpCaller<T> caller, String dc) {
-        final DataCenterClient client = endpoints.get(dc);
+        final DataCenterClient client = getEndpoints().get(dc);
         if (client == null) {
             getLogger().warn("Invalid prefix " + dc + " given");
             return null;
@@ -103,6 +128,22 @@ public abstract class HttpRepository {
 
     protected String getOauthAuthorizationHeader(String myTokenStr) {
         return "OAuth " + myTokenStr;
+    }
+
+    protected void handleHttpCallException(UniformInterfaceException e) {
+        getLogger().warn("Client call to another DC failed.", e);
+        ClientResponse resp = e.getResponse();
+        if (resp == null) {
+            getLogger().warn("No response returned.");
+            return;
+        }
+
+        if (MediaType.APPLICATION_OCTET_STREAM_TYPE.equals(resp.getType())) {
+            getLogger().warn("Cause -> {}: {}", e);
+        } else {
+            IdmFault fault = resp.getEntity(IdmFault.class);
+            getLogger().warn("Cause -> {}: {}", fault.getMessage(), fault.getDetails());
+        }
     }
 
     protected abstract Logger getLogger();

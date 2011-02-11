@@ -111,19 +111,6 @@ public class RepositoryConfiguration {
     public TokenFindDeleteDao<AccessToken> xdcTokenDao() {
         Logger logger = LoggerFactory
             .getLogger(HttpAccessTokenRepository.class);
-        AuthCredentials idmCreds = new AuthCredentials();
-        idmCreds.setClientId(appConfig.getString("idm.clientId"));
-        idmCreds.setClientSecret(appConfig.getString("idm.clientSecret"));
-        idmCreds.setGrantType(AuthGrantType.NONE);
-        String[] dcs = appConfig.getStringArray("dc");
-        DataCenterEndpoints endpoints = new DataCenterEndpoints();
-        Client jclient = Client.create();
-        for (String dc : dcs) {
-            String[] dcData = dc.split("\\|");
-            WebResource resource = jclient.resource(dcData[1]);
-            DataCenterClient client = new DataCenterClient(dcData[0], resource);
-            endpoints.put(client);
-        }
-        return new HttpAccessTokenRepository(endpoints, idmCreds, logger);
+        return new HttpAccessTokenRepository(appConfig, logger);
     }
 }
