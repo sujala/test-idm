@@ -605,9 +605,7 @@ public class LdapClientRepositoryTest {
     private Client createTestClientInstance() {
         Client newClient = new Client("DELETE_My_ClientId", ClientSecret
             .newInstance("DELETE_My_Client_Secret"), "DELETE_My_Name", "inum",
-            "iname", "RCN-123-456-789", ClientStatus.ACTIVE,
-            "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111",
-            "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE");
+            "iname", "RCN-123-456-789", ClientStatus.ACTIVE);
         newClient.setLocked(false);
         newClient.setSoftDeleted(false);
         return newClient;

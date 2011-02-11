@@ -26,7 +26,7 @@ public class UserTest {
             "USA", "MY DISPLAY NAME", "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE.5556",
             "@Rackspace.TestCustomer*delete.me",
             "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE", "XXX", UserStatus.ACTIVE,
-            "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE", "RPN-111-222-333");
+            "RPN-111-222-333");
         return newUser;
     }
 
@@ -123,7 +123,6 @@ public class UserTest {
         user1.setLocale(null);
         user1.setSecretAnswer(null);
         user1.setSecretQuestion(null);
-        user1.setSeeAlso(null);
         user1.setStatus(null);
         user1.setTimeZoneObj(null);
 
@@ -143,7 +142,6 @@ public class UserTest {
         user2.setLocale(null);
         user2.setSecretAnswer(null);
         user2.setSecretQuestion(null);
-        user2.setSeeAlso(null);
         user2.setStatus(null);
         user2.setTimeZoneObj(null);
 
@@ -254,12 +252,6 @@ public class UserTest {
         Assert.assertFalse(user2.equals(user1));
         user2.setSecretQuestion(user1.getSecretQuestion());
 
-        user2.setSeeAlso("SomeOtherValue");
-        Assert.assertFalse(user1.equals(user2));
-        user2.setSeeAlso(null);
-        Assert.assertFalse(user2.equals(user1));
-        user2.setSeeAlso(user1.getSeeAlso());
-
         user2.setStatus(UserStatus.INACTIVE);
         Assert.assertFalse(user1.equals(user2));
         user2.setStatus(null);
@@ -316,15 +308,15 @@ public class UserTest {
 
         System.out.println(violations);
     }
-    
+
     @Test
     public void shouldGetPasswordNoPrefix() {
-        
+
         String pwdStr = "secret";
-        
+
         User user = getTestUser();
         user.setPassword("{CLEAR}" + pwdStr);
-        
+
         String pwdNoPrefix = user.getPasswordNoPrefix();
         Assert.assertEquals(pwdStr, pwdNoPrefix);
     }
@@ -348,8 +340,8 @@ public class UserTest {
             .getValidator();
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         Assert.assertEquals(1, violations.size());
-        Assert.assertEquals(MessageTexts.EMAIL, violations
-            .iterator().next().getMessage());
+        Assert.assertEquals(MessageTexts.EMAIL, violations.iterator().next()
+            .getMessage());
         System.out.println(violations);
     }
 
@@ -362,8 +354,8 @@ public class UserTest {
             .getValidator();
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         Assert.assertEquals(1, violations.size());
-        Assert.assertEquals(MessageTexts.EMAIL, violations
-            .iterator().next().getMessage());
+        Assert.assertEquals(MessageTexts.EMAIL, violations.iterator().next()
+            .getMessage());
         System.out.println(violations);
     }
 }

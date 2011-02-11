@@ -385,8 +385,7 @@ public class OAuthServiceTests {
 
     private Client getTestClient() {
         Client client = new Client(clientId, ClientSecret.newInstance(clientSecret), "DELETE_My_Name", "inum", "iname",
-                "RCN-123-456-789", ClientStatus.ACTIVE, "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111",
-                "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111");
+                "RCN-123-456-789", ClientStatus.ACTIVE);
         return client;
     }
 

@@ -512,7 +512,7 @@ public class ClientServiceTests {
 
     private Client getFakeClient() {
         return new Client(clientId, clientSecret, name, inum, iname,
-            customerId, status, seeAlso, owner);
+            customerId, status);
     }
     
     private Customer getFakeCustomer() {

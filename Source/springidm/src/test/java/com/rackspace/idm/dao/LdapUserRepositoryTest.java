@@ -538,7 +538,6 @@ public class LdapUserRepositoryTest {
         newUser.setIname("@Rackspace.TestCustomer*deleteme");
         newUser.setInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE.5555");
         newUser.setOrgInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE");
-        newUser.setSeeAlso("inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE");
         newUser.setStatus(UserStatus.ACTIVE);
         newUser.setRegion("ORD");
         newUser.setSoftDeleted(false);
@@ -557,8 +556,7 @@ public class LdapUserRepositoryTest {
                 "What is your favourite colur?", "Yellow. No, Blue! Arrrrgh!"),
             "USA", "MY DISPLAY NAME", "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE.5556",
             "@Rackspace.TestCustomer*delete.me",
-            "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE", "XXX", UserStatus.ACTIVE,
-            "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE", "RPN-111-222-333");
+            "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE", "XXX", UserStatus.ACTIVE,"RPN-111-222-333");
         newUser.setDefaults();
         return newUser;
     }
@@ -577,7 +575,6 @@ public class LdapUserRepositoryTest {
         newUser.setIname("@Rackspace.TestCustomer*delete.me");
         newUser.setInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE.5557");
         newUser.setOrgInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE");
-        newUser.setSeeAlso("inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE");
         newUser.setStatus(UserStatus.ACTIVE);
         newUser.setDefaults();
         return newUser;

@@ -447,8 +447,7 @@ public class AccessTokenServiceTests {
 
     private Client getFakeClient() {
         Client client = new Client(clientId, ClientSecret.newInstance(clientSecret), clientName, clientInum,
-            clientIname, "RCN-123-456-789", ClientStatus.ACTIVE, "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111",
-            userInum);
+            clientIname, "RCN-123-456-789", ClientStatus.ACTIVE);
         return client;
     }
 }

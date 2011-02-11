@@ -28,7 +28,7 @@ public class ClientTests {
         ClientSecret clientSecret = ClientSecret.newInstance(clientPassword);
 
         return new Client(clientId, clientSecret, name, inum, iname,
-            customerId, status, seeAlso, owner);
+            customerId, status);
     }
 
     @Test
@@ -59,8 +59,6 @@ public class ClientTests {
         client1.setIname(null);
         client1.setInum(null);
         client1.setName(null);
-        client1.setOwner(null);
-        client1.setSeeAlso(null);
         client1.setStatus(null);
 
         client2.setClientId(null);
@@ -69,8 +67,6 @@ public class ClientTests {
         client2.setIname(null);
         client2.setInum(null);
         client2.setName(null);
-        client2.setOwner(null);
-        client2.setSeeAlso(null);
         client2.setStatus(null);
 
         Assert.assertTrue(client1.equals(client2));
@@ -119,18 +115,6 @@ public class ClientTests {
         client2.setName(null);
         Assert.assertFalse(client2.equals(client1));
         client2.setName(client1.getName());
-
-        client2.setOwner("SomeOtherValue");
-        Assert.assertFalse(client1.equals(client2));
-        client2.setOwner(null);
-        Assert.assertFalse(client2.equals(client1));
-        client2.setOwner(client1.getOwner());
-
-        client2.setSeeAlso("SomeOtherValue");
-        Assert.assertFalse(client1.equals(client2));
-        client2.setSeeAlso(null);
-        Assert.assertFalse(client2.equals(client1));
-        client2.setSeeAlso(client1.getSeeAlso());
 
         client2.setStatus(ClientStatus.INACTIVE);
         Assert.assertFalse(client1.equals(client2));
