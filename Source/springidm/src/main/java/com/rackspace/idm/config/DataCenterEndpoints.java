@@ -13,6 +13,10 @@ import org.apache.commons.lang.StringUtils;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 
+/**
+ * @author john.eo
+ * Not thread safe
+ */
 public class DataCenterEndpoints {
     private String[] dcConfigs;
     private Map<String, DataCenterClient> endpoints = new HashMap<String, DataCenterClient>();
@@ -43,15 +47,15 @@ public class DataCenterEndpoints {
     }
 
     public static DataCenterEndpoints build(String[] dcConfigs) {
-        DataCenterEndpoints eps = new DataCenterEndpoints();
+        DataCenterEndpoints endpoints = new DataCenterEndpoints();
         Client jclient = Client.create();
         for (String dcConfig : dcConfigs) {
             String[] dcData = dcConfig.split("\\|");
             WebResource resource = jclient.resource(dcData[1]);
             DataCenterClient client = new DataCenterClient(dcData[0], resource);
-            eps.put(client);
+            endpoints.put(client);
         }
 
-        return eps;
+        return endpoints;
     }
 }

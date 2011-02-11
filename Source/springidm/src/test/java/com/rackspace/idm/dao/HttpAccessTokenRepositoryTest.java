@@ -44,19 +44,16 @@ public class HttpAccessTokenRepositoryTest {
         endpoints.put(qaServer);
 
         // Use the QA memcached server to simulated XDC token store
-        Configuration qaconfig = new PropertiesConfiguration();
-        qaconfig.addProperty("memcached.serverList", "10.127.7.165:11211");
-        mcdRemote = new MemcachedConfiguration(qaconfig, new StubLogger()).memcacheClient();
-
-        // Delete any old token
-        deleteUserTokenInMemcached();
-
         Configuration config = new PropertiesConfiguration();
+        config.addProperty("memcached.serverList", "10.127.7.165:11211");
         config.addProperty("idm.clientId", IDM_CLIENT_ID);
         config.addProperty("idm.clientSecret", "password");
         String[] dcs = {"QA|http://10.127.7.164:8080/v1.0"};
         config.addProperty("dc", dcs);
 
+        mcdRemote = new MemcachedConfiguration(config, new StubLogger()).memcacheClient();
+        // Delete any old token
+        deleteUserTokenInMemcached();
         repo = new HttpAccessTokenRepository(config, new StubLogger());
     }
 
@@ -70,16 +67,17 @@ public class HttpAccessTokenRepositoryTest {
     @Test
     @Ignore("Inserts test token on the 'remote' server's memcached. Invoke manually for debugging the client service call.")
     public void putUserTokenInMemcached() {
-        AccessToken token = getNewToken(600);
+        int tokenExpInSec = 600;
+        AccessToken token = getNewToken(tokenExpInSec);
         // Add a token to a "cross-data-center" location, with expiration set in
         // seconds.
-        mcdRemote.set(QA_TOKEN_STRING, 600, token);
-        mcdRemote.set(getTokenKeyByClientId(token.getOwner(), token.getRequestor()), 600,
+        mcdRemote.set(QA_TOKEN_STRING, tokenExpInSec, token);
+        mcdRemote.set(getTokenKeyByClientId(token.getOwner(), token.getRequestor()), tokenExpInSec,
             token.getTokenString());
     }
 
     @Test
-    public void shouldLookForTokenAcrossDc() {
+    public void shouldFindForTokenAcrossDc() {
         putUserTokenInMemcached();
 
         // Now attempt a lookup from the local DAO
@@ -87,6 +85,16 @@ public class HttpAccessTokenRepositoryTest {
         Assert.assertNotNull(remoteToken);
         Assert.assertNotNull(remoteToken.getTokenUser());
         Assert.assertNotNull(remoteToken.getTokenClient());
+    }
+
+    @Test
+    public void shouldDeleteTokenInAnotherDc() {
+        putUserTokenInMemcached();
+        Object remoteToken = mcdRemote.get(QA_TOKEN_STRING);
+        Assert.assertNotNull(remoteToken);
+        repo.delete(QA_TOKEN_STRING);
+        remoteToken = mcdRemote.get(QA_TOKEN_STRING);
+        Assert.assertNull(remoteToken);
     }
 
     private String getTokenKeyByClientId(String owner, String requestor) {

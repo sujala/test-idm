@@ -57,22 +57,6 @@ public abstract class HttpRepository {
         return extractMyAccessToken(resp, client);
     }
 
-    private AuthCredentials getIdmCreds() {
-        String clientId = config.getString("idm.clientId");
-        String clientSecret = config.getString("idm.clientSecret");
-
-        if (idmCreds != null && idmCreds.getClientId().equals(clientId)
-            && idmCreds.getClientSecret().equals(clientSecret)) {
-            return idmCreds;
-        }
-
-        idmCreds = new AuthCredentials();
-        idmCreds.setClientId(clientId);
-        idmCreds.setClientSecret(clientSecret);
-        idmCreds.setGrantType(AuthGrantType.NONE);
-        return idmCreds;
-    }
-
     protected DataCenterEndpoints getEndpoints() {
         String[] dcs = config.getStringArray("dc");
         if (endpoints == null) {
@@ -96,6 +80,16 @@ public abstract class HttpRepository {
         }
     }
 
+    /**
+     * Makes the HTTP client call using an access token granted by a remote IDM instance
+     * to this local IDM instance. If the first attempt fails due to this token expiring,
+     * will try again with a new token.
+     * 
+     * @param <T> Generic return type
+     * @param caller Implementation of the HTTP client call
+     * @param dc Prefix of the data center against which the HTTP client call is to be made
+     * @return Client call response, if any
+     */
     protected <T> T makeHttpCall(HttpCaller<T> caller, String dc) {
         final DataCenterClient client = getEndpoints().get(dc);
         if (client == null) {
@@ -148,6 +142,35 @@ public abstract class HttpRepository {
 
     protected abstract Logger getLogger();
 
+    /**
+     * Builds the credentials to obtain an access token for the local IDM instance that will make an
+     * HTTP call against remote IDM instance(s).
+     * 
+     * @return
+     */
+    private AuthCredentials getIdmCreds() {
+        String clientId = config.getString("idm.clientId");
+        String clientSecret = config.getString("idm.clientSecret");
+
+        if (idmCreds != null && idmCreds.getClientId().equals(clientId)
+            && idmCreds.getClientSecret().equals(clientSecret)) {
+            return idmCreds;
+        }
+
+        idmCreds = new AuthCredentials();
+        idmCreds.setClientId(clientId);
+        idmCreds.setClientSecret(clientSecret);
+        idmCreds.setGrantType(AuthGrantType.NONE);
+        return idmCreds;
+    }
+
+    /**
+     * Encapsulates HTTP client call.
+     * 
+     * @author john.eo
+     *
+     * @param <T> Response type
+     */
     protected interface HttpCaller<T> {
         T execute(String myTokenStr, DataCenterClient client);
     }

@@ -4,7 +4,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.SerializationException;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
@@ -78,8 +77,6 @@ public class HttpAccessTokenRepository extends HttpRepository implements TokenFi
                 }
             }, dc);
         }
-
-        throw new NotImplementedException();
     }
 
     @Override
