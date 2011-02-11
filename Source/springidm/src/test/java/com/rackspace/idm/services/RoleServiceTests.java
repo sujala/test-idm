@@ -204,7 +204,7 @@ public class RoleServiceTests {
         EasyMock.expect(mockUserDao.getGroupIdsForUser(testUser.getUsername())).andReturn(roleIds);
         EasyMock.replay(mockUserDao);
         
-        EasyMock.expect(mockRoleDao.findByInum(inum)).andReturn(testRole);
+        EasyMock.expect(mockRoleDao.findRoleByUniqueId(roleDN)).andReturn(testRole);
         EasyMock.replay(mockRoleDao);
         
         List<Role> roles = roleService.getRolesForUser(testUser.getUsername());

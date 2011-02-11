@@ -30,7 +30,8 @@ public class LdapClientRepositoryTest {
     private LdapConnectionPools connPools;
     
     String userDN = "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com";
-
+    String testCustomerDN = "o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com";
+    
     @BeforeClass
     public static void cleanUpData() {
         final LdapConnectionPools pools = getConnPools();
@@ -75,7 +76,7 @@ public class LdapClientRepositoryTest {
         }
 
         try {
-            repo.add(null);
+            repo.add(null, testCustomerDN);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
@@ -593,7 +594,7 @@ public class LdapClientRepositoryTest {
 
     private Client addNewTestClient() {
         Client newClient = createTestClientInstance();
-        repo.add(newClient);
+        repo.add(newClient, testCustomerDN);
         return newClient;
     }
     

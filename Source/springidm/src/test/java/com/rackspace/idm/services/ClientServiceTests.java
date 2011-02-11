@@ -145,7 +145,7 @@ public class ClientServiceTests {
             mockClientDao
                 .getUnusedClientInum(customer.getInum()))
             .andReturn(customer.getInum() + "!8888.8888");
-        mockClientDao.add((Client)EasyMock.anyObject());
+        mockClientDao.add((Client)EasyMock.anyObject(), (String)EasyMock.anyObject());
         EasyMock.replay(mockClientDao);
         
         clientService.add(client);
