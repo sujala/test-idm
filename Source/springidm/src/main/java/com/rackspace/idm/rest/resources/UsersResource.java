@@ -512,10 +512,12 @@ public class UsersResource {
         User user = checkAndGetUser(username);
 
         user.setMossoId(jaxbUser.getMossoId());
+        
+        this.userService.updateUser(user);
 
         logger.info("Updated MossoId for User: {}", user);
 
-        return Response.ok(jaxbUser).build();
+        return Response.ok(userConverter.toUserWithOnlyMossoId(user)).build();
     }
 
     /**
@@ -564,7 +566,7 @@ public class UsersResource {
         logger.info("Updated NastID for User: {}", user);
 
         return Response.ok(
-            userConverter.toUserJaxbWithoutAnyAdditionalElements(user)).build();
+            userConverter.toUserWithOnlyNastId(user)).build();
     }
 
     private User checkAndGetUser(String username) {

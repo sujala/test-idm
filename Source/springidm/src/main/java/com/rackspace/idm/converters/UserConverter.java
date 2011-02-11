@@ -121,6 +121,18 @@ public class UserConverter {
         returnedUser.setLocked(user.isLocked());
         return returnedUser;
     }
+    
+    public com.rackspace.idm.jaxb.User toUserWithOnlyMossoId(User user) {
+        com.rackspace.idm.jaxb.User returnedUser = of.createUser();
+        returnedUser.setMossoId(user.getMossoId());
+        return returnedUser;
+    }
+    
+    public com.rackspace.idm.jaxb.User toUserWithOnlyNastId(User user) {
+        com.rackspace.idm.jaxb.User returnedUser = of.createUser();
+        returnedUser.setNastId(user.getNastId());
+        return returnedUser;
+    }
 
     public com.rackspace.idm.jaxb.User toUserWithOnlySoftDeletedJaxb(User user) {
         com.rackspace.idm.jaxb.User returnedUser = of.createUser();
