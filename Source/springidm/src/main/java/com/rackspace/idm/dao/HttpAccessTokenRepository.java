@@ -18,8 +18,8 @@ import com.rackspace.idm.entities.AccessToken;
 public class HttpAccessTokenRepository extends HttpRepository implements TokenFindDeleteDao<AccessToken> {
     private Logger logger;
 
-    public HttpAccessTokenRepository(Configuration config, Logger logger) {
-        super(config);
+    public HttpAccessTokenRepository(DataCenterEndpoints endpoints, Configuration config, Logger logger) {
+        super(endpoints, config);
         this.logger = logger;
     }
 
@@ -31,7 +31,7 @@ public class HttpAccessTokenRepository extends HttpRepository implements TokenFi
 
         logger.debug("Searching for token {}.", tokenString);
         String dc = DataCenterEndpoints.getTokenPrefix(tokenString);
-        DataCenterClient client = getEndpoints().get(dc);
+        DataCenterClient client = endpoints.get(dc);
 
         byte[] tokenBytes = makeHttpCall(new HttpCaller<byte[]>() {
             @Override
@@ -65,12 +65,12 @@ public class HttpAccessTokenRepository extends HttpRepository implements TokenFi
 
         logger.debug("Attempting to delete for token {}.", tokenString);
 
-        List<String> tokenPermutations = getEndpoints().getAllTokenPermuations(tokenString);
+        List<String> tokenPermutations = endpoints.getAllTokenPermuations(tokenString);
 
         for (String dcTokenCombo : tokenPermutations) {
             HttpCaller<Object> deleter = new HttpDeleteCaller(dcTokenCombo);
 
-            for (DataCenterClient client : getEndpoints().getAll()) {
+            for (DataCenterClient client : endpoints.getAll()) {
                 // Don't make a call against the local (own) IDM instance.
                 // That should be done using a memcached DAO instance.
                 if (client.getDcPrefix().equals(config.getString("token.dataCenterPrefix"))) {
@@ -96,7 +96,9 @@ public class HttpAccessTokenRepository extends HttpRepository implements TokenFi
 
         @Override
         public Object execute(String myTokenStr, DataCenterClient client) {
-            client.getResource().path(TOKEN_RESOURCE_PATH + "/" + tokenString)
+            // Don't trigger another global delete. We are already in the middle
+            // of executing one.
+            client.getResource().path(TOKEN_RESOURCE_PATH + "/" + tokenString).queryParam("global", "false")
                 .accept(MediaType.APPLICATION_XML)
                 .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr)).delete();
 

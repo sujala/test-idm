@@ -52,4 +52,6 @@ public interface AccessTokenService {
     AccessToken validateToken(String tokenString);
 
     void delete(String tokenString);
+    
+    void deleteGlobally(String tokenString);
 }

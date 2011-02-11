@@ -13,7 +13,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.rackspace.idm.config.DataCenterClient;
 import com.rackspace.idm.config.DataCenterEndpoints;
 import com.rackspace.idm.config.MemcachedConfiguration;
 import com.rackspace.idm.entities.AccessToken;
@@ -24,7 +23,6 @@ import com.rackspace.idm.entities.ClientGroup;
 import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
 
 public class HttpAccessTokenRepositoryTest {
     private static final String TOKEN_OWNER = "userTested";
@@ -37,12 +35,6 @@ public class HttpAccessTokenRepositoryTest {
 
     @Before
     public void setUp() {
-        // Client for the "QA" remote instance of IDM
-        WebResource wrqa = c.resource("http://10.127.7.164:8080/v1.0");
-        DataCenterClient qaServer = new DataCenterClient("QA", wrqa);
-        DataCenterEndpoints endpoints = new DataCenterEndpoints();
-        endpoints.put(qaServer);
-
         // Use the QA memcached server to simulated XDC token store
         Configuration config = new PropertiesConfiguration();
         config.addProperty("memcached.serverList", "10.127.7.165:11211");
@@ -51,10 +43,11 @@ public class HttpAccessTokenRepositoryTest {
         String[] dcs = {"QA|http://10.127.7.164:8080/v1.0"};
         config.addProperty("dc", dcs);
 
+        DataCenterEndpoints endpoints = new DataCenterEndpoints(config);
         mcdRemote = new MemcachedConfiguration(config, new StubLogger()).memcacheClient();
         // Delete any old token
         deleteUserTokenInMemcached();
-        repo = new HttpAccessTokenRepository(config, new StubLogger());
+        repo = new HttpAccessTokenRepository(endpoints, config, new StubLogger());
     }
 
     @Test

@@ -23,11 +23,12 @@ public abstract class HttpRepository {
     protected static final String TOKEN_RESOURCE_PATH = "token";
     protected Configuration config;
     protected TokenConverter converter = new TokenConverter();
+    protected DataCenterEndpoints endpoints;
 
-    private DataCenterEndpoints endpoints;
     private AuthCredentials idmCreds;
 
-    public HttpRepository(Configuration config) {
+    public HttpRepository(DataCenterEndpoints endpoints, Configuration config) {
+        this.endpoints = endpoints;
         this.config = config;
     }
 
@@ -38,7 +39,7 @@ public abstract class HttpRepository {
      * @return Access token that represents the local IDM instance.
      */
     protected AccessToken getMyAccessToken(String dc) {
-        DataCenterClient client = getEndpoints().get(dc);
+        DataCenterClient client = endpoints.get(dc);
         AccessToken myToken = client.getAccessToken();
         if (myToken != null && !myToken.isExpired(new DateTime())) {
             return myToken;
@@ -55,14 +56,6 @@ public abstract class HttpRepository {
         }
 
         return extractMyAccessToken(resp, client);
-    }
-
-    protected DataCenterEndpoints getEndpoints() {
-        String[] dcs = config.getStringArray("dc");
-        if (endpoints == null) {
-            return DataCenterEndpoints.build(dcs);
-        }
-        return DataCenterEndpoints.refresh(endpoints, dcs);
     }
 
     protected AccessToken extractMyAccessToken(ClientResponse resp, DataCenterClient client) {

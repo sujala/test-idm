@@ -6,12 +6,14 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.groups.Default;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
@@ -219,6 +221,7 @@ public class TokenResource {
      *
      * @param authHeader  HTTP Authorization header for authenticating the calling client.
      * @param tokenString Token to be revoked.
+     * @param global If true (default), will revoke tokens globally.
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}authCredentials
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -231,7 +234,8 @@ public class TokenResource {
     @DELETE
     @Path("{tokenString}")
     public Response revokeAccessToken(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("tokenString") String tokenString) {
+        @HeaderParam("Authorization") String authHeader, @PathParam("tokenString") String tokenString,
+        @DefaultValue("true") @QueryParam("global") boolean isGlobal) {
 
         logger.debug("Revoking Token: {}", tokenString);
 
@@ -240,7 +244,11 @@ public class TokenResource {
             String authTokenString = authHeaderHelper.getTokenFromAuthHeader(authHeader);
             logger.debug("Parsed Auth Header - Token: {}", authTokenString);
 
-            oauthService.revokeToken(authTokenString, tokenString);
+            if (isGlobal) {
+                oauthService.revokeTokenGlobally(authTokenString, tokenString);
+            } else {
+                oauthService.revokeToken(authTokenString, tokenString);
+            }
 
             logger.info("Revoked Token: {}", tokenString);
 

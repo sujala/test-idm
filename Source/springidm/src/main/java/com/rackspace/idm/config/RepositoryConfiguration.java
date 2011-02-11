@@ -2,36 +2,32 @@ package com.rackspace.idm.config;
 
 import net.spy.memcached.MemcachedClient;
 
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.apache.commons.configuration.Configuration;
 
 import com.rackspace.idm.dao.AccessTokenDao;
+import com.rackspace.idm.dao.AuthDao;
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.CustomerDao;
 import com.rackspace.idm.dao.EndpointDao;
+import com.rackspace.idm.dao.HttpAccessTokenRepository;
+import com.rackspace.idm.dao.LdapAuthRepository;
 import com.rackspace.idm.dao.LdapClientRepository;
 import com.rackspace.idm.dao.LdapConnectionPools;
 import com.rackspace.idm.dao.LdapCustomerRepository;
-import com.rackspace.idm.dao.LdapAuthRepository;
 import com.rackspace.idm.dao.LdapEndpointRepository;
 import com.rackspace.idm.dao.LdapRefreshTokenRepository;
 import com.rackspace.idm.dao.LdapRoleRepository;
 import com.rackspace.idm.dao.LdapUserRepository;
 import com.rackspace.idm.dao.MemcachedAccessTokenRepository;
-import com.rackspace.idm.dao.AuthDao;
 import com.rackspace.idm.dao.RefreshTokenDao;
 import com.rackspace.idm.dao.RoleDao;
 import com.rackspace.idm.dao.TokenFindDeleteDao;
 import com.rackspace.idm.dao.UserDao;
-import com.rackspace.idm.dao.HttpAccessTokenRepository;
 import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.jaxb.AuthCredentials;
-import com.rackspace.idm.jaxb.AuthGrantType;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.extensions.StartTLSExtendedRequest;
 
@@ -70,8 +66,7 @@ public class RepositoryConfiguration {
 
     @Bean
     public RefreshTokenDao refreshTokenRepository() {
-        Logger logger = LoggerFactory
-            .getLogger(LdapRefreshTokenRepository.class);
+        Logger logger = LoggerFactory.getLogger(LdapRefreshTokenRepository.class);
         return new LdapRefreshTokenRepository(connPools, appConfig, logger);
     }
 
@@ -89,16 +84,14 @@ public class RepositoryConfiguration {
 
     @Bean
     public AccessTokenDao accessTokenRepository() {
-        Logger logger = LoggerFactory
-            .getLogger(MemcachedAccessTokenRepository.class);
+        Logger logger = LoggerFactory.getLogger(MemcachedAccessTokenRepository.class);
         return new MemcachedAccessTokenRepository(memcached, logger);
     }
 
     @Bean
     public AuthDao authenticationRepository() {
         Logger logger = LoggerFactory.getLogger(LdapAuthRepository.class);
-        return new LdapAuthRepository(authReposConnPool,
-            startTLSExtendedRequest, logger);
+        return new LdapAuthRepository(authReposConnPool, startTLSExtendedRequest, logger);
     }
 
     @Bean
@@ -107,10 +100,14 @@ public class RepositoryConfiguration {
         return new LdapEndpointRepository(connPools, appConfig, logger);
     }
 
+    @Bean
+    public DataCenterEndpoints dcEnpoints() {
+        return new DataCenterEndpoints(appConfig);
+    }
+
     @Bean(name = "xdcTokenDao")
     public TokenFindDeleteDao<AccessToken> xdcTokenDao() {
-        Logger logger = LoggerFactory
-            .getLogger(HttpAccessTokenRepository.class);
-        return new HttpAccessTokenRepository(appConfig, logger);
+        Logger logger = LoggerFactory.getLogger(HttpAccessTokenRepository.class);
+        return new HttpAccessTokenRepository(dcEnpoints(), appConfig, logger);
     }
 }
