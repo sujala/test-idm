@@ -22,6 +22,7 @@ public class Client extends BaseClient {
     private String uniqueId = null;
     private String inum = null;
     private String iname = null;
+    private String orgInum = null;
     private Boolean locked = null;
     private String seeAlso = null;
     private Boolean softDeleted = null;
@@ -76,6 +77,16 @@ public class Client extends BaseClient {
     public void setName(String name) {
         if (name != null) {
             this.name = name;
+        }
+    }
+    
+    public String getOrgInum() {
+        return orgInum;
+    }
+
+    public void setOrgInum(String orgInum) {
+        if (orgInum != null) {
+            this.orgInum = orgInum;
         }
     }
 

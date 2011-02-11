@@ -73,7 +73,11 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         if (!StringUtils.isBlank(client.getInum())) {
             atts.add(new Attribute(ATTR_INUM, client.getInum()));
         }
-
+        
+        if (!StringUtils.isBlank(client.getOrgInum())) {
+            atts.add(new Attribute(ATTR_O, client.getOrgInum()));
+        }
+        
         if (!StringUtils.isBlank(client.getOwner())) {
             atts.add(new Attribute(ATTR_OWNER, client.getOwner()));
         }
