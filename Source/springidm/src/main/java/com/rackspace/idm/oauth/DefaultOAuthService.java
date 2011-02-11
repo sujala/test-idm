@@ -1,6 +1,5 @@
 package com.rackspace.idm.oauth;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.entities.*;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
