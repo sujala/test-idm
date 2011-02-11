@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface ClientDao {
 
-    void add(Client client);
+    void add(Client client, String customerUniqueId);
 
     void addClientGroup(ClientGroup clientGroup);
 

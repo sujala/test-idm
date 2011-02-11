@@ -8,7 +8,6 @@ import com.rackspace.idm.entities.*;
 import org.slf4j.Logger;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.CustomerDao;
 import com.rackspace.idm.dao.UserDao;
@@ -68,10 +67,9 @@ public class DefaultClientService implements ClientService {
             throw new IllegalStateException("Unsupported hashing algorithm", e);
         }
 
-        client.setOwner(GlobalConstants.INUM_PREFIX + customer.getInum());
         client.setInum(clientDao.getUnusedClientInum(customer.getInum()));
 
-        clientDao.add(client);
+        clientDao.add(client, customer.getUniqueId());
         logger.info("Added Client: {}", client);
     }
 

@@ -5,7 +5,7 @@ import java.util.List;
 import com.rackspace.idm.entities.Role;
 
 public interface RoleDao {
-    void add(Role role);
+    void add(Role role, String customerUniqueId);
 
     void addUserToRole(String userDN, String roleDN);
 
@@ -16,6 +16,8 @@ public interface RoleDao {
     Role findByRoleNameAndCustomerId(String roleName, String customerId);
 
     Role findByInum(String inum);
+    
+    Role findRoleByUniqueId(String uniqueId);
 
     void save(Role role);
 

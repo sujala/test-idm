@@ -7,7 +7,6 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.entities.Role;
 import com.rackspace.idm.entities.RoleStatus;
@@ -32,7 +31,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         super(connPools, config, logger);
     }
 
-    public void add(Role role) {
+    public void add(Role role, String customerUniqueId) {
         getLogger().info("Adding role {}", role);
         if (role == null) {
             getLogger().error("Null instance of role was passed");
@@ -87,13 +86,9 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
 
         LDAPResult result;
 
-        String roleDN = new LdapDnBuilder()
-            .setBaseDn(BASE_DN)
+        String roleDN = new LdapDnBuilder().setBaseDn(customerUniqueId)
             .addAttriubte(ATTR_INUM, role.getInum())
-            .addAttriubte(ATTR_OU, "groups")
-            .addAttriubte(ATTR_O,
-                role.getOwner().replace(GlobalConstants.INUM_PREFIX, ""))
-            .build();
+            .addAttriubte(ATTR_OU, "groups").build();
 
         role.setUniqueId(roleDN);
 
@@ -209,9 +204,12 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         Role role = null;
         SearchResult searchResult = null;
 
+        String searchFilter = new LdapSearchBuilder().addEqualAttribute(
+            ATTR_INUM, inum).build();
+
         try {
             searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                "(" + GlobalConstants.INUM_PREFIX + inum + ")");
+                searchFilter);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for inum {} - {}", inum, ldapEx);
             throw new IllegalStateException(ldapEx);
@@ -367,5 +365,39 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         } while (role != null);
 
         return inum;
+    }
+
+    public Role findRoleByUniqueId(String uniqueId) {
+        Role role = null;
+        SearchResult searchResult = null;
+
+        String searchFilter = new LdapSearchBuilder().addEqualAttribute(
+            ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEGROUP).build();
+
+        try {
+            searchResult = getAppConnPool().search(uniqueId, SearchScope.BASE,
+                searchFilter);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() == 1) {
+            SearchResultEntry e = searchResult.getSearchEntries().get(0);
+            if (e.getObjectClassAttribute()
+                .hasValue(OBJECTCLASS_RACKSPACEGROUP)) {
+                role = getRole(e);
+            }
+        } else if (searchResult.getEntryCount() > 1) {
+            String errMsg = String.format(
+                "More than one entry was found for client search - %s",
+                uniqueId);
+            getLogger().error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
+        getLogger().debug("Found Role - {}", role);
+
+        return role;
     }
 }

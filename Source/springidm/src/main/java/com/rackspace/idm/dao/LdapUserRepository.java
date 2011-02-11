@@ -37,7 +37,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         super(connPools, config, logger);
     }
 
-    public void add(User user, String customerDN) {
+    public void add(User user, String customerUniqueId) {
         getLogger().debug("Adding user - {}", user);
         if (user == null) {
             getLogger().error("Null instance of User was passed");
@@ -51,7 +51,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "The password appears to be an existing instance. It must be a new instance!");
         }
 
-        String userDN = new LdapDnBuilder().setBaseDn(customerDN)
+        String userDN = new LdapDnBuilder().setBaseDn(customerUniqueId)
             .addAttriubte(ATTR_INUM, user.getInum())
             .addAttriubte(ATTR_OU, "people").build();
 

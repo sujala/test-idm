@@ -12,7 +12,6 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
@@ -46,7 +45,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         super(connPools, config, logger);
     }
 
-    public void add(Client client) {
+    public void add(Client client, String customerUniqueId) {
         getLogger().info("Adding client {}", client);
         if (client == null) {
             getLogger().error("Null instance of Client was passed");
@@ -127,11 +126,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         LDAPResult result;
 
         String clientDN = new LdapDnBuilder()
-            .setBaseDn(BASE_DN)
+            .setBaseDn(customerUniqueId)
             .addAttriubte(ATTR_INUM, client.getInum())
-            .addAttriubte(ATTR_OU, "applications")
-            .addAttriubte(ATTR_O,
-                client.getOwner().replace(GlobalConstants.INUM_PREFIX, ""))
+            .addAttriubte(ATTR_OU, "people")
             .build();
 
         client.setUniqueId(clientDN);

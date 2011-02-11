@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.dao.RoleDao;
 import com.rackspace.idm.dao.UserDao;
 import com.rackspace.idm.entities.Role;
@@ -80,13 +79,11 @@ public class DefaultRoleService implements RoleService {
 
         List<Role> roles = new ArrayList<Role>();
 
-        // TODO: Pull the inum parsing into a helper class
-        String inum = "";
-
         for (String roleId : roleIds) {
-            String[] roleInum = roleId.split(",");
-            inum = roleInum[0].replace(GlobalConstants.INUM_PREFIX, "");
-            roles.add(roleDao.findByInum(inum));
+            Role role = roleDao.findRoleByUniqueId(roleId);
+            if (role != null) {
+                roles.add(role);
+            }
         }
 
         logger.info("Got Roles for User: {} - {}", username, roles);

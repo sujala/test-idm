@@ -11,9 +11,9 @@ public interface RoleService {
 
     void deleteUserFromRole(User user, Role role);
 
+    List<Role> getByCustomerId(String customerId);
+
     Role getRole(String roleName, String customerId);
 
     List<Role> getRolesForUser(String username);
-
-    List<Role> getByCustomerId(String customerId);
 }

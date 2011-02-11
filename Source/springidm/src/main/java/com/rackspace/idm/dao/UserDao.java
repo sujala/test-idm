@@ -8,7 +8,7 @@ import com.rackspace.idm.entities.Users;
 
 public interface UserDao {
 
-    void add(User user, String customerDN);
+    void add(User user, String customerUniqueId);
 
     UserAuthenticationResult authenticate(String userName, String password);
 
