@@ -80,18 +80,17 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         LDAPResult result;
 
-        String customerDN = new LdapDnBuilder().setBaseDn(BASE_DN)
-            .addAttriubte(ATTR_O, customer.getInum()).build();
+        String customerDN = new LdapDnBuilder(BASE_DN).addAttriubte(ATTR_O,
+            customer.getInum()).build();
 
         customer.setUniqueId(customerDN);
 
-        String customerGroupsDN = new LdapDnBuilder().setBaseDn(customerDN)
-            .addAttriubte(ATTR_OU, OU_GROUPS_NAME).build();
-        String customerPeopleDN = new LdapDnBuilder().setBaseDn(customerDN)
-            .addAttriubte(ATTR_OU, OU_PEOPLE_NAME).build();
-        String customerApplicationsDN = new LdapDnBuilder()
-            .setBaseDn(customerDN).addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME)
-            .build();
+        String customerGroupsDN = new LdapDnBuilder(customerDN).addAttriubte(
+            ATTR_OU, OU_GROUPS_NAME).build();
+        String customerPeopleDN = new LdapDnBuilder(customerDN).addAttriubte(
+            ATTR_OU, OU_PEOPLE_NAME).build();
+        String customerApplicationsDN = new LdapDnBuilder(customerDN)
+            .addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME).build();
 
         try {
             result = getAppConnPool().add(customerDN, attributes);

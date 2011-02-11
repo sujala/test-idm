@@ -222,10 +222,7 @@ public class UserServiceTests {
     public void shouldRestoreSoftDeletedUser() {
         User user = getFakeUser();
 
-        Map<String, String> userStatusMap = new HashMap<String, String>();
-        userStatusMap.put(GlobalConstants.ATTR_SOFT_DELETED, "TRUE");
-
-        mockUserDao.saveRestoredUser(user, userStatusMap);
+        mockUserDao.saveRestoredUser(user);
         EasyMock.replay(mockUserDao);
 
         userService.restoreSoftDeletedUser(user);

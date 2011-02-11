@@ -1,6 +1,5 @@
 package com.rackspace.idm.services;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.dao.*;
 import com.rackspace.idm.entities.*;
 import com.rackspace.idm.exceptions.DuplicateException;
@@ -47,8 +46,8 @@ public class DefaultUserService implements UserService {
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
         CustomerDao customerDao, AccessTokenDao tokenDao,
         RefreshTokenDao refreshTokenDao, ClientDao clientDao,
-        EmailService emailService,
-        ClientService clientService, boolean isTrusted, Logger logger) {
+        EmailService emailService, ClientService clientService,
+        boolean isTrusted, Logger logger) {
 
         this.userDao = userDao;
         this.authDao = rackerDao;
@@ -66,7 +65,7 @@ public class DefaultUserService implements UserService {
         logger.info("Adding User: {}", user);
         String customerId = user.getCustomerId();
 
-            boolean isUsernameUnique = userDao.isUsernameUnique(user.getUsername());
+        boolean isUsernameUnique = userDao.isUsernameUnique(user.getUsername());
 
         if (!isUsernameUnique) {
             logger.warn("Couldn't add user {} because username already taken",
@@ -202,14 +201,12 @@ public class DefaultUserService implements UserService {
 
     public User getSoftDeletedUser(String customerId, String username) {
 
-        logger.debug("Getting User: {} - {}", customerId, username);
+        logger
+            .debug("Getting Soft Deleted User: {} - {}", customerId, username);
 
-        Map<String, String> userStatusMap = new HashMap<String, String>();
-        userStatusMap.put(GlobalConstants.ATTR_SOFT_DELETED, "TRUE");
+        User user = userDao.findSoftDeletedUser(customerId, username);
 
-        User user = userDao.findUser(customerId, username, userStatusMap);
-
-        logger.debug("Got User: {}", user);
+        logger.debug("Got Soft Deleted User: {}", user);
 
         return user;
     }
@@ -248,7 +245,8 @@ public class DefaultUserService implements UserService {
         logger.debug("Getting User: {}", mossoId);
         User user = userDao.findByMossoId(mossoId);
         if (user != null) {
-            user.setGroups(clientService.getClientGroupsForUser(user.getUsername()));
+            user.setGroups(clientService.getClientGroupsForUser(user
+                .getUsername()));
         }
         logger.debug("Got User: {}", user);
         return user;
@@ -258,7 +256,8 @@ public class DefaultUserService implements UserService {
         logger.debug("Getting User: {}", nastId);
         User user = userDao.findByNastId(nastId);
         if (user != null) {
-            user.setGroups(clientService.getClientGroupsForUser(user.getUsername()));
+            user.setGroups(clientService.getClientGroupsForUser(user
+                .getUsername()));
         }
         logger.debug("Got User: {}", user);
         return user;
@@ -272,11 +271,9 @@ public class DefaultUserService implements UserService {
         logger.info("Restoring Soft Deleted User: {}", user.getUsername());
 
         user.setSoftDeleted(false);
-        Map<String, String> userStatusMap = new HashMap<String, String>();
-        userStatusMap.put(GlobalConstants.ATTR_SOFT_DELETED, "TRUE");
-        this.userDao.saveRestoredUser(user, userStatusMap);
-        logger
-            .info("Restoring Soft Deleted User done.: {}", user.getUsername());
+
+        this.userDao.saveRestoredUser(user);
+        logger.info("Restored Soft Deleted User: {}", user.getUsername());
     }
 
     public void sendRecoveryEmail(String username, String userEmail,
@@ -331,10 +328,10 @@ public class DefaultUserService implements UserService {
         logger.info("Soft Deleting User: {}", username);
         User user = this.userDao.findByUsername(username);
         user.setSoftDeleted(true);
-        
+
         DateTime softDeletedTimestamp = new DateTime(new Date());
         user.setSoftDeletedTimestamp(softDeletedTimestamp);
-        
+
         this.userDao.save(user);
 
         // revoke user's tokens

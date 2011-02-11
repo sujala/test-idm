@@ -7,6 +7,7 @@ import org.apache.commons.configuration.Configuration;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
@@ -20,11 +21,11 @@ public abstract class LdapRepository {
     protected static final String OBJECTCLASS_CLIENTPERMISSION = "clientPermission";
     protected static final String OBJECTCLASS_GROUPOFNAMES = "groupOfNames";
     protected static final String OBJECTCLASS_ORGANIZATIONALUNIT = "organizationalUnit";
-    protected static final String OBJECTCLASS_RACKSPACEAPPLICATION = "rackspaceApplication";
-    protected static final String OBJECTCLASS_RACKSPACEGROUP = "rackspaceGroup";
-    protected static final String OBJECTCLASS_RACKSPACEORGANIZATION = "rackspaceOrganization";
-    protected static final String OBJECTCLASS_RACKSPACEPERSON = "rackspacePerson";
-    protected static final String OBJECTCLASS_RACKSPACETOKEN = "rackspaceToken";
+    protected static final String OBJECTCLASS_RACKSPACEAPPLICATION = "rsApplication";
+    protected static final String OBJECTCLASS_RACKSPACEGROUP = "rsGroup";
+    protected static final String OBJECTCLASS_RACKSPACEORGANIZATION = "rsOrganization";
+    protected static final String OBJECTCLASS_RACKSPACEPERSON = "rsPerson";
+    protected static final String OBJECTCLASS_RACKSPACETOKEN = "rsToken";
     protected static final String OBJECTCLASS_TOP = "top";
 
     protected static final String[] ATTR_BASEURL_OBJECT_CLASS_VALUES = {
@@ -52,7 +53,7 @@ public abstract class LdapRepository {
     protected static final String ATTR_BASEURL_TYPE = "baseUrlType";
     protected static final String ATTR_BLOB = "blob";
     protected static final String ATTR_C = "c";
-    protected static final String ATTR_CLIENT_ID = "rackspaceApiKey";
+    protected static final String ATTR_CLIENT_ID = "clientId";
     protected static final String ATTR_CLIENT_SECRET = "userPassword";
     protected static final String ATTR_CREATED_DATE = "createTimestamp";
     protected static final String ATTR_DEF = "def";
@@ -85,11 +86,11 @@ public abstract class LdapRepository {
     protected static final String ATTR_PERMISSION_TYPE = "permissionType";
     protected static final String ATTR_PUBLIC_URL = "publicUrl";
     protected static final String ATTR_PWD_ACCOUNT_LOCKOUT_TIME = "pwdAccountLockedTime";
-    protected static final String ATTR_RACKSPACE_API_KEY = "rackspaceApiKey";
-    protected static final String ATTR_RACKSPACE_CUSTOMER_NUMBER = "rackspaceCustomerNumber";
-    protected static final String ATTR_RACKSPACE_PERSON_NUMBER = "rackspacePersonNumber";
-    protected static final String ATTR_RACKSPACE_REGION = "rackspaceRegion";
-    protected static final String ATTR_REGION = "rackspaceRegion";
+    protected static final String ATTR_RACKSPACE_API_KEY = "rsApiKey";
+    protected static final String ATTR_RACKSPACE_CUSTOMER_NUMBER = "RCN";
+    protected static final String ATTR_RACKSPACE_PERSON_NUMBER = "RPN";
+    protected static final String ATTR_RACKSPACE_REGION = "rsRegion";
+    protected static final String ATTR_REGION = "rsRegion";
     protected static final String ATTR_SEE_ALSO = "seeAlso";
     protected static final String ATTR_SERVICE = "service";
     protected static final String ATTR_SN = "sn";
@@ -162,6 +163,15 @@ public abstract class LdapRepository {
         private String value;
 
         public QueryPair(String attribute, String comparer, String value) {
+            if (StringUtils.isBlank(attribute)) {
+                throw new IllegalArgumentException("attribute cannot be empty");
+            }
+            if (StringUtils.isBlank(comparer)) {
+                throw new IllegalArgumentException("comparer cannot be empty");
+            }
+            if (StringUtils.isBlank(value)) {
+                throw new IllegalArgumentException("value cannot be empty");
+            }
             this.comparer = comparer;
             this.attribute = attribute;
             this.value = value;
@@ -180,13 +190,12 @@ public abstract class LdapRepository {
         private List<QueryPair> queryPairs;
         private String baseDN;
 
-        public LdapDnBuilder() {
-            queryPairs = new ArrayList<QueryPair>();
-        }
-
-        public LdapDnBuilder setBaseDn(String baseDN) {
+        public LdapDnBuilder(String baseDN) {
+            if (StringUtils.isBlank(baseDN)) {
+                throw new IllegalArgumentException("baseDN cannot be empty");
+            }
             this.baseDN = baseDN;
-            return this;
+            this.queryPairs = new ArrayList<QueryPair>();
         }
 
         public LdapDnBuilder addAttriubte(String attribute, String value) {
@@ -228,6 +237,10 @@ public abstract class LdapRepository {
         }
 
         public String build() {
+            if (queryPairs.size() == 0) {
+                return "";
+            }
+            
             StringBuilder builder = new StringBuilder();
 
             for (QueryPair pair : queryPairs) {

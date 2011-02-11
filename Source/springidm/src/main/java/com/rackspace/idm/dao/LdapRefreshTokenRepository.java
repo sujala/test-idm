@@ -276,7 +276,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
 
-        String tokenDN = new LdapDnBuilder().setBaseDn(TOKEN_BASE_DN)
+        String tokenDN = new LdapDnBuilder(TOKEN_BASE_DN)
             .addAttriubte(ATTR_O, refreshToken.getTokenString()).build();
 
         LDAPResult result;

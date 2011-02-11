@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 public class LdapUserRepository extends LdapRepository implements UserDao {
 
@@ -29,8 +28,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     // NOTE: This is pretty fragile way of handling the specific error, so we
     // need to look into more reliable way of detecting this error.
     private static final String STALE_PASSWORD_MESSAGE = "The provided new password was found in the password history for the user";
-    private static final String USER_FIND_BY_CUSTOMER_NUMBER_STRING = "(&(objectClass=rackspacePerson)(rackspaceCustomerNumber=%s)(uid=%s)";
-    private static final String USER_FIND_BY_USERNAME_BASESTRING = "(&(objectClass=rackspacePerson)(uid=%s)";
 
     public LdapUserRepository(LdapConnectionPools connPools,
         Configuration config, Logger logger) {
@@ -51,7 +48,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "The password appears to be an existing instance. It must be a new instance!");
         }
 
-        String userDN = new LdapDnBuilder().setBaseDn(customerUniqueId)
+        String userDN = new LdapDnBuilder(customerUniqueId)
             .addAttriubte(ATTR_INUM, user.getInum())
             .addAttriubte(ATTR_OU, OU_PEOPLE_NAME).build();
 
@@ -322,8 +319,37 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
-    public User findUser(String customerId, String username,
-        Map<String, String> userStatusMap) {
+    // public User findUser(String customerId, String username,
+    // Map<String, String> userStatusMap) {
+    //
+    // getLogger().debug(
+    // "LdapUserRepository.findUser() - customerId: {}, username: {} ",
+    // customerId, username);
+    //
+    // if (StringUtils.isBlank(customerId)) {
+    // getLogger().error("Null or Empty customerId parameter");
+    // throw new IllegalArgumentException(
+    // "Null or Empty customerId parameter.");
+    // }
+    // if (StringUtils.isBlank(username)) {
+    // getLogger().error("Null or Empty username parameter");
+    // throw new IllegalArgumentException(
+    // "Null or Empty username parameter.");
+    // }
+    //
+    // String searchString = buildSearchString(
+    // USER_FIND_BY_CUSTOMER_NUMBER_STRING, userStatusMap);
+    //
+    // searchString = String.format(searchString, customerId, username);
+    //
+    // User user = getSingleUser(searchString, ATTR_SEARCH_ATTRIBUTES);
+    //
+    // getLogger().debug("Found User for customer - {}, {}", customerId, user);
+    //
+    // return user;
+    // }
+
+    public User findSoftDeletedUser(String customerId, String username) {
 
         getLogger().debug(
             "LdapUserRepository.findUser() - customerId: {}, username: {} ",
@@ -340,12 +366,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "Null or Empty username parameter.");
         }
 
-        String searchString = buildSearchString(
-            USER_FIND_BY_CUSTOMER_NUMBER_STRING, userStatusMap);
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_UID, username)
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(true))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
 
-        searchString = String.format(searchString, customerId, username);
-
-        User user = getSingleUser(searchString, ATTR_SEARCH_ATTRIBUTES);
+        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User for customer - {}, {}", customerId, user);
 
@@ -492,7 +520,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Updated user - {}", user);
     }
 
-    public void saveRestoredUser(User user, Map<String, String> userStatusMap) {
+    public void saveRestoredUser(User user) {
         getLogger().info("Updating user {}", user);
         if (user == null || StringUtils.isBlank(user.getUsername())) {
             getLogger().error(
@@ -504,11 +532,18 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         User oldUser = null;
         SearchResult searchResult = null;
         String userDN = null;
-        String searchString = buildSearchString(
-            USER_FIND_BY_USERNAME_BASESTRING, userStatusMap);
+
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_UID, user.getUsername())
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER,
+                user.getCustomerId())
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(true))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
         try {
             searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(searchString, user.getUsername()));
+                String.format(searchFilter, user.getUsername()));
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for username {} - {}",
                 user.getUsername(), ldapEx);
@@ -630,25 +665,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         getLogger().debug(result.toString());
         return ResultCode.SUCCESS.equals(result.getResultCode());
-    }
-
-    private String buildSearchString(String baseString,
-        Map<String, String> userStatusMap) {
-        String ldapSearchString = baseString;
-
-        for (String key : userStatusMap.keySet()) {
-            String value = userStatusMap.get(key);
-
-            if (key.equals(ATTR_SOFT_DELETED)) {
-                ldapSearchString += "(" + ATTR_SOFT_DELETED + "=" + value
-                    + "))";
-            }
-
-            if (key.equals(ATTR_LOCKED)) {
-                ldapSearchString += "(" + ATTR_LOCKED + "=" + value + "))";
-            }
-        }
-        return ldapSearchString;
     }
 
     private Users findFirst100ByCustomerIdAndLock(String customerId,

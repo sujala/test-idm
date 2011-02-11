@@ -125,7 +125,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         LDAPResult result;
 
-        String clientDN = new LdapDnBuilder().setBaseDn(customerUniqueId)
+        String clientDN = new LdapDnBuilder(customerUniqueId)
             .addAttriubte(ATTR_INUM, client.getInum())
             .addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME).build();
 
@@ -146,10 +146,10 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 client.getName(), result.getResultCode().toString()));
         }
 
-        String clientPermissionsDN = new LdapDnBuilder().setBaseDn(clientDN)
+        String clientPermissionsDN = new LdapDnBuilder(clientDN)
             .addAttriubte(ATTR_OU, OU_PERMISSIONS_NAME).build();
 
-        String clientGroupsDN = new LdapDnBuilder().setBaseDn(clientDN)
+        String clientGroupsDN = new LdapDnBuilder(clientDN)
             .addAttriubte(ATTR_OU, OU_GROUPS_NAME).build();
 
         // Add ou=permissions under new client entry
@@ -236,7 +236,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             atts.add(new Attribute(ATTR_NAME, clientGroup.getName()));
         }
 
-        String groupDN = new LdapDnBuilder().setBaseDn(client.getUniqueId())
+        String groupDN = new LdapDnBuilder(client.getUniqueId())
             .addAttriubte(ATTR_NAME, clientGroup.getName())
             .addAttriubte(ATTR_OU, OU_GROUPS_NAME).build();
 
@@ -295,7 +295,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         String clientDN = this.getClientDnByClientId(permission.getClientId());
 
-        String permissionDN = new LdapDnBuilder().setBaseDn(clientDN)
+        String permissionDN = new LdapDnBuilder(clientDN)
             .addAttriubte(ATTR_NAME, permission.getPermissionId())
             .addAttriubte(ATTR_OU, OU_PERMISSIONS_NAME).build();
 

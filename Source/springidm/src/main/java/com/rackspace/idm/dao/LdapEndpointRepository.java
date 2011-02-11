@@ -78,10 +78,8 @@ public class LdapEndpointRepository extends LdapRepository implements
             atts.add(new Attribute(ATTR_DEF, baseUrl.getDef().toString()));
         }
 
-        String baseUrlDN = new LdapDnBuilder()
-            .setBaseDn(BASEURL_BASE_DN)
-            .addAttriubte(ATTR_BASEURL_ID,
-                String.valueOf(baseUrl.getBaseUrlId())).build();
+        String baseUrlDN = new LdapDnBuilder(BASEURL_BASE_DN).addAttriubte(
+            ATTR_BASEURL_ID, String.valueOf(baseUrl.getBaseUrlId())).build();
 
         LDAPResult result;
 
@@ -157,8 +155,8 @@ public class LdapEndpointRepository extends LdapRepository implements
 
         LDAPResult result = null;
 
-        String baseUrlDN = new LdapDnBuilder().setBaseDn(BASEURL_BASE_DN)
-            .addAttriubte(ATTR_BASEURL_ID, String.valueOf(baseUrlId)).build();
+        String baseUrlDN = new LdapDnBuilder(BASEURL_BASE_DN).addAttriubte(
+            ATTR_BASEURL_ID, String.valueOf(baseUrlId)).build();
 
         try {
             result = getAppConnPool().delete(

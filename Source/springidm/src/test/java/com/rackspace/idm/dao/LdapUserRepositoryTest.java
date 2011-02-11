@@ -259,14 +259,26 @@ public class LdapUserRepositoryTest {
     public void shouldAddDeleteRestoreUser() {
 
         User newUser = addNewTestUser();
+        
+        newUser.setSoftDeleted(true);
+        
+        repo.save(newUser);
 
+        User deletedUser = repo.findSoftDeletedUser(newUser.getCustomerId(),
+            newUser.getUsername());
+        User notFound = repo.findUser(newUser.getCustomerId(), newUser.getUsername());
+        
+        Assert.assertNotNull(deletedUser);
+        Assert.assertNull(notFound);
+        
+        deletedUser.setSoftDeleted(false);
+        
+        repo.saveRestoredUser(deletedUser);
+        
+        User restoredUser = repo.findUser(deletedUser.getCustomerId(), deletedUser.getUsername());
+        Assert.assertNotNull(restoredUser);
+        
         repo.delete(newUser.getUsername());
-
-        Map<String, String> userStatusMap = new HashMap<String, String>();
-        userStatusMap.put(GlobalConstants.ATTR_SOFT_DELETED, "FALSE");
-
-        User deletedUser = repo.findUser(newUser.getCustomerId(),
-            newUser.getUsername(), userStatusMap);
     }
     
     @Test
@@ -280,24 +292,18 @@ public class LdapUserRepositoryTest {
         newUser.setSoftDeletedTimestamp(softDeletedTimestamp);
         
         repo.save(newUser);
-        
-        Map<String, String> userStatusMap = new HashMap<String, String>();
-        userStatusMap.put(GlobalConstants.ATTR_SOFT_DELETED, "TRUE");
 
-        User softDeletedUser = repo.findUser(newUser.getCustomerId(),
-            newUser.getUsername(), userStatusMap);        
+        User softDeletedUser = repo.findSoftDeletedUser(newUser.getCustomerId(),
+            newUser.getUsername());        
 
         Assert.assertNotNull(softDeletedUser.getSoftDeleteTimestamp());
         
         softDeletedUser.setSoftDeleted(false);
         
-        repo.saveRestoredUser(softDeletedUser, userStatusMap);
-        
-        userStatusMap = new HashMap<String, String>();
-        userStatusMap.put(GlobalConstants.ATTR_SOFT_DELETED, "FALSE");
+        repo.saveRestoredUser(softDeletedUser);
         
         User unSoftDeletedUser = repo.findUser(newUser.getCustomerId(),
-            newUser.getUsername(), userStatusMap);        
+            newUser.getUsername());        
       
         Assert.assertNull(unSoftDeletedUser.getSoftDeleteTimestamp());
         
