@@ -3,8 +3,6 @@ package com.rackspace.idm.services;
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.TokenFindDeleteDao;
-import com.rackspace.idm.dao.RefreshTokenDao;
-import com.rackspace.idm.dao.HttpAccessTokenRepository;
 import com.rackspace.idm.entities.*;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
