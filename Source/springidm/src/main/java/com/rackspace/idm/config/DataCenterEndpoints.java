@@ -1,6 +1,10 @@
 package com.rackspace.idm.config;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
@@ -14,6 +18,11 @@ public class DataCenterEndpoints {
 
     public DataCenterClient get(String dc) {
         return endPoints.get(dc);
+    }
+
+    public List<DataCenterClient> getAll() {
+        Collection<DataCenterClient> all = endPoints.values();
+        return Collections.unmodifiableList(new ArrayList<DataCenterClient>(all));
     }
 
     public String getTokenPrefix(String tokenWithPrefix) {

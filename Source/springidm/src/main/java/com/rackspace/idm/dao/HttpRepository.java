@@ -2,6 +2,7 @@ package com.rackspace.idm.dao;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -53,7 +54,7 @@ public abstract class HttpRepository {
         return extractMyAccessToken(resp, client);
     }
 
-    AccessToken extractMyAccessToken(ClientResponse resp, DataCenterClient client) {
+    protected AccessToken extractMyAccessToken(ClientResponse resp, DataCenterClient client) {
         if (Response.Status.OK.getStatusCode() == resp.getStatus()) {
             AccessToken myToken = converter
                 .toAccessTokenFromJaxb(resp.getEntity(Auth.class).getAccessToken());
@@ -70,5 +71,43 @@ public abstract class HttpRepository {
 
     protected abstract void handleHttpCallException(UniformInterfaceException e);
 
+    protected <T> T makeHttpCall(HttpCaller<T> caller, String dc) {
+        final DataCenterClient client = endpoints.get(dc);
+        if (client == null) {
+            getLogger().warn("Invalid prefix " + dc + " given");
+            return null;
+        }
+
+        AccessToken myToken = getMyAccessToken(dc);
+        try {
+            return caller.execute(myToken.getTokenString(), client);
+        } catch (UniformInterfaceException ue1) {
+            boolean myTokenExpired = ue1.getResponse().getStatus() == Status.UNAUTHORIZED.getStatusCode()
+                && myToken.isExpired(new DateTime());
+            if (myTokenExpired) {
+                // Try again with a new token, client token might have just
+                // expired.
+                myToken = getMyAccessToken(dc);
+                try {
+                    return caller.execute(myToken.getTokenString(), client);
+                } catch (UniformInterfaceException ue2) {
+                    handleHttpCallException(ue2);
+                    return null;
+                }
+            } else {
+                handleHttpCallException(ue1);
+                return null;
+            }
+        }
+    }
+
+    protected String getOauthAuthorizationHeader(String myTokenStr) {
+        return "OAuth " + myTokenStr;
+    }
+
     protected abstract Logger getLogger();
+
+    protected interface HttpCaller<T> {
+        T execute(String myTokenStr, DataCenterClient client);
+    }
 }
