@@ -1,5 +1,7 @@
 package com.rackspace.idm.dao;
 
+import java.util.List;
+
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
@@ -10,6 +12,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 
 import com.rackspace.idm.config.DataCenterClient;
+import com.rackspace.idm.config.DataCenterEndpoints;
 import com.rackspace.idm.entities.AccessToken;
 
 public class HttpAccessTokenRepository extends HttpRepository implements TokenFindDeleteDao<AccessToken> {
@@ -27,16 +30,18 @@ public class HttpAccessTokenRepository extends HttpRepository implements TokenFi
         }
 
         logger.debug("Searching for token {}.", tokenString);
-        String dc = getEndpoints().getTokenPrefix(tokenString);
+        String dc = DataCenterEndpoints.getTokenPrefix(tokenString);
+        DataCenterClient client = getEndpoints().get(dc);
 
         byte[] tokenBytes = makeHttpCall(new HttpCaller<byte[]>() {
+            @Override
             public byte[] execute(String myTokenStr, DataCenterClient client) {
                 return client.getResource().path(TOKEN_RESOURCE_PATH + "/" + tokenString)
                     .accept(MediaType.APPLICATION_OCTET_STREAM)
                     .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr))
                     .get(byte[].class);
             }
-        }, dc);
+        }, client);
 
         if (tokenBytes == null || tokenBytes.length == 0) {
             return null;
@@ -60,27 +65,43 @@ public class HttpAccessTokenRepository extends HttpRepository implements TokenFi
 
         logger.debug("Attempting to delete for token {}.", tokenString);
 
-        for (DataCenterClient dccl : getEndpoints().getAll()) {
-            if (dccl.getDcPrefix().equals(config.getString("token.dataCenterPrefix"))) {
-                continue;
-            }
+        List<String> tokenPermutations = getEndpoints().getAllTokenPermuations(tokenString);
 
-            String dc = dccl.getDcPrefix();
-            makeHttpCall(new HttpCaller<Object>() {
-                @Override
-                public Object execute(String myTokenStr, DataCenterClient client) {
-                    client.getResource().path(TOKEN_RESOURCE_PATH + "/" + tokenString)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr)).delete();
+        for (String dcTokenCombo : tokenPermutations) {
+            HttpCaller<Object> deleter = new HttpDeleteCaller(dcTokenCombo);
 
-                    return null;
+            for (DataCenterClient client : getEndpoints().getAll()) {
+                // Don't make a call against the local (own) IDM instance.
+                // That should be done using a memcached DAO instance.
+                if (client.getDcPrefix().equals(config.getString("token.dataCenterPrefix"))) {
+                    continue;
                 }
-            }, dc);
+
+                makeHttpCall(deleter, client);
+            }
         }
     }
 
     @Override
     protected Logger getLogger() {
         return logger;
+    }
+
+    private class HttpDeleteCaller implements HttpCaller<Object> {
+        private String tokenString;
+
+        HttpDeleteCaller(String tokenString) {
+            this.tokenString = tokenString;
+        }
+
+        @Override
+        public Object execute(String myTokenStr, DataCenterClient client) {
+            client.getResource().path(TOKEN_RESOURCE_PATH + "/" + tokenString)
+                .accept(MediaType.APPLICATION_XML)
+                .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr)).delete();
+
+            return null;
+        }
+
     }
 }

@@ -90,12 +90,13 @@ public abstract class HttpRepository {
      * @param dc Prefix of the data center against which the HTTP client call is to be made
      * @return Client call response, if any
      */
-    protected <T> T makeHttpCall(HttpCaller<T> caller, String dc) {
-        final DataCenterClient client = getEndpoints().get(dc);
+    protected <T> T makeHttpCall(HttpCaller<T> caller, DataCenterClient client) {
         if (client == null) {
-            getLogger().warn("Invalid prefix " + dc + " given");
+            getLogger().warn("Request for invalid data center prefix.");
             return null;
         }
+
+        String dc = client.getDcPrefix();
 
         AccessToken myToken = getMyAccessToken(dc);
         try {

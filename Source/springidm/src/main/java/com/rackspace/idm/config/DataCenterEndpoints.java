@@ -34,7 +34,18 @@ public class DataCenterEndpoints {
         return Collections.unmodifiableList(new ArrayList<DataCenterClient>(all));
     }
 
-    public String getTokenPrefix(String tokenWithPrefix) {
+    public List<String> getAllTokenPermuations(String tokenWithPrefix) {
+        // Build a list of all possible prefix/token combination
+        String tokenWithoutPrefix = StringUtils.split(tokenWithPrefix, "-")[1];
+        List<String> tokenPermutations = new ArrayList<String>();
+        for (DataCenterClient client : endpoints.values()) {
+            tokenPermutations.add(String.format("%s-%s", client.getDcPrefix(), tokenWithoutPrefix));
+        }
+
+        return tokenPermutations;
+    }
+
+    public static String getTokenPrefix(String tokenWithPrefix) {
         return StringUtils.split(tokenWithPrefix, "-")[0];
     }
 
