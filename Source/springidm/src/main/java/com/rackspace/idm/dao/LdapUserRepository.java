@@ -770,10 +770,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             atts.add(new Attribute(ATTR_STATUS, user.getStatus().toString()));
         }
 
-        if (!StringUtils.isBlank(user.getSeeAlso())) {
-            atts.add(new Attribute(ATTR_SEE_ALSO, user.getSeeAlso()));
-        }
-
         if (user.getTimeZoneObj() != null) {
             atts.add(new Attribute(ATTR_TIME_ZONE, user.getTimeZone()));
         }
@@ -927,7 +923,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 statusStr.toUpperCase()));
         }
 
-        user.setSeeAlso(resultEntry.getAttributeValue(ATTR_SEE_ALSO));
         user.setLastname(resultEntry.getAttributeValue(ATTR_SN));
         user.setTimeZoneObj(DateTimeZone.forID(resultEntry
             .getAttributeValue(ATTR_TIME_ZONE)));
@@ -1090,17 +1085,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 uNew.getSecretQuestion())) {
                 mods.add(new Modification(ModificationType.REPLACE,
                     ATTR_PASSWORD_SECRET_Q, uNew.getSecretQuestion()));
-            }
-        }
-
-        if (uNew.getSeeAlso() != null) {
-            if (StringUtils.isBlank(uNew.getSeeAlso())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_SEE_ALSO));
-            } else if (!StringUtils
-                .equals(uOld.getSeeAlso(), uNew.getSeeAlso())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_SEE_ALSO, uNew.getSeeAlso()));
             }
         }
 

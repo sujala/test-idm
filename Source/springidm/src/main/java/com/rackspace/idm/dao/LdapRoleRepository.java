@@ -58,18 +58,12 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         if (!StringUtils.isBlank(role.getOrgInum())) {
             atts.add(new Attribute(ATTR_O, role.getOrgInum()));
         }
-        if (!StringUtils.isBlank(role.getOwner())) {
-            atts.add(new Attribute(ATTR_OWNER, role.getOwner()));
-        }
         if (!StringUtils.isBlank(role.getCustomerId())) {
             atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, role
                 .getCustomerId()));
         }
         if (role.getStatus() != null) {
             atts.add(new Attribute(ATTR_STATUS, role.getStatus().toString()));
-        }
-        if (!StringUtils.isBlank(role.getSeeAlso())) {
-            atts.add(new Attribute(ATTR_SEE_ALSO, role.getSeeAlso()));
         }
 
         if (role.getPermissions() != null && role.getPermissions().size() > 0) {
@@ -279,8 +273,6 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         role.setIname(resultEntry.getAttributeValue(ATTR_INAME));
         role.setInum(resultEntry.getAttributeValue(ATTR_INUM));
         role.setOrgInum(resultEntry.getAttributeValue(ATTR_O));
-        role.setOwner(resultEntry.getAttributeValue(ATTR_OWNER));
-        role.setSeeAlso(resultEntry.getAttributeValue(ATTR_SEE_ALSO));
         role.setType(resultEntry.getAttributeValue(ATTR_GROUP_TYPE));
 
         String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);

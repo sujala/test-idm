@@ -62,10 +62,6 @@ public class LdapCustomerRepository extends LdapRepository implements
             atts.add(new Attribute(ATTR_STATUS, customer.getStatus().toString()));
         }
 
-        if (!StringUtils.isBlank(customer.getSeeAlso())) {
-            atts.add(new Attribute(ATTR_SEE_ALSO, customer.getSeeAlso()));
-        }
-
         if (customer.getIsLocked() != null) {
             atts.add(new Attribute(ATTR_LOCKED, String.valueOf(customer
                 .getIsLocked())));
@@ -408,8 +404,6 @@ public class LdapCustomerRepository extends LdapRepository implements
             customer.setStatus(Enum.valueOf(CustomerStatus.class,
                 statusStr.toUpperCase()));
         }
-        customer.setSeeAlso(resultEntry.getAttributeValue(ATTR_SEE_ALSO));
-        customer.setOwner(resultEntry.getAttributeValue(ATTR_OWNER));
 
         String deleted = resultEntry.getAttributeValue(ATTR_SOFT_DELETED);
         if (deleted != null) {
@@ -462,26 +456,6 @@ public class LdapCustomerRepository extends LdapRepository implements
             && !cOld.getStatus().equals(cNew.getStatus())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_STATUS,
                 cNew.getStatus().toString()));
-        }
-
-        if (cNew.getSeeAlso() != null) {
-            if (StringUtils.isBlank(cNew.getSeeAlso())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_SEE_ALSO));
-            } else if (!StringUtils
-                .equals(cOld.getSeeAlso(), cNew.getSeeAlso())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_SEE_ALSO, cNew.getSeeAlso()));
-            }
-        }
-
-        if (cNew.getOwner() != null) {
-            if (StringUtils.isBlank(cNew.getOwner())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_OWNER));
-            } else if (!StringUtils.equals(cOld.getOwner(), cNew.getOwner())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_OWNER,
-                    cNew.getOwner()));
-            }
         }
 
         if (cNew.getIsLocked() != null

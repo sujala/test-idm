@@ -67,6 +67,7 @@ public class DefaultClientService implements ClientService {
             throw new IllegalStateException("Unsupported hashing algorithm", e);
         }
 
+        client.setOrgInum(customer.getInum());
         client.setInum(clientDao.getUnusedClientInum(customer.getInum()));
 
         clientDao.add(client, customer.getUniqueId());

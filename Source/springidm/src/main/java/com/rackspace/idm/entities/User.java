@@ -36,7 +36,6 @@ public class User extends BaseUser {
     private String orgInum = null;
     private String apiKey = null;
     private UserStatus status = null;
-    private String seeAlso = null;
 
     private Boolean softDeleted = null;
     private String region = null;
@@ -74,7 +73,7 @@ public class User extends BaseUser {
     public User(String username, String customerId, String email,
         UserHumanName name, UserLocale preference, UserCredential credential,
         String country, String displayName, String inum, String iname,
-        String orgInum, String apiKey, UserStatus status, String seeAlso,
+        String orgInum, String apiKey, UserStatus status,
         String personId) {
         this.username = username;
         this.customerId = customerId;
@@ -89,7 +88,6 @@ public class User extends BaseUser {
         this.orgInum = orgInum;
         this.apiKey = apiKey;
         this.status = status;
-        this.seeAlso = seeAlso;
         this.personId = personId;
     }
 
@@ -197,16 +195,6 @@ public class User extends BaseUser {
     public void setStatus(UserStatus status) {
         if (status != null) {
             this.status = status;
-        }
-    }
-
-    public String getSeeAlso() {
-        return seeAlso;
-    }
-
-    public void setSeeAlso(String seeAlso) {
-        if (seeAlso != null) {
-            this.seeAlso = seeAlso;
         }
     }
 
@@ -484,10 +472,6 @@ public class User extends BaseUser {
             setCountry(modifiedUser.getCountry());
         }
 
-        if (!StringUtils.isBlank(modifiedUser.getSeeAlso())) {
-            setSeeAlso(modifiedUser.getSeeAlso());
-        }
-
         if (!StringUtils.isBlank(modifiedUser.getRegion())) {
             setRegion(modifiedUser.getRegion());
         }
@@ -521,7 +505,6 @@ public class User extends BaseUser {
         result = prime * result
             + ((preference == null) ? 0 : preference.hashCode());
         result = prime * result + ((region == null) ? 0 : region.hashCode());
-        result = prime * result + ((seeAlso == null) ? 0 : seeAlso.hashCode());
         result = prime * result
             + ((softDeleted == null) ? 0 : softDeleted.hashCode());
         result = prime * result + ((status == null) ? 0 : status.toString().hashCode());
@@ -662,13 +645,6 @@ public class User extends BaseUser {
         } else if (!region.equals(other.region)) {
             return false;
         }
-        if (seeAlso == null) {
-            if (other.seeAlso != null) {
-                return false;
-            }
-        } else if (!seeAlso.equals(other.seeAlso)) {
-            return false;
-        }
         if (softDeleted == null) {
             if (other.softDeleted != null) {
                 return false;
@@ -703,8 +679,7 @@ public class User extends BaseUser {
             + name + ", preference=" + preference + ", country=" + country
             + ", displayName=" + displayName + ", inum=" + inum + ", iname="
             + iname + ", locked=" + locked + ", orgInum=" + orgInum
-            + ", apiKey=" + apiKey + ", status=" + status + ", seeAlso="
-            + seeAlso + ", softDeleted=" + softDeleted + ", region=" + region
+            + ", apiKey=" + apiKey + ", status=" + status + ", softDeleted=" + softDeleted + ", region=" + region
             + ", nastId=" + nastId + ", mossoId=" + mossoId + ", created="
             + created + ", updated=" + updated + ", passwordFailureLocked="
             + maxLoginFailuresExceded + ", username=" + username
@@ -780,12 +755,6 @@ public class User extends BaseUser {
         public Builder setFlags(UserStatus status, boolean isLocked) {
             user.status = status;
             user.locked = isLocked;
-
-            return this;
-        }
-
-        public Builder setSeeAlso(String seeAlso) {
-            user.seeAlso = seeAlso;
 
             return this;
         }

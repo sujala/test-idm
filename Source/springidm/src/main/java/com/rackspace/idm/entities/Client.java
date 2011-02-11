@@ -24,24 +24,19 @@ public class Client extends BaseClient {
     private String iname = null;
     private String orgInum = null;
     private Boolean locked = null;
-    private String seeAlso = null;
     private Boolean softDeleted = null;
-    private String owner = null;
 
     public Client() {
     }
 
     public Client(String clientId, ClientSecret clientSecret, String name,
-                  String inum, String iname, String customerId, ClientStatus status,
-                  String seeAlso, String owner) {
+        String inum, String iname, String customerId, ClientStatus status) {
         super(clientId, customerId);
         this.clientSecret = clientSecret;
         this.name = name;
         this.inum = inum;
         this.iname = iname;
         this.status = status;
-        this.seeAlso = seeAlso;
-        this.owner = owner;
     }
 
     public void setUniqueId(String uniqueId) {
@@ -79,7 +74,7 @@ public class Client extends BaseClient {
             this.name = name;
         }
     }
-    
+
     public String getOrgInum() {
         return orgInum;
     }
@@ -114,16 +109,6 @@ public class Client extends BaseClient {
         }
     }
 
-    public String getSeeAlso() {
-        return seeAlso;
-    }
-
-    public void setSeeAlso(String seeAlso) {
-        if (seeAlso != null) {
-            this.seeAlso = seeAlso;
-        }
-    }
-
     public Boolean isSoftDeleted() {
         return softDeleted;
     }
@@ -140,16 +125,6 @@ public class Client extends BaseClient {
         this.locked = isLocked;
     }
 
-    public String getOwner() {
-        return owner;
-    }
-
-    public void setOwner(String owner) {
-        if (owner != null) {
-            this.owner = owner;
-        }
-    }
-
     public void setInum(String inum) {
         if (inum != null) {
             this.inum = inum;
@@ -160,8 +135,10 @@ public class Client extends BaseClient {
         return inum;
     }
 
-    // The following overrides allow for a more permissive mutators in the child (Client)
-    // while maintaining a more strict, immutable-ish characteristics in the parent (BaseClient).
+    // The following overrides allow for a more permissive mutators in the child
+    // (Client)
+    // while maintaining a more strict, immutable-ish characteristics in the
+    // parent (BaseClient).
 
     @Override
     public void setClientId(String clientId) {
@@ -175,7 +152,8 @@ public class Client extends BaseClient {
 
     @Override
     public void setPermissions(List<Permission> permissions) {
-        // Make the setter more permissive here, but keep it restrictive in BaseClient
+        // Make the setter more permissive here, but keep it restrictive in
+        // BaseClient
         this.permissions = permissions;
     }
 
@@ -200,19 +178,16 @@ public class Client extends BaseClient {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result
-                + ((clientSecret == null) ? 0 : clientSecret.hashCode());
+            + ((clientSecret == null) ? 0 : clientSecret.hashCode());
         result = prime * result + ((iname == null) ? 0 : iname.hashCode());
         result = prime * result + ((inum == null) ? 0 : inum.hashCode());
-        result = prime * result
-                + ((locked == null) ? 0 : locked.hashCode());
+        result = prime * result + ((locked == null) ? 0 : locked.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result + ((owner == null) ? 0 : owner.hashCode());
-        result = prime * result + ((seeAlso == null) ? 0 : seeAlso.hashCode());
         result = prime * result
-                + ((softDeleted == null) ? 0 : softDeleted.hashCode());
+            + ((softDeleted == null) ? 0 : softDeleted.hashCode());
         result = prime * result + ((status == null) ? 0 : status.hashCode());
         result = prime * result
-                + ((uniqueId == null) ? 0 : uniqueId.hashCode());
+            + ((uniqueId == null) ? 0 : uniqueId.hashCode());
         return result;
     }
 
@@ -263,20 +238,6 @@ public class Client extends BaseClient {
         } else if (!name.equals(other.name)) {
             return false;
         }
-        if (owner == null) {
-            if (other.owner != null) {
-                return false;
-            }
-        } else if (!owner.equals(other.owner)) {
-            return false;
-        }
-        if (seeAlso == null) {
-            if (other.seeAlso != null) {
-                return false;
-            }
-        } else if (!seeAlso.equals(other.seeAlso)) {
-            return false;
-        }
         if (softDeleted == null) {
             if (other.softDeleted != null) {
                 return false;
@@ -300,9 +261,8 @@ public class Client extends BaseClient {
     @Override
     public String toString() {
         return "Client [clientSecret=" + clientSecret + ", name=" + name
-                + ", status=" + status + ", uniqueId=" + uniqueId + ", inum="
-                + inum + ", iname=" + iname + ", isLocked=" + locked
-                + ", seeAlso=" + seeAlso + ", softDeleted=" + softDeleted
-                + ", owner=" + owner + "]";
+            + ", status=" + status + ", uniqueId=" + uniqueId + ", inum="
+            + inum + ", iname=" + iname + ", isLocked=" + locked
+            + ", softDeleted=" + softDeleted + "]";
     }
 }

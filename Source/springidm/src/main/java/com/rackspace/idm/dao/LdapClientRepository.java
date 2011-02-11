@@ -63,7 +63,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         if (!StringUtils.isBlank(client.getName())) {
-            atts.add(new Attribute(ATTR_DISPLAY_NAME, client.getName()));
+            atts.add(new Attribute(ATTR_NAME, client.getName()));
         }
 
         if (!StringUtils.isBlank(client.getIname())) {
@@ -77,10 +77,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         if (!StringUtils.isBlank(client.getOrgInum())) {
             atts.add(new Attribute(ATTR_O, client.getOrgInum()));
         }
-        
-        if (!StringUtils.isBlank(client.getOwner())) {
-            atts.add(new Attribute(ATTR_OWNER, client.getOwner()));
-        }
 
         if (!StringUtils.isBlank(client.getCustomerId())) {
             atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, client
@@ -89,10 +85,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         if (client.getStatus() != null) {
             atts.add(new Attribute(ATTR_STATUS, client.getStatus().toString()));
-        }
-
-        if (!StringUtils.isBlank(client.getSeeAlso())) {
-            atts.add(new Attribute(ATTR_SEE_ALSO, client.getSeeAlso()));
         }
 
         if (!StringUtils.isBlank(client.getClientSecretObj().getValue())) {
@@ -562,7 +554,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         String searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_DISPLAY_NAME, clientName)
+            .addEqualAttribute(ATTR_NAME, clientName)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEAPPLICATION).build();
@@ -1003,7 +995,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         ClientSecret secret = ClientSecret.existingInstance(resultEntry
             .getAttributeValue(ATTR_CLIENT_SECRET));
         client.setClientSecretObj(secret);
-        client.setName(resultEntry.getAttributeValue(ATTR_DISPLAY_NAME));
+        client.setName(resultEntry.getAttributeValue(ATTR_NAME));
         client.setInum(resultEntry.getAttributeValue(ATTR_INUM));
         client.setIname(resultEntry.getAttributeValue(ATTR_INAME));
 
@@ -1015,8 +1007,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             client.setStatus(Enum.valueOf(ClientStatus.class,
                 statusStr.toUpperCase()));
         }
-        client.setSeeAlso(resultEntry.getAttributeValue(ATTR_SEE_ALSO));
-        client.setOwner(resultEntry.getAttributeValue(ATTR_OWNER));
 
         String deleted = resultEntry.getAttributeValue(ATTR_SOFT_DELETED);
         if (deleted != null) {
@@ -1183,26 +1173,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             && !cOld.getStatus().equals(cNew.getStatus())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_STATUS,
                 cNew.getStatus().toString()));
-        }
-
-        if (cNew.getSeeAlso() != null) {
-            if (StringUtils.isBlank(cNew.getSeeAlso())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_SEE_ALSO));
-            } else if (!StringUtils
-                .equals(cOld.getSeeAlso(), cNew.getSeeAlso())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_SEE_ALSO, cNew.getSeeAlso()));
-            }
-        }
-
-        if (cNew.getOwner() != null) {
-            if (StringUtils.isBlank(cNew.getOwner())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_OWNER));
-            } else if (!StringUtils.equals(cOld.getOwner(), cNew.getOwner())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_OWNER,
-                    cNew.getOwner()));
-            }
         }
 
         if (cNew.isSoftDeleted() != null
