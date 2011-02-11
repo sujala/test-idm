@@ -111,10 +111,14 @@
 		<attribute name="customerId" type="xsd:string" use="required">
 			<annotation>
 				<documentation>
-					<p>The unique Id for the customer the client belongs to.</p>
+					<p>
+						The unique Id for the customer the client
+						belongs to.
+					</p>
 				</documentation>
 			</annotation>
 		</attribute>
+		<attribute name="customerInum" type="xsd:string"></attribute>
 		<attribute name="name" type="string" use="required">
 			<annotation>
 				<documentation>
@@ -136,7 +140,8 @@
 				</documentation>
 			</annotation>
 		</attribute>
-		<attribute name="status" type="idm:ClientStatus" use="optional">
+		<attribute name="status" type="idm:ClientStatus"
+			use="optional">
 			<annotation>
 				<documentation>
 					<p>The user's status.</p>
