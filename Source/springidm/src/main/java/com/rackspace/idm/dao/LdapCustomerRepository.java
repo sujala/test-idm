@@ -26,11 +26,8 @@ import com.unboundid.ldap.sdk.controls.SubtreeDeleteRequestControl;
 public class LdapCustomerRepository extends LdapRepository implements
     CustomerDao {
 
-    private static final String CUSTOMER_FIND_ALL_STRING_NOT_DELETED = "(&(objectClass=rackspaceOrganization)(softDeleted=FALSE))";
-    private static final String CUSTOMER_FIND_BY_CUSTOMER_ID_STRING_NOT_DELETED = "(&(objectClass=rackspaceOrganization)(rackspaceCustomerNumber=%s)(softDeleted=FALSE))";
-    private static final String CUSTOMER_FIND_BY_INUM_STRING = "(&(objectClass=rackspaceOrganization)(inum=%s))";
-
-    public LdapCustomerRepository(LdapConnectionPools connPools, Configuration config, Logger logger) {
+    public LdapCustomerRepository(LdapConnectionPools connPools,
+        Configuration config, Logger logger) {
         super(connPools, config, logger);
     }
 
@@ -44,7 +41,8 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         List<Attribute> atts = new ArrayList<Attribute>();
 
-        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_CUSTOMER_OBJECT_CLASS_VALUES));
+        atts.add(new Attribute(ATTR_OBJECT_CLASS,
+            ATTR_CUSTOMER_OBJECT_CLASS_VALUES));
 
         if (!StringUtils.isBlank(customer.getIname())) {
             atts.add(new Attribute(ATTR_INAME, customer.getIname()));
@@ -223,9 +221,15 @@ public class LdapCustomerRepository extends LdapRepository implements
     public List<Customer> findAll() {
         getLogger().debug("Search all customers");
         SearchResult searchResult = null;
+
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEORGANIZATION)
+            .build();
+
         try {
             searchResult = getAppConnPool().search(BASE_DN, SearchScope.ONE,
-                CUSTOMER_FIND_ALL_STRING_NOT_DELETED);
+                searchFilter);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error(
                 "Error searching for all customers under DN {} - {}", BASE_DN,
@@ -282,9 +286,15 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         Customer customer = null;
         SearchResult searchResult = null;
+
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_INUM, customerInum)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEORGANIZATION)
+            .build();
+
         try {
             searchResult = getAppConnPool().search(BASE_DN, SearchScope.ONE,
-                String.format(CUSTOMER_FIND_BY_INUM_STRING, customerInum));
+                searchFilter);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for customerInum {} - {}",
                 customerInum, ldapEx);
@@ -413,8 +423,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         if (cNew.getSoftDeleted() != null
             && cNew.getSoftDeleted() != cOld.getSoftDeleted()) {
             mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_SOFT_DELETED, String.valueOf(cNew
-                    .getSoftDeleted())));
+                ATTR_SOFT_DELETED, String.valueOf(cNew.getSoftDeleted())));
         }
 
         return mods;
@@ -453,12 +462,16 @@ public class LdapCustomerRepository extends LdapRepository implements
 
     private SearchResult getCustomerSearchResult(String customerId) {
         SearchResult searchResult = null;
+
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEORGANIZATION)
+            .build();
+
         try {
-            searchResult = getAppConnPool().search(
-                BASE_DN,
-                SearchScope.ONE,
-                String.format(CUSTOMER_FIND_BY_CUSTOMER_ID_STRING_NOT_DELETED,
-                    customerId));
+            searchResult = getAppConnPool().search(BASE_DN, SearchScope.ONE,
+                searchFilter);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for customerId {} - {}",
                 customerId, ldapEx);
@@ -472,8 +485,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         Customer customer = null;
         String inum = "";
         do {
-            inum = this.getRackspaceInumPrefix()
-                + InumHelper.getRandomInum(2);
+            inum = this.getRackspaceInumPrefix() + InumHelper.getRandomInum(2);
             customer = findByInum(inum);
         } while (customer != null);
 

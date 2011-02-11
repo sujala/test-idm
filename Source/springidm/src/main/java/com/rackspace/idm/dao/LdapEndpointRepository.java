@@ -26,14 +26,11 @@ import com.unboundid.ldap.sdk.SearchScope;
 public class LdapEndpointRepository extends LdapRepository implements
     EndpointDao {
 
-    private static final String BASE_URL_STRING = "baseUrlId=%s," + BASEURL_BASE_DN;
+    private static final String BASE_URL_STRING = "baseUrlId=%s,"
+        + BASEURL_BASE_DN;
 
-    private static final String BASEURL_FIND_ALL_STRING = "(objectClass=baseUrl)";
-    private static final String BASEURL_FIND_BY_ID_STRING = "(&(objectClass=baseUrl)(baseUrlId=%s))";
-
-    private static final String USER_FIND_BY_USERNAME_BASESTRING = "(&(objectClass=rackspacePerson)(uid=%s))";
-
-    public LdapEndpointRepository(LdapConnectionPools connPools, Configuration config, Logger logger) {
+    public LdapEndpointRepository(LdapConnectionPools connPools,
+        Configuration config, Logger logger) {
         super(connPools, config, logger);
     }
 
@@ -47,7 +44,8 @@ public class LdapEndpointRepository extends LdapRepository implements
 
         List<Attribute> atts = new ArrayList<Attribute>();
 
-        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_BASEURL_OBJECT_CLASS_VALUES));
+        atts.add(new Attribute(ATTR_OBJECT_CLASS,
+            ATTR_BASEURL_OBJECT_CLASS_VALUES));
 
         if (!StringUtils.isBlank(baseUrl.getAdminUrl())) {
             atts.add(new Attribute(ATTR_ADMIN_URL, baseUrl.getAdminUrl()));
@@ -183,9 +181,13 @@ public class LdapEndpointRepository extends LdapRepository implements
         CloudBaseUrl baseUrl = null;
         SearchResult searchResult = null;
 
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_BASEURL_ID, String.valueOf(baseUrlId))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
+
         try {
-            searchResult = getAppConnPool().search(BASEURL_BASE_DN, SearchScope.ONE,
-                String.format(BASEURL_FIND_BY_ID_STRING, baseUrlId));
+            searchResult = getAppConnPool().search(BASEURL_BASE_DN,
+                SearchScope.ONE, searchFilter);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for baseUrl - {}", ldapEx);
             throw new IllegalStateException(ldapEx);
@@ -209,9 +211,12 @@ public class LdapEndpointRepository extends LdapRepository implements
         List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
         SearchResult searchResult = null;
 
+        String searchFilter = new LdapSearchBuilder().addEqualAttribute(
+            ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
+
         try {
-            searchResult = getAppConnPool().search(BASEURL_BASE_DN, SearchScope.ONE,
-                BASEURL_FIND_ALL_STRING);
+            searchResult = getAppConnPool().search(BASEURL_BASE_DN,
+                SearchScope.ONE, searchFilter);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for baseUrls - {}", ldapEx);
             throw new IllegalStateException(ldapEx);
@@ -328,11 +333,17 @@ public class LdapEndpointRepository extends LdapRepository implements
         String nastId = null;
         Integer mossoId = null;
         SearchResult searchResult = null;
+
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_UID, username)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
         try {
             searchResult = getAppConnPool().search(
                 BASE_DN,
                 SearchScope.SUB,
-                String.format(USER_FIND_BY_USERNAME_BASESTRING, username),
+                searchFilter,
                 new String[]{ATTR_ENDPOINT, ATTR_UID, ATTR_NAST_ID,
                     ATTR_MOSSO_ID});
         } catch (LDAPSearchException ldapEx) {

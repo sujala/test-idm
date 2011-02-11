@@ -30,10 +30,8 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
     private static final String ROLE_ADD_DN_STRING = "inum=%s,ou=groups,o=%s,"
         + BASE_DN;
 
-    private static final String ROLE_FIND_BY_NAME_AND_CUSTOMER_NUMBER_STRING = "(&(objectClass=rackspaceGroup)(cn=%s)(rackspaceCustomerNumber=%s))";
-    private static final String ROLE_FIND_BY_CUSTOMERID_STRING = "(&(objectClass=rackspaceGroup)(rackspaceCustomerNumber=%s))";
-
-    public LdapRoleRepository(LdapConnectionPools connPools, Configuration config, Logger logger) {
+    public LdapRoleRepository(LdapConnectionPools connPools,
+        Configuration config, Logger logger) {
         super(connPools, config, logger);
     }
 
@@ -108,8 +106,8 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
             getLogger().error("Error adding role {} - {}", role.getName(),
                 result.getResultCode());
             throw new IllegalStateException(String.format(
-                "LDAP error encountered when adding role: %s - %s", role
-                    .getName(), result.getResultCode().toString()));
+                "LDAP error encountered when adding role: %s - %s",
+                role.getName(), result.getResultCode().toString()));
         }
 
         getLogger().debug("Added role {}", role);
@@ -174,8 +172,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         }
 
         List<Modification> mods = new ArrayList<Modification>();
-        mods
-            .add(new Modification(ModificationType.DELETE, ATTR_MEMBER, userDN));
+        mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER, userDN));
 
         LDAPResult result;
         try {
@@ -288,8 +285,8 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
 
         String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
         if (statusStr != null) {
-            role.setStatus(Enum.valueOf(RoleStatus.class, statusStr
-                .toUpperCase()));
+            role.setStatus(Enum.valueOf(RoleStatus.class,
+                statusStr.toUpperCase()));
         }
 
         return role;
@@ -297,12 +294,16 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
 
     private SearchResult getRoleSearchResult(String roleName, String customerId) {
         SearchResult searchResult = null;
+
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_NAME, roleName)
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEGROUP)
+            .build();
+
         try {
-            searchResult = getAppConnPool().search(
-                BASE_DN,
-                SearchScope.SUB,
-                String.format(ROLE_FIND_BY_NAME_AND_CUSTOMER_NUMBER_STRING,
-                    roleName, customerId));
+            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
+                searchFilter);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for role {} = {}", roleName,
                 ldapEx);
@@ -322,9 +323,15 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
 
         List<Role> roles = new ArrayList<Role>();
         SearchResult searchResult = null;
+
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEGROUP)
+            .build();
+
         try {
             searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(ROLE_FIND_BY_CUSTOMERID_STRING, customerId));
+                searchFilter);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error(
                 "Error searching for Roles for CustomerId {} - {}", customerId,

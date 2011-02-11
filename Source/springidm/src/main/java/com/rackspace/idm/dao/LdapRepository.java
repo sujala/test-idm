@@ -1,11 +1,18 @@
 package com.rackspace.idm.dao;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.configuration.Configuration;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
 public abstract class LdapRepository {
+    protected static final DateTimeFormatter DATE_PARSER = DateTimeFormat
+        .forPattern("yyyyMMddHHmmss.SSS'Z");
 
     // Definitions for LDAP Objectclasses
     protected static final String OBJECTCLASS_BASEURL = "baseUrl";
@@ -141,5 +148,57 @@ public abstract class LdapRepository {
 
     protected String getRackspaceInumPrefix() {
         return config.getString("rackspace.inum.prefix");
+    }
+
+    protected static class LdapSearchBuilder {
+        private List<QueryPair> queryPairs;
+
+        public LdapSearchBuilder() {
+            queryPairs = new ArrayList<QueryPair>();
+        }
+
+        public LdapSearchBuilder addEqualAttribute(String attribute,
+            String value) {
+            queryPairs.add(new QueryPair(attribute, "=", value));
+            return this;
+        }
+
+        public LdapSearchBuilder addGreaterOrEqualAttribute(String attribute,
+            String value) {
+            queryPairs.add(new QueryPair(attribute, ">=", value));
+            return this;
+        }
+
+        public String build() {
+            StringBuilder builder = new StringBuilder();
+
+            for (QueryPair pair : queryPairs) {
+                builder.append(pair.getQueryString());
+            }
+
+            String searchString = builder.toString();
+
+            if (queryPairs.size() > 0) {
+                searchString = String.format("(&%s)", searchString);
+            }
+
+            return searchString;
+        }
+
+        private class QueryPair {
+            private String comparer;
+            private String attribute;
+            private String value;
+
+            public QueryPair(String attribute, String comparer, String value) {
+                this.comparer = comparer;
+                this.attribute = attribute;
+                this.value = value;
+            }
+
+            public String getQueryString() {
+                return String.format("(%s)", attribute + comparer + value);
+            }
+        }
     }
 }

@@ -15,8 +15,6 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -26,29 +24,17 @@ import java.util.Map;
 
 public class LdapUserRepository extends LdapRepository implements UserDao {
 
-    public static final DateTimeFormatter DATE_PARSER = DateTimeFormat
-        .forPattern("yyyyMMddHHmmss.SSS'Z");
-
     private static final String[] ATTR_SEARCH_ATTRIBUTES = {"*",
         ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
 
     // NOTE: This is pretty fragile way of handling the specific error, so we
     // need to look into more reliable way of detecting this error.
     private static final String STALE_PASSWORD_MESSAGE = "The provided new password was found in the password history for the user";
-    private static final String USER_FIND_ALL_STRING_NOT_DELETED = "(&(objectClass=rackspacePerson)(softDeleted=FALSE))";
     private static final String USER_FIND_BY_CUSTOMER_NUMBER_STRING = "(&(objectClass=rackspacePerson)(rackspaceCustomerNumber=%s)(uid=%s)";
-    private static final String USER_FIND_BY_CUSTOMERID_AND_LOCK_STRING = "(&(objectClass=rackspacePerson)(rackspaceCustomerNumber=%s)(locked=%s)(softDeleted=FALSE))";
-    private static final String USER_FIND_BY_CUSTOMERID_STRING_NOT_DELETED = "(&(objectClass=rackspacePerson)(rackspaceCustomerNumber=%s)(softDeleted=FALSE))";
-    private static final String USER_FIND_BY_CUSTOMERID_USERNAME_NOT_DELETED = "(&(objectClass=rackspacePerson)(rackspaceCustomerNumber=%s)(uid=%s)(softDeleted=FALSE))";
-    private static final String USER_FIND_BY_EMAIL_STRING = "(&(objectClass=rackspacePerson)(mail=%s))";
-    private static final String USER_FIND_BY_INUM_STRING = "(&(objectClass=rackspacePerson)(inum=%s))";
-    private static final String USER_FIND_BY_MOSSO_ID = "(&(objectClass=rackspacePerson)(rsMossoId=%s))";
-    private static final String USER_FIND_BY_NAST_ID = "(&(objectClass=rackspacePerson)(rsNastId=%s))";
     private static final String USER_FIND_BY_USERNAME_BASESTRING = "(&(objectClass=rackspacePerson)(uid=%s)";
-    private static final String USER_FIND_BY_USERNAME_STRING = "(&(objectClass=rackspacePerson)(uid=%s))";
-    private static final String USER_FIND_BY_USERNAME_STRING_NOT_DELETED = "(&(objectClass=rackspacePerson)(uid=%s)(softDeleted=FALSE))";
 
-    public LdapUserRepository(LdapConnectionPools connPools, Configuration config, Logger logger) {
+    public LdapUserRepository(LdapConnectionPools connPools,
+        Configuration config, Logger logger) {
         super(connPools, config, logger);
     }
 
@@ -174,7 +160,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public Users findAll(int offset, int limit) {
         getLogger().debug("Search all users");
 
-        String searchFilter = USER_FIND_ALL_STRING_NOT_DELETED;
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .addEqualAttribute(ATTR_SOFT_DELETED, "FALSE").build();
         Users users = getMultipleUsers(searchFilter, ATTR_SEARCH_ATTRIBUTES,
             offset, limit);
 
@@ -193,8 +181,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "Null or Empty customerId parameter.");
         }
 
-        String searchFilter = String.format(
-            USER_FIND_BY_CUSTOMERID_STRING_NOT_DELETED, customerId);
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
         Users users = getMultipleUsers(searchFilter, ATTR_SEARCH_ATTRIBUTES,
             offset, limit);
 
@@ -210,7 +202,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalArgumentException("Null or Empty email parameter.");
         }
 
-        String searchFilter = String.format(USER_FIND_BY_EMAIL_STRING, email);
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_MAIL, email)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
         User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
@@ -228,7 +223,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalArgumentException("Null or Empty inum parameter.");
         }
 
-        String searchFilter = String.format(USER_FIND_BY_INUM_STRING, inum);
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_INUM, inum)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
         User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
@@ -239,7 +238,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public User findByMossoId(int mossoId) {
         getLogger().debug("Doing search for nastId " + mossoId);
 
-        String searchFilter = String.format(USER_FIND_BY_MOSSO_ID, mossoId);
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_MOSSO_ID, String.valueOf(mossoId))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
         User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
@@ -255,7 +258,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "Null or Empty nastId parameter.");
         }
 
-        String searchFilter = String.format(USER_FIND_BY_NAST_ID, nastId);
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_NAST_ID, nastId)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
         User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
@@ -271,8 +278,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "Null or Empty username parameter.");
         }
 
-        String searchFilter = String.format(
-            USER_FIND_BY_USERNAME_STRING_NOT_DELETED, username);
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_UID, username)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
         User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
@@ -297,8 +308,13 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "Null or Empty username parameter.");
         }
 
-        String searchFilter = String.format(
-            USER_FIND_BY_CUSTOMERID_USERNAME_NOT_DELETED, customerId, username);
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_UID, username)
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
         User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User for customer - {}, {}", customerId, user);
@@ -348,12 +364,15 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         SearchResult searchResult = null;
 
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_UID, username)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
         try {
-            searchResult = getAppConnPool().search(
-                BASE_DN,
-                SearchScope.SUB,
-                String.format(USER_FIND_BY_USERNAME_STRING_NOT_DELETED,
-                    username), new String[]{ATTR_MEMBER_OF});
+            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
+                searchFilter, new String[]{ATTR_MEMBER_OF});
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for username {} - {}", username,
                 ldapEx);
@@ -396,8 +415,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public String getUserDnByUsername(String username) {
         String dn = null;
 
-        String searchFilter = String.format(
-            USER_FIND_BY_USERNAME_STRING_NOT_DELETED, username);
+        String searchFilter = new LdapSearchBuilder()
+        .addEqualAttribute(ATTR_UID, username)
+        .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+        .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+        .build();
+        
         User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         if (user != null) {
@@ -409,8 +432,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     public boolean isUsernameUnique(String username) {
 
-        String searchFilter = String.format(USER_FIND_BY_USERNAME_STRING,
-            username);
+        String searchFilter = new LdapSearchBuilder()
+        .addEqualAttribute(ATTR_UID, username)
+        .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+        .build();
+        
         User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         return user == null;
@@ -614,8 +640,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             String value = userStatusMap.get(key);
 
             if (key.equals(ATTR_SOFT_DELETED)) {
-                ldapSearchString += "(" + ATTR_SOFT_DELETED
-                    + "=" + value + "))";
+                ldapSearchString += "(" + ATTR_SOFT_DELETED + "=" + value
+                    + "))";
             }
 
             if (key.equals(ATTR_LOCKED)) {
@@ -631,9 +657,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         int limit = 100;
         int offset = 0;
-
-        String searchFilter = String.format(
-            USER_FIND_BY_CUSTOMERID_AND_LOCK_STRING, customerId, isLocked);
+        
+        String searchFilter = new LdapSearchBuilder()
+        .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+        .addEqualAttribute(ATTR_LOCKED, String.valueOf(isLocked))
+        .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+        .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+        .build();
+        
         Users users = getMultipleUsers(searchFilter, ATTR_SEARCH_ATTRIBUTES,
             offset, limit);
 
@@ -742,8 +773,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (user.isSoftDeleted() != null) {
-            atts.add(new Attribute(ATTR_SOFT_DELETED, String
-                .valueOf(user.isSoftDeleted())));
+            atts.add(new Attribute(ATTR_SOFT_DELETED, String.valueOf(user
+                .isSoftDeleted())));
         }
 
         if (!StringUtils.isBlank(user.getNastId())) {
@@ -764,11 +795,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
             new SortKey(ATTR_UID));
-        
+
         offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
         limit = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
-        limit = limit > this.getLdapPagingLimitMax() ? this.getLdapPagingLimitMax() : limit;
-        
+        limit = limit > this.getLdapPagingLimitMax() ? this
+            .getLdapPagingLimitMax() : limit;
 
         // In the constructor below we're adding one to the offset because the
         // Rackspace API standard calls for a 0 based offset while LDAP uses a
@@ -885,8 +916,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         user.setRegion(resultEntry.getAttributeValue(ATTR_RACKSPACE_REGION));
 
-        String deleted = resultEntry
-            .getAttributeValue(ATTR_SOFT_DELETED);
+        String deleted = resultEntry.getAttributeValue(ATTR_SOFT_DELETED);
         if (deleted != null) {
             user.setSoftDeleted(resultEntry
                 .getAttributeValueAsBoolean(ATTR_SOFT_DELETED));
@@ -1094,8 +1124,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD,
                 uNew.getPasswordObj().getValue()));
 
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD,
-                uNew.getPasswordObj().getValue()));
+            mods.add(new Modification(ModificationType.REPLACE,
+                ATTR_CLEAR_PASSWORD, uNew.getPasswordObj().getValue()));
         }
 
         if (uNew.isLocked() != null && uNew.isLocked() != uOld.isLocked()) {
@@ -1106,8 +1136,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         if (uNew.isSoftDeleted() != null
             && uNew.isSoftDeleted() != uOld.isSoftDeleted()) {
             mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_SOFT_DELETED, String.valueOf(uNew
-                    .isSoftDeleted())));
+                ATTR_SOFT_DELETED, String.valueOf(uNew.isSoftDeleted())));
 
             if (uNew.isSoftDeleted()) {
                 mods.add(new Modification(ModificationType.ADD,

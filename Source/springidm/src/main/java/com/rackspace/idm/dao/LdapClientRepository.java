@@ -46,21 +46,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
     private static final String CLIENT_ADD_DN_STRING = "inum=%s,ou=applications,o=%s,"
         + BASE_DN;
-    private static final String CLIENT_FIND_ALL_STRING_NOT_DELETED = "(&(objectClass=rackspaceApplication)(softDeleted=FALSE))";
-    private static final String CLIENT_FIND_BY_NAME_STRING_NOT_DELETED = "(&(objectClass=rackspaceApplication)(displayName=%s)(softDeleted=FALSE))";
-    private static final String CLIENT_FIND_BY_INUM_STRING = "(&(objectClass=rackspaceApplication)(inum=%s))";
-    private static final String CLIENT_FIND_BY_CLIENTID_STRING_NOT_DELETED = "(&(objectClass=rackspaceApplication)(rackspaceApiKey=%s)(softDeleted=FALSE))";
-    private static final String CLIENT_FIND_BY_CUSTOMERID_STRING_NOT_DELETED = "(&(objectClass=rackspaceApplication)(rackspaceCustomerNumber=%s)(softDeleted=FALSE))";
 
-    private static final String CLIENT_FIND_BY_CUSTOMERID_AND_LOCK_STRING = "(&(objectClass=rackspaceApplication)(rackspaceCustomerNumber=%s)(locked=%s)(softDeleted=FALSE))";
-
-    private static final String PERMISSION_FIND_BY_CLIENTID = "(objectClass=clientPermission)";
-    private static final String PERMISSION_FIND_BY_ID = "(&(cn=%s)(objectClass=clientPermission))";
-
-    private static final String GROUP_FIND_BY_CLIENTID = "(objectClass=clientGroup)";
-    private static final String GROUP_FIND_BY_ID = "(&(cn=%s)(objectClass=clientGroup))";
-
-    public LdapClientRepository(LdapConnectionPools connPools, Configuration config, Logger logger) {
+    public LdapClientRepository(LdapConnectionPools connPools,
+        Configuration config, Logger logger) {
         super(connPools, config, logger);
     }
 
@@ -120,8 +108,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         if (client.isSoftDeleted() != null) {
-            atts.add(new Attribute(ATTR_SOFT_DELETED, String
-                .valueOf(client.isSoftDeleted())));
+            atts.add(new Attribute(ATTR_SOFT_DELETED, String.valueOf(client
+                .isSoftDeleted())));
         }
 
         if (client.getPermissions() != null
@@ -343,8 +331,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         if (StringUtils.isBlank(userUniqueId)) {
             getLogger().error("User uniqueId was blank");
-            throw new IllegalArgumentException(
-                "User uniqueId was blank");
+            throw new IllegalArgumentException("User uniqueId was blank");
         }
 
         if (group == null || StringUtils.isBlank(group.getUniqueId())) {
@@ -355,7 +342,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.ADD, ATTR_MEMBER, userUniqueId));
+        mods.add(new Modification(ModificationType.ADD, ATTR_MEMBER,
+            userUniqueId));
 
         LDAPResult result;
         try {
@@ -512,7 +500,10 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     public List<Client> findAll() {
         getLogger().debug("Search all clients");
 
-        String searchFilter = CLIENT_FIND_ALL_STRING_NOT_DELETED;
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+            .build();
 
         List<Client> clients = new ArrayList<Client>();
         SearchResult searchResult = null;
@@ -545,8 +536,12 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 "Null or Empty clientId parameter.");
         }
 
-        String searchFilter = String.format(
-            CLIENT_FIND_BY_CLIENTID_STRING_NOT_DELETED, clientId);
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_CLIENT_ID, clientId)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+            .build();
+
         Client client = getSingleClient(searchFilter);
 
         getLogger().debug("Found client - {}", client);
@@ -563,8 +558,12 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 "Null or Empty client name parameter.");
         }
 
-        String searchFilter = String.format(
-            CLIENT_FIND_BY_NAME_STRING_NOT_DELETED, clientName);
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_DISPLAY_NAME, clientName)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+            .build();
+
         Client client = getSingleClient(searchFilter);
 
         getLogger().debug("Found client - {}", client);
@@ -575,9 +574,13 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     public ClientGroup findClientGroupByUniqueId(String uniqueId) {
         ClientGroup group = null;
         SearchResult searchResult = null;
+
+        String searchFilter = new LdapSearchBuilder().addEqualAttribute(
+            ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
+
         try {
             searchResult = getAppConnPool().search(uniqueId, SearchScope.BASE,
-                GROUP_FIND_BY_CLIENTID);
+                searchFilter);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
@@ -609,7 +612,11 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             throw new IllegalArgumentException("Null or Empty Inum parameter.");
         }
 
-        String searchFilter = String.format(CLIENT_FIND_BY_INUM_STRING, inum);
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_INUM, inum)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+            .build();
+
         Client client = getSingleClient(searchFilter);
 
         getLogger().debug("Found client - {}", client);
@@ -626,8 +633,11 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 "Null or Empty customerId parameter.");
         }
 
-        String searchFilter = String.format(
-            CLIENT_FIND_BY_CUSTOMERID_STRING_NOT_DELETED, customerId);
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+            .build();
         Clients clients = getMultipleClients(searchFilter, offset, limit);
 
         getLogger().debug("Found clients {} for customer {}", clients,
@@ -647,8 +657,12 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 "Null or Empty clientId parameter.");
         }
 
-        String searchFilter = String.format(
-            CLIENT_FIND_BY_CLIENTID_STRING_NOT_DELETED, clientId);
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_CLIENT_ID, clientId)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+            .build();
+
         Client client = getSingleClient(searchFilter);
 
         getLogger().debug("Found client - {}", client);
@@ -673,10 +687,14 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         ClientGroup group = null;
         SearchResult searchResult = null;
+
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_NAME, name)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
+
         try {
             searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
-                String.format(GROUP_FIND_BY_ID, name),
-                ATTR_GROUP_SEARCH_ATTRIBUTES);
+                searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for clientGroup {} - {}", name,
                 ldapEx);
@@ -710,9 +728,12 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         SearchResult searchResult = null;
 
+        String searchFilter = new LdapSearchBuilder().addEqualAttribute(
+            ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
+
         try {
             searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
-                GROUP_FIND_BY_CLIENTID, ATTR_GROUP_SEARCH_ATTRIBUTES);
+                searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for clientId {} - {}", clientId,
                 ldapEx);
@@ -735,9 +756,15 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         Permission permission = null;
         SearchResult searchResult = null;
+
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_NAME, permissionId)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTPERMISSION)
+            .build();
+
         try {
             searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
-                String.format(PERMISSION_FIND_BY_ID, permissionId));
+                searchFilter);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for permissionId {} - {}",
                 clientId, ldapEx);
@@ -765,9 +792,12 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         List<Permission> permissions = new ArrayList<Permission>();
         SearchResult searchResult = null;
 
+        String searchFilter = new LdapSearchBuilder().addEqualAttribute(
+            ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTPERMISSION).build();
+
         try {
             searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
-                PERMISSION_FIND_BY_CLIENTID);
+                searchFilter);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for clientId {} - {}", clientId,
                 ldapEx);
@@ -811,7 +841,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER, userUniqueId));
+        mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER,
+            userUniqueId));
 
         LDAPResult result;
         try {
@@ -947,8 +978,13 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         int limit = 100;
         int offset = 0;
 
-        String searchFilter = String.format(
-            CLIENT_FIND_BY_CUSTOMERID_AND_LOCK_STRING, customerId, isLocked);
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_LOCKED, String.valueOf(isLocked))
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+            .build();
+
         Clients clients = getMultipleClients(searchFilter, offset, limit);
 
         getLogger().debug("Found Users - {}", clients);
@@ -1024,10 +1060,11 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
             new SortKey(ATTR_NAME));
-        
+
         offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
         limit = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
-        limit = limit > this.getLdapPagingLimitMax() ? this.getLdapPagingLimitMax() : limit;
+        limit = limit > this.getLdapPagingLimitMax() ? this
+            .getLdapPagingLimitMax() : limit;
 
         // In the constructor below we're adding one to the offset because the
         // Rackspace API standard calls for a 0 based offset while LDAP uses a
@@ -1167,8 +1204,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         if (cNew.isSoftDeleted() != null
             && cNew.isSoftDeleted() != cOld.isSoftDeleted()) {
             mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_SOFT_DELETED, String.valueOf(cNew
-                    .isSoftDeleted())));
+                ATTR_SOFT_DELETED, String.valueOf(cNew.isSoftDeleted())));
         }
 
         if (cNew.getPermissions() != null
