@@ -1,6 +1,5 @@
 package com.rackspace.idm.dao;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.entities.*;
 import com.rackspace.idm.exceptions.StalePasswordException;
 import com.rackspace.idm.exceptions.UserDisabledException;
@@ -52,8 +51,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "The password appears to be an existing instance. It must be a new instance!");
         }
 
-        String userDN = GlobalConstants.INUM_PREFIX + user.getInum()
-            + ",ou=people," + customerDN;
+        String userDN = new LdapDnBuilder().setBaseDn(customerDN)
+            .addAttriubte(ATTR_INUM, user.getInum())
+            .addAttriubte(ATTR_OU, "people").build();
 
         user.setUniqueId(userDN);
 
@@ -416,11 +416,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         String dn = null;
 
         String searchFilter = new LdapSearchBuilder()
-        .addEqualAttribute(ATTR_UID, username)
-        .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-        .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-        .build();
-        
+            .addEqualAttribute(ATTR_UID, username)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
         User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         if (user != null) {
@@ -433,10 +433,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public boolean isUsernameUnique(String username) {
 
         String searchFilter = new LdapSearchBuilder()
-        .addEqualAttribute(ATTR_UID, username)
-        .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-        .build();
-        
+            .addEqualAttribute(ATTR_UID, username)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
         User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         return user == null;
@@ -657,14 +657,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         int limit = 100;
         int offset = 0;
-        
+
         String searchFilter = new LdapSearchBuilder()
-        .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-        .addEqualAttribute(ATTR_LOCKED, String.valueOf(isLocked))
-        .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-        .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-        .build();
-        
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_LOCKED, String.valueOf(isLocked))
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
         Users users = getMultipleUsers(searchFilter, ATTR_SEARCH_ATTRIBUTES,
             offset, limit);
 

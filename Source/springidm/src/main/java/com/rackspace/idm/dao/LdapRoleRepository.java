@@ -27,9 +27,6 @@ import com.unboundid.ldap.sdk.SearchScope;
 
 public class LdapRoleRepository extends LdapRepository implements RoleDao {
 
-    private static final String ROLE_ADD_DN_STRING = "inum=%s,ou=groups,o=%s,"
-        + BASE_DN;
-
     public LdapRoleRepository(LdapConnectionPools connPools,
         Configuration config, Logger logger) {
         super(connPools, config, logger);
@@ -90,8 +87,13 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
 
         LDAPResult result;
 
-        String roleDN = String.format(ROLE_ADD_DN_STRING, role.getInum(), role
-            .getOwner().replace(GlobalConstants.INUM_PREFIX, ""));
+        String roleDN = new LdapDnBuilder()
+            .setBaseDn(BASE_DN)
+            .addAttriubte(ATTR_INUM, role.getInum())
+            .addAttriubte(ATTR_OU, "groups")
+            .addAttriubte(ATTR_O,
+                role.getOwner().replace(GlobalConstants.INUM_PREFIX, ""))
+            .build();
 
         role.setUniqueId(roleDN);
 

@@ -26,9 +26,6 @@ import com.unboundid.ldap.sdk.SearchScope;
 public class LdapEndpointRepository extends LdapRepository implements
     EndpointDao {
 
-    private static final String BASE_URL_STRING = "baseUrlId=%s,"
-        + BASEURL_BASE_DN;
-
     public LdapEndpointRepository(LdapConnectionPools connPools,
         Configuration config, Logger logger) {
         super(connPools, config, logger);
@@ -81,8 +78,10 @@ public class LdapEndpointRepository extends LdapRepository implements
             atts.add(new Attribute(ATTR_DEF, baseUrl.getDef().toString()));
         }
 
-        String baseUrlDN = String.format(BASE_URL_STRING,
-            baseUrl.getBaseUrlId());
+        String baseUrlDN = new LdapDnBuilder()
+            .setBaseDn(BASEURL_BASE_DN)
+            .addAttriubte(ATTR_BASEURL_ID,
+                String.valueOf(baseUrl.getBaseUrlId())).build();
 
         LDAPResult result;
 
@@ -157,9 +156,13 @@ public class LdapEndpointRepository extends LdapRepository implements
         getLogger().info("Deleting baseUrl - {}", baseUrlId);
 
         LDAPResult result = null;
+
+        String baseUrlDN = new LdapDnBuilder().setBaseDn(BASEURL_BASE_DN)
+            .addAttriubte(ATTR_BASEURL_ID, String.valueOf(baseUrlId)).build();
+
         try {
             result = getAppConnPool().delete(
-                String.format(BASE_URL_STRING, baseUrlId));
+                String.format(baseUrlDN, baseUrlId));
         } catch (LDAPException ldapEx) {
             getLogger().error("Error deleting baseUlr {} - {}", baseUrlId,
                 ldapEx);

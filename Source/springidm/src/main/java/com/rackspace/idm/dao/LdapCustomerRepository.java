@@ -80,12 +80,18 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         LDAPResult result;
 
-        String customerDN = "o=" + customer.getInum() + "," + BASE_DN;
+        String customerDN = new LdapDnBuilder().setBaseDn(BASE_DN)
+            .addAttriubte(ATTR_O, customer.getInum()).build();
+
         customer.setUniqueId(customerDN);
 
-        String customerGroupsDN = "ou=groups," + customerDN;
-        String customerPeopleDN = "ou=people," + customerDN;
-        String customerApplicationsDN = "ou=applications," + customerDN;
+        String customerGroupsDN = new LdapDnBuilder().setBaseDn(customerDN)
+            .addAttriubte(ATTR_OU, "groups").build();
+        String customerPeopleDN = new LdapDnBuilder().setBaseDn(customerDN)
+            .addAttriubte(ATTR_OU, "people").build();
+        String customerApplicationsDN = new LdapDnBuilder()
+            .setBaseDn(customerDN).addAttriubte(ATTR_OU, "applications")
+            .build();
 
         try {
             result = getAppConnPool().add(customerDN, attributes);
@@ -224,8 +230,8 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         String searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEORGANIZATION)
-            .build();
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEORGANIZATION).build();
 
         try {
             searchResult = getAppConnPool().search(BASE_DN, SearchScope.ONE,
@@ -289,8 +295,8 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         String searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_INUM, customerInum)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEORGANIZATION)
-            .build();
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEORGANIZATION).build();
 
         try {
             searchResult = getAppConnPool().search(BASE_DN, SearchScope.ONE,
@@ -317,14 +323,43 @@ public class LdapCustomerRepository extends LdapRepository implements
         return customer;
     }
 
+    public String getCustomerDnByCustomerId(String customerId) {
+        String dn = null;
+        SearchResult searchResult = getCustomerSearchResult(customerId);
+        if (searchResult.getEntryCount() == 1) {
+            SearchResultEntry e = searchResult.getSearchEntries().get(0);
+            dn = e.getDN();
+        } else if (searchResult.getEntryCount() > 1) {
+            getLogger().error(
+                "More than one entry was found for customerId {}", customerId);
+            throw new IllegalStateException(
+                "More than one entry was found for this customerId");
+        }
+        return dn;
+    }
+
+    public String getUnusedCustomerInum() {
+        // TODO: We might may this call to the XDI server in the future.
+        Customer customer = null;
+        String inum = "";
+        do {
+            inum = this.getRackspaceInumPrefix() + InumHelper.getRandomInum(2);
+            customer = findByInum(inum);
+        } while (customer != null);
+
+        return inum;
+    }
+
     public void save(Customer customer) {
         getLogger().debug("Updating customer {}", customer);
+        
         if (customer == null || StringUtils.isBlank(customer.getCustomerId())) {
             getLogger().error(
                 "Customer instance is null or its customerId has no value");
             throw new IllegalArgumentException(
                 "Bad parameter: The Customer instance either null or its customerId has no value.");
         }
+        
         Customer oldCustomer = findByCustomerId(customer.getCustomerId());
 
         if (oldCustomer == null) {
@@ -361,19 +396,55 @@ public class LdapCustomerRepository extends LdapRepository implements
         getLogger().debug("Updated customer {}", customer.getCustomerId());
     }
 
-    public String getCustomerDnByCustomerId(String customerId) {
-        String dn = null;
-        SearchResult searchResult = getCustomerSearchResult(customerId);
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            dn = e.getDN();
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error(
-                "More than one entry was found for customerId {}", customerId);
-            throw new IllegalStateException(
-                "More than one entry was found for this customerId");
+    private Customer getCustomer(SearchResultEntry resultEntry) {
+        Customer customer = new Customer();
+
+        customer.setUniqueId(resultEntry.getDN());
+        customer.setCustomerId(resultEntry
+            .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
+        customer.setInum(resultEntry.getAttributeValue(ATTR_INUM));
+        customer.setIname(resultEntry.getAttributeValue(ATTR_INAME));
+        String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
+        if (statusStr != null) {
+            customer.setStatus(Enum.valueOf(CustomerStatus.class,
+                statusStr.toUpperCase()));
         }
-        return dn;
+        customer.setSeeAlso(resultEntry.getAttributeValue(ATTR_SEE_ALSO));
+        customer.setOwner(resultEntry.getAttributeValue(ATTR_OWNER));
+
+        String deleted = resultEntry.getAttributeValue(ATTR_SOFT_DELETED);
+        if (deleted != null) {
+            customer.setSoftDeleted(resultEntry
+                .getAttributeValueAsBoolean(ATTR_SOFT_DELETED));
+        }
+
+        String locked = resultEntry.getAttributeValue(ATTR_LOCKED);
+        if (locked != null) {
+            customer.setIsLocked(resultEntry
+                .getAttributeValueAsBoolean(ATTR_LOCKED));
+        }
+
+        return customer;
+    }
+
+    private SearchResult getCustomerSearchResult(String customerId) {
+        SearchResult searchResult = null;
+
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEORGANIZATION).build();
+
+        try {
+            searchResult = getAppConnPool().search(BASE_DN, SearchScope.ONE,
+                searchFilter);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("Error searching for customerId {} - {}",
+                customerId, ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+        return searchResult;
     }
 
     List<Modification> getModifications(Customer cOld, Customer cNew) {
@@ -427,68 +498,5 @@ public class LdapCustomerRepository extends LdapRepository implements
         }
 
         return mods;
-    }
-
-    private Customer getCustomer(SearchResultEntry resultEntry) {
-        Customer customer = new Customer();
-
-        customer.setUniqueId(resultEntry.getDN());
-        customer.setCustomerId(resultEntry
-            .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
-        customer.setInum(resultEntry.getAttributeValue(ATTR_INUM));
-        customer.setIname(resultEntry.getAttributeValue(ATTR_INAME));
-        String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
-        if (statusStr != null) {
-            customer.setStatus(Enum.valueOf(CustomerStatus.class,
-                statusStr.toUpperCase()));
-        }
-        customer.setSeeAlso(resultEntry.getAttributeValue(ATTR_SEE_ALSO));
-        customer.setOwner(resultEntry.getAttributeValue(ATTR_OWNER));
-
-        String deleted = resultEntry.getAttributeValue(ATTR_SOFT_DELETED);
-        if (deleted != null) {
-            customer.setSoftDeleted(resultEntry
-                .getAttributeValueAsBoolean(ATTR_SOFT_DELETED));
-        }
-
-        String locked = resultEntry.getAttributeValue(ATTR_LOCKED);
-        if (locked != null) {
-            customer.setIsLocked(resultEntry
-                .getAttributeValueAsBoolean(ATTR_LOCKED));
-        }
-
-        return customer;
-    }
-
-    private SearchResult getCustomerSearchResult(String customerId) {
-        SearchResult searchResult = null;
-
-        String searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEORGANIZATION)
-            .build();
-
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.ONE,
-                searchFilter);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for customerId {} - {}",
-                customerId, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-        return searchResult;
-    }
-
-    public String getUnusedCustomerInum() {
-        // TODO: We might may this call to the XDI server in the future.
-        Customer customer = null;
-        String inum = "";
-        do {
-            inum = this.getRackspaceInumPrefix() + InumHelper.getRandomInum(2);
-            customer = findByInum(inum);
-        } while (customer != null);
-
-        return inum;
     }
 }

@@ -150,6 +150,58 @@ public abstract class LdapRepository {
         return config.getString("rackspace.inum.prefix");
     }
 
+    private static class QueryPair {
+        private String comparer;
+        private String attribute;
+        private String value;
+
+        public QueryPair(String attribute, String comparer, String value) {
+            this.comparer = comparer;
+            this.attribute = attribute;
+            this.value = value;
+        }
+
+        public String getQueryString() {
+            return String.format("(%s)", attribute + comparer + value);
+        }
+
+        public String getDnString() {
+            return attribute + comparer + value;
+        }
+    }
+
+    protected static class LdapDnBuilder {
+        private List<QueryPair> queryPairs;
+        private String baseDN;
+
+        public LdapDnBuilder() {
+            queryPairs = new ArrayList<QueryPair>();
+        }
+
+        public LdapDnBuilder setBaseDn(String baseDN) {
+            this.baseDN = baseDN;
+            return this;
+        }
+
+        public LdapDnBuilder addAttriubte(String attribute, String value) {
+            queryPairs.add(new QueryPair(attribute, "=", value));
+            return this;
+        }
+
+        public String build() {
+            StringBuilder builder = new StringBuilder();
+
+            for (QueryPair pair : queryPairs) {
+                builder.append(pair.getDnString());
+                builder.append(",");
+            }
+
+            String searchString = builder.toString() + baseDN;
+
+            return searchString;
+        }
+    }
+
     protected static class LdapSearchBuilder {
         private List<QueryPair> queryPairs;
 
@@ -183,22 +235,6 @@ public abstract class LdapRepository {
             }
 
             return searchString;
-        }
-
-        private class QueryPair {
-            private String comparer;
-            private String attribute;
-            private String value;
-
-            public QueryPair(String attribute, String comparer, String value) {
-                this.comparer = comparer;
-                this.attribute = attribute;
-                this.value = value;
-            }
-
-            public String getQueryString() {
-                return String.format("(%s)", attribute + comparer + value);
-            }
         }
     }
 }

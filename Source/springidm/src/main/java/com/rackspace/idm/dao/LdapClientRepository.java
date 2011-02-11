@@ -39,13 +39,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_RACKSPACE_CUSTOMER_NUMBER,
         ATTR_NAME};
 
-    private static final String ADD_PERMISSION_FORMAT_STRING = "cn=%s,ou=permissions,%s";
-    private static final String ADD_CLIENT_GROUP_FORMAT_STRING = "cn=%s,ou=groups,%s";
-
     private static final String CONNECT_ERROR_STRING = "Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct.";
-
-    private static final String CLIENT_ADD_DN_STRING = "inum=%s,ou=applications,o=%s,"
-        + BASE_DN;
 
     public LdapClientRepository(LdapConnectionPools connPools,
         Configuration config, Logger logger) {
@@ -132,8 +126,13 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         LDAPResult result;
 
-        String clientDN = String.format(CLIENT_ADD_DN_STRING, client.getInum(),
-            client.getOwner().replace(GlobalConstants.INUM_PREFIX, ""));
+        String clientDN = new LdapDnBuilder()
+            .setBaseDn(BASE_DN)
+            .addAttriubte(ATTR_INUM, client.getInum())
+            .addAttriubte(ATTR_OU, "applications")
+            .addAttriubte(ATTR_O,
+                client.getOwner().replace(GlobalConstants.INUM_PREFIX, ""))
+            .build();
 
         client.setUniqueId(clientDN);
 
@@ -239,8 +238,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             atts.add(new Attribute(ATTR_NAME, clientGroup.getName()));
         }
 
-        String groupDN = String.format(ADD_CLIENT_GROUP_FORMAT_STRING,
-            clientGroup.getName(), client.getUniqueId());
+        String groupDN = new LdapDnBuilder().setBaseDn(client.getUniqueId())
+            .addAttriubte(ATTR_NAME, clientGroup.getName())
+            .addAttriubte(ATTR_OU, "groups").build();
 
         clientGroup.setUniqueId(groupDN);
 
@@ -297,8 +297,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         String clientDN = this.getClientDnByClientId(permission.getClientId());
 
-        String permissionDN = String.format(ADD_PERMISSION_FORMAT_STRING,
-            permission.getPermissionId(), clientDN);
+        String permissionDN = new LdapDnBuilder().setBaseDn(clientDN)
+            .addAttriubte(ATTR_NAME, permission.getPermissionId())
+            .addAttriubte(ATTR_OU, "permissions").build();
 
         permission.setUniqueId(permissionDN);
 
@@ -502,8 +503,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         String searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
-            .build();
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         List<Client> clients = new ArrayList<Client>();
         SearchResult searchResult = null;
@@ -539,8 +540,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         String searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_CLIENT_ID, clientId)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
-            .build();
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         Client client = getSingleClient(searchFilter);
 
@@ -561,8 +562,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         String searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_DISPLAY_NAME, clientName)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
-            .build();
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         Client client = getSingleClient(searchFilter);
 
@@ -614,8 +615,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         String searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_INUM, inum)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
-            .build();
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         Client client = getSingleClient(searchFilter);
 
@@ -636,8 +637,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         String searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
-            .build();
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEAPPLICATION).build();
         Clients clients = getMultipleClients(searchFilter, offset, limit);
 
         getLogger().debug("Found clients {} for customer {}", clients,
@@ -660,8 +661,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         String searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_CLIENT_ID, clientId)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
-            .build();
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         Client client = getSingleClient(searchFilter);
 
@@ -690,7 +691,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         String searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_NAME, name)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP)
+            .build();
 
         try {
             searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
@@ -982,8 +984,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
             .addEqualAttribute(ATTR_LOCKED, String.valueOf(isLocked))
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
-            .build();
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         Clients clients = getMultipleClients(searchFilter, offset, limit);
 

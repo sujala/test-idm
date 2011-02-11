@@ -19,60 +19,6 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         super(connPools, config, logger);
     }
 
-    public void save(RefreshToken refreshToken) {
-        getLogger().info("Saving Refresh Token - {}", refreshToken);
-        if (refreshToken == null) {
-            getLogger().error("Null instance of Token was passed");
-            throw new IllegalArgumentException(
-                "Null instance of RefreshToken was passed.");
-        }
-
-        List<Attribute> atts = new ArrayList<Attribute>();
-
-        atts.add(new Attribute(ATTR_OBJECT_CLASS,
-            ATTR_TOKEN_OBJECT_CLASS_VALUES));
-
-        if (!StringUtils.isBlank(refreshToken.getTokenString())) {
-            atts.add(new Attribute(ATTR_O, refreshToken.getTokenString()));
-        }
-        if (refreshToken.getExpirationTime() != null) {
-            atts.add(new Attribute(ATTR_EXPIRATION, DATE_PARSER
-                .print(refreshToken.getExpirationTime())));
-        }
-        if (!StringUtils.isBlank(refreshToken.getOwner())) {
-            atts.add(new Attribute(ATTR_TOKEN_OWNER, refreshToken.getOwner()));
-        }
-        if (!StringUtils.isBlank(refreshToken.getRequestor())) {
-            atts.add(new Attribute(ATTR_TOKEN_REQUESTOR, refreshToken
-                .getRequestor()));
-        }
-
-        Attribute[] attributes = atts.toArray(new Attribute[0]);
-
-        String tokenDN = "o=" + refreshToken.getTokenString() + ","
-            + TOKEN_BASE_DN;
-
-        LDAPResult result;
-        try {
-            result = getAppConnPool().add(tokenDN, attributes);
-        } catch (LDAPException ldapEx) {
-            getLogger().error("Error adding RefreshToken {} - {}",
-                refreshToken, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            getLogger().error("Error adding RefreshToken {} - {}",
-                refreshToken, result.getResultCode());
-            throw new IllegalArgumentException(String.format(
-                "LDAP error encountered when adding RefreshToken: %s - %s",
-                refreshToken.getTokenString(), result.getResultCode()
-                    .toString()));
-        }
-
-        getLogger().info("Added token - {}", refreshToken);
-    }
-
     @Override
     public void delete(String tokenString) {
         getLogger().info("Deleting refresh token - {}", tokenString);
@@ -238,17 +184,6 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         return token;
     }
 
-    private RefreshToken getToken(SearchResultEntry resultEntry) {
-        RefreshToken token = new RefreshToken();
-        token.setTokenString(resultEntry.getAttributeValue(ATTR_O));
-        String expirationStr = resultEntry.getAttributeValue(ATTR_EXPIRATION);
-        DateTime expiration = DATE_PARSER.parseDateTime(expirationStr);
-        token.setExpirationTime(expiration);
-        token.setOwner(resultEntry.getAttributeValue(ATTR_TOKEN_OWNER));
-        token.setRequestor(resultEntry.getAttributeValue(ATTR_TOKEN_REQUESTOR));
-        return token;
-    }
-
     public RefreshToken findTokenForOwner(String owner, String requestor,
         DateTime validAfter) {
         getLogger().debug("Searching for refresh token for Owner: {}", owner);
@@ -311,23 +246,58 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         return dn;
     }
 
-    private SearchResult getTokenSearchResult(String tokenString) {
-        SearchResult searchResult = null;
+    public void save(RefreshToken refreshToken) {
+        getLogger().info("Saving Refresh Token - {}", refreshToken);
+        if (refreshToken == null) {
+            getLogger().error("Null instance of Token was passed");
+            throw new IllegalArgumentException(
+                "Null instance of RefreshToken was passed.");
+        }
 
-        String searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_O, tokenString)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN)
-            .build();
+        List<Attribute> atts = new ArrayList<Attribute>();
 
+        atts.add(new Attribute(ATTR_OBJECT_CLASS,
+            ATTR_TOKEN_OBJECT_CLASS_VALUES));
+
+        if (!StringUtils.isBlank(refreshToken.getTokenString())) {
+            atts.add(new Attribute(ATTR_O, refreshToken.getTokenString()));
+        }
+        if (refreshToken.getExpirationTime() != null) {
+            atts.add(new Attribute(ATTR_EXPIRATION, DATE_PARSER
+                .print(refreshToken.getExpirationTime())));
+        }
+        if (!StringUtils.isBlank(refreshToken.getOwner())) {
+            atts.add(new Attribute(ATTR_TOKEN_OWNER, refreshToken.getOwner()));
+        }
+        if (!StringUtils.isBlank(refreshToken.getRequestor())) {
+            atts.add(new Attribute(ATTR_TOKEN_REQUESTOR, refreshToken
+                .getRequestor()));
+        }
+
+        Attribute[] attributes = atts.toArray(new Attribute[0]);
+
+        String tokenDN = new LdapDnBuilder().setBaseDn(TOKEN_BASE_DN)
+            .addAttriubte(ATTR_O, refreshToken.getTokenString()).build();
+
+        LDAPResult result;
         try {
-            searchResult = getAppConnPool().search(TOKEN_BASE_DN,
-                SearchScope.SUB, searchFilter);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for token {} - {}", tokenString,
-                ldapEx);
+            result = getAppConnPool().add(tokenDN, attributes);
+        } catch (LDAPException ldapEx) {
+            getLogger().error("Error adding RefreshToken {} - {}",
+                refreshToken, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
-        return searchResult;
+
+        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            getLogger().error("Error adding RefreshToken {} - {}",
+                refreshToken, result.getResultCode());
+            throw new IllegalArgumentException(String.format(
+                "LDAP error encountered when adding RefreshToken: %s - %s",
+                refreshToken.getTokenString(), result.getResultCode()
+                    .toString()));
+        }
+
+        getLogger().info("Added token - {}", refreshToken);
     }
 
     public void updateToken(RefreshToken refreshToken) {
@@ -375,6 +345,17 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         getLogger().info("Updated refreshToken - {}", tokenString);
     }
 
+    private RefreshToken getToken(SearchResultEntry resultEntry) {
+        RefreshToken token = new RefreshToken();
+        token.setTokenString(resultEntry.getAttributeValue(ATTR_O));
+        String expirationStr = resultEntry.getAttributeValue(ATTR_EXPIRATION);
+        DateTime expiration = DATE_PARSER.parseDateTime(expirationStr);
+        token.setExpirationTime(expiration);
+        token.setOwner(resultEntry.getAttributeValue(ATTR_TOKEN_OWNER));
+        token.setRequestor(resultEntry.getAttributeValue(ATTR_TOKEN_REQUESTOR));
+        return token;
+    }
+
     // helper funcs
     private String getTokenDnByTokenString(String tokenString) {
         String dn = null;
@@ -405,6 +386,25 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
                 "More than one entry was found for this refresh token");
         }
         return dn;
+    }
+
+    private SearchResult getTokenSearchResult(String tokenString) {
+        SearchResult searchResult = null;
+
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_O, tokenString)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN)
+            .build();
+
+        try {
+            searchResult = getAppConnPool().search(TOKEN_BASE_DN,
+                SearchScope.SUB, searchFilter);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("Error searching for token {} - {}", tokenString,
+                ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+        return searchResult;
     }
 
     List<Modification> getModifications(RefreshToken tOld, RefreshToken tNew) {
