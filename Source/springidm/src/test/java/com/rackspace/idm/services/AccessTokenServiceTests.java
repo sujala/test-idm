@@ -15,9 +15,10 @@ import com.rackspace.idm.config.DataCenterEndpoints;
 import com.rackspace.idm.config.PropertyFileConfiguration;
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
+import com.rackspace.idm.dao.XdcAccessTokenDao;
 import com.rackspace.idm.dao.MemcachedAccessTokenRepository;
 import com.rackspace.idm.dao.RefreshTokenDao;
-import com.rackspace.idm.dao.TokenFindDeleteDao;
+import com.rackspace.idm.dao.TokenDao;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.entities.Client;
@@ -40,7 +41,7 @@ public class AccessTokenServiceTests {
     ClientDao mockClientDao;
     UserService mockUserService;
     AccessTokenService tokenService;
-    TokenFindDeleteDao<AccessToken> mockWebClientAccessTokenDao;
+    XdcAccessTokenDao mockWebClientAccessTokenDao;
 
     TokenDefaultAttributes defaultAttributes;
 
@@ -85,7 +86,7 @@ public class AccessTokenServiceTests {
         mockRefreshTokenDao = EasyMock.createMock(RefreshTokenDao.class);
         mockClientDao = EasyMock.createMock(ClientDao.class);
         mockUserService = EasyMock.createMock(UserService.class);
-        mockWebClientAccessTokenDao = EasyMock.createMock(TokenFindDeleteDao.class);
+        mockWebClientAccessTokenDao = EasyMock.createMock(XdcAccessTokenDao.class);
         defaultAttributes = new TokenDefaultAttributes(defaultTokenExpirationSeconds,
             cloudAuthExpirationSeconds, maxTokenExpirationSeconds, minTokenExpirationSeconds,
             dataCenterPrefix, isTrustedServer);

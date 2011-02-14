@@ -3,7 +3,7 @@ package com.rackspace.idm.dao;
 import com.rackspace.idm.entities.RefreshToken;
 import org.joda.time.DateTime;
 
-public interface RefreshTokenDao extends TokenFindDeleteSaveDao<RefreshToken> {
+public interface RefreshTokenDao extends TokenDao<RefreshToken> {
 
     RefreshToken findTokenForOwner(String owner, String requestor,
                                    DateTime expiredAfter);

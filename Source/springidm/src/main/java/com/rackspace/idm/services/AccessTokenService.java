@@ -54,4 +54,8 @@ public interface AccessTokenService {
     void delete(String tokenString);
     
     void deleteGlobally(String tokenString);
+
+    void deleteAllForOwner(String owner);
+
+    void deleteAllGloballyForOwner(String owner);
 }

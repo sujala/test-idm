@@ -6,6 +6,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.SerializationException;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
@@ -15,7 +16,7 @@ import com.rackspace.idm.config.DataCenterClient;
 import com.rackspace.idm.config.DataCenterEndpoints;
 import com.rackspace.idm.entities.AccessToken;
 
-public class HttpAccessTokenRepository extends HttpRepository implements TokenFindDeleteDao<AccessToken> {
+public class HttpAccessTokenRepository extends HttpRepository implements XdcAccessTokenDao {
     private Logger logger;
 
     public HttpAccessTokenRepository(DataCenterEndpoints endpoints, Configuration config, Logger logger) {
@@ -23,6 +24,9 @@ public class HttpAccessTokenRepository extends HttpRepository implements TokenFi
         this.logger = logger;
     }
 
+    /* (non-Javadoc)
+     * @see com.rackspace.idm.dao.HttpAccessTokenDao#findByTokenString(java.lang.String)
+     */
     @Override
     public AccessToken findByTokenString(final String tokenString) {
         if (StringUtils.isBlank(tokenString)) {
@@ -57,6 +61,9 @@ public class HttpAccessTokenRepository extends HttpRepository implements TokenFi
         return xdcToken;
     }
 
+    /* (non-Javadoc)
+     * @see com.rackspace.idm.dao.HttpAccessTokenDao#delete(java.lang.String)
+     */
     @Override
     public void delete(final String tokenString) {
         if (StringUtils.isBlank(tokenString)) {
@@ -80,6 +87,13 @@ public class HttpAccessTokenRepository extends HttpRepository implements TokenFi
                 makeHttpCall(deleter, client);
             }
         }
+    }
+    
+
+    @Override
+    public void deleteAllTokensForOwner(String owner) {
+        // TODO Auto-generated method stub
+        throw new NotImplementedException();
     }
 
     @Override

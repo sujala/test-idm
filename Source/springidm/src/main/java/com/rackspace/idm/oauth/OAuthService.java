@@ -18,4 +18,8 @@ public interface OAuthService {
     void revokeTokenLocally(String tokenStringRequestingDelete, String tokenToDelete) throws NotAuthorizedException;
     
     void revokeTokenGlobally(String tokenStringRequestingDelete, String tokenToDelete) throws NotAuthorizedException;
+
+    void revokeTokenForOwnerGlobally(String authTokenString, String ownerId);
+
+    void revokeTokenForOwnerLocally(String authTokenString, String ownerId);
 }

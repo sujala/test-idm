@@ -51,16 +51,15 @@ public class ServiceConfiguration {
     @Autowired
     private EndpointDao endpointDao;
     @Autowired
+    private XdcAccessTokenDao xdcTokenDao;
+    @Autowired
+    private DataCenterEndpoints dcEndpoints;
 
     @Value("#{memcacheStatusRepository}")
     private PingableService memcacheService;
     
     @Value("#{ldapStatusRepository}")
     private PingableService ldapRepository;
-
-    private TokenFindDeleteDao<AccessToken> xdcTokenDao;
-    @Autowired
-    private DataCenterEndpoints dcEndpoints;
 
     @Autowired
     private Configuration config;

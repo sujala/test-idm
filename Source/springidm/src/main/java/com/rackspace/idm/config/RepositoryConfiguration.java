@@ -13,6 +13,7 @@ import com.rackspace.idm.dao.AuthDao;
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.CustomerDao;
 import com.rackspace.idm.dao.EndpointDao;
+import com.rackspace.idm.dao.XdcAccessTokenDao;
 import com.rackspace.idm.dao.HttpAccessTokenRepository;
 import com.rackspace.idm.dao.LdapAuthRepository;
 import com.rackspace.idm.dao.LdapClientRepository;
@@ -26,7 +27,6 @@ import com.rackspace.idm.dao.LdapUserRepository;
 import com.rackspace.idm.dao.MemcachedAccessTokenRepository;
 import com.rackspace.idm.dao.RefreshTokenDao;
 import com.rackspace.idm.dao.RoleDao;
-import com.rackspace.idm.dao.TokenFindDeleteDao;
 import com.rackspace.idm.dao.UserDao;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.util.PingableService;
@@ -108,7 +108,7 @@ public class RepositoryConfiguration {
     }
 
     @Bean(name = "xdcTokenDao")
-    public TokenFindDeleteDao<AccessToken> xdcTokenDao() {
+    public XdcAccessTokenDao xdcTokenDao() {
         Logger logger = LoggerFactory.getLogger(HttpAccessTokenRepository.class);
         return new HttpAccessTokenRepository(dcEnpoints(), appConfig, logger);
     }

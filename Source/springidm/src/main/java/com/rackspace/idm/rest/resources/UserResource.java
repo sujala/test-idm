@@ -56,14 +56,11 @@ public class UserResource {
     private Logger logger;
 
     @Autowired
-    public UserResource(AccessTokenService accessTokenService,
-        ApiKeyResource apiKeyResource, UserLockResource userLockResource,
-        UserPasswordResource userPasswordResource,
-        UserGroupsResource userGroupsResource,
-        UserSecretResource userSecretResource,
-        UserSoftDeleteResource userSoftDeleteResource,
-        UserStatusResource userStatusResource, UserService userService,
-        UserConverter userConverter, InputValidator inputValidator,
+    public UserResource(AccessTokenService accessTokenService, ApiKeyResource apiKeyResource,
+        UserLockResource userLockResource, UserPasswordResource userPasswordResource,
+        UserGroupsResource userGroupsResource, UserSecretResource userSecretResource,
+        UserSoftDeleteResource userSoftDeleteResource, UserStatusResource userStatusResource,
+        UserService userService, UserConverter userConverter, InputValidator inputValidator,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.accessTokenService = accessTokenService;
         this.apiKeyResource = apiKeyResource;
@@ -97,25 +94,21 @@ public class UserResource {
      */
     @GET
     public Response getUser(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients, Admins and User's are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId)
             || authorizationService.authorizeUser(token, customerId, username);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -144,26 +137,20 @@ public class UserResource {
      * @param username username
      */
     @PUT
-    public Response updateUser(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("username") String username,
-        com.rackspace.idm.jaxb.User inputUser) {
+    public Response updateUser(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        @PathParam("username") String username, com.rackspace.idm.jaxb.User inputUser) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients, Admins and User's are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId)
             || authorizationService.authorizeUser(token, customerId, username);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -185,9 +172,13 @@ public class UserResource {
             throw new BadRequestException(errorMsg);
         }
 
+        if (user.isLocked()) {
+            accessTokenService.deleteAllGloballyForOwner(user.getUsername());
+        }
+
         logger.info("Updated User: {}", user);
         return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
-    }  
+    }
 
     /**
      * Deletes a user.
@@ -205,24 +196,20 @@ public class UserResource {
      * @param username username
      */
     @DELETE
-    public Response deleteUser(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
+    public Response deleteUser(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
         logger.info("Deleting User :{}", username);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -280,8 +267,7 @@ public class UserResource {
     }
 
     private void handleUserNotFoundError(String customerId, String username) {
-        String errorMsg = String.format("User not found: %s - %s", customerId,
-            username);
+        String errorMsg = String.format("User not found: %s - %s", customerId, username);
         logger.error(errorMsg);
         throw new NotFoundException(errorMsg);
     }

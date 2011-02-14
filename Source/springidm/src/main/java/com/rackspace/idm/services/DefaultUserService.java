@@ -335,16 +335,14 @@ public class DefaultUserService implements UserService {
         this.userDao.save(user);
 
         // revoke user's tokens
-        String owner = user.getInum();
-        Set<String> allClientInums = new HashSet<String>();
+        String owner = user.getUsername();
         Set<String> allClientIds = new HashSet<String>();
 
         for (Client client : clientDao.findAll()) {
-            allClientInums.add(client.getInum());
             allClientIds.add(client.getClientId());
         }
         tokenDao.deleteAllTokensForOwner(owner,
-            Collections.unmodifiableSet(allClientInums));
+            Collections.unmodifiableSet(allClientIds));
 
         refreshTokenDao.deleteAllTokensForUser(username);
 
@@ -368,13 +366,13 @@ public class DefaultUserService implements UserService {
 
         // revoke user's token if disabling
         if (status.equals(UserStatus.INACTIVE)) {
-            String owner = user.getInum();
-            Set<String> allClientInums = new HashSet<String>();
+            String owner = user.getUsername();
+            Set<String> allClientIds = new HashSet<String>();
             for (Client client : clientDao.findAll()) {
-                allClientInums.add(client.getInum());
+                allClientIds.add(client.getClientId());
             }
             tokenDao.deleteAllTokensForOwner(owner,
-                Collections.unmodifiableSet(allClientInums));
+                Collections.unmodifiableSet(allClientIds));
         }
     }
 

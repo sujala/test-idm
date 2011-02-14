@@ -5,6 +5,7 @@ import static com.rackspace.idm.oauth.OAuthGrantType.PASSWORD;
 import static com.rackspace.idm.oauth.OAuthGrantType.REFRESH_TOKEN;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.NotImplementedException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 
@@ -92,6 +93,19 @@ public class DefaultOAuthService implements OAuthService {
     @Override
     public void revokeTokenGlobally(String tokenStringRequestingDelete, String tokenToDelete) {
         revokeToken(tokenStringRequestingDelete, tokenToDelete, true);
+    }
+    
+
+    @Override
+    public void revokeTokenForOwnerGlobally(String authTokenString, String ownerId) {
+        // TODO Auto-generated method stub
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void revokeTokenForOwnerLocally(String authTokenString, String ownerId) {
+        // TODO Auto-generated method stub
+        throw new NotImplementedException();
     }
 
     private void revokeToken(String tokenStringRequestingDelete, String tokenToDelete, boolean isGlobal)

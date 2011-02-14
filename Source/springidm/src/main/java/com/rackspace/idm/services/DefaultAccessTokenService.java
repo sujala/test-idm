@@ -1,5 +1,8 @@
 package com.rackspace.idm.services;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.configuration.Configuration;
@@ -11,7 +14,8 @@ import org.slf4j.Logger;
 import com.rackspace.idm.config.DataCenterEndpoints;
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
-import com.rackspace.idm.dao.TokenFindDeleteDao;
+import com.rackspace.idm.dao.XdcAccessTokenDao;
+import com.rackspace.idm.dao.TokenDao;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.entities.BaseClient;
@@ -24,7 +28,7 @@ import com.rackspace.idm.util.AuthHeaderHelper;
 
 public class DefaultAccessTokenService implements AccessTokenService {
     private AccessTokenDao tokenDao;
-    private TokenFindDeleteDao<AccessToken> xdcTokenDao;
+    private XdcAccessTokenDao xdcTokenDao;
     private ClientDao clientDao;
     private Logger logger;
     private UserService userService;
@@ -33,7 +37,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
     private Configuration config;
 
     public DefaultAccessTokenService(AccessTokenDao tokenDao, ClientDao clientDao, UserService userService,
-        TokenFindDeleteDao<AccessToken> xdcTokenDao, AuthHeaderHelper authHeaderHelper,
+        XdcAccessTokenDao xdcTokenDao, AuthHeaderHelper authHeaderHelper,
         DataCenterEndpoints dcEndpoints, Configuration config, Logger logger) {
 
         this.tokenDao = tokenDao;
@@ -357,6 +361,20 @@ public class DefaultAccessTokenService implements AccessTokenService {
     }
 
     @Override
+    public void deleteAllForOwner(String owner) {
+        Set<String> allClientIds = getAllTokenRequestors();
+        tokenDao.deleteAllTokensForOwner(owner, Collections.unmodifiableSet(allClientIds));
+    }
+
+    private Set<String> getAllTokenRequestors() {
+        Set<String> allClientIds = new HashSet<String>();
+        for (Client client : clientDao.findAll()) {
+            allClientIds.add(client.getClientId());
+        }
+        return allClientIds;
+    }
+
+    @Override
     public void deleteGlobally(String tokenString) {
         // Start with the local tokens, including any from another DC that might
         // have been cached locally.
@@ -365,6 +383,15 @@ public class DefaultAccessTokenService implements AccessTokenService {
         }
 
         xdcTokenDao.delete(tokenString);
+    }
+
+    @Override
+    public void deleteAllGloballyForOwner(String owner) {
+        // Start with the local tokens.
+        tokenDao.deleteAllTokensForOwner(owner, getAllTokenRequestors());
+        //tokenDao.
+
+        //xdcTokenDao.deleteAllTokensFor
     }
 
     private String generateTokenWithDcPrefix() {
