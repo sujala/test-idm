@@ -8,6 +8,7 @@ import com.rackspace.idm.oauth.DefaultOAuthService;
 import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.*;
 import com.rackspace.idm.util.AuthHeaderHelper;
+import com.rackspace.idm.util.PingableService;
 import com.rackspace.idm.validation.InputValidator;
 import net.spy.memcached.MemcachedClient;
 import org.apache.commons.configuration.Configuration;
@@ -16,6 +17,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
 import javax.validation.Validation;
@@ -49,9 +51,17 @@ public class ServiceConfiguration {
     @Autowired
     private EndpointDao endpointDao;
     @Autowired
+
+    @Value("#{memcacheStatusRepository}")
+    private PingableService memcacheService;
+    
+    @Value("#{ldapStatusRepository}")
+    private PingableService ldapRepository;
+
     private TokenFindDeleteDao<AccessToken> xdcTokenDao;
     @Autowired
     private DataCenterEndpoints dcEndpoints;
+
     @Autowired
     private Configuration config;
 
@@ -83,6 +93,11 @@ public class ServiceConfiguration {
     @Bean
     public AuthHeaderHelper authHeaderHelper() {
         return new AuthHeaderHelper();
+    }
+    
+    @Bean
+    public HealthMonitoringService healthMonitoringBean() {
+        return new HealthMonitoringService(memcacheService, ldapRepository, logger);
     }
 
     @Bean
@@ -168,7 +183,7 @@ public class ServiceConfiguration {
         return new DefaultUserService(userRepo, authDao, customerDao, accessTokenDao, refreshTokenDao,
             clientDao, emailService(), clientService(), isTrustedServer, logger);
     }
-
+    
     @Bean
     public OAuthService oauthService() {
         Logger logger = LoggerFactory.getLogger(DefaultOAuthService.class);

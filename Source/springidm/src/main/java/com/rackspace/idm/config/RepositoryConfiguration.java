@@ -21,6 +21,7 @@ import com.rackspace.idm.dao.LdapCustomerRepository;
 import com.rackspace.idm.dao.LdapEndpointRepository;
 import com.rackspace.idm.dao.LdapRefreshTokenRepository;
 import com.rackspace.idm.dao.LdapRoleRepository;
+import com.rackspace.idm.dao.LdapStatusRepository;
 import com.rackspace.idm.dao.LdapUserRepository;
 import com.rackspace.idm.dao.MemcachedAccessTokenRepository;
 import com.rackspace.idm.dao.RefreshTokenDao;
@@ -28,6 +29,7 @@ import com.rackspace.idm.dao.RoleDao;
 import com.rackspace.idm.dao.TokenFindDeleteDao;
 import com.rackspace.idm.dao.UserDao;
 import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.util.PingableService;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.extensions.StartTLSExtendedRequest;
 
@@ -109,5 +111,17 @@ public class RepositoryConfiguration {
     public TokenFindDeleteDao<AccessToken> xdcTokenDao() {
         Logger logger = LoggerFactory.getLogger(HttpAccessTokenRepository.class);
         return new HttpAccessTokenRepository(dcEnpoints(), appConfig, logger);
+    }
+    
+    @Bean(name = "ldapStatusRepository")
+    public PingableService ldapStatusRepository() {
+        Logger logger = LoggerFactory.getLogger(LdapStatusRepository.class);
+        return new LdapStatusRepository(connPools,appConfig, logger);
+    }
+    
+    @Bean(name = "memcacheStatusRepository")
+    public PingableService memcacheStatusRepository() {
+        Logger logger = LoggerFactory.getLogger(MemcachedAccessTokenRepository.class);
+        return new MemcachedAccessTokenRepository(memcached, logger);
     }
 }

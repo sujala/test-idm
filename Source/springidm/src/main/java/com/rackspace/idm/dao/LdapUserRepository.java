@@ -870,10 +870,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     private User getSingleUser(String searchFilter, String[] searchAttributes) {
         User user = null;
         SearchResult searchResult = null;
-        try {
+        try {   
             searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
                 searchFilter, searchAttributes);
-        } catch (LDAPSearchException ldapEx) {
+        }
+        catch (LDAPSearchException ldapEx) {     
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
         }

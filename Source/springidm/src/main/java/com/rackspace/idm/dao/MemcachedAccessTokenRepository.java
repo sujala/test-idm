@@ -1,17 +1,20 @@
 package com.rackspace.idm.dao;
 
-import com.rackspace.idm.entities.AccessToken;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
 import net.spy.memcached.MemcachedClient;
+
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.util.PingableService;
 
-public class MemcachedAccessTokenRepository implements AccessTokenDao {
+public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableService {
 
     private MemcachedClient memcached;
     private Logger logger;
@@ -21,6 +24,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
 
     public MemcachedAccessTokenRepository(MemcachedClient memcached,
         Logger logger) {
+        
         this.memcached = memcached;
         this.logger = logger;
     }
@@ -113,7 +117,8 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
      */
     @Override
     public AccessToken findByTokenString(String tokenString) {
-        if (StringUtils.isBlank(tokenString)) {
+        
+         if (StringUtils.isBlank(tokenString)) {
             logger.error("Token string is null or empty");
             throw new IllegalArgumentException("Token string is null or empty");
         }
@@ -225,6 +230,18 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
         }
 
         logger.debug("{} tokens were deleted for user {}", delCount, owner);
+    }
+    
+    public boolean isAlive() {
+             
+        try {
+            memcached.get("DUMMY-STRING");
+        }
+        catch(RuntimeException runtimeExp) {
+            runtimeExp.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     private String getKeyForFindByOwner(String owner, String requestor) {
