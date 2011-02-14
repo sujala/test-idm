@@ -68,7 +68,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         if ("POST".equals(method) && "token".equals(path)) {
             return request;
         }
-
+        
         String authHeader = request.getHeaderValue(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || authHeader.isEmpty()) {
             throw new NotAuthenticatedException(
