@@ -15,7 +15,7 @@ public interface OAuthService {
     AuthData getTokens(OAuthGrantType grantType, AuthCredentials trParam, DateTime currentTime) throws
             NotAuthenticatedException;
 
-    void revokeToken(String tokenStringRequestingDelete, String tokenToDelete) throws NotAuthorizedException;
+    void revokeTokenLocally(String tokenStringRequestingDelete, String tokenToDelete) throws NotAuthorizedException;
     
     void revokeTokenGlobally(String tokenStringRequestingDelete, String tokenToDelete) throws NotAuthorizedException;
 }

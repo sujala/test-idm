@@ -313,7 +313,7 @@ public class OAuthServiceTests {
 
         EasyMock.replay(mockAccessTokenService, mockRefreshTokenService);
 
-        oauthService.revokeToken(requestorToken, tokenVal);
+        oauthService.revokeTokenLocally(requestorToken, tokenVal);
 
         EasyMock.verify(mockAccessTokenService, mockRefreshTokenService);
     }
@@ -332,7 +332,7 @@ public class OAuthServiceTests {
 
         EasyMock.replay(mockAccessTokenService, mockUserService, mockClientService, mockRefreshTokenService);
 
-        oauthService.revokeToken(requestorToken, tokenVal);
+        oauthService.revokeTokenLocally(requestorToken, tokenVal);
 
         EasyMock.verify(mockAccessTokenService, mockUserService, mockClientService, mockRefreshTokenService);
     }
@@ -351,7 +351,7 @@ public class OAuthServiceTests {
 
         EasyMock.replay(mockAccessTokenService, mockUserService, mockClientService, mockRefreshTokenService);
 
-        oauthService.revokeToken(requestorToken, tokenVal);
+        oauthService.revokeTokenLocally(requestorToken, tokenVal);
 
         EasyMock.verify(mockAccessTokenService, mockUserService, mockClientService, mockRefreshTokenService);
     }

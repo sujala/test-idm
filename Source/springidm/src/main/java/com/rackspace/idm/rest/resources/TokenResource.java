@@ -217,11 +217,12 @@ public class TokenResource {
     }
 
     /**
-     * Removes the token from IDM.
+     * Removes the token from IDM, across all DCs.
      *
      * @param authHeader  HTTP Authorization header for authenticating the calling client.
      * @param tokenString Token to be revoked.
-     * @param global If true (default), will revoke tokens globally.
+     * @param global If false (default is true), will revoke tokens in the local DC only. Only
+     *        Customer IDM can make the local removal call.
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}authCredentials
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -247,7 +248,7 @@ public class TokenResource {
             if (isGlobal) {
                 oauthService.revokeTokenGlobally(authTokenString, tokenString);
             } else {
-                oauthService.revokeToken(authTokenString, tokenString);
+                oauthService.revokeTokenLocally(authTokenString, tokenString);
             }
 
             logger.info("Revoked Token: {}", tokenString);

@@ -1,6 +1,19 @@
 package com.rackspace.idm.oauth;
 
-import com.rackspace.idm.entities.*;
+import static com.rackspace.idm.oauth.OAuthGrantType.NONE;
+import static com.rackspace.idm.oauth.OAuthGrantType.PASSWORD;
+import static com.rackspace.idm.oauth.OAuthGrantType.REFRESH_TOKEN;
+
+import org.apache.commons.configuration.Configuration;
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
+
+import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.entities.AuthData;
+import com.rackspace.idm.entities.Client;
+import com.rackspace.idm.entities.ClientAuthenticationResult;
+import com.rackspace.idm.entities.RefreshToken;
+import com.rackspace.idm.entities.UserAuthenticationResult;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.exceptions.NotAuthorizedException;
@@ -8,12 +21,6 @@ import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.services.RefreshTokenService;
 import com.rackspace.idm.services.UserService;
-
-import org.apache.commons.configuration.Configuration;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
-
-import static com.rackspace.idm.oauth.OAuthGrantType.*;
 
 public class DefaultOAuthService implements OAuthService {
     private UserService userService;
@@ -78,7 +85,7 @@ public class DefaultOAuthService implements OAuthService {
         return null;
     }
 
-    public void revokeToken(String tokenStringRequestingDelete, String tokenToDelete) {
+    public void revokeTokenLocally(String tokenStringRequestingDelete, String tokenToDelete) {
         revokeToken(tokenStringRequestingDelete, tokenToDelete, false);
     }
 
@@ -86,7 +93,7 @@ public class DefaultOAuthService implements OAuthService {
     public void revokeTokenGlobally(String tokenStringRequestingDelete, String tokenToDelete) {
         revokeToken(tokenStringRequestingDelete, tokenToDelete, true);
     }
-    
+
     private void revokeToken(String tokenStringRequestingDelete, String tokenToDelete, boolean isGlobal)
         throws NotAuthorizedException {
         logger.info("Deleting Token {}", tokenToDelete);
@@ -106,14 +113,26 @@ public class DefaultOAuthService implements OAuthService {
             throw new IllegalStateException(error);
         }
 
-        // Only CustomerIdm Client and Client that got token or the user of the
-        // token are authorized to revoke token
+        boolean isGoodAsIdm = isAuthorizedAsCustomerIdm(requestingToken);
+        boolean isAuthorized = false;
+        if (isGlobal) {
+            // Only CustomerIdm Client and Client that got token or the user of
+            // the token are authorized to revoke token
+            isAuthorized = isGoodAsIdm || isAuthorizedAsRequestorOrOwner(deletingToken, requestingToken);
+        } else {
+            // Only Customer IDM can make a non-global token revocation call.
+            isAuthorized = isGoodAsIdm;
+        }
 
-        boolean authorized = isAuthorized(deletingToken, requestingToken);
-
-        if (!authorized) {
-            String errMsg = String.format("Requesting token %s not authorized to revoke token %s",
-                tokenStringRequestingDelete, tokenToDelete);
+        if (!isAuthorized) {
+            String errMsg;
+            if (isGlobal) {
+                errMsg = String.format("Requesting token %s not authorized to revoke token %s.",
+                    tokenStringRequestingDelete, tokenToDelete);
+            } else {
+                errMsg = String.format("Requesting token %s not authorized to revoke token %s locally.",
+                    tokenStringRequestingDelete, tokenToDelete);
+            }
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -134,10 +153,7 @@ public class DefaultOAuthService implements OAuthService {
         logger.info("Deleted Token {}", deletingToken);
     }
 
-    private boolean isAuthorized(AccessToken deletingToken, AccessToken requestingToken) {
-        boolean isCustomerIdm = requestingToken.isClientToken()
-            && requestingToken.getTokenClient().getClientId().equals(getIdmClientId());
-
+    private boolean isAuthorizedAsRequestorOrOwner(AccessToken deletingToken, AccessToken requestingToken) {
         boolean isRequestor = requestingToken.isClientToken()
             && requestingToken.getTokenClient().getClientId()
                 .equals(deletingToken.getTokenClient().getClientId());
@@ -147,8 +163,14 @@ public class DefaultOAuthService implements OAuthService {
             && requestingToken.getTokenUser().getUsername()
                 .equals(deletingToken.getTokenUser().getUsername());
 
-        boolean authorized = isCustomerIdm || isRequestor || isOwner;
+        boolean authorized = isRequestor || isOwner;
         return authorized;
+    }
+
+    private boolean isAuthorizedAsCustomerIdm(AccessToken requestingToken) {
+        boolean isCustomerIdm = requestingToken.isClientToken()
+            && requestingToken.getTokenClient().getClientId().equals(getIdmClientId());
+        return isCustomerIdm;
     }
 
     private void deleteRefreshTokenByAccessToken(AccessToken accessToken) {
