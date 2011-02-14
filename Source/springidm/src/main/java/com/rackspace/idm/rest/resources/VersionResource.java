@@ -82,7 +82,7 @@ public class VersionResource {
 
         return Response.ok(version).build();
     }
-
+    
     @Path("customers")
     public CustomersResource getCustomersResource() {
         return customersResource;
