@@ -384,13 +384,8 @@ public class LdapClientRepositoryTest {
     
     @Test 
     public void shouldNotGetClientGroupForNonExistenClient() {
-        try {
         ClientGroup returnedGorup = repo.getClientGroup("RACKSPACE", "BADCLIENTNAME", "name");
-        Assert.fail("Shouldn't have found client");
-        }
-        catch (Exception ex) {
-            Assert.assertTrue(ex instanceof NotFoundException);
-        }
+        Assert.assertNull(returnedGorup);
     }
     
     @Test
