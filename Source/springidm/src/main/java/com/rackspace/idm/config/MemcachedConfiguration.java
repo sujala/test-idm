@@ -35,7 +35,7 @@ public class MemcachedConfiguration {
         this.logger = logger;
     }
 
-    @Bean
+    @Bean(destroyMethod="shutdown") 
     public MemcachedClient memcacheClient() {
         try {
             String serverList = config.getString("memcached.serverList");

@@ -96,7 +96,7 @@ public class ServiceConfiguration {
     
     @Bean
     public HealthMonitoringService healthMonitoringBean() {
-        return new HealthMonitoringService(memcacheService, ldapRepository, logger);
+        return new HealthMonitoringService(memcacheService, ldapRepository);
     }
 
     @Bean

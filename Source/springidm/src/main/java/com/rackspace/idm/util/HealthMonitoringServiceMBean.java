@@ -2,8 +2,8 @@ package com.rackspace.idm.util;
 
 public interface HealthMonitoringServiceMBean {
     
-    public boolean pingMemcache();
+    public String getMemcacheStatus();
     
-    public boolean pingLDAP();
+    public String getLDAPStatus();
 
 }

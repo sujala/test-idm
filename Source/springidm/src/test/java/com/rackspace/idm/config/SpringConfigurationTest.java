@@ -35,6 +35,7 @@ import com.rackspace.idm.rest.resources.UserSoftDeleteResource;
 import com.rackspace.idm.rest.resources.UserStatusResource;
 import com.rackspace.idm.rest.resources.UsersResource;
 import com.rackspace.idm.rest.resources.VersionResource;
+import com.rackspace.idm.services.HealthMonitoringService;
 
 public class SpringConfigurationTest {
 
@@ -136,5 +137,8 @@ public class SpringConfigurationTest {
         
         VersionResource versionResource = ctx.getBean(VersionResource.class);
         Assert.assertNotNull(versionResource);
+        
+        HealthMonitoringService healthMonitoringService = ctx.getBean(HealthMonitoringService.class);
+        Assert.assertNotNull(healthMonitoringService);
     }
 }

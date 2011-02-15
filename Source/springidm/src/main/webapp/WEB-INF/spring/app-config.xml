@@ -39,12 +39,11 @@
 	<bean id="exporter" class="org.springframework.jmx.export.MBeanExporter" lazy-init="false">
     	<property name="beans">
       		<map>
-        		<entry key="bean:name=healthMonitoringBean" value-ref="healthMonitoringBean"/>
+        		<entry key="com.rackspace.idm:name=healthMonitoringBean" value-ref="healthMonitoringBean"/>
       		</map>
     	</property>
   	</bean>
 
-  	<!-- <bean id="healthMonitoringBean" class="com.rackspace.idm.services.HealthMonitoringService"> </bean> --> 
 	<!-- ========================= COMPONENT DEFINITIONS =========================
 -->
 
