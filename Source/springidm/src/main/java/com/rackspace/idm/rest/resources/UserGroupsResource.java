@@ -140,7 +140,8 @@ public class UserGroupsResource {
      */
     @PUT
     @Path("{groupName}")
-    public Response addUserToGroup(@Context Request request, @Context UriInfo uriInfo,
+    public Response addUserToGroup(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username,
@@ -180,9 +181,8 @@ public class UserGroupsResource {
             throw new NotFoundException(errorMsg);
         }
 
-        ClientGroup group = this.clientService
-            .getClientGroupByClientIdAndGroupName(
-                getIdmClientId(), groupName);
+        ClientGroup group = this.clientService.getClientGroup(
+            getRackspaceCustomerId(), getIdmClientId(), groupName);
 
         if (group == null) {
             String errorMsg = String.format(
@@ -251,13 +251,13 @@ public class UserGroupsResource {
             throw new NotFoundException(errorMsg);
         }
 
-        ClientGroup group = this.clientService
-            .getClientGroupByClientIdAndGroupName(
-                getIdmClientId(), groupName);
+        ClientGroup group = this.clientService.getClientGroup(
+            getRackspaceCustomerId(), getIdmClientId(), groupName);
 
         if (group == null) {
             String errorMsg = String.format(
-                "Remove User From Group Failed - Group not found: {}", groupName);
+                "Remove User From Group Failed - Group not found: {}",
+                groupName);
             logger.error(errorMsg);
             throw new NotFoundException(errorMsg);
         }
@@ -276,9 +276,13 @@ public class UserGroupsResource {
         }
         return user;
     }
-    
+
     private String getIdmClientId() {
         return config.getString("idm.clientId");
+    }
+
+    private String getRackspaceCustomerId() {
+        return config.getString("rackspace.customerId");
     }
 
     private void handleUserNotFoundError(String customerId, String username) {

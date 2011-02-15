@@ -95,7 +95,7 @@ public class ClientGroupResource {
             throw new ForbiddenException(errMsg);
         }
 
-        this.clientService.deleteClientGroup(clientId, groupName);
+        this.clientService.deleteClientGroup(customerId, clientId, groupName);
 
         return Response.noContent().build();
     }
@@ -141,11 +141,16 @@ public class ClientGroupResource {
             throw new ForbiddenException(errMsg);
         }
 
-        ClientGroup group = this.clientService
-            .getClientGroupByClientIdAndGroupName(clientId, groupName);
+        ClientGroup group = this.clientService.getClientGroup(customerId,
+            clientId, groupName);
 
         if (group == null) {
-            throw new NotFoundException("Client Group not found.");
+            String errMsg = String
+                .format(
+                    "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.",
+                    groupName, clientId, customerId);
+            logger.error(errMsg);
+            throw new NotFoundException(errMsg);
         }
 
         return Response.ok(groupConverter.toClientGroupJaxb(group)).build();

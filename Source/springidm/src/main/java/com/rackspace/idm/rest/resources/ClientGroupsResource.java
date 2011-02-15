@@ -156,13 +156,18 @@ public class ClientGroupsResource {
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
-
+        
+        if (!clientGroup.getCustomerId().toLowerCase().equals(customerId.toLowerCase())) {
+            throw new BadRequestException("CustomerId in clientGroup does not match CustomerId in url");
+        }
+        
+        if (!clientGroup.getClientId().toLowerCase().equals(clientId.toLowerCase())) {
+            throw new BadRequestException("ClientId in clientGroup does not match ClientId in url");
+        }
+        
         if (StringUtils.isBlank(clientGroup.getName())) {
             throw new BadRequestException("Client Group Name cannot be blank");
         }
-
-        clientGroup.setCustomerId(customerId);
-        clientGroup.setClientId(clientId);
 
         ClientGroup group = groupConverter.toClientGroupDO(clientGroup);
 

@@ -289,7 +289,7 @@ public class LdapClientRepositoryTest {
         Client testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group);
-        ClientGroup returnedGroup = repo.getClientGroupByClientIdAndGroupName(group.getClientId(), group.getName());
+        ClientGroup returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         Assert.assertNotNull(returnedGroup);
         repo.delete(testClient.getClientId());
     }
@@ -312,7 +312,7 @@ public class LdapClientRepositoryTest {
         Client testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group);
-        ClientGroup returnedGroup = repo.getClientGroupByClientIdAndGroupName(group.getClientId(), group.getName());
+        ClientGroup returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         Assert.assertNotNull(returnedGroup);
         try {
             repo.addClientGroup(group);
@@ -329,10 +329,10 @@ public class LdapClientRepositoryTest {
         Client testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group);
-        ClientGroup returnedGroup = repo.getClientGroupByClientIdAndGroupName(group.getClientId(), group.getName());
+        ClientGroup returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         Assert.assertNotNull(returnedGroup);
-        repo.deleteClientGroup(group.getClientId(), group.getName());
-        returnedGroup = repo.getClientGroupByClientIdAndGroupName(group.getClientId(), group.getName());
+        repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
+        returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         Assert.assertNull(returnedGroup);
         repo.delete(testClient.getClientId());
     }
@@ -341,25 +341,12 @@ public class LdapClientRepositoryTest {
     public void shouldThrowErrorForDeleteClientGroupForNonExistentClient() {
         
         try {
-            repo.deleteClientGroup("BADCLIENTNAME", "GROUPNAME");
+            repo.deleteClientGroup("CUSTOMERID", "BADCLIENTNAME", "GROUPNAME");
             Assert.fail("Shouldn't have Deleted Group");
         }
         catch (Exception ex) {
             Assert.assertTrue(ex instanceof NotFoundException);
         }
-    }
-    
-    @Test
-    public void shouldThrowErrorForNonExistentClientGroup() {
-        Client testClient = addNewTestClient();
-        try {
-            repo.deleteClientGroup(testClient.getClientId(), "GROUPNAME");
-            Assert.fail("Shouldn't have Deleted Group");
-        }
-        catch (Exception ex) {
-            Assert.assertTrue(ex instanceof NotFoundException);
-        }
-        repo.delete(testClient.getClientId());
     }
     
     @Test
@@ -367,7 +354,7 @@ public class LdapClientRepositoryTest {
         Client testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group);
-        ClientGroup returnedGroup = repo.getClientGroupByClientIdAndGroupName(group.getClientId(), group.getName());
+        ClientGroup returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         Assert.assertNotNull(returnedGroup);
         repo.delete(testClient.getClientId());
     }
@@ -398,7 +385,7 @@ public class LdapClientRepositoryTest {
     @Test 
     public void shouldNotGetClientGroupForNonExistenClient() {
         try {
-        ClientGroup returnedGorup = repo.getClientGroupByClientIdAndGroupName("BADCLIENTNAME", "name");
+        ClientGroup returnedGorup = repo.getClientGroup("RACKSPACE", "BADCLIENTNAME", "name");
         Assert.fail("Shouldn't have found client");
         }
         catch (Exception ex) {
@@ -409,7 +396,7 @@ public class LdapClientRepositoryTest {
     @Test
     public void shouldReturnNullForGetClientGroupForNonExistentGroup() {
         Client testClient = addNewTestClient();
-        ClientGroup returnedGroup = repo.getClientGroupByClientIdAndGroupName(testClient.getClientId(), "SOMEBADNAME");
+        ClientGroup returnedGroup = repo.getClientGroup(testClient.getCustomerId(), testClient.getClientId(), "SOMEBADNAME");
         Assert.assertNull(returnedGroup);
         repo.delete(testClient.getClientId());
     }

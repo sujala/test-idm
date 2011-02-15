@@ -137,6 +137,10 @@ public class DefaultClientService implements ClientService {
     public Client getById(String clientId) {
         return clientDao.findByClientId(clientId);
     }
+    
+    public Client getClient(String customerId, String clientId) {
+        return clientDao.getClient(customerId, clientId);
+    }
 
     public Client getByName(String clientName) {
         return clientDao.findByClientname(clientName);
@@ -199,35 +203,27 @@ public class DefaultClientService implements ClientService {
             throw new IllegalArgumentException("username cannot be blank");
         }
 
-        if (clientGroup == null
-            || StringUtils.isBlank(clientGroup.getClientId())
-            || StringUtils.isBlank(clientGroup.getName())) {
-            throw new IllegalArgumentException(
-                "clientgroup cannot be null and must have non blank clientId and name");
-        }
-
         User user = userDao.findByUsername(username);
         if (user == null) {
-            throw new NotFoundException();
+            throw new NotFoundException(String.format("User with username %s not found", username));
         }
-
-        ClientGroup group = clientDao.getClientGroupByClientIdAndGroupName(
-            clientGroup.getClientId(), clientGroup.getName());
-        if (group == null) {
-            throw new NotFoundException();
+        
+        try {
+            clientDao.addUserToClientGroup(user.getUniqueId(), clientGroup);
+        } catch (DuplicateException drx) {
+            logger.warn("User {} already in group {}", user, clientGroup);
+            return;
         }
-
-        clientDao.addUserToClientGroup(user.getUniqueId(), group);
     }
 
-    public void deleteClientGroup(String clientId, String name) {
-        clientDao.deleteClientGroup(clientId, name);
+    public void deleteClientGroup(String customerId, String clientId, String name) {
+        clientDao.deleteClientGroup(customerId, clientId, name);
     }
-
-    public ClientGroup getClientGroupByClientIdAndGroupName(String clientId,
-        String name) {
-        ClientGroup group = clientDao.getClientGroupByClientIdAndGroupName(
-            clientId, name);
+    
+    public ClientGroup getClientGroup(String customerId, String clientId,
+        String groupName) {
+        ClientGroup group = clientDao.getClientGroup(customerId,
+            clientId, groupName);
         return group;
     }
 
@@ -243,25 +239,17 @@ public class DefaultClientService implements ClientService {
             throw new IllegalArgumentException("username cannot be blank");
         }
 
-        if (clientGroup == null
-            || StringUtils.isBlank(clientGroup.getClientId())
-            || StringUtils.isBlank(clientGroup.getName())) {
-            throw new IllegalArgumentException(
-                "clientgroup cannot be null and must have non blank clientId and name");
-        }
-
         User user = userDao.findByUsername(username);
         if (user == null) {
             throw new NotFoundException();
         }
-
-        ClientGroup group = clientDao.getClientGroupByClientIdAndGroupName(
-            clientGroup.getClientId(), clientGroup.getName());
-        if (group == null) {
-            throw new NotFoundException();
+        
+        try {
+            clientDao.removeUserFromGroup(user.getUniqueId(), clientGroup);
+        } catch (NotFoundException nfe) {
+            logger.warn("User {} isn't in group {}", user, clientGroup);
+            return;
         }
-
-        clientDao.removeUserFromGroup(user.getUniqueId(), group);
     }
 
     public List<ClientGroup> getClientGroupsForUser(String username) {

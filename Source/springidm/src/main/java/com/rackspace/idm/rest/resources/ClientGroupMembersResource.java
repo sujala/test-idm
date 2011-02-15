@@ -21,6 +21,7 @@ import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.ClientGroup;
 import com.rackspace.idm.exceptions.ForbiddenException;
+import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
@@ -91,7 +92,16 @@ public class ClientGroupMembersResource {
         }
 
         ClientGroup group = this.clientService
-            .getClientGroupByClientIdAndGroupName(clientId, groupName);
+            .getClientGroup(customerId, clientId, groupName);
+        
+        if (group == null) {
+            String errMsg = String
+                .format(
+                    "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.",
+                    groupName, clientId, customerId);
+            logger.error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
 
         this.clientService.addUserToClientGroup(username, group);
 
@@ -142,7 +152,16 @@ public class ClientGroupMembersResource {
         }
 
         ClientGroup group = this.clientService
-            .getClientGroupByClientIdAndGroupName(clientId, groupName);
+            .getClientGroup(customerId, clientId, groupName);
+        
+        if (group == null) {
+            String errMsg = String
+                .format(
+                    "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.",
+                    groupName, clientId, customerId);
+            logger.error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
 
         this.clientService.removeUserFromClientGroup(username, group);
 

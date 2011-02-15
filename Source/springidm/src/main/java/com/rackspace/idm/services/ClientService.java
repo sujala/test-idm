@@ -25,7 +25,7 @@ public interface ClientService {
 
     void delete(String clientId);
     
-    void deleteClientGroup(String clientId, String name);
+    void deleteClientGroup(String customerId, String clientId, String name);
 
     void deleteDefinedPermission(Permission permission);
     
@@ -34,9 +34,10 @@ public interface ClientService {
     Client getById(String clientId);
     
     Client getByName(String clientName);
-
-    ClientGroup getClientGroupByClientIdAndGroupName(String clientId,
-        String name);
+    
+    Client getClient(String customerId, String clientId);
+    
+    ClientGroup getClientGroup(String customerId, String clientId, String groupName);
 
     List<ClientGroup> getClientGroupsByClientId(String clientId);
 

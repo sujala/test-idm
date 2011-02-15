@@ -24,11 +24,13 @@ public interface ClientDao {
 
     void delete(String clientId);
 
-    void deleteClientGroup(String clientId, String name);
+    void deleteClientGroup(String customerId, String clientId, String name);
 
     void deleteDefinedPermission(Permission permission);
 
     List<Client> findAll();
+    
+    Client getClient(String customerId, String clientId);
 
     Client findByClientId(String clientId);
 
@@ -41,9 +43,9 @@ public interface ClientDao {
     Clients getByCustomerId(String customerId, int offset, int limit);
 
     String getClientDnByClientId(String clientId);
-
-    ClientGroup getClientGroupByClientIdAndGroupName(String clientId,
-        String name);
+    
+    ClientGroup getClientGroup(String customerId, String clientId,
+        String groupName);
 
     List<ClientGroup> getClientGroupsByClientId(String clientId);
 

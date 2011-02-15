@@ -73,7 +73,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         if (!StringUtils.isBlank(client.getInum())) {
             atts.add(new Attribute(ATTR_INUM, client.getInum()));
         }
-        
+
         if (!StringUtils.isBlank(client.getOrgInum())) {
             atts.add(new Attribute(ATTR_O, client.getOrgInum()));
         }
@@ -142,11 +142,11 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 client.getName(), result.getResultCode().toString()));
         }
 
-        String clientPermissionsDN = new LdapDnBuilder(clientDN)
-            .addAttriubte(ATTR_OU, OU_PERMISSIONS_NAME).build();
+        String clientPermissionsDN = new LdapDnBuilder(clientDN).addAttriubte(
+            ATTR_OU, OU_PERMISSIONS_NAME).build();
 
-        String clientGroupsDN = new LdapDnBuilder(clientDN)
-            .addAttriubte(ATTR_OU, OU_GROUPS_NAME).build();
+        String clientGroupsDN = new LdapDnBuilder(clientDN).addAttriubte(
+            ATTR_OU, OU_GROUPS_NAME).build();
 
         // Add ou=permissions under new client entry
         Attribute[] permissionAttributes = {
@@ -203,13 +203,13 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 "Null instance of clientGroup was passed.");
         }
 
-        Client client = this.findByClientId(clientGroup.getClientId());
+        Client client = this.getClient(clientGroup.getCustomerId(), clientGroup.getClientId());
 
         if (client == null) {
             throw new NotFoundException();
         }
 
-        ClientGroup group = this.getClientGroupByClientIdAndGroupName(
+        ClientGroup group = this.getClientGroup(clientGroup.getCustomerId(),
             clientGroup.getClientId(), clientGroup.getName());
 
         if (group != null) {
@@ -434,18 +434,22 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().info("Deleted client {}", clientId);
     }
 
-    public void deleteClientGroup(String clientId, String name) {
+    public void deleteClientGroup(String customerId, String clientId,
+        String name) {
         getLogger().info("Deleting clientGroup {}", name);
 
         if (StringUtils.isBlank(clientId) || StringUtils.isBlank(name)) {
             throw new IllegalArgumentException();
         }
 
-        ClientGroup group = this.getClientGroupByClientIdAndGroupName(clientId,
-            name);
+        ClientGroup group = this.getClientGroup(customerId, clientId, name);
 
         if (group == null) {
-            throw new NotFoundException();
+            throw new NotFoundException(
+                String
+                    .format(
+                        "Client Group with Name %s, ClientId %s, and CustomerId %s not found",
+                        customerId, clientId, name));
         }
 
         LDAPResult result = null;
@@ -533,6 +537,29 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         String searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_CLIENT_ID, clientId)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+
+        Client client = getSingleClient(searchFilter);
+
+        getLogger().debug("Found client - {}", client);
+
+        return client;
+    }
+
+    public Client getClient(String customerId, String clientId) {
+        getLogger().debug("Doing search for clientId {}", clientId);
+
+        if (StringUtils.isBlank(clientId)) {
+            getLogger().error("Null or Empty clientId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty clientId parameter.");
+        }
+
+        String searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_CLIENT_ID, clientId)
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEAPPLICATION).build();
@@ -669,31 +696,25 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return dn;
     }
 
-    public ClientGroup getClientGroupByClientIdAndGroupName(String clientId,
-        String name) {
-
-        Client client = this.findByClientId(clientId);
-
-        if (client == null) {
-            throw new NotFoundException();
-        }
-
-        String searchDN = "ou=groups," + client.getUniqueId();
+    public ClientGroup getClientGroup(String customerId, String clientId,
+        String groupName) {
 
         ClientGroup group = null;
         SearchResult searchResult = null;
 
         String searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_NAME, name)
+            .addEqualAttribute(ATTR_NAME, groupName)
+            .addEqualAttribute(ATTR_CLIENT_ID, clientId)
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP)
             .build();
 
         try {
-            searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
+            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
                 searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
         } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for clientGroup {} - {}", name,
-                ldapEx);
+            getLogger().error("Error searching for clientGroup {} - {}",
+                groupName, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
