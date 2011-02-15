@@ -18,12 +18,15 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Customer;
+import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.CustomerService;
+import com.rackspace.idm.services.UserService;
 
 /**
  * Customer lock.
@@ -37,11 +40,23 @@ public class CustomerLockResource {
     private AccessTokenService accessTokenService;
     private CustomerService customerService;
     private AuthorizationService authorizationService;
+    private UserService userService;
+    private OAuthService oauthService;
     private Logger logger;
 
     @Autowired
-    public CustomerLockResource(AccessTokenService accessTokenService,
-        CustomerService customerService,
+    public CustomerLockResource(CustomerService customerService,
+        AuthorizationService authorizationService, UserService userService, OAuthService oauthService,
+        LoggerFactoryWrapper logger) {
+        this.customerService = customerService;
+        this.authorizationService = authorizationService;
+        this.userService = userService;
+        this.oauthService = oauthService;
+        this.logger = logger.getLogger(this.getClass());
+    }
+
+    @Deprecated
+    public CustomerLockResource(AccessTokenService accessTokenService, CustomerService customerService,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.accessTokenService = accessTokenService;
         this.customerService = customerService;
@@ -63,24 +78,20 @@ public class CustomerLockResource {
      * @param customerId RCN
      */
     @PUT
-    public Response setCustomerLockStatus(@Context Request request,
-        @Context UriInfo uriInfo, @PathParam("customerId") String customerId,
-        @HeaderParam("Authorization") String authHeader,
+    public Response setCustomerLockStatus(@Context Request request, @Context UriInfo uriInfo,
+        @PathParam("customerId") String customerId, @HeaderParam("Authorization") String authHeader,
         com.rackspace.idm.jaxb.Customer inputCustomer) {
 
         logger.debug("Getting Customer: {}", customerId);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = oauthService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath());
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -93,8 +104,7 @@ public class CustomerLockResource {
 
         Customer customer = this.customerService.getCustomer(customerId);
         if (customer == null) {
-            String errorMsg = String.format("Customer not found: %s",
-                customerId);
+            String errorMsg = String.format("Customer not found: %s", customerId);
             logger.error(errorMsg);
             throw new NotFoundException(errorMsg);
         }
@@ -102,6 +112,13 @@ public class CustomerLockResource {
         boolean locked = inputCustomer.isLocked();
         this.customerService.setCustomerLocked(customer, locked);
         logger.debug("Successfully locked customer: {}", customer);
+
+        logger.debug("Revoking all user tokens for customer {}", customer.getCustomerId());
+
+        // TODO What is the right limit for this?
+        for (User user : userService.getByCustomerId(customerId, 0, -1).getUsers()) {
+            oauthService.revokeTokensGloballyForOwner(token.getTokenString(), user.getUsername());
+        }
 
         return Response.ok(inputCustomer).build();
     }
