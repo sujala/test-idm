@@ -1,5 +1,6 @@
 package com.rackspace.idm.dao;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -8,21 +9,18 @@ import org.junit.Test;
 import com.rackspace.idm.config.AuthRepositoryLdapConfiguration;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
-import com.unboundid.ldap.sdk.extensions.StartTLSExtendedRequest;
 
-@Ignore("Bamboo appears to be unable to connect to Rackspace's LDAP servers.")
+//@Ignore
 public class LdapAuthRepositoryTest {
     private LdapAuthRepository repo;
     private LDAPConnectionPool connPool;
-    private StartTLSExtendedRequest startTlsReq;
 
     @Before
     public void setUp() {
         AuthRepositoryLdapConfiguration config = new AuthRepositoryLdapConfiguration(
             true, new StubLogger());
         connPool = config.connection();
-        startTlsReq = config.startTLSExtendedRequest();
-        repo = new LdapAuthRepository(connPool, startTlsReq, new StubLogger());
+        repo = new LdapAuthRepository(connPool, new StubLogger());
     }
 
     public boolean authenticateRacker() {
@@ -46,5 +44,10 @@ public class LdapAuthRepositoryTest {
             Assert.assertTrue(authenticateRacker());
             System.out.println("auth count: " + (i + 1));
         }
+    }
+    
+    @After
+    public void tearDown() {
+        connPool.close();
     }
 }

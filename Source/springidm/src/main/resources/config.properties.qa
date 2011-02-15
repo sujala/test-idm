@@ -25,14 +25,11 @@ app.version.wadl.url=http://10.127.7.164:8080/v1.0/application.wadl
 
 ldap.bind.dn=cn=Directory Manager
 ldap.bind.password=Esp$2t#
-ldap.server.address=10.127.7.165
-ldap.server.port=389
-# comma or space delimited list of server addresses in host:port format
-ldap.serverList=10.127.7.165:389
+# comma or space delimited list of server addresses in host:port format, port default is 636
+ldap.serverList=10.127.7.165:636
 ldap.server.trusted=false
 ldap.server.pool.size.init=10
 ldap.server.pool.size.max=1000
-ldap.server.base=ou=users,o=rackspace
 
 ldap.paging.offset.default=0
 ldap.paging.limit.default=25

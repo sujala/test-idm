@@ -50,8 +50,6 @@ public class RepositoryConfiguration {
     @Autowired
     private LDAPConnectionPool authReposConnPool;
     @Autowired
-    private StartTLSExtendedRequest startTLSExtendedRequest;
-    @Autowired
     private Configuration appConfig;
 
     @Bean
@@ -93,7 +91,7 @@ public class RepositoryConfiguration {
     @Bean
     public AuthDao authenticationRepository() {
         Logger logger = LoggerFactory.getLogger(LdapAuthRepository.class);
-        return new LdapAuthRepository(authReposConnPool, startTLSExtendedRequest, logger);
+        return new LdapAuthRepository(authReposConnPool, logger);
     }
 
     @Bean

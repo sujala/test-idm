@@ -19,22 +19,24 @@ public class LdapAuthRepository implements AuthDao {
     private static final String USER_FIND_BY_USERNAME = "(&(objectClass=inetOrgPerson)(cn=%s))";
     private static final String BASE_DN = "ou=users,o=rackspace";
     private LDAPConnectionPool connPool;
-    private StartTLSExtendedRequest startTlsReq;
 
-    public LdapAuthRepository(LDAPConnectionPool connPool, 
-        StartTLSExtendedRequest startTlsReq, Logger logger) {
+    public LdapAuthRepository(LDAPConnectionPool connPool, Logger logger) {
         this.connPool = connPool;
         this.logger = logger;
-        this.startTlsReq = startTlsReq;
     }
 
     public boolean authenticate(String userName, String password) {
         logger.debug("Authenticating user {}", userName);
         BindResult result = null;
         LDAPConnection conn = null;
+        
+        String userDn = getUserDnByUsername(userName);
+        
+        if (userDn == null) {
+            return false;
+        }
         try {
-            conn = getStartTlsConfiguredConnection();
-            result = conn.bind(getUserDnByUsername(userName), password);
+            result = connPool.bind(userDn, password);
         } catch (LDAPException e) {
             if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
                 logger.info(
@@ -57,19 +59,6 @@ public class LdapAuthRepository implements AuthDao {
         }
         logger.debug(result.toString());
         return ResultCode.SUCCESS.equals(result.getResultCode());
-    }
-
-    private LDAPConnection getStartTlsConfiguredConnection()
-        throws LDAPException {
-        LDAPConnection conn;
-        conn = connPool.getConnection();
-        ExtendedResult extendedResult = conn
-            .processExtendedOperation(startTlsReq);
-        if (!ResultCode.SUCCESS.equals(extendedResult.getResultCode())) {
-            throw new IllegalArgumentException(
-                "Cannot establish a secure StartTLS connection.");
-        }
-        return conn;
     }
 
     private String getUserDnByUsername(String username) {

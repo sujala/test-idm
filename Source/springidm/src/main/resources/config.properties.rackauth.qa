@@ -1,47 +1,111 @@
-##############################################################################################################
+#################################################################################
 #
-# DEV RACKER AUTHENTICATION CONFIGURATION.
+# QA RACKER AUTHENTICATION CONFIGURATION.
 #
 # Configuration for IDM server that authenticates Rackers on the trusted network.
 # Note that on this file needs to be renamed to config.properties to enable the Racker authentication.
 #
-##############################################################################################################
+#################################################################################
 
-##############################################################################################################
+#################################################################################
 #
-# RACKER LDAP SERVER
+# IDM APPLICATION VERSION SETTINGS
 #
-##############################################################################################################
+#################################################################################
 
-# Directory info for racker authentication
-#ldap.server.address=cert-edir.dfw1.corp.rackspace.com
+app.version=1.0
+app.version.status=CURRENT
+app.version.doc.url=http://172.17.16.85:8080/idm-docs/idm-devguide-20101111.pdf
+app.version.wadl.url=http://10.127.7.164:8080/v1.0/application.wadl
+
+#################################################################################
+#
+# CUSTOMER LDAP SERVER
+#
+#################################################################################
+
 ldap.bind.dn=cn=Directory Manager
 ldap.bind.password=Esp$2t#
-ldap.server.address=172.17.16.85
-ldap.server.port=389
+# comma or space delimited list of server addresses in host:port format, port default is 636
+ldap.serverList=10.127.7.165:636
 ldap.server.trusted=true
-ldap.server.pool.size.init=2
-ldap.server.pool.size.max=10
-ldap.server.base=ou=users,o=rackspace
+ldap.server.pool.size.init=10
+ldap.server.pool.size.max=1000
 
-##############################################################################################################
+ldap.paging.offset.default=0
+ldap.paging.limit.default=25
+ldap.paging.limit.max=1000
+
+ldap.password.failure.lockout.min=30
+
+#################################################################################
+#
+# RACKER AUTHENTICATION LDAP SERVER
+#
+#################################################################################
+
+# Rackspace eDir
+auth.ldap.server.pool.size.init=2
+auth.ldap.server.pool.size.max=10
+auth.ldap.serverList=cert-edir.dfw1.corp.rackspace.com:636
+auth.ldap.bind.dn=cn=cloud_controlpanel\,ou=users\,o=rackspace
+auth.ldap.bind.password=Sj!wI2As
+
+#################################################################################
 #
 # MEMCAHED SERVER
 #
-##############################################################################################################
+#################################################################################
 
 # Space delimited list of memcached instances in host:port format
-memcached.serverList=172.17.16.84:11211
+memcached.serverList=10.127.7.165:11211
 
-##############################################################################################################
+#################################################################################
+#
+# RACKSPACE SETTINGS
+#
+#################################################################################
+
+rackspace.customerId=RACKSPACE
+rackspace.inum.prefix=@!FFFF.FFFF.FFFF.FFFF
+
+#################################################################################
+#
+# IDM SETTINGS
+#
+#################################################################################
+
+idm.clientId=18e7a7032733486cd32f472d7bd58f709ac0d221
+idm.clientSecret=password
+idm.AdminGroupName=Idm Admin
+
+#################################################################################
 #
 # TOKEN SETTINGS
 #
-##############################################################################################################
+#################################################################################
 
 token.expirationSeconds=3600
 token.cloudAuthExpirationSeconds=86400
 token.maxExpirationSeconds=86400
 token.minExpirationSeconds=10
 token.refreshTokenExpirationSeconds=86400
-token.dataCenterPrefix=DFW
+token.dataCenterPrefix=QA
+
+#################################################################################
+#
+# DATA CENTERS
+#
+#################################################################################
+
+# Values that are useful only for testing.
+dc=DEV|http://10.127.7.166:8080/v1.0
+dc=QA|http://10.127.7.164:8080/v1.0
+
+#################################################################################
+#
+# MISCELLANEOUS SETTINGS
+#
+#################################################################################
+
+cloud.baseurl.ref.string=https://idm.rackspace.com/v%s/baseurls/%s
