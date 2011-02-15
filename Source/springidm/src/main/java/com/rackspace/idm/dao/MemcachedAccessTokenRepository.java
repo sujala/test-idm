@@ -1,5 +1,7 @@
 package com.rackspace.idm.dao;
 
+import java.net.SocketAddress;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -18,7 +20,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
 
     private MemcachedClient memcached;
     private Logger logger;
-
+    
     public static final DateTimeFormatter DATE_PARSER = DateTimeFormat
         .forPattern("yyyyMMddHHmmss.SSS'Z");
 
@@ -235,13 +237,18 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
     public boolean isAlive() {
              
         try {
-            memcached.get("DUMMY-STRING");
+            // this call and subsequent give us correct answer if any of the server is down.
+            Map<SocketAddress, Map<String, String>> stats = memcached.getStats();
+            if (memcached.getUnavailableServers().size() > 0) {
+                return false;
+            }
+            else {
+                return true;
+            }
         }
         catch(RuntimeException runtimeExp) {
-            runtimeExp.printStackTrace();
             return false;
         }
-        return true;
     }
 
     private String getKeyForFindByOwner(String owner, String requestor) {

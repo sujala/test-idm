@@ -1,12 +1,5 @@
 package com.rackspace.idm.services;
 
-import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-
-import com.rackspace.idm.dao.AccessTokenDao;
-import com.rackspace.idm.dao.LdapRepository;
-import com.rackspace.idm.dao.MemcachedAccessTokenRepository;
 import com.rackspace.idm.util.HealthMonitoringServiceMBean;
 import com.rackspace.idm.util.PingableService;
 
@@ -16,22 +9,33 @@ public class HealthMonitoringService implements HealthMonitoringServiceMBean {
 
     private PingableService ldapRespository;
     
-    private Logger logger;
-    
-    public HealthMonitoringService(PingableService memcacheService, PingableService ldapRepository, 
-        Logger logger) {
+    private static final String memcacheStatusString = "Memcached is ";
+    private static final String ldapStatusString = "LDAP is ";
+    private static final String downStatus = "down.";
+    private static final String upStatus = "up.";
+        
+    public HealthMonitoringService(PingableService memcacheService, PingableService ldapRepository) {
         this.memcacheService = memcacheService;
         this.ldapRespository = ldapRepository;
-        this.logger = logger;
     }
     
     @Override
-    public boolean pingMemcache() {
-        return memcacheService.isAlive();
+    public String getMemcacheStatus() {
+        if (memcacheService.isAlive()) {
+            return (memcacheStatusString + upStatus);
+        }
+        else {
+            return (memcacheStatusString + downStatus);
+        }
     }
 
     @Override
-    public boolean pingLDAP() {
-        return ldapRespository.isAlive();
+    public String getLDAPStatus() {
+        if (ldapRespository.isAlive()) {
+            return (ldapStatusString + upStatus);
+        }
+        else {
+            return (ldapStatusString + downStatus);
+        }
     }
 }
