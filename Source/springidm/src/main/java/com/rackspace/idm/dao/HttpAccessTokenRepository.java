@@ -6,7 +6,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.SerializationException;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
@@ -24,8 +23,12 @@ public class HttpAccessTokenRepository extends HttpRepository implements XdcAcce
         this.logger = logger;
     }
 
-    /* (non-Javadoc)
-     * @see com.rackspace.idm.dao.HttpAccessTokenDao#findByTokenString(java.lang.String)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.rackspace.idm.dao.HttpAccessTokenDao#findByTokenString(java.lang.
+     * String)
      */
     @Override
     public AccessToken findByTokenString(final String tokenString) {
@@ -61,7 +64,9 @@ public class HttpAccessTokenRepository extends HttpRepository implements XdcAcce
         return xdcToken;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.rackspace.idm.dao.HttpAccessTokenDao#delete(java.lang.String)
      */
     @Override
@@ -88,12 +93,32 @@ public class HttpAccessTokenRepository extends HttpRepository implements XdcAcce
             }
         }
     }
-    
 
     @Override
-    public void deleteAllTokensForOwner(String owner) {
-        // TODO Auto-generated method stub
-        throw new NotImplementedException();
+    public void deleteAllTokensForOwner(final String ownerId) {
+        if (StringUtils.isBlank(ownerId)) {
+            throw new IllegalArgumentException("No ownerId given.");
+        }
+
+        logger.debug("Attempting to delete all access tokens for owner {}.", ownerId);
+        for (DataCenterClient client : endpoints.getAll()) {
+            // Don't make a call against the local (own) IDM instance.
+            if (client.getDcPrefix().equals(config.getString("token.dataCenterPrefix"))) {
+                continue;
+            }
+
+            makeHttpCall(new HttpCaller<Object>() {
+
+                @Override
+                public Object execute(String myTokenStr, DataCenterClient client) {
+                    client.getResource().path(TOKEN_RESOURCE_PATH).queryParam("owner", ownerId.trim())
+                        .accept(MediaType.APPLICATION_XML)
+                        .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr)).delete();
+                    return null;
+                }
+            }, client);
+        }
+
     }
 
     @Override

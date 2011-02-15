@@ -5,7 +5,6 @@ import static com.rackspace.idm.oauth.OAuthGrantType.PASSWORD;
 import static com.rackspace.idm.oauth.OAuthGrantType.REFRESH_TOKEN;
 
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.NotImplementedException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 
@@ -41,6 +40,11 @@ public class DefaultOAuthService implements OAuthService {
         this.refreshTokenService = refreshTokenService;
         this.logger = logger;
         this.config = config;
+    }
+
+    @Override
+    public AccessToken getAccessTokenByAuthHeader(String authHeader) {
+        return accessTokenService.getAccessTokenByAuthHeader(authHeader);
     }
 
     @Override
@@ -86,26 +90,57 @@ public class DefaultOAuthService implements OAuthService {
         return null;
     }
 
-    public void revokeTokenLocally(String tokenStringRequestingDelete, String tokenToDelete) {
+    public void revokeTokensLocally(String tokenStringRequestingDelete, String tokenToDelete) {
         revokeToken(tokenStringRequestingDelete, tokenToDelete, false);
     }
 
     @Override
-    public void revokeTokenGlobally(String tokenStringRequestingDelete, String tokenToDelete) {
+    public void revokeTokensGlobally(String tokenStringRequestingDelete, String tokenToDelete) {
         revokeToken(tokenStringRequestingDelete, tokenToDelete, true);
     }
-    
 
     @Override
-    public void revokeTokenForOwnerGlobally(String authTokenString, String ownerId) {
-        // TODO Auto-generated method stub
-        throw new NotImplementedException();
+    public void revokeTokensLocallyForOwner(String authTokenString, String ownerId) {
+        revokeTokensForOwner(authTokenString, ownerId, false);
     }
 
     @Override
-    public void revokeTokenForOwnerLocally(String authTokenString, String ownerId) {
-        // TODO Auto-generated method stub
-        throw new NotImplementedException();
+    public void revokeTokensGloballyForOwner(String authTokenString, String ownerId) {
+        revokeTokensForOwner(authTokenString, ownerId, true);
+    }
+
+    private void revokeTokensForOwner(String authTokenString, String ownerId, boolean isGlobal) {
+        AccessToken requestingToken = accessTokenService.getAccessTokenByTokenString(authTokenString);
+        if (requestingToken == null) {
+            String error = "No entry found for token " + requestingToken;
+            logger.debug(error);
+            throw new IllegalArgumentException(error);
+        }
+
+        boolean isAuthorized = isAuthorizedAsCustomerIdm(requestingToken);
+
+        if (!isAuthorized) {
+            String errMsg = String.format("Requesting token %s not authorized to revoke token for owner %s.",
+                authTokenString, ownerId);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
+        if (requestingToken.getRequestor() == null) {
+            String error = String.format("Token %s does not have a requestor",
+                requestingToken.getTokenString());
+            logger.debug(error);
+            throw new IllegalStateException(error);
+        }
+
+        if (isGlobal) {
+            refreshTokenService.deleteAllTokensForUser(ownerId);
+            accessTokenService.deleteAllGloballyForOwner(ownerId);
+        } else {
+            accessTokenService.deleteAllForOwner(ownerId);
+        }
+
+        logger.debug("Deleted all access tokens for owner {}.", ownerId);
     }
 
     private void revokeToken(String tokenStringRequestingDelete, String tokenToDelete, boolean isGlobal)
@@ -158,8 +193,8 @@ public class DefaultOAuthService implements OAuthService {
             throw new IllegalStateException(error);
         }
 
-        deleteRefreshTokenByAccessToken(deletingToken);
         if (isGlobal) {
+            deleteRefreshTokenByAccessToken(deletingToken);
             accessTokenService.deleteGlobally(deletingToken.getTokenString());
         } else {
             accessTokenService.delete(deletingToken.getTokenString());

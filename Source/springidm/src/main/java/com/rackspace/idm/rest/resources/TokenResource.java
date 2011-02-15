@@ -236,7 +236,7 @@ public class TokenResource {
     @Path("{tokenString}")
     public Response revokeAccessToken(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("tokenString") String tokenString,
-        @QueryParam("owner") String ownerId, @DefaultValue("true") @QueryParam("global") boolean isGlobal) {
+        @DefaultValue("true") @QueryParam("global") boolean isGlobal) {
 
         logger.debug("Revoking Token: {}", tokenString);
 
@@ -245,26 +245,13 @@ public class TokenResource {
             String authTokenString = authHeaderHelper.getTokenFromAuthHeader(authHeader);
             logger.debug("Parsed Auth Header - Token: {}", authTokenString);
 
-            boolean isByOwner = true;
-            if (StringUtils.isBlank(ownerId)) {
-                isByOwner = false;
-            }
-
-            if (isByOwner) {
-                if (isGlobal) {
-                    oauthService.revokeTokenForOwnerGlobally(authTokenString, ownerId);
-                } else {
-                    oauthService.revokeTokenForOwnerLocally(authTokenString, ownerId);
-                }
+            if (isGlobal) {
+                // Propagate the revoke call to all DCs
+                oauthService.revokeTokensGlobally(authTokenString, tokenString);
             } else {
-                if (isGlobal) {
-                    // Propagate the revoke call to all DCs
-                    oauthService.revokeTokenGlobally(authTokenString, tokenString);
-                } else {
-                    // Most likely a revoke call coming in from the IDM instance
-                    // where the revoke call originated.
-                    oauthService.revokeTokenLocally(authTokenString, tokenString);
-                }
+                // Most likely a revoke call coming in from the IDM instance
+                // where the revoke call originated.
+                oauthService.revokeTokensLocally(authTokenString, tokenString);
             }
 
             logger.info("Revoked Token: {}", tokenString);
@@ -279,6 +266,44 @@ public class TokenResource {
             logger.error(errorMsg);
             throw new ApiException(HttpServletResponse.SC_BAD_REQUEST, ErrorMsg.BAD_REQUEST, errorMsg);
 
+        }
+
+        return Response.noContent().build();
+    }
+
+
+    /**
+     * To be used only by a remote instance of IDM.
+     * 
+     * @param request
+     * @param uriInfo
+     * @param authHeader
+     * @param ownerId
+     * @return
+     */
+    @DELETE
+    @Path("")
+    public Response revokeAccessTokensForOwner(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @QueryParam("owner") String ownerId) {
+        logger.debug("Revoking Token for owner {}", ownerId);
+
+        logger.debug("Parsing Auth Header");
+        String authTokenString = authHeaderHelper.getTokenFromAuthHeader(authHeader);
+        logger.debug("Parsed Auth Header - Token: {}", authTokenString);
+
+        if (StringUtils.isBlank(ownerId)) {
+            String msg = "The owner query paramter is required.";
+            logger.warn(msg);
+            throw new IllegalArgumentException(msg);
+        }
+
+        try {
+            oauthService.revokeTokensLocallyForOwner(authTokenString, ownerId);
+            logger.info("Revoked Token for owner {}", ownerId);
+        } catch (TokenExpiredException ex) {
+            String errorMsg = String.format("Authorization failed, token is expired: %s", authHeader);
+            logger.error(errorMsg);
+            throw new ApiException(HttpServletResponse.SC_UNAUTHORIZED, ErrorMsg.UNAUTHORIZED, errorMsg);
         }
 
         return Response.noContent().build();

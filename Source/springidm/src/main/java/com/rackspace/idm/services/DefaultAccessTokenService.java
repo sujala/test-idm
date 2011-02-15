@@ -389,9 +389,8 @@ public class DefaultAccessTokenService implements AccessTokenService {
     public void deleteAllGloballyForOwner(String owner) {
         // Start with the local tokens.
         tokenDao.deleteAllTokensForOwner(owner, getAllTokenRequestors());
-        //tokenDao.
 
-        //xdcTokenDao.deleteAllTokensFor
+        xdcTokenDao.deleteAllTokensForOwner(owner);
     }
 
     private String generateTokenWithDcPrefix() {
