@@ -117,7 +117,7 @@ public class CustomerLockResource {
 
         // TODO What is the right limit for this?
         for (User user : userService.getByCustomerId(customerId, 0, -1).getUsers()) {
-            oauthService.revokeTokensGloballyForOwner(token.getTokenString(), user.getUsername());
+            oauthService.revokeTokensGloballyForOwner(user.getUsername());
         }
 
         return Response.ok(inputCustomer).build();

@@ -11,6 +11,7 @@ import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.config.DataCenterClient;
 import com.rackspace.idm.config.DataCenterEndpoints;
 import com.rackspace.idm.entities.AccessToken;
@@ -111,14 +112,43 @@ public class HttpAccessTokenRepository extends HttpRepository implements XdcAcce
 
                 @Override
                 public Object execute(String myTokenStr, DataCenterClient client) {
-                    client.getResource().path(TOKEN_RESOURCE_PATH).queryParam("owner", ownerId.trim())
-                        .accept(MediaType.APPLICATION_XML)
+                    client.getResource().path(TOKEN_RESOURCE_PATH)
+                        .queryParam("querytype", GlobalConstants.TokenDeleteByType.owner.toString())
+                        .queryParam("id", ownerId.trim()).accept(MediaType.APPLICATION_XML)
                         .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr)).delete();
                     return null;
                 }
             }, client);
         }
 
+    }
+
+    @Override
+    public void deleteAllTokensForCustomer(final String customerId) {
+        if (StringUtils.isBlank(customerId)) {
+            throw new IllegalArgumentException("No ownerId given.");
+        }
+
+        logger.debug("Attempting to delete all access tokens for customer {}.", customerId);
+        for (DataCenterClient client : endpoints.getAll()) {
+            // Don't make a call against the local (own) IDM instance.
+            if (client.getDcPrefix().equals(config.getString("token.dataCenterPrefix"))) {
+                continue;
+            }
+
+            makeHttpCall(new HttpCaller<Object>() {
+
+                @Override
+                public Object execute(String myTokenStr, DataCenterClient client) {
+                    client.getResource().path(TOKEN_RESOURCE_PATH)
+                        .queryParam("querytype", GlobalConstants.TokenDeleteByType.customer.toString())
+                        .queryParam("id", customerId.trim()).accept(MediaType.APPLICATION_XML)
+                        .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr)).delete();
+                    return null;
+                }
+
+            }, client);
+        }
     }
 
     @Override

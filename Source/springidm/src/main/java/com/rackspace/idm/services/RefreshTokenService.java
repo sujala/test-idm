@@ -1,7 +1,8 @@
 package com.rackspace.idm.services;
 
-import com.rackspace.idm.entities.RefreshToken;
 import org.joda.time.DateTime;
+
+import com.rackspace.idm.entities.RefreshToken;
 
 public interface RefreshTokenService {
 
@@ -14,6 +15,6 @@ public interface RefreshTokenService {
     void resetTokenExpiration(RefreshToken token);
 
     void deleteAllTokensForUser(String username);
-    
+
     void deleteTokenForUserByClientId(String username, String clientId);
 }

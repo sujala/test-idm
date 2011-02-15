@@ -4,6 +4,8 @@ import static com.rackspace.idm.oauth.OAuthGrantType.NONE;
 import static com.rackspace.idm.oauth.OAuthGrantType.PASSWORD;
 import static com.rackspace.idm.oauth.OAuthGrantType.REFRESH_TOKEN;
 
+import java.util.List;
+
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -13,6 +15,7 @@ import com.rackspace.idm.entities.AuthData;
 import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.ClientAuthenticationResult;
 import com.rackspace.idm.entities.RefreshToken;
+import com.rackspace.idm.entities.User;
 import com.rackspace.idm.entities.UserAuthenticationResult;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
@@ -101,15 +104,6 @@ public class DefaultOAuthService implements OAuthService {
 
     @Override
     public void revokeTokensLocallyForOwner(String authTokenString, String ownerId) {
-        revokeTokensForOwner(authTokenString, ownerId, false);
-    }
-
-    @Override
-    public void revokeTokensGloballyForOwner(String authTokenString, String ownerId) {
-        revokeTokensForOwner(authTokenString, ownerId, true);
-    }
-
-    private void revokeTokensForOwner(String authTokenString, String ownerId, boolean isGlobal) {
         AccessToken requestingToken = accessTokenService.getAccessTokenByTokenString(authTokenString);
         if (requestingToken == null) {
             String error = "No entry found for token " + requestingToken;
@@ -133,14 +127,59 @@ public class DefaultOAuthService implements OAuthService {
             throw new IllegalStateException(error);
         }
 
-        if (isGlobal) {
-            refreshTokenService.deleteAllTokensForUser(ownerId);
-            accessTokenService.deleteAllGloballyForOwner(ownerId);
-        } else {
-            accessTokenService.deleteAllForOwner(ownerId);
+        accessTokenService.deleteAllForOwner(ownerId);
+        logger.debug("Deleted all access tokens for owner {}.", ownerId);
+    }
+
+    @Override
+    public void revokeTokensGloballyForOwner(String ownerId) {
+        refreshTokenService.deleteAllTokensForUser(ownerId);
+        accessTokenService.deleteAllGloballyForOwner(ownerId);
+        logger.debug("Deleted all access tokens for owner {}.", ownerId);
+    }
+
+    @Override
+    public void revokeTokensLocallyForCustomer(String authTokenString, String customerId) {
+        AccessToken requestingToken = accessTokenService.getAccessTokenByTokenString(authTokenString);
+        if (requestingToken == null) {
+            String error = "No entry found for token " + requestingToken;
+            logger.debug(error);
+            throw new IllegalArgumentException(error);
         }
 
-        logger.debug("Deleted all access tokens for owner {}.", ownerId);
+        boolean isAuthorized = isAuthorizedAsCustomerIdm(requestingToken);
+
+        if (!isAuthorized) {
+            String errMsg = String.format(
+                "Requesting token %s not authorized to revoke token for customer %s.", authTokenString,
+                customerId);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
+        if (requestingToken.getRequestor() == null) {
+            String error = String.format("Token %s does not have a requestor",
+                requestingToken.getTokenString());
+            logger.debug(error);
+            throw new IllegalStateException(error);
+        }
+
+        for (User user : userService.getByCustomerId(customerId, 0, -1).getUsers()) {
+            accessTokenService.deleteAllForOwner(user.getUsername());
+        }
+        logger.debug("Deleted all access tokens for customer {}.", customerId);
+
+    }
+
+    @Override
+    public void revokeTokensGloballyForCustomer(String customerId) {
+        List<User> users = userService.getByCustomerId(customerId, 0, -1).getUsers();
+        for (User user : users) {
+            refreshTokenService.deleteAllTokensForUser(user.getUsername());
+        }
+
+        accessTokenService.deleteAllGloballyForCustomer(customerId, users);
+        logger.debug("Deleted all access tokens for customer {}.", customerId);
     }
 
     private void revokeToken(String tokenStringRequestingDelete, String tokenToDelete, boolean isGlobal)

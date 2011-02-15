@@ -17,17 +17,51 @@ public interface OAuthService {
     AuthData getTokens(OAuthGrantType grantType, AuthCredentials trParam, DateTime currentTime) throws
             NotAuthenticatedException;
 
+    /**
+     * Only other IDM instances are authorized to call this method.
+     * 
+     * @param tokenStringRequestingDelete
+     * @param tokenToDelete
+     * @throws NotAuthorizedException
+     */
     void revokeTokensLocally(String tokenStringRequestingDelete, String tokenToDelete) throws NotAuthorizedException;
     
+    /**
+     * Can be invoked by either IDM or any client.
+     * 
+     * @param tokenStringRequestingDelete
+     * @param tokenToDelete
+     * @throws NotAuthorizedException
+     */
     void revokeTokensGlobally(String tokenStringRequestingDelete, String tokenToDelete) throws NotAuthorizedException;
 
     /**
-     * Only other IDM instances are allowed to call this method.
+     * Only other IDM instances are authorized to call this method.
      * 
      * @param authTokenString
      * @param ownerId
      */
-    void revokeTokensLocallyForOwner(String authTokenString, String ownerId);
+    void revokeTokensLocallyForOwner(String idmAuthTokenStr, String ownerId);
     
-    void revokeTokensGloballyForOwner(String authTokenString, String ownerId);
+    /**
+     * To be ONLY used internally within the SAME IDM instance.
+     * 
+     * @param ownerId
+     */
+    void revokeTokensGloballyForOwner(String ownerId);
+    
+    /**
+     * Only other IDM instance are allowed to call this method.
+     * 
+     * @param authTokenString
+     * @param customerId
+     */
+    void revokeTokensLocallyForCustomer(String idmAuthTokenStr, String customerId);
+    
+    /**
+     * To be ONLY used internally within the SAME IDM instance.
+     * 
+     * @param customerId
+     */
+    void revokeTokensGloballyForCustomer(String customerId);
 }

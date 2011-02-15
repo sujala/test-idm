@@ -6,6 +6,9 @@ package com.rackspace.idm;
  */
 public final class GlobalConstants {
 
+    public static enum TokenDeleteByType {
+        owner, customer
+    }
     public static final String NO_REPLY_EMAIL = "no-reply@idm.rackspace.com";
     public static final String API_NAMESPACE_LOCATION = "http://docs.rackspacecloud.com/idm/api/v1.0";
 

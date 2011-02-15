@@ -21,6 +21,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -29,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.ErrorMsg;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.AuthConverter;
 import com.rackspace.idm.entities.AccessToken;
@@ -271,7 +273,6 @@ public class TokenResource {
         return Response.noContent().build();
     }
 
-
     /**
      * To be used only by a remote instance of IDM.
      * 
@@ -283,23 +284,32 @@ public class TokenResource {
      */
     @DELETE
     @Path("")
-    public Response revokeAccessTokensForOwner(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @QueryParam("owner") String ownerId) {
-        logger.debug("Revoking Token for owner {}", ownerId);
+    public Response revokeAccessTokensForOwnerOrCustomer(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @QueryParam("querytype") GlobalConstants.TokenDeleteByType queryType, @QueryParam("id") String id) {
+        logger.debug("Revoking Token for query type {} and id {}", queryType, id);
 
         logger.debug("Parsing Auth Header");
-        String authTokenString = authHeaderHelper.getTokenFromAuthHeader(authHeader);
-        logger.debug("Parsed Auth Header - Token: {}", authTokenString);
+        String idmAuthTokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
+        logger.debug("Parsed Auth Header - Token: {}", idmAuthTokenStr);
 
-        if (StringUtils.isBlank(ownerId)) {
-            String msg = "The owner query paramter is required.";
+        if (queryType == null || StringUtils.isBlank(id)) {
+            String msg = "Both the querytype (either owner or customer) and the id values are required.";
             logger.warn(msg);
             throw new IllegalArgumentException(msg);
         }
 
         try {
-            oauthService.revokeTokensLocallyForOwner(authTokenString, ownerId);
-            logger.info("Revoked Token for owner {}", ownerId);
+            if (GlobalConstants.TokenDeleteByType.owner == queryType) {
+                oauthService.revokeTokensLocallyForOwner(idmAuthTokenStr, id);
+                logger.info("Revoked Token for owner {}", id);
+            } else if (GlobalConstants.TokenDeleteByType.customer == queryType) {
+                oauthService.revokeTokensLocallyForCustomer(idmAuthTokenStr, id);
+                logger.info("Revoked Token for customer {}", id);
+            } else {
+                // If this happens, the developer forgot to implement this.
+                throw new NotImplementedException("querytype " + queryType + " is not supported.");
+            }
         } catch (TokenExpiredException ex) {
             String errorMsg = String.format("Authorization failed, token is expired: %s", authHeader);
             logger.error(errorMsg);

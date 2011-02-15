@@ -2,6 +2,7 @@ package com.rackspace.idm.services;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -37,8 +38,8 @@ public class DefaultAccessTokenService implements AccessTokenService {
     private Configuration config;
 
     public DefaultAccessTokenService(AccessTokenDao tokenDao, ClientDao clientDao, UserService userService,
-        XdcAccessTokenDao xdcTokenDao, AuthHeaderHelper authHeaderHelper,
-        DataCenterEndpoints dcEndpoints, Configuration config, Logger logger) {
+        XdcAccessTokenDao xdcTokenDao, AuthHeaderHelper authHeaderHelper, DataCenterEndpoints dcEndpoints,
+        Configuration config, Logger logger) {
 
         this.tokenDao = tokenDao;
         this.clientDao = clientDao;
@@ -391,6 +392,17 @@ public class DefaultAccessTokenService implements AccessTokenService {
         tokenDao.deleteAllTokensForOwner(owner, getAllTokenRequestors());
 
         xdcTokenDao.deleteAllTokensForOwner(owner);
+    }
+
+    @Override
+    public void deleteAllGloballyForCustomer(String customerId, List<User> users) {
+        // Start with the local token
+        Set<String> allTokenRequestors = getAllTokenRequestors();
+        for (User user : users) {
+            tokenDao.deleteAllTokensForOwner(user.getUsername(), allTokenRequestors);
+        }
+
+        xdcTokenDao.deleteAllTokensForCustomer(customerId);
     }
 
     private String generateTokenWithDcPrefix() {

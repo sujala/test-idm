@@ -1,5 +1,7 @@
 package com.rackspace.idm.services;
 
+import java.util.List;
+
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.BaseClient;
 import com.rackspace.idm.entities.BaseUser;
@@ -58,4 +60,6 @@ public interface AccessTokenService {
     void deleteAllForOwner(String owner);
 
     void deleteAllGloballyForOwner(String owner);
+
+    void deleteAllGloballyForCustomer(String customerId, List<User> users);
 }

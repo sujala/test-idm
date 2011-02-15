@@ -197,7 +197,7 @@ public class UserResource {
         }
 
         if (user.isLocked()) {
-            oauthService.revokeTokensGloballyForOwner(token.getTokenString(), username);
+            oauthService.revokeTokensGloballyForOwner(username);
         }
 
         logger.info("Updated User: {}", user);

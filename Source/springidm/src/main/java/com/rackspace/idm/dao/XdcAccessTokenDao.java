@@ -9,4 +9,6 @@ public interface XdcAccessTokenDao {
     void delete(final String tokenString);
 
     void deleteAllTokensForOwner(String owner);
+
+    void deleteAllTokensForCustomer(String customerId);
 }
