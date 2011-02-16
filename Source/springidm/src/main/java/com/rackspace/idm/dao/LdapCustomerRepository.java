@@ -7,6 +7,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.entities.CustomerStatus;
 import com.rackspace.idm.util.InumHelper;
@@ -88,9 +89,12 @@ public class LdapCustomerRepository extends LdapRepository implements
         String customerApplicationsDN = new LdapDnBuilder(customerDN)
             .addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME).build();
 
+        Audit audit = Audit.log(customerDN).add();
         try {
             result = getAppConnPool().add(customerDN, attributes);
+            audit.succeed();
         } catch (LDAPException ldapEx) {
+        	audit.fail();
             getLogger()
                 .error("Error adding customer {} - {}", customer, ldapEx);
             throw new IllegalStateException(ldapEx);
@@ -370,11 +374,15 @@ public class LdapCustomerRepository extends LdapRepository implements
         }
 
         LDAPResult result = null;
+        List<Modification> mods = getModifications(oldCustomer, customer);
+        Audit audit = Audit.log(oldCustomer.getCustomerId()).modify(mods);
         try {
-            result = getAppConnPool().modify(
+			result = getAppConnPool().modify(
                 getCustomerDnByCustomerId(customer.getCustomerId()),
-                getModifications(oldCustomer, customer));
+                mods);
+			audit.succeed();
         } catch (LDAPException ldapEx) {
+        	audit.fail();
             getLogger().error("Error updating customer {} - {}", customer,
                 ldapEx);
             throw new IllegalStateException(ldapEx);

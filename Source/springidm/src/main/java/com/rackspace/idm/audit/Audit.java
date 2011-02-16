@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import com.unboundid.asn1.ASN1Sequence;
 import com.unboundid.ldap.sdk.Modification;
 
 public class Audit {
@@ -69,7 +70,10 @@ public class Audit {
 
 	public Audit modify(List<Modification> mods) {
 		for (Modification mod : mods) {
-			addEvent(ACTION.MODIFY, mod.getModificationType().getName().toLowerCase() + " " + mod.getAttributeName());
+			// do not write passwords to log
+			if(mod.getAttributeName().equals("userPassword")) {
+				mod = new Modification(mod.getModificationType(), mod.getAttributeName(), "*****");
+			}
 			addEvent(ACTION.MODIFY, mod.toString());
 		}
 		return this;
