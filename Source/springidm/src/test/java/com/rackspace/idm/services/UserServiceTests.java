@@ -192,11 +192,9 @@ public class UserServiceTests {
         User user = getFakeUser();
         List<Client> clients = getFakeClients();
 
-        Set<String> allClientInums = new HashSet<String>();
         Set<String> allClientIds = new HashSet<String>();
 
         for (Client client : clients) {
-            allClientInums.add(client.getInum());
             allClientIds.add(client.getClientId());
         }
 
@@ -207,7 +205,7 @@ public class UserServiceTests {
         EasyMock.expect(mockClientDao.findAll()).andReturn(clients);
         EasyMock.replay(mockClientDao);
 
-        mockTokenDao.deleteAllTokensForOwner(user.getInum(), allClientInums);
+        mockTokenDao.deleteAllTokensForOwner(user.getUsername(), allClientIds);
         EasyMock.replay(mockTokenDao);
 
         mockRefreshTokenDao.deleteAllTokensForUser(user.getUsername());

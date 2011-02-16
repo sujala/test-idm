@@ -14,6 +14,7 @@ import com.rackspace.idm.util.AuthHeaderHelper;
 import junit.framework.Assert;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -52,16 +53,17 @@ public class OAuthServiceTests {
         mockAccessTokenService = EasyMock.createMock(AccessTokenService.class);
         mockRefreshTokenService = EasyMock.createMock(RefreshTokenService.class);
         authHeaderHelper = new AuthHeaderHelper();
-        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        Configuration appConfig = new PropertiesConfiguration();
+        appConfig.addProperty("idm.clientId", clientId);
         oauthService = new DefaultOAuthService(mockUserService, mockClientService, mockAccessTokenService,
-                mockRefreshTokenService, appConfig, new StubLogger());
+            mockRefreshTokenService, appConfig, new StubLogger());
     }
 
     @Test
     public void shouldAssertTokenIsExpired() throws Exception {
         AccessToken accessToken = new AccessToken(tokenVal,
-                MemcachedAccessTokenRepository.DATE_PARSER.parseDateTime("20001231210627.300Z"), getFakeUser(),
-                getTestClient(), IDM_SCOPE.FULL);
+            MemcachedAccessTokenRepository.DATE_PARSER.parseDateTime("20001231210627.300Z"), getFakeUser(),
+            getTestClient(), IDM_SCOPE.FULL);
         Assert.assertTrue(accessToken.isExpired(new DateTime()));
     }
 
@@ -86,18 +88,19 @@ public class OAuthServiceTests {
         Client testClient = getTestClient();
         UserAuthenticationResult uaResult = new UserAuthenticationResult(user, true);
         EasyMock.expect(mockUserService.authenticate(authCredentials.getUsername(), userpass.getValue()))
-                .andReturn(uaResult);
+            .andReturn(uaResult);
         EasyMock.expect(mockAccessTokenService.getDefaultTokenExpirationSeconds()).andReturn(3600);
-        EasyMock.expect(
-                mockAccessTokenService.getTokenByBasicCredentials(testClient, user, expireInSeconds, currentTime))
-                .andReturn(testAccessToken);
+        EasyMock
+            .expect(
+                mockAccessTokenService.getTokenByBasicCredentials(testClient, user, expireInSeconds,
+                    currentTime)).andReturn(testAccessToken);
 
-        EasyMock.expect(mockRefreshTokenService
-                .getRefreshTokenByUserAndClient(authCredentials.getUsername(), authCredentials.getClientId(),
-                        currentTime)).andReturn(null);
-        EasyMock.expect(mockRefreshTokenService
-                .createRefreshTokenForUser(authCredentials.getUsername(), authCredentials.getClientId()))
-                .andReturn(testRefreshToken);
+        EasyMock.expect(
+            mockRefreshTokenService.getRefreshTokenByUserAndClient(authCredentials.getUsername(),
+                authCredentials.getClientId(), currentTime)).andReturn(null);
+        EasyMock.expect(
+            mockRefreshTokenService.createRefreshTokenForUser(authCredentials.getUsername(),
+                authCredentials.getClientId())).andReturn(testRefreshToken);
 
         ClientAuthenticationResult caResult = new ClientAuthenticationResult(testClient, true);
         EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
@@ -126,7 +129,7 @@ public class OAuthServiceTests {
         EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
         EasyMock.expect(mockAccessTokenService.getDefaultTokenExpirationSeconds()).andReturn(3600);
         EasyMock.expect(mockAccessTokenService.getAccessTokenForClient(caResult.getClient(), currentTime))
-                .andReturn(testAccessToken);
+            .andReturn(testAccessToken);
         EasyMock.replay(mockClientService, mockAccessTokenService);
         AuthData authData = oauthService.getTokens(grantType, authCredentials, currentTime);
 
@@ -147,17 +150,17 @@ public class OAuthServiceTests {
         AccessToken testAccessToken = getFakeAccessToken();
         DateTime currentTime = new DateTime();
 
-        EasyMock.expect(mockRefreshTokenService.getRefreshTokenByTokenString(refreshTokenVal))
-                .andReturn(testRefreshToken);
+        EasyMock.expect(mockRefreshTokenService.getRefreshTokenByTokenString(refreshTokenVal)).andReturn(
+            testRefreshToken);
         mockRefreshTokenService.resetTokenExpiration(testRefreshToken);
 
-        EasyMock.expect(mockAccessTokenService
-                .createAccessTokenForUser(authCredentials.getUsername(), authCredentials.getClientId(),
-                        expireInSeconds)).andReturn(testAccessToken);
+        EasyMock.expect(
+            mockAccessTokenService.createAccessTokenForUser(authCredentials.getUsername(),
+                authCredentials.getClientId(), expireInSeconds)).andReturn(testAccessToken);
         EasyMock.expect(mockAccessTokenService.getDefaultTokenExpirationSeconds()).andReturn(3600);
 
-        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret))
-                .andReturn(new ClientAuthenticationResult(getTestClient(), true));
+        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(
+            new ClientAuthenticationResult(getTestClient(), true));
 
         EasyMock.replay(mockRefreshTokenService, mockAccessTokenService, mockClientService);
 
@@ -178,27 +181,27 @@ public class OAuthServiceTests {
 
         RefreshToken testRefreshToken = getFakeRefreshToken();
         AccessToken testAccessToken = getFakeAccessToken();
-        testAccessToken
-                .setExpirationTime(MemcachedAccessTokenRepository.DATE_PARSER.parseDateTime("20000101000000.300Z"));
+        testAccessToken.setExpirationTime(MemcachedAccessTokenRepository.DATE_PARSER
+            .parseDateTime("20000101000000.300Z"));
         DateTime currentTime = new DateTime();
 
         UserAuthenticationResult uaResult = new UserAuthenticationResult(getFakeUser(), true);
         ClientAuthenticationResult caResult = new ClientAuthenticationResult(getTestClient(), true);
 
         EasyMock.expect(mockUserService.authenticate(authCredentials.getUsername(), userpass.getValue()))
-                .andReturn(uaResult);
+            .andReturn(uaResult);
 
-        EasyMock.expect(mockAccessTokenService
-                .getTokenByBasicCredentials(caResult.getClient(), uaResult.getUser(), expireInSeconds, currentTime))
-                .andReturn(testAccessToken);
+        EasyMock.expect(
+            mockAccessTokenService.getTokenByBasicCredentials(caResult.getClient(), uaResult.getUser(),
+                expireInSeconds, currentTime)).andReturn(testAccessToken);
         EasyMock.expect(mockAccessTokenService.getDefaultTokenExpirationSeconds()).andReturn(expireInSeconds);
 
-        EasyMock.expect(mockRefreshTokenService
-                .getRefreshTokenByUserAndClient(authCredentials.getUsername(), authCredentials.getClientId(),
-                        currentTime)).andReturn(null);
-        EasyMock.expect(mockRefreshTokenService
-                .createRefreshTokenForUser(authCredentials.getUsername(), authCredentials.getClientId()))
-                .andReturn(testRefreshToken);
+        EasyMock.expect(
+            mockRefreshTokenService.getRefreshTokenByUserAndClient(authCredentials.getUsername(),
+                authCredentials.getClientId(), currentTime)).andReturn(null);
+        EasyMock.expect(
+            mockRefreshTokenService.createRefreshTokenForUser(authCredentials.getUsername(),
+                authCredentials.getClientId())).andReturn(testRefreshToken);
 
         EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
 
@@ -225,21 +228,22 @@ public class OAuthServiceTests {
         EasyMock.expect(mockUserService.getUser(authCredentials.getUsername())).andReturn(testuser);
         UserAuthenticationResult uaResult = new UserAuthenticationResult(testuser, false);
         EasyMock.expect(mockUserService.authenticate(authCredentials.getUsername(), userpass.getValue()))
-                .andReturn(uaResult);
+            .andReturn(uaResult);
 
         ClientAuthenticationResult caResult = new ClientAuthenticationResult(getTestClient(), true);
         EasyMock.expect(
-                mockClientService.authenticate(authCredentials.getClientId(), authCredentials.getClientSecret()))
-                .andReturn(caResult);
+            mockClientService.authenticate(authCredentials.getClientId(), authCredentials.getClientSecret()))
+            .andReturn(caResult);
 
         EasyMock.expect(mockAccessTokenService.getDefaultTokenExpirationSeconds()).andReturn(expireInSeconds);
-        EasyMock.expect(mockAccessTokenService
-                .getTokenByBasicCredentials(caResult.getClient(), uaResult.getUser(), expireInSeconds, currentTime))
-                .andReturn(getFakeAccessToken());
+        EasyMock.expect(
+            mockAccessTokenService.getTokenByBasicCredentials(caResult.getClient(), uaResult.getUser(),
+                expireInSeconds, currentTime)).andReturn(getFakeAccessToken());
 
         RefreshToken fakeRefreshToken = getFakeRefreshToken();
-        EasyMock.expect(mockRefreshTokenService.getRefreshTokenByUserAndClient(username, clientId, currentTime))
-                .andReturn(fakeRefreshToken);
+        EasyMock.expect(
+            mockRefreshTokenService.getRefreshTokenByUserAndClient(username, clientId, currentTime))
+            .andReturn(fakeRefreshToken);
         mockRefreshTokenService.resetTokenExpiration(fakeRefreshToken);
         EasyMock.expectLastCall();
 
@@ -260,12 +264,13 @@ public class OAuthServiceTests {
 
         DateTime currentTime = new DateTime();
 
-        EasyMock.expect(mockRefreshTokenService.getRefreshTokenByTokenString(refreshTokenVal)).andReturn(null);
+        EasyMock.expect(mockRefreshTokenService.getRefreshTokenByTokenString(refreshTokenVal))
+            .andReturn(null);
 
         ClientAuthenticationResult caResult = new ClientAuthenticationResult(getTestClient(), true);
         EasyMock.expect(
-                mockClientService.authenticate(authCredentials.getClientId(), authCredentials.getClientSecret()))
-                .andReturn(caResult);
+            mockClientService.authenticate(authCredentials.getClientId(), authCredentials.getClientSecret()))
+            .andReturn(caResult);
 
         EasyMock.replay(mockRefreshTokenService, mockClientService);
 
@@ -283,16 +288,16 @@ public class OAuthServiceTests {
         authCredentials.setGrantType("refresh-token");
 
         RefreshToken testRefreshToken = getFakeRefreshToken();
-        testRefreshToken
-                .setExpirationTime(MemcachedAccessTokenRepository.DATE_PARSER.parseDateTime("20000101000000.300Z"));
+        testRefreshToken.setExpirationTime(MemcachedAccessTokenRepository.DATE_PARSER
+            .parseDateTime("20000101000000.300Z"));
         DateTime currentTime = new DateTime();
 
-        EasyMock.expect(mockRefreshTokenService.getRefreshTokenByTokenString(refreshTokenVal))
-                .andReturn(testRefreshToken);
+        EasyMock.expect(mockRefreshTokenService.getRefreshTokenByTokenString(refreshTokenVal)).andReturn(
+            testRefreshToken);
         ClientAuthenticationResult caResult = new ClientAuthenticationResult(getTestClient(), true);
         EasyMock.expect(
-                mockClientService.authenticate(authCredentials.getClientId(), authCredentials.getClientSecret()))
-                .andReturn(caResult);
+            mockClientService.authenticate(authCredentials.getClientId(), authCredentials.getClientSecret()))
+            .andReturn(caResult);
 
         EasyMock.replay(mockRefreshTokenService, mockClientService);
 
@@ -304,12 +309,12 @@ public class OAuthServiceTests {
 
     @Test
     public void shouldRevokeToken() {
-        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(tokenVal)).andReturn(getFakeAccessToken());
-        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(requestorToken)).andReturn(getFakeAccessToken());
+        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(tokenVal)).andReturn(
+            getFakeAccessToken());
+        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(requestorToken)).andReturn(
+            getFakeClientAccessToken());
         mockAccessTokenService.delete(tokenVal);
         EasyMock.expectLastCall();
-
-        mockRefreshTokenService.deleteTokenForUserByClientId(username, clientId);
 
         EasyMock.replay(mockAccessTokenService, mockRefreshTokenService);
 
@@ -321,7 +326,8 @@ public class OAuthServiceTests {
     @Test(expected = IllegalStateException.class)
     public void shouldNotRevokeTokenForTokenNotFound() {
         EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(tokenVal)).andReturn(null);
-        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(requestorToken)).andReturn(getFakeAccessToken());
+        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(requestorToken)).andReturn(
+            getFakeAccessToken());
         mockAccessTokenService.delete(tokenVal);
         EasyMock.expectLastCall();
 
@@ -339,7 +345,8 @@ public class OAuthServiceTests {
 
     @Test(expected = IllegalStateException.class)
     public void shouldNotRevokeTokenForTokenThatDoesNotExist() {
-        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(tokenVal)).andReturn(getFakeAccessToken());
+        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(tokenVal)).andReturn(
+            getFakeAccessToken());
         EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(requestorToken)).andReturn(null);
         mockAccessTokenService.delete(tokenVal);
         EasyMock.expectLastCall();
@@ -359,12 +366,19 @@ public class OAuthServiceTests {
     // helpers
     private AccessToken getFakeAccessToken() {
         return new AccessToken(tokenVal,
-                MemcachedAccessTokenRepository.DATE_PARSER.parseDateTime("20201231210627.300Z"), getFakeUser(),
-                getTestClient(), IDM_SCOPE.FULL);
+            MemcachedAccessTokenRepository.DATE_PARSER.parseDateTime("20201231210627.300Z"), getFakeUser(),
+            getTestClient(), IDM_SCOPE.FULL);
+    }
+
+    private AccessToken getFakeClientAccessToken() {
+        return new AccessToken(tokenVal,
+            MemcachedAccessTokenRepository.DATE_PARSER.parseDateTime("20201231210627.300Z"), null,
+            getTestClient(), IDM_SCOPE.FULL);
     }
 
     private RefreshToken getFakeRefreshToken() {
-        return new RefreshToken(refreshTokenVal, new DateTime().plusSeconds(expireInSeconds), username, clientId);
+        return new RefreshToken(refreshTokenVal, new DateTime().plusSeconds(expireInSeconds), username,
+            clientId);
     }
 
     private AuthData getFakeAuthData() {
@@ -376,16 +390,15 @@ public class OAuthServiceTests {
     }
 
     private User getFakeUser() {
-        User user =
-                new User(username, customerId, useremail, new UserHumanName(firstname, "", lastname), new UserLocale(),
-                        new UserCredential(userpass, "", ""));
+        User user = new User(username, customerId, useremail, new UserHumanName(firstname, "", lastname),
+            new UserLocale(), new UserCredential(userpass, "", ""));
         user.setApiKey("1234567890");
         return user;
     }
 
     private Client getTestClient() {
-        Client client = new Client(clientId, ClientSecret.newInstance(clientSecret), "DELETE_My_Name", "inum", "iname",
-                "RCN-123-456-789", ClientStatus.ACTIVE);
+        Client client = new Client(clientId, ClientSecret.newInstance(clientSecret), "DELETE_My_Name",
+            "inum", "iname", "RCN-123-456-789", ClientStatus.ACTIVE);
         return client;
     }
 
