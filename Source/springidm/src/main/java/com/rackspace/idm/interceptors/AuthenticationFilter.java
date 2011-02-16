@@ -19,6 +19,8 @@ import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
+import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * @author john.eo Apply token-based authentication to all calls except the
@@ -54,9 +56,11 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         String path = request.getPath();
         String method = request.getMethod();
 
-        MDC.put(Audit.REMOTE_IP, req.getRemoteAddr());
-        MDC.put(Audit.HOST_IP, req.getLocalAddr());
-        MDC.put(Audit.PATH, path);
+        if(req != null) {
+            MDC.put(Audit.REMOTE_IP, req.getRemoteAddr());
+            MDC.put(Audit.HOST_IP, req.getLocalAddr());
+            MDC.put(Audit.PATH, path);
+        }
         // Skip authentication for the following 5 calls
 
         if ("GET".equals(method) && "application.wadl".equals(path)) {
