@@ -196,7 +196,7 @@ public class UserResource {
             throw new BadRequestException(errorMsg);
         }
 
-        if (user.isLocked()) {
+        if (user.isDisabled()) {
             oauthService.revokeTokensGloballyForOwner(username);
         }
 
