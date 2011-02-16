@@ -47,10 +47,9 @@ ldap.password.failure.lockout.min=30
 # Rackspace eDir
 auth.ldap.server.pool.size.init=2
 auth.ldap.server.pool.size.max=10
+auth.ldap.server=cert-edir.dfw1.corp.rackspace.com
+auth.ldap.server.port=636
 auth.ldap.base.dn=ou=users\,o=rackspace
-auth.ldap.serverList=cert-edir.dfw1.corp.rackspace.com:636
-auth.ldap.bind.dn=cn=cloud_controlpanel\,ou=users\,o=rackspace
-auth.ldap.bind.password=Sj!wI2As
 
 #################################################################################
 #

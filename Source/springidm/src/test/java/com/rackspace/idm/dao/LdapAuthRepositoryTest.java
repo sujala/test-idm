@@ -13,7 +13,6 @@ import com.rackspace.idm.config.AuthRepositoryLdapConfiguration;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
-@Ignore
 public class LdapAuthRepositoryTest {
     private LdapAuthRepository repo;
     private LDAPConnectionPool connPool;
@@ -54,6 +53,7 @@ public class LdapAuthRepositoryTest {
      * the StartTLS handshake.
      */
     @Test
+    @Ignore("Need to get good credentials to test Racker Auth, You can test it with you personal creds but don't commit.")
     public void shouldAuthenticateRackerManyTimes() throws InterruptedException {
         // Just making sure that the connection pool isn't being depleted when
         // the connections are being closed after the authentication bind.
