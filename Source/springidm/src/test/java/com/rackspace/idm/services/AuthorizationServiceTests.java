@@ -121,7 +121,7 @@ public class AuthorizationServiceTests {
 
         EasyMock.expect(
             mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
-                clientId, permissionId)).andReturn(perm);
+                idmClientId, permissionId)).andReturn(perm);
         EasyMock.replay(mockClientDao);
 
         boolean authorized = service.authorizeClient(authorizedClientToken,
