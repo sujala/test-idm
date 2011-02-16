@@ -8,19 +8,24 @@ import org.junit.Test;
 
 import com.rackspace.idm.config.AuthRepositoryLdapConfiguration;
 import com.rackspace.idm.test.stub.StubLogger;
-import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
-//@Ignore
+@Ignore
 public class LdapAuthRepositoryTest {
     private LdapAuthRepository repo;
-    private LDAPConnectionPool connPool;
+    private LdapConnectionPools connPools;
 
     @Before
     public void setUp() {
-        AuthRepositoryLdapConfiguration config = new AuthRepositoryLdapConfiguration(
-            true, new StubLogger());
-        connPool = config.connection();
-        repo = new LdapAuthRepository(connPool, new StubLogger());
+        connPools = getConnPools();
+        repo = getRepo(connPools);
+    }
+    
+    private static LdapAuthRepository getRepo(LdapConnectionPools connPools) {
+        return new LdapAuthRepository(connPools,  new StubLogger());
+    }
+
+    private static LdapConnectionPools getConnPools() {
+        return new AuthRepositoryLdapConfiguration(true, new StubLogger()).connectionPools();
     }
 
     public boolean authenticateRacker() {
@@ -48,6 +53,6 @@ public class LdapAuthRepositoryTest {
     
     @After
     public void tearDown() {
-        connPool.close();
+        connPools.close();
     }
 }

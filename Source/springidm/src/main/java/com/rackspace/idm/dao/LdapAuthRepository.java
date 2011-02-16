@@ -18,17 +18,16 @@ public class LdapAuthRepository implements AuthDao {
     private Logger logger;
     private static final String USER_FIND_BY_USERNAME = "(&(objectClass=inetOrgPerson)(cn=%s))";
     private static final String BASE_DN = "ou=users,o=rackspace";
-    private LDAPConnectionPool connPool;
+    private LdapConnectionPools connPools;
 
-    public LdapAuthRepository(LDAPConnectionPool connPool, Logger logger) {
-        this.connPool = connPool;
+    public LdapAuthRepository(LdapConnectionPools connPools, Logger logger) {
+        this.connPools = connPools;
         this.logger = logger;
     }
 
     public boolean authenticate(String userName, String password) {
         logger.debug("Authenticating user {}", userName);
         BindResult result = null;
-        LDAPConnection conn = null;
         
         String userDn = getUserDnByUsername(userName);
         
@@ -36,7 +35,7 @@ public class LdapAuthRepository implements AuthDao {
             return false;
         }
         try {
-            result = connPool.bind(userDn, password);
+            result = connPools.getBindConnPool().bind(userDn, password);
         } catch (LDAPException e) {
             if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
                 logger.info(
@@ -47,13 +46,7 @@ public class LdapAuthRepository implements AuthDao {
             logger.error("Bind operation on username " + userName + " failed.",
                 e);
             throw new IllegalStateException(e);
-        } finally {
-            if (conn != null) {
-                conn.close();
-            }
-            logger.debug("conn count: {}", connPool
-                .getCurrentAvailableConnections());
-        }
+        } 
         if (result == null) {
             throw new IllegalStateException("Could not get bind result.");
         }
@@ -79,7 +72,7 @@ public class LdapAuthRepository implements AuthDao {
     private SearchResult getUserSearchResult(String username) {
         SearchResult searchResult = null;
         try {
-            searchResult = connPool.search(BASE_DN, SearchScope.SUB, String
+            searchResult = connPools.getAppConnPool().search(BASE_DN, SearchScope.SUB, String
                 .format(USER_FIND_BY_USERNAME, username));
         } catch (LDAPSearchException ldapEx) {
             logger.error("Error searching for username {} - {}", username,

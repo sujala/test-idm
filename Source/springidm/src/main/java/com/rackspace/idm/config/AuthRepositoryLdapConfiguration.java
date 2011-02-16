@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
+import com.rackspace.idm.dao.LdapConnectionPools;
 import com.unboundid.ldap.sdk.BindRequest;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
@@ -67,7 +68,6 @@ public class AuthRepositoryLdapConfiguration {
         }
     }
 
-    @Bean(destroyMethod = "close", name = "connectionToAuth")
     public LDAPConnectionPool connection() {
         
         boolean isTrusted = config.getBoolean("ldap.server.trusted", false);
@@ -117,5 +117,17 @@ public class AuthRepositoryLdapConfiguration {
 
         logger.debug("LDAPConnectionPool:[{}]", connPool);
         return connPool;
+    }
+    
+    @Bean(name="authConnectionPools", destroyMethod = "close")
+    public LdapConnectionPools connectionPools() {
+        LDAPConnectionPool appPool = connection();
+        LDAPConnectionPool bindPool = connection();
+        
+        if (appPool == null || bindPool == null) {
+            return null;
+        }
+        
+        return new LdapConnectionPools(connection(), connection());
     }
 }
