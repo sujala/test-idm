@@ -186,7 +186,7 @@ public class UserGroupsResource {
 
         if (group == null) {
             String errorMsg = String.format(
-                "Add User to Group Failed - Group not found: {}", groupName);
+                "Add User to Group Failed - Group not found: %s", groupName);
             logger.error(errorMsg);
             throw new NotFoundException(errorMsg);
         }
@@ -256,7 +256,7 @@ public class UserGroupsResource {
 
         if (group == null) {
             String errorMsg = String.format(
-                "Remove User From Group Failed - Group not found: {}",
+                "Remove User From Group Failed - Group not found: %s",
                 groupName);
             logger.error(errorMsg);
             throw new NotFoundException(errorMsg);
