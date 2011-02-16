@@ -6,7 +6,6 @@ import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
 import com.rackspace.idm.dao.AccessTokenDao;
@@ -29,10 +28,8 @@ import com.rackspace.idm.dao.MemcachedAccessTokenRepository;
 import com.rackspace.idm.dao.RefreshTokenDao;
 import com.rackspace.idm.dao.RoleDao;
 import com.rackspace.idm.dao.UserDao;
-import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.util.PingableService;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
-import com.unboundid.ldap.sdk.extensions.StartTLSExtendedRequest;
 
 /**
  * @author john.eo <br/>
@@ -44,10 +41,10 @@ import com.unboundid.ldap.sdk.extensions.StartTLSExtendedRequest;
 @org.springframework.context.annotation.Configuration
 public class RepositoryConfiguration {
 
-    @Value("#{customerConnectionPools}")
+    @Autowired
     private LdapConnectionPools connPools;
-    @Value("#{authConnectionPools}")
-    private LdapConnectionPools authConnPools;
+    @Autowired
+    private LDAPConnectionPool authReposConnPool;
     @Autowired
     private MemcachedClient memcached;
     @Autowired
@@ -92,7 +89,7 @@ public class RepositoryConfiguration {
     @Bean
     public AuthDao authenticationRepository() {
         Logger logger = LoggerFactory.getLogger(LdapAuthRepository.class);
-        return new LdapAuthRepository(authConnPools, logger);
+        return new LdapAuthRepository(authReposConnPool, appConfig, logger);
     }
 
     @Bean

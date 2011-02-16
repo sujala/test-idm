@@ -101,7 +101,7 @@ public class LdapConfiguration {
         return connPool;
     }
 
-    @Bean(name="customerConnectionPools", destroyMethod = "close")
+    @Bean(destroyMethod = "close")
     public LdapConnectionPools connectionPools() {
         return new LdapConnectionPools(connection(), connection());
     }

@@ -1,5 +1,8 @@
 package com.rackspace.idm.dao;
 
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -8,24 +11,33 @@ import org.junit.Test;
 
 import com.rackspace.idm.config.AuthRepositoryLdapConfiguration;
 import com.rackspace.idm.test.stub.StubLogger;
+import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
 @Ignore
 public class LdapAuthRepositoryTest {
     private LdapAuthRepository repo;
-    private LdapConnectionPools connPools;
+    private LDAPConnectionPool connPool;
 
     @Before
     public void setUp() {
-        connPools = getConnPools();
-        repo = getRepo(connPools);
-    }
-    
-    private static LdapAuthRepository getRepo(LdapConnectionPools connPools) {
-        return new LdapAuthRepository(connPools,  new StubLogger());
+        connPool = getConnPool();
+        repo = getRepo(connPool);
     }
 
-    private static LdapConnectionPools getConnPools() {
-        return new AuthRepositoryLdapConfiguration(true, new StubLogger()).connectionPools();
+    private static LdapAuthRepository getRepo(LDAPConnectionPool connPool) {
+        Configuration config = null;
+        try {
+            config = new PropertiesConfiguration("auth.repository.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
+        return new LdapAuthRepository(connPool, config, new StubLogger());
+    }
+
+    private static LDAPConnectionPool getConnPool() {
+        return new AuthRepositoryLdapConfiguration(true, new StubLogger())
+            .connection();
     }
 
     public boolean authenticateRacker() {
@@ -50,9 +62,9 @@ public class LdapAuthRepositoryTest {
             System.out.println("auth count: " + (i + 1));
         }
     }
-    
+
     @After
     public void tearDown() {
-        connPools.close();
+        connPool.close();
     }
 }
