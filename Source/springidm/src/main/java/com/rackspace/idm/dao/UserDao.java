@@ -1,7 +1,5 @@
 package com.rackspace.idm.dao;
 
-import java.util.Map;
-
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.entities.UserAuthenticationResult;
 import com.rackspace.idm.entities.Users;

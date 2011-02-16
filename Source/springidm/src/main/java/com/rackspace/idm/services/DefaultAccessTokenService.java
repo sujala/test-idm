@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -16,7 +15,6 @@ import com.rackspace.idm.config.DataCenterEndpoints;
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.XdcAccessTokenDao;
-import com.rackspace.idm.dao.TokenDao;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.entities.BaseClient;
