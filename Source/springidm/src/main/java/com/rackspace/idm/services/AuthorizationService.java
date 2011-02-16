@@ -19,5 +19,5 @@ public interface AuthorizationService {
     /**
      * Appropriate for authorizing internal calls.
      */
-    boolean authorizeCustomerIdm(AccessToken authToken, String verb, String uri);
+    boolean authorizeCustomerIdm(AccessToken authToken);
 }

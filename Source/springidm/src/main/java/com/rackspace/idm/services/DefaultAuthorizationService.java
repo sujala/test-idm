@@ -97,13 +97,17 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    @Override
-    public boolean authorizeCustomerIdm(AccessToken authToken, String verb,
-        String uri) {
-        if (getIdmClientId().equals(authToken.getTokenClient().getClientId())) {
-            return authorizeClient(authToken, verb, uri);
+    public boolean authorizeCustomerIdm(AccessToken authToken) {
+        if (!authToken.isClientToken()) {
+            return false;
         }
-        return false;
+
+        boolean authorized = getIdmClientId().equalsIgnoreCase(
+            authToken.getTokenClient().getClientId())
+            && getRackspaceCustomerId().equalsIgnoreCase(
+                authToken.getTokenClient().getCustomerId());
+        
+        return authorized;
     }
 
     private List<String> getAllowedMethodsFromPermissions(

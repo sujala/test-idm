@@ -31,7 +31,8 @@ public class AuthorizationServiceTests {
 
     String customerId = "RACKSPACE";
     String otherCustomerId = "RCN-000-000-000";
-    String clientId = "18e7a7032733486cd32f472d7bd58f709ac0d221";
+    String idmClientId = "18e7a7032733486cd32f472d7bd58f709ac0d221";
+    String clientId = "clientId";
 
     String username = "username";
 
@@ -44,6 +45,7 @@ public class AuthorizationServiceTests {
     BaseClient authorizedClient;
     BaseClient notAuthorizedClient;
     BaseClient nonRackspaceClient;
+    BaseClient idmClient;
 
     BaseUser authorizedUser;
     BaseUser otherCompanyUser;
@@ -66,6 +68,7 @@ public class AuthorizationServiceTests {
     AccessToken otherCompanyUserToken;
     AccessToken authorizedAdminToken;
     AccessToken otherCompanyAdminToken;
+    AccessToken customerIdmToken;
 
     @Before
     public void setUp() throws Exception {
@@ -74,8 +77,10 @@ public class AuthorizationServiceTests {
             new PropertyFileConfiguration().getConfigFromClasspath(),
             new StubLogger()).memcacheClient();
 
-        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
-        service = new DefaultAuthorizationService(mockClientDao, mclient, appConfig, new StubLogger());
+        Configuration appConfig = new PropertyFileConfiguration()
+            .getConfigFromClasspath();
+        service = new DefaultAuthorizationService(mockClientDao, mclient,
+            appConfig, new StubLogger());
         setUpObjects();
     }
 
@@ -96,7 +101,8 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnTrueForRackspaceClient() {
 
-        boolean authorized = service.authorizeRackspaceClient(authorizedClientToken);
+        boolean authorized = service
+            .authorizeRackspaceClient(authorizedClientToken);
 
         Assert.assertTrue(authorized);
     }
@@ -104,7 +110,8 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnFalseForRackspaceClient() {
 
-        boolean authorized = service.authorizeRackspaceClient(nonRackspaceClientToken);
+        boolean authorized = service
+            .authorizeRackspaceClient(nonRackspaceClientToken);
 
         Assert.assertTrue(!authorized);
     }
@@ -113,11 +120,12 @@ public class AuthorizationServiceTests {
     public void ShouldReturnTrueForClient() {
 
         EasyMock.expect(
-                mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
-                        clientId, permissionId)).andReturn(perm);
+            mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
+                clientId, permissionId)).andReturn(perm);
         EasyMock.replay(mockClientDao);
 
-        boolean authorized = service.authorizeClient(authorizedClientToken, verb, uri);
+        boolean authorized = service.authorizeClient(authorizedClientToken,
+            verb, uri);
 
         Assert.assertTrue(authorized);
     }
@@ -125,7 +133,8 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnFalseForClient() {
 
-        boolean authorized = service.authorizeClient(notAuthorizedClientToken, verb, uri);
+        boolean authorized = service.authorizeClient(notAuthorizedClientToken,
+            verb, uri);
 
         Assert.assertTrue(!authorized);
     }
@@ -133,7 +142,8 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnTrueForAdmin() {
 
-        boolean authorized = service.authorizeAdmin(authorizedAdminToken, customerId);
+        boolean authorized = service.authorizeAdmin(authorizedAdminToken,
+            customerId);
 
         Assert.assertTrue(authorized);
     }
@@ -141,7 +151,8 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnFalseForAdmin() {
 
-        boolean authorized = service.authorizeAdmin(otherCompanyAdminToken, customerId);
+        boolean authorized = service.authorizeAdmin(otherCompanyAdminToken,
+            customerId);
 
         Assert.assertTrue(!authorized);
     }
@@ -149,8 +160,8 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnTrueForUser() {
 
-        boolean authorized = service.authorizeUser(authorizedUserToken, customerId,
-                username);
+        boolean authorized = service.authorizeUser(authorizedUserToken,
+            customerId, username);
 
         Assert.assertTrue(authorized);
     }
@@ -158,8 +169,8 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnFalseForUser() {
 
-        boolean authorized = service.authorizeUser(otherCompanyUserToken, customerId,
-                username);
+        boolean authorized = service.authorizeUser(otherCompanyUserToken,
+            customerId, username);
 
         Assert.assertTrue(!authorized);
     }
@@ -168,7 +179,7 @@ public class AuthorizationServiceTests {
     public void ShouldReturnTrueForCompanyUser() {
 
         boolean authorized = service.authorizeCustomerUser(authorizedUserToken,
-                customerId);
+            customerId);
 
         Assert.assertTrue(authorized);
     }
@@ -176,15 +187,29 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnFalseForCompanyUser() {
 
-        boolean authorized = service.authorizeCustomerUser(otherCompanyUserToken,
-                customerId);
+        boolean authorized = service.authorizeCustomerUser(
+            otherCompanyUserToken, customerId);
 
+        Assert.assertTrue(!authorized);
+    }
+
+    @Test
+    public void ShouldReturnTrueForCustomerIdm() {
+        boolean authorized = service.authorizeCustomerIdm(customerIdmToken);
+        
+        Assert.assertTrue(authorized);
+    }
+
+    @Test
+    public void ShouldReturnFalseForCustomerIdm() {
+        boolean authorized = service.authorizeCustomerIdm(notAuthorizedClientToken);
+        
         Assert.assertTrue(!authorized);
     }
 
     private void setUpObjects() {
         perm = new Permission();
-        perm.setClientId(clientId);
+        perm.setClientId(idmClientId);
         perm.setCustomerId(customerId);
         perm.setPermissionId(permissionId);
         perm.setValue(permissionValue);
@@ -194,11 +219,13 @@ public class AuthorizationServiceTests {
 
         admin = new ClientGroup();
         admin.setName(adminRoleName);
-        admin.setClientId(clientId);
+        admin.setClientId(idmClientId);
         admin.setCustomerId(customerId);
 
         groups = new ArrayList<ClientGroup>();
         groups.add(admin);
+
+        idmClient = new BaseClient(idmClientId, customerId, permissions);
 
         authorizedClient = new BaseClient(clientId, customerId, permissions);
         notAuthorizedClient = new BaseClient(clientId, customerId);
@@ -212,32 +239,34 @@ public class AuthorizationServiceTests {
         tokenExpiration = new DateTime();
 
         trustedToken = new AccessToken(tokenString, tokenExpiration,
-                authorizedUser, authorizedClient, AccessToken.IDM_SCOPE.FULL, true);
+            authorizedUser, authorizedClient, AccessToken.IDM_SCOPE.FULL, true);
 
         authorizedClientToken = new AccessToken(tokenString, tokenExpiration,
-                null, authorizedClient, AccessToken.IDM_SCOPE.FULL, false);
+            null, authorizedClient, AccessToken.IDM_SCOPE.FULL, false);
 
         notAuthorizedClientToken = new AccessToken(tokenString,
-                tokenExpiration, null, notAuthorizedClient,
-                AccessToken.IDM_SCOPE.FULL, false);
+            tokenExpiration, null, notAuthorizedClient,
+            AccessToken.IDM_SCOPE.FULL, false);
 
-        nonRackspaceClientToken = new AccessToken(tokenString,
-                tokenExpiration, null, nonRackspaceClient,
-                AccessToken.IDM_SCOPE.FULL, false);
+        nonRackspaceClientToken = new AccessToken(tokenString, tokenExpiration,
+            null, nonRackspaceClient, AccessToken.IDM_SCOPE.FULL, false);
 
         authorizedUserToken = new AccessToken(tokenString, tokenExpiration,
-                authorizedUser, authorizedClient, AccessToken.IDM_SCOPE.FULL, false);
+            authorizedUser, authorizedClient, AccessToken.IDM_SCOPE.FULL, false);
 
         otherCompanyUserToken = new AccessToken(tokenString, tokenExpiration,
-                otherCompanyUser, authorizedClient, AccessToken.IDM_SCOPE.FULL,
-                false);
+            otherCompanyUser, authorizedClient, AccessToken.IDM_SCOPE.FULL,
+            false);
 
         authorizedAdminToken = new AccessToken(tokenString, tokenExpiration,
-                authorizedAdmin, authorizedClient, AccessToken.IDM_SCOPE.FULL,
-                false);
+            authorizedAdmin, authorizedClient, AccessToken.IDM_SCOPE.FULL,
+            false);
 
         otherCompanyAdminToken = new AccessToken(tokenString, tokenExpiration,
-                otherCompanyAdmin, authorizedClient, AccessToken.IDM_SCOPE.FULL,
-                false);
+            otherCompanyAdmin, authorizedClient, AccessToken.IDM_SCOPE.FULL,
+            false);
+
+        customerIdmToken = new AccessToken(tokenString, tokenExpiration, null,
+            idmClient, AccessToken.IDM_SCOPE.FULL, false);
     }
 }

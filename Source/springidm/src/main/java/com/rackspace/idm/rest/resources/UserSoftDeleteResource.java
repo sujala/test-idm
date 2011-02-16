@@ -80,7 +80,8 @@ public class UserSoftDeleteResource {
 
         // Racker's and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeAdmin(token, customerId);
+            || authorizationService.authorizeAdmin(token, customerId)
+            || authorizationService.authorizeCustomerIdm(token);
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",

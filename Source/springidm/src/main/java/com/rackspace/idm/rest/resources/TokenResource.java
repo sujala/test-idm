@@ -198,8 +198,7 @@ public class TokenResource {
         AccessToken callingToken = this.tokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Another IDM instance is authorized.
-        boolean authorized = authorizationService.authorizeCustomerIdm(callingToken, request.getMethod(),
-            uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeCustomerIdm(callingToken);
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call", callingToken);

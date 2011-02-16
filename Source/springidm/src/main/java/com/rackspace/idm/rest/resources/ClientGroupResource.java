@@ -83,8 +83,7 @@ public class ClientGroupResource {
 
         // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeCustomerIdm(token,
-                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeCustomerIdm(token)
             || (token.isClientToken() && token.getTokenClient().getClientId()
                 .equals(clientId));
 
