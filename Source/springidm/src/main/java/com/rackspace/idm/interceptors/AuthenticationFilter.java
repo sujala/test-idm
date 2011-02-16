@@ -1,11 +1,10 @@
 package com.rackspace.idm.interceptors;
 
-import com.rackspace.idm.exceptions.NotAuthenticatedException;
-import com.rackspace.idm.oauth.OAuthService;
-import com.rackspace.idm.services.AccessTokenService;
-import com.rackspace.idm.util.AuthHeaderHelper;
-import com.sun.jersey.spi.container.ContainerRequest;
-import com.sun.jersey.spi.container.ContainerRequestFilter;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+
+import org.apache.log4j.MDC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -13,7 +12,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
-import javax.ws.rs.core.HttpHeaders;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.exceptions.NotAuthenticatedException;
+import com.rackspace.idm.oauth.OAuthService;
+import com.rackspace.idm.services.AccessTokenService;
+import com.rackspace.idm.util.AuthHeaderHelper;
+import com.sun.jersey.spi.container.ContainerRequest;
+import com.sun.jersey.spi.container.ContainerRequestFilter;
 
 /**
  * @author john.eo Apply token-based authentication to all calls except the
@@ -26,6 +31,8 @@ public class AuthenticationFilter implements ContainerRequestFilter,
     private AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private Logger logger;
 
+    @Context HttpServletRequest req; 
+    
     private ApplicationContext springCtx;
 
     public AuthenticationFilter() {
@@ -47,6 +54,9 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         String path = request.getPath();
         String method = request.getMethod();
 
+        MDC.put(Audit.REMOTE_IP, req.getRemoteAddr());
+        MDC.put(Audit.HOST_IP, req.getLocalAddr());
+        MDC.put(Audit.PATH, path);
         // Skip authentication for the following 5 calls
 
         if ("GET".equals(method) && "application.wadl".equals(path)) {
@@ -68,7 +78,6 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         if ("POST".equals(method) && "token".equals(path)) {
             return request;
         }
-        
         String authHeader = request.getHeaderValue(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || authHeader.isEmpty()) {
             throw new NotAuthenticatedException(
