@@ -68,6 +68,9 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             e = thrown.getCause();
         }
 
+        if (e instanceof NumberFormatException) {
+            return toResponse(new BadRequest(), e, 400);
+        }
         if (e instanceof PermissionConflictException) {
             return toResponse(new PermissionIdConflict(), e, 409);
         }
