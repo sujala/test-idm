@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import com.unboundid.asn1.ASN1Sequence;
+import com.rackspace.idm.dao.LdapRepository;
 import com.unboundid.ldap.sdk.Modification;
 
 public class Audit {
@@ -16,7 +16,7 @@ public class Audit {
 	public static final String PATH = "PATH";
 
 	private enum ACTION {
-		USERAUTH, CLIENTAUTH, ADD, DELETE, MODIFY;
+		USERAUTH, CLIENTAUTH, RACKERAUTH, ADD, DELETE, MODIFY;
 	}
 
 	private enum RESULT {
@@ -25,23 +25,23 @@ public class Audit {
 
 	private class Event {
 		private ACTION action;
-		private String target;
+		private String context;
 
-		Event(ACTION action, String target) {
+		Event(ACTION action, String context) {
 			this.action = action;
-			this.target = target;
+			this.context = context;
 		}
 	}
 
 	private static final String AUDIT_LOGGER_ID = "audit";
 	
 	private List<Event> events = new ArrayList<Event>();
-	private String source;
-	private long timestamp;
+	private String target;
+	private final long timestamp = System.currentTimeMillis();
+	private volatile boolean consumed = false;
 
 	private Audit(String s) {
-		source = s;
-		timestamp = System.currentTimeMillis();
+		target = s;
 	}
 
 	public static Audit log(Object o) {
@@ -54,6 +54,10 @@ public class Audit {
 
 	public static Audit authUser(Object o) {
 		return new Audit(o.toString()).addEvent(ACTION.USERAUTH);
+	}
+	
+	public static Audit authRacker(Object o) {
+		return new Audit(o.toString()).addEvent(ACTION.RACKERAUTH);
 	}
 
 	public Audit add() {
@@ -68,11 +72,19 @@ public class Audit {
 		return this.addEvent(ACTION.MODIFY);
 	}
 
+	// these attributes will be obfuscated
+	private static final List<String> secrets = new ArrayList<String>();
+	{
+		secrets.add(LdapRepository.ATTR_PASSWORD);
+		secrets.add(LdapRepository.ATTR_RACKSPACE_API_KEY);
+	}
+
 	public Audit modify(List<Modification> mods) {
+		// obfuscate our secret attributes
 		for (Modification mod : mods) {
-			// do not write passwords to log
-			if(mod.getAttributeName().equals("userPassword")) {
-				mod = new Modification(mod.getModificationType(), mod.getAttributeName(), "*****");
+			if (secrets.contains(mod.getAttributeName())) {
+				mod = new Modification(mod.getModificationType(),
+						mod.getAttributeName(), "*****");
 			}
 			addEvent(ACTION.MODIFY, mod.toString());
 		}
@@ -88,11 +100,15 @@ public class Audit {
 	}
 
 	private void log(RESULT r) {
+		if (consumed) {
+			LoggerFactory.getLogger(getClass()).error("Audit logger reused");
+		}
+		consumed = true;
 		Logger logger = LoggerFactory.getLogger(AUDIT_LOGGER_ID);
 		for (Event event : events) {
 			logger.info(
 					r + " {} {} [{}] {} {} {} {}",
-					new Object[] { event.action, source, event.target,
+					new Object[] { event.action, target, event.context,
 							MDC.get(REMOTE_IP), MDC.get(HOST_IP),
 							MDC.get(PATH), timestamp });
 		}
@@ -102,8 +118,8 @@ public class Audit {
 		return addEvent(a, "-");
 	}
 
-	private Audit addEvent(ACTION a, String target) {
-		events.add(new Event(a, target));
+	private Audit addEvent(ACTION a, String context) {
+		events.add(new Event(a, context));
 		return this;
 	}
 }
