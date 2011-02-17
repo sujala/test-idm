@@ -7,6 +7,7 @@ import org.apache.log4j.MDC;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.rackspace.idm.dao.LdapRepository;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
 
@@ -22,6 +23,7 @@ public class AuditTest {
 	@Test
 	public void shouldLogEvent() {
 		Audit.log("clientId").modify().succeed();
+		Audit.log("clientId").delete().succeed();
 	}
 	
 	@Test
@@ -30,11 +32,13 @@ public class AuditTest {
 	}
 	
 	@Test
-	public void shouldLogModifications() {
-		MDC.put(Audit.PATH, "/modify");
+	public void shouldObfuscatePassword() {
 		List<Modification> mods = new ArrayList<Modification>();
-		mods.add(new Modification(ModificationType.REPLACE, "firstname"));
-		mods.add(new Modification(ModificationType.ADD, "email"));
-		Audit.log("userId").modify(mods).succeed();
+		Modification mod = new Modification(ModificationType.REPLACE, LdapRepository.ATTR_PASSWORD, "secret");
+		mods.add(mod);
+		mod = new Modification(ModificationType.REPLACE, LdapRepository.ATTR_RACKSPACE_API_KEY, "secret");
+		mods.add(mod);
+		Audit.log("clientId").modify(mods).fail();
 	}
+	
 }
