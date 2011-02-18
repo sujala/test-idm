@@ -14,7 +14,7 @@ import com.rackspace.idm.GlobalConstants;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
-public class User extends BaseUser {
+public class User extends BaseUser implements Auditable {
     private static final long serialVersionUID = 1347677880811855274L;
 
     @NotNull
@@ -779,4 +779,9 @@ public class User extends BaseUser {
             return user;
         }
     }
+    
+    public String getAuditContext() {
+        return getUniqueId(); 
+    }
+    
 }

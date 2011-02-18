@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import com.rackspace.idm.dao.LdapRepository;
+import com.rackspace.idm.entities.Auditable;
 import com.unboundid.ldap.sdk.Modification;
 
 public class Audit {
@@ -45,21 +46,39 @@ public class Audit {
 		target = s;
 	}
 
-	public static Audit log(Object o) {
-		return new Audit(o.toString());
-	}
-
-	public static Audit authClient(Object o) {
-		return new Audit(o.toString()).addEvent(ACTION.CLIENTAUTH);
-	}
-
-	public static Audit authUser(Object o) {
-		return new Audit(o.toString()).addEvent(ACTION.USERAUTH);
+	public static Audit log(Auditable o) {
+		return new Audit(o.getAuditContext());
 	}
 	
-	public static Audit authRacker(Object o) {
-		return new Audit(o.toString()).addEvent(ACTION.RACKERAUTH);
+	public static Audit log(String o) {
+        return new Audit(o);
+    }	
+
+	public static Audit authClient(String o) {
+		return new Audit(o).addEvent(ACTION.CLIENTAUTH);
 	}
+	
+	public static Audit authUser(String o) {
+		return new Audit(o).addEvent(ACTION.USERAUTH);
+	}
+	
+	public static Audit authRacker(String o) {
+		return new Audit(o).addEvent(ACTION.RACKERAUTH);
+	}
+	
+
+	public static Audit authClient(Auditable o) {
+        return new Audit(o.getAuditContext()).addEvent(ACTION.CLIENTAUTH);
+    }
+
+    public static Audit authUser(Auditable o) {
+        return new Audit(o.getAuditContext()).addEvent(ACTION.USERAUTH);
+    }
+    
+    public static Audit authRacker(Auditable o) {
+        return new Audit(o.getAuditContext()).addEvent(ACTION.RACKERAUTH);
+    }	
+	
 
 	public Audit add() {
 		return this.addEvent(ACTION.ADD);
