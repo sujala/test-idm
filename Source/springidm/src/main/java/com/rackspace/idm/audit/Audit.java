@@ -1,6 +1,7 @@
 package com.rackspace.idm.audit;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -73,10 +74,12 @@ public class Audit {
 	}
 
 	// these attributes will be obfuscated
-	private static final List<String> secrets = new ArrayList<String>();
-	{
-		secrets.add(LdapRepository.ATTR_PASSWORD);
-		secrets.add(LdapRepository.ATTR_RACKSPACE_API_KEY);
+	private static final List<String> secrets;
+	static {
+		List<String> temp = new ArrayList<String>();
+		temp.add(LdapRepository.ATTR_PASSWORD);
+		temp.add(LdapRepository.ATTR_RACKSPACE_API_KEY);
+		secrets = Collections.unmodifiableList(temp);
 	}
 
 	public Audit modify(List<Modification> mods) {
@@ -102,6 +105,7 @@ public class Audit {
 	private void log(RESULT r) {
 		if (consumed) {
 			LoggerFactory.getLogger(getClass()).error("Audit logger reused");
+			return;
 		}
 		consumed = true;
 		Logger logger = LoggerFactory.getLogger(AUDIT_LOGGER_ID);
