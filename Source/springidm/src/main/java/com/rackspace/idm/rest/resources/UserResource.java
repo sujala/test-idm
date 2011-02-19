@@ -196,6 +196,7 @@ public class UserResource {
             throw new BadRequestException(errorMsg);
         }
 
+        // TODO DELETE ME
         if (user.isDisabled()) {
             oauthService.revokeTokensGloballyForOwner(username);
         }

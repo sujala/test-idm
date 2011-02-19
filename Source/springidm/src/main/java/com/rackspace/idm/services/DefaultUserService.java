@@ -356,24 +356,12 @@ public class DefaultUserService implements UserService {
     }
 
     public void updateUserStatus(User user, String statusStr) {
-
         UserStatus status = Enum.valueOf(UserStatus.class,
             statusStr.toUpperCase());
         user.setStatus(status);
         this.userDao.save(user);
 
         logger.info("Updated User's status: {}, {}", user, status);
-
-        // revoke user's token if disabling
-        if (status.equals(UserStatus.INACTIVE)) {
-            String owner = user.getUsername();
-            Set<String> allClientIds = new HashSet<String>();
-            for (Client client : clientDao.findAll()) {
-                allClientIds.add(client.getClientId());
-            }
-            tokenDao.deleteAllTokensForOwner(owner,
-                Collections.unmodifiableSet(allClientIds));
-        }
     }
 
     private Map<String, String> getCustomParamsMap(

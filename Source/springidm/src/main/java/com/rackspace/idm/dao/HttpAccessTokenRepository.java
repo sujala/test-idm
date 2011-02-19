@@ -1,7 +1,5 @@
 package com.rackspace.idm.dao;
 
-import java.util.List;
-
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
@@ -11,7 +9,7 @@ import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 
-import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.GlobalConstants.TokenDeleteByType;
 import com.rackspace.idm.config.DataCenterClient;
 import com.rackspace.idm.config.DataCenterEndpoints;
 import com.rackspace.idm.entities.AccessToken;
@@ -75,24 +73,21 @@ public class HttpAccessTokenRepository extends HttpRepository implements XdcAcce
         if (StringUtils.isBlank(tokenString)) {
             throw new IllegalArgumentException("No token String given.");
         }
-
         logger.debug("Attempting to delete for token {}.", tokenString);
 
-        List<String> tokenPermutations = endpoints.getAllTokenPermuations(tokenString);
+        makeHttpCallToOtherDcs(new HttpCaller<Object>() {
+            @Override
+            public Object execute(String myTokenStr, DataCenterClient client) {
+                // Don't trigger another global delete. We are already in
+                // the middle
+                // of executing one.
+                client.getResource().path(TOKEN_RESOURCE_PATH + "/" + tokenString)
+                    .queryParam("global", "false").accept(MediaType.APPLICATION_XML)
+                    .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr)).delete();
 
-        for (String dcTokenCombo : tokenPermutations) {
-            HttpCaller<Object> deleter = new HttpDeleteCaller(dcTokenCombo);
-
-            for (DataCenterClient client : endpoints.getAll()) {
-                // Don't make a call against the local (own) IDM instance.
-                // That should be done using a memcached DAO instance.
-                if (client.getDcPrefix().equals(config.getString("token.dataCenterPrefix"))) {
-                    continue;
-                }
-
-                makeHttpCall(deleter, client);
+                return null;
             }
-        }
+        });
     }
 
     @Override
@@ -100,55 +95,31 @@ public class HttpAccessTokenRepository extends HttpRepository implements XdcAcce
         if (StringUtils.isBlank(ownerId)) {
             throw new IllegalArgumentException("No ownerId given.");
         }
-
         logger.debug("Attempting to delete all access tokens for owner {}.", ownerId);
-        for (DataCenterClient client : endpoints.getAll()) {
-            // Don't make a call against the local (own) IDM instance.
-            if (client.getDcPrefix().equals(config.getString("token.dataCenterPrefix"))) {
-                continue;
+
+        makeHttpCallToOtherDcs(new HttpCaller<Object>() {
+            @Override
+            public Object execute(String myTokenStr, DataCenterClient client) {
+                return makeHttpDeleteCallById(ownerId, TokenDeleteByType.owner, myTokenStr, client);
             }
-
-            makeHttpCall(new HttpCaller<Object>() {
-
-                @Override
-                public Object execute(String myTokenStr, DataCenterClient client) {
-                    client.getResource().path(TOKEN_RESOURCE_PATH)
-                        .queryParam("querytype", GlobalConstants.TokenDeleteByType.owner.toString())
-                        .queryParam("id", ownerId.trim()).accept(MediaType.APPLICATION_XML)
-                        .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr)).delete();
-                    return null;
-                }
-            }, client);
-        }
+        });
 
     }
 
     @Override
     public void deleteAllTokensForCustomer(final String customerId) {
         if (StringUtils.isBlank(customerId)) {
-            throw new IllegalArgumentException("No ownerId given.");
+            throw new IllegalArgumentException("No customerId given.");
         }
-
         logger.debug("Attempting to delete all access tokens for customer {}.", customerId);
-        for (DataCenterClient client : endpoints.getAll()) {
-            // Don't make a call against the local (own) IDM instance.
-            if (client.getDcPrefix().equals(config.getString("token.dataCenterPrefix"))) {
-                continue;
+
+        makeHttpCallToOtherDcs(new HttpCaller<Object>() {
+            @Override
+            public Object execute(String myTokenStr, DataCenterClient client) {
+                return makeHttpDeleteCallById(customerId, TokenDeleteByType.customer, myTokenStr, client);
             }
 
-            makeHttpCall(new HttpCaller<Object>() {
-
-                @Override
-                public Object execute(String myTokenStr, DataCenterClient client) {
-                    client.getResource().path(TOKEN_RESOURCE_PATH)
-                        .queryParam("querytype", GlobalConstants.TokenDeleteByType.customer.toString())
-                        .queryParam("id", customerId.trim()).accept(MediaType.APPLICATION_XML)
-                        .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr)).delete();
-                    return null;
-                }
-
-            }, client);
-        }
+        });
     }
 
     @Override
@@ -156,23 +127,22 @@ public class HttpAccessTokenRepository extends HttpRepository implements XdcAcce
         return logger;
     }
 
-    private class HttpDeleteCaller implements HttpCaller<Object> {
-        private String tokenString;
+    private Object makeHttpDeleteCallById(String id, TokenDeleteByType idType, String myTokenStr,
+        DataCenterClient client) {
+        client.getResource().path(TOKEN_RESOURCE_PATH).queryParam("querytype", idType.toString())
+            .queryParam("id", id.trim()).accept(MediaType.APPLICATION_XML)
+            .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr)).delete();
+        return null;
+    }
 
-        HttpDeleteCaller(String tokenString) {
-            this.tokenString = tokenString;
+    private <T> void makeHttpCallToOtherDcs(HttpCaller<T> caller) {
+        for (DataCenterClient client : endpoints.getAll()) {
+            // Don't make a call against the local (own) IDM instance.
+            if (client.getDcPrefix().equals(config.getString("token.dataCenterPrefix"))) {
+                continue;
+            }
+
+            makeHttpCall(caller, client);
         }
-
-        @Override
-        public Object execute(String myTokenStr, DataCenterClient client) {
-            // Don't trigger another global delete. We are already in the middle
-            // of executing one.
-            client.getResource().path(TOKEN_RESOURCE_PATH + "/" + tokenString).queryParam("global", "false")
-                .accept(MediaType.APPLICATION_XML)
-                .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr)).delete();
-
-            return null;
-        }
-
     }
 }

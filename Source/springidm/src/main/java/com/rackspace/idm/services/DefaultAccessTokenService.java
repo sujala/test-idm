@@ -374,17 +374,6 @@ public class DefaultAccessTokenService implements AccessTokenService {
     }
 
     @Override
-    public void deleteGlobally(String tokenString) {
-        // Start with the local tokens, including any from another DC that might
-        // have been cached locally.
-        for (String tokenPermutation : dcEndpoints.getAllTokenPermuations(tokenString)) {
-            tokenDao.delete(tokenPermutation);
-        }
-
-        xdcTokenDao.delete(tokenString);
-    }
-
-    @Override
     public void deleteAllGloballyForOwner(String owner) {
         // Start with the local tokens.
         tokenDao.deleteAllTokensForOwner(owner, getAllTokenRequestors());

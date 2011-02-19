@@ -19,6 +19,7 @@ import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
@@ -32,17 +33,25 @@ import com.rackspace.idm.services.UserService;
 @Component
 public class UserSoftDeleteResource {
 
-    private AccessTokenService accessTokenService;
+    private OAuthService oauthService;
     private UserService userService;
     private UserConverter userConverter;
     private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
-    public UserSoftDeleteResource(AccessTokenService accessTokenService,
-        UserService userService, UserConverter userConverter,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
-        this.accessTokenService = accessTokenService;
+    public UserSoftDeleteResource(OAuthService oauthService, UserService userService,
+        UserConverter userConverter, AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        this.oauthService = oauthService;
+        this.userService = userService;
+        this.userConverter = userConverter;
+        this.authorizationService = authorizationService;
+        this.logger = logger.getLogger(this.getClass());
+    }
+
+    @Deprecated
+    public UserSoftDeleteResource(AccessTokenService accessTokenService, UserService userService,
+        UserConverter userConverter, AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.userService = userService;
         this.userConverter = userConverter;
         this.authorizationService = authorizationService;
@@ -66,17 +75,13 @@ public class UserSoftDeleteResource {
      * @param username username
      */
     @PUT
-    public Response setUserSoftDelete(
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("username") String username,
+    public Response setUserSoftDelete(@HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId, @PathParam("username") String username,
         com.rackspace.idm.jaxb.User inputUser) {
 
-        logger.info("Updating SoftDelete for User: {} - {}", username,
-            inputUser.isSoftDeleted());
+        logger.info("Updating SoftDelete for User: {} - {}", username, inputUser.isSoftDeleted());
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.oauthService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
@@ -84,8 +89,7 @@ public class UserSoftDeleteResource {
             || authorizationService.authorizeCustomerIdm(token);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -114,14 +118,14 @@ public class UserSoftDeleteResource {
 
         if (softDelete) {
             this.userService.softDeleteUser(username);
+            oauthService.revokeTokensGloballyForOwner(username);
         } else {
             this.userService.restoreSoftDeletedUser(user);
         }
 
         logger.info("Updated SoftDelete for user: {} - []", user);
 
-        return Response.ok(userConverter.toUserWithOnlySoftDeletedJaxb(user))
-            .build();
+        return Response.ok(userConverter.toUserWithOnlySoftDeletedJaxb(user)).build();
     }
 
     private User checkAndGetUser(String customerId, String username) {
@@ -133,8 +137,7 @@ public class UserSoftDeleteResource {
     }
 
     private void handleUserNotFoundError(String customerId, String username) {
-        String errorMsg = String.format("User not found: %s - %s", customerId,
-            username);
+        String errorMsg = String.format("User not found: %s - %s", customerId, username);
         logger.error(errorMsg);
         throw new NotFoundException(errorMsg);
     }

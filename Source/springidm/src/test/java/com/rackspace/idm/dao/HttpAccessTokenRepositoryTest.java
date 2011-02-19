@@ -80,16 +80,6 @@ public class HttpAccessTokenRepositoryTest {
         Assert.assertNotNull(remoteToken.getTokenClient());
     }
 
-    @Test
-    public void shouldDeleteTokenInAnotherDc() {
-        putUserTokenInMemcached();
-        Object remoteToken = mcdRemote.get(QA_TOKEN_STRING);
-        Assert.assertNotNull(remoteToken);
-        repo.delete(QA_TOKEN_STRING);
-        remoteToken = mcdRemote.get(QA_TOKEN_STRING);
-        Assert.assertNull(remoteToken);
-    }
-
     private String getTokenKeyByClientId(String owner, String requestor) {
         return owner + "_" + requestor;
     }

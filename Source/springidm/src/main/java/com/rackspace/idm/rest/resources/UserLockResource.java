@@ -22,6 +22,7 @@ import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
@@ -35,17 +36,25 @@ import com.rackspace.idm.services.UserService;
 @Component
 public class UserLockResource {
 
-    private AccessTokenService accessTokenService;
+    private OAuthService oauthService;
     private UserService userService;
     private UserConverter userConverter;
     private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
-    public UserLockResource(AccessTokenService accessTokenService,
-        UserService userService, UserConverter userConverter,
+    public UserLockResource(OAuthService oauthService, UserService userService, UserConverter userConverter,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
-        this.accessTokenService = accessTokenService;
+        this.oauthService = oauthService;
+        this.userService = userService;
+        this.userConverter = userConverter;
+        this.authorizationService = authorizationService;
+        this.logger = logger.getLogger(this.getClass());
+    }
+
+    @Deprecated
+    public UserLockResource(AccessTokenService accessTokenService, UserService userService,
+        UserConverter userConverter, AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.userService = userService;
         this.userConverter = userConverter;
         this.authorizationService = authorizationService;
@@ -70,26 +79,20 @@ public class UserLockResource {
      * @param inputUser User lock
      */
     @PUT
-    public Response setUserLock(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("username") String username,
-        com.rackspace.idm.jaxb.User inputUser) {
+    public Response setUserLock(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        @PathParam("username") String username, com.rackspace.idm.jaxb.User inputUser) {
 
         logger.info("Locking User: {} - {}", username);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.oauthService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Rcker's and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath());
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -100,17 +103,17 @@ public class UserLockResource {
             throw new BadRequestException(errMsg);
         }
 
-        boolean lockStatus = inputUser.isLocked();
-
         User user = checkAndGetUser(customerId, username);
 
         if (user == null) {
             handleUserNotFoundError(customerId, username);
         }
 
-        user.setLocked(lockStatus);
-
+        user.setLocked(inputUser.isLocked());
         this.userService.updateUser(user);
+        if (inputUser.isLocked()) {
+            oauthService.revokeTokensGloballyForOwner(username);
+        }
 
         return Response.ok(userConverter.toUserWithOnlyLockJaxb(user)).build();
     }
@@ -123,9 +126,8 @@ public class UserLockResource {
         return user;
     }
 
-    private void handleUserNotFoundError(String customerId, String username) {
-        String errorMsg = String.format("User not found: %s - %s", customerId,
-            username);
+    private void handleUserNotFoundError(String customerId, String username) throws NotFoundException {
+        String errorMsg = String.format("User not found: %s - %s", customerId, username);
         logger.error(errorMsg);
         throw new NotFoundException(errorMsg);
     }

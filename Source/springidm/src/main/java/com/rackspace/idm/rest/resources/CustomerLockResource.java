@@ -36,8 +36,6 @@ import com.rackspace.idm.services.UserService;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class CustomerLockResource {
-
-    private AccessTokenService accessTokenService;
     private CustomerService customerService;
     private AuthorizationService authorizationService;
     private UserService userService;
@@ -45,9 +43,8 @@ public class CustomerLockResource {
     private Logger logger;
 
     @Autowired
-    public CustomerLockResource(CustomerService customerService,
-        AuthorizationService authorizationService, UserService userService, OAuthService oauthService,
-        LoggerFactoryWrapper logger) {
+    public CustomerLockResource(CustomerService customerService, AuthorizationService authorizationService,
+        UserService userService, OAuthService oauthService, LoggerFactoryWrapper logger) {
         this.customerService = customerService;
         this.authorizationService = authorizationService;
         this.userService = userService;
@@ -58,7 +55,6 @@ public class CustomerLockResource {
     @Deprecated
     public CustomerLockResource(AccessTokenService accessTokenService, CustomerService customerService,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
-        this.accessTokenService = accessTokenService;
         this.customerService = customerService;
         this.authorizationService = authorizationService;
         this.logger = logger.getLogger(this.getClass());
@@ -109,15 +105,14 @@ public class CustomerLockResource {
             throw new NotFoundException(errorMsg);
         }
 
-        boolean locked = inputCustomer.isLocked();
-        this.customerService.setCustomerLocked(customer, locked);
+        boolean isLocked = inputCustomer.isLocked();
+        this.customerService.setCustomerLocked(customer, isLocked);
         logger.debug("Successfully locked customer: {}", customer);
 
         logger.debug("Revoking all user tokens for customer {}", customer.getCustomerId());
 
-        // TODO What is the right limit for this?
-        for (User user : userService.getByCustomerId(customerId, 0, -1).getUsers()) {
-            oauthService.revokeTokensGloballyForOwner(user.getUsername());
+        if (isLocked) {
+            oauthService.revokeTokensGloballyForCustomer(customerId);
         }
 
         return Response.ok(inputCustomer).build();

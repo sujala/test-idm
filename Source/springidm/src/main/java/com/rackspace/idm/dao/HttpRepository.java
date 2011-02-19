@@ -92,6 +92,11 @@ public abstract class HttpRepository {
         String dc = client.getDcPrefix();
 
         AccessToken myToken = getMyAccessToken(dc);
+        if (myToken == null) {
+            // No client access token? Not much I can do here.
+            return null;
+        }
+
         try {
             return caller.execute(myToken.getTokenString(), client);
         } catch (UniformInterfaceException ue1) {

@@ -22,6 +22,8 @@ import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.jaxb.UserStatus;
+import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
@@ -35,17 +37,25 @@ import com.rackspace.idm.services.UserService;
 @Component
 public class UserStatusResource {
 
-    private AccessTokenService accessTokenService;
+    private OAuthService oauthService;
     private UserService userService;
     private UserConverter userConverter;
     private AuthorizationService authorizationService;
     private Logger logger;
 
     @Autowired
-    public UserStatusResource(AccessTokenService accessTokenService,
-        UserService userService, UserConverter userConverter,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
-        this.accessTokenService = accessTokenService;
+    public UserStatusResource(OAuthService accessTokenService, UserService userService,
+        UserConverter userConverter, AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        this.oauthService = accessTokenService;
+        this.userService = userService;
+        this.userConverter = userConverter;
+        this.authorizationService = authorizationService;
+        this.logger = logger.getLogger(this.getClass());
+    }
+
+    @Deprecated
+    public UserStatusResource(AccessTokenService accessTokenService, UserService userService,
+        UserConverter userConverter, AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.userService = userService;
         this.userConverter = userConverter;
         this.authorizationService = authorizationService;
@@ -70,27 +80,21 @@ public class UserStatusResource {
      * @param inputUser The user status flag
      */
     @PUT
-    public Response setUserStatus(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("username") String username,
-        com.rackspace.idm.jaxb.User inputUser) {
+    public Response setUserStatus(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        @PathParam("username") String username, com.rackspace.idm.jaxb.User inputUser) {
 
         logger.info("Updating Status for User: {}", username);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.oauthService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -110,16 +114,19 @@ public class UserStatusResource {
         try {
             this.userService.updateUserStatus(user, statusStr);
         } catch (IllegalArgumentException ex) {
-            String errorMsg = String.format("Invalid status value: %s",
-                statusStr);
+            String errorMsg = String.format("Invalid status value: %s", statusStr);
             logger.error(errorMsg);
             throw new BadRequestException(errorMsg);
         }
+
+        if (UserStatus.INACTIVE == inputUser.getStatus()) {
+            oauthService.revokeTokensGloballyForOwner(username);
+        }
+
         logger.info("Updated status for user: {}", user);
 
         User outputUser = this.userService.getUser(customerId, username);
-        return Response.ok(userConverter.toUserWithOnlyStatusJaxb(outputUser))
-            .build();
+        return Response.ok(userConverter.toUserWithOnlyStatusJaxb(outputUser)).build();
     }
 
     private User checkAndGetUser(String customerId, String username) {
@@ -131,8 +138,7 @@ public class UserStatusResource {
     }
 
     private void handleUserNotFoundError(String customerId, String username) {
-        String errorMsg = String.format("User not found: %s - %s", customerId,
-            username);
+        String errorMsg = String.format("User not found: %s - %s", customerId, username);
         logger.error(errorMsg);
         throw new NotFoundException(errorMsg);
     }

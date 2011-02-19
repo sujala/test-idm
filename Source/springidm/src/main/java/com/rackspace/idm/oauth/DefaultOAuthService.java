@@ -233,8 +233,9 @@ public class DefaultOAuthService implements OAuthService {
         }
 
         if (isGlobal) {
+            // This user is to be completely logged out of the system.
             deleteRefreshTokenByAccessToken(deletingToken);
-            accessTokenService.deleteGlobally(deletingToken.getTokenString());
+            accessTokenService.deleteAllGloballyForOwner(deletingToken.getOwner());
         } else {
             accessTokenService.delete(deletingToken.getTokenString());
         }
