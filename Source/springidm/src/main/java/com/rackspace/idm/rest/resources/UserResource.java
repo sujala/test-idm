@@ -14,7 +14,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -28,7 +27,6 @@ import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
-import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
@@ -42,7 +40,6 @@ import com.rackspace.idm.validation.InputValidator;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class UserResource {
-    private OAuthService oauthService;
     private AccessTokenService accessTokenService;
     private ApiKeyResource apiKeyResource;
     private UserLockResource userLockResource;
@@ -58,28 +55,6 @@ public class UserResource {
     private Logger logger;
 
     @Autowired
-    public UserResource(OAuthService oauthService, ApiKeyResource apiKeyResource,
-        UserLockResource userLockResource, UserPasswordResource userPasswordResource,
-        UserGroupsResource userGroupsResource, UserSecretResource userSecretResource,
-        UserSoftDeleteResource userSoftDeleteResource, UserStatusResource userStatusResource,
-        UserService userService, UserConverter userConverter, InputValidator inputValidator,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
-        this.oauthService = oauthService;
-        this.apiKeyResource = apiKeyResource;
-        this.userLockResource = userLockResource;
-        this.userPasswordResource = userPasswordResource;
-        this.userGroupsResource = userGroupsResource;
-        this.userSecretResource = userSecretResource;
-        this.userSoftDeleteResource = userSoftDeleteResource;
-        this.userStatusResource = userStatusResource;
-        this.userService = userService;
-        this.userConverter = userConverter;
-        this.inputValidator = inputValidator;
-        this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
-    }
-
-    @Deprecated
     public UserResource(AccessTokenService accessTokenService, ApiKeyResource apiKeyResource,
         UserLockResource userLockResource, UserPasswordResource userPasswordResource,
         UserGroupsResource userGroupsResource, UserSecretResource userSecretResource,
@@ -121,7 +96,7 @@ public class UserResource {
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
-        AccessToken token = this.oauthService.getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients, Admins and User's are
         // authorized
@@ -165,7 +140,7 @@ public class UserResource {
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("username") String username, com.rackspace.idm.jaxb.User inputUser) {
 
-        AccessToken token = this.oauthService.getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients, Admins and User's are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
@@ -196,11 +171,6 @@ public class UserResource {
             throw new BadRequestException(errorMsg);
         }
 
-        // TODO DELETE ME
-        if (user.isDisabled()) {
-            oauthService.revokeTokensGloballyForOwner(username);
-        }
-
         logger.info("Updated User: {}", user);
         return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
     }
@@ -227,7 +197,7 @@ public class UserResource {
 
         logger.info("Deleting User :{}", username);
 
-        AccessToken token = this.oauthService.getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),

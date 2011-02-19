@@ -20,7 +20,6 @@ import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.oauth.OAuthService;
-import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
 
@@ -43,15 +42,6 @@ public class UserSoftDeleteResource {
     public UserSoftDeleteResource(OAuthService oauthService, UserService userService,
         UserConverter userConverter, AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.oauthService = oauthService;
-        this.userService = userService;
-        this.userConverter = userConverter;
-        this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
-    }
-
-    @Deprecated
-    public UserSoftDeleteResource(AccessTokenService accessTokenService, UserService userService,
-        UserConverter userConverter, AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.userService = userService;
         this.userConverter = userConverter;
         this.authorizationService = authorizationService;

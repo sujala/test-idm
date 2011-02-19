@@ -52,15 +52,6 @@ public class UserLockResource {
         this.logger = logger.getLogger(this.getClass());
     }
 
-    @Deprecated
-    public UserLockResource(AccessTokenService accessTokenService, UserService userService,
-        UserConverter userConverter, AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
-        this.userService = userService;
-        this.userConverter = userConverter;
-        this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
-    }
-
     /**
      * Sets the value for the user lock.
      * 

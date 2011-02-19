@@ -24,7 +24,6 @@ import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.jaxb.UserStatus;
 import com.rackspace.idm.oauth.OAuthService;
-import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.UserService;
 
@@ -47,15 +46,6 @@ public class UserStatusResource {
     public UserStatusResource(OAuthService accessTokenService, UserService userService,
         UserConverter userConverter, AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.oauthService = accessTokenService;
-        this.userService = userService;
-        this.userConverter = userConverter;
-        this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
-    }
-
-    @Deprecated
-    public UserStatusResource(AccessTokenService accessTokenService, UserService userService,
-        UserConverter userConverter, AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.userService = userService;
         this.userConverter = userConverter;
         this.authorizationService = authorizationService;

@@ -52,14 +52,6 @@ public class CustomerLockResource {
         this.logger = logger.getLogger(this.getClass());
     }
 
-    @Deprecated
-    public CustomerLockResource(AccessTokenService accessTokenService, CustomerService customerService,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
-        this.customerService = customerService;
-        this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
-    }
-
     /**
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}customer
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}customer
