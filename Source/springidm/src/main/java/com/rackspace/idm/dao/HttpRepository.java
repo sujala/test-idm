@@ -38,11 +38,13 @@ public abstract class HttpRepository {
      * in other DCs.
      * @return Access token that represents the local IDM instance.
      */
-    protected AccessToken getMyAccessToken(String dc) {
+    protected AccessToken getMyAccessToken(String dc, boolean getFromCache) {
         DataCenterClient client = endpoints.get(dc);
-        AccessToken myToken = client.getAccessToken();
-        if (myToken != null && !myToken.isExpired(new DateTime())) {
-            return myToken;
+        if (getFromCache) {
+            AccessToken myToken = client.getAccessToken();
+            if (myToken != null && !myToken.isExpired(new DateTime())) {
+                return myToken;
+            }
         }
 
         getLogger().debug("Requesting client access token for Customer IDM");
@@ -91,7 +93,7 @@ public abstract class HttpRepository {
 
         String dc = client.getDcPrefix();
 
-        AccessToken myToken = getMyAccessToken(dc);
+        AccessToken myToken = getMyAccessToken(dc, true);
         if (myToken == null) {
             // No client access token? Not much I can do here.
             return null;
@@ -104,7 +106,7 @@ public abstract class HttpRepository {
             if (isUnauthorized) {
                 // Try again with a new token, client token might have just
                 // expired.
-                myToken = getMyAccessToken(dc);
+                myToken = getMyAccessToken(dc, false);
                 try {
                     return caller.execute(myToken.getTokenString(), client);
                 } catch (UniformInterfaceException ue2) {
