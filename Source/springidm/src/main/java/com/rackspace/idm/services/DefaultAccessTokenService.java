@@ -263,7 +263,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
         Boolean authenticated = false;
 
         // check token is valid and not expired
-        AccessToken accessToken = getAccessTokenByTokenString(accessTokenStr);
+        AccessToken accessToken = getTokenByTokenStringGlobally(accessTokenStr);
         if (accessToken != null && !accessToken.isExpired(new DateTime())) {
             authenticated = true;
         }
@@ -333,20 +333,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
     public AccessToken validateToken(String tokenString) {
         logger.debug("Validating Token: {}", tokenString);
 
-        AccessToken token = tokenDao.findByTokenString(tokenString);
-
-        // Check if token is from other data center.
-        if (token == null && !tokenString.startsWith(getDataCenterPrefix())) {
-            try {
-                token = xdcTokenDao.findByTokenString(tokenString);
-            } catch (Exception e) {
-                logger.warn("Exception occurred while attempting xdc token retrieval", e);
-            }
-            if (token != null) {
-                tokenDao.save(token);
-            }
-        }
-
+        AccessToken token = getTokenByTokenStringGlobally(tokenString);
         if (token == null || token.getExpiration() <= 0) {
             logger.debug("Token {} Invalid", tokenString);
             return null;
@@ -393,6 +380,23 @@ public class DefaultAccessTokenService implements AccessTokenService {
         }
 
         xdcTokenDao.deleteAllTokensForCustomer(customerId);
+    }
+
+    private AccessToken getTokenByTokenStringGlobally(String tokenString) {
+        AccessToken token = tokenDao.findByTokenString(tokenString);
+
+        // Check if token is from other data center.
+        if (token == null && !tokenString.startsWith(getDataCenterPrefix())) {
+            try {
+                token = xdcTokenDao.findByTokenString(tokenString);
+            } catch (Exception e) {
+                logger.warn("Exception occurred while attempting xdc token retrieval", e);
+            }
+            if (token != null) {
+                tokenDao.save(token);
+            }
+        }
+        return token;
     }
 
     private String generateTokenWithDcPrefix() {
