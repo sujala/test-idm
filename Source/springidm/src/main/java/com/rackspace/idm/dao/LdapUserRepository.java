@@ -1204,7 +1204,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     
     private void addAuditLogForAuthentication(User user, boolean authenticated) {
      
-        Audit audit = Audit.authUser(user).add();
+        Audit audit = Audit.authUser(user);
         if (authenticated) {
             audit.succeed();
         }

@@ -781,7 +781,8 @@ public class User extends BaseUser implements Auditable {
     }
     
     public String getAuditContext() {
-        return getUniqueId(); 
+        String format = "username=%s, customer=%s";
+        return String.format(format, username, customerId);
     }
     
 }
