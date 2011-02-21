@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import com.rackspace.idm.dao.LdapRepository;
-import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Auditable;
 import com.unboundid.ldap.sdk.Modification;
 
