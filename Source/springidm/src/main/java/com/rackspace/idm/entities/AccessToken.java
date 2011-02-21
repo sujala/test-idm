@@ -127,11 +127,11 @@ public final class AccessToken extends Token implements Serializable {
             String format = "Client:%s";
             auditString = String.format(format, client.getClientId());
         } else {
-            String rackerFormat = "Racker:%s";
-            String userFormat = "User:%s";
+            String rackerFormat = "Racker:%s-Client:%s";
+            String userFormat = "User:%s-Client:%s";
             auditString = isTrusted ? String.format(rackerFormat,
-                user.getUsername()) : String.format(userFormat,
-                user.getUsername());
+                user.getUsername(), client.getClientId()) : String.format(
+                userFormat, user.getUsername(), client.getClientId());
         }
         return auditString;
     }

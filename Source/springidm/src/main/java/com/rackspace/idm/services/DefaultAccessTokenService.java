@@ -8,9 +8,11 @@ import java.util.UUID;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.MDC;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.config.DataCenterEndpoints;
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
@@ -265,6 +267,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
         if (accessToken != null && !accessToken.isExpired(new DateTime())) {
             authenticated = true;
         }
+        MDC.put(Audit.WHO, accessToken.getAuditString());
         logger.debug("Authorized Token: {} : {}", accessTokenStr, authenticated);
         return authenticated;
     }

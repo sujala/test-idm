@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import com.rackspace.idm.dao.LdapRepository;
+import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Auditable;
 import com.unboundid.ldap.sdk.Modification;
 
@@ -16,6 +17,7 @@ public class Audit {
 	public static final String REMOTE_IP = "REMOTE_IP";
 	public static final String HOST_IP = "HOST_IP";
 	public static final String PATH = "PATH";
+	public static final String WHO = "WHO";
 
 	private enum ACTION {
 		USERAUTH, CLIENTAUTH, RACKERAUTH, ADD, DELETE, MODIFY;
@@ -130,8 +132,8 @@ public class Audit {
 		Logger logger = LoggerFactory.getLogger(AUDIT_LOGGER_ID);
 		for (Event event : events) {
 			logger.info(
-					r + " {} {} [{}] {} {} {} {}",
-					new Object[] { event.action, target, event.context,
+					r + " {} {} [{}] {} {} {} {} {}",
+					new Object[] { event.action, target, event.context, MDC.get(WHO),
 							MDC.get(REMOTE_IP), MDC.get(HOST_IP),
 							MDC.get(PATH), timestamp });
 		}
