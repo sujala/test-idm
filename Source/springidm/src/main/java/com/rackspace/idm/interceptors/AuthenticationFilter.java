@@ -19,8 +19,6 @@ import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
-import org.apache.commons.lang.ObjectUtils;
-import org.apache.commons.lang.StringUtils;
 
 /**
  * @author john.eo Apply token-based authentication to all calls except the
