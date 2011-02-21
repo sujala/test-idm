@@ -52,8 +52,6 @@ public class ServiceConfiguration {
     private EndpointDao endpointDao;
     @Autowired
     private XdcAccessTokenDao xdcTokenDao;
-    @Autowired
-    private DataCenterEndpoints dcEndpoints;
 
     @Value("#{memcacheStatusRepository}")
     private PingableService memcacheService;
@@ -86,7 +84,7 @@ public class ServiceConfiguration {
     public AccessTokenService tokenService() {
         Logger logger = LoggerFactory.getLogger(DefaultAccessTokenService.class);
         return new DefaultAccessTokenService(accessTokenDao, clientDao, userService(), xdcTokenDao,
-            authHeaderHelper(), dcEndpoints, config, logger);
+            authHeaderHelper(), config, logger);
     }
 
     @Bean

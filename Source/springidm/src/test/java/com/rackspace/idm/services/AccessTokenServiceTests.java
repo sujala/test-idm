@@ -11,7 +11,6 @@ import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.config.DataCenterEndpoints;
 import com.rackspace.idm.config.PropertyFileConfiguration;
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
@@ -48,7 +47,6 @@ public class AccessTokenServiceTests {
     String tokenString = "XXXXXX";
     String authHeader = "OAuth " + tokenString;
     DateTime tokenExpiration = MemcachedAccessTokenRepository.DATE_PARSER.parseDateTime("20201231210627.3Z");
-    // String tokenOwner = "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111";
     String tokenOwner = "mkovacs";
     String clientId = "SomeClientId";
     String clientDn = "inum=@!FFFF.FFFF.FFFF.FFFF!DDDD.DDDD,ou=Applications,dc=rackspace,dc=com";
@@ -90,9 +88,8 @@ public class AccessTokenServiceTests {
             cloudAuthExpirationSeconds, maxTokenExpirationSeconds, minTokenExpirationSeconds,
             dataCenterPrefix, isTrustedServer);
         Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
-        DataCenterEndpoints dcEndpoints = new DataCenterEndpoints(appConfig);
         tokenService = new DefaultAccessTokenService(mockTokenDao, mockClientDao, mockUserService,
-            mockWebClientAccessTokenDao, new AuthHeaderHelper(), dcEndpoints, appConfig, new StubLogger());
+            mockWebClientAccessTokenDao, new AuthHeaderHelper(), appConfig, new StubLogger());
     }
 
     @Test

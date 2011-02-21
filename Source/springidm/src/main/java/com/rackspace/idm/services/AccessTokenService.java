@@ -5,6 +5,7 @@ import java.util.List;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.BaseClient;
 import com.rackspace.idm.entities.BaseUser;
+import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.User;
 import org.joda.time.DateTime;
 
@@ -59,5 +60,5 @@ public interface AccessTokenService {
 
     void deleteAllGloballyForOwner(String owner);
 
-    void deleteAllGloballyForCustomer(String customerId, List<User> users);
+    void deleteAllGloballyForCustomer(String customerId, List<User> users, List<Client> clients);
 }

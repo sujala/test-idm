@@ -4,6 +4,7 @@ import static com.rackspace.idm.oauth.OAuthGrantType.NONE;
 import static com.rackspace.idm.oauth.OAuthGrantType.PASSWORD;
 import static com.rackspace.idm.oauth.OAuthGrantType.REFRESH_TOKEN;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
@@ -14,9 +15,11 @@ import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.AuthData;
 import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.ClientAuthenticationResult;
+import com.rackspace.idm.entities.Clients;
 import com.rackspace.idm.entities.RefreshToken;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.entities.UserAuthenticationResult;
+import com.rackspace.idm.entities.Users;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.exceptions.NotAuthorizedException;
@@ -26,6 +29,7 @@ import com.rackspace.idm.services.RefreshTokenService;
 import com.rackspace.idm.services.UserService;
 
 public class DefaultOAuthService implements OAuthService {
+    private static final int MAX_PAGE_LIMIT = 1000;
     private UserService userService;
     private ClientService clientService;
     private AccessTokenService accessTokenService;
@@ -164,22 +168,57 @@ public class DefaultOAuthService implements OAuthService {
             throw new IllegalStateException(error);
         }
 
-        for (User user : userService.getByCustomerId(customerId, 0, -1).getUsers()) {
+        for (User user : getAllUsersForCustomerId(customerId)) {
             accessTokenService.deleteAllForOwner(user.getUsername());
         }
+
+        for (Client client : getAllClientsForCustomerId(customerId)) {
+            accessTokenService.deleteAllForOwner(client.getClientId());
+        }
+
         logger.debug("Deleted all access tokens for customer {}.", customerId);
 
     }
 
     @Override
     public void revokeTokensGloballyForCustomer(String customerId) {
-        List<User> users = userService.getByCustomerId(customerId, 0, -1).getUsers();
-        for (User user : users) {
+        List<User> usersList = getAllUsersForCustomerId(customerId);
+        for (User user : usersList) {
             refreshTokenService.deleteAllTokensForUser(user.getUsername());
         }
 
-        accessTokenService.deleteAllGloballyForCustomer(customerId, users);
+        List<Client> clientsList = getAllClientsForCustomerId(customerId);
+
+        accessTokenService.deleteAllGloballyForCustomer(customerId, usersList, clientsList);
         logger.debug("Deleted all access tokens for customer {}.", customerId);
+    }
+
+    private List<Client> getAllClientsForCustomerId(String customerId) {
+        List<Client> clientsList = new ArrayList<Client>();
+        int count = 0;
+        int total = 1; // This gets overwritten, just needs to be greater than
+                       // count right now.
+        for (int offset = 0; count < total; offset += MAX_PAGE_LIMIT) {
+            Clients clientsObj = clientService.getByCustomerId(customerId, offset, MAX_PAGE_LIMIT);
+            clientsList.addAll(clientsObj.getClients());
+            total = clientsObj.getTotalRecords();
+            count = clientsList.size();
+        }
+        return clientsList;
+    }
+
+    private List<User> getAllUsersForCustomerId(String customerId) {
+        List<User> usersList = new ArrayList<User>();
+        int count = 0;
+        int total = 1; // This gets overwritten, just needs to be greater than
+                       // count right now.
+        for (int offset = 0; count < total; offset += MAX_PAGE_LIMIT) {
+            Users usersObj = userService.getByCustomerId(customerId, offset, MAX_PAGE_LIMIT);
+            usersList.addAll(usersObj.getUsers());
+            total = usersObj.getTotalRecords();
+            count = usersList.size();
+        }
+        return usersList;
     }
 
     private void revokeToken(String tokenStringRequestingDelete, String tokenToDelete, boolean isGlobal)
