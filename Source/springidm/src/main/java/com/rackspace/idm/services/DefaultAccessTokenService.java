@@ -266,8 +266,9 @@ public class DefaultAccessTokenService implements AccessTokenService {
         AccessToken accessToken = getTokenByTokenStringGlobally(accessTokenStr);
         if (accessToken != null && !accessToken.isExpired(new DateTime())) {
             authenticated = true;
+            MDC.put(Audit.WHO, accessToken.getAuditString());
         }
-        MDC.put(Audit.WHO, accessToken.getAuditString());
+        
         logger.debug("Authorized Token: {} : {}", accessTokenStr, authenticated);
         return authenticated;
     }
