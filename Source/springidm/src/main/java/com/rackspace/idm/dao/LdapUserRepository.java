@@ -1,5 +1,6 @@
 package com.rackspace.idm.dao;
 
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.entities.*;
 import com.rackspace.idm.exceptions.StalePasswordException;
 import com.rackspace.idm.exceptions.UserDisabledException;
@@ -57,9 +58,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         Attribute[] attributes = getAddAttributes(user);
 
         LDAPResult result;
+        Audit audit = Audit.log(user).add();
         try {
             result = getAppConnPool().add(userDN, attributes);
+            audit.succeed();
         } catch (LDAPException ldapEx) {
+            audit.fail();
             getLogger().error("Error adding user {} - {}", user, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
@@ -136,10 +140,13 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "Null or Empty username parameter.");
         }
 
+        Audit audit = Audit.log(username).delete();
         LDAPResult result = null;
         try {
             result = getAppConnPool().delete(getUserDnByUsername(username));
+            audit.succeed();
         } catch (LDAPException ldapEx) {
+            audit.fail();
             getLogger().error("Error deleting username {} - {}", username,
                 ldapEx);
             throw new IllegalStateException(ldapEx);
@@ -497,10 +504,13 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             return;
         }
 
+        Audit audit = Audit.log(user).modify(mods);
         LDAPResult result = null;
         try {
             result = getAppConnPool().modify(oldUser.getUniqueId(), mods);
+            audit.succeed();
         } catch (LDAPException ldapEx) {
+            audit.fail();
             if (ResultCode.UNWILLING_TO_PERFORM.equals(ldapEx.getResultCode())
                 && STALE_PASSWORD_MESSAGE.equals(ldapEx.getMessage())) {
                 throw new StalePasswordException(
@@ -579,11 +589,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             return;
         }
 
+        List<Modification> mods = getModifications(oldUser, user);
+        Audit audit = Audit.log(user).modify(mods);
         LDAPResult result = null;
-        try {
-            result = getAppConnPool().modify(userDN,
-                getModifications(oldUser, user));
+        try {           
+            result = getAppConnPool().modify(userDN,mods);
+            audit.succeed();
         } catch (LDAPException ldapEx) {
+            audit.fail();
             getLogger().error("Error updating user {} - {}",
                 user.getUsername(), ldapEx);
             throw new IllegalStateException(ldapEx);
@@ -624,6 +637,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         UserAuthenticationResult authResult = validateUserStatus(user,
             authenticated);
         getLogger().debug("Authenticated User by password");
+        
+        addAuditLogForAuthentication(user, authenticated);
+        
         return authResult;
     }
 
@@ -640,6 +656,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         UserAuthenticationResult authResult = validateUserStatus(user,
             authenticated);
         getLogger().debug("Authenticated User by API Key - {}", authResult);
+        
+        addAuditLogForAuthentication(user, authenticated);
 
         return authResult;
     }
@@ -1177,5 +1195,16 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         return mods;
+    }
+    
+    private void addAuditLogForAuthentication(User user, boolean authenticated) {
+     
+        Audit audit = Audit.authUser(user).add();
+        if (authenticated) {
+            audit.succeed();
+        }
+        else {
+            audit.fail();
+        }
     }
 }
