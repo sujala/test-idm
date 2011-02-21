@@ -121,6 +121,21 @@ public final class AccessToken extends Token implements Serializable {
             && user.groups.size() > 0;
     }
 
+    public String getAuditString() {
+        String auditString = null;
+        if (isClientToken()) {
+            String format = "Client:%s";
+            auditString = String.format(format, client.getClientId());
+        } else {
+            String rackerFormat = "Racker:%s";
+            String userFormat = "User:%s";
+            auditString = isTrusted ? String.format(rackerFormat,
+                user.getUsername()) : String.format(userFormat,
+                user.getUsername());
+        }
+        return auditString;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
