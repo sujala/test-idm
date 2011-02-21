@@ -100,9 +100,8 @@ public abstract class HttpRepository {
         try {
             return caller.execute(myToken.getTokenString(), client);
         } catch (UniformInterfaceException ue1) {
-            boolean myTokenExpired = ue1.getResponse().getStatus() == Status.UNAUTHORIZED.getStatusCode()
-                && myToken.isExpired(new DateTime());
-            if (myTokenExpired) {
+            boolean isUnauthorized = ue1.getResponse().getStatus() == Status.UNAUTHORIZED.getStatusCode();
+            if (isUnauthorized) {
                 // Try again with a new token, client token might have just
                 // expired.
                 myToken = getMyAccessToken(dc);
