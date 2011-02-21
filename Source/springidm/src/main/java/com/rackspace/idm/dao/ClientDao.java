@@ -20,8 +20,6 @@ public interface ClientDao {
 
     ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 
-    boolean authenticateDeprecated(String clientId, String clientSecret);
-
     void delete(String clientId);
 
     void deleteClientGroup(String customerId, String clientId, String name);

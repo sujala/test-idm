@@ -6,7 +6,7 @@ import javax.validation.constraints.Pattern;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 
-public class Customer {
+public class Customer implements Auditable {
 
     private String uniqueId = null;
 
@@ -227,5 +227,11 @@ public class Customer {
             + ", inum=" + inum + ", owner=" + owner + ", seeAlso=" + seeAlso
             + ", softDeleted=" + softDeleted + ", status=" + status
             + ", uniqueId=" + uniqueId + "]";
+    }
+
+    @Override
+    public String getAuditContext() {
+        String format = "customerId=%s";
+        return String.format(format, customerId);
     }
 }

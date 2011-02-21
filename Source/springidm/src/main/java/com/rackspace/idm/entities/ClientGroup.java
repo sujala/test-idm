@@ -4,7 +4,7 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 
-public class ClientGroup implements Serializable{
+public class ClientGroup implements Serializable, Auditable{
     private static final long serialVersionUID = -5845388972735116102L;
     
     private String uniqueId = null;
@@ -161,5 +161,11 @@ public class ClientGroup implements Serializable{
             return new ClientGroup(clientId, customerId, name);
         }
 
+    }
+
+    @Override
+    public String getAuditContext() {
+        String format = "groupName=%s,clientId=$s,customerId=%s";
+        return String.format(format, name, clientId, customerId);
     }
 }

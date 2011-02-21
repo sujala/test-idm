@@ -89,10 +89,9 @@ public class LdapCustomerRepository extends LdapRepository implements
         String customerApplicationsDN = new LdapDnBuilder(customerDN)
             .addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME).build();
 
-        Audit audit = Audit.log(customerDN).add();
+        Audit audit = Audit.log(customer).add();
         try {
             result = getAppConnPool().add(customerDN, attributes);
-            audit.succeed();
         } catch (LDAPException ldapEx) {
         	audit.fail();
             getLogger()
@@ -101,6 +100,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             getLogger().error("Error adding customerId {} - {}",
                 customer.getCustomerId(), result.getResultCode());
             throw new IllegalStateException(String.format(
@@ -116,12 +116,14 @@ public class LdapCustomerRepository extends LdapRepository implements
         try {
             result = getAppConnPool().add(customerGroupsDN, groupAttributes);
         } catch (LDAPException ldapEx) {
+            audit.fail();
             getLogger().error("Error adding customer groups {} - {}", customer,
                 ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             getLogger().error(
                 "Error adding customer groups for customerId {} - {}",
                 customer.getCustomerId(), result.getResultCode());
@@ -141,12 +143,14 @@ public class LdapCustomerRepository extends LdapRepository implements
         try {
             result = getAppConnPool().add(customerPeopleDN, peopleAttributes);
         } catch (LDAPException ldapEx) {
+            audit.fail();
             getLogger().error("Error adding customer people {} - {}", customer,
                 ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             getLogger().error(
                 "Error adding customer people for customerId {} - {}",
                 customer.getCustomerId(), result.getResultCode());
@@ -167,12 +171,14 @@ public class LdapCustomerRepository extends LdapRepository implements
             result = getAppConnPool().add(customerApplicationsDN,
                 applicationAttributes);
         } catch (LDAPException ldapEx) {
+            audit.fail();
             getLogger().error("Error adding customer applications {} - {}",
                 customer, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             getLogger().error(
                 "Error adding customer applications for customerId {} - {}",
                 customer.getCustomerId(), result.getResultCode());
@@ -183,6 +189,7 @@ public class LdapCustomerRepository extends LdapRepository implements
                         customer.getCustomerId(), result.getResultCode()
                             .toString()));
         }
+        audit.succeed();
 
         getLogger().debug("Added customer {}", customer);
     }
@@ -194,8 +201,12 @@ public class LdapCustomerRepository extends LdapRepository implements
             throw new IllegalArgumentException(
                 "Null or Empty customerId parameter.");
         }
+        
+        Customer customer = findByCustomerId(customerId);
 
-        String customerDN = getCustomerDnByCustomerId(customerId);
+        String customerDN = customer.getUniqueId();
+        
+        Audit audit = Audit.log(customer).delete();
 
         LDAPResult result = null;
         try {
@@ -203,6 +214,7 @@ public class LdapCustomerRepository extends LdapRepository implements
             request.addControl(new SubtreeDeleteRequestControl());
             result = getAppConnPool().delete(request);
         } catch (LDAPException ldapEx) {
+            audit.fail();
             getLogger().error(
                 "Could not perform delete for customerId {} - {}", customerId,
                 ldapEx);
@@ -210,6 +222,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             getLogger().error(
                 "Error deleting customer groups for customerId {} - {}",
                 customerId, result.getResultCode());
@@ -219,6 +232,7 @@ public class LdapCustomerRepository extends LdapRepository implements
                         "LDAP error encountered when deleting customer groups for customerId: %s - %s",
                         customerId, result.getResultCode().toString()));
         }
+        audit.succeed();
 
         getLogger().info("Deleted customer {}", customerId);
     }
@@ -375,12 +389,11 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         LDAPResult result = null;
         List<Modification> mods = getModifications(oldCustomer, customer);
-        Audit audit = Audit.log(oldCustomer.getCustomerId()).modify(mods);
+        Audit audit = Audit.log(oldCustomer).modify(mods);
         try {
 			result = getAppConnPool().modify(
                 getCustomerDnByCustomerId(customer.getCustomerId()),
                 mods);
-			audit.succeed();
         } catch (LDAPException ldapEx) {
         	audit.fail();
             getLogger().error("Error updating customer {} - {}", customer,
@@ -389,12 +402,14 @@ public class LdapCustomerRepository extends LdapRepository implements
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             getLogger().error("Error updating customer {} - {}",
                 customer.getCustomerId(), result.getResultCode());
             throw new IllegalArgumentException(String.format(
                 "LDAP error encountered when updating customer: %s - %s",
                 customer.getCustomerId(), result.getResultCode().toString()));
         }
+        audit.succeed();
 
         getLogger().debug("Updated customer {}", customer.getCustomerId());
     }

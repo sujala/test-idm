@@ -9,7 +9,7 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 
-public class Permission implements Serializable {
+public class Permission implements Serializable, Auditable {
     private static final long serialVersionUID = -4289257131504718968L;
     public static final String LDAP_SEPERATOR = "::";
 
@@ -237,5 +237,11 @@ public class Permission implements Serializable {
             return permission;
         }
 
+    }
+
+    @Override
+    public String getAuditContext() {
+        String format = "permissionId=%s,clientId=%s,customerId=%s";
+        return String.format(format, permissionId, clientId, customerId);
     }
 }

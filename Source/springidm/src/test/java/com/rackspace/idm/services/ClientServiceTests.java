@@ -13,6 +13,7 @@ import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.CustomerDao;
 import com.rackspace.idm.dao.UserDao;
 import com.rackspace.idm.entities.Client;
+import com.rackspace.idm.entities.ClientAuthenticationResult;
 import com.rackspace.idm.entities.ClientGroup;
 import com.rackspace.idm.entities.ClientSecret;
 import com.rackspace.idm.entities.ClientStatus;
@@ -121,14 +122,14 @@ public class ClientServiceTests {
     @Test
     public void shouldAuthenticateClient() {
         EasyMock.expect(
-            mockClientDao.authenticateDeprecated(clientId, clientSecret.getValue()))
-            .andReturn(true);
+            mockClientDao.authenticate(clientId, clientSecret.getValue()))
+            .andReturn(new ClientAuthenticationResult(getFakeClient(), true));
         EasyMock.replay(mockClientDao);
 
-        boolean authenticated = clientService.authenticateDeprecated(clientId,
+        ClientAuthenticationResult authenticated = clientService.authenticate(clientId,
                 clientSecret.getValue());
 
-        Assert.assertTrue(authenticated);
+        Assert.assertTrue(authenticated.isAuthenticated());
         EasyMock.verify(mockClientDao);
     }
 

@@ -13,6 +13,7 @@ import org.junit.Test;
 import com.rackspace.idm.config.LdapConfiguration;
 import com.rackspace.idm.config.PropertyFileConfiguration;
 import com.rackspace.idm.entities.Client;
+import com.rackspace.idm.entities.ClientAuthenticationResult;
 import com.rackspace.idm.entities.ClientGroup;
 import com.rackspace.idm.entities.ClientSecret;
 import com.rackspace.idm.entities.ClientStatus;
@@ -201,8 +202,8 @@ public class LdapClientRepositoryTest {
 
     @Test
     public void shouldAuthenticateForCorrectCredentials() {
-        boolean authenticated = repo.authenticateDeprecated("ABCDEF", "password");
-        Assert.assertTrue(authenticated);
+        ClientAuthenticationResult authenticated = repo.authenticate("ABCDEF", "password");
+        Assert.assertTrue(authenticated.isAuthenticated());
     }
 
     @Test

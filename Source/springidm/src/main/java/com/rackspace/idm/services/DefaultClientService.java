@@ -74,10 +74,6 @@ public class DefaultClientService implements ClientService {
         logger.info("Added Client: {}", client);
     }
 
-    public boolean authenticateDeprecated(String clientId, String clientSecret) {
-        return clientDao.authenticateDeprecated(clientId, clientSecret);
-    }
-
     @Override
     public ClientAuthenticationResult authenticate(String clientId,
         String clientSecret) {

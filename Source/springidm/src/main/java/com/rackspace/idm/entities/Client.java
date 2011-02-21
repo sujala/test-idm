@@ -7,7 +7,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.List;
 
-public class Client extends BaseClient {
+public class Client extends BaseClient implements Auditable {
     private static final long serialVersionUID = -3160754818606772239L;
 
     private ClientSecret clientSecret;
@@ -264,5 +264,11 @@ public class Client extends BaseClient {
             + ", status=" + status + ", uniqueId=" + uniqueId + ", inum="
             + inum + ", iname=" + iname + ", isLocked=" + locked
             + ", softDeleted=" + softDeleted + "]";
+    }
+
+    @Override
+    public String getAuditContext() {
+        String format = "clientId=%s,customerId=%s";
+        return String.format(format, clientId, customerId);
     }
 }
