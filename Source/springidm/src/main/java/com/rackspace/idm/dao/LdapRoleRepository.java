@@ -3,6 +3,7 @@ package com.rackspace.idm.dao;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.rackspace.idm.audit.Audit;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -86,14 +87,17 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
 
         role.setUniqueId(roleDN);
 
+        Audit audit = Audit.log(role).add();
         try {
             result = getAppConnPool().add(roleDN, attributes);
         } catch (LDAPException ldapEx) {
+            audit.fail();
             getLogger().error("Error adding role {} - {}", role, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             getLogger().error("Error adding role {} - {}", role.getName(),
                 result.getResultCode());
             throw new IllegalStateException(String.format(
@@ -101,6 +105,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
                 role.getName(), result.getResultCode().toString()));
         }
 
+        audit.succeed();
         getLogger().debug("Added role {}", role);
     }
 
@@ -121,10 +126,12 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         List<Modification> mods = new ArrayList<Modification>();
         mods.add(new Modification(ModificationType.ADD, ATTR_MEMBER, userDN));
 
+        Audit audit = Audit.log(roleDN).modify(mods);
         LDAPResult result;
         try {
             result = getAppConnPool().modify(roleDN, mods);
         } catch (LDAPException ldapEx) {
+            audit.fail();
             getLogger().error("Error adding user to role {} - {}", roleDN,
                 ldapEx);
 
@@ -136,11 +143,13 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             throw new IllegalStateException(String.format(
                 "LDAP error encountered when adding user to role: %s - %s",
                 roleDN, result.getResultCode().toString()));
         }
 
+        audit.succeed();
         getLogger().info("Added user {} to role {}", userDN, roleDN);
     }
 
@@ -165,10 +174,12 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         List<Modification> mods = new ArrayList<Modification>();
         mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER, userDN));
 
+        Audit audit = Audit.log(roleDN).modify(mods);
         LDAPResult result;
         try {
             result = getAppConnPool().modify(roleDN, mods);
         } catch (LDAPException ldapEx) {
+            audit.fail();
             getLogger().error("Error deleting user from role {} - {}", roleDN,
                 ldapEx);
             if (ldapEx.getResultCode().equals(ResultCode.NO_SUCH_ATTRIBUTE)) {
@@ -178,6 +189,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             getLogger().error("Error deleting user from role {} - {}", roleDN,
                 result.getResultCode());
             throw new IllegalStateException(String.format(
@@ -185,6 +197,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
                 roleDN, result.getResultCode().toString()));
         }
 
+        audit.succeed();
         getLogger().info("Deleted user {} from role {}", userDN, roleDN);
     }
 

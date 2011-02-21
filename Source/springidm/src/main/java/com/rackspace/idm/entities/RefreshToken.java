@@ -4,7 +4,7 @@ import org.joda.time.DateTime;
 
 import com.rackspace.idm.oauthAuthentication.Token;
 
-public class RefreshToken extends Token {
+public class RefreshToken extends Token implements Auditable {
 
     private String owner;
     private String requestor;
@@ -80,5 +80,10 @@ public class RefreshToken extends Token {
     public String toString() {
         return "RefreshToken [owner=\"" + owner + "\", requestor=\""
             + requestor + "\", expiration=\"" + getExpirationTime() + "\"]";
+    }
+
+    @Override
+    public String getAuditContext() {
+        return this.getTokenString();
     }
 }

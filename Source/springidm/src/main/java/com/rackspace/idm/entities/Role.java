@@ -5,7 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.List;
 
-public class Role implements Serializable {
+public class Role implements Serializable, Auditable {
     private static final long serialVersionUID = 875666210673489138L;
 
     private String uniqueId = null;
@@ -344,5 +344,10 @@ public class Role implements Serializable {
             return role;
         }
 
+    }
+
+    @Override
+    public String getAuditContext() {
+        return getUniqueId();
     }
 }

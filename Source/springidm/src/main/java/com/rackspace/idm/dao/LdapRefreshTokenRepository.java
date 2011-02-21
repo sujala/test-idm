@@ -1,5 +1,6 @@
 package com.rackspace.idm.dao;
 
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.entities.RefreshToken;
 import com.unboundid.ldap.sdk.*;
 
@@ -25,20 +26,25 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
             throw new IllegalArgumentException("Null or Empty tokenString parameter.");
         }
 
+        Audit audit = Audit.log(tokenString).delete();
         LDAPResult result = null;
         try {
             result = getAppConnPool().delete(getTokenDnByTokenstring(tokenString));
         } catch (LDAPException ldapEx) {
+            audit.fail();
             getLogger().error("Error deleting refreshToken {} - {}", tokenString, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             getLogger().error("Error deleting refreshToken {} - {}", tokenString, result.getResultCode());
             throw new IllegalStateException(String.format(
                 "LDAP error encountered when deleting refreshToken: %s - %s" + tokenString, result
                     .getResultCode().toString()));
         }
+
+        audit.succeed();
         getLogger().info("Deleted token - {}", tokenString);
     }
 
@@ -233,21 +239,25 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
         String tokenDN = new LdapDnBuilder(TOKEN_BASE_DN).addAttriubte(ATTR_O, refreshToken.getTokenString())
             .build();
 
+        Audit audit = Audit.log(refreshToken).add();
         LDAPResult result;
         try {
             result = getAppConnPool().add(tokenDN, attributes);
         } catch (LDAPException ldapEx) {
+            audit.fail();
             getLogger().error("Error adding RefreshToken {} - {}", refreshToken, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             getLogger().error("Error adding RefreshToken {} - {}", refreshToken, result.getResultCode());
             throw new IllegalArgumentException(String.format(
                 "LDAP error encountered when adding RefreshToken: %s - %s", refreshToken.getTokenString(),
                 result.getResultCode().toString()));
         }
 
+        audit.succeed();
         getLogger().info("Added token - {}", refreshToken);
     }
 
@@ -272,22 +282,26 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
             return;
         }
 
+        Audit audit = Audit.log(refreshToken).modify();
         LDAPResult result = null;
         try {
             result = getAppConnPool().modify(getTokenDnByTokenString(tokenString),
                 getModifications(oldRefreshToken, refreshToken));
         } catch (LDAPException ldapEx) {
+            audit.fail();
             getLogger().error("Error updating refreshToken {} - {}", tokenString, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             getLogger().error("Error updating refreshToken {} - {}", tokenString, result.getResultCode());
             throw new IllegalArgumentException(String.format(
                 "LDAP error encountered when updating refreshToken: %s - %s" + tokenString, result
                     .getResultCode().toString()));
         }
 
+        audit.succeed();
         getLogger().info("Updated refreshToken - {}", tokenString);
     }
 
