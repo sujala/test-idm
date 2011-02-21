@@ -60,8 +60,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         LDAPResult result;
         Audit audit = Audit.log(user).add();
         try {
-            result = getAppConnPool().add(userDN, attributes);
-            audit.succeed();
+            result = getAppConnPool().add(userDN, attributes);      
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error("Error adding user {} - {}", user, ldapEx);
@@ -69,6 +68,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             getLogger().error("Error adding user {} - {}", user.getUsername(),
                 result.getResultCode());
             throw new IllegalStateException(String.format(
@@ -78,6 +78,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         
         // Now that its in LDAP we'll set the password to existing type
         user.setPasswordObj(Password.existingInstance(user.getPassword()));
+        
+        audit.succeed();
 
         getLogger().debug("Added user {}", user);
     }
@@ -144,7 +146,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         LDAPResult result = null;
         try {
             result = getAppConnPool().delete(getUserDnByUsername(username));
-            audit.succeed();
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error("Error deleting username {} - {}", username,
@@ -153,6 +154,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             getLogger().error("Error deleting username {} - {}", username,
                 result.getResultCode());
             throw new IllegalStateException(
@@ -161,6 +163,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                         + username, result.getResultCode().toString()));
         }
 
+        audit.succeed();
         getLogger().info("Deleted username - {}", username);
     }
 
@@ -507,8 +510,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         Audit audit = Audit.log(user).modify(mods);
         LDAPResult result = null;
         try {
-            result = getAppConnPool().modify(oldUser.getUniqueId(), mods);
-            audit.succeed();
+            result = getAppConnPool().modify(oldUser.getUniqueId(), mods);           
         } catch (LDAPException ldapEx) {
             audit.fail();
             if (ResultCode.UNWILLING_TO_PERFORM.equals(ldapEx.getResultCode())
@@ -523,6 +525,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             getLogger().error("Error updating user {} - {}",
                 user.getUsername(), result.getResultCode());
             throw new IllegalArgumentException(String.format(
@@ -533,6 +536,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         // Now that its in LDAP we'll set the password to existing type
         user.setPasswordObj(Password.existingInstance(user.getPassword()));
 
+        audit.succeed();
         getLogger().info("Updated user - {}", user);
     }
 
@@ -593,8 +597,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         Audit audit = Audit.log(user).modify(mods);
         LDAPResult result = null;
         try {           
-            result = getAppConnPool().modify(userDN,mods);
-            audit.succeed();
+            result = getAppConnPool().modify(userDN,mods);         
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error("Error updating user {} - {}",
@@ -603,6 +606,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail();
             getLogger().error("Error updating user {} - {}",
                 user.getUsername(), result.getResultCode());
             throw new IllegalArgumentException(String.format(
@@ -610,6 +614,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                     + user.getUsername(), result.getResultCode().toString()));
         }
 
+        audit.succeed();
         getLogger().info("Updated user - {}", user);
     }
 
