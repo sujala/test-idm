@@ -1,16 +1,5 @@
 package com.rackspace.idm.oauth;
 
-import com.rackspace.idm.config.PropertyFileConfiguration;
-import com.rackspace.idm.dao.MemcachedAccessTokenRepository;
-import com.rackspace.idm.entities.*;
-import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
-import com.rackspace.idm.exceptions.NotAuthenticatedException;
-import com.rackspace.idm.services.AccessTokenService;
-import com.rackspace.idm.services.ClientService;
-import com.rackspace.idm.services.RefreshTokenService;
-import com.rackspace.idm.services.UserService;
-import com.rackspace.idm.test.stub.StubLogger;
-import com.rackspace.idm.util.AuthHeaderHelper;
 import junit.framework.Assert;
 
 import org.apache.commons.configuration.Configuration;
@@ -18,11 +7,31 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.HashSet;
-import java.util.Set;
+import com.rackspace.idm.dao.MemcachedAccessTokenRepository;
+import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
+import com.rackspace.idm.entities.AuthData;
+import com.rackspace.idm.entities.Client;
+import com.rackspace.idm.entities.ClientAuthenticationResult;
+import com.rackspace.idm.entities.ClientSecret;
+import com.rackspace.idm.entities.ClientStatus;
+import com.rackspace.idm.entities.Password;
+import com.rackspace.idm.entities.RefreshToken;
+import com.rackspace.idm.entities.User;
+import com.rackspace.idm.entities.UserAuthenticationResult;
+import com.rackspace.idm.entities.UserCredential;
+import com.rackspace.idm.entities.UserHumanName;
+import com.rackspace.idm.entities.UserLocale;
+import com.rackspace.idm.exceptions.NotAuthenticatedException;
+import com.rackspace.idm.services.AccessTokenService;
+import com.rackspace.idm.services.AuthorizationService;
+import com.rackspace.idm.services.ClientService;
+import com.rackspace.idm.services.RefreshTokenService;
+import com.rackspace.idm.services.UserService;
+import com.rackspace.idm.test.stub.StubLogger;
+import com.rackspace.idm.util.AuthHeaderHelper;
 
 public class OAuthServiceTests {
 
@@ -30,6 +39,7 @@ public class OAuthServiceTests {
     ClientService mockClientService;
     AccessTokenService mockAccessTokenService;
     RefreshTokenService mockRefreshTokenService;
+    AuthorizationService mockAuthorizationService;
     OAuthService oauthService;
     AuthHeaderHelper authHeaderHelper;
 
@@ -52,11 +62,12 @@ public class OAuthServiceTests {
         mockClientService = EasyMock.createMock(ClientService.class);
         mockAccessTokenService = EasyMock.createMock(AccessTokenService.class);
         mockRefreshTokenService = EasyMock.createMock(RefreshTokenService.class);
+        mockAuthorizationService = EasyMock.createNiceMock(AuthorizationService.class);
         authHeaderHelper = new AuthHeaderHelper();
         Configuration appConfig = new PropertiesConfiguration();
         appConfig.addProperty("idm.clientId", clientId);
         oauthService = new DefaultOAuthService(mockUserService, mockClientService, mockAccessTokenService,
-            mockRefreshTokenService, appConfig, new StubLogger());
+            mockRefreshTokenService, mockAuthorizationService, appConfig, new StubLogger());
     }
 
     @Test
@@ -315,12 +326,14 @@ public class OAuthServiceTests {
             getFakeClientAccessToken());
         mockAccessTokenService.delete(tokenVal);
         EasyMock.expectLastCall();
+        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(getFakeClientAccessToken())).andReturn(
+            true);
 
-        EasyMock.replay(mockAccessTokenService, mockRefreshTokenService);
+        EasyMock.replay(mockAccessTokenService, mockRefreshTokenService, mockAuthorizationService);
 
         oauthService.revokeTokensLocally(requestorToken, tokenVal);
 
-        EasyMock.verify(mockAccessTokenService, mockRefreshTokenService);
+        EasyMock.verify(mockAccessTokenService, mockRefreshTokenService, mockAuthorizationService);
     }
 
     @Test(expected = IllegalStateException.class)

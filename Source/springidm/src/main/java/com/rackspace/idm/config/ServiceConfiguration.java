@@ -194,8 +194,8 @@ public class ServiceConfiguration {
     @Bean
     public OAuthService oauthService() {
         Logger logger = LoggerFactory.getLogger(DefaultOAuthService.class);
-        return new DefaultOAuthService(userService(), clientService(),
-            tokenService(), refreshTokenService(), config, logger);
+        return new DefaultOAuthService(userService(), clientService(), tokenService(), refreshTokenService(),
+            authorizationService(), config, logger);
     }
 
     @Bean

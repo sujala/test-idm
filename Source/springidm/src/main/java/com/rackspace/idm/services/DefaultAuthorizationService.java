@@ -20,8 +20,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private Logger logger;
     private Configuration config;
 
-    public DefaultAuthorizationService(ClientDao clientDao,
-        MemcachedClient memcached, Configuration config, Logger logger) {
+    public DefaultAuthorizationService(ClientDao clientDao, MemcachedClient memcached, Configuration config,
+        Logger logger) {
         this.memcached = memcached;
         this.clientDao = clientDao;
         this.logger = logger;
@@ -34,8 +34,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     public boolean authorizeRackspaceClient(AccessToken token) {
         return token.isClientToken()
-            && token.getTokenClient().getCustomerId()
-                .equals(getRackspaceCustomerId());
+            && token.getTokenClient().getCustomerId().equals(getRackspaceCustomerId());
     }
 
     public boolean authorizeClient(AccessToken token, String verb, String uri) {
@@ -44,21 +43,19 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
 
-        List<String> allowedActions = getAllowedMethodsFromPermissions(token
-            .getTokenClient().getPermissions());
+        List<String> allowedActions = getAllowedMethodsFromPermissions(token.getTokenClient()
+            .getPermissions());
 
         return checkPermissions(allowedActions, verb, uri);
     }
 
-    public boolean authorizeUser(AccessToken token, String customerId,
-        String username) {
+    public boolean authorizeUser(AccessToken token, String customerId, String username) {
 
         if (token.isClientToken() || token.isRestrictedToSetPassword()) {
             return false;
         }
 
-        boolean authorized = token.getTokenUser().getUsername()
-            .equals(username)
+        boolean authorized = token.getTokenUser().getUsername().equals(username)
             && token.getTokenUser().getCustomerId().equals(customerId);
 
         return authorized;
@@ -70,8 +67,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
 
-        boolean authorized = token.getTokenUser().getCustomerId()
-            .equals(customerId);
+        boolean authorized = token.getTokenUser().getCustomerId().equals(customerId);
 
         return authorized;
     }
@@ -88,8 +84,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
         for (ClientGroup r : token.getTokenUser().getGroups()) {
             if (r.getClientId().equals(getIdmClientId())
-                && r.getName().toLowerCase()
-                    .equals(getIdmAdminGroupName().toLowerCase())) {
+                && r.getName().toLowerCase().equals(getIdmAdminGroupName().toLowerCase())) {
                 authorized = true;
             }
         }
@@ -102,16 +97,28 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
 
-        boolean authorized = getIdmClientId().equalsIgnoreCase(
-            authToken.getTokenClient().getClientId())
-            && getRackspaceCustomerId().equalsIgnoreCase(
-                authToken.getTokenClient().getCustomerId());
-        
+        boolean authorized = getIdmClientId().equalsIgnoreCase(authToken.getTokenClient().getClientId())
+            && getRackspaceCustomerId().equalsIgnoreCase(authToken.getTokenClient().getCustomerId());
+
         return authorized;
     }
 
-    private List<String> getAllowedMethodsFromPermissions(
-        List<Permission> permissions) {
+    @Override
+    public boolean authorizeAsRequestorOrOwner(AccessToken targetToken, AccessToken requestingToken) {
+        boolean isRequestor = requestingToken.isClientToken()
+            && requestingToken.getTokenClient().getClientId()
+                .equals(targetToken.getTokenClient().getClientId());
+
+        boolean isOwner = requestingToken.getTokenUser() != null
+            && targetToken.getTokenUser() != null
+            && requestingToken.getTokenUser().getUsername()
+                .equals(targetToken.getTokenUser().getUsername());
+
+        boolean authorized = isRequestor || isOwner;
+        return authorized;
+    }
+
+    private List<String> getAllowedMethodsFromPermissions(List<Permission> permissions) {
 
         if (permissions == null || permissions.size() < 1) {
             return null;
@@ -121,12 +128,10 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
         for (Permission perm : permissions) {
             if (perm.getClientId().equals(getIdmClientId())) {
-                Permission p = (Permission) memcached.get(perm
-                    .getPermissionId());
+                Permission p = (Permission) memcached.get(perm.getPermissionId());
                 if (p == null) {
-                    p = clientDao
-                        .getDefinedPermissionByClientIdAndPermissionId(
-                            perm.getClientId(), perm.getPermissionId());
+                    p = clientDao.getDefinedPermissionByClientIdAndPermissionId(perm.getClientId(),
+                        perm.getPermissionId());
                     if (p != null) {
                         memcached.set(p.getPermissionId(), 3600, p);
                     }
@@ -140,8 +145,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return uris;
     }
 
-    private boolean checkPermissions(List<String> allowedActions, String verb,
-        String uri) {
+    private boolean checkPermissions(List<String> allowedActions, String verb, String uri) {
 
         String requestedActionURI = verb + " " + uri;
         requestedActionURI = requestedActionURI.toLowerCase();
@@ -164,8 +168,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return result;
     }
 
-    private boolean checkPermission(String actionURIRegex,
-        String actionURIRequest) {
+    private boolean checkPermission(String actionURIRegex, String actionURIRequest) {
 
         if (actionURIRegex == null)
             return false;

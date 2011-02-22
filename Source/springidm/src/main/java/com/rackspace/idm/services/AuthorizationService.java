@@ -20,4 +20,11 @@ public interface AuthorizationService {
      * Appropriate for authorizing internal calls.
      */
     boolean authorizeCustomerIdm(AccessToken authToken);
+
+    /**
+     * @param targetToken Token against which the action being performed is being evaluated.
+     * @param requestingToken Representing the caller's credentials
+     * @return
+     */
+    abstract boolean authorizeAsRequestorOrOwner(AccessToken targetToken, AccessToken requestingToken);
 }

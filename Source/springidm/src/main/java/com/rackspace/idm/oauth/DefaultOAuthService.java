@@ -24,27 +24,28 @@ import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.exceptions.NotAuthorizedException;
 import com.rackspace.idm.services.AccessTokenService;
+import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.services.RefreshTokenService;
 import com.rackspace.idm.services.UserService;
 
 public class DefaultOAuthService implements OAuthService {
-    private static final int MAX_PAGE_LIMIT = 1000;
     private UserService userService;
     private ClientService clientService;
     private AccessTokenService accessTokenService;
     private RefreshTokenService refreshTokenService;
+    private AuthorizationService authorizationService;
     private Logger logger;
     private Configuration config;
 
     public DefaultOAuthService(UserService userService, ClientService clientService,
-        AccessTokenService accessTokenService, RefreshTokenService refreshTokenService, Configuration config,
-        Logger logger) {
-
+        AccessTokenService accessTokenService, RefreshTokenService refreshTokenService,
+        AuthorizationService authorizationService, Configuration config, Logger logger) {
         this.userService = userService;
         this.clientService = clientService;
         this.accessTokenService = accessTokenService;
         this.refreshTokenService = refreshTokenService;
+        this.authorizationService = authorizationService;
         this.logger = logger;
         this.config = config;
     }
@@ -115,7 +116,7 @@ public class DefaultOAuthService implements OAuthService {
             throw new IllegalArgumentException(error);
         }
 
-        boolean isAuthorized = isAuthorizedAsCustomerIdm(requestingToken);
+        boolean isAuthorized = authorizationService.authorizeCustomerIdm(requestingToken);
 
         if (!isAuthorized) {
             String errMsg = String.format("Requesting token %s not authorized to revoke token for owner %s.",
@@ -151,7 +152,7 @@ public class DefaultOAuthService implements OAuthService {
             throw new IllegalArgumentException(error);
         }
 
-        boolean isAuthorized = isAuthorizedAsCustomerIdm(requestingToken);
+        boolean isAuthorized = authorizationService.authorizeCustomerIdm(requestingToken);
 
         if (!isAuthorized) {
             String errMsg = String.format(
@@ -195,28 +196,24 @@ public class DefaultOAuthService implements OAuthService {
 
     private List<Client> getAllClientsForCustomerId(String customerId) {
         List<Client> clientsList = new ArrayList<Client>();
-        int count = 0;
         int total = 1; // This gets overwritten, just needs to be greater than
-                       // count right now.
-        for (int offset = 0; count < total; offset += MAX_PAGE_LIMIT) {
-            Clients clientsObj = clientService.getByCustomerId(customerId, offset, MAX_PAGE_LIMIT);
+                       // offset right now.
+        for (int offset = 0; offset < total; offset += getPagingLimit()) {
+            Clients clientsObj = clientService.getByCustomerId(customerId, offset, getPagingLimit());
             clientsList.addAll(clientsObj.getClients());
             total = clientsObj.getTotalRecords();
-            count = clientsList.size();
         }
         return clientsList;
     }
 
     private List<User> getAllUsersForCustomerId(String customerId) {
         List<User> usersList = new ArrayList<User>();
-        int count = 0;
         int total = 1; // This gets overwritten, just needs to be greater than
-                       // count right now.
-        for (int offset = 0; count < total; offset += MAX_PAGE_LIMIT) {
-            Users usersObj = userService.getByCustomerId(customerId, offset, MAX_PAGE_LIMIT);
+                       // offset right now.
+        for (int offset = 0; offset < total; offset += getPagingLimit()) {
+            Users usersObj = userService.getByCustomerId(customerId, offset, getPagingLimit());
             usersList.addAll(usersObj.getUsers());
             total = usersObj.getTotalRecords();
-            count = usersList.size();
         }
         return usersList;
     }
@@ -225,9 +222,9 @@ public class DefaultOAuthService implements OAuthService {
         throws NotAuthorizedException {
         logger.info("Deleting Token {}", tokenToDelete);
 
-        AccessToken deletingToken = accessTokenService.getAccessTokenByTokenString(tokenToDelete);
-        if (deletingToken == null) {
-            String error = "No entry found for token " + deletingToken;
+        AccessToken deletedToken = accessTokenService.getAccessTokenByTokenString(tokenToDelete);
+        if (deletedToken == null) {
+            String error = "No entry found for token " + deletedToken;
             logger.debug(error);
             throw new IllegalStateException(error);
         }
@@ -240,12 +237,12 @@ public class DefaultOAuthService implements OAuthService {
             throw new IllegalStateException(error);
         }
 
-        boolean isGoodAsIdm = isAuthorizedAsCustomerIdm(requestingToken);
+        boolean isGoodAsIdm = authorizationService.authorizeCustomerIdm(requestingToken);
         boolean isAuthorized = false;
         if (isGlobal) {
             // Only CustomerIdm Client and Client that got token or the user of
             // the token are authorized to revoke token
-            isAuthorized = isGoodAsIdm || isAuthorizedAsRequestorOrOwner(deletingToken, requestingToken);
+            isAuthorized = isGoodAsIdm || authorizationService.authorizeAsRequestorOrOwner(deletedToken, requestingToken);
         } else {
             // Only Customer IDM can make a non-global token revocation call.
             isAuthorized = isGoodAsIdm;
@@ -264,41 +261,21 @@ public class DefaultOAuthService implements OAuthService {
             throw new ForbiddenException(errMsg);
         }
 
-        if (deletingToken.getRequestor() == null) {
+        if (deletedToken.getRequestor() == null) {
             String error = String
-                .format("Token %s does not have a requestor", deletingToken.getTokenString());
+                .format("Token %s does not have a requestor", deletedToken.getTokenString());
             logger.debug(error);
             throw new IllegalStateException(error);
         }
 
         if (isGlobal) {
             // This user is to be completely logged out of the system.
-            deleteRefreshTokenByAccessToken(deletingToken);
-            accessTokenService.deleteAllGloballyForOwner(deletingToken.getOwner());
+            deleteRefreshTokenByAccessToken(deletedToken);
+            accessTokenService.deleteAllGloballyForOwner(deletedToken.getOwner());
         } else {
-            accessTokenService.delete(deletingToken.getTokenString());
+            accessTokenService.delete(deletedToken.getTokenString());
         }
-        logger.info("Deleted Token {}", deletingToken);
-    }
-
-    private boolean isAuthorizedAsRequestorOrOwner(AccessToken deletingToken, AccessToken requestingToken) {
-        boolean isRequestor = requestingToken.isClientToken()
-            && requestingToken.getTokenClient().getClientId()
-                .equals(deletingToken.getTokenClient().getClientId());
-
-        boolean isOwner = requestingToken.getTokenUser() != null
-            && deletingToken.getTokenUser() != null
-            && requestingToken.getTokenUser().getUsername()
-                .equals(deletingToken.getTokenUser().getUsername());
-
-        boolean authorized = isRequestor || isOwner;
-        return authorized;
-    }
-
-    private boolean isAuthorizedAsCustomerIdm(AccessToken requestingToken) {
-        boolean isCustomerIdm = requestingToken.isClientToken()
-            && requestingToken.getTokenClient().getClientId().equals(getIdmClientId());
-        return isCustomerIdm;
+        logger.info("Deleted Token {}", deletedToken);
     }
 
     private void deleteRefreshTokenByAccessToken(AccessToken accessToken) {
@@ -355,5 +332,9 @@ public class DefaultOAuthService implements OAuthService {
 
     private String getIdmClientId() {
         return config.getString("idm.clientId");
+    }
+
+    private int getPagingLimit() {
+        return config.getInt("ldap.paging.limit.max");
     }
 }
