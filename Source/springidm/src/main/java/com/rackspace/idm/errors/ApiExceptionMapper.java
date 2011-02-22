@@ -1,9 +1,14 @@
 package com.rackspace.idm.errors;
 
+import java.util.List;
 import java.util.ResourceBundle;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
@@ -55,6 +60,9 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
     private ResourceBundle faultMessageConfig;
     private Logger logger;
 
+    @Context
+    private HttpHeaders headers;
+
     @Autowired
     public ApiExceptionMapper(ResourceBundle faultMessageConfig, LoggerFactoryWrapper loggerWrapper) {
         this.faultMessageConfig = faultMessageConfig;
@@ -95,8 +103,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         if (e instanceof StalePasswordException) {
             return toResponse(new StalePasswordFault(), e, 409);
         }
-        if (e instanceof NotAuthenticatedException
-            || e instanceof NotAuthorizedException) {
+        if (e instanceof NotAuthenticatedException || e instanceof NotAuthorizedException) {
             return toResponse(new Unauthorized(), e, 401);
         }
         if (e instanceof ForbiddenException) {
@@ -106,7 +113,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             return toResponse(new ItemNotFound(), e, 404);
         }
         if (e instanceof com.sun.jersey.api.NotFoundException) {
-            NotFoundException exp = new NotFoundException("Resource Not Found"); 
+            NotFoundException exp = new NotFoundException("Resource Not Found");
             return toResponse(new ItemNotFound(), exp, 404);
         }
         if (e instanceof DuplicateUsernameException) {
@@ -147,13 +154,11 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
                     Exception exp = new Exception("Method Not Allowed");
                     return toResponse(new MethodNotAllowed(), exp, 405);
                 case 500:
-                    return toResponse(new ServerError() , e.getCause(), 500);
+                    return toResponse(new ServerError(), e.getCause(), 500);
                 case 503:
-                    return toResponse(new ServiceUnavailable(), e.getCause(),
-                        503);
+                    return toResponse(new ServiceUnavailable(), e.getCause(), 503);
                 default:
-                    return toResponse(new ServiceUnavailable(), e.getCause(), wae
-                        .getResponse().getStatus());
+                    return toResponse(new ServiceUnavailable(), e.getCause(), wae.getResponse().getStatus());
             }
         }
 
@@ -170,14 +175,15 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             msg = faultMessageConfig.getString(faultClassName + ".msg");
             dtl = faultMessageConfig.getString(faultClassName + ".dtl");
         } catch (Exception e) {
-            // Unable to load the message or details! Most likey no entry has been made
+            // Unable to load the message or details! Most likey no entry has
+            // been made
             logger.error("Could not load fault message resource for {}:\n{}", faultClassName, e);
         }
 
         if (StringUtils.isBlank(msg)) {
             if (t == null) {
                 msg = ErrorMsg.SERVER_ERROR;
-            } else if (StringUtils.isBlank(t.getMessage())){
+            } else if (StringUtils.isBlank(t.getMessage())) {
                 msg = faultClassName;
             } else {
                 msg = t.getMessage();
@@ -195,6 +201,18 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         fault.setMessage(msg);
         fault.setDetails(dtl);
 
-        return Response.status(code).entity(fault).build();
+        ResponseBuilder builder = Response.status(code).entity(fault);
+        List<String> acceptHeaderVals = headers.getRequestHeader(HttpHeaders.ACCEPT);
+        boolean isOctetStreamResponse = acceptHeaderVals.get(0).equals(MediaType.APPLICATION_OCTET_STREAM);
+        if (isOctetStreamResponse) {
+            // Convert to a different response
+            MediaType respType = MediaType.APPLICATION_JSON_TYPE;
+            if (acceptHeaderVals.size() > 1) {
+                respType = MediaType.valueOf(acceptHeaderVals.get(1));
+            }
+            return builder.type(respType).build();
+        }
+
+        return builder.build();
     }
 }

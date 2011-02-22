@@ -43,7 +43,7 @@ public class HttpAccessTokenRepository extends HttpRepository implements XdcAcce
             @Override
             public byte[] execute(String myTokenStr, DataCenterClient client) {
                 return client.getResource().path(TOKEN_RESOURCE_PATH + "/" + tokenString)
-                    .accept(MediaType.APPLICATION_OCTET_STREAM)
+                    .accept(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_XML)
                     .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr))
                     .get(byte[].class);
             }
