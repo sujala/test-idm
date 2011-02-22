@@ -86,7 +86,7 @@ public class HttpAccessTokenRepositoryTest {
 
     @Test
     public void shouldGetMyToken() {
-        AccessToken idmTk = repo.getMyAccessToken("QA");
+        AccessToken idmTk = repo.getMyAccessToken("QA", false);
         Assert.assertNotNull(idmTk);
     }
 
