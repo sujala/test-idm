@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -40,6 +41,7 @@ public class Audit {
 	
 	private List<Event> events = new ArrayList<Event>();
 	private String target;
+	private String failureMsg = "-";
 	private final long timestamp = System.currentTimeMillis();
 	private volatile boolean consumed = false;
 
@@ -121,6 +123,11 @@ public class Audit {
 	public void fail() {
 		log(RESULT.FAIL);
 	}
+	
+	public void fail(String msg) {
+		failureMsg = msg;
+		fail();
+	}
 
 	private void log(RESULT r) {
 		if (consumed) {
@@ -131,9 +138,9 @@ public class Audit {
 		Logger logger = LoggerFactory.getLogger(AUDIT_LOGGER_ID);
 		for (Event event : events) {
 			logger.info(
-					r + " {} {} [{}] {} {} {} {} {}",
-					new Object[] { event.action, target, event.context, MDC.get(WHO),
-							MDC.get(REMOTE_IP), MDC.get(HOST_IP),
+					r + " {} {} [{}] {} {} {} {} {} {}",
+					new Object[] { event.action, target, event.context, StringUtils.defaultIfEmpty(MDC.get(WHO),"-"),
+							failureMsg, MDC.get(REMOTE_IP), MDC.get(HOST_IP),
 							MDC.get(PATH), timestamp });
 		}
 	}

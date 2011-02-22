@@ -41,4 +41,10 @@ public class AuditTest {
 		Audit.log("clientId").modify(mods).fail();
 	}
 	
+	@Test
+	public void shouldFailWithMsg() {
+		MDC.put(Audit.WHO, "whoId");
+		Audit.log("clientId").delete().fail("failMsg");
+	}
+	
 }
