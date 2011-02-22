@@ -184,8 +184,8 @@ public class UsersResource {
             throw new DuplicateUsernameException(errorMsg);
         }
 
-        ClientGroup idmAdmin = new ClientGroup(getIdmClientId(),
-            getRackspaceCustomerId(), getIdmAdminGroupName());
+        ClientGroup idmAdmin = this.clientService.getClientGroup(
+            getRackspaceCustomerId(), getIdmClientId(), getIdmAdminGroupName());
 
         this.clientService.addUserToClientGroup(userDO.getUsername(), idmAdmin);
 
