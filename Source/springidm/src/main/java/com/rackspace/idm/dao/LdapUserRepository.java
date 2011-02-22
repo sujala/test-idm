@@ -2,6 +2,7 @@ package com.rackspace.idm.dao;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.entities.*;
+import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.exceptions.StalePasswordException;
 import com.rackspace.idm.exceptions.UserDisabledException;
 import com.rackspace.idm.util.InumHelper;
@@ -145,9 +146,17 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         Audit audit = Audit.log(username).delete();
+        
+        User user = this.findByUsername(username);
+        if (user == null) {
+            String errorMsg = String.format("User %s not found", username);
+            audit.fail(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+        
         LDAPResult result = null;
         try {
-            result = getAppConnPool().delete(getUserDnByUsername(username));
+            result = getAppConnPool().delete(user.getUniqueId());
         } catch (LDAPException ldapEx) {
             String errorString = String.format("Error deleting username %s - %s", username,
                 ldapEx);
@@ -285,6 +294,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     public User findByUsername(String username) {
+        // This method returns a user whether or not the user has been soft-deleted
         getLogger().debug("Doing search for username " + username);
         if (StringUtils.isBlank(username)) {
             getLogger().error("Null or Empty username parameter");
@@ -294,7 +304,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         String searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_UID, username)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
@@ -326,67 +335,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_UID, username)
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
-
-        getLogger().debug("Found User for customer - {}, {}", customerId, user);
-
-        return user;
-    }
-
-    // public User findUser(String customerId, String username,
-    // Map<String, String> userStatusMap) {
-    //
-    // getLogger().debug(
-    // "LdapUserRepository.findUser() - customerId: {}, username: {} ",
-    // customerId, username);
-    //
-    // if (StringUtils.isBlank(customerId)) {
-    // getLogger().error("Null or Empty customerId parameter");
-    // throw new IllegalArgumentException(
-    // "Null or Empty customerId parameter.");
-    // }
-    // if (StringUtils.isBlank(username)) {
-    // getLogger().error("Null or Empty username parameter");
-    // throw new IllegalArgumentException(
-    // "Null or Empty username parameter.");
-    // }
-    //
-    // String searchString = buildSearchString(
-    // USER_FIND_BY_CUSTOMER_NUMBER_STRING, userStatusMap);
-    //
-    // searchString = String.format(searchString, customerId, username);
-    //
-    // User user = getSingleUser(searchString, ATTR_SEARCH_ATTRIBUTES);
-    //
-    // getLogger().debug("Found User for customer - {}, {}", customerId, user);
-    //
-    // return user;
-    // }
-
-    public User findSoftDeletedUser(String customerId, String username) {
-
-        getLogger().debug(
-            "LdapUserRepository.findUser() - customerId: {}, username: {} ",
-            customerId, username);
-
-        if (StringUtils.isBlank(customerId)) {
-            getLogger().error("Null or Empty customerId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty customerId parameter.");
-        }
-        if (StringUtils.isBlank(username)) {
-            getLogger().error("Null or Empty username parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty username parameter.");
-        }
-
-        String searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_UID, username)
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(true))
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
@@ -457,24 +405,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return inum;
     }
 
-    public String getUserDnByUsername(String username) {
-        String dn = null;
-
-        String searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_UID, username)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
-
-        if (user != null) {
-            dn = user.getUniqueId();
-        }
-
-        return dn;
-    }
-
     public boolean isUsernameUnique(String username) {
 
         String searchFilter = new LdapSearchBuilder()
@@ -541,86 +471,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         
         // Now that its in LDAP we'll set the password to existing type
         user.setPasswordObj(Password.existingInstance(user.getPassword()));
-
-        audit.succeed();
-        getLogger().info("Updated user - {}", user);
-    }
-
-    public void saveRestoredUser(User user) {
-        getLogger().info("Updating user {}", user);
-        if (user == null || StringUtils.isBlank(user.getUsername())) {
-            getLogger().error(
-                "User instance is null or its userName has no value");
-            throw new IllegalArgumentException(
-                "Bad parameter: The User instance either null or its userName has no value.");
-        }
-
-        User oldUser = null;
-        SearchResult searchResult = null;
-        String userDN = null;
-
-        String searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_UID, user.getUsername())
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER,
-                user.getCustomerId())
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(true))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                String.format(searchFilter, user.getUsername()));
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for username {} - {}",
-                user.getUsername(), ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            oldUser = getUser(e);
-            userDN = e.getDN();
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error("More than one entry was found for username {}",
-                user.getUsername());
-            throw new IllegalStateException(
-                "More than one entry was found for this username");
-        }
-
-        if (oldUser == null) {
-            getLogger()
-                .error("No record found for user {}", user.getUsername());
-            throw new IllegalArgumentException(
-                "There is no exisiting record for the given User instance. Has the userName been changed?");
-        }
-
-        if (user.equals(oldUser)) {
-            // No changes!
-            return;
-        }
-
-        List<Modification> mods = getModifications(oldUser, user);
-        Audit audit = Audit.log(user).modify(mods);
-        LDAPResult result = null;
-        try {           
-            result = getAppConnPool().modify(userDN,mods);         
-        } catch (LDAPException ldapEx) {
-            String errorString = String.format("Error updating user %s - %s",
-                user.getUsername(), ldapEx);
-            audit.fail(errorString);
-            getLogger().error(errorString);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            String errorString = String.format("Error updating user %s - %s",
-                user.getUsername(), result.getResultCode());
-            audit.fail(errorString);
-            getLogger().error(errorString);
-            throw new IllegalArgumentException(String.format(
-                "LDAP error encountered when updating user: %s - %s"
-                    + user.getUsername(), result.getResultCode().toString()));
-        }
 
         audit.succeed();
         getLogger().info("Updated user - {}", user);
@@ -1178,8 +1028,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
             if (uNew.isSoftDeleted()) {
                 mods.add(new Modification(ModificationType.ADD,
-                    ATTR_SOFT_DELETED_DATE, String.valueOf(uNew
-                        .getSoftDeleteTimestamp())));
+                    ATTR_SOFT_DELETED_DATE, String.valueOf(new DateTime())));
             } else {
                 mods.add(new Modification(ModificationType.DELETE,
                     ATTR_SOFT_DELETED_DATE));

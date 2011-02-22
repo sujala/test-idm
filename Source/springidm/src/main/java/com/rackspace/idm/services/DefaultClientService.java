@@ -19,6 +19,7 @@ import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.exceptions.UserDisabledException;
 import com.rackspace.idm.util.HashHelper;
 
 public class DefaultClientService implements ClientService {
@@ -133,7 +134,7 @@ public class DefaultClientService implements ClientService {
     public Client getById(String clientId) {
         return clientDao.findByClientId(clientId);
     }
-    
+
     public Client getClient(String customerId, String clientId) {
         return clientDao.getClient(customerId, clientId);
     }
@@ -201,9 +202,15 @@ public class DefaultClientService implements ClientService {
 
         User user = userDao.findByUsername(username);
         if (user == null) {
-            throw new NotFoundException(String.format("User with username %s not found", username));
+            throw new NotFoundException(String.format(
+                "User with username %s not found", username));
         }
-        
+
+        if (user.isDisabled()) {
+            throw new UserDisabledException(String.format(
+                "User %s is disabled and cannot be added to group", username));
+        }
+
         try {
             clientDao.addUserToClientGroup(user.getUniqueId(), clientGroup);
         } catch (DuplicateException drx) {
@@ -212,14 +219,15 @@ public class DefaultClientService implements ClientService {
         }
     }
 
-    public void deleteClientGroup(String customerId, String clientId, String name) {
+    public void deleteClientGroup(String customerId, String clientId,
+        String name) {
         clientDao.deleteClientGroup(customerId, clientId, name);
     }
-    
+
     public ClientGroup getClientGroup(String customerId, String clientId,
         String groupName) {
-        ClientGroup group = clientDao.getClientGroup(customerId,
-            clientId, groupName);
+        ClientGroup group = clientDao.getClientGroup(customerId, clientId,
+            groupName);
         return group;
     }
 
@@ -239,7 +247,7 @@ public class DefaultClientService implements ClientService {
         if (user == null) {
             throw new NotFoundException();
         }
-        
+
         try {
             clientDao.removeUserFromGroup(user.getUniqueId(), clientGroup);
         } catch (NotFoundException nfe) {

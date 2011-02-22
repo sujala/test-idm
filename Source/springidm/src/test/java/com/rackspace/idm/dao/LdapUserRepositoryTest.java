@@ -264,7 +264,7 @@ public class LdapUserRepositoryTest {
         
         repo.save(newUser);
 
-        User deletedUser = repo.findSoftDeletedUser(newUser.getCustomerId(),
+        User deletedUser = repo.findByUsername(
             newUser.getUsername());
         User notFound = repo.findUser(newUser.getCustomerId(), newUser.getUsername());
         
@@ -273,7 +273,7 @@ public class LdapUserRepositoryTest {
         
         deletedUser.setSoftDeleted(false);
         
-        repo.saveRestoredUser(deletedUser);
+        repo.save(deletedUser);
         
         User restoredUser = repo.findUser(deletedUser.getCustomerId(), deletedUser.getUsername());
         Assert.assertNotNull(restoredUser);
@@ -287,19 +287,16 @@ public class LdapUserRepositoryTest {
         User newUser = addNewTestUser();
         newUser.setSoftDeleted(true);
         
-        DateTime softDeletedTimestamp = new DateTime(new Date());
-        newUser.setSoftDeletedTimestamp(softDeletedTimestamp);
-        
         repo.save(newUser);
 
-        User softDeletedUser = repo.findSoftDeletedUser(newUser.getCustomerId(),
+        User softDeletedUser = repo.findByUsername(
             newUser.getUsername());        
 
         Assert.assertNotNull(softDeletedUser.getSoftDeleteTimestamp());
         
         softDeletedUser.setSoftDeleted(false);
         
-        repo.saveRestoredUser(softDeletedUser);
+        repo.save(softDeletedUser);
         
         User unSoftDeletedUser = repo.findUser(newUser.getCustomerId(),
             newUser.getUsername());        
@@ -376,15 +373,6 @@ public class LdapUserRepositoryTest {
 
         // delete test user
         repo.delete(newUser.getUsername());
-    }
-
-    @Test
-    public void shouldGenerateUserDn() {
-        String dn = repo.getUserDnByUsername("mkovacs");
-        Assert
-            .assertEquals(
-                "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com",
-                dn);
     }
 
     @Test

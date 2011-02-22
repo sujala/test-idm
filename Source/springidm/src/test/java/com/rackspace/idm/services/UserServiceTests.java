@@ -74,19 +74,16 @@ public class UserServiceTests {
 
         mockUserDao = EasyMock.createMock(UserDao.class);
         mockCustomerDao = EasyMock.createMock(CustomerDao.class);
-        mockTokenDao = EasyMock.createMock(AccessTokenDao.class);
-        mockRefreshTokenDao = EasyMock.createMock(RefreshTokenDao.class);
-        mockClientDao = EasyMock.createMock(ClientDao.class);
         mockEmailService = EasyMock.createMock(EmailService.class);
         mockRackerDao = EasyMock.createMock(AuthDao.class);
         mockClientService = EasyMock.createMock(ClientService.class);
 
         userService = new DefaultUserService(mockUserDao, mockRackerDao,
-            mockCustomerDao, mockTokenDao, mockRefreshTokenDao, mockClientDao,
+            mockCustomerDao, 
             mockEmailService, mockClientService, false, new StubLogger());
 
         trustedUserService = new DefaultUserService(mockUserDao, mockRackerDao,
-            mockCustomerDao, mockTokenDao, mockRefreshTokenDao, mockClientDao,
+            mockCustomerDao, 
             mockEmailService, mockClientService, true, new StubLogger());
     }
 
@@ -185,47 +182,6 @@ public class UserServiceTests {
     public void shouldDeleteUser() {
         mockUserDao.delete(username);
         userService.deleteUser(username);
-    }
-
-    @Test
-    public void shouldSoftDeleteUser() {
-        User user = getFakeUser();
-        List<Client> clients = getFakeClients();
-
-        Set<String> allClientIds = new HashSet<String>();
-
-        for (Client client : clients) {
-            allClientIds.add(client.getClientId());
-        }
-
-        EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(user);
-        mockUserDao.save(user);
-        EasyMock.replay(mockUserDao);
-
-        EasyMock.expect(mockClientDao.findAll()).andReturn(clients);
-        EasyMock.replay(mockClientDao);
-
-        mockTokenDao.deleteAllTokensForOwner(user.getUsername(), allClientIds);
-        EasyMock.replay(mockTokenDao);
-
-        mockRefreshTokenDao.deleteAllTokensForUser(user.getUsername());
-        EasyMock.replay(mockRefreshTokenDao);
-
-        userService.softDeleteUser(username);
-
-        EasyMock.verify(mockUserDao);
-    }
-
-    @Test
-    public void shouldRestoreSoftDeletedUser() {
-        User user = getFakeUser();
-
-        mockUserDao.saveRestoredUser(user);
-        EasyMock.replay(mockUserDao);
-
-        userService.restoreSoftDeletedUser(user);
-
-        EasyMock.verify(mockUserDao);
     }
 
     @Test

@@ -34,22 +34,13 @@ public interface UserDao {
 
     User findUser(String customerId, String username);
 
-//    User findUser(String customerId, String username,
-//        Map<String, String> userStatusMap);
-    
-    User findSoftDeletedUser(String customerId, String username);
-
     String[] getGroupIdsForUser(String username);
 
     String getUnusedUserInum(String customerInum);
 
-    String getUserDnByUsername(String username);
-
     boolean isUsernameUnique(String username);
 
     void save(User user);
-
-    void saveRestoredUser(User user);
 
     void setAllUsersLocked(String customerId, boolean locked);
 }

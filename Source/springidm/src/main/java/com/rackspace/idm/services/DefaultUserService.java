@@ -22,7 +22,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.joda.time.DateTime;
 
 public class DefaultUserService implements UserService {
 
@@ -34,9 +33,6 @@ public class DefaultUserService implements UserService {
     private UserDao userDao;
     private AuthDao authDao;
     private CustomerDao customerDao;
-    private AccessTokenDao tokenDao;
-    private RefreshTokenDao refreshTokenDao;
-    private ClientDao clientDao;
     private EmailService emailService;
     private ClientService clientService;
     private TemplateProcessor tproc = new TemplateProcessor();
@@ -44,17 +40,12 @@ public class DefaultUserService implements UserService {
     private boolean isTrustedServer;
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
-        CustomerDao customerDao, AccessTokenDao tokenDao,
-        RefreshTokenDao refreshTokenDao, ClientDao clientDao,
-        EmailService emailService, ClientService clientService,
-        boolean isTrusted, Logger logger) {
+        CustomerDao customerDao, EmailService emailService,
+        ClientService clientService, boolean isTrusted, Logger logger) {
 
         this.userDao = userDao;
         this.authDao = rackerDao;
         this.customerDao = customerDao;
-        this.tokenDao = tokenDao;
-        this.refreshTokenDao = refreshTokenDao;
-        this.clientDao = clientDao;
         this.emailService = emailService;
         this.clientService = clientService;
         this.isTrustedServer = isTrusted;
@@ -199,18 +190,6 @@ public class DefaultUserService implements UserService {
         return users;
     }
 
-    public User getSoftDeletedUser(String customerId, String username) {
-
-        logger
-            .debug("Getting Soft Deleted User: {} - {}", customerId, username);
-
-        User user = userDao.findSoftDeletedUser(customerId, username);
-
-        logger.debug("Got Soft Deleted User: {}", user);
-
-        return user;
-    }
-
     public User getUser(String username) {
         logger.debug("Getting User: {}", username);
         User user = userDao.findByUsername(username);
@@ -267,15 +246,6 @@ public class DefaultUserService implements UserService {
         return userDao.isUsernameUnique(username);
     }
 
-    public void restoreSoftDeletedUser(User user) {
-        logger.info("Restoring Soft Deleted User: {}", user.getUsername());
-
-        user.setSoftDeleted(false);
-
-        this.userDao.saveRestoredUser(user);
-        logger.info("Restored Soft Deleted User: {}", user.getUsername());
-    }
-
     public void sendRecoveryEmail(String username, String userEmail,
         PasswordRecovery recoveryParam, String tokenString) {
         logger.debug("Sending password recovery email for User: {}", username);
@@ -322,31 +292,6 @@ public class DefaultUserService implements UserService {
 
         logger.debug("Sent password recovery email for User: {}", username);
 
-    }
-
-    public void softDeleteUser(String username) {
-        logger.info("Soft Deleting User: {}", username);
-        User user = this.userDao.findByUsername(username);
-        user.setSoftDeleted(true);
-
-        DateTime softDeletedTimestamp = new DateTime(new Date());
-        user.setSoftDeletedTimestamp(softDeletedTimestamp);
-
-        this.userDao.save(user);
-
-        // revoke user's tokens
-        String owner = user.getUsername();
-        Set<String> allClientIds = new HashSet<String>();
-
-        for (Client client : clientDao.findAll()) {
-            allClientIds.add(client.getClientId());
-        }
-        tokenDao.deleteAllTokensForOwner(owner,
-            Collections.unmodifiableSet(allClientIds));
-
-        refreshTokenDao.deleteAllTokensForUser(username);
-
-        logger.info("Soft Deleted User: {}", username);
     }
 
     public void updateUser(User user) {

@@ -32,17 +32,11 @@ public interface UserService {
 
     User getUser(String customerId, String username);
 
-    User getSoftDeletedUser(String customerId, String username);
-
     boolean isUsernameUnique(String username);
 
     void sendRecoveryEmail(String username, String userEmail, PasswordRecovery recoveryParam, String tokenString);
 
-    void softDeleteUser(String username);
-
     void updateUser(User user);
 
     void updateUserStatus(User user, String statusStr);
-
-    void restoreSoftDeletedUser(User user);
 }
