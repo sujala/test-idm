@@ -62,15 +62,17 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         try {
             result = getAppConnPool().add(userDN, attributes);      
         } catch (LDAPException ldapEx) {
-            audit.fail();
-            getLogger().error("Error adding user {} - {}", user, ldapEx);
+            String errorString = String.format("Error adding user %s - %s", user, ldapEx);
+            audit.fail(errorString);
+            getLogger().error(errorString);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
-            getLogger().error("Error adding user {} - {}", user.getUsername(),
+            String errorString = String.format("Error adding user %s - %s", user.getUsername(),
                 result.getResultCode());
+            audit.fail(errorString);
+            getLogger().error(errorString);
             throw new IllegalStateException(String.format(
                 "LDAP error encountered when adding user: %s - %s",
                 user.getUsername(), result.getResultCode().toString()));
@@ -147,16 +149,18 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         try {
             result = getAppConnPool().delete(getUserDnByUsername(username));
         } catch (LDAPException ldapEx) {
-            audit.fail();
-            getLogger().error("Error deleting username {} - {}", username,
+            String errorString = String.format("Error deleting username %s - %s", username,
                 ldapEx);
+            audit.fail(errorString);
+            getLogger().error(errorString);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
-            getLogger().error("Error deleting username {} - {}", username,
+            String errorString = String.format("Error deleting username %s - %s", username,
                 result.getResultCode());
+            audit.fail(errorString);
+            getLogger().error(errorString);
             throw new IllegalStateException(
                 String.format(
                     "LDAP error encountered when deleting user: %s - %s"
@@ -512,9 +516,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         try {
             result = getAppConnPool().modify(oldUser.getUniqueId(), mods);           
         } catch (LDAPException ldapEx) {
-            audit.fail();
+            
             if (ResultCode.UNWILLING_TO_PERFORM.equals(ldapEx.getResultCode())
                 && STALE_PASSWORD_MESSAGE.equals(ldapEx.getMessage())) {
+                audit.fail(STALE_PASSWORD_MESSAGE);
                 throw new StalePasswordException(
                     "Past 10 passwords for the user cannot be re-used.");
             }
@@ -525,9 +530,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
-            getLogger().error("Error updating user {} - {}",
+            String errorString = String.format("Error updating user %s - %s",
                 user.getUsername(), result.getResultCode());
+            audit.fail(errorString);
+            getLogger().error(errorString);
             throw new IllegalArgumentException(String.format(
                 "LDAP error encountered when updating user: %s - %s"
                     + user.getUsername(), result.getResultCode().toString()));
@@ -599,16 +605,18 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         try {           
             result = getAppConnPool().modify(userDN,mods);         
         } catch (LDAPException ldapEx) {
-            audit.fail();
-            getLogger().error("Error updating user {} - {}",
+            String errorString = String.format("Error updating user %s - %s",
                 user.getUsername(), ldapEx);
+            audit.fail(errorString);
+            getLogger().error(errorString);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
-            getLogger().error("Error updating user {} - {}",
+            String errorString = String.format("Error updating user %s - %s",
                 user.getUsername(), result.getResultCode());
+            audit.fail(errorString);
+            getLogger().error(errorString);
             throw new IllegalArgumentException(String.format(
                 "LDAP error encountered when updating user: %s - %s"
                     + user.getUsername(), result.getResultCode().toString()));
@@ -1209,7 +1217,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             audit.succeed();
         }
         else {
-            audit.fail();
+            String failureMessage = String.format("User Authentication Failed.");
+            audit.fail(failureMessage);
         }
     }
 }
