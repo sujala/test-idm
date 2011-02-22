@@ -10,6 +10,7 @@ import java.util.List;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.AuthData;
@@ -34,19 +35,18 @@ public class DefaultOAuthService implements OAuthService {
     private ClientService clientService;
     private AccessTokenService accessTokenService;
     private RefreshTokenService refreshTokenService;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
     private AuthorizationService authorizationService;
-    private Logger logger;
     private Configuration config;
 
     public DefaultOAuthService(UserService userService, ClientService clientService,
         AccessTokenService accessTokenService, RefreshTokenService refreshTokenService,
-        AuthorizationService authorizationService, Configuration config, Logger logger) {
+        AuthorizationService authorizationService, Configuration config) {
         this.userService = userService;
         this.clientService = clientService;
         this.accessTokenService = accessTokenService;
         this.refreshTokenService = refreshTokenService;
         this.authorizationService = authorizationService;
-        this.logger = logger;
         this.config = config;
     }
 
@@ -63,7 +63,9 @@ public class DefaultOAuthService implements OAuthService {
         ClientAuthenticationResult caResult = clientService.authenticate(trParam.getClientId(),
             trParam.getClientSecret());
         if (!caResult.isAuthenticated()) {
-            throw new NotAuthenticatedException("Bad Client credentials.");
+            String message = "Bad Client credentials.";
+            logger.warn(message);
+			throw new NotAuthenticatedException(message);
         }
 
         AccessToken accessToken = null;
@@ -72,7 +74,9 @@ public class DefaultOAuthService implements OAuthService {
             UserAuthenticationResult uaResult = userService.authenticate(trParam.getUsername(),
                 trParam.getPassword());
             if (!uaResult.isAuthenticated()) {
-                throw new NotAuthenticatedException("Bad User credentials.");
+                String message = "Bad User credentials.";
+                logger.warn(message);
+				throw new NotAuthenticatedException(message);
             }
 
             accessToken = accessTokenService.getTokenByBasicCredentials(caResult.getClient(),
@@ -91,11 +95,9 @@ public class DefaultOAuthService implements OAuthService {
             return new AuthData(accessToken, refreshToken);
         }
 
-        throwNotAuthenticatedException(String.format("Unsupported GrantType: %s", grantType));
-
-        // The execution never gets here since the line above throws an
-        // exception. But the compiler no likey.
-        return null;
+        String message = String.format("Unsupported GrantType: %s", grantType);
+        logger.warn(message);
+        throw new NotAuthenticatedException(message);
     }
 
     public void revokeTokensLocally(String tokenStringRequestingDelete, String tokenToDelete) {
@@ -112,7 +114,7 @@ public class DefaultOAuthService implements OAuthService {
         AccessToken requestingToken = accessTokenService.getAccessTokenByTokenString(authTokenString);
         if (requestingToken == null) {
             String error = "No entry found for token " + requestingToken;
-            logger.debug(error);
+            logger.warn(error);
             throw new IllegalArgumentException(error);
         }
 
@@ -121,14 +123,14 @@ public class DefaultOAuthService implements OAuthService {
         if (!isAuthorized) {
             String errMsg = String.format("Requesting token %s not authorized to revoke token for owner %s.",
                 authTokenString, ownerId);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         if (requestingToken.getRequestor() == null) {
             String error = String.format("Token %s does not have a requestor",
                 requestingToken.getTokenString());
-            logger.debug(error);
+            logger.warn(error);
             throw new IllegalStateException(error);
         }
 
@@ -148,7 +150,7 @@ public class DefaultOAuthService implements OAuthService {
         AccessToken requestingToken = accessTokenService.getAccessTokenByTokenString(authTokenString);
         if (requestingToken == null) {
             String error = "No entry found for token " + requestingToken;
-            logger.debug(error);
+            logger.warn(error);
             throw new IllegalArgumentException(error);
         }
 
@@ -158,14 +160,14 @@ public class DefaultOAuthService implements OAuthService {
             String errMsg = String.format(
                 "Requesting token %s not authorized to revoke token for customer %s.", authTokenString,
                 customerId);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         if (requestingToken.getRequestor() == null) {
             String error = String.format("Token %s does not have a requestor",
                 requestingToken.getTokenString());
-            logger.debug(error);
+            logger.warn(error);
             throw new IllegalStateException(error);
         }
 
@@ -220,12 +222,12 @@ public class DefaultOAuthService implements OAuthService {
 
     private void revokeToken(String tokenStringRequestingDelete, String tokenToDelete, boolean isGlobal)
         throws NotAuthorizedException {
-        logger.info("Deleting Token {}", tokenToDelete);
+        logger.debug("Deleting Token {}", tokenToDelete);
 
         AccessToken deletedToken = accessTokenService.getAccessTokenByTokenString(tokenToDelete);
         if (deletedToken == null) {
             String error = "No entry found for token " + deletedToken;
-            logger.debug(error);
+            logger.warn(error);
             throw new IllegalStateException(error);
         }
 
@@ -233,7 +235,7 @@ public class DefaultOAuthService implements OAuthService {
             .getAccessTokenByTokenString(tokenStringRequestingDelete);
         if (requestingToken == null) {
             String error = "No entry found for token " + tokenStringRequestingDelete;
-            logger.debug(error);
+            logger.warn(error);
             throw new IllegalStateException(error);
         }
 
@@ -257,14 +259,14 @@ public class DefaultOAuthService implements OAuthService {
                 errMsg = String.format("Requesting token %s not authorized to revoke token %s locally.",
                     tokenStringRequestingDelete, tokenToDelete);
             }
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         if (deletedToken.getRequestor() == null) {
             String error = String
                 .format("Token %s does not have a requestor", deletedToken.getTokenString());
-            logger.debug(error);
+            logger.warn(error);
             throw new IllegalStateException(error);
         }
 
@@ -275,7 +277,7 @@ public class DefaultOAuthService implements OAuthService {
         } else {
             accessTokenService.delete(deletedToken.getTokenString());
         }
-        logger.info("Deleted Token {}", deletedToken);
+        logger.debug("Deleted Token {}", deletedToken);
     }
 
     private void deleteRefreshTokenByAccessToken(AccessToken accessToken) {
@@ -302,8 +304,10 @@ public class DefaultOAuthService implements OAuthService {
         DateTime currentTime) {
         RefreshToken refreshToken = refreshTokenService.getRefreshTokenByTokenString(refreshTokenString);
         if (refreshToken == null || refreshToken.isExpired(currentTime)) {
-            throwNotAuthenticatedException(String
-                .format("Unauthorized Refresh Token: %s", refreshTokenString));
+            String msg = String
+                .format("Unauthorized Refresh Token: %s", refreshTokenString);
+            logger.warn(msg);
+            throw new NotAuthenticatedException(msg);
         }
         refreshTokenService.resetTokenExpiration(refreshToken);
         String username = refreshToken.getOwner();
@@ -323,11 +327,6 @@ public class DefaultOAuthService implements OAuthService {
         }
 
         return refreshToken;
-    }
-
-    private void throwNotAuthenticatedException(String errorMsg) throws NotAuthenticatedException {
-        logger.error(errorMsg);
-        throw new NotAuthenticatedException(errorMsg);
     }
 
     private int getPagingLimit() {

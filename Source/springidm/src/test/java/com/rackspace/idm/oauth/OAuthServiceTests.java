@@ -30,7 +30,6 @@ import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 import com.rackspace.idm.services.RefreshTokenService;
 import com.rackspace.idm.services.UserService;
-import com.rackspace.idm.test.stub.StubLogger;
 import com.rackspace.idm.util.AuthHeaderHelper;
 
 public class OAuthServiceTests {
@@ -67,7 +66,7 @@ public class OAuthServiceTests {
         Configuration appConfig = new PropertiesConfiguration();
         appConfig.addProperty("idm.clientId", clientId);
         oauthService = new DefaultOAuthService(mockUserService, mockClientService, mockAccessTokenService,
-            mockRefreshTokenService, mockAuthorizationService, appConfig, new StubLogger());
+            mockRefreshTokenService, mockAuthorizationService, appConfig);
     }
 
     @Test

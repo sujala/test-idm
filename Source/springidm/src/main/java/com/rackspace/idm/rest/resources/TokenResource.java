@@ -26,6 +26,7 @@ import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -64,7 +65,7 @@ public class TokenResource {
     private InputValidator inputValidator;
     private AuthConverter authConverter;
     private AuthorizationService authorizationService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(TokenResource.class);
 
     @Autowired(required = true)
     public TokenResource(AccessTokenService tokenService, OAuthService oauthService,
@@ -76,7 +77,6 @@ public class TokenResource {
         this.inputValidator = inputValidator;
         this.authConverter = authConverter;
         this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -120,7 +120,7 @@ public class TokenResource {
         ApiError err = validate(trParam, grantType);
         if (err != null) {
             String msg = String.format("Bad request parameters: %s", err.getMessage());
-            logger.debug(msg);
+            logger.warn(msg);
             throw new BadRequestException(msg);
         }
 
@@ -161,7 +161,7 @@ public class TokenResource {
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call", authToken);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -171,7 +171,7 @@ public class TokenResource {
         AccessToken token = tokenService.validateToken(tokenString);
         if (token == null) {
             String errorMsg = String.format("Token not found : %s", tokenString);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
@@ -202,14 +202,14 @@ public class TokenResource {
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call", callingToken);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             return Response.status(Status.FORBIDDEN).build();
         }
 
         // Validate Token exists and is valid
         AccessToken token = tokenService.validateToken(tokenString);
         if (token == null) {
-            logger.info("Token not found : {}", tokenString);
+            logger.warn("Token not found : {}", tokenString);
             return Response.status(Status.NOT_FOUND).build();
         }
 
@@ -255,11 +255,11 @@ public class TokenResource {
                 oauthService.revokeTokensLocally(authTokenString, tokenString);
             }
 
-            logger.info("Revoked Token: {}", tokenString);
+            logger.warn("Revoked Token: {}", tokenString);
 
         } catch (TokenExpiredException ex) {
             String errorMsg = String.format("Authorization failed, token is expired: %s", authHeader);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new ApiException(HttpServletResponse.SC_UNAUTHORIZED, ErrorMsg.UNAUTHORIZED, errorMsg);
 
         } catch (IllegalStateException ex) {
@@ -301,17 +301,17 @@ public class TokenResource {
         try {
             if (GlobalConstants.TokenDeleteByType.owner == queryType) {
                 oauthService.revokeTokensLocallyForOwner(idmAuthTokenStr, id);
-                logger.info("Revoked Token for owner {}", id);
+                logger.warn("Revoked Token for owner {}", id);
             } else if (GlobalConstants.TokenDeleteByType.customer == queryType) {
                 oauthService.revokeTokensLocallyForCustomer(idmAuthTokenStr, id);
-                logger.info("Revoked Token for customer {}", id);
+                logger.warn("Revoked Token for customer {}", id);
             } else {
                 // If this happens, the developer forgot to implement this.
                 throw new NotImplementedException("querytype " + queryType + " is not supported.");
             }
         } catch (TokenExpiredException ex) {
             String errorMsg = String.format("Authorization failed, token is expired: %s", authHeader);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new ApiException(HttpServletResponse.SC_UNAUTHORIZED, ErrorMsg.UNAUTHORIZED, errorMsg);
         }
 

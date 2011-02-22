@@ -91,11 +91,7 @@ public class ServiceConfiguration {
     @Autowired
     private Configuration config;
 
-    // TODO Hey ya'll, start usin' this logger!
-    private Logger logger;
-
     public ServiceConfiguration() {
-        logger = LoggerFactory.getLogger(ServiceConfiguration.class);
     }
 
     /**
@@ -104,9 +100,8 @@ public class ServiceConfiguration {
      * @param config
      * @param logger
      */
-    public ServiceConfiguration(Configuration config, Logger logger) {
+    public ServiceConfiguration(Configuration config) {
         this.config = config;
-        this.logger = logger;
     }
 
     @Bean
@@ -212,9 +207,8 @@ public class ServiceConfiguration {
 
     @Bean
     public OAuthService oauthService() {
-        Logger logger = LoggerFactory.getLogger(DefaultOAuthService.class);
         return new DefaultOAuthService(userService(), clientService(), tokenService(), refreshTokenService(),
-            authorizationService(), config, logger);
+            authorizationService(), config);
     }
 
     @Bean
