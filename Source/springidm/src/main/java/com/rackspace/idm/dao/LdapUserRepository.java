@@ -1066,7 +1066,16 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             audit.succeed();
         }
         else {
-            String failureMessage = String.format("User Authentication Failed.");
+            String failureMessage = "User Authentication Failed: %s";
+            
+            if (user.isMaxLoginFailuresExceded()) {
+                failureMessage = String.format(failureMessage, "User locked due to max login failures limit exceded");
+            } else if (user.isDisabled()) {
+                failureMessage = String.format(failureMessage, "User is Disabled");
+            } else {
+                failureMessage = String.format(failureMessage, "Incorrect Credentials");
+            }
+
             audit.fail(failureMessage);
         }
     }
