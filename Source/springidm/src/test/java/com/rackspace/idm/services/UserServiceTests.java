@@ -294,10 +294,6 @@ public class UserServiceTests {
         mockUserDao.save(user);
         EasyMock.replay(mockUserDao);
 
-        List<Client> clients = getFakeClients();
-        EasyMock.expect(mockClientDao.findAll()).andReturn(clients);
-        EasyMock.replay(mockClientDao);
-
         userService.updateUserStatus(user, statusStr);
         EasyMock.verify(mockUserDao);
     }
