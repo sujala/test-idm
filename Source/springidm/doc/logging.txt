@@ -1,0 +1,25 @@
+
+IDM uses slf4j
+
+Each class Logger should be a final instance field
+see: http://www.slf4j.org/manual.html
+
+Log levels are defined as:
+
+DEBUG
+	Normal debug tracing
+	
+INFO
+	Initialization
+	Configuration re-load or JMX changes
+	Statistics which the app may emit under normal conditions
+	
+WARN
+	User errors
+	Unexpected not found errors
+	Not authorized conditions
+	Business logic 
+	
+ERROR
+	Environment and System related failures
+	Memcached or LDAP Server issues
