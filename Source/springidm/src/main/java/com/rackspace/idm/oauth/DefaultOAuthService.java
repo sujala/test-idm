@@ -330,10 +330,6 @@ public class DefaultOAuthService implements OAuthService {
         throw new NotAuthenticatedException(errorMsg);
     }
 
-    private String getIdmClientId() {
-        return config.getString("idm.clientId");
-    }
-
     private int getPagingLimit() {
         return config.getInt("ldap.paging.limit.max");
     }
