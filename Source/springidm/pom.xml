@@ -560,7 +560,7 @@
                 <artifactId>maven-soapui-pro-plugin</artifactId>
                 <version>3.6.1</version>
                 <configuration>
-                    <projectFile>soapui/soapUiProject-idm-dev.xml</projectFile>
+                    <projectFile>soapui/idm-api-qa-soapui-project.xml</projectFile>
                     <junitReport>true</junitReport>
                     <outputFolder>soapui/test-results</outputFolder>
                     <testFailIgnore>false</testFailIgnore>
