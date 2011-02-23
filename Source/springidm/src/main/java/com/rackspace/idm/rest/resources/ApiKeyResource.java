@@ -14,6 +14,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -45,15 +46,14 @@ public class ApiKeyResource {
     private AccessTokenService accessTokenService;
     private UserService userService;
     private AuthorizationService authorizationService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public ApiKeyResource(AccessTokenService accessTokenService,UserService userService,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.userService = userService;
         this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -91,7 +91,7 @@ public class ApiKeyResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -127,7 +127,8 @@ public class ApiKeyResource {
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
-        logger.info("Reseting Cloud Auth service API key for User: {}",
+        
+        logger.debug("Reseting Cloud Auth service API key for User: {}",
             username);
         
         AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
@@ -143,7 +144,7 @@ public class ApiKeyResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -155,7 +156,7 @@ public class ApiKeyResource {
         user.setApiKey(apiKey);
         this.userService.updateUser(user);
 
-        logger.info("Reset Cloud Auth service API key for user: {}", user);
+        logger.debug("Reset Cloud Auth service API key for user: {}", user);
 
         UserApiKey userApiKey = new UserApiKey();
         userApiKey.setApiKey(apiKey);
@@ -174,7 +175,7 @@ public class ApiKeyResource {
     private void handleUserNotFoundError(String customerId, String username) {
         String errorMsg = String.format("User not found: %s - %s", customerId,
             username);
-        logger.error(errorMsg);
+        logger.warn(errorMsg);
         throw new NotFoundException(errorMsg);
     }
 }
