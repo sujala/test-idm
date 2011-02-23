@@ -19,6 +19,7 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -49,20 +50,19 @@ public class UserGroupsResource {
     private ClientService clientService;
     private GroupConverter groupConverter;
     private AuthorizationService authorizationService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
     private Configuration config;
 
     @Autowired
     public UserGroupsResource(AccessTokenService accessTokenService,
         UserService userService, ClientService clientService,
         GroupConverter groupConverter, Configuration config,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.userService = userService;
         this.clientService = clientService;
         this.groupConverter = groupConverter;
         this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
         this.config = config;
     }
 
@@ -105,7 +105,7 @@ public class UserGroupsResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -149,11 +149,11 @@ public class UserGroupsResource {
 
         if (StringUtils.isBlank(groupName)) {
             String errorMsg = "Group name cannot be blank";
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
         }
 
-        logger.info("Adding user {} to group {}", username, groupName);
+        logger.debug("Adding user {} to group {}", username, groupName);
 
         AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
@@ -167,7 +167,7 @@ public class UserGroupsResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -177,7 +177,7 @@ public class UserGroupsResource {
         if (user == null) {
             String errorMsg = String.format(
                 "Add User to Group Failed - User not found: %s", username);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
@@ -187,13 +187,13 @@ public class UserGroupsResource {
         if (group == null) {
             String errorMsg = String.format(
                 "Add User to Group Failed - Group not found: %s", groupName);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
         this.clientService.addUserToClientGroup(username, group);
 
-        logger.info("Added user {} to group {}", user, group);
+        logger.debug("Added user {} to group {}", user, group);
 
         return Response.noContent().build();
     }
@@ -237,7 +237,7 @@ public class UserGroupsResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -247,7 +247,7 @@ public class UserGroupsResource {
         if (user == null) {
             String errorMsg = String.format(
                 "Remove User From Group Failed - User not found: %s", username);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
@@ -258,13 +258,13 @@ public class UserGroupsResource {
             String errorMsg = String.format(
                 "Remove User From Group Failed - Group not found: %s",
                 groupName);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
         this.clientService.removeUserFromClientGroup(username, group);
 
-        logger.info("User {} removed from group {}", user, group);
+        logger.debug("User {} removed from group {}", user, group);
 
         return Response.noContent().build();
     }
@@ -288,7 +288,7 @@ public class UserGroupsResource {
     private void handleUserNotFoundError(String customerId, String username) {
         String errorMsg = String.format("User not found: %s - %s", customerId,
             username);
-        logger.error(errorMsg);
+        logger.warn(errorMsg);
         throw new NotFoundException(errorMsg);
     }
 }

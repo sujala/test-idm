@@ -9,6 +9,7 @@ import com.rackspace.idm.jaxb.PasswordRecovery;
 import com.rackspace.idm.services.*;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -28,7 +29,7 @@ public class UserPasswordResource {
     private PasswordConverter passwordConverter;
     private TokenConverter tokenConverter;
     private AuthorizationService authorizationService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
     String errorMsg = String.format("Authorization Failed");
 
     @Autowired
@@ -36,14 +37,13 @@ public class UserPasswordResource {
         UserService userService, 
         PasswordComplexityService passwordComplexityService,
         PasswordConverter passwordConverter, TokenConverter tokenConverter,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.userService = userService;
         this.passwordComplexityService = passwordComplexityService;
         this.passwordConverter = passwordConverter;
         this.tokenConverter = tokenConverter;
         this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -77,7 +77,7 @@ public class UserPasswordResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -108,7 +108,7 @@ public class UserPasswordResource {
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
-        logger.info("Reseting Password for User: {}", username);
+        logger.debug("Reseting Password for User: {}", username);
 
         AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
@@ -122,7 +122,7 @@ public class UserPasswordResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -131,7 +131,7 @@ public class UserPasswordResource {
         Password newPassword = Password.generateRandom();
         user.setPasswordObj(newPassword);
         this.userService.updateUser(user);
-        logger.info("Updated password for user: {}", user);
+        logger.debug("Updated password for user: {}", user);
 
         Password password = Password.existingInstance(user.getPassword());
 
@@ -185,7 +185,7 @@ public class UserPasswordResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token.getTokenString());
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -197,14 +197,14 @@ public class UserPasswordResource {
             throw new BadRequestException(errorMsg);
         }
 
-        logger.info("Updating Password for User: {}", username);
+        logger.debug("Updating Password for User: {}", username);
 
         if (!isRecovery) {
             if (userCred.getCurrentPassword() == null
                 || StringUtils.isBlank(userCred.getCurrentPassword()
                     .getPassword())) {
                 String errMsg = "Value for Current Password cannot be blank";
-                logger.error(errMsg);
+                logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
 
@@ -214,7 +214,7 @@ public class UserPasswordResource {
             if (!uaResult.isAuthenticated()) {
                 String errorMsg = String.format("Current password does not match for user: %s",
                     username);
-                logger.debug(errorMsg);
+                logger.warn(errorMsg);
                 throw new NotAuthenticatedException(errorMsg);
             }
         }
@@ -224,7 +224,7 @@ public class UserPasswordResource {
         user.setPasswordObj(Password.newInstance(userCred.getNewPassword()
             .getPassword()));
         this.userService.updateUser(user);
-        logger.info("Updated password for user: {}", user);
+        logger.debug("Updated password for user: {}", user);
         return Response.ok(userCred).build();
     }
 
@@ -262,7 +262,7 @@ public class UserPasswordResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -270,13 +270,13 @@ public class UserPasswordResource {
 
         if (!user.getStatus().equals(UserStatus.ACTIVE)) {
             String errorMsg = "User is not active";
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new ForbiddenException(errorMsg);
         }
 
         if (user.isLocked()) {
             String errorMsg = "User is locked";
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
 
             throw new UserDisabledException(errorMsg);
         }
@@ -314,7 +314,7 @@ public class UserPasswordResource {
         @PathParam("customerId") String customerId,
         @PathParam("username") String username, PasswordRecovery recoveryParam) {
 
-        logger.info("Sending password recovery email for User: {}", username);
+        logger.debug("Sending password recovery email for User: {}", username);
 
         AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
@@ -327,7 +327,7 @@ public class UserPasswordResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -335,25 +335,25 @@ public class UserPasswordResource {
 
         if (!user.getStatus().equals(UserStatus.ACTIVE)) {
             String errorMsg = "User is not active";
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new ForbiddenException(errorMsg);
         }
 
         if (user.isLocked()) {
             String errorMsg = "User is locked";
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new ForbiddenException(errorMsg);
         }
 
         if (StringUtils.isBlank(user.getEmail())) {
             String errorMsg = "User doesn't have an email address";
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new IdmException(errorMsg);
         }
 
         if (StringUtils.isBlank(recoveryParam.getCallbackUrl())) {
             String errorMsg = "callbackUrl is a required parameter.";
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
         }
 
@@ -365,15 +365,15 @@ public class UserPasswordResource {
                 recoveryParam, resetToken.getTokenString());
         } catch (IllegalArgumentException e) {
             String errorMsg = e.getMessage();
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
         } catch (IllegalStateException ise) {
             String errorMsg = "Could not send password recovery email.";
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new IdmException(errorMsg);
         }
 
-        logger.info("Sent password recovery email for User: {}", username);
+        logger.debug("Sent password recovery email for User: {}", username);
 
         return Response.noContent().build();
     }
@@ -389,7 +389,7 @@ public class UserPasswordResource {
     private void handleUserNotFoundError(String customerId, String username) {
         String errorMsg = String.format("User not found: %s - %s", customerId,
             username);
-        logger.error(errorMsg);
+        logger.warn(errorMsg);
         throw new NotFoundException(errorMsg);
     }
 }
