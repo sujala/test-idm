@@ -14,6 +14,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -36,16 +37,14 @@ public class ClientGroupMembersResource {
     private AccessTokenService accessTokenService;
     private ClientService clientService;
     private AuthorizationService authorizationService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public ClientGroupMembersResource(AccessTokenService accessTokenService,
-        ClientService clientService, AuthorizationService authorizationService,
-        LoggerFactoryWrapper logger) {
+        ClientService clientService, AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.clientService = clientService;
         this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -86,7 +85,7 @@ public class ClientGroupMembersResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token.getTokenString());
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -98,7 +97,7 @@ public class ClientGroupMembersResource {
                 .format(
                     "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.",
                     groupName, clientId, customerId);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
@@ -145,7 +144,7 @@ public class ClientGroupMembersResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token.getTokenString());
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -157,7 +156,7 @@ public class ClientGroupMembersResource {
                 .format(
                     "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.",
                     groupName, clientId, customerId);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
