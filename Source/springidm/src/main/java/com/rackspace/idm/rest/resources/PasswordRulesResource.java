@@ -11,6 +11,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,16 +32,14 @@ public class PasswordRulesResource {
 
     private PasswordComplexityService passwordComplexityService;
     private PasswordRulesConverter passwordRulesConverter;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public PasswordRulesResource(
         PasswordComplexityService passwordComplexityService,
-        PasswordRulesConverter passwordRulesConverter,
-        LoggerFactoryWrapper logger) {
+        PasswordRulesConverter passwordRulesConverter) {
         this.passwordComplexityService = passwordComplexityService;
         this.passwordRulesConverter = passwordRulesConverter;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**

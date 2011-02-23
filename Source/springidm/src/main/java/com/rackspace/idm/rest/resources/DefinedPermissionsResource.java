@@ -19,6 +19,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -54,7 +55,7 @@ public class DefinedPermissionsResource {
     private InputValidator inputValidator;
     private AuthorizationService authorizationService;
     private AccessTokenService accessTokenService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public DefinedPermissionsResource(
@@ -62,14 +63,13 @@ public class DefinedPermissionsResource {
         ClientService clientService, PermissionConverter permissionConverter,
         InputValidator inputValidator,
         AuthorizationService authorizationService,
-        AccessTokenService accessTokenService, LoggerFactoryWrapper logger) {
+        AccessTokenService accessTokenService) {
         this.definedPermissionResource = definedPermissionResource;
         this.permissionConverter = permissionConverter;
         this.inputValidator = inputValidator;
         this.clientService = clientService;
         this.authorizationService = authorizationService;
         this.accessTokenService = accessTokenService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -108,7 +108,7 @@ public class DefinedPermissionsResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -116,7 +116,7 @@ public class DefinedPermissionsResource {
         if (client == null || !client.getCustomerId().equals(customerId)) {
             String errMsg = String.format("Client with Id %s not found.",
                 clientId);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
@@ -126,7 +126,7 @@ public class DefinedPermissionsResource {
         if (defineds == null) {
             String errorMsg = String.format(
                 "Permissions Not Found for client: %s", clientId);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
@@ -174,7 +174,7 @@ public class DefinedPermissionsResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token.getTokenString());
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -193,7 +193,7 @@ public class DefinedPermissionsResource {
             this.clientService.addDefinedPermission(permissionDO);
         } catch (DuplicateException ex) {
             String errorMsg = ex.getMessage();
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new PermissionConflictException(errorMsg);
         }
 
@@ -203,7 +203,7 @@ public class DefinedPermissionsResource {
         try {
             uri = new URI(location);
         } catch (URISyntaxException e) {
-            logger.error("Permission Location URI error");
+            logger.warn("Permission Location URI error");
         }
 
         return Response.ok(permission).location(uri)

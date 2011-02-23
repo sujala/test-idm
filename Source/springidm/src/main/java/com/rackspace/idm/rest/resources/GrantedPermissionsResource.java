@@ -12,6 +12,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -39,17 +40,16 @@ public class GrantedPermissionsResource {
     private ClientService clientService;
     private PermissionConverter permissionConverter;
     private AuthorizationService authorizationService;
-    private Logger logger;
-
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    
     @Autowired
     public GrantedPermissionsResource(AccessTokenService accessTokenService,
         ClientService clientService, PermissionConverter permissionConverter,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.permissionConverter = permissionConverter;
         this.clientService = clientService;
         this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -88,7 +88,7 @@ public class GrantedPermissionsResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -97,7 +97,7 @@ public class GrantedPermissionsResource {
         if (client == null || !client.getCustomerId().equals(customerId)) {
             String errMsg = String.format("Client With Client Id %SNot Found",
                 clientId);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
