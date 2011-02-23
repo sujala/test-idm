@@ -17,6 +17,7 @@ import com.rackspace.idm.exceptions.*;
 
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
@@ -60,7 +61,7 @@ public class UsersResource {
     private EndpointService endpointService;
     private EndPointConverter endpointConverter;
     private ClientService clientService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
     private Configuration config;
 
     @Autowired
@@ -70,8 +71,7 @@ public class UsersResource {
         PasswordComplexityService passwordComplexityService,
         AuthorizationService authorizationService,
         EndpointService endpointService, EndPointConverter endpointConverter,
-        ClientService clientService, Configuration config,
-        LoggerFactoryWrapper logger) {
+        ClientService clientService, Configuration config) {
         this.accessTokenService = accessTokenService;
         this.customerService = customerService;
         this.userService = userService;
@@ -82,7 +82,6 @@ public class UsersResource {
         this.endpointService = endpointService;
         this.endpointConverter = endpointConverter;
         this.clientService = clientService;
-        this.logger = logger.getLogger(this.getClass());
         this.config = config;
     }
 
@@ -119,7 +118,7 @@ public class UsersResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -135,7 +134,7 @@ public class UsersResource {
             String errorMsg = String.format(
                 "A user with username '%s' already exists.",
                 userDO.getUsername());
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new DuplicateUsernameException(errorMsg);
         }
 
@@ -167,7 +166,7 @@ public class UsersResource {
             String errorMsg = String.format(
                 "A customer with customerId '%s' already exists.",
                 customer.getCustomerId());
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new CustomerConflictException(errorMsg);
         }
 
@@ -180,7 +179,7 @@ public class UsersResource {
             String errorMsg = String.format(
                 "A user with username '%s' already exists.",
                 userDO.getUsername());
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new DuplicateUsernameException(errorMsg);
         }
 
@@ -194,7 +193,7 @@ public class UsersResource {
         groups.add(idmAdmin);
         userDO.setGroups(groups);
 
-        logger.info("Added User: {}", userDO);
+        logger.debug("Added User: {}", userDO);
 
         String locationUri = String.format("/customers/%s/users/%s",
             customer.getCustomerId(), user.getUsername());
@@ -205,7 +204,7 @@ public class UsersResource {
         try {
             uri = new URI(locationUri);
         } catch (URISyntaxException e) {
-            logger.error("Customer Location URI error");
+            logger.warn("Customer Location URI error");
         }
 
         return Response.ok(user).location(uri)
@@ -242,7 +241,7 @@ public class UsersResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -283,7 +282,7 @@ public class UsersResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -326,7 +325,7 @@ public class UsersResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -368,7 +367,7 @@ public class UsersResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -378,7 +377,7 @@ public class UsersResource {
         if (endpoint == null) {
             String errMsg = String.format("BaseUrlId %s not found for user %s",
                 baseUrlId, username);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
@@ -418,7 +417,7 @@ public class UsersResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -459,7 +458,7 @@ public class UsersResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -505,7 +504,7 @@ public class UsersResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -515,7 +514,7 @@ public class UsersResource {
         
         this.userService.updateUser(user);
 
-        logger.info("Updated MossoId for User: {}", user);
+        logger.debug("Updated MossoId for User: {}", user);
 
         return Response.ok(userConverter.toUserWithOnlyMossoId(user)).build();
     }
@@ -553,7 +552,7 @@ public class UsersResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -563,7 +562,7 @@ public class UsersResource {
 
         this.userService.updateUser(user);
 
-        logger.info("Updated NastID for User: {}", user);
+        logger.debug("Updated NastID for User: {}", user);
 
         return Response.ok(
             userConverter.toUserWithOnlyNastId(user)).build();

@@ -9,6 +9,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -36,17 +37,16 @@ public class UserSoftDeleteResource {
     private UserService userService;
     private UserConverter userConverter;
     private AuthorizationService authorizationService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public UserSoftDeleteResource(OAuthService oauthService,
         UserService userService, UserConverter userConverter,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService) {
         this.oauthService = oauthService;
         this.userService = userService;
         this.userConverter = userConverter;
         this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -72,7 +72,7 @@ public class UserSoftDeleteResource {
         @PathParam("username") String username,
         com.rackspace.idm.jaxb.User inputUser) {
 
-        logger.info("Updating SoftDelete for User: {} - {}", username,
+        logger.debug("Updating SoftDelete for User: {} - {}", username,
             inputUser.isSoftDeleted());
 
         AccessToken token = this.oauthService
@@ -86,13 +86,13 @@ public class UserSoftDeleteResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         if (inputUser.isSoftDeleted() == null) {
             String errMsg = "Blank value for softDelted passed in.";
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
 
@@ -102,7 +102,7 @@ public class UserSoftDeleteResource {
         if (user == null || !user.getCustomerId().equalsIgnoreCase(customerId)) {
             String errorMsg = String.format("User not found: %s - %s",
                 customerId, username);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 

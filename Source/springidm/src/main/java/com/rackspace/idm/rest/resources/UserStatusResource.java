@@ -12,6 +12,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -40,16 +41,15 @@ public class UserStatusResource {
     private UserService userService;
     private UserConverter userConverter;
     private AuthorizationService authorizationService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public UserStatusResource(OAuthService accessTokenService, UserService userService,
-        UserConverter userConverter, AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        UserConverter userConverter, AuthorizationService authorizationService) {
         this.oauthService = accessTokenService;
         this.userService = userService;
         this.userConverter = userConverter;
         this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -74,7 +74,7 @@ public class UserStatusResource {
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("username") String username, com.rackspace.idm.jaxb.User inputUser) {
 
-        logger.info("Updating Status for User: {}", username);
+        logger.debug("Updating Status for User: {}", username);
 
         AccessToken token = this.oauthService.getAccessTokenByAuthHeader(authHeader);
 
@@ -85,7 +85,7 @@ public class UserStatusResource {
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call", token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -97,7 +97,7 @@ public class UserStatusResource {
             statusStr = inputUser.getStatus().value();
         } catch (Exception ex) {
             String errMsg = "Invalid value for Status sent in.";
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
 
@@ -105,7 +105,7 @@ public class UserStatusResource {
             this.userService.updateUserStatus(user, statusStr);
         } catch (IllegalArgumentException ex) {
             String errorMsg = String.format("Invalid status value: %s", statusStr);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
         }
 
@@ -113,7 +113,7 @@ public class UserStatusResource {
             oauthService.revokeTokensGloballyForOwner(username);
         }
 
-        logger.info("Updated status for user: {}", user);
+        logger.debug("Updated status for user: {}", user);
 
         User outputUser = this.userService.getUser(customerId, username);
         return Response.ok(userConverter.toUserWithOnlyStatusJaxb(outputUser)).build();
@@ -129,7 +129,7 @@ public class UserStatusResource {
 
     private void handleUserNotFoundError(String customerId, String username) {
         String errorMsg = String.format("User not found: %s - %s", customerId, username);
-        logger.error(errorMsg);
+        logger.warn(errorMsg);
         throw new NotFoundException(errorMsg);
     }
 }

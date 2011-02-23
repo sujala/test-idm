@@ -14,6 +14,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -42,17 +43,16 @@ public class UserRoleResource {
     private UserService userService;
     private RoleService roleService;
     private AuthorizationService authorizationService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public UserRoleResource(AccessTokenService accessTokenService,
         UserService userService, AuthorizationService authorizationService,
-        RoleService roleService, LoggerFactoryWrapper logger) {
+        RoleService roleService) {
         this.accessTokenService = accessTokenService;
         this.userService = userService;
         this.roleService = roleService;
         this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -80,11 +80,11 @@ public class UserRoleResource {
 
         if (StringUtils.isBlank(roleName)) {
             String errorMsg = "RoleName cannot be blank";
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
         }
 
-        logger.info("Setting role {} for User {}", roleName, username);
+        logger.debug("Setting role {} for User {}", roleName, username);
 
         AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
@@ -98,7 +98,7 @@ public class UserRoleResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -111,13 +111,13 @@ public class UserRoleResource {
         if (role == null) {
             String errorMsg = String.format(
                 "Set Role Failed - Role not found: {}", roleName);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
         this.roleService.addUserToRole(user, role);
 
-        logger.info("Set the role {} for user {}", role, user);
+        logger.debug("Set the role {} for user {}", role, user);
 
         return Response.noContent().build();
     }
@@ -145,7 +145,7 @@ public class UserRoleResource {
         @PathParam("username") String username,
         @PathParam("roleName") String roleName) {
 
-        logger.info("Deleting role for User: {}", username);
+        logger.debug("Deleting role for User: {}", username);
 
         AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
@@ -159,7 +159,7 @@ public class UserRoleResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -169,7 +169,7 @@ public class UserRoleResource {
         if (user == null) {
             String errorMsg = String.format(
                 "Set Role Failed - User not found: %s", username);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
@@ -179,13 +179,13 @@ public class UserRoleResource {
         if (role == null) {
             String errorMsg = String.format(
                 "Set Role Failed - Role not found: {}", roleName);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
         this.roleService.deleteUserFromRole(user, role);
 
-        logger.info("User {} deleted from role {}", user, role);
+        logger.debug("User {} deleted from role {}", user, role);
 
         return Response.noContent().build();
     }
@@ -201,7 +201,7 @@ public class UserRoleResource {
     private void handleUserNotFoundError(String customerId, String username) {
         String errorMsg = String.format("User not found: %s - %s", customerId,
             username);
-        logger.error(errorMsg);
+        logger.warn(errorMsg);
         throw new NotFoundException(errorMsg);
     }
 }

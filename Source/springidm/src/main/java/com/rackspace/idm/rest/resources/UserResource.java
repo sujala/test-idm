@@ -15,10 +15,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.UserConverter;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.User;
@@ -52,7 +52,7 @@ public class UserResource {
     private UserConverter userConverter;
     private InputValidator inputValidator;
     private AuthorizationService authorizationService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public UserResource(AccessTokenService accessTokenService, ApiKeyResource apiKeyResource,
@@ -60,7 +60,7 @@ public class UserResource {
         UserGroupsResource userGroupsResource, UserSecretResource userSecretResource,
         UserSoftDeleteResource userSoftDeleteResource, UserStatusResource userStatusResource,
         UserService userService, UserConverter userConverter, InputValidator inputValidator,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.apiKeyResource = apiKeyResource;
         this.userLockResource = userLockResource;
@@ -73,7 +73,6 @@ public class UserResource {
         this.userConverter = userConverter;
         this.inputValidator = inputValidator;
         this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -156,7 +155,7 @@ public class UserResource {
 
         User updatedUser = userConverter.toUserDO(inputUser);
 
-        logger.info("Updating User: {}", username);
+        logger.debug("Updating User: {}", username);
 
         User user = checkAndGetUser(customerId, username);
 
@@ -171,7 +170,7 @@ public class UserResource {
             throw new BadRequestException(errorMsg);
         }
 
-        logger.info("Updated User: {}", user);
+        logger.debug("Updated User: {}", user);
         return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
     }
 
@@ -195,7 +194,7 @@ public class UserResource {
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
-        logger.info("Deleting User :{}", username);
+        logger.debug("Deleting User :{}", username);
 
         AccessToken token = accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
@@ -213,7 +212,7 @@ public class UserResource {
 
         this.userService.deleteUser(username);
 
-        logger.info("Deleted User: {}", user);
+        logger.debug("Deleted User: {}", user);
 
         return Response.noContent().build();
     }
@@ -263,7 +262,7 @@ public class UserResource {
 
     private void handleUserNotFoundError(String customerId, String username) {
         String errorMsg = String.format("User not found: %s - %s", customerId, username);
-        logger.error(errorMsg);
+        logger.warn(errorMsg);
         throw new NotFoundException(errorMsg);
     }
 
