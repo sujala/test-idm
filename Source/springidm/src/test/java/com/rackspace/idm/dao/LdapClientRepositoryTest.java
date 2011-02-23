@@ -192,15 +192,6 @@ public class LdapClientRepositoryTest {
     }
 
     @Test
-    public void shouldGenerateClientDn() {
-        String dn = repo.getClientDnByClientId("ABCDEF");
-        Assert
-            .assertEquals(
-                "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!2222,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com",
-                dn);
-    }
-
-    @Test
     public void shouldAuthenticateForCorrectCredentials() {
         ClientAuthenticationResult authenticated = repo.authenticate("ABCDEF", "password");
         Assert.assertTrue(authenticated.isAuthenticated());
