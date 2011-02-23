@@ -15,11 +15,11 @@ import javax.ws.rs.core.UriInfo;
 
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.AuthConverter;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.CloudEndpoint;
@@ -45,18 +45,17 @@ public class AuthResource {
     private AuthorizationService authorizationService;
     private EndpointService endpointService;
     private AuthConverter authConverter;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public AuthResource(AuthConverter authConverter,
         EndpointService endpointService,
         AuthorizationService authorizationService,
-        AccessTokenService accessTokenService, LoggerFactoryWrapper logger) {
+        AccessTokenService accessTokenService) {
         this.authConverter = authConverter;
         this.authorizationService = authorizationService;
         this.accessTokenService = accessTokenService;
         this.endpointService = endpointService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -90,7 +89,7 @@ public class AuthResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -99,7 +98,7 @@ public class AuthResource {
 
         if (StringUtils.isBlank(username) || StringUtils.isBlank(apiKey)) {
             String errMsg = "Blank Value passed in for username or key";
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
 
@@ -148,7 +147,7 @@ public class AuthResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -157,7 +156,7 @@ public class AuthResource {
 
         if (StringUtils.isBlank(apiKey)) {
             String errMsg = "Blank Value passed in for key";
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
 
@@ -206,7 +205,7 @@ public class AuthResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -215,7 +214,7 @@ public class AuthResource {
 
         if (StringUtils.isBlank(nastId) || StringUtils.isBlank(apiKey)) {
             String errMsg = "Blank Value passed in for nastId or key";
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
 
