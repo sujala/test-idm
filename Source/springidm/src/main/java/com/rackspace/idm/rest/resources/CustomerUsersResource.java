@@ -20,6 +20,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -61,7 +62,7 @@ public class CustomerUsersResource {
     private InputValidator inputValidator;
     private PasswordComplexityService passwordComplexityService;
     private AuthorizationService authorizationService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public CustomerUsersResource(AccessTokenService accessTokenService,
@@ -69,7 +70,7 @@ public class CustomerUsersResource {
         CustomerService customerService, UserConverter userConverter,
         InputValidator inputValidator,
         PasswordComplexityService passwordComplexityService,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.userResource = userResource;
         this.userService = userService;
@@ -78,7 +79,6 @@ public class CustomerUsersResource {
         this.inputValidator = inputValidator;
         this.passwordComplexityService = passwordComplexityService;
         this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -119,7 +119,7 @@ public class CustomerUsersResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -127,7 +127,7 @@ public class CustomerUsersResource {
         if (customer == null) {
             String errorMsg = String.format("Customer not found: %s",
                 customerId);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
@@ -171,7 +171,7 @@ public class CustomerUsersResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -185,7 +185,7 @@ public class CustomerUsersResource {
             throw new BadRequestException(err.getMessage());
         }
 
-        logger.info("Adding User: {}", user.getUsername());
+        logger.debug("Adding User: {}", user.getUsername());
 
         if (userDO.getPasswordObj() == null
             || StringUtils.isBlank(userDO.getPasswordObj().getValue())) {
@@ -206,15 +206,15 @@ public class CustomerUsersResource {
             this.userService.addUser(userDO);
         } catch (IllegalStateException ex) {
             String errorMsg = "User not added because customer doesn't exist.";
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
         } catch (DuplicateException ex) {
             String errorMsg = ex.getMessage();
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new DuplicateUsernameException(errorMsg);
         }
 
-        logger.info("Added User: {}", user);
+        logger.debug("Added User: {}", user);
 
         String location = uriInfo.getPath() + userDO.getUsername();
 
@@ -222,7 +222,7 @@ public class CustomerUsersResource {
         try {
             uri = new URI(location);
         } catch (URISyntaxException e) {
-            logger.error("Customer Location URI error");
+            logger.warn("Customer Location URI error");
         }
 
         return Response.ok(userConverter.toUserJaxb(userDO)).location(uri)

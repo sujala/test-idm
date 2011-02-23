@@ -14,6 +14,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -44,7 +45,7 @@ public class CustomerResource {
     private CustomerService customerService;
     private CustomerConverter customerConverter;
     private AuthorizationService authorizationService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public CustomerResource(AccessTokenService accessTokenService,
@@ -52,7 +53,7 @@ public class CustomerResource {
         CustomerLockResource customerLockResource, RolesResource rolesResource,
         CustomerUsersResource customerUsersResource,
         CustomerService customerService, CustomerConverter customerConverter,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.customerClientsResource = customerClientsResource;
         this.customerLockResource = customerLockResource;
@@ -61,7 +62,6 @@ public class CustomerResource {
         this.customerService = customerService;
         this.customerConverter = customerConverter;
         this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -98,7 +98,7 @@ public class CustomerResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -106,7 +106,7 @@ public class CustomerResource {
         if (customer == null) {
             String errorMsg = String.format("Customer not found: %s",
                 customerId);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
@@ -149,7 +149,7 @@ public class CustomerResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -158,13 +158,13 @@ public class CustomerResource {
         if (customer == null) {
             String errorMsg = String.format("Customer not found: %s",
                 customerId);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
         this.customerService.softDeleteCustomer(customerId);
 
-        logger.info("Deleted Customer: {}", customerId);
+        logger.debug("Deleted Customer: {}", customerId);
 
         return Response.noContent().build();
     }

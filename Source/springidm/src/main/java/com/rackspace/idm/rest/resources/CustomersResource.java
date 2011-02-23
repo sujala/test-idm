@@ -14,6 +14,7 @@ import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.CustomerService;
 import com.rackspace.idm.validation.InputValidator;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -38,20 +39,19 @@ public class CustomersResource {
     private InputValidator inputValidator;
     private CustomerConverter customerConverter;
     private AuthorizationService authorizationService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public CustomersResource(AccessTokenService accessTokenService,
         CustomerResource customerResource, CustomerService customerService,
         InputValidator inputValidator, CustomerConverter customerConverter,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.customerResource = customerResource;
         this.customerService = customerService;
         this.inputValidator = inputValidator;
         this.customerConverter = customerConverter;
         this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -85,7 +85,7 @@ public class CustomersResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -97,7 +97,7 @@ public class CustomersResource {
             throw new BadRequestException(err.getMessage());
         }
 
-        logger.info("Adding Customer: {}", customer.getCustomerId());
+        logger.debug("Adding Customer: {}", customer.getCustomerId());
 
         try {
             this.customerService.addCustomer(customer);
@@ -105,11 +105,11 @@ public class CustomersResource {
             String errorMsg = String.format(
                 "A customer with that customerId already exists: %s",
                 customer.getCustomerId());
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new CustomerConflictException(errorMsg);
         }
 
-        logger.info("Added Customer: {}", customer);
+        logger.debug("Added Customer: {}", customer);
 
         String location = uriInfo.getPath() + customer.getCustomerId();
 
@@ -117,7 +117,7 @@ public class CustomersResource {
         try {
             uri = new URI(location);
         } catch (URISyntaxException e) {
-            logger.error("Customer Location URI error");
+            logger.warn("Customer Location URI error");
         }
 
         return Response.ok(customerConverter.toJaxbCustomer(customer))

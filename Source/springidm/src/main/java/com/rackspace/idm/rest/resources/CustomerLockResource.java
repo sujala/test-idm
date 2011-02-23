@@ -12,18 +12,16 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Customer;
-import com.rackspace.idm.entities.User;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.oauth.OAuthService;
-import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.CustomerService;
 import com.rackspace.idm.services.UserService;
@@ -40,16 +38,15 @@ public class CustomerLockResource {
     private AuthorizationService authorizationService;
     private UserService userService;
     private OAuthService oauthService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public CustomerLockResource(CustomerService customerService, AuthorizationService authorizationService,
-        UserService userService, OAuthService oauthService, LoggerFactoryWrapper logger) {
+        UserService userService, OAuthService oauthService) {
         this.customerService = customerService;
         this.authorizationService = authorizationService;
         this.userService = userService;
         this.oauthService = oauthService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -80,20 +77,20 @@ public class CustomerLockResource {
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call", token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         if (inputCustomer.isLocked() == null) {
             String errMsg = "Blank value for locked passed in.";
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
 
         Customer customer = this.customerService.getCustomer(customerId);
         if (customer == null) {
             String errorMsg = String.format("Customer not found: %s", customerId);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
