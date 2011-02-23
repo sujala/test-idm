@@ -16,17 +16,18 @@ import org.slf4j.Logger;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.util.PingableService;
 
-public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableService {
+public class MemcachedAccessTokenRepository implements AccessTokenDao,
+    PingableService {
 
     private MemcachedClient memcached;
     private Logger logger;
-    
+
     public static final DateTimeFormatter DATE_PARSER = DateTimeFormat
         .forPattern("yyyyMMddHHmmss.SSS'Z");
 
     public MemcachedAccessTokenRepository(MemcachedClient memcached,
         Logger logger) {
-        
+
         this.memcached = memcached;
         this.logger = logger;
     }
@@ -39,7 +40,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
             throw new IllegalArgumentException("Token is null");
         }
         String tokenString = accessToken.getTokenString();
-		if (StringUtils.isBlank(tokenString)
+        if (StringUtils.isBlank(tokenString)
             || accessToken.getExpirationTime() == null) {
             String errMsg = "Token string and/or expiration time values are not present in the given token.";
             logger.error(errMsg);
@@ -51,7 +52,8 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         // add operation will make the two entries.
 
         // Try adding the token with the token string as the key
-        Future<Boolean> resultByTokenStr = memcached.set(tokenString, accessToken.getExpiration(), accessToken);
+        Future<Boolean> resultByTokenStr = memcached.set(tokenString,
+            accessToken.getExpiration(), accessToken);
         boolean addedByTokenStr = evaluateCacheOperation(resultByTokenStr,
             "set token by token string", accessToken);
         if (!addedByTokenStr) {
@@ -62,22 +64,25 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
             throw new IllegalStateException(errMsg);
         }
         // do not overwrite client token if password reset flow
-        if(!accessToken.isRestrictedToSetPassword()) {
-	        // Try adding the tokenString with the owner_requestor as the key
-	        Future<Boolean> resultByOwner = memcached.set(getKeyForFindByOwner(
-	            accessToken.getOwner(), accessToken.getRequestor()), accessToken
-	            .getExpiration(), tokenString);
-	        boolean addedByOwner = evaluateCacheOperation(resultByOwner,
-	            "set token by owner", accessToken);
-	        if (!addedByOwner) {
-	            // Attempt a rollback of the previous operation before bailing with
-	            // an exception
-	            memcached.delete(tokenString);
-	            String errMsg = String.format(
-	                "Failed to add token by owner with parameter %s", accessToken);
-	            logger.error(errMsg);
-	            throw new IllegalStateException(errMsg);
-        }
+        if (!accessToken.isRestrictedToSetPassword()) {
+            // Try adding the tokenString with the owner_requestor as the key
+            Future<Boolean> resultByOwner = memcached.set(
+                getKeyForFindByOwner(accessToken.getOwner(),
+                    accessToken.getRequestor()), accessToken.getExpiration(),
+                tokenString);
+            boolean addedByOwner = evaluateCacheOperation(resultByOwner,
+                "set token by owner", accessToken);
+            if (!addedByOwner) {
+                // Attempt a rollback of the previous operation before bailing
+                // with
+                // an exception
+                memcached.delete(tokenString);
+                String errMsg = String.format(
+                    "Failed to add token by owner with parameter %s",
+                    accessToken);
+                logger.error(errMsg);
+                throw new IllegalStateException(errMsg);
+            }
         }
         logger.debug("Added token: {}", accessToken);
     }
@@ -100,17 +105,20 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         boolean deletedByTokenStr = evaluateCacheOperation(resultByTokenStr,
             "delete token by token string", tokenString);
 
-        // delete pointer to token
-        Future<Boolean> resultByOwner = memcached.delete(getKeyForFindByOwner(
-            token.getOwner(), token.getRequestor()));
-        boolean deletedByOwner = evaluateCacheOperation(resultByOwner,
-            "delete token by owner", tokenString);
+        if (!token.isRestrictedToSetPassword()) {
+            // delete pointer to token
+            Future<Boolean> resultByOwner = memcached
+                .delete(getKeyForFindByOwner(token.getOwner(),
+                    token.getRequestor()));
+            boolean deletedByOwner = evaluateCacheOperation(resultByOwner,
+                "delete token by owner", tokenString);
 
-        if (!deletedByTokenStr || !deletedByOwner) {
-            String errMsg = String.format("Failed to delete token %s",
-                tokenString);
-            logger.error(errMsg);
-            throw new IllegalStateException(errMsg);
+            if (!deletedByTokenStr || !deletedByOwner) {
+                String errMsg = String.format("Failed to delete token %s",
+                    tokenString);
+                logger.error(errMsg);
+                throw new IllegalStateException(errMsg);
+            }
         }
     }
 
@@ -119,8 +127,8 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
      */
     @Override
     public AccessToken findByTokenString(String tokenString) {
-        
-         if (StringUtils.isBlank(tokenString)) {
+
+        if (StringUtils.isBlank(tokenString)) {
             logger.error("Token string is null or empty");
             throw new IllegalArgumentException("Token string is null or empty");
         }
@@ -131,10 +139,14 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
             return null;
         }
 
+        if (token.isRestrictedToSetPassword()) {
+            return token;
+        }
+        
         // Do a consistency check to make sure there is also the same token
         // stored by owner_requestor.
-        Object foundByOwner = memcached.get(getKeyForFindByOwner(token
-            .getOwner(), token.getRequestor()));
+        Object foundByOwner = memcached.get(getKeyForFindByOwner(
+            token.getOwner(), token.getRequestor()));
         if (token.getTokenString().equals(foundByOwner)) {
             logger.debug("Found token with value {}", token);
             return token;
@@ -162,15 +174,15 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         }
         logger.debug("Finding token with owner {} and requestor {}", owner,
             requestor);
-        String tokenString = (String) memcached.get(getKeyForFindByOwner(
-            owner, requestor));
-        
+        String tokenString = (String) memcached.get(getKeyForFindByOwner(owner,
+            requestor));
+
         if (StringUtils.isEmpty(tokenString)) {
             logger.debug("No token found for owner {} and requestor {}", owner,
                 requestor);
             return null;
         }
-        
+
         AccessToken token = (AccessToken) memcached.get(tokenString);
         if (token == null) {
             logger.debug("No token found for owner {} and requestor {}", owner,
@@ -199,7 +211,8 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
     }
 
     @Override
-    public void deleteAllTokensForOwner(String owner, Set<String> tokenRequestors) {
+    public void deleteAllTokensForOwner(String owner,
+        Set<String> tokenRequestors) {
         if (StringUtils.isBlank(owner) || tokenRequestors == null
             || tokenRequestors.isEmpty()) {
             logger.error("Given parameters are null or empty");
@@ -233,20 +246,20 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
 
         logger.debug("{} tokens were deleted for user {}", delCount, owner);
     }
-    
+
     public boolean isAlive() {
-             
+
         try {
-            // this call and subsequent give us correct answer if any of the server is down.
-            Map<SocketAddress, Map<String, String>> stats = memcached.getStats();
+            // this call and subsequent give us correct answer if any of the
+            // server is down.
+            Map<SocketAddress, Map<String, String>> stats = memcached
+                .getStats();
             if (memcached.getUnavailableServers().size() > 0) {
                 return false;
-            }
-            else {
+            } else {
                 return true;
             }
-        }
-        catch(RuntimeException runtimeExp) {
+        } catch (RuntimeException runtimeExp) {
             return false;
         }
     }
