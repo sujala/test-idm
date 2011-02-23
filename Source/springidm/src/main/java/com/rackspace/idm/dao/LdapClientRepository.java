@@ -48,11 +48,14 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
     public void add(Client client, String customerUniqueId) {
         getLogger().info("Adding client {}", client);
+
         if (client == null) {
-            getLogger().error("Null instance of Client was passed");
-            throw new IllegalArgumentException(
-                "Null instance of Client was passed.");
+            String errMsg = "Null instance of Client was passed in.";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
         }
+        
+        Audit audit = Audit.log(client).add();
 
         List<Attribute> atts = new ArrayList<Attribute>();
 
@@ -128,11 +131,10 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         client.setUniqueId(clientDN);
 
-        Audit audit = Audit.log(client).add();
         try {
             result = getAppConnPool().add(clientDN, attributes);
         } catch (LDAPException ldapEx) {
-            audit.fail();
+            audit.fail(ldapEx.getMessage());
             getLogger().error("Error adding client {} - {}", client, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
@@ -140,7 +142,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
             getLogger().error("Error adding client {} - {}",
                 client.getClientId(), result.getResultCode());
-            audit.fail();
+            audit.fail(result.getResultCode().toString());
             throw new IllegalStateException(String.format(
                 "LDAP error encountered when adding client: %s - %s",
                 client.getName(), result.getResultCode().toString()));
@@ -161,14 +163,14 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             result = getAppConnPool().add(clientPermissionsDN,
                 permissionAttributes);
         } catch (LDAPException ldapEx) {
-            audit.fail();
+            audit.fail(ldapEx.getMessage());
             getLogger().error("Error adding client permission ou: {} - {}",
                 client.getClientId(), ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
+            audit.fail(result.getResultCode().toString());
             String errMsg = String
                 .format(
                     "LDAP error encountered when adding client permissions ou: %s - %s",
@@ -185,14 +187,14 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         try {
             result = getAppConnPool().add(clientGroupsDN, groupAttributes);
         } catch (LDAPException ldapEx) {
-            audit.fail();
+            audit.fail(ldapEx.getMessage());
             getLogger().error("Error adding client groups ou: {} - {}",
                 client.getClientId(), ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
+            audit.fail(result.getResultCode().toString());
             String errMsg = String.format(
                 "LDAP error encountered when adding client groups ou: %s - %s",
                 client.getClientId(), result.getResultCode().toString());
@@ -207,26 +209,32 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
     public void addClientGroup(ClientGroup clientGroup) {
         getLogger().info("Adding ClientGroup {}", clientGroup);
-        if (clientGroup == null) {
-            getLogger().error("Null instance of clientGroup was passed");
-            throw new IllegalArgumentException(
-                "Null instance of clientGroup was passed.");
-        }
 
         Audit audit = Audit.log(clientGroup).add();
+
+        if (clientGroup == null) {
+            String errMsg = "Null instance of clientGroup was passed";
+            audit.fail(errMsg);
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
 
         Client client = this.getClient(clientGroup.getCustomerId(),
             clientGroup.getClientId());
 
         if (client == null) {
-            throw new NotFoundException();
+            String errMsg = "Client Not Found";
+            audit.fail(errMsg);
+            throw new NotFoundException(errMsg);
         }
 
         ClientGroup group = this.getClientGroup(clientGroup.getCustomerId(),
             clientGroup.getClientId(), clientGroup.getName());
 
         if (group != null) {
-            throw new DuplicateClientGroupException();
+            String errMsg = "Client Group already exists";
+            audit.fail(errMsg);
+            throw new DuplicateClientGroupException(errMsg);
         }
 
         List<Attribute> atts = new ArrayList<Attribute>();
@@ -256,14 +264,14 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         try {
             result = getAppConnPool().add(groupDN, atts);
         } catch (LDAPException ldapEx) {
-            audit.fail();
+            audit.fail(ldapEx.getMessage());
             getLogger().error("Error adding client group {} - {}", clientGroup,
                 ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
+            audit.fail(result.getResultCode().toString());
             getLogger().error("Error adding clientGroup {} - {}",
                 clientGroup.getName(), result.getResultCode());
             throw new IllegalStateException(String.format(
@@ -278,11 +286,14 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
     public void addDefinedPermission(Permission permission) {
         getLogger().info("Adding Permission {}", permission);
+
         if (permission == null) {
-            getLogger().error("Null instance of Permission was passed");
-            throw new IllegalArgumentException(
-                "Null instance of Permission was passed.");
+            String errMsg = "Null instance of Permission was passed";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
         }
+        
+        Audit audit = Audit.log(permission).add();
 
         List<Attribute> atts = new ArrayList<Attribute>();
 
@@ -306,29 +317,34 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             atts.add(new Attribute(ATTR_PERMISSION_TYPE, permission.getType()));
         }
 
-        String clientDN = this.getClientDnByClientId(permission.getClientId());
+        Client client = this.getClient(permission.getCustomerId(),
+            permission.getClientId());
 
-        String permissionDN = new LdapDnBuilder(clientDN)
+        if (client == null) {
+            String errMsg = "Client Not Found";
+            audit.fail(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        String permissionDN = new LdapDnBuilder(client.getUniqueId())
             .addAttriubte(ATTR_NAME, permission.getPermissionId())
             .addAttriubte(ATTR_OU, OU_PERMISSIONS_NAME).build();
 
         permission.setUniqueId(permissionDN);
-
-        Audit audit = Audit.log(permission).add();
 
         LDAPResult result;
 
         try {
             result = getAppConnPool().add(permissionDN, atts);
         } catch (LDAPException ldapEx) {
-            audit.fail();
+            audit.fail(ldapEx.getMessage());
             getLogger().error("Error adding permission {} - {}", permission,
                 ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
+            audit.fail(result.getResultCode().toString());
             getLogger().error("Error adding permission {} - {}",
                 permission.getPermissionId(), result.getResultCode());
             throw new IllegalStateException(
@@ -348,15 +364,15 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().info("Adding user {} to {}", userUniqueId, group);
 
         if (StringUtils.isBlank(userUniqueId)) {
-            getLogger().error("User uniqueId was blank");
-            throw new IllegalArgumentException("User uniqueId was blank");
+            String errMsg = "User uniqueId was blank";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
         }
 
         if (group == null || StringUtils.isBlank(group.getUniqueId())) {
-            getLogger().error(
-                "Null group passed in or group uniqueId was blank");
-            throw new IllegalArgumentException(
-                "Null group passed in or group uniqueId was blank");
+            String errMsg = "Null group passed in or group uniqueId was blank";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
         }
 
         List<Modification> mods = new ArrayList<Modification>();
@@ -365,10 +381,10 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         LDAPResult result;
         Audit audit = Audit.log(group).modify(mods);
+
         try {
             result = getAppConnPool().modify(group.getUniqueId(), mods);
         } catch (LDAPException ldapEx) {
-            audit.fail();
             getLogger().error("Error adding user to group {} - {}", group,
                 ldapEx);
 
@@ -376,11 +392,13 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 ResultCode.ATTRIBUTE_OR_VALUE_EXISTS)) {
                 throw new DuplicateException("User already in group");
             }
+
+            audit.fail(ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
+            audit.fail(result.getResultCode().toString());
             throw new IllegalStateException(String.format(
                 "LDAP error encountered when adding user to group: %s - %s",
                 group, result.getResultCode().toString()));
@@ -395,15 +413,19 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         String clientSecret) {
         BindResult result;
         Client client = findByClientId(clientId);
+        
+        Audit audit = Audit.authClient(client);
         if (client == null) {
+            String errMsg = "Client Not Found";
+            audit.fail(errMsg);
             return new ClientAuthenticationResult(null, false);
         }
         try {
-            result = getBindConnPool().bind(getClientDnByClientId(clientId),
+            result = getBindConnPool().bind(client.getUniqueId(),
                 clientSecret);
-            Audit.authClient(client).succeed();
+            audit.succeed();
         } catch (LDAPException e) {
-            Audit.authClient(client).fail();
+            audit.fail(e.getMessage());
             if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
                 return new ClientAuthenticationResult(client, false);
             }
@@ -477,12 +499,12 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         try {
             result = getAppConnPool().delete(group.getUniqueId());
         } catch (LDAPException ldapEx) {
-            audit.fail();
+            audit.fail(ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
+            audit.fail(result.getResultCode().toString());
             throw new IllegalStateException();
         }
         audit.succeed();
@@ -505,7 +527,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                     permission.getClientId(), permission.getPermissionId())
                     .getUniqueId());
         } catch (LDAPException ldapEx) {
-            audit.fail();
+            audit.fail(ldapEx.getMessage());
             getLogger().error(
                 "Could not perform delete for permission {} - {}", permission,
                 ldapEx);
@@ -513,7 +535,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
+            audit.fail(result.getResultCode().toString());
             getLogger().error("Error deleting permission {} - {}", permission,
                 result.getResultCode());
             throw new IllegalStateException(String.format(
@@ -696,34 +718,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return clients;
     }
 
-    public String getClientDnByClientId(String clientId) {
-        getLogger().debug("Doing search for clientId {}", clientId);
-
-        String dn = null;
-
-        if (StringUtils.isBlank(clientId)) {
-            getLogger().error("Null or Empty clientId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty clientId parameter.");
-        }
-
-        String searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_CLIENT_ID, clientId)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEAPPLICATION).build();
-
-        Client client = getSingleClient(searchFilter);
-
-        getLogger().debug("Found client - {}", client);
-
-        if (client != null) {
-            dn = client.getUniqueId();
-        }
-
-        return dn;
-    }
-
     public ClientGroup getClientGroup(String customerId, String clientId,
         String groupName) {
 
@@ -894,7 +888,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         try {
             result = getAppConnPool().modify(group.getUniqueId(), mods);
         } catch (LDAPException ldapEx) {
-            audit.fail();
+            audit.fail(ldapEx.getMessage());
             getLogger().error("Error deleting user from group {} - {}", group,
                 ldapEx);
             if (ldapEx.getResultCode().equals(ResultCode.NO_SUCH_ATTRIBUTE)) {
@@ -904,7 +898,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
+            audit.fail(result.getResultCode().toString());
             getLogger().error("Error removing user from group {} - {}", group,
                 result.getResultCode());
             throw new IllegalStateException(
@@ -945,7 +939,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         LDAPResult result = null;
         Audit audit = Audit.log(client).modify(mods);
         try {
-            result = getAppConnPool().modify(getClientDnByClientId(clientId),
+            result = getAppConnPool().modify(oldClient.getUniqueId(),
                 mods);
         } catch (LDAPException ldapEx) {
             audit.fail();

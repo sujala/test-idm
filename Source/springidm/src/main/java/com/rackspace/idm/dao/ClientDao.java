@@ -39,8 +39,6 @@ public interface ClientDao {
     ClientGroup findClientGroupByUniqueId(String uniqueId);
 
     Clients getByCustomerId(String customerId, int offset, int limit);
-
-    String getClientDnByClientId(String clientId);
     
     ClientGroup getClientGroup(String customerId, String clientId,
         String groupName);
