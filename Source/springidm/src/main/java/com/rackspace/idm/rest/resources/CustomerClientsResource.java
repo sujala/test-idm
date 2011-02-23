@@ -19,6 +19,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -56,14 +57,14 @@ public class CustomerClientsResource {
     private ClientService clientService;
     private CustomerClientResource customerClientResource;
     private AuthorizationService authorizationService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public CustomerClientsResource(AccessTokenService accessTokenService,
         CustomerService customerService, InputValidator inputValidator,
         ClientConverter clientConverter, ClientService clientService,
         CustomerClientResource customerClientResource,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.customerService = customerService;
         this.clientService = clientService;
@@ -71,7 +72,6 @@ public class CustomerClientsResource {
         this.inputValidator = inputValidator;
         this.customerClientResource = customerClientResource;
         this.authorizationService = authorizationService;
-        this.logger = logger.getLogger(this.getClass());
     }
 
     /**
@@ -111,7 +111,7 @@ public class CustomerClientsResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -119,7 +119,7 @@ public class CustomerClientsResource {
         if (customer == null) {
             String errorMsg = String.format("Customer not found: %s",
                 customerId);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
@@ -166,7 +166,7 @@ public class CustomerClientsResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -184,7 +184,7 @@ public class CustomerClientsResource {
             this.clientService.add(clientDO);
         } catch (DuplicateException ex) {
             String errorMsg = ex.getMessage();
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new ClientConflictException(errorMsg);
         }
 
@@ -199,7 +199,7 @@ public class CustomerClientsResource {
         try {
             uri = new URI(location);
         } catch (URISyntaxException e) {
-            logger.error("Client Location URI error");
+            logger.warn("Client Location URI error");
         }
 
         return Response.ok(client).location(uri)

@@ -13,6 +13,7 @@ import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -33,21 +34,20 @@ public class CustomerClientResource {
     private PermissionsResource permissionsResource;
     private ClientGroupsResource clientGroupsResource;
     private AuthorizationService authorizationService;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public CustomerClientResource(AccessTokenService accessTokenService,
         ClientService clientService, ClientConverter clientConverter,
         PermissionsResource permissionsResource,ClientGroupsResource clientGroupsResource,
-        AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
+        AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.clientService = clientService;
         this.clientConverter = clientConverter;
         this.permissionsResource = permissionsResource;
         this.authorizationService = authorizationService;
         this.clientGroupsResource = clientGroupsResource;
-        this.logger = logger.getLogger(this.getClass());
-    }
+     }
 
     /**
      * Gets the client data.
@@ -85,7 +85,7 @@ public class CustomerClientResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -95,7 +95,7 @@ public class CustomerClientResource {
             || !client.getCustomerId().toLowerCase()
                 .equals(customerId.toLowerCase())) {
             String errorMsg = String.format("Client Not Found: %s", clientId);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
@@ -141,7 +141,7 @@ public class CustomerClientResource {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 token);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
@@ -151,7 +151,7 @@ public class CustomerClientResource {
             || !client.getCustomerId().toLowerCase()
                 .equals(customerId.toLowerCase())) {
             String errorMsg = String.format("Client Not Found: %s", clientId);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
@@ -162,12 +162,12 @@ public class CustomerClientResource {
             clientSecret = clientService.resetClientSecret(client);
         } catch (IllegalArgumentException e) {
             String errorMsg = String.format("Invalid client: %s", clientId);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         } catch (IllegalStateException e) {
             String errorMsg = String.format(
                 "Error generating secret for client: %s", clientId);
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new IdmException(e);
         }
 
