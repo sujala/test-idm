@@ -1,5 +1,7 @@
 package com.rackspace.idm.interceptors;
 
+import java.util.UUID;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
@@ -58,6 +60,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             MDC.put(Audit.REMOTE_IP, req.getRemoteAddr());
             MDC.put(Audit.HOST_IP, req.getLocalAddr());
             MDC.put(Audit.PATH, path);
+            MDC.put(Audit.GUUID, UUID.randomUUID().toString());
         }
         // Skip authentication for the following 5 calls
 

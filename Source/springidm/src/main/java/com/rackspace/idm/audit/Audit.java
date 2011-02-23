@@ -18,6 +18,7 @@ public class Audit {
 	public static final String HOST_IP = "HOST_IP";
 	public static final String PATH = "PATH";
 	public static final String WHO = "WHO";
+	public static final String GUUID = "GUUID";
 
 	private enum ACTION {
 		USERAUTH, CLIENTAUTH, RACKERAUTH, ADD, DELETE, MODIFY;
@@ -42,7 +43,6 @@ public class Audit {
 	private List<Event> events = new ArrayList<Event>();
 	private String target;
 	private String failureMsg = "-";
-	private final long timestamp = System.currentTimeMillis();
 	private volatile boolean consumed = false;
 
 	private Audit(String s) {
@@ -141,7 +141,7 @@ public class Audit {
 					r + " {} {} [{}] {} {} {} {} {} {}",
 					new Object[] { event.action, target, event.context, StringUtils.defaultIfEmpty(MDC.get(WHO),"-"),
 							failureMsg, MDC.get(REMOTE_IP), MDC.get(HOST_IP),
-							MDC.get(PATH), timestamp });
+							MDC.get(PATH), MDC.get(GUUID) });
 		}
 	}
 

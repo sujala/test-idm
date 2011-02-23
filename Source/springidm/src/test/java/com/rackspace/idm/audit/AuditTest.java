@@ -2,6 +2,7 @@ package com.rackspace.idm.audit;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.log4j.MDC;
 import org.junit.Before;
@@ -19,6 +20,7 @@ public class AuditTest {
 		MDC.put(Audit.HOST_IP, "127.0.0.1");
 		MDC.put(Audit.REMOTE_IP, "10.127.7.164");
 		MDC.put(Audit.PATH, "/token");
+		MDC.put(Audit.GUUID, UUID.randomUUID().toString());
 	}
 	@Test
 	public void shouldLogEvent() {
