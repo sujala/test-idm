@@ -23,7 +23,6 @@ import com.rackspace.idm.entities.UserAuthenticationResult;
 import com.rackspace.idm.entities.Users;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
-import com.rackspace.idm.exceptions.NotAuthorizedException;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
@@ -101,12 +100,82 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     public void revokeTokensLocally(String tokenStringRequestingDelete, String tokenToDelete) {
-        revokeToken(tokenStringRequestingDelete, tokenToDelete, false);
+        logger.info("Deleting Token {}", tokenToDelete);
+
+        AccessToken deletedToken = accessTokenService.getAccessTokenByTokenString(tokenToDelete);
+        if (deletedToken == null) {
+            String error = "No entry found for token " + deletedToken;
+            logger.debug(error);
+            throw new IllegalStateException(error);
+        }
+
+        AccessToken requestingToken = accessTokenService
+            .getAccessTokenByTokenString(tokenStringRequestingDelete);
+        if (requestingToken == null) {
+            String error = "No entry found for token " + tokenStringRequestingDelete;
+            logger.debug(error);
+            throw new IllegalStateException(error);
+        }
+
+        boolean isAuthorized = authorizationService.authorizeCustomerIdm(requestingToken);
+        if (!isAuthorized) {
+            String errMsg;
+            errMsg = String.format("Requesting token %s not authorized to revoke token %s locally.",
+                tokenStringRequestingDelete, tokenToDelete);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
+        if (deletedToken.getRequestor() == null) {
+            String error = String.format("Token %s does not have a requestor", deletedToken.getTokenString());
+            logger.debug(error);
+            throw new IllegalStateException(error);
+        }
+        accessTokenService.delete(deletedToken.getTokenString());
+        logger.info("Deleted Token {}", deletedToken);
     }
 
     @Override
     public void revokeTokensGlobally(String tokenStringRequestingDelete, String tokenToDelete) {
-        revokeToken(tokenStringRequestingDelete, tokenToDelete, true);
+        logger.info("Deleting Token {}", tokenToDelete);
+        AccessToken deletedToken = accessTokenService.getAccessTokenByTokenStringGlobally(tokenToDelete);
+        if (deletedToken == null) {
+            String error = "No entry found for token " + deletedToken;
+            logger.debug(error);
+            throw new IllegalStateException(error);
+        }
+
+        AccessToken requestingToken = accessTokenService
+            .getAccessTokenByTokenStringGlobally(tokenStringRequestingDelete);
+        if (requestingToken == null) {
+            String error = "No entry found for token " + tokenStringRequestingDelete;
+            logger.debug(error);
+            throw new IllegalStateException(error);
+        }
+
+        boolean isGoodAsIdm = authorizationService.authorizeCustomerIdm(requestingToken);
+        // Only CustomerIdm Client and Client that got token or the user of
+        // the token are authorized to revoke token
+        boolean isAuthorized = isGoodAsIdm
+            || authorizationService.authorizeAsRequestorOrOwner(deletedToken, requestingToken);
+
+        if (!isAuthorized) {
+            String errMsg;
+            errMsg = String.format("Requesting token %s not authorized to revoke token %s.",
+                tokenStringRequestingDelete, tokenToDelete);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
+        if (deletedToken.getRequestor() == null) {
+            String error = String.format("Token %s does not have a requestor", deletedToken.getTokenString());
+            logger.debug(error);
+            throw new IllegalStateException(error);
+        }
+        // This user is to be completely logged out of the system.
+        deleteRefreshTokenByAccessToken(deletedToken);
+        accessTokenService.deleteAllGloballyForOwner(deletedToken.getOwner());
+        logger.info("Deleted Token {}", deletedToken);
     }
 
     @Override
@@ -220,66 +289,6 @@ public class DefaultOAuthService implements OAuthService {
         return usersList;
     }
 
-    private void revokeToken(String tokenStringRequestingDelete, String tokenToDelete, boolean isGlobal)
-        throws NotAuthorizedException {
-        logger.debug("Deleting Token {}", tokenToDelete);
-
-        AccessToken deletedToken = accessTokenService.getAccessTokenByTokenString(tokenToDelete);
-        if (deletedToken == null) {
-            String error = "No entry found for token " + deletedToken;
-            logger.warn(error);
-            throw new IllegalStateException(error);
-        }
-
-        AccessToken requestingToken = accessTokenService
-            .getAccessTokenByTokenString(tokenStringRequestingDelete);
-        if (requestingToken == null) {
-            String error = "No entry found for token " + tokenStringRequestingDelete;
-            logger.warn(error);
-            throw new IllegalStateException(error);
-        }
-
-        boolean isGoodAsIdm = authorizationService.authorizeCustomerIdm(requestingToken);
-        boolean isAuthorized = false;
-        if (isGlobal) {
-            // Only CustomerIdm Client and Client that got token or the user of
-            // the token are authorized to revoke token
-            isAuthorized = isGoodAsIdm || authorizationService.authorizeAsRequestorOrOwner(deletedToken, requestingToken);
-        } else {
-            // Only Customer IDM can make a non-global token revocation call.
-            isAuthorized = isGoodAsIdm;
-        }
-
-        if (!isAuthorized) {
-            String errMsg;
-            if (isGlobal) {
-                errMsg = String.format("Requesting token %s not authorized to revoke token %s.",
-                    tokenStringRequestingDelete, tokenToDelete);
-            } else {
-                errMsg = String.format("Requesting token %s not authorized to revoke token %s locally.",
-                    tokenStringRequestingDelete, tokenToDelete);
-            }
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-
-        if (deletedToken.getRequestor() == null) {
-            String error = String
-                .format("Token %s does not have a requestor", deletedToken.getTokenString());
-            logger.warn(error);
-            throw new IllegalStateException(error);
-        }
-
-        if (isGlobal) {
-            // This user is to be completely logged out of the system.
-            deleteRefreshTokenByAccessToken(deletedToken);
-            accessTokenService.deleteAllGloballyForOwner(deletedToken.getOwner());
-        } else {
-            accessTokenService.delete(deletedToken.getTokenString());
-        }
-        logger.debug("Deleted Token {}", deletedToken);
-    }
-
     private void deleteRefreshTokenByAccessToken(AccessToken accessToken) {
         // Clients do not get Refresh Tokens so there is no need to
         // revoke one if the access token is for a client
@@ -327,6 +336,11 @@ public class DefaultOAuthService implements OAuthService {
         }
 
         return refreshToken;
+    }
+
+    private void throwNotAuthenticatedException(String errorMsg) throws NotAuthenticatedException {
+        logger.error(errorMsg);
+        throw new NotAuthenticatedException(errorMsg);
     }
 
     private int getPagingLimit() {

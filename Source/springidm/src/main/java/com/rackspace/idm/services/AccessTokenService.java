@@ -2,33 +2,35 @@ package com.rackspace.idm.services;
 
 import java.util.List;
 
+import org.joda.time.DateTime;
+
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.BaseClient;
 import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.User;
-import org.joda.time.DateTime;
 
 public interface AccessTokenService {
 
     boolean authenticateAccessToken(String accessTokenStr);
 
     AccessToken getTokenByUsernameAndApiCredentials(BaseClient client, String username, String apiKey,
-                                                    int expirationSeconds, DateTime currentTime);
+        int expirationSeconds, DateTime currentTime);
 
     AccessToken getTokenByNastIdAndApiCredentials(BaseClient client, String nastId, String apiKey,
-                                                  int expirationSeconds, DateTime currentTime);
+        int expirationSeconds, DateTime currentTime);
 
-    AccessToken getTokenByMossoIdAndApiCredentials(BaseClient client, int mossoId, String apiKey, int expirationSeconds,
-                                                   DateTime currentTime);
+    AccessToken getTokenByMossoIdAndApiCredentials(BaseClient client, int mossoId, String apiKey,
+        int expirationSeconds, DateTime currentTime);
 
     AccessToken getTokenByBasicCredentials(BaseClient client, BaseUser user, int expirationSeconds,
-                                           DateTime currentTime);
-
+        DateTime currentTime);
 
     AccessToken getAccessTokenByAuthHeader(String authHeader);
 
     AccessToken getAccessTokenByTokenString(String tokenString);
+
+    AccessToken getAccessTokenByTokenStringGlobally(String tokenString);
 
     AccessToken getAccessTokenForUser(BaseUser user, BaseClient client, DateTime expiresAfter);
 

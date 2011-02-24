@@ -258,12 +258,12 @@ public class DefaultAccessTokenService implements AccessTokenService {
         Boolean authenticated = false;
 
         // check token is valid and not expired
-        AccessToken accessToken = getTokenByTokenStringGlobally(accessTokenStr);
+        AccessToken accessToken = getAccessTokenByTokenStringGlobally(accessTokenStr);
         if (accessToken != null && !accessToken.isExpired(new DateTime())) {
             authenticated = true;
             MDC.put(Audit.WHO, accessToken.getAuditString());
         }
-        
+
         logger.debug("Authorized Token: {} : {}", accessTokenStr, authenticated);
         return authenticated;
     }
@@ -329,7 +329,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
     public AccessToken validateToken(String tokenString) {
         logger.debug("Validating Token: {}", tokenString);
 
-        AccessToken token = getTokenByTokenStringGlobally(tokenString);
+        AccessToken token = getAccessTokenByTokenStringGlobally(tokenString);
         if (token == null || token.getExpiration() <= 0) {
             logger.debug("Token {} Invalid", tokenString);
             return null;
@@ -385,7 +385,8 @@ public class DefaultAccessTokenService implements AccessTokenService {
         xdcTokenDao.deleteAllTokensForCustomer(customerId);
     }
 
-    private AccessToken getTokenByTokenStringGlobally(String tokenString) {
+    @Override
+    public AccessToken getAccessTokenByTokenStringGlobally(String tokenString) {
         AccessToken token = tokenDao.findByTokenString(tokenString);
 
         // Check if token is from other data center.
