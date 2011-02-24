@@ -194,13 +194,13 @@ public class DefaultUserService implements UserService {
         logger.debug("Getting User: {}", username);
         User user = userDao.findByUsername(username);
         if (user == null) {
-            logger.debug("No user found for user name {}", username);
+            logger.warn("No user found for user name {}", username);
             return null;
         }
 
         if (StringUtils.isBlank(user.getInum())) {
             String msg = String.format("User %s is missing iNum.", username);
-            logger.debug(msg);
+            logger.warn(msg);
             throw new IllegalStateException(msg);
         }
 
@@ -256,7 +256,7 @@ public class DefaultUserService implements UserService {
         boolean matchFound = m.matches();
         if (!matchFound) {
             String errorMsg = "Invalid from address";
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new IllegalArgumentException(errorMsg);
         }
 
@@ -271,7 +271,7 @@ public class DefaultUserService implements UserService {
         matchFound = replyToMatcher.matches();
         if (!matchFound) {
             String errorMsg = "Invalid reply-to address";
-            logger.error(errorMsg);
+            logger.warn(errorMsg);
             throw new IllegalArgumentException(errorMsg);
         }
 

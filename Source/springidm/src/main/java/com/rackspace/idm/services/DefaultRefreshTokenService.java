@@ -66,7 +66,7 @@ public class DefaultRefreshTokenService implements RefreshTokenService {
         logger.debug("resetting refresh token expiration: {}", token);
 
         if (token == null) {
-            logger.error("Null instance of RefreshToken was passed");
+            logger.warn("Null instance of RefreshToken was passed");
             throw new IllegalArgumentException("Null instance of RefreshToken was passed.");
         }
 

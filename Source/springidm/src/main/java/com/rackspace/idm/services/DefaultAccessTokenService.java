@@ -311,7 +311,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
         int expirationSeconds, DateTime currentTime) {
 
         if (!authResult.isAuthenticated()) {
-            logger.error("Incorrect Credentials");
+            logger.warn("Incorrect Credentials");
             throw new NotAuthenticatedException("Incorrect Credentials");
         }
 

@@ -53,9 +53,9 @@ public class DefaultCustomerService implements CustomerService {
     }
 
     public Customer getCustomer(String customerId) {
-        logger.debug("Getting Customer: {}", customerId);
+        logger.info("Getting Customer: {}", customerId);
         Customer customer = customerDao.findByCustomerId(customerId);
-        logger.debug("Got Customer: {}", customer);
+        logger.info("Got Customer: {}", customer);
         return customer;
     }
     

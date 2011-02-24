@@ -27,11 +27,11 @@ public class DefaultRoleService implements RoleService {
     public void addUserToRole(User user, Role role) {
         logger.info("Adding user {} to Role {}", user, role);
         if (user == null) {
-            logger.error("Null user passed");
+            logger.warn("Null user passed");
             throw new IllegalArgumentException("Null user passed");
         }
         if (role == null) {
-            logger.error("Null role passed");
+            logger.warn("Null role passed");
             throw new IllegalArgumentException("Null role passed");
         }
         try {
@@ -46,11 +46,11 @@ public class DefaultRoleService implements RoleService {
     public void deleteUserFromRole(User user, Role role) {
         logger.info("Adding user {} to Role {}", user, role);
         if (user == null) {
-            logger.error("Null user passed");
+            logger.warn("Null user passed");
             throw new IllegalArgumentException("Null user passed");
         }
         if (role == null) {
-            logger.error("Null role passed");
+            logger.warn("Null role passed");
             throw new IllegalArgumentException("Null role passed");
         }
         try {

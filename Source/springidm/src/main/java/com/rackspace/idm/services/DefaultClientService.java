@@ -38,7 +38,7 @@ public class DefaultClientService implements ClientService {
     }
 
     public void add(Client client) {
-        logger.info("Adding Client: {}", client);
+        logger.debug("Adding Client: {}", client);
         Customer customer = customerDao
             .findByCustomerId(client.getCustomerId());
 
@@ -72,7 +72,7 @@ public class DefaultClientService implements ClientService {
         client.setInum(clientDao.getUnusedClientInum(customer.getInum()));
 
         clientDao.add(client, customer.getUniqueId());
-        logger.info("Added Client: {}", client);
+        logger.debug("Added Client: {}", client);
     }
 
     @Override
