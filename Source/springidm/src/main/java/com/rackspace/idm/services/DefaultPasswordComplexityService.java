@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.entities.passwordcomplexity.LowercaseRule;
 import com.rackspace.idm.entities.passwordcomplexity.MinimumLengthRule;
@@ -21,12 +22,11 @@ public class DefaultPasswordComplexityService implements
     private LowercaseRule lowercaseRule = new LowercaseRule();
     private SpecialCharacterRule specialCharacterRule = new SpecialCharacterRule();
     private NumberRule numberRule = new NumberRule();
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private List<PasswordRule> rules = new ArrayList<PasswordRule>();
 
-    public DefaultPasswordComplexityService(Logger logger) {
-        this.logger = logger;
+    public DefaultPasswordComplexityService() {
         
         rules.add(minLengthRule);
         rules.add(uppercaseRule);

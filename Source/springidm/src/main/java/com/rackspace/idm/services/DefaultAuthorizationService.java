@@ -7,6 +7,7 @@ import net.spy.memcached.MemcachedClient;
 
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.entities.AccessToken;
@@ -17,14 +18,12 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     private MemcachedClient memcached;
     private ClientDao clientDao;
-    private Logger logger;
     private Configuration config;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultAuthorizationService(ClientDao clientDao, MemcachedClient memcached, Configuration config,
-        Logger logger) {
+    public DefaultAuthorizationService(ClientDao clientDao, MemcachedClient memcached, Configuration config) {
         this.memcached = memcached;
         this.clientDao = clientDao;
-        this.logger = logger;
         this.config = config;
     }
 

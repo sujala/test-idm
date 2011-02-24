@@ -69,7 +69,7 @@ public class RoleServiceTests {
         mockUserDao = EasyMock.createMock(UserDao.class);
         mockRoleDao = EasyMock.createMock(RoleDao.class);
 
-        roleService = new DefaultRoleService(mockRoleDao, mockUserDao, new StubLogger());
+        roleService = new DefaultRoleService(mockRoleDao, mockUserDao);
         
         testRole = new Role(uniqueId, roleName, customerId,
             country, inum, iname, orgInum,

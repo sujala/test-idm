@@ -1,6 +1,7 @@
 package com.rackspace.idm.services;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.CustomerDao;
@@ -14,17 +15,14 @@ public class DefaultCustomerService implements CustomerService {
     private CustomerDao customerDao;
     private UserDao userDao;
     
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultCustomerService(ClientDao clientDao,
-        CustomerDao customerDao, UserDao userDao,
-        Logger logger) {
+        CustomerDao customerDao, UserDao userDao) {
         
         this.clientDao = clientDao;
         this.customerDao = customerDao;
         this.userDao = userDao;
-        
-        this.logger = logger;
     }
 
     public void addCustomer(Customer customer) {

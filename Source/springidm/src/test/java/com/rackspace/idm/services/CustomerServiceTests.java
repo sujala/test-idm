@@ -39,7 +39,7 @@ public class CustomerServiceTests {
         mockUserDao = EasyMock.createMock(UserDao.class);
 
         service = new DefaultCustomerService(mockClientDao, mockCustomerDao,
-            mockUserDao, new StubLogger());
+            mockUserDao);
     }
 
     @Test

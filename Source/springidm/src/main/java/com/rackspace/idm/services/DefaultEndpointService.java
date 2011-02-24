@@ -3,6 +3,7 @@ package com.rackspace.idm.services;
 import java.util.List;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.dao.EndpointDao;
 import com.rackspace.idm.entities.CloudBaseUrl;
@@ -12,11 +13,10 @@ import com.rackspace.idm.exceptions.BaseUrlConflictException;
 public class DefaultEndpointService implements EndpointService {
 
     private EndpointDao endpointDao;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultEndpointService(EndpointDao endpointDao, Logger logger) {
+    public DefaultEndpointService(EndpointDao endpointDao) {
         this.endpointDao = endpointDao;
-        this.logger = logger;
     }
 
     public void addBaseUrl(CloudBaseUrl baseUrl) {

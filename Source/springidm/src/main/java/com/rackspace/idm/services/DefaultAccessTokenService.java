@@ -1,6 +1,5 @@
 package com.rackspace.idm.services;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -11,6 +10,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import com.rackspace.idm.audit.Audit;
@@ -18,12 +18,12 @@ import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.XdcAccessTokenDao;
 import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.entities.BaseClient;
 import com.rackspace.idm.entities.BaseUser;
 import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.User;
 import com.rackspace.idm.entities.UserAuthenticationResult;
+import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 
@@ -31,18 +31,17 @@ public class DefaultAccessTokenService implements AccessTokenService {
     private AccessTokenDao tokenDao;
     private XdcAccessTokenDao xdcTokenDao;
     private ClientDao clientDao;
-    private Logger logger;
     private UserService userService;
     private AuthHeaderHelper authHeaderHelper;
     private Configuration config;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultAccessTokenService(AccessTokenDao tokenDao, ClientDao clientDao, UserService userService,
-        XdcAccessTokenDao xdcTokenDao, AuthHeaderHelper authHeaderHelper, Configuration config, Logger logger) {
+        XdcAccessTokenDao xdcTokenDao, AuthHeaderHelper authHeaderHelper, Configuration config) {
         this.tokenDao = tokenDao;
         this.clientDao = clientDao;
         this.userService = userService;
         this.xdcTokenDao = xdcTokenDao;
-        this.logger = logger;
         this.authHeaderHelper = authHeaderHelper;
         this.config = config;
     }

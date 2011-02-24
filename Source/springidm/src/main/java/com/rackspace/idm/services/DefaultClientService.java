@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.rackspace.idm.entities.*;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.dao.ClientDao;
@@ -27,14 +28,13 @@ public class DefaultClientService implements ClientService {
     private ClientDao clientDao;
     private CustomerDao customerDao;
     private UserDao userDao;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultClientService(ClientDao clientDao, CustomerDao customerDao,
-        UserDao userDao, Logger logger) {
+        UserDao userDao) {
         this.clientDao = clientDao;
         this.customerDao = customerDao;
         this.userDao = userDao;
-        this.logger = logger;
     }
 
     public void add(Client client) {

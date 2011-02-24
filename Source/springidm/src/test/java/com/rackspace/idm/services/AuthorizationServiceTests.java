@@ -80,7 +80,7 @@ public class AuthorizationServiceTests {
         Configuration appConfig = new PropertyFileConfiguration()
             .getConfigFromClasspath();
         service = new DefaultAuthorizationService(mockClientDao, mclient,
-            appConfig, new StubLogger());
+            appConfig);
         setUpObjects();
     }
 

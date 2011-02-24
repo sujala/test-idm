@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.dao.RefreshTokenDao;
 import com.rackspace.idm.entities.RefreshToken;
@@ -12,14 +13,15 @@ import com.rackspace.idm.entities.RefreshTokenDefaultAttributes;
 public class DefaultRefreshTokenService implements RefreshTokenService {
 
     private RefreshTokenDao refreshTokenDao;
-    private Logger logger;
+    
     private int expirationSeconds;
+    
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultRefreshTokenService(RefreshTokenDefaultAttributes defaultAttributes,
-        RefreshTokenDao refreshTokenDao, Logger logger) {
+        RefreshTokenDao refreshTokenDao) {
 
         this.refreshTokenDao = refreshTokenDao;
-        this.logger = logger;
 
         this.expirationSeconds = defaultAttributes.getExpirationSeconds();
     }

@@ -89,7 +89,7 @@ public class AccessTokenServiceTests {
             dataCenterPrefix, isTrustedServer);
         Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
         tokenService = new DefaultAccessTokenService(mockTokenDao, mockClientDao, mockUserService,
-            mockWebClientAccessTokenDao, new AuthHeaderHelper(), appConfig, new StubLogger());
+            mockWebClientAccessTokenDao, new AuthHeaderHelper(), appConfig);
     }
 
     @Test

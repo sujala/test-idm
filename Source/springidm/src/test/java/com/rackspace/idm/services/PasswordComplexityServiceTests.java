@@ -17,7 +17,7 @@ public class PasswordComplexityServiceTests {
 
     @Before
     public void setUp() {
-        service = new DefaultPasswordComplexityService(new StubLogger());
+        service = new DefaultPasswordComplexityService();
     }
 
     @Test

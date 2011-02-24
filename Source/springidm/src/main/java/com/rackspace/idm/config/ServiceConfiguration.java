@@ -8,8 +8,6 @@ import net.spy.memcached.MemcachedClient;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -106,9 +104,8 @@ public class ServiceConfiguration {
 
     @Bean
     public AccessTokenService tokenService() {
-        Logger logger = LoggerFactory.getLogger(DefaultAccessTokenService.class);
         return new DefaultAccessTokenService(accessTokenDao, clientDao, userService(), xdcTokenDao,
-            authHeaderHelper(), config, logger);
+            authHeaderHelper(), config);
     }
 
     @Bean
@@ -123,20 +120,17 @@ public class ServiceConfiguration {
 
     @Bean
     public ClientService clientService() {
-        Logger logger = LoggerFactory.getLogger(DefaultClientService.class);
-        return new DefaultClientService(clientDao, customerDao, userRepo, logger);
+        return new DefaultClientService(clientDao, customerDao, userRepo);
     }
 
     @Bean
     public EndpointService endpointService() {
-        Logger logger = LoggerFactory.getLogger(DefaultEndpointService.class);
-        return new DefaultEndpointService(endpointDao, logger);
+        return new DefaultEndpointService(endpointDao);
     }
 
     @Bean
     public CustomerService customerService() {
-        Logger logger = LoggerFactory.getLogger(DefaultCustomerService.class);
-        return new DefaultCustomerService(clientDao, customerDao, userRepo, logger);
+        return new DefaultCustomerService(clientDao, customerDao, userRepo);
     }
 
     @Bean
@@ -174,8 +168,7 @@ public class ServiceConfiguration {
 
     @Bean
     public PasswordComplexityService passwordComplexityService() {
-        Logger logger = LoggerFactory.getLogger(DefaultPasswordComplexityService.class);
-        return new DefaultPasswordComplexityService(logger);
+        return new DefaultPasswordComplexityService();
     }
 
     @Bean
@@ -186,23 +179,19 @@ public class ServiceConfiguration {
         RefreshTokenDefaultAttributes defaultAttributes = new RefreshTokenDefaultAttributes(
             defaultTokenExpirationSeconds, dataCenterPrefix);
 
-        Logger logger = LoggerFactory.getLogger(DefaultRefreshTokenService.class);
-
-        return new DefaultRefreshTokenService(defaultAttributes, refreshTokenDao, logger);
+        return new DefaultRefreshTokenService(defaultAttributes, refreshTokenDao);
     }
 
     @Bean
     public RoleService roleService() {
-        Logger logger = LoggerFactory.getLogger(DefaultRoleService.class);
-        return new DefaultRoleService(roleDao, userRepo, logger);
+        return new DefaultRoleService(roleDao, userRepo);
     }
 
     @Bean
     public UserService userService() {
-        Logger logger = LoggerFactory.getLogger(DefaultUserService.class);
         boolean isTrustedServer = config.getBoolean("ldap.server.trusted", false);
         return new DefaultUserService(userRepo, authDao, customerDao, emailService(), clientService(),
-            isTrustedServer, logger);
+            isTrustedServer);
     }
 
     @Bean
@@ -213,7 +202,6 @@ public class ServiceConfiguration {
 
     @Bean
     public AuthorizationService authorizationService() {
-        Logger logger = LoggerFactory.getLogger(DefaultAuthorizationService.class);
-        return new DefaultAuthorizationService(clientDao, memcached, config, logger);
+        return new DefaultAuthorizationService(clientDao, memcached, config);
     }
 }

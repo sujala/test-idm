@@ -11,6 +11,7 @@ import com.rackspace.idm.validation.RegexPatterns;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.mail.EmailException;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,12 +37,12 @@ public class DefaultUserService implements UserService {
     private EmailService emailService;
     private ClientService clientService;
     private TemplateProcessor tproc = new TemplateProcessor();
-    private Logger logger;
     private boolean isTrustedServer;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
         CustomerDao customerDao, EmailService emailService,
-        ClientService clientService, boolean isTrusted, Logger logger) {
+        ClientService clientService, boolean isTrusted) {
 
         this.userDao = userDao;
         this.authDao = rackerDao;
@@ -49,7 +50,6 @@ public class DefaultUserService implements UserService {
         this.emailService = emailService;
         this.clientService = clientService;
         this.isTrustedServer = isTrusted;
-        this.logger = logger;
     }
 
     public void addUser(User user) throws DuplicateException {

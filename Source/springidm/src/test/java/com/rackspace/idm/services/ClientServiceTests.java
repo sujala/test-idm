@@ -66,8 +66,7 @@ public class ClientServiceTests {
         mockCustomerDao = EasyMock.createMock(CustomerDao.class);
         mockUserDao = EasyMock.createMock(UserDao.class);
 
-        clientService = new DefaultClientService(mockClientDao, mockCustomerDao, mockUserDao,
-            new StubLogger());
+        clientService = new DefaultClientService(mockClientDao, mockCustomerDao, mockUserDao);
     }
 
     @Test

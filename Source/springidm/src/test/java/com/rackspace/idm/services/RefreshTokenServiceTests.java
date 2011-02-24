@@ -33,7 +33,7 @@ public class RefreshTokenServiceTests {
             defaultTokenExpirationSeconds, dataCenterPrefix);
 
         refreshTokenService = new DefaultRefreshTokenService(defaultAttributes,
-            mockRefreshTokenDao, new StubLogger());
+            mockRefreshTokenDao);
     }
 
     @Test

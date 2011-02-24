@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.dao.RoleDao;
 import com.rackspace.idm.dao.UserDao;
@@ -16,12 +17,11 @@ public class DefaultRoleService implements RoleService {
 
     private RoleDao roleDao;
     private UserDao userDao;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultRoleService(RoleDao roleDao, UserDao userDao, Logger logger) {
+    public DefaultRoleService(RoleDao roleDao, UserDao userDao) {
         this.roleDao = roleDao;
         this.userDao = userDao;
-        this.logger = logger;
     }
 
     public void addUserToRole(User user, Role role) {
