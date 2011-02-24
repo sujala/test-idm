@@ -4,6 +4,7 @@ import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rackspace.idm.audit.Audit;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.LDAPException;
@@ -26,6 +27,8 @@ public class LdapAuthRepository implements AuthDao {
         logger.debug("Authenticating user {}", userName);
         BindResult result = null;
         
+        Audit audit = Audit.authRacker(userName);
+        
         String userDn = String.format("cn=%s,", userName) + getBaseDn();
         
         try {
@@ -35,6 +38,7 @@ public class LdapAuthRepository implements AuthDao {
                 logger.info(
                     "Invalid login attempt by user {} with password {}.",
                     userName, password);
+                audit.fail("Incorrect Credentials");
                 return false;
             }
             logger.error("Bind operation on username " + userName + " failed.",
@@ -42,9 +46,12 @@ public class LdapAuthRepository implements AuthDao {
             throw new IllegalStateException(e);
         } 
         if (result == null) {
+            audit.fail();
             throw new IllegalStateException("Could not get bind result.");
         }
         logger.debug(result.toString());
+        
+        audit.succeed();
         return ResultCode.SUCCESS.equals(result.getResultCode());
     }
     
