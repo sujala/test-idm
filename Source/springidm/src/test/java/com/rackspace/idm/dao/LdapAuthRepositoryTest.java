@@ -40,7 +40,7 @@ public class LdapAuthRepositoryTest {
     }
 
     public boolean authenticateRacker() {
-        return repo.authenticate("cloud_controlpanel", "Sj!wI2As");
+        return repo.authenticate("cidm_user1", "lr7dy8qO");
     }
 
     @Test
@@ -53,7 +53,6 @@ public class LdapAuthRepositoryTest {
      * the StartTLS handshake.
      */
     @Test
-    @Ignore("Need to get good credentials to test Racker Auth, You can test it with you personal creds but don't commit.")
     public void shouldAuthenticateRackerManyTimes() throws InterruptedException {
         // Just making sure that the connection pool isn't being depleted when
         // the connections are being closed after the authentication bind.
