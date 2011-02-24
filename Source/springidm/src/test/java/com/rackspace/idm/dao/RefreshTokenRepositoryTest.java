@@ -41,7 +41,7 @@ public class RefreshTokenRepositoryTest {
     private static LdapRefreshTokenRepository getRepo(
         LdapConnectionPools connPools) {
         Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
-        return new LdapRefreshTokenRepository(connPools, appConfig, new StubLogger());
+        return new LdapRefreshTokenRepository(connPools, appConfig);
     }
 
     private static LdapConnectionPools getConnPools() {

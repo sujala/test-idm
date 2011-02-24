@@ -1,26 +1,41 @@
 package com.rackspace.idm.dao;
 
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.entities.*;
-import com.rackspace.idm.exceptions.NotFoundException;
-import com.rackspace.idm.exceptions.StalePasswordException;
-import com.rackspace.idm.exceptions.UserDisabledException;
-import com.rackspace.idm.util.InumHelper;
-import com.unboundid.ldap.sdk.*;
-import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
-import com.unboundid.ldap.sdk.controls.SortKey;
-import com.unboundid.ldap.sdk.controls.VirtualListViewRequestControl;
-import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.entities.Password;
+import com.rackspace.idm.entities.User;
+import com.rackspace.idm.entities.UserAuthenticationResult;
+import com.rackspace.idm.entities.UserStatus;
+import com.rackspace.idm.entities.Users;
+import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.exceptions.StalePasswordException;
+import com.rackspace.idm.exceptions.UserDisabledException;
+import com.rackspace.idm.util.InumHelper;
+import com.unboundid.ldap.sdk.Attribute;
+import com.unboundid.ldap.sdk.BindResult;
+import com.unboundid.ldap.sdk.Control;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.LDAPResult;
+import com.unboundid.ldap.sdk.LDAPSearchException;
+import com.unboundid.ldap.sdk.Modification;
+import com.unboundid.ldap.sdk.ModificationType;
+import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.ldap.sdk.SearchRequest;
+import com.unboundid.ldap.sdk.SearchResult;
+import com.unboundid.ldap.sdk.SearchResultEntry;
+import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
+import com.unboundid.ldap.sdk.controls.SortKey;
+import com.unboundid.ldap.sdk.controls.VirtualListViewRequestControl;
+import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
 
 public class LdapUserRepository extends LdapRepository implements UserDao {
 
@@ -32,8 +47,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     private static final String STALE_PASSWORD_MESSAGE = "The provided new password was found in the password history for the user";
 
     public LdapUserRepository(LdapConnectionPools connPools,
-        Configuration config, Logger logger) {
-        super(connPools, config, logger);
+        Configuration config) {
+        super(connPools, config);
     }
 
     public void add(User user, String customerUniqueId) {

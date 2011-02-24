@@ -7,6 +7,7 @@ import org.apache.commons.configuration.Configuration;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
@@ -115,13 +116,12 @@ public abstract class LdapRepository {
     protected static final String OU_PERMISSIONS_NAME = "permissions";
 
     private LdapConnectionPools conn;
-    private Logger logger;
     private Configuration config;
+    
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());   
 
-    protected LdapRepository(LdapConnectionPools conn, Configuration config,
-        Logger logger) {
+    protected LdapRepository(LdapConnectionPools conn, Configuration config) {
         this.conn = conn;
-        this.logger = logger;
         this.config = config;
     }
 

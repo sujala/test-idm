@@ -1,21 +1,29 @@
 package com.rackspace.idm.dao;
 
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.entities.RefreshToken;
-import com.unboundid.ldap.sdk.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.entities.RefreshToken;
+import com.unboundid.ldap.sdk.Attribute;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.LDAPResult;
+import com.unboundid.ldap.sdk.LDAPSearchException;
+import com.unboundid.ldap.sdk.Modification;
+import com.unboundid.ldap.sdk.ModificationType;
+import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.ldap.sdk.SearchResult;
+import com.unboundid.ldap.sdk.SearchResultEntry;
+import com.unboundid.ldap.sdk.SearchScope;
 
 public class LdapRefreshTokenRepository extends LdapRepository implements RefreshTokenDao {
 
-    public LdapRefreshTokenRepository(LdapConnectionPools connPools, Configuration config, Logger logger) {
-        super(connPools, config, logger);
+    public LdapRefreshTokenRepository(LdapConnectionPools connPools, Configuration config) {
+        super(connPools, config);
     }
 
     @Override

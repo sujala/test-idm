@@ -2,6 +2,7 @@ package com.rackspace.idm.dao;
 
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
@@ -9,15 +10,16 @@ import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.ResultCode;
 
 public class LdapAuthRepository implements AuthDao {
-    private Logger logger;
+
     private static final String BASE_DN = "ou=users,o=rackspace";
     private LDAPConnectionPool connPool;
-    private Configuration config;
+    private Configuration config;    
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    
 
-    public LdapAuthRepository(LDAPConnectionPool connPool, Configuration config, Logger logger) {
+    public LdapAuthRepository(LDAPConnectionPool connPool, Configuration config) {
         this.connPool = connPool;
         this.config = config;
-        this.logger = logger;
     }
 
     public boolean authenticate(String userName, String password) {

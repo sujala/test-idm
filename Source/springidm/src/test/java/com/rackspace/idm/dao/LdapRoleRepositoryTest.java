@@ -24,7 +24,7 @@ public class LdapRoleRepositoryTest {
 
     private static LdapRoleRepository getRepo(LdapConnectionPools connPools) {
         Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
-        return new LdapRoleRepository(connPools, appConfig, new StubLogger());
+        return new LdapRoleRepository(connPools, appConfig);
     }
 
     private static LdapConnectionPools getConnPools() {

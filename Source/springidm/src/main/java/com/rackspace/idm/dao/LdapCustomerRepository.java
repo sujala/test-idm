@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.entities.Customer;
@@ -28,8 +27,8 @@ public class LdapCustomerRepository extends LdapRepository implements
     CustomerDao {
 
     public LdapCustomerRepository(LdapConnectionPools connPools,
-        Configuration config, Logger logger) {
-        super(connPools, config, logger);
+        Configuration config) {
+        super(connPools, config);
     }
 
     public void add(Customer customer) {

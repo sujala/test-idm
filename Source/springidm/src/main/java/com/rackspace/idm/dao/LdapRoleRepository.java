@@ -3,11 +3,10 @@ package com.rackspace.idm.dao;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.rackspace.idm.audit.Audit;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
 
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.entities.Role;
 import com.rackspace.idm.entities.RoleStatus;
@@ -28,8 +27,8 @@ import com.unboundid.ldap.sdk.SearchScope;
 public class LdapRoleRepository extends LdapRepository implements RoleDao {
 
     public LdapRoleRepository(LdapConnectionPools connPools,
-        Configuration config, Logger logger) {
-        super(connPools, config, logger);
+        Configuration config) {
+        super(connPools, config);
     }
 
     public void add(Role role, String customerUniqueId) {

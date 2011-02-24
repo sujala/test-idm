@@ -8,6 +8,7 @@ import org.apache.commons.lang.SerializationException;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.GlobalConstants.TokenDeleteByType;
 import com.rackspace.idm.config.DataCenterClient;
@@ -15,11 +16,10 @@ import com.rackspace.idm.config.DataCenterEndpoints;
 import com.rackspace.idm.entities.AccessToken;
 
 public class HttpAccessTokenRepository extends HttpRepository implements XdcAccessTokenDao {
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public HttpAccessTokenRepository(DataCenterEndpoints endpoints, Configuration config, Logger logger) {
+    public HttpAccessTokenRepository(DataCenterEndpoints endpoints, Configuration config) {
         super(endpoints, config);
-        this.logger = logger;
     }
 
     /*

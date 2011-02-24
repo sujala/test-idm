@@ -47,7 +47,7 @@ public class HttpAccessTokenRepositoryTest {
         mcdRemote = new MemcachedConfiguration(config, new StubLogger()).memcacheClient();
         // Delete any old token
         deleteUserTokenInMemcached();
-        repo = new HttpAccessTokenRepository(endpoints, config, new StubLogger());
+        repo = new HttpAccessTokenRepository(endpoints, config);
     }
 
     @Test

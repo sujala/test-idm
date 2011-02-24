@@ -52,50 +52,42 @@ public class RepositoryConfiguration {
 
     @Bean
     public UserDao ldapUserRepository() {
-        Logger logger = LoggerFactory.getLogger(LdapUserRepository.class);
-        return new LdapUserRepository(connPools, appConfig, logger);
+        return new LdapUserRepository(connPools, appConfig);
     }
 
     @Bean
     public ClientDao ldapClientRepository() {
-        Logger logger = LoggerFactory.getLogger(LdapClientRepository.class);
-        return new LdapClientRepository(connPools, appConfig, logger);
+        return new LdapClientRepository(connPools, appConfig);
     }
 
     @Bean
     public RefreshTokenDao refreshTokenRepository() {
-        Logger logger = LoggerFactory.getLogger(LdapRefreshTokenRepository.class);
-        return new LdapRefreshTokenRepository(connPools, appConfig, logger);
+        return new LdapRefreshTokenRepository(connPools, appConfig);
     }
 
     @Bean
     public CustomerDao ldapCustomerRepository() {
-        Logger logger = LoggerFactory.getLogger(LdapCustomerRepository.class);
-        return new LdapCustomerRepository(connPools, appConfig, logger);
+        return new LdapCustomerRepository(connPools, appConfig);
     }
 
     @Bean
     public RoleDao roleDao() {
-        Logger logger = LoggerFactory.getLogger(LdapRoleRepository.class);
-        return new LdapRoleRepository(connPools, appConfig, logger);
+        return new LdapRoleRepository(connPools, appConfig);
     }
 
     @Bean
     public AccessTokenDao accessTokenRepository() {
-        Logger logger = LoggerFactory.getLogger(MemcachedAccessTokenRepository.class);
-        return new MemcachedAccessTokenRepository(memcached, logger);
+        return new MemcachedAccessTokenRepository(memcached);
     }
 
     @Bean
     public AuthDao authenticationRepository() {
-        Logger logger = LoggerFactory.getLogger(LdapAuthRepository.class);
-        return new LdapAuthRepository(authReposConnPool, appConfig, logger);
+        return new LdapAuthRepository(authReposConnPool, appConfig);
     }
 
     @Bean
     public EndpointDao endpointDao() {
-        Logger logger = LoggerFactory.getLogger(LdapRoleRepository.class);
-        return new LdapEndpointRepository(connPools, appConfig, logger);
+        return new LdapEndpointRepository(connPools, appConfig);
     }
 
     @Bean
@@ -105,19 +97,16 @@ public class RepositoryConfiguration {
 
     @Bean(name = "xdcTokenDao")
     public XdcAccessTokenDao xdcTokenDao() {
-        Logger logger = LoggerFactory.getLogger(HttpAccessTokenRepository.class);
-        return new HttpAccessTokenRepository(dcEnpoints(), appConfig, logger);
+        return new HttpAccessTokenRepository(dcEnpoints(), appConfig);
     }
     
     @Bean(name = "ldapStatusRepository")
     public PingableService ldapStatusRepository() {
-        Logger logger = LoggerFactory.getLogger(LdapStatusRepository.class);
-        return new LdapStatusRepository(connPools,appConfig, logger);
+        return new LdapStatusRepository(connPools,appConfig);
     }
     
     @Bean(name = "memcacheStatusRepository")
     public PingableService memcacheStatusRepository() {
-        Logger logger = LoggerFactory.getLogger(MemcachedAccessTokenRepository.class);
-        return new MemcachedAccessTokenRepository(memcached, logger);
+        return new MemcachedAccessTokenRepository(memcached);
     }
 }

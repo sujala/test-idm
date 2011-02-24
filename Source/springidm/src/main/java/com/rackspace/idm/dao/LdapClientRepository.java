@@ -3,16 +3,20 @@ package com.rackspace.idm.dao;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
+
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.entities.*;
+import com.rackspace.idm.entities.Client;
+import com.rackspace.idm.entities.ClientAuthenticationResult;
+import com.rackspace.idm.entities.ClientGroup;
+import com.rackspace.idm.entities.ClientSecret;
+import com.rackspace.idm.entities.ClientStatus;
+import com.rackspace.idm.entities.Clients;
+import com.rackspace.idm.entities.Permission;
 import com.rackspace.idm.exceptions.DuplicateClientGroupException;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.NotFoundException;
-
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-
 import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
@@ -42,8 +46,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     private static final String CONNECT_ERROR_STRING = "Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct.";
 
     public LdapClientRepository(LdapConnectionPools connPools,
-        Configuration config, Logger logger) {
-        super(connPools, config, logger);
+        Configuration config) {
+        super(connPools, config);
     }
 
     public void add(Client client, String customerUniqueId) {

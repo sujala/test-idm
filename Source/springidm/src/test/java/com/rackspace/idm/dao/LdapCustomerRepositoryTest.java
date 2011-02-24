@@ -44,7 +44,7 @@ public class LdapCustomerRepositoryTest {
 
     private static LdapCustomerRepository getRepo(LdapConnectionPools connPools) {
         Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
-        return new LdapCustomerRepository(connPools, appConfig, new StubLogger());
+        return new LdapCustomerRepository(connPools, appConfig);
     }
 
     private static LdapConnectionPools getConnPools() {

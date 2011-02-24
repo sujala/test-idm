@@ -31,7 +31,7 @@ public class LdapAuthRepositoryTest {
         } catch (ConfigurationException e) {
             System.out.println(e);
         }
-        return new LdapAuthRepository(connPool, config, new StubLogger());
+        return new LdapAuthRepository(connPool, config);
     }
 
     private static LDAPConnectionPool getConnPool() {

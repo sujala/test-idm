@@ -12,6 +12,7 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.util.PingableService;
@@ -20,16 +21,14 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao,
     PingableService {
 
     private MemcachedClient memcached;
-    private Logger logger;
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public static final DateTimeFormatter DATE_PARSER = DateTimeFormat
         .forPattern("yyyyMMddHHmmss.SSS'Z");
 
-    public MemcachedAccessTokenRepository(MemcachedClient memcached,
-        Logger logger) {
+    public MemcachedAccessTokenRepository(MemcachedClient memcached) {
 
         this.memcached = memcached;
-        this.logger = logger;
     }
 
     @Override

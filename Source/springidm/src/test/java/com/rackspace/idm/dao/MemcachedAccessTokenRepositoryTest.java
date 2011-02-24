@@ -34,8 +34,7 @@ public class MemcachedAccessTokenRepositoryTest {
             new PropertyFileConfiguration().getConfigFromClasspath(),
             new StubLogger()).memcacheClient();
         tokenRequestors.add("rackspace_control_panael");
-        MemcachedAccessTokenRepository tempRepo = new MemcachedAccessTokenRepository(
-            mclient, new StubLogger());
+        MemcachedAccessTokenRepository tempRepo = new MemcachedAccessTokenRepository(mclient);
         tempRepo.delete(TOKEN_STRING);
     }
 
@@ -44,7 +43,7 @@ public class MemcachedAccessTokenRepositoryTest {
         MemcachedClient mclient = new MemcachedConfiguration(
             new PropertyFileConfiguration().getConfigFromClasspath(),
             new StubLogger()).memcacheClient();
-        repo = new MemcachedAccessTokenRepository(mclient, new StubLogger());
+        repo = new MemcachedAccessTokenRepository(mclient);
         token = getNewToken(60);
     }
 

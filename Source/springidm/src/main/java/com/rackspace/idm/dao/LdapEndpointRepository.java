@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
 
 import com.rackspace.idm.entities.CloudBaseUrl;
 import com.rackspace.idm.entities.CloudEndpoint;
@@ -27,8 +26,8 @@ public class LdapEndpointRepository extends LdapRepository implements
     EndpointDao {
 
     public LdapEndpointRepository(LdapConnectionPools connPools,
-        Configuration config, Logger logger) {
-        super(connPools, config, logger);
+        Configuration config) {
+        super(connPools, config);
     }
 
     public void addBaseUrl(CloudBaseUrl baseUrl) {
