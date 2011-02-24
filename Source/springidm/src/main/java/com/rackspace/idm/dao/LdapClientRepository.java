@@ -43,8 +43,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_RACKSPACE_CUSTOMER_NUMBER,
         ATTR_NAME};
 
-    private static final String CONNECT_ERROR_STRING = "Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct.";
-
     public LdapClientRepository(LdapConnectionPools connPools,
         Configuration config) {
         super(connPools, config);
@@ -433,9 +431,11 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
                 return new ClientAuthenticationResult(client, false);
             }
-            getLogger().error("Error authenticating for clientId {} - {}",
-                clientId, e);
-            throw new IllegalStateException(CONNECT_ERROR_STRING, e);
+            getLogger()
+            .error(
+                "Bind operation on clientId " + clientId
+                    + " failed.", e);
+            throw new IllegalStateException(e);
         }
 
         return new ClientAuthenticationResult(client,
