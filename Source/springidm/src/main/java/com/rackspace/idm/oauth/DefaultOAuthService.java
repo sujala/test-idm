@@ -23,6 +23,7 @@ import com.rackspace.idm.entities.UserAuthenticationResult;
 import com.rackspace.idm.entities.Users;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
+import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
@@ -104,9 +105,9 @@ public class DefaultOAuthService implements OAuthService {
 
         AccessToken deletedToken = accessTokenService.getAccessTokenByTokenString(tokenToDelete);
         if (deletedToken == null) {
-            String error = "No entry found for token " + deletedToken;
+            String error = "No entry found for token " + tokenToDelete;
             logger.debug(error);
-            throw new IllegalStateException(error);
+            throw new NotFoundException(error);
         }
 
         AccessToken requestingToken = accessTokenService
@@ -140,9 +141,9 @@ public class DefaultOAuthService implements OAuthService {
         logger.info("Deleting Token {}", tokenToDelete);
         AccessToken deletedToken = accessTokenService.getAccessTokenByTokenStringGlobally(tokenToDelete);
         if (deletedToken == null) {
-            String error = "No entry found for token " + deletedToken;
+            String error = "No entry found for token " + tokenToDelete;
             logger.debug(error);
-            throw new IllegalStateException(error);
+            throw new NotFoundException(error);
         }
 
         AccessToken requestingToken = accessTokenService
@@ -182,7 +183,7 @@ public class DefaultOAuthService implements OAuthService {
     public void revokeTokensLocallyForOwner(String authTokenString, String ownerId) {
         AccessToken requestingToken = accessTokenService.getAccessTokenByTokenString(authTokenString);
         if (requestingToken == null) {
-            String error = "No entry found for token " + requestingToken;
+            String error = "No entry found for token " + authTokenString;
             logger.warn(error);
             throw new IllegalArgumentException(error);
         }
@@ -218,7 +219,7 @@ public class DefaultOAuthService implements OAuthService {
     public void revokeTokensLocallyForCustomer(String authTokenString, String customerId) {
         AccessToken requestingToken = accessTokenService.getAccessTokenByTokenString(authTokenString);
         if (requestingToken == null) {
-            String error = "No entry found for token " + requestingToken;
+            String error = "No entry found for token " + authTokenString;
             logger.warn(error);
             throw new IllegalArgumentException(error);
         }

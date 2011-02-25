@@ -132,11 +132,12 @@ public abstract class HttpRepository {
             return;
         }
 
-        if (MediaType.APPLICATION_OCTET_STREAM_TYPE.equals(resp.getType())) {
-            getLogger().warn("Cause -> {}: {}", e);
-        } else {
+        if (MediaType.APPLICATION_JSON_TYPE.equals(resp.getType())
+            || MediaType.APPLICATION_XML_TYPE.equals(resp.getType())) {
             IdmFault fault = resp.getEntity(IdmFault.class);
             getLogger().warn("Cause -> {}: {}", fault.getMessage(), fault.getDetails());
+        } else {
+            getLogger().warn("Cause -> {}", e);
         }
     }
 
