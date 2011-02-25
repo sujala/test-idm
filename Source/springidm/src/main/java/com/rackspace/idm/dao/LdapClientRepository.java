@@ -416,12 +416,12 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         BindResult result;
         Client client = findByClientId(clientId);
         
-        Audit audit = Audit.authClient(client);
         if (client == null) {
-            String errMsg = "Client Not Found";
-            audit.fail(errMsg);
             return new ClientAuthenticationResult(null, false);
         }
+        
+        Audit audit = Audit.authClient(client);
+        
         try {
             result = getBindConnPool().bind(client.getUniqueId(),
                 clientSecret);
