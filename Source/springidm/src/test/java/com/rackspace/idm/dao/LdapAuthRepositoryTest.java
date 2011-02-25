@@ -53,6 +53,7 @@ public class LdapAuthRepositoryTest {
      * the StartTLS handshake.
      */
     @Test
+    @Ignore("Still waiting on correct credentials")
     public void shouldAuthenticateRackerManyTimes() throws InterruptedException {
         // Just making sure that the connection pool isn't being depleted when
         // the connections are being closed after the authentication bind.
