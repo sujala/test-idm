@@ -1,6 +1,5 @@
 package com.rackspace.idm.rest.resources;
 
-import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.CustomerConverter;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Customer;

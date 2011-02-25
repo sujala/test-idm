@@ -1,6 +1,5 @@
 package com.rackspace.idm.rest.resources;
 
-import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.PasswordConverter;
 import com.rackspace.idm.converters.TokenConverter;
 import com.rackspace.idm.entities.*;
