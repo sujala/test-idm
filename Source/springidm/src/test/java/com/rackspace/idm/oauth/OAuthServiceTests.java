@@ -25,6 +25,7 @@ import com.rackspace.idm.entities.UserCredential;
 import com.rackspace.idm.entities.UserHumanName;
 import com.rackspace.idm.entities.UserLocale;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
+import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
 import com.rackspace.idm.services.ClientService;
@@ -335,7 +336,7 @@ public class OAuthServiceTests {
         EasyMock.verify(mockAccessTokenService, mockRefreshTokenService, mockAuthorizationService);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = NotFoundException.class)
     public void shouldNotRevokeTokenForTokenNotFound() {
         EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(tokenVal)).andReturn(null);
         EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(requestorToken)).andReturn(
