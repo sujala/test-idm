@@ -73,13 +73,10 @@ public class AuthorizationServiceTests {
     @Before
     public void setUp() throws Exception {
         mockClientDao = EasyMock.createMock(ClientDao.class);
-        MemcachedClient mclient = new MemcachedConfiguration(
-            new PropertyFileConfiguration().getConfigFromClasspath(),
-            new StubLogger()).memcacheClient();
 
         Configuration appConfig = new PropertyFileConfiguration()
             .getConfigFromClasspath();
-        service = new DefaultAuthorizationService(mockClientDao, mclient,
+        service = new DefaultAuthorizationService(mockClientDao,
             appConfig);
         setUpObjects();
     }
