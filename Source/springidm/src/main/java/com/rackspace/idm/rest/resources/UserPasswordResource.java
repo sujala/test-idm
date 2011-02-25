@@ -171,8 +171,8 @@ public class UserPasswordResource {
 
         if (isRecovery) {
             authorized = token.isRestrictedToSetPassword()
-                && token.getTokenUser().getCustomerId().equals(customerId)
-                && token.getTokenUser().getUsername().equals(userCred);
+                && token.getTokenUser().getCustomerId().equalsIgnoreCase(customerId)
+                && token.getTokenUser().getUsername().equals(username);
         } else {
             authorized = authorizationService.authorizeRacker(token)
                 || authorizationService.authorizeClient(token,
