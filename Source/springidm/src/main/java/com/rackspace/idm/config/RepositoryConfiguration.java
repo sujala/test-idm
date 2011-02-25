@@ -3,8 +3,6 @@ package com.rackspace.idm.config;
 import net.spy.memcached.MemcachedClient;
 
 import org.apache.commons.configuration.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
