@@ -74,8 +74,6 @@ public class ServiceConfiguration {
     @Autowired
     private AuthDao authDao;
     @Autowired
-    private MemcachedClient memcached;
-    @Autowired
     private EndpointDao endpointDao;
     @Autowired
     private XdcAccessTokenDao xdcTokenDao;
@@ -202,6 +200,6 @@ public class ServiceConfiguration {
 
     @Bean
     public AuthorizationService authorizationService() {
-        return new DefaultAuthorizationService(clientDao, memcached, config);
+        return new DefaultAuthorizationService(clientDao, config);
     }
 }

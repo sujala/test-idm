@@ -2,8 +2,7 @@ package com.rackspace.idm.services;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import net.spy.memcached.MemcachedClient;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
@@ -16,13 +15,11 @@ import com.rackspace.idm.entities.Permission;
 
 public class DefaultAuthorizationService implements AuthorizationService {
 
-    private MemcachedClient memcached;
     private ClientDao clientDao;
     private Configuration config;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultAuthorizationService(ClientDao clientDao, MemcachedClient memcached, Configuration config) {
-        this.memcached = memcached;
+    public DefaultAuthorizationService(ClientDao clientDao, Configuration config) {
         this.clientDao = clientDao;
         this.config = config;
     }
@@ -33,7 +30,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     public boolean authorizeRackspaceClient(AccessToken token) {
         return token.isClientToken()
-            && token.getTokenClient().getCustomerId().equals(getRackspaceCustomerId());
+            && token.getTokenClient().getCustomerId()
+                .equals(getRackspaceCustomerId());
     }
 
     public boolean authorizeClient(AccessToken token, String verb, String uri) {
@@ -42,19 +40,21 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
 
-        List<String> allowedActions = getAllowedMethodsFromPermissions(token.getTokenClient()
-            .getPermissions());
+        List<String> allowedActions = getAllowedMethodsFromPermissions(token
+            .getTokenClient().getPermissions());
 
         return checkPermissions(allowedActions, verb, uri);
     }
 
-    public boolean authorizeUser(AccessToken token, String customerId, String username) {
+    public boolean authorizeUser(AccessToken token, String customerId,
+        String username) {
 
         if (token.isClientToken() || token.isRestrictedToSetPassword()) {
             return false;
         }
 
-        boolean authorized = token.getTokenUser().getUsername().equals(username)
+        boolean authorized = token.getTokenUser().getUsername()
+            .equals(username)
             && token.getTokenUser().getCustomerId().equals(customerId);
 
         return authorized;
@@ -66,7 +66,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
 
-        boolean authorized = token.getTokenUser().getCustomerId().equals(customerId);
+        boolean authorized = token.getTokenUser().getCustomerId()
+            .equals(customerId);
 
         return authorized;
     }
@@ -83,7 +84,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
         for (ClientGroup r : token.getTokenUser().getGroups()) {
             if (r.getClientId().equals(getIdmClientId())
-                && r.getName().toLowerCase().equals(getIdmAdminGroupName().toLowerCase())) {
+                && r.getName().toLowerCase()
+                    .equals(getIdmAdminGroupName().toLowerCase())) {
                 authorized = true;
             }
         }
@@ -96,14 +98,17 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
 
-        boolean authorized = getIdmClientId().equalsIgnoreCase(authToken.getTokenClient().getClientId())
-            && getRackspaceCustomerId().equalsIgnoreCase(authToken.getTokenClient().getCustomerId());
+        boolean authorized = getIdmClientId().equalsIgnoreCase(
+            authToken.getTokenClient().getClientId())
+            && getRackspaceCustomerId().equalsIgnoreCase(
+                authToken.getTokenClient().getCustomerId());
 
         return authorized;
     }
 
     @Override
-    public boolean authorizeAsRequestorOrOwner(AccessToken targetToken, AccessToken requestingToken) {
+    public boolean authorizeAsRequestorOrOwner(AccessToken targetToken,
+        AccessToken requestingToken) {
         boolean isRequestor = requestingToken.isClientToken()
             && requestingToken.getTokenClient().getClientId()
                 .equals(targetToken.getTokenClient().getClientId());
@@ -117,7 +122,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    private List<String> getAllowedMethodsFromPermissions(List<Permission> permissions) {
+    private List<String> getAllowedMethodsFromPermissions(
+        List<Permission> permissions) {
 
         if (permissions == null || permissions.size() < 1) {
             return null;
@@ -127,24 +133,28 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
         for (Permission perm : permissions) {
             if (perm.getClientId().equals(getIdmClientId())) {
-                Permission p = (Permission) memcached.get(perm.getPermissionId());
-                if (p == null) {
-                    p = clientDao.getDefinedPermissionByClientIdAndPermissionId(perm.getClientId(),
-                        perm.getPermissionId());
-                    if (p != null) {
-                        memcached.set(p.getPermissionId(), 3600, p);
+
+                if (!IdmPermissions.contains(perm.getPermissionId())) {
+                    perm = clientDao
+                        .getDefinedPermissionByClientIdAndPermissionId(
+                            perm.getClientId(), perm.getPermissionId());
+                    if (perm == null || perm.getValue() == null) {
+                        continue;
                     }
+                    IdmPermissions.put(perm.getPermissionId(), perm.getValue());
+
                 }
-                if (p != null) {
-                    uris.add(p.getValue());
-                }
+                uris.add(IdmPermissions.get(perm.getPermissionId()));
             }
         }
 
         return uris;
     }
 
-    private boolean checkPermissions(List<String> allowedActions, String verb, String uri) {
+    static ConcurrentHashMap<String, String> IdmPermissions = new ConcurrentHashMap<String, String>();
+
+    private boolean checkPermissions(List<String> allowedActions, String verb,
+        String uri) {
 
         String requestedActionURI = verb + " " + uri;
         requestedActionURI = requestedActionURI.toLowerCase();
@@ -167,7 +177,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return result;
     }
 
-    private boolean checkPermission(String actionURIRegex, String actionURIRequest) {
+    private boolean checkPermission(String actionURIRegex,
+        String actionURIRequest) {
 
         if (actionURIRegex == null)
             return false;
