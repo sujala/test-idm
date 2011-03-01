@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao.impl;
+package com.rackspace.idm.domain.dao.impl;
 
 import java.util.ArrayList;
 import java.util.Date;

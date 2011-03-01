@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao.impl;
+package com.rackspace.idm.domain.dao.impl;
 
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;

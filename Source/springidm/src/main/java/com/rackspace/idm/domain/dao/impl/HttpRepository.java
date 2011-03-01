@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao.impl;
+package com.rackspace.idm.domain.dao.impl;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
