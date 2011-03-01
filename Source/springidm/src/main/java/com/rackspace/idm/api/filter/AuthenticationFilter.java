@@ -1,4 +1,4 @@
-package com.rackspace.idm.interceptors;
+package com.rackspace.idm.api.filter;
 
 import java.util.UUID;
 
