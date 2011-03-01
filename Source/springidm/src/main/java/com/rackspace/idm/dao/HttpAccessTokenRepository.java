@@ -11,8 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.GlobalConstants.TokenDeleteByType;
-import com.rackspace.idm.config.DataCenterClient;
-import com.rackspace.idm.config.DataCenterEndpoints;
+import com.rackspace.idm.domain.config.DataCenterClient;
+import com.rackspace.idm.domain.config.DataCenterEndpoints;
 import com.rackspace.idm.entities.AccessToken;
 
 public class HttpAccessTokenRepository extends HttpRepository implements XdcAccessTokenDao {
