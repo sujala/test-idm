@@ -95,7 +95,7 @@ public class TokenResource {
      */
     @POST
     public Response getAccessToken(@HeaderParam("Authorization") String authHeader,
-        com.rackspace.idm.domain.entity.jaxb.AuthCredentials creds) {
+        com.rackspace.idm.jaxb.AuthCredentials creds) {
         AuthCredentials trParam = new AuthCredentials();
         trParam.setClientId(creds.getClientId());
         trParam.setClientSecret(creds.getClientSecret());
