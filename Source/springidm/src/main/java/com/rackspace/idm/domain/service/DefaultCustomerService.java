@@ -1,4 +1,4 @@
-package com.rackspace.idm.services;
+package com.rackspace.idm.domain.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

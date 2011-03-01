@@ -1,4 +1,4 @@
-package com.rackspace.idm.services;
+package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.util.HealthMonitoringServiceMBean;
 import com.rackspace.idm.util.PingableService;

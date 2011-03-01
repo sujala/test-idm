@@ -1,4 +1,4 @@
-package com.rackspace.idm.services;
+package com.rackspace.idm.domain.service;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
