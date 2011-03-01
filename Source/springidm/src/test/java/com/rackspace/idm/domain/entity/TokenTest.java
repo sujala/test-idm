@@ -1,4 +1,4 @@
-package com.rackspace.idm.entities;
+package com.rackspace.idm.domain.entity;
 
 import org.joda.time.DateTime;
 import org.junit.Assert;

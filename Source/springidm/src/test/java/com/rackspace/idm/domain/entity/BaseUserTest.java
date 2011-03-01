@@ -1,4 +1,4 @@
-package com.rackspace.idm.entities;
+package com.rackspace.idm.domain.entity;
 
 import org.apache.commons.lang.SerializationUtils;
 import org.junit.Assert;

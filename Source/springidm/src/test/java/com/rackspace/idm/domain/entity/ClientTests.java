@@ -1,4 +1,4 @@
-package com.rackspace.idm.entities;
+package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientSecret;

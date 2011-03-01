@@ -1,4 +1,4 @@
-package com.rackspace.idm.entities;
+package com.rackspace.idm.domain.entity;
 
 import java.util.Locale;
 import java.util.Set;
