@@ -1,4 +1,4 @@
-package com.rackspace.idm.entities.passwordcomplexity;
+package com.rackspace.idm.domain.entity;
 
 public abstract class PasswordRule {
     private int ruleId = 0;

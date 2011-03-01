@@ -4,6 +4,14 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+import com.rackspace.idm.domain.entity.LowercaseRule;
+import com.rackspace.idm.domain.entity.MinimumLengthRule;
+import com.rackspace.idm.domain.entity.NumberRule;
+import com.rackspace.idm.domain.entity.PasswordRule;
+import com.rackspace.idm.domain.entity.PasswordRuleResult;
+import com.rackspace.idm.domain.entity.SpecialCharacterRule;
+import com.rackspace.idm.domain.entity.UppercaseRule;
+
 public class PasswordRuleTests {
     
     PasswordRule rule;

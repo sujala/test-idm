@@ -1,4 +1,4 @@
-package com.rackspace.idm.entities.passwordcomplexity;
+package com.rackspace.idm.domain.entity;
 
 public class LowercaseRule extends PasswordRule {
     private static final int RULE_ID = 3;

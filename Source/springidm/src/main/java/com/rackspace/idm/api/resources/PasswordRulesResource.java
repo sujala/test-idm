@@ -16,8 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.PasswordRulesConverter;
-import com.rackspace.idm.entities.passwordcomplexity.PasswordComplexityResult;
-import com.rackspace.idm.entities.passwordcomplexity.PasswordRule;
+import com.rackspace.idm.domain.entity.PasswordComplexityResult;
+import com.rackspace.idm.domain.entity.PasswordRule;
 import com.rackspace.idm.services.PasswordComplexityService;
 
 /**

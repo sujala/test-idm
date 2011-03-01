@@ -2,9 +2,9 @@ package com.rackspace.idm.api.converter;
 
 import java.util.List;
 
-import com.rackspace.idm.entities.passwordcomplexity.PasswordComplexityResult;
-import com.rackspace.idm.entities.passwordcomplexity.PasswordRule;
-import com.rackspace.idm.entities.passwordcomplexity.PasswordRuleResult;
+import com.rackspace.idm.domain.entity.PasswordComplexityResult;
+import com.rackspace.idm.domain.entity.PasswordRule;
+import com.rackspace.idm.domain.entity.PasswordRuleResult;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class PasswordRulesConverter {

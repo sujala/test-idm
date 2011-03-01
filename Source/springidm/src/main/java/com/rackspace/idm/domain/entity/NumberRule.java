@@ -1,4 +1,4 @@
-package com.rackspace.idm.entities.passwordcomplexity;
+package com.rackspace.idm.domain.entity;
 
 import java.util.regex.Pattern;
 

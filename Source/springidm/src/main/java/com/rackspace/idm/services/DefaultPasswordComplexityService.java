@@ -6,13 +6,13 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rackspace.idm.entities.passwordcomplexity.LowercaseRule;
-import com.rackspace.idm.entities.passwordcomplexity.MinimumLengthRule;
-import com.rackspace.idm.entities.passwordcomplexity.NumberRule;
-import com.rackspace.idm.entities.passwordcomplexity.PasswordComplexityResult;
-import com.rackspace.idm.entities.passwordcomplexity.PasswordRule;
-import com.rackspace.idm.entities.passwordcomplexity.SpecialCharacterRule;
-import com.rackspace.idm.entities.passwordcomplexity.UppercaseRule;
+import com.rackspace.idm.domain.entity.LowercaseRule;
+import com.rackspace.idm.domain.entity.MinimumLengthRule;
+import com.rackspace.idm.domain.entity.NumberRule;
+import com.rackspace.idm.domain.entity.PasswordComplexityResult;
+import com.rackspace.idm.domain.entity.PasswordRule;
+import com.rackspace.idm.domain.entity.SpecialCharacterRule;
+import com.rackspace.idm.domain.entity.UppercaseRule;
 
 public class DefaultPasswordComplexityService implements
     PasswordComplexityService {

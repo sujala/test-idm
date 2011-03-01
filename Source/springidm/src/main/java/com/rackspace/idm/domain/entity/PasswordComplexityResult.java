@@ -1,4 +1,4 @@
-package com.rackspace.idm.entities.passwordcomplexity;
+package com.rackspace.idm.domain.entity;
 
 import java.util.ArrayList;
 import java.util.List;

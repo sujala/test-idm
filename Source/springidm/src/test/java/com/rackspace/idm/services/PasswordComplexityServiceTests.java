@@ -5,7 +5,7 @@ import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.entities.passwordcomplexity.PasswordComplexityResult;
+import com.rackspace.idm.domain.entity.PasswordComplexityResult;
 import com.rackspace.idm.test.stub.StubLogger;
 
 public class PasswordComplexityServiceTests {
