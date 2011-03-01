@@ -45,6 +45,7 @@ import com.rackspace.idm.services.RefreshTokenService;
 import com.rackspace.idm.services.RoleService;
 import com.rackspace.idm.services.UserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
+import com.rackspace.idm.util.LoggerMBean;
 import com.rackspace.idm.util.PingableService;
 import com.rackspace.idm.validation.InputValidator;
 
