@@ -29,9 +29,9 @@ import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.RefreshTokenService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exceptions.ForbiddenException;
-import com.rackspace.idm.exceptions.NotAuthenticatedException;
-import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.NotFoundException;
 
 public class DefaultOAuthService implements OAuthService {
     private UserService userService;

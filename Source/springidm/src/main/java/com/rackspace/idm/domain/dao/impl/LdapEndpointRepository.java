@@ -11,7 +11,7 @@ import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.EndPoints;
-import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;

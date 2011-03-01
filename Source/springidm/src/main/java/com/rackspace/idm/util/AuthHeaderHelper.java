@@ -6,7 +6,7 @@ import java.util.Map;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 
-import com.rackspace.idm.exceptions.NotAuthorizedException;
+import com.rackspace.idm.exception.NotAuthorizedException;
 
 public class AuthHeaderHelper {
 

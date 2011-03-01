@@ -4,7 +4,7 @@ import com.rackspace.idm.api.converter.PasswordConverter;
 import com.rackspace.idm.api.converter.TokenConverter;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.exceptions.*;
+import com.rackspace.idm.exception.*;
 import com.rackspace.idm.jaxb.PasswordRecovery;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;

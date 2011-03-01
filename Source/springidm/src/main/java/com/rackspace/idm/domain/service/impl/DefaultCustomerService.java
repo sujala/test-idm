@@ -8,7 +8,7 @@ import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.exceptions.DuplicateException;
+import com.rackspace.idm.exception.DuplicateException;
 
 public class DefaultCustomerService implements CustomerService {
 

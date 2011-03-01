@@ -4,8 +4,9 @@ import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.AuthData;
 import com.rackspace.idm.domain.entity.OAuthGrantType;
-import com.rackspace.idm.exceptions.NotAuthenticatedException;
-import com.rackspace.idm.exceptions.NotAuthorizedException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.NotAuthorizedException;
+
 import org.joda.time.DateTime;
 
 /**

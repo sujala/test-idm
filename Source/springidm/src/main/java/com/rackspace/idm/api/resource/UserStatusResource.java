@@ -22,9 +22,9 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exceptions.BadRequestException;
-import com.rackspace.idm.exceptions.ForbiddenException;
-import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.jaxb.UserStatus;
 
 /**

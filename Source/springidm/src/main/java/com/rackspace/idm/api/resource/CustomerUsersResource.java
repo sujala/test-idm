@@ -36,12 +36,12 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exceptions.BadRequestException;
-import com.rackspace.idm.exceptions.DuplicateException;
-import com.rackspace.idm.exceptions.DuplicateUsernameException;
-import com.rackspace.idm.exceptions.ForbiddenException;
-import com.rackspace.idm.exceptions.NotFoundException;
-import com.rackspace.idm.exceptions.PasswordValidationException;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.DuplicateUsernameException;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.PasswordValidationException;
 import com.rackspace.idm.validation.InputValidator;
 
 /**

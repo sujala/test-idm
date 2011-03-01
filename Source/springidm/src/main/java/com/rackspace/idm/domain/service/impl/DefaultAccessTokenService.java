@@ -26,7 +26,7 @@ import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exceptions.NotAuthenticatedException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 
 public class DefaultAccessTokenService implements AccessTokenService {

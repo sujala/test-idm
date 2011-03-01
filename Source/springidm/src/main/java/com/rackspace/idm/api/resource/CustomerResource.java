@@ -24,8 +24,8 @@ import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.exceptions.ForbiddenException;
-import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotFoundException;
 
 /**
  * A Rackspace Customer.

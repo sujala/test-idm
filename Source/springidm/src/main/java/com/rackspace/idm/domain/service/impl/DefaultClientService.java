@@ -13,9 +13,9 @@ import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ClientService;
-import com.rackspace.idm.exceptions.DuplicateException;
-import com.rackspace.idm.exceptions.NotFoundException;
-import com.rackspace.idm.exceptions.UserDisabledException;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.util.HashHelper;
 
 public class DefaultClientService implements ClientService {

@@ -33,11 +33,11 @@ import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.exceptions.BadRequestException;
-import com.rackspace.idm.exceptions.ClientConflictException;
-import com.rackspace.idm.exceptions.DuplicateException;
-import com.rackspace.idm.exceptions.ForbiddenException;
-import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.ClientConflictException;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
 
 /**

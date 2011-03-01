@@ -26,7 +26,7 @@ import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exceptions.*;
+import com.rackspace.idm.exception.*;
 
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;

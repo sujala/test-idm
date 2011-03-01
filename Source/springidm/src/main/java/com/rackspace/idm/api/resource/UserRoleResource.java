@@ -25,9 +25,9 @@ import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exceptions.BadRequestException;
-import com.rackspace.idm.exceptions.ForbiddenException;
-import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotFoundException;
 
 /**
  * A user role.

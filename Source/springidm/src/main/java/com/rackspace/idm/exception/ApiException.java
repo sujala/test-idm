@@ -1,4 +1,4 @@
-package com.rackspace.idm.exceptions;
+package com.rackspace.idm.exception;
 
 import javax.ws.rs.WebApplicationException;
 

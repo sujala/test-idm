@@ -11,8 +11,8 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Role;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.RoleService;
-import com.rackspace.idm.exceptions.DuplicateException;
-import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotFoundException;
 
 public class DefaultRoleService implements RoleService {
 

@@ -3,7 +3,7 @@ package com.rackspace.idm.domain.service;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.exceptions.DuplicateException;
+import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.jaxb.PasswordRecovery;
 
 public interface UserService {

@@ -1,4 +1,4 @@
-package com.rackspace.idm.exceptions;
+package com.rackspace.idm.exception;
 
 @SuppressWarnings("serial")
 public class PasswordValidationException extends IdmException {

@@ -9,7 +9,7 @@ import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.exceptions.BaseUrlConflictException;
+import com.rackspace.idm.exception.BaseUrlConflictException;
 
 public class DefaultEndpointService implements EndpointService {
 
