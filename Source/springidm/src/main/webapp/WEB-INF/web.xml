@@ -29,13 +29,13 @@
 		<init-param>
 			<param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
 			<param-value>
-				com.rackspace.idm.interceptors.AuthenticationFilter;
+				com.rackspace.idm.api.filter.AuthenticationFilter;
 				com.sun.jersey.api.container.filter.GZIPContentEncodingFilter
 			</param-value>
 		</init-param>
 		<init-param>
 			<param-name>com.sun.jersey.config.property.WadlGeneratorConfig</param-name>
-			<param-value>com.rackspace.idm.config.IdmWadlGeneratorConfig</param-value>
+			<param-value>com.rackspace.idm.api.config.IdmWadlGeneratorConfig</param-value>
 		</init-param>
 		<init-param>
 			<param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
