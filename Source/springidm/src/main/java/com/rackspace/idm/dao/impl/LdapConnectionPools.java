@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao;
+package com.rackspace.idm.dao.impl;
 
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 

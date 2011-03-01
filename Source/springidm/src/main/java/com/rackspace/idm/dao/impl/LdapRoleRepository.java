@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao;
+package com.rackspace.idm.dao.impl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,6 +7,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.dao.RoleDao;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.Role;
 import com.rackspace.idm.domain.entity.RoleStatus;

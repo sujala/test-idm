@@ -1,10 +1,11 @@
-package com.rackspace.idm.dao;
+package com.rackspace.idm.dao.impl;
 
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.dao.AuthDao;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.LDAPException;

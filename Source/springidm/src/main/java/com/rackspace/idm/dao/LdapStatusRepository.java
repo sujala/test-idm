@@ -2,6 +2,8 @@ package com.rackspace.idm.dao;
 
 import org.apache.commons.configuration.Configuration;
 
+import com.rackspace.idm.dao.impl.LdapConnectionPools;
+import com.rackspace.idm.dao.impl.LdapRepository;
 import com.rackspace.idm.util.PingableService;
 import com.unboundid.ldap.sdk.LDAPException;
 

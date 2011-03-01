@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao;
+package com.rackspace.idm.dao.impl;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,6 +10,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.dao.UserDao;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;

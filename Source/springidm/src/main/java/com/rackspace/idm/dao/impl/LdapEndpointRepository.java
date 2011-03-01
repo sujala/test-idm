@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao;
+package com.rackspace.idm.dao.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,6 +7,7 @@ import java.util.List;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 
+import com.rackspace.idm.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.EndPoints;

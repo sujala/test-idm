@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao;
+package com.rackspace.idm.dao.impl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +8,7 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.entity.RefreshToken;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.LDAPException;

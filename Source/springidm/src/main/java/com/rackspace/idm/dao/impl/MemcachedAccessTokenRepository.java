@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao;
+package com.rackspace.idm.dao.impl;
 
 import java.net.SocketAddress;
 import java.util.Map;
@@ -14,6 +14,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.util.PingableService;
 
