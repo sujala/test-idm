@@ -1,4 +1,4 @@
-package com.rackspace.idm.errors;
+package com.rackspace.idm.api.error;
 
 import java.util.List;
 import java.util.ResourceBundle;

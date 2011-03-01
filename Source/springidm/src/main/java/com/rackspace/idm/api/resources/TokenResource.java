@@ -32,11 +32,11 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.ErrorMsg;
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.config.LoggerFactoryWrapper;
 import com.rackspace.idm.converters.AuthConverter;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.AuthData;
-import com.rackspace.idm.errors.ApiError;
 import com.rackspace.idm.exceptions.ApiException;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;

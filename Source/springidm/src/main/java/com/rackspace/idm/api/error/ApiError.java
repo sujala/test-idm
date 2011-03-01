@@ -1,4 +1,4 @@
-package com.rackspace.idm.errors;
+package com.rackspace.idm.api.error;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

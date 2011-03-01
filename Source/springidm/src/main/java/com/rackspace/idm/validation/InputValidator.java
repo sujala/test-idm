@@ -6,7 +6,7 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.ws.rs.core.Response;
 
-import com.rackspace.idm.errors.ApiError;
+import com.rackspace.idm.api.error.ApiError;
 
 public class InputValidator {
     private Validator validator;

@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.converters.EndPointConverter;
 import com.rackspace.idm.converters.UserConverter;
 import com.rackspace.idm.entities.AccessToken;
@@ -30,7 +31,6 @@ import com.rackspace.idm.entities.CloudEndpoint;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.entities.Password;
 import com.rackspace.idm.entities.User;
-import com.rackspace.idm.errors.ApiError;
 import com.rackspace.idm.jaxb.BaseURLRef;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;
