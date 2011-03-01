@@ -20,13 +20,13 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.jaxb.UserSecret;
-import com.rackspace.idm.services.AccessTokenService;
-import com.rackspace.idm.services.AuthorizationService;
-import com.rackspace.idm.services.UserService;
 
 /**
  * A users secret question and answer

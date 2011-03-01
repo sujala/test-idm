@@ -24,13 +24,13 @@ import com.rackspace.idm.domain.entity.UserCredential;
 import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
 import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
+import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.RefreshTokenService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.exceptions.NotFoundException;
-import com.rackspace.idm.services.AccessTokenService;
-import com.rackspace.idm.services.AuthorizationService;
-import com.rackspace.idm.services.ClientService;
-import com.rackspace.idm.services.RefreshTokenService;
-import com.rackspace.idm.services.UserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 
 public class OAuthServiceTests {

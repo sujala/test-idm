@@ -20,12 +20,12 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.jaxb.UserApiKey;
-import com.rackspace.idm.services.AccessTokenService;
-import com.rackspace.idm.services.AuthorizationService;
-import com.rackspace.idm.services.UserService;
 
 /**
  * Support for user-level API that the Cloud Auth service uses.

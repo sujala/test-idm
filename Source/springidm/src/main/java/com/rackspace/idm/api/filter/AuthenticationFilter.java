@@ -15,9 +15,9 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.oauth.OAuthService;
-import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;

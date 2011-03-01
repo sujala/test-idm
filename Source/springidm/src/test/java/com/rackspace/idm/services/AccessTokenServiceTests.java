@@ -29,6 +29,9 @@ import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
+import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.DefaultAccessTokenService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.rackspace.idm.util.AuthHeaderHelper;
 

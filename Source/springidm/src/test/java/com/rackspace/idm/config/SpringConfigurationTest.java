@@ -35,7 +35,7 @@ import com.rackspace.idm.api.resources.UserSoftDeleteResource;
 import com.rackspace.idm.api.resources.UserStatusResource;
 import com.rackspace.idm.api.resources.UsersResource;
 import com.rackspace.idm.api.resources.VersionResource;
-import com.rackspace.idm.services.HealthMonitoringService;
+import com.rackspace.idm.domain.service.HealthMonitoringService;
 
 public class SpringConfigurationTest {
 

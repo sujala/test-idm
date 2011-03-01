@@ -20,10 +20,10 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserCredential;
 import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
+import com.rackspace.idm.domain.service.DefaultRoleService;
+import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.NotFoundException;
-import com.rackspace.idm.services.DefaultRoleService;
-import com.rackspace.idm.services.RoleService;
 import com.rackspace.idm.test.stub.StubLogger;
 
 public class RoleServiceTests {

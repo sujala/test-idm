@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.PasswordRulesConverter;
 import com.rackspace.idm.domain.entity.PasswordComplexityResult;
 import com.rackspace.idm.domain.entity.PasswordRule;
-import com.rackspace.idm.services.PasswordComplexityService;
+import com.rackspace.idm.domain.service.PasswordComplexityService;
 
 /**
  * Password Complexity Rules

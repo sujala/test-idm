@@ -23,14 +23,14 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.jaxb.MossoCredentials;
 import com.rackspace.idm.jaxb.NastCredentials;
 import com.rackspace.idm.jaxb.UsernameCredentials;
-import com.rackspace.idm.services.AccessTokenService;
-import com.rackspace.idm.services.AuthorizationService;
-import com.rackspace.idm.services.EndpointService;
 
 /**
  * Backward Compatible Auth Methods

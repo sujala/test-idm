@@ -22,6 +22,8 @@ import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.DefaultClientService;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.test.stub.StubLogger;

@@ -19,6 +19,13 @@ import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.CustomerService;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.PasswordComplexityService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exceptions.*;
 
 import org.apache.commons.configuration.Configuration;
@@ -32,13 +39,6 @@ import com.rackspace.idm.api.converter.EndPointConverter;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.jaxb.BaseURLRef;
-import com.rackspace.idm.services.AccessTokenService;
-import com.rackspace.idm.services.AuthorizationService;
-import com.rackspace.idm.services.ClientService;
-import com.rackspace.idm.services.CustomerService;
-import com.rackspace.idm.services.EndpointService;
-import com.rackspace.idm.services.PasswordComplexityService;
-import com.rackspace.idm.services.UserService;
 import com.rackspace.idm.validation.InputValidator;
 
 /**

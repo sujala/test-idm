@@ -31,17 +31,17 @@ import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
+import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.CustomerService;
+import com.rackspace.idm.domain.service.PasswordComplexityService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.DuplicateUsernameException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.exceptions.PasswordValidationException;
-import com.rackspace.idm.services.AccessTokenService;
-import com.rackspace.idm.services.AuthorizationService;
-import com.rackspace.idm.services.CustomerService;
-import com.rackspace.idm.services.PasswordComplexityService;
-import com.rackspace.idm.services.UserService;
 import com.rackspace.idm.validation.InputValidator;
 
 /**

@@ -7,6 +7,8 @@ import org.apache.commons.mail.EmailException;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.entity.EmailSettings;
+import com.rackspace.idm.domain.service.DefaultEmailService;
+import com.rackspace.idm.domain.service.EmailService;
 
 public class EmailServiceTests {
     

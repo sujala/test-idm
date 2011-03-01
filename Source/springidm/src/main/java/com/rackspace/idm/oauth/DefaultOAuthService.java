@@ -21,14 +21,14 @@ import com.rackspace.idm.domain.entity.RefreshToken;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.Users;
+import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.RefreshTokenService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.exceptions.NotFoundException;
-import com.rackspace.idm.services.AccessTokenService;
-import com.rackspace.idm.services.AuthorizationService;
-import com.rackspace.idm.services.ClientService;
-import com.rackspace.idm.services.RefreshTokenService;
-import com.rackspace.idm.services.UserService;
 
 public class DefaultOAuthService implements OAuthService {
     private UserService userService;
