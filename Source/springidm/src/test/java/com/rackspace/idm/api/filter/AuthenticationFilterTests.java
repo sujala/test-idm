@@ -3,7 +3,7 @@ package com.rackspace.idm.api.filter;
 import com.rackspace.idm.api.filter.AuthenticationFilter;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.OAuthService;
-import com.rackspace.idm.exceptions.NotAuthenticatedException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.sun.jersey.spi.container.ContainerRequest;
 import org.easymock.EasyMock;

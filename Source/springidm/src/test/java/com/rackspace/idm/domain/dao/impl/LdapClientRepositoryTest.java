@@ -21,9 +21,9 @@ import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.exceptions.DuplicateClientGroupException;
-import com.rackspace.idm.exceptions.DuplicateException;
-import com.rackspace.idm.exceptions.NotFoundException;
+import com.rackspace.idm.exception.DuplicateClientGroupException;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.unboundid.ldap.sdk.Modification;
 

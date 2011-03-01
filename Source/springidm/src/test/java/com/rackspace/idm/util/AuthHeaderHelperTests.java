@@ -5,7 +5,7 @@ import java.util.Map;
 import org.junit.Test;
 import org.springframework.util.Assert;
 
-import com.rackspace.idm.exceptions.NotAuthorizedException;
+import com.rackspace.idm.exception.NotAuthorizedException;
 import com.unboundid.util.Base64;
 
 public class AuthHeaderHelperTests {

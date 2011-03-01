@@ -28,7 +28,7 @@ import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.EmailService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
-import com.rackspace.idm.exceptions.DuplicateException;
+import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.jaxb.CustomParamsList;
 import com.rackspace.idm.jaxb.PasswordRecovery;
 import com.rackspace.idm.test.stub.StubLogger;
