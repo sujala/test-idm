@@ -20,6 +20,15 @@ import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.idm.api.resource.auth.AuthResource;
+import com.rackspace.idm.api.resource.baseurl.BaseUrlsResource;
+import com.rackspace.idm.api.resource.customer.CustomersResource;
+import com.rackspace.idm.api.resource.mosso.MossoUserResource;
+import com.rackspace.idm.api.resource.nast.NastUserResource;
+import com.rackspace.idm.api.resource.passwordrule.PasswordRulesResource;
+import com.rackspace.idm.api.resource.token.TokenResource;
+import com.rackspace.idm.api.resource.user.UsersResource;
+
 /**
  * API Version
  * 
