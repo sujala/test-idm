@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.ErrorMsg;
-import com.rackspace.idm.config.LoggerFactoryWrapper;
+import com.rackspace.idm.domain.config.LoggerFactoryWrapper;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.BaseUrlConflictException;
 import com.rackspace.idm.exceptions.ClientConflictException;
