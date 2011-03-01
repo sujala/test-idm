@@ -1,4 +1,4 @@
-package com.rackspace.idm.config;
+package com.rackspace.idm.api.config;
 
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;

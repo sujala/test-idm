@@ -1,4 +1,4 @@
-package com.rackspace.idm.config;
+package com.rackspace.idm.api.config;
 
 import java.util.List;
 
