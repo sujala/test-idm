@@ -1,4 +1,4 @@
-package com.rackspace.idm.converters;
+package com.rackspace.idm.api.converter;
 
 import java.util.ArrayList;
 import java.util.List;

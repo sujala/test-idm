@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resources;
 
+import com.rackspace.idm.api.converter.CustomerConverter;
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.converters.CustomerConverter;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.exceptions.BadRequestException;

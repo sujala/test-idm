@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.idm.converters.AuthConverter;
+import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.CloudEndpoint;
 import com.rackspace.idm.exceptions.BadRequestException;

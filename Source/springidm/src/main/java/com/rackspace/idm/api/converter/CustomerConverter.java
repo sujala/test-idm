@@ -1,4 +1,4 @@
-package com.rackspace.idm.converters;
+package com.rackspace.idm.api.converter;
 
 import com.rackspace.idm.entities.Customer;
 import com.rackspace.idm.jaxb.ObjectFactory;

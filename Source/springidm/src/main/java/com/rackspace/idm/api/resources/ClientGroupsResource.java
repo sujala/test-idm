@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.idm.converters.GroupConverter;
+import com.rackspace.idm.api.converter.GroupConverter;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.Client;
 import com.rackspace.idm.entities.ClientGroup;

@@ -4,17 +4,17 @@ import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
-import com.rackspace.idm.converters.AuthConverter;
-import com.rackspace.idm.converters.ClientConverter;
-import com.rackspace.idm.converters.CustomerConverter;
-import com.rackspace.idm.converters.EndPointConverter;
-import com.rackspace.idm.converters.GroupConverter;
-import com.rackspace.idm.converters.PasswordConverter;
-import com.rackspace.idm.converters.PasswordRulesConverter;
-import com.rackspace.idm.converters.PermissionConverter;
-import com.rackspace.idm.converters.RoleConverter;
-import com.rackspace.idm.converters.TokenConverter;
-import com.rackspace.idm.converters.UserConverter;
+import com.rackspace.idm.api.converter.AuthConverter;
+import com.rackspace.idm.api.converter.ClientConverter;
+import com.rackspace.idm.api.converter.CustomerConverter;
+import com.rackspace.idm.api.converter.EndPointConverter;
+import com.rackspace.idm.api.converter.GroupConverter;
+import com.rackspace.idm.api.converter.PasswordConverter;
+import com.rackspace.idm.api.converter.PasswordRulesConverter;
+import com.rackspace.idm.api.converter.PermissionConverter;
+import com.rackspace.idm.api.converter.RoleConverter;
+import com.rackspace.idm.api.converter.TokenConverter;
+import com.rackspace.idm.api.converter.UserConverter;
 
 @org.springframework.context.annotation.Configuration
 public class ConverterConfiguration {

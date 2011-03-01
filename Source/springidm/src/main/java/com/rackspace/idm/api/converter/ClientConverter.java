@@ -1,4 +1,4 @@
-package com.rackspace.idm.converters;
+package com.rackspace.idm.api.converter;
 
 import org.apache.commons.lang.StringUtils;
 
