@@ -1,6 +1,6 @@
 package com.rackspace.idm.dao;
 
-import com.rackspace.idm.oauthAuthentication.Token;
+import com.rackspace.idm.domain.entity.Token;
 
 public interface TokenDao<T extends Token> {
 

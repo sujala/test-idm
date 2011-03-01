@@ -1,7 +1,9 @@
-package com.rackspace.idm.oauth;
+package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.AuthData;
+import com.rackspace.idm.domain.entity.OAuthGrantType;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.exceptions.NotAuthorizedException;
 import org.joda.time.DateTime;

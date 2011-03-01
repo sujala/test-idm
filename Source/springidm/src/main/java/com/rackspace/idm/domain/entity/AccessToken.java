@@ -6,7 +6,6 @@ import java.io.Serializable;
 
 import org.joda.time.DateTime;
 
-import com.rackspace.idm.oauthAuthentication.Token;
 
 public final class AccessToken extends Token implements Serializable {
     private static final long serialVersionUID = -3054005479579503671L;

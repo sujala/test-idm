@@ -20,12 +20,12 @@ import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.jaxb.UserStatus;
-import com.rackspace.idm.oauth.OAuthService;
 
 /**
  * A user status

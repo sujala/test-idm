@@ -1,4 +1,4 @@
-package com.rackspace.idm.oauthAuthentication;
+package com.rackspace.idm.domain.entity;
 
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;

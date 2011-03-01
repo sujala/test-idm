@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.entity;
 
 import org.joda.time.DateTime;
 
-import com.rackspace.idm.oauthAuthentication.Token;
 
 public class RefreshToken extends Token implements Auditable {
 

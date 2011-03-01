@@ -1,8 +1,8 @@
-package com.rackspace.idm.oauth;
+package com.rackspace.idm.domain.service;
 
-import static com.rackspace.idm.oauth.OAuthGrantType.NONE;
-import static com.rackspace.idm.oauth.OAuthGrantType.PASSWORD;
-import static com.rackspace.idm.oauth.OAuthGrantType.REFRESH_TOKEN;
+import static com.rackspace.idm.domain.entity.OAuthGrantType.NONE;
+import static com.rackspace.idm.domain.entity.OAuthGrantType.PASSWORD;
+import static com.rackspace.idm.domain.entity.OAuthGrantType.REFRESH_TOKEN;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,19 +13,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.AuthData;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.Clients;
+import com.rackspace.idm.domain.entity.OAuthGrantType;
 import com.rackspace.idm.domain.entity.RefreshToken;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.domain.service.AccessTokenService;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ClientService;
-import com.rackspace.idm.domain.service.RefreshTokenService;
-import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.exceptions.NotFoundException;

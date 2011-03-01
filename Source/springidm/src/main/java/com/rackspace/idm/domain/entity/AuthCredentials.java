@@ -1,4 +1,4 @@
-package com.rackspace.idm.oauth;
+package com.rackspace.idm.domain.entity;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;

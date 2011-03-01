@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.validation.BasicCredentialsCheck;
 
 import javax.validation.ConstraintViolation;

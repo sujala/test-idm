@@ -7,7 +7,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
-import com.rackspace.idm.oauth.AuthCredentials;
+import com.rackspace.idm.domain.entity.AuthCredentials;
 
 public interface IDMClient {
 

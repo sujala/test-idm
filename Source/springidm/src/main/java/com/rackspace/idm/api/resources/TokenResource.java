@@ -36,17 +36,17 @@ import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.config.LoggerFactoryWrapper;
 import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.AuthData;
+import com.rackspace.idm.domain.entity.OAuthGrantType;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.exceptions.ApiException;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.exceptions.TokenExpiredException;
-import com.rackspace.idm.oauth.AuthCredentials;
-import com.rackspace.idm.oauth.OAuthGrantType;
-import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.BasicCredentialsCheck;
 import com.rackspace.idm.validation.InputValidator;
@@ -95,7 +95,7 @@ public class TokenResource {
      */
     @POST
     public Response getAccessToken(@HeaderParam("Authorization") String authHeader,
-        com.rackspace.idm.jaxb.AuthCredentials creds) {
+        com.rackspace.idm.domain.entity.jaxb.AuthCredentials creds) {
         AuthCredentials trParam = new AuthCredentials();
         trParam.setClientId(creds.getClientId());
         trParam.setClientSecret(creds.getClientSecret());
