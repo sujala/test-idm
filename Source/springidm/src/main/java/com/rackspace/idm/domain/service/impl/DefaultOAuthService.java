@@ -1,4 +1,4 @@
-package com.rackspace.idm.domain.service;
+package com.rackspace.idm.domain.service.impl;
 
 import static com.rackspace.idm.domain.entity.OAuthGrantType.NONE;
 import static com.rackspace.idm.domain.entity.OAuthGrantType.PASSWORD;
@@ -23,6 +23,12 @@ import com.rackspace.idm.domain.entity.RefreshToken;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.Users;
+import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.OAuthService;
+import com.rackspace.idm.domain.service.RefreshTokenService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.exceptions.NotFoundException;

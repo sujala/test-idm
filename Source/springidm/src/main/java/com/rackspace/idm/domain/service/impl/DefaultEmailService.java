@@ -1,4 +1,4 @@
-package com.rackspace.idm.domain.service;
+package com.rackspace.idm.domain.service.impl;
 
 import java.util.List;
 
@@ -8,6 +8,7 @@ import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.SimpleEmail;
 
 import com.rackspace.idm.domain.entity.EmailSettings;
+import com.rackspace.idm.domain.service.EmailService;
 
 public class DefaultEmailService implements EmailService {
     

@@ -1,4 +1,4 @@
-package com.rackspace.idm.domain.service;
+package com.rackspace.idm.domain.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +12,7 @@ import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.service.AuthorizationService;
 
 public class DefaultAuthorizationService implements AuthorizationService {
 

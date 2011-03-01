@@ -1,4 +1,4 @@
-package com.rackspace.idm.domain.service;
+package com.rackspace.idm.domain.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.entity.PasswordComplexityResult;
 import com.rackspace.idm.domain.entity.PasswordRule;
 import com.rackspace.idm.domain.entity.SpecialCharacterRule;
 import com.rackspace.idm.domain.entity.UppercaseRule;
+import com.rackspace.idm.domain.service.PasswordComplexityService;
 
 public class DefaultPasswordComplexityService implements
     PasswordComplexityService {

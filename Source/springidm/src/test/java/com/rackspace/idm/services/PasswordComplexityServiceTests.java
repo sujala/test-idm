@@ -6,8 +6,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.entity.PasswordComplexityResult;
-import com.rackspace.idm.domain.service.DefaultPasswordComplexityService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
+import com.rackspace.idm.domain.service.impl.DefaultPasswordComplexityService;
 import com.rackspace.idm.test.stub.StubLogger;
 
 public class PasswordComplexityServiceTests {

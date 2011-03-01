@@ -7,7 +7,7 @@ import com.rackspace.idm.domain.config.MemcachedConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.DefaultAuthorizationService;
+import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import junit.framework.Assert;

@@ -1,4 +1,4 @@
-package com.rackspace.idm.domain.service;
+package com.rackspace.idm.domain.service.impl;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -12,6 +12,7 @@ import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.CustomerDao;
 import com.rackspace.idm.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.exceptions.UserDisabledException;

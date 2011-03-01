@@ -1,4 +1,4 @@
-package com.rackspace.idm.domain.service;
+package com.rackspace.idm.domain.service.impl;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -24,6 +24,8 @@ import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
+import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 

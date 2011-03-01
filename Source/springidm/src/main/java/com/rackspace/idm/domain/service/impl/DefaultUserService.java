@@ -1,10 +1,13 @@
-package com.rackspace.idm.domain.service;
+package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.dao.AuthDao;
 import com.rackspace.idm.dao.CustomerDao;
 import com.rackspace.idm.dao.UserDao;
 import com.rackspace.idm.dao.impl.*;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.EmailService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.jaxb.CustomParam;
 import com.rackspace.idm.jaxb.PasswordRecovery;

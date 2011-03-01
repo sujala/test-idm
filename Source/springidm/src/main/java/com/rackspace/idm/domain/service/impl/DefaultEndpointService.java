@@ -1,4 +1,4 @@
-package com.rackspace.idm.domain.service;
+package com.rackspace.idm.domain.service.impl;
 
 import java.util.List;
 
@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import com.rackspace.idm.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.exceptions.BaseUrlConflictException;
 
 public class DefaultEndpointService implements EndpointService {

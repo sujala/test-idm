@@ -13,7 +13,7 @@ import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.Role;
 import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.domain.service.DefaultCustomerService;
+import com.rackspace.idm.domain.service.impl.DefaultCustomerService;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.test.stub.StubLogger;
 

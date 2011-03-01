@@ -1,4 +1,4 @@
-package com.rackspace.idm.domain.service;
+package com.rackspace.idm.domain.service.impl;
 
 import java.util.UUID;
 
@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.rackspace.idm.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.entity.RefreshToken;
 import com.rackspace.idm.domain.entity.RefreshTokenDefaultAttributes;
+import com.rackspace.idm.domain.service.RefreshTokenService;
 
 public class DefaultRefreshTokenService implements RefreshTokenService {
 

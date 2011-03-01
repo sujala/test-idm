@@ -1,4 +1,4 @@
-package com.rackspace.idm.domain.service;
+package com.rackspace.idm.domain.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +10,7 @@ import com.rackspace.idm.dao.RoleDao;
 import com.rackspace.idm.dao.UserDao;
 import com.rackspace.idm.domain.entity.Role;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.NotFoundException;
 
