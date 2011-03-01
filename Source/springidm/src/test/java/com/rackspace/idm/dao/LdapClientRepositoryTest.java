@@ -199,20 +199,16 @@ public class LdapClientRepositoryTest {
 
     @Test
     public void shouldGenerateModifications() {
-        Permission permission = createTestPermissionInstance();
-        List<Permission> permissions = new ArrayList<Permission>();
-        permissions.add(permission);
         Client client = createTestClientInstance();
         Client cClient = createTestClientInstance();
         cClient.setName("changed_client_name");
         cClient.setClientSecretObj(ClientSecret
             .newInstance("changed_client_secret"));
         cClient.setStatus(ClientStatus.INACTIVE);
-        cClient.setPermissions(permissions);
 
         List<Modification> mods = repo.getModifications(client, cClient);
 
-        Assert.assertEquals(3, mods.size());
+        Assert.assertEquals(2, mods.size());
         Assert.assertEquals("changed_client_secret", mods.get(0).getAttribute()
             .getValue());
         Assert.assertEquals(ClientStatus.INACTIVE.toString(), mods.get(1)

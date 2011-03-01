@@ -107,22 +107,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 .isSoftDeleted())));
         }
 
-        if (client.getPermissions() != null
-            && client.getPermissions().size() > 0) {
-            List<String> permissions = new ArrayList<String>();
-            for (Permission permission : client.getPermissions()) {
-                String p = permission.getPermissionLDAPserialization();
-                if (p != null) {
-                    permissions.add(p);
-                }
-            }
-            String[] perms = permissions
-                .toArray(new String[permissions.size()]);
-            if (perms.length > 0) {
-                atts.add(new Attribute(ATTR_PERMISSION, perms));
-            }
-        }
-
         Attribute[] attributes = atts.toArray(new Attribute[0]);
 
         LDAPResult result;
@@ -1081,9 +1065,10 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         String[] permissions = resultEntry.getAttributeValues(ATTR_PERMISSION);
 
-        List<Permission> perms = new ArrayList<Permission>();
-
         if (permissions != null && permissions.length > 0) {
+            
+            List<Permission> perms = new ArrayList<Permission>();
+            
             for (String s : permissions) {
                 String[] split = s.split(Permission.LDAP_SEPERATOR);
 
@@ -1238,33 +1223,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             && cNew.isSoftDeleted() != cOld.isSoftDeleted()) {
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_SOFT_DELETED, String.valueOf(cNew.isSoftDeleted())));
-        }
-
-        if (cNew.getPermissions() != null
-            && !cNew.getPermissions().equals(cOld.getPermissions())) {
-            if (cNew.getPermissions().size() == 0) {
-                // If the new list of permissions has zero permissions but the
-                // old list of permissions is greater than 0. Then we need to
-                // add a modification to delete the permissions
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_PERMISSION));
-            } else {
-                // If the new list of permissions has 1 or more permissions then
-                // we can just do a replace modification
-                List<String> permissions = new ArrayList<String>();
-                for (Permission permission : cNew.getPermissions()) {
-                    String p = permission.getPermissionLDAPserialization();
-                    if (p != null) {
-                        permissions.add(p);
-                    }
-                }
-                String[] perms = permissions.toArray(new String[permissions
-                    .size()]);
-                if (perms.length > 0) {
-                    mods.add(new Modification(ModificationType.REPLACE,
-                        ATTR_PERMISSION, perms));
-                }
-            }
         }
 
         return mods;
