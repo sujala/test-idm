@@ -14,7 +14,6 @@ import com.rackspace.idm.GlobalConstants.TokenDeleteByType;
 import com.rackspace.idm.domain.config.DataCenterClient;
 import com.rackspace.idm.domain.config.DataCenterEndpoints;
 import com.rackspace.idm.domain.dao.XdcAccessTokenDao;
-import com.rackspace.idm.domain.dao.impl.HttpRepository.HttpCaller;
 import com.rackspace.idm.domain.entity.AccessToken;
 
 public class HttpAccessTokenRepository extends HttpRepository implements XdcAccessTokenDao {
