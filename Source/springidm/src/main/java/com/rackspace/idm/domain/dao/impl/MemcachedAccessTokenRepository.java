@@ -1,7 +1,5 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import java.net.SocketAddress;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -142,7 +140,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao,
         if (token.isRestrictedToSetPassword()) {
             return token;
         }
-        
+
         // Do a consistency check to make sure there is also the same token
         // stored by owner_requestor.
         Object foundByOwner = memcached.get(getKeyForFindByOwner(
@@ -252,8 +250,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao,
         try {
             // this call and subsequent give us correct answer if any of the
             // server is down.
-            Map<SocketAddress, Map<String, String>> stats = memcached
-                .getStats();
+            memcached.getStats();
             if (memcached.getUnavailableServers().size() > 0) {
                 return false;
             } else {
