@@ -1,9 +1,9 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.dao.AuthDao;
-import com.rackspace.idm.dao.CustomerDao;
-import com.rackspace.idm.dao.UserDao;
 import com.rackspace.idm.dao.impl.*;
+import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.CustomerDao;
+import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.EmailService;

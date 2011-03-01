@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.dao.AuthDao;
+import com.rackspace.idm.domain.dao.AuthDao;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.LDAPException;

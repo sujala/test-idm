@@ -7,7 +7,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.dao.RoleDao;
+import com.rackspace.idm.domain.dao.RoleDao;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.Role;
 import com.rackspace.idm.domain.entity.RoleStatus;

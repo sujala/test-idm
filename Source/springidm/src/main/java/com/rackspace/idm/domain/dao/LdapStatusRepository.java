@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao;
+package com.rackspace.idm.domain.dao;
 
 import org.apache.commons.configuration.Configuration;
 

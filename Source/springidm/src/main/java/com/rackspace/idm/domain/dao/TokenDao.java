@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao;
+package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.Token;
 

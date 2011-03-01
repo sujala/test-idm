@@ -7,7 +7,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.dao.CustomerDao;
+import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.util.InumHelper;

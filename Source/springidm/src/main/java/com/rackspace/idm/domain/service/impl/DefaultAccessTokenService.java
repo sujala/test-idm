@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.dao.AccessTokenDao;
-import com.rackspace.idm.dao.ClientDao;
-import com.rackspace.idm.dao.XdcAccessTokenDao;
+import com.rackspace.idm.domain.dao.AccessTokenDao;
+import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.XdcAccessTokenDao;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;

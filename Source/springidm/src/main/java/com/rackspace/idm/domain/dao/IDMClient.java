@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao;
+package com.rackspace.idm.domain.dao;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;

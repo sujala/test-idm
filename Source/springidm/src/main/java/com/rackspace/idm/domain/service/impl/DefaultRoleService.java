@@ -6,8 +6,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rackspace.idm.dao.RoleDao;
-import com.rackspace.idm.dao.UserDao;
+import com.rackspace.idm.domain.dao.RoleDao;
+import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Role;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.RoleService;
