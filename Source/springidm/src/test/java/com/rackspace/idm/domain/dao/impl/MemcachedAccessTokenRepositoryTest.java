@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao.impl;
+package com.rackspace.idm.domain.dao.impl;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -11,9 +11,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.rackspace.idm.dao.impl.MemcachedAccessTokenRepository;
 import com.rackspace.idm.domain.config.MemcachedConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
+import com.rackspace.idm.domain.dao.impl.MemcachedAccessTokenRepository;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;

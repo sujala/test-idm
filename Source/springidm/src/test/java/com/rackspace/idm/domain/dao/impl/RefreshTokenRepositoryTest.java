@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao.impl;
+package com.rackspace.idm.domain.dao.impl;
 
 import java.util.HashSet;
 import java.util.List;
@@ -13,10 +13,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.rackspace.idm.dao.impl.LdapConnectionPools;
-import com.rackspace.idm.dao.impl.LdapRefreshTokenRepository;
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
+import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
+import com.rackspace.idm.domain.dao.impl.LdapRefreshTokenRepository;
 import com.rackspace.idm.domain.entity.RefreshToken;
 import com.rackspace.idm.test.stub.StubLogger;
 

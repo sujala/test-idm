@@ -11,12 +11,12 @@ import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.dao.AccessTokenDao;
-import com.rackspace.idm.dao.ClientDao;
-import com.rackspace.idm.dao.RefreshTokenDao;
-import com.rackspace.idm.dao.XdcAccessTokenDao;
-import com.rackspace.idm.dao.impl.MemcachedAccessTokenRepository;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
+import com.rackspace.idm.domain.dao.AccessTokenDao;
+import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.RefreshTokenDao;
+import com.rackspace.idm.domain.dao.XdcAccessTokenDao;
+import com.rackspace.idm.domain.dao.impl.MemcachedAccessTokenRepository;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientSecret;

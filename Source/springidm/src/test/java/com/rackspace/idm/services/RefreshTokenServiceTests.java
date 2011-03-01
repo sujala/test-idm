@@ -7,7 +7,7 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.dao.RefreshTokenDao;
+import com.rackspace.idm.domain.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.entity.RefreshToken;
 import com.rackspace.idm.domain.entity.RefreshTokenDefaultAttributes;
 import com.rackspace.idm.domain.service.RefreshTokenService;

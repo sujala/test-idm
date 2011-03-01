@@ -10,8 +10,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.dao.RoleDao;
-import com.rackspace.idm.dao.UserDao;
+import com.rackspace.idm.domain.dao.RoleDao;
+import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.Role;

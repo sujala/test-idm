@@ -1,10 +1,10 @@
 package com.rackspace.idm.services;
 
 import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.dao.AccessTokenDao;
-import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.domain.config.MemcachedConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
+import com.rackspace.idm.domain.dao.AccessTokenDao;
+import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;

@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao.impl;
+package com.rackspace.idm.domain.dao.impl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +15,7 @@ import org.junit.Test;
 
 import com.rackspace.idm.domain.config.DataCenterEndpoints;
 import com.rackspace.idm.domain.config.MemcachedConfiguration;
+import com.rackspace.idm.domain.dao.impl.HttpAccessTokenRepository;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;

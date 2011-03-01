@@ -9,9 +9,9 @@ import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.dao.ClientDao;
-import com.rackspace.idm.dao.CustomerDao;
-import com.rackspace.idm.dao.UserDao;
+import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.CustomerDao;
+import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;

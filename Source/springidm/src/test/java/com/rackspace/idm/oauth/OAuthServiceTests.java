@@ -9,7 +9,7 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.dao.impl.MemcachedAccessTokenRepository;
+import com.rackspace.idm.domain.dao.impl.MemcachedAccessTokenRepository;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.AuthData;

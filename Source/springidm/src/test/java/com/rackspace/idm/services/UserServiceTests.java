@@ -17,12 +17,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.dao.AccessTokenDao;
-import com.rackspace.idm.dao.ClientDao;
-import com.rackspace.idm.dao.CustomerDao;
-import com.rackspace.idm.dao.AuthDao;
-import com.rackspace.idm.dao.RefreshTokenDao;
-import com.rackspace.idm.dao.UserDao;
+import com.rackspace.idm.domain.dao.AccessTokenDao;
+import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.CustomerDao;
+import com.rackspace.idm.domain.dao.RefreshTokenDao;
+import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.EmailService;
