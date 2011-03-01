@@ -7,8 +7,8 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.entities.Customer;
-import com.rackspace.idm.entities.CustomerStatus;
+import com.rackspace.idm.domain.entity.Customer;
+import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.DeleteRequest;

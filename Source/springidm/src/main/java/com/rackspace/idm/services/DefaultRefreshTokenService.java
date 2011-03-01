@@ -7,8 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.dao.RefreshTokenDao;
-import com.rackspace.idm.entities.RefreshToken;
-import com.rackspace.idm.entities.RefreshTokenDefaultAttributes;
+import com.rackspace.idm.domain.entity.RefreshToken;
+import com.rackspace.idm.domain.entity.RefreshTokenDefaultAttributes;
 
 public class DefaultRefreshTokenService implements RefreshTokenService {
 

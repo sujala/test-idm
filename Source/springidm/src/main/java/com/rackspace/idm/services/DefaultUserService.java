@@ -1,7 +1,7 @@
 package com.rackspace.idm.services;
 
 import com.rackspace.idm.dao.*;
-import com.rackspace.idm.entities.*;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.jaxb.CustomParam;
 import com.rackspace.idm.jaxb.PasswordRecovery;

@@ -8,7 +8,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import com.rackspace.idm.entities.*;
 import junit.framework.Assert;
 
 import org.apache.commons.mail.EmailException;
@@ -24,6 +23,7 @@ import com.rackspace.idm.dao.CustomerDao;
 import com.rackspace.idm.dao.AuthDao;
 import com.rackspace.idm.dao.RefreshTokenDao;
 import com.rackspace.idm.dao.UserDao;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.jaxb.CustomParamsList;
 import com.rackspace.idm.jaxb.PasswordRecovery;

@@ -19,8 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.CustomerConverter;
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.Customer;
+import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.services.AccessTokenService;

@@ -1,6 +1,6 @@
 package com.rackspace.idm.util;
 
-import com.rackspace.idm.entities.CloudEndpoint;
+import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.jaxb.Service;
 import com.rackspace.idm.jaxb.ServiceCatalog;
 

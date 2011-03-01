@@ -11,8 +11,8 @@ import org.junit.Test;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
-import com.rackspace.idm.entities.Customer;
-import com.rackspace.idm.entities.CustomerStatus;
+import com.rackspace.idm.domain.entity.Customer;
+import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.unboundid.ldap.sdk.Modification;
 

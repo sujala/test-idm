@@ -1,9 +1,9 @@
 package com.rackspace.idm.api.resources;
 
 import com.rackspace.idm.api.converter.ClientConverter;
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.Client;
-import com.rackspace.idm.entities.ClientSecret;
+import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.IdmException;
 import com.rackspace.idm.exceptions.NotFoundException;

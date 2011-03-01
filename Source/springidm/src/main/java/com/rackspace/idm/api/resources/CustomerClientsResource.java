@@ -25,10 +25,10 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.ClientConverter;
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.Client;
-import com.rackspace.idm.entities.Clients;
-import com.rackspace.idm.entities.Customer;
+import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Clients;
+import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ClientConflictException;
 import com.rackspace.idm.exceptions.DuplicateException;

@@ -8,7 +8,7 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.entities.RefreshToken;
+import com.rackspace.idm.domain.entity.RefreshToken;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;

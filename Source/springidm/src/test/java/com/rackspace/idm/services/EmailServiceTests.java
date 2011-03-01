@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.commons.mail.EmailException;
 import org.junit.Test;
 
-import com.rackspace.idm.entities.EmailSettings;
+import com.rackspace.idm.domain.entity.EmailSettings;
 
 public class EmailServiceTests {
     

@@ -1,8 +1,9 @@
 package com.rackspace.idm.entities;
 
-import com.rackspace.idm.entities.Client;
-import com.rackspace.idm.entities.ClientSecret;
-import com.rackspace.idm.entities.ClientStatus;
+import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.ClientSecret;
+import com.rackspace.idm.domain.entity.ClientStatus;
+
 import org.junit.Assert;
 
 import org.junit.Test;

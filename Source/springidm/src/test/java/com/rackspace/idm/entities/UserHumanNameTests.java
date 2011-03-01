@@ -4,7 +4,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-import com.rackspace.idm.entities.UserHumanName;
+import com.rackspace.idm.domain.entity.UserHumanName;
 
 public class UserHumanNameTests {
 

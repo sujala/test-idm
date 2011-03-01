@@ -10,7 +10,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-import com.rackspace.idm.entities.ClientSecret;
+import com.rackspace.idm.domain.entity.ClientSecret;
 
 public class ClientSecretTests {
     @Test(expected = IllegalArgumentException.class)

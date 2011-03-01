@@ -7,9 +7,9 @@ import java.util.List;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 
-import com.rackspace.idm.entities.CloudBaseUrl;
-import com.rackspace.idm.entities.CloudEndpoint;
-import com.rackspace.idm.entities.EndPoints;
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.EndPoints;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.LDAPException;

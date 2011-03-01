@@ -1,6 +1,7 @@
 package com.rackspace.idm.dao;
 
-import com.rackspace.idm.entities.RefreshToken;
+import com.rackspace.idm.domain.entity.RefreshToken;
+
 import org.joda.time.DateTime;
 
 public interface RefreshTokenDao extends TokenDao<RefreshToken> {

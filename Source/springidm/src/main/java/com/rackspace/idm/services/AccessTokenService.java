@@ -4,11 +4,11 @@ import java.util.List;
 
 import org.joda.time.DateTime;
 
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.BaseClient;
-import com.rackspace.idm.entities.BaseUser;
-import com.rackspace.idm.entities.Client;
-import com.rackspace.idm.entities.User;
+import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.BaseClient;
+import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.User;
 
 public interface AccessTokenService {
 

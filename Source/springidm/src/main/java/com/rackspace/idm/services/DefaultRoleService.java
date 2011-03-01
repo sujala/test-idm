@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.dao.RoleDao;
 import com.rackspace.idm.dao.UserDao;
-import com.rackspace.idm.entities.Role;
-import com.rackspace.idm.entities.User;
+import com.rackspace.idm.domain.entity.Role;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.NotFoundException;
 

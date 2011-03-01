@@ -2,7 +2,7 @@ package com.rackspace.idm.services;
 
 import org.joda.time.DateTime;
 
-import com.rackspace.idm.entities.RefreshToken;
+import com.rackspace.idm.domain.entity.RefreshToken;
 
 public interface RefreshTokenService {
 

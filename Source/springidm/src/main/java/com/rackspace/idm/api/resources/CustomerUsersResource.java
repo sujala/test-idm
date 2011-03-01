@@ -26,11 +26,11 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.Customer;
-import com.rackspace.idm.entities.Password;
-import com.rackspace.idm.entities.User;
-import com.rackspace.idm.entities.Users;
+import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.Customer;
+import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.exceptions.DuplicateUsernameException;

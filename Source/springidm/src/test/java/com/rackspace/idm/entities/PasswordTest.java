@@ -4,7 +4,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-import com.rackspace.idm.entities.Password;
+import com.rackspace.idm.domain.entity.Password;
 
 public class PasswordTest {
 

@@ -1,6 +1,6 @@
 package com.rackspace.idm.dao;
 
-import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.domain.entity.AccessToken;
 
 public interface XdcAccessTokenDao {
 

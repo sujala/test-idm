@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.converter;
 
-import com.rackspace.idm.entities.Customer;
+import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class CustomerConverter {

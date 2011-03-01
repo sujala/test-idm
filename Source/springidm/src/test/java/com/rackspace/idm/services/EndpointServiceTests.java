@@ -10,8 +10,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.rackspace.idm.dao.EndpointDao;
-import com.rackspace.idm.entities.CloudBaseUrl;
-import com.rackspace.idm.entities.CloudEndpoint;
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.exceptions.BaseUrlConflictException;
 import com.rackspace.idm.test.stub.StubLogger;
 

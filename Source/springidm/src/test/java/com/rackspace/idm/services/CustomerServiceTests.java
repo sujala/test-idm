@@ -9,9 +9,9 @@ import com.rackspace.idm.dao.ClientDao;
 import com.rackspace.idm.dao.CustomerDao;
 import com.rackspace.idm.dao.RoleDao;
 import com.rackspace.idm.dao.UserDao;
-import com.rackspace.idm.entities.Customer;
-import com.rackspace.idm.entities.CustomerStatus;
-import com.rackspace.idm.entities.Role;
+import com.rackspace.idm.domain.entity.Customer;
+import com.rackspace.idm.domain.entity.CustomerStatus;
+import com.rackspace.idm.domain.entity.Role;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.test.stub.StubLogger;
 

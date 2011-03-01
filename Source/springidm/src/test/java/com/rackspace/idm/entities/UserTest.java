@@ -12,6 +12,12 @@ import junit.framework.Assert;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
+import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserCredential;
+import com.rackspace.idm.domain.entity.UserHumanName;
+import com.rackspace.idm.domain.entity.UserLocale;
+import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.validation.MessageTexts;
 
 public class UserTest {

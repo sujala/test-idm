@@ -25,8 +25,8 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.EndPointConverter;
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.exceptions.NotFoundException;

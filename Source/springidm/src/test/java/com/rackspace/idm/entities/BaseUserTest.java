@@ -4,6 +4,9 @@ import org.apache.commons.lang.SerializationUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.ClientGroup;
+
 import java.util.ArrayList;
 import java.util.List;
 

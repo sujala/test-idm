@@ -2,7 +2,7 @@ package com.rackspace.idm.dao;
 
 import java.util.List;
 
-import com.rackspace.idm.entities.Role;
+import com.rackspace.idm.domain.entity.Role;
 
 public interface RoleDao {
     void add(Role role, String customerUniqueId);

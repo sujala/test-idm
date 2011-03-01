@@ -1,10 +1,10 @@
 package com.rackspace.idm.dao;
 
-import com.rackspace.idm.entities.Client;
-import com.rackspace.idm.entities.ClientAuthenticationResult;
-import com.rackspace.idm.entities.ClientGroup;
-import com.rackspace.idm.entities.Clients;
-import com.rackspace.idm.entities.Permission;
+import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
+import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.Clients;
+import com.rackspace.idm.domain.entity.Permission;
 
 import java.util.List;
 

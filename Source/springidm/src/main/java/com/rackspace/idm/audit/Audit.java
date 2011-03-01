@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import com.rackspace.idm.dao.LdapRepository;
-import com.rackspace.idm.entities.Auditable;
+import com.rackspace.idm.domain.entity.Auditable;
 import com.unboundid.ldap.sdk.Modification;
 
 public class Audit {

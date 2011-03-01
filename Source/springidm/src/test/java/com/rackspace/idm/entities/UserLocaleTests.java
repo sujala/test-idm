@@ -4,7 +4,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-import com.rackspace.idm.entities.UserLocale;
+import com.rackspace.idm.domain.entity.UserLocale;
 
 import java.util.Locale;
 

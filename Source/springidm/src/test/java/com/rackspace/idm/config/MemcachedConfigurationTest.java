@@ -2,10 +2,10 @@ package com.rackspace.idm.config;
 
 import com.rackspace.idm.domain.config.MemcachedConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
-import com.rackspace.idm.entities.BaseClient;
-import com.rackspace.idm.entities.BaseUser;
+import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.BaseClient;
+import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.test.stub.StubLogger;
 import net.spy.memcached.MemcachedClient;
 import org.joda.time.DateTime;

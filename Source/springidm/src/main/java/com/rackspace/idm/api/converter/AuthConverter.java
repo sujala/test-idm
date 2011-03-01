@@ -2,9 +2,9 @@ package com.rackspace.idm.api.converter;
 
 import java.util.List;
 
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.AuthData;
-import com.rackspace.idm.entities.CloudEndpoint;
+import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.AuthData;
+import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.jaxb.CloudAuth;
 import com.rackspace.idm.jaxb.ObjectFactory;
 import com.rackspace.idm.jaxb.ServiceCatalog;

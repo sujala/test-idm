@@ -1,6 +1,6 @@
 package com.rackspace.idm.services;
 
-import com.rackspace.idm.entities.Customer;
+import com.rackspace.idm.domain.entity.Customer;
 
 public interface CustomerService {
 

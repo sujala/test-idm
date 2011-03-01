@@ -2,7 +2,7 @@ package com.rackspace.idm.dao;
 
 import java.util.List;
 
-import com.rackspace.idm.entities.Customer;
+import com.rackspace.idm.domain.entity.Customer;
 
 public interface CustomerDao {
     void add(Customer customer);

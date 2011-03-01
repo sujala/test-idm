@@ -1,8 +1,8 @@
 package com.rackspace.idm.services;
 
-import com.rackspace.idm.entities.User;
-import com.rackspace.idm.entities.UserAuthenticationResult;
-import com.rackspace.idm.entities.Users;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserAuthenticationResult;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.exceptions.DuplicateException;
 import com.rackspace.idm.jaxb.PasswordRecovery;
 

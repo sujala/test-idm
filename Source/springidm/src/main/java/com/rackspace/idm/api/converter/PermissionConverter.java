@@ -3,8 +3,8 @@ package com.rackspace.idm.api.converter;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.rackspace.idm.entities.Permission;
-import com.rackspace.idm.entities.PermissionSet;
+import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.PermissionSet;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class PermissionConverter {

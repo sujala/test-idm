@@ -4,7 +4,8 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-import com.rackspace.idm.entities.Customer;
+import com.rackspace.idm.domain.entity.Customer;
+import com.rackspace.idm.domain.entity.CustomerStatus;
 
 public class CustomerTest {
 

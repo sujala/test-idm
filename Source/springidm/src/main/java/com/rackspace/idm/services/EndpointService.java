@@ -2,8 +2,8 @@ package com.rackspace.idm.services;
 
 import java.util.List;
 
-import com.rackspace.idm.entities.CloudBaseUrl;
-import com.rackspace.idm.entities.CloudEndpoint;
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.CloudEndpoint;
 
 public interface EndpointService {
     void addBaseUrl(CloudBaseUrl baseUrl);

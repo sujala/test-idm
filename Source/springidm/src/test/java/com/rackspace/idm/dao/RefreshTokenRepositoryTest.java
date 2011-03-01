@@ -15,7 +15,7 @@ import org.junit.Test;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
-import com.rackspace.idm.entities.RefreshToken;
+import com.rackspace.idm.domain.entity.RefreshToken;
 import com.rackspace.idm.test.stub.StubLogger;
 
 public class RefreshTokenRepositoryTest {

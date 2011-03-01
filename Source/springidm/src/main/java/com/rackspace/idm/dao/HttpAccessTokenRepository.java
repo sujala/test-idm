@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.rackspace.idm.GlobalConstants.TokenDeleteByType;
 import com.rackspace.idm.domain.config.DataCenterClient;
 import com.rackspace.idm.domain.config.DataCenterEndpoints;
-import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.domain.entity.AccessToken;
 
 public class HttpAccessTokenRepository extends HttpRepository implements XdcAccessTokenDao {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());

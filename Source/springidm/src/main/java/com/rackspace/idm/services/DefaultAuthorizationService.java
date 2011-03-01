@@ -9,9 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.dao.ClientDao;
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.ClientGroup;
-import com.rackspace.idm.entities.Permission;
+import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.Permission;
 
 public class DefaultAuthorizationService implements AuthorizationService {
 

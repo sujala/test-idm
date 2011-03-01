@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import com.rackspace.idm.api.converter.TokenConverter;
 import com.rackspace.idm.domain.config.DataCenterClient;
 import com.rackspace.idm.domain.config.DataCenterEndpoints;
-import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.jaxb.Auth;
 import com.rackspace.idm.jaxb.AuthCredentials;
 import com.rackspace.idm.jaxb.AuthGrantType;

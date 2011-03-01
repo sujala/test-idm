@@ -3,7 +3,7 @@ package com.rackspace.idm.api.converter;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.rackspace.idm.entities.ClientGroup;
+import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class GroupConverter {

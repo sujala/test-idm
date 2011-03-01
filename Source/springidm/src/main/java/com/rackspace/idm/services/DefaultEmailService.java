@@ -7,7 +7,7 @@ import org.apache.commons.mail.Email;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.SimpleEmail;
 
-import com.rackspace.idm.entities.EmailSettings;
+import com.rackspace.idm.domain.entity.EmailSettings;
 
 public class DefaultEmailService implements EmailService {
     

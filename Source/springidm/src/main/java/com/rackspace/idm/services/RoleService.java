@@ -2,8 +2,8 @@ package com.rackspace.idm.services;
 
 import java.util.List;
 
-import com.rackspace.idm.entities.Role;
-import com.rackspace.idm.entities.User;
+import com.rackspace.idm.domain.entity.Role;
+import com.rackspace.idm.domain.entity.User;
 
 public interface RoleService {
 

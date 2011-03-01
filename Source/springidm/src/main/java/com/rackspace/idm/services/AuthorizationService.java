@@ -1,6 +1,6 @@
 package com.rackspace.idm.services;
 
-import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.domain.entity.AccessToken;
 
 public interface AuthorizationService {
     

@@ -21,8 +21,8 @@ import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.api.converter.AuthConverter;
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.CloudEndpoint;
+import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.exceptions.BadRequestException;
 import com.rackspace.idm.exceptions.ForbiddenException;
 import com.rackspace.idm.jaxb.MossoCredentials;

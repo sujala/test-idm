@@ -13,6 +13,12 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.Customer;
+import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.exceptions.*;
 
 import org.apache.commons.configuration.Configuration;
@@ -25,12 +31,6 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import com.rackspace.idm.api.converter.EndPointConverter;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.ClientGroup;
-import com.rackspace.idm.entities.CloudEndpoint;
-import com.rackspace.idm.entities.Customer;
-import com.rackspace.idm.entities.Password;
-import com.rackspace.idm.entities.User;
 import com.rackspace.idm.jaxb.BaseURLRef;
 import com.rackspace.idm.services.AccessTokenService;
 import com.rackspace.idm.services.AuthorizationService;

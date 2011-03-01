@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.config;
 
-import com.rackspace.idm.entities.AccessToken;
+import com.rackspace.idm.domain.entity.AccessToken;
 import com.sun.jersey.api.client.WebResource;
 
 public class DataCenterClient {

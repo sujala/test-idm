@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.converter;
 
-import com.rackspace.idm.entities.AccessToken;
-import com.rackspace.idm.entities.RefreshToken;
+import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.RefreshToken;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class TokenConverter {

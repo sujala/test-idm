@@ -2,7 +2,7 @@ package com.rackspace.idm.api.resources;
 
 import com.rackspace.idm.api.converter.PasswordConverter;
 import com.rackspace.idm.api.converter.TokenConverter;
-import com.rackspace.idm.entities.*;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exceptions.*;
 import com.rackspace.idm.jaxb.PasswordRecovery;
 import com.rackspace.idm.services.*;

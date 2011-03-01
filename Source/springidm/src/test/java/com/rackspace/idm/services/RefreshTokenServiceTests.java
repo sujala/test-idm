@@ -8,8 +8,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.rackspace.idm.dao.RefreshTokenDao;
-import com.rackspace.idm.entities.RefreshToken;
-import com.rackspace.idm.entities.RefreshTokenDefaultAttributes;
+import com.rackspace.idm.domain.entity.RefreshToken;
+import com.rackspace.idm.domain.entity.RefreshTokenDefaultAttributes;
 import com.rackspace.idm.test.stub.StubLogger;
 
 public class RefreshTokenServiceTests {

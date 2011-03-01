@@ -5,10 +5,10 @@ import javax.xml.datatype.DatatypeFactory;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.rackspace.idm.entities.BaseUser;
-import com.rackspace.idm.entities.User;
-import com.rackspace.idm.entities.UserStatus;
-import com.rackspace.idm.entities.Users;
+import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserStatus;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class UserConverter {

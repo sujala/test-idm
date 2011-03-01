@@ -10,11 +10,11 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.entities.Password;
-import com.rackspace.idm.entities.User;
-import com.rackspace.idm.entities.UserAuthenticationResult;
-import com.rackspace.idm.entities.UserStatus;
-import com.rackspace.idm.entities.Users;
+import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserAuthenticationResult;
+import com.rackspace.idm.domain.entity.UserStatus;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.exceptions.NotFoundException;
 import com.rackspace.idm.exceptions.StalePasswordException;
 import com.rackspace.idm.exceptions.UserDisabledException;

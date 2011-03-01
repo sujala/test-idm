@@ -2,9 +2,9 @@ package com.rackspace.idm.api.converter;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.rackspace.idm.entities.BaseClient;
-import com.rackspace.idm.entities.Client;
-import com.rackspace.idm.entities.ClientStatus;
+import com.rackspace.idm.domain.entity.BaseClient;
+import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.jaxb.Clients;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
@@ -69,7 +69,7 @@ public class ClientConverter {
         return toClientJaxb(client, true, true);
     }
 
-    public Clients toClientListJaxb(com.rackspace.idm.entities.Clients clients) {
+    public Clients toClientListJaxb(com.rackspace.idm.domain.entity.Clients clients) {
 
         if (clients == null || clients.getClients().size() < 1) {
             return null;
