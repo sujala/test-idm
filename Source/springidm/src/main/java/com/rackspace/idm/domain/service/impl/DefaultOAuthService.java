@@ -342,11 +342,6 @@ public class DefaultOAuthService implements OAuthService {
         return refreshToken;
     }
 
-    private void throwNotAuthenticatedException(String errorMsg) throws NotAuthenticatedException {
-        logger.error(errorMsg);
-        throw new NotAuthenticatedException(errorMsg);
-    }
-
     private int getPagingLimit() {
         return config.getInt("ldap.paging.limit.max");
     }
