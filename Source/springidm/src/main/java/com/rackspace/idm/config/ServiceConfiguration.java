@@ -113,6 +113,11 @@ public class ServiceConfiguration {
     public HealthMonitoringService healthMonitoringBean() {
         return new HealthMonitoringService(memcacheService, ldapRepository);
     }
+    
+    @Bean
+    public LoggerMBean loggerMonitoringBean() {
+    	return new LoggerMBean();
+    }
 
     @Bean
     public ClientService clientService() {
