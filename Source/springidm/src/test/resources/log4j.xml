@@ -23,7 +23,7 @@
 		<level value="info" />
 	</logger>
 	
-	<logger name="com.rackspace.idm.config">
+	<logger name="com.rackspace.idm.domain.config">
 		<level value="info" />
 	</logger>
 	

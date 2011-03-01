@@ -10,7 +10,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rackspace.idm.config.MemcachedConfiguration;
+import com.rackspace.idm.domain.config.MemcachedConfiguration;
 
 public class IdmMemcachedUtility {
     private static final String LOCAL_SERVERLIST = "127.0.0.1:11211";

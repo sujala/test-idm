@@ -1,4 +1,4 @@
-package com.rackspace.idm.config;
+package com.rackspace.idm.domain.config;
 
 import com.rackspace.idm.entities.AccessToken;
 import com.sun.jersey.api.client.WebResource;

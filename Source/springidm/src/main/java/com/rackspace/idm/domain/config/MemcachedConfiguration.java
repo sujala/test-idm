@@ -1,4 +1,4 @@
-package com.rackspace.idm.config;
+package com.rackspace.idm.domain.config;
 
 import java.io.IOException;
 

@@ -1,10 +1,10 @@
 package com.rackspace.idm.services;
 
 import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.config.MemcachedConfiguration;
-import com.rackspace.idm.config.PropertyFileConfiguration;
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
+import com.rackspace.idm.domain.config.MemcachedConfiguration;
+import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.entities.*;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.rackspace.idm.util.AuthHeaderHelper;

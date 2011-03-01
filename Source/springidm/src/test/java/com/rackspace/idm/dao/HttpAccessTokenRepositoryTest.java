@@ -13,8 +13,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.rackspace.idm.config.DataCenterEndpoints;
-import com.rackspace.idm.config.MemcachedConfiguration;
+import com.rackspace.idm.domain.config.DataCenterEndpoints;
+import com.rackspace.idm.domain.config.MemcachedConfiguration;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.entities.BaseClient;

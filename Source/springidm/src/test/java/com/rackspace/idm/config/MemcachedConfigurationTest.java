@@ -1,5 +1,7 @@
 package com.rackspace.idm.config;
 
+import com.rackspace.idm.domain.config.MemcachedConfiguration;
+import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.entities.AccessToken;
 import com.rackspace.idm.entities.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.entities.BaseClient;

@@ -13,8 +13,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.rackspace.idm.config.LdapConfiguration;
-import com.rackspace.idm.config.PropertyFileConfiguration;
+import com.rackspace.idm.domain.config.LdapConfiguration;
+import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.entities.RefreshToken;
 import com.rackspace.idm.test.stub.StubLogger;
 

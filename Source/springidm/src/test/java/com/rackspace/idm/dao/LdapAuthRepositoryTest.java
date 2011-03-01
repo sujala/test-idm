@@ -9,7 +9,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.rackspace.idm.config.AuthRepositoryLdapConfiguration;
+import com.rackspace.idm.domain.config.AuthRepositoryLdapConfiguration;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
