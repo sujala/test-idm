@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao;
+package com.rackspace.idm.dao.impl;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.rackspace.idm.dao.impl.LdapAuthRepository;
 import com.rackspace.idm.domain.config.AuthRepositoryLdapConfiguration;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;

@@ -13,9 +13,9 @@ import org.junit.Test;
 
 import com.rackspace.idm.dao.AccessTokenDao;
 import com.rackspace.idm.dao.ClientDao;
-import com.rackspace.idm.dao.MemcachedAccessTokenRepository;
 import com.rackspace.idm.dao.RefreshTokenDao;
 import com.rackspace.idm.dao.XdcAccessTokenDao;
+import com.rackspace.idm.dao.impl.MemcachedAccessTokenRepository;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Client;

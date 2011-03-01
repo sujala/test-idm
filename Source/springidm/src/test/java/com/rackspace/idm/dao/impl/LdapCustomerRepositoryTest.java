@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao;
+package com.rackspace.idm.dao.impl;
 
 import java.util.List;
 
@@ -9,6 +9,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.rackspace.idm.dao.impl.LdapConnectionPools;
+import com.rackspace.idm.dao.impl.LdapCustomerRepository;
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.Customer;

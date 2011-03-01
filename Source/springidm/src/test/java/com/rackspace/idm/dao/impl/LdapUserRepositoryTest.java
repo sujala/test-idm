@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao;
+package com.rackspace.idm.dao.impl;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -16,6 +16,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.dao.impl.LdapConnectionPools;
+import com.rackspace.idm.dao.impl.LdapUserRepository;
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.Password;

@@ -8,7 +8,7 @@ import org.apache.log4j.MDC;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.dao.LdapRepository;
+import com.rackspace.idm.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
 
