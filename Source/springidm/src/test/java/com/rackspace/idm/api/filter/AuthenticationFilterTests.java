@@ -1,5 +1,6 @@
-package com.rackspace.idm.interceptors;
+package com.rackspace.idm.api.filter;
 
+import com.rackspace.idm.api.filter.AuthenticationFilter;
 import com.rackspace.idm.exceptions.NotAuthenticatedException;
 import com.rackspace.idm.oauth.OAuthService;
 import com.rackspace.idm.services.AccessTokenService;
