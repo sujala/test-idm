@@ -1,4 +1,4 @@
-package com.rackspace.idm.dao;
+package com.rackspace.idm.dao.impl;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.GlobalConstants.TokenDeleteByType;
+import com.rackspace.idm.dao.XdcAccessTokenDao;
+import com.rackspace.idm.dao.impl.HttpRepository.HttpCaller;
 import com.rackspace.idm.domain.config.DataCenterClient;
 import com.rackspace.idm.domain.config.DataCenterEndpoints;
 import com.rackspace.idm.domain.entity.AccessToken;
