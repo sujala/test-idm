@@ -109,7 +109,7 @@ public class CustomerClientResource {
     }
 
     /**
-     * Gets the client data.
+     * Delete a client.
      *
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
@@ -134,11 +134,9 @@ public class CustomerClientResource {
         AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
 
-        // Rackers, Rackspace Clients, Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath());
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
