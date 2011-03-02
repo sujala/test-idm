@@ -63,9 +63,9 @@ public class LdapCustomerRepository extends LdapRepository implements
             atts.add(new Attribute(ATTR_STATUS, customer.getStatus().toString()));
         }
 
-        if (customer.getIsLocked() != null) {
+        if (customer.isLocked() != null) {
             atts.add(new Attribute(ATTR_LOCKED, String.valueOf(customer
-                .getIsLocked())));
+                .isLocked())));
         }
 
         if (customer.getSoftDeleted() != null) {
@@ -436,7 +436,7 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         String locked = resultEntry.getAttributeValue(ATTR_LOCKED);
         if (locked != null) {
-            customer.setIsLocked(resultEntry
+            customer.setLocked(resultEntry
                 .getAttributeValueAsBoolean(ATTR_LOCKED));
         }
 
@@ -481,10 +481,10 @@ public class LdapCustomerRepository extends LdapRepository implements
                 cNew.getStatus().toString()));
         }
 
-        if (cNew.getIsLocked() != null
-            && cNew.getIsLocked() != cOld.getIsLocked()) {
+        if (cNew.isLocked() != null
+            && cNew.isLocked() != cOld.isLocked()) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_LOCKED,
-                String.valueOf(cNew.getIsLocked())));
+                String.valueOf(cNew.isLocked())));
         }
 
         if (cNew.getSoftDeleted() != null

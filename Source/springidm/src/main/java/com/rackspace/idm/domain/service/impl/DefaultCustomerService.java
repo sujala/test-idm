@@ -72,7 +72,7 @@ public class DefaultCustomerService implements CustomerService {
         clientDao.setAllClientLocked(customerId, locked);
         
         // lock customer
-        customer.setIsLocked(locked);
+        customer.setLocked(locked);
         customerDao.save(customer);
         
         logger.info("Locked customer: {}", customer);

@@ -18,7 +18,7 @@ public class CustomerConverter {
         customer.setCustomerId(jaxbCustomer.getCustomerId());
         customer.setInum(jaxbCustomer.getInum());
         if (jaxbCustomer.isLocked() != null) {
-            customer.setIsLocked(jaxbCustomer.isLocked());
+            customer.setLocked(jaxbCustomer.isLocked());
         }
 
         if (jaxbCustomer.isSoftDeleted() != null) {
@@ -34,7 +34,7 @@ public class CustomerConverter {
         jaxbCustomer.setCustomerId(customer.getCustomerId());
         jaxbCustomer.setIname(customer.getIname());
         jaxbCustomer.setInum(customer.getInum());
-        jaxbCustomer.setLocked(customer.getIsLocked());
+        jaxbCustomer.setLocked(customer.isLocked());
         jaxbCustomer.setSoftDeleted(customer.getSoftDeleted());
 
         return jaxbCustomer;

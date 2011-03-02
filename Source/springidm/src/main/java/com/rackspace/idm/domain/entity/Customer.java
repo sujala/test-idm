@@ -19,7 +19,7 @@ public class Customer implements Auditable {
     private String seeAlso = null;
     private String owner = null;
 
-    private Boolean isLocked = null;
+    private Boolean locked = null;
     private Boolean softDeleted = null;
 
     public Customer() {
@@ -83,12 +83,12 @@ public class Customer implements Auditable {
         }
     }
 
-    public Boolean getIsLocked() {
-        return this.isLocked;
+    public Boolean isLocked() {
+        return this.locked;
     }
 
-    public void setIsLocked(Boolean isLocked) {
-        this.isLocked = isLocked;
+    public void setLocked(Boolean isLocked) {
+        this.locked = isLocked;
     }
 
     public CustomerStatus getStatus() {
@@ -123,7 +123,7 @@ public class Customer implements Auditable {
 
     public void setDefaults() {
         this.status = CustomerStatus.ACTIVE;
-        this.isLocked = false;
+        this.locked = false;
         this.softDeleted = false;
     }
 
@@ -136,7 +136,7 @@ public class Customer implements Auditable {
         result = prime * result + ((iname == null) ? 0 : iname.hashCode());
         result = prime * result + ((inum == null) ? 0 : inum.hashCode());
         result = prime * result
-            + ((isLocked == null) ? 0 : isLocked.hashCode());
+            + ((locked == null) ? 0 : locked.hashCode());
         result = prime * result + ((owner == null) ? 0 : owner.hashCode());
         result = prime * result + ((seeAlso == null) ? 0 : seeAlso.hashCode());
         result = prime * result
@@ -180,11 +180,11 @@ public class Customer implements Auditable {
         } else if (!inum.equals(other.inum)) {
             return false;
         }
-        if (isLocked == null) {
-            if (other.isLocked != null) {
+        if (locked == null) {
+            if (other.locked != null) {
                 return false;
             }
-        } else if (!isLocked.equals(other.isLocked)) {
+        } else if (!locked.equals(other.locked)) {
             return false;
         }
         if (owner == null) {
