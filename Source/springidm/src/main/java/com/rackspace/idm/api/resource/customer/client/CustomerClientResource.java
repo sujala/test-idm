@@ -109,6 +109,64 @@ public class CustomerClientResource {
     }
 
     /**
+     * Gets the client data.
+     *
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param clientId   Client application ID
+     * @response.representation.204.doc Successful request
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     */
+    @DELETE
+    public Response deleteClient(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId) {
+
+        logger.debug("Deleting Client: {}", clientId);
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Rackers, Rackspace Clients, Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeRackspaceClient(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo.getPath());
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
+        Client client = this.clientService.getById(clientId);
+
+        if (client == null
+            || !client.getCustomerId().toLowerCase()
+                .equals(customerId.toLowerCase())) {
+            String errorMsg = String.format("Client Not Found: %s", clientId);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+
+        logger.debug("Got Client: {}", client);
+
+        this.clientService.delete(clientId);
+
+        logger.debug("Deleted client: {}", clientId);
+
+        return Response.noContent().build();
+    }
+
+    /**
      * Reset the client secret
      *
      * @param authHeader HTTP Authorization header for authenticating the caller.

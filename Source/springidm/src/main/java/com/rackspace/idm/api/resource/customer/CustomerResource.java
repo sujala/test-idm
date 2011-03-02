@@ -164,7 +164,7 @@ public class CustomerResource {
             throw new NotFoundException(errorMsg);
         }
 
-        this.customerService.softDeleteCustomer(customerId);
+        this.customerService.deleteCustomer(customerId);
 
         logger.debug("Deleted Customer: {}", customerId);
 
