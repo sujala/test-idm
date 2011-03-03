@@ -1,7 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -19,8 +18,6 @@ import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.util.PingableService;
 
 public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableService {
-    // TODO Find out what this value is
-    private static final int INFINITE_EXPIRATION = -1;
     private MemcachedClient memcached;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -47,7 +44,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         logger.debug("Adding token: {}", accessToken);
 
         // Since we will need to look up by both token string and user name, the
-        // add operation will make the two entries.
+        // add operation will make 2 entries.
 
         // Try adding the token with the token string as the key
         Future<Boolean> resultByTokenStr = memcached.set(tokenString, accessToken.getExpiration(),
@@ -63,15 +60,14 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         // do not overwrite client token if password reset flow
         if (!accessToken.isRestrictedToSetPassword()) {
             // Try adding the tokenString with the owner_requestor as the key
-            Map<String, String> lookupByRequestor = getOrCreateLookupMap(accessToken.getOwner());
-            lookupByRequestor.put(accessToken.getRequestor(), tokenString);
-            Future<Boolean> resultByOwner = memcached.set(accessToken.getOwner(),
-                accessToken.getExpiration(), lookupByRequestor);
+            UserTokenStrings userTokenStrings = getOrCreateLookupMap(accessToken.getOwner());
+            userTokenStrings.put(accessToken.getRequestor(), accessToken.getExpiration(), tokenString);
+            Future<Boolean> resultByOwner = memcached.set(userTokenStrings.getOwnerId(),
+                userTokenStrings.getExpiration(), userTokenStrings);
             boolean addedByOwner = evaluateCacheOperation(resultByOwner, "set token by owner", accessToken);
             if (!addedByOwner) {
                 // Attempt a rollback of the previous operation before bailing
-                // with
-                // an exception
+                // with an exception
                 memcached.delete(tokenString);
                 String errMsg = String.format("Failed to add token by owner with parameter %s", accessToken);
                 logger.error(errMsg);
@@ -101,9 +97,8 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
 
         if (!token.isRestrictedToSetPassword()) {
             // delete pointer to token
-            Map<String, String> lookupByRequestor = getOrCreateLookupMap(token.getOwner());
-            lookupByRequestor.remove(token.getRequestor());
-            Future<Boolean> deleteResult = removeByRequestor(lookupByRequestor, token.getOwner(),
+            UserTokenStrings userTokenStrings = getOrCreateLookupMap(token.getOwner());
+            Future<Boolean> deleteResult = removeByRequestor(userTokenStrings, token.getOwner(),
                 token.getRequestor());
             boolean deletedByOwner = evaluateCacheOperation(deleteResult, "delete token by owner",
                 tokenString);
@@ -139,8 +134,8 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
 
         // Do a consistency check to make sure there is also the same token
         // stored by owner/requestor IDs.
-        Map<String, String> lookupByRequestor = getOrCreateLookupMap(token.getOwner());
-        String tokenStrByRequestor = lookupByRequestor.get(token.getRequestor());
+        UserTokenStrings userTokenStrings = getOrCreateLookupMap(token.getOwner());
+        String tokenStrByRequestor = userTokenStrings.get(token.getRequestor());
         if (token.getTokenString().equals(tokenStrByRequestor)) {
             logger.debug("Found token with value {}", token);
             return token;
@@ -150,6 +145,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         // found or did not match. Therefore, the data is in an inconsistent
         // state.
         logger.error("Token cache in an inconsistent state. Deleting {}", token);
+        removeByRequestor(userTokenStrings, token.getOwner(), token.getRequestor());
         memcached.delete(tokenString);
 
         logger.debug("No token found with value {}", tokenString);
@@ -157,7 +153,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
     }
 
     /**
-     * Will NOT find expire tokens.
+     * Will NOT find expired tokens.
      */
     @Override
     public AccessToken findTokenForOwner(String owner, String requestor) {
@@ -166,8 +162,8 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
             throw new IllegalArgumentException("Owner value is null or empty");
         }
         logger.debug("Finding token with owner {} and requestor {}", owner, requestor);
-        Map<String, String> lookupByRequestor = (Map<String, String>) getOrCreateLookupMap(owner);
-        String tokenStrByRequestor = lookupByRequestor.get(requestor);
+        UserTokenStrings userTokenStrings = getOrCreateLookupMap(owner);
+        String tokenStrByRequestor = userTokenStrings.get(requestor);
         if (StringUtils.isBlank(tokenStrByRequestor)) {
             logger.debug("No token found for owner {} and requestor {}", owner, requestor);
             return null;
@@ -178,7 +174,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
             logger.debug("No token found for owner {} and requestor {}", owner, requestor);
             // Keep things consistent by removing stray token string that points
             // to a non-existing token.
-            removeByRequestor(lookupByRequestor, owner, requestor);
+            removeByRequestor(userTokenStrings, owner, requestor);
             return null;
         }
 
@@ -187,12 +183,23 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
 
     @Override
     public void deleteAllTokensForOwner(String owner) {
-        Map<String, String> lookupByRequestor = getOrCreateLookupMap(owner);
-        for (String tokenStr : lookupByRequestor.values()) {
-            //TODO Add error handling!
-            memcached.delete(tokenStr);
+        UserTokenStrings userTokenStrings = getOrCreateLookupMap(owner);
+        boolean isAllSuccessful = true;
+        for (String tokenStr : userTokenStrings.getTokenStrings()) {
+            Future<Boolean> result = memcached.delete(tokenStr);
+            boolean successful = evaluateCacheOperation(result, "delete a token from a list for owner",
+                tokenStr);
+            isAllSuccessful = isAllSuccessful && successful;
         }
-        memcached.delete(owner);
+
+        Future<Boolean> result = memcached.delete(owner);
+        boolean success = evaluateCacheOperation(result, "delete all tokens associated with owner", owner);
+        isAllSuccessful = isAllSuccessful && success;
+        if (!isAllSuccessful) {
+            String errMsg = String.format("Failed to delete some or all tokens for owner %s", owner);
+            logger.error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
     }
 
     @Override
@@ -216,23 +223,24 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         }
     }
 
-    private Map<String, String> getOrCreateLookupMap(String tokenOwnerId) {
+    private UserTokenStrings getOrCreateLookupMap(String tokenOwnerId) {
         @SuppressWarnings("unchecked")
-        Map<String, String> lookupByRequestor = (Map<String, String>) memcached.get(tokenOwnerId);
-        if (lookupByRequestor == null) {
-            lookupByRequestor = new HashMap<String, String>();
+        UserTokenStrings userTokenStrings = (UserTokenStrings) memcached.get(tokenOwnerId);
+        if (userTokenStrings == null) {
+            userTokenStrings = new UserTokenStrings(tokenOwnerId);
         }
 
-        return lookupByRequestor;
+        return userTokenStrings;
     }
 
-    private Future<Boolean> removeByRequestor(Map<String, String> lookupByRequestor, String owner,
+    private Future<Boolean> removeByRequestor(UserTokenStrings userTokenStrings, String owner,
         String requestor) {
-        lookupByRequestor.remove(requestor);
-        if (lookupByRequestor.size() == 0) {
+        userTokenStrings.remove(requestor);
+        List<String> tokenStrings = userTokenStrings.getTokenStrings();
+        if (tokenStrings.size() == 0) {
             return memcached.delete(owner);
         }
-        return memcached.set(owner, INFINITE_EXPIRATION, lookupByRequestor);
+        return memcached.set(owner, userTokenStrings.getExpiration(), userTokenStrings);
     }
 
     private boolean evaluateCacheOperation(Future<Boolean> result, String operation, Object... operationParam) {
