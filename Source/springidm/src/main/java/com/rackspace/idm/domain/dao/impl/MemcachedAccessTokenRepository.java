@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -16,14 +18,13 @@ import com.rackspace.idm.domain.dao.AccessTokenDao;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.util.PingableService;
 
-public class MemcachedAccessTokenRepository implements AccessTokenDao,
-    PingableService {
-
+public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableService {
+    // TODO Find out what this value is
+    private static final int INFINITE_EXPIRATION = -1;
     private MemcachedClient memcached;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public static final DateTimeFormatter DATE_PARSER = DateTimeFormat
-        .forPattern("yyyyMMddHHmmss.SSS'Z");
+    public static final DateTimeFormatter DATE_PARSER = DateTimeFormat.forPattern("yyyyMMddHHmmss.SSS'Z");
 
     public MemcachedAccessTokenRepository(MemcachedClient memcached) {
 
@@ -38,8 +39,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao,
             throw new IllegalArgumentException("Token is null");
         }
         String tokenString = accessToken.getTokenString();
-        if (StringUtils.isBlank(tokenString)
-            || accessToken.getExpirationTime() == null) {
+        if (StringUtils.isBlank(tokenString) || accessToken.getExpirationTime() == null) {
             String errMsg = "Token string and/or expiration time values are not present in the given token.";
             logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
@@ -50,13 +50,12 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao,
         // add operation will make the two entries.
 
         // Try adding the token with the token string as the key
-        Future<Boolean> resultByTokenStr = memcached.set(tokenString,
-            accessToken.getExpiration(), accessToken);
-        boolean addedByTokenStr = evaluateCacheOperation(resultByTokenStr,
-            "set token by token string", accessToken);
+        Future<Boolean> resultByTokenStr = memcached.set(tokenString, accessToken.getExpiration(),
+            accessToken);
+        boolean addedByTokenStr = evaluateCacheOperation(resultByTokenStr, "set token by token string",
+            accessToken);
         if (!addedByTokenStr) {
-            String errMsg = String.format(
-                "Failed to add token by token string with parameter %s",
+            String errMsg = String.format("Failed to add token by token string with parameter %s",
                 accessToken);
             logger.error(errMsg);
             throw new IllegalStateException(errMsg);
@@ -64,20 +63,17 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao,
         // do not overwrite client token if password reset flow
         if (!accessToken.isRestrictedToSetPassword()) {
             // Try adding the tokenString with the owner_requestor as the key
-            Future<Boolean> resultByOwner = memcached.set(
-                getKeyForFindByOwner(accessToken.getOwner(),
-                    accessToken.getRequestor()), accessToken.getExpiration(),
-                tokenString);
-            boolean addedByOwner = evaluateCacheOperation(resultByOwner,
-                "set token by owner", accessToken);
+            Map<String, String> lookupByRequestor = getOrCreateLookupMap(accessToken.getOwner());
+            lookupByRequestor.put(accessToken.getRequestor(), tokenString);
+            Future<Boolean> resultByOwner = memcached.set(accessToken.getOwner(),
+                accessToken.getExpiration(), lookupByRequestor);
+            boolean addedByOwner = evaluateCacheOperation(resultByOwner, "set token by owner", accessToken);
             if (!addedByOwner) {
                 // Attempt a rollback of the previous operation before bailing
                 // with
                 // an exception
                 memcached.delete(tokenString);
-                String errMsg = String.format(
-                    "Failed to add token by owner with parameter %s",
-                    accessToken);
+                String errMsg = String.format("Failed to add token by owner with parameter %s", accessToken);
                 logger.error(errMsg);
                 throw new IllegalStateException(errMsg);
             }
@@ -100,20 +96,20 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao,
 
         // delete primary token
         Future<Boolean> resultByTokenStr = memcached.delete(tokenString);
-        boolean deletedByTokenStr = evaluateCacheOperation(resultByTokenStr,
-            "delete token by token string", tokenString);
+        boolean deletedByTokenStr = evaluateCacheOperation(resultByTokenStr, "delete token by token string",
+            tokenString);
 
         if (!token.isRestrictedToSetPassword()) {
             // delete pointer to token
-            Future<Boolean> resultByOwner = memcached
-                .delete(getKeyForFindByOwner(token.getOwner(),
-                    token.getRequestor()));
-            boolean deletedByOwner = evaluateCacheOperation(resultByOwner,
-                "delete token by owner", tokenString);
+            Map<String, String> lookupByRequestor = getOrCreateLookupMap(token.getOwner());
+            lookupByRequestor.remove(token.getRequestor());
+            Future<Boolean> deleteResult = removeByRequestor(lookupByRequestor, token.getOwner(),
+                token.getRequestor());
+            boolean deletedByOwner = evaluateCacheOperation(deleteResult, "delete token by owner",
+                tokenString);
 
             if (!deletedByTokenStr || !deletedByOwner) {
-                String errMsg = String.format("Failed to delete token %s",
-                    tokenString);
+                String errMsg = String.format("Failed to delete token %s", tokenString);
                 logger.error(errMsg);
                 throw new IllegalStateException(errMsg);
             }
@@ -142,10 +138,10 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao,
         }
 
         // Do a consistency check to make sure there is also the same token
-        // stored by owner_requestor.
-        Object foundByOwner = memcached.get(getKeyForFindByOwner(
-            token.getOwner(), token.getRequestor()));
-        if (token.getTokenString().equals(foundByOwner)) {
+        // stored by owner/requestor IDs.
+        Map<String, String> lookupByRequestor = getOrCreateLookupMap(token.getOwner());
+        String tokenStrByRequestor = lookupByRequestor.get(token.getRequestor());
+        if (token.getTokenString().equals(tokenStrByRequestor)) {
             logger.debug("Found token with value {}", token);
             return token;
         }
@@ -153,8 +149,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao,
         // The corresponding entry stored with key of owner_requestor was not
         // found or did not match. Therefore, the data is in an inconsistent
         // state.
-        logger
-            .error("Token cache in an inconsistent state. Deleting {}", token);
+        logger.error("Token cache in an inconsistent state. Deleting {}", token);
         memcached.delete(tokenString);
 
         logger.debug("No token found with value {}", tokenString);
@@ -170,79 +165,39 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao,
             logger.error("Owner value is null or empty");
             throw new IllegalArgumentException("Owner value is null or empty");
         }
-        logger.debug("Finding token with owner {} and requestor {}", owner,
-            requestor);
-        String tokenString = (String) memcached.get(getKeyForFindByOwner(owner,
-            requestor));
-
-        if (StringUtils.isEmpty(tokenString)) {
-            logger.debug("No token found for owner {} and requestor {}", owner,
-                requestor);
+        logger.debug("Finding token with owner {} and requestor {}", owner, requestor);
+        Map<String, String> lookupByRequestor = (Map<String, String>) getOrCreateLookupMap(owner);
+        String tokenStrByRequestor = lookupByRequestor.get(requestor);
+        if (StringUtils.isBlank(tokenStrByRequestor)) {
+            logger.debug("No token found for owner {} and requestor {}", owner, requestor);
             return null;
         }
 
-        AccessToken token = (AccessToken) memcached.get(tokenString);
+        AccessToken token = (AccessToken) memcached.get(tokenStrByRequestor);
         if (token == null) {
-            logger.debug("No token found for owner {} and requestor {}", owner,
-                requestor);
+            logger.debug("No token found for owner {} and requestor {}", owner, requestor);
+            // Keep things consistent by removing stray token string that points
+            // to a non-existing token.
+            removeByRequestor(lookupByRequestor, owner, requestor);
             return null;
         }
 
-        // Do a consistency check to make sure there is also the same token
-        // stored by token string.
-        Object foundByTokenStr = memcached.get(token.getTokenString());
-        if (token.equals(foundByTokenStr)) {
-            logger.debug("Found token with value {}", token);
-            return token;
-        }
-
-        // The corresponding entry stored with key of token string was not
-        // found or did not match. Therefore, the data is in an inconsistent
-        // state.
-        logger
-            .error("Token cache in an inconsistent state. Deleting {}", token);
-
-        memcached.delete(getKeyForFindByOwner(owner, requestor));
-        logger.debug("No token found for owner {} and requestor {}", owner,
-            requestor);
-        return null;
+        return token;
     }
 
     @Override
-    public void deleteAllTokensForOwner(String owner,
-        Set<String> tokenRequestors) {
-        if (StringUtils.isBlank(owner) || tokenRequestors == null
-            || tokenRequestors.isEmpty()) {
-            logger.error("Given parameters are null or empty");
-            throw new IllegalArgumentException(
-                "Given parameters are null or empty");
+    public void deleteAllTokensForOwner(String owner) {
+        Map<String, String> lookupByRequestor = getOrCreateLookupMap(owner);
+        for (String tokenStr : lookupByRequestor.values()) {
+            //TODO Add error handling!
+            memcached.delete(tokenStr);
         }
-        logger.debug("Deleting token with owner {} and requestors {}", owner,
-            tokenRequestors);
-        int delCount = 0;
-        for (String requestor : tokenRequestors) {
-            String ownerKey = getKeyForFindByOwner(owner, requestor);
-            String tokenString = (String) memcached.get(ownerKey);
-            if (tokenString == null) {
-                continue;
-            }
+        memcached.delete(owner);
+    }
 
-            Future<Boolean> resultByTokenStr = memcached.delete(tokenString);
-            boolean deletedByTokenStr = evaluateCacheOperation(
-                resultByTokenStr, "delete all tokens by token string", owner,
-                requestor);
-
-            Future<Boolean> resultByOwner = memcached.delete(ownerKey);
-            boolean deletedByOwner = evaluateCacheOperation(resultByOwner,
-                String.format("delete all tokens by owner", owner, requestor),
-                owner, requestor);
-
-            if (deletedByTokenStr || deletedByOwner) {
-                delCount++;
-            }
-        }
-
-        logger.debug("{} tokens were deleted for user {}", delCount, owner);
+    @Override
+    public void deleteAllTokensForOwner(String owner, Set<String> tokenRequestors) {
+        throw new UnsupportedOperationException("This method is no longer supported!");
     }
 
     public boolean isAlive() {
@@ -261,32 +216,36 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao,
         }
     }
 
-    private String getKeyForFindByOwner(String owner, String requestor) {
-        String key = String.format("%s_%s", owner, requestor);
-        if (key.length() > 250) {
-            logger
-                .error("The length of the key string based on owner and requestor values is longer than 250, the maximum set by memcached.");
-            throw new IllegalArgumentException(
-                "The length of the key string based on owner and requestor values is longer than 250, the maximum set by memcached.");
+    private Map<String, String> getOrCreateLookupMap(String tokenOwnerId) {
+        @SuppressWarnings("unchecked")
+        Map<String, String> lookupByRequestor = (Map<String, String>) memcached.get(tokenOwnerId);
+        if (lookupByRequestor == null) {
+            lookupByRequestor = new HashMap<String, String>();
         }
 
-        return key;
+        return lookupByRequestor;
     }
 
-    private boolean evaluateCacheOperation(Future<Boolean> result,
-        String operation, Object... operationParam) {
+    private Future<Boolean> removeByRequestor(Map<String, String> lookupByRequestor, String owner,
+        String requestor) {
+        lookupByRequestor.remove(requestor);
+        if (lookupByRequestor.size() == 0) {
+            return memcached.delete(owner);
+        }
+        return memcached.set(owner, INFINITE_EXPIRATION, lookupByRequestor);
+    }
+
+    private boolean evaluateCacheOperation(Future<Boolean> result, String operation, Object... operationParam) {
         try {
             return result.get();
         } catch (InterruptedException iex) {
-            String threadErrMsg = String
-                .format(
-                    "Could not confirm success of the operation \"%s\" with prameters %s",
-                    operation, operationParam);
+            String threadErrMsg = String.format(
+                "Could not confirm success of the operation \"%s\" with prameters %s", operation,
+                operationParam);
             logger.error(threadErrMsg);
             return false;
         } catch (ExecutionException eex) {
-            String failedErrMsg = String.format(
-                "Failed to perform %s with parameter(s): %s", operation,
+            String failedErrMsg = String.format("Failed to perform %s with parameter(s): %s", operation,
                 operationParam);
             logger.error(failedErrMsg);
             return false;
