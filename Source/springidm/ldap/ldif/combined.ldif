@@ -352,6 +352,7 @@ o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
 RCN: RACKSPACE
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithUsernameAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithUsernameAndPassword
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithMossoIdAndApiKey
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithNastIdAndApiKey
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetBaseUrls
@@ -416,6 +417,7 @@ permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddFirstUser
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::ValidateToken
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::RevokeToken
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithUsernameAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithUsernameAndPassword
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithMossoIdAndApiKey
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithNastIdAndApiKey
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByUsername
@@ -692,6 +694,14 @@ cn: AuthWithUsernameAndApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST auth
+
+dn: cn=AuthWithUsernameAndPassword,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: AuthWithUsernameAndPassword
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+blob: POST auth/username
 
 dn: cn=AuthWithMossoIdAndApiKey,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top

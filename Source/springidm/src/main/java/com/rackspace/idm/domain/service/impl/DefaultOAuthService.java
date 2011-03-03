@@ -7,6 +7,10 @@ import static com.rackspace.idm.domain.entity.OAuthGrantType.REFRESH_TOKEN;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.rackspace.idm.api.error.ApiError;
+import com.rackspace.idm.validation.BasicCredentialsCheck;
+import com.rackspace.idm.validation.InputValidator;
+import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -33,6 +37,8 @@ import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 
+import javax.validation.groups.Default;
+
 public class DefaultOAuthService implements OAuthService {
     private UserService userService;
     private ClientService clientService;
@@ -41,16 +47,19 @@ public class DefaultOAuthService implements OAuthService {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
     private AuthorizationService authorizationService;
     private Configuration config;
+    private InputValidator inputValidator;
 
     public DefaultOAuthService(UserService userService, ClientService clientService,
         AccessTokenService accessTokenService, RefreshTokenService refreshTokenService,
-        AuthorizationService authorizationService, Configuration config) {
+        AuthorizationService authorizationService, Configuration config,
+        InputValidator inputValidator) {
         this.userService = userService;
         this.clientService = clientService;
         this.accessTokenService = accessTokenService;
         this.refreshTokenService = refreshTokenService;
         this.authorizationService = authorizationService;
         this.config = config;
+        this.inputValidator = inputValidator;
     }
 
     @Override
@@ -269,6 +278,26 @@ public class DefaultOAuthService implements OAuthService {
         logger.debug("Deleted all access tokens for customer {}.", customerId);
     }
 
+    public OAuthGrantType getGrantType(String grantTypeStrVal) {
+        OAuthGrantType grantType = OAuthGrantType.valueOf(grantTypeStrVal.replace("-", "_").toUpperCase());
+        logger.debug("Verified GrantType: {}", grantTypeStrVal);
+        return grantType;
+    }
+
+    public ApiError validateGrantType(AuthCredentials trParam, OAuthGrantType grantType) {
+
+        if (OAuthGrantType.PASSWORD == grantType) {
+            return inputValidator.validate(trParam, Default.class, BasicCredentialsCheck.class);
+        }
+
+        if (OAuthGrantType.REFRESH_TOKEN == grantType) {
+            return inputValidator.validate(trParam, Default.class, RefreshTokenCredentialsCheck.class);
+        }
+
+        return inputValidator.validate(trParam);
+    }
+
+    // private functions
     private List<Client> getAllClientsForCustomerId(String customerId) {
         List<Client> clientsList = new ArrayList<Client>();
         int total = 1; // This gets overwritten, just needs to be greater than

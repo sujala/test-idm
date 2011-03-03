@@ -116,8 +116,8 @@ public class TokenResource {
             }
         }
 
-        OAuthGrantType grantType = getGrantType(trParam.getGrantType());
-        ApiError err = validate(trParam, grantType);
+        OAuthGrantType grantType = this.oauthService.getGrantType(trParam.getGrantType());
+        ApiError err = this.oauthService.validateGrantType(trParam, grantType);
         if (err != null) {
             String msg = String.format("Bad request parameters: %s", err.getMessage());
             logger.warn(msg);
@@ -222,7 +222,7 @@ public class TokenResource {
      *
      * @param authHeader  HTTP Authorization header for authenticating the calling client.
      * @param tokenString Token to be revoked.
-     * @param global If false (default is true), will revoke tokens in the local DC only. Only
+     * @param isGlobal If false (default is true), will revoke tokens in the local DC only. Only
      *        Customer IDM can make the local removal call.
      * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}authCredentials
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
@@ -278,11 +278,10 @@ public class TokenResource {
      * @param request
      * @param uriInfo
      * @param authHeader
-     * @param ownerId
+     * @param id
      * @return
      */
     @DELETE
-    @Path("")
     public Response revokeAccessTokensForOwnerOrCustomer(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @QueryParam("querytype") GlobalConstants.TokenDeleteByType queryType, @QueryParam("id") String id) {
@@ -321,24 +320,5 @@ public class TokenResource {
     // private funcs
     protected DateTime getCurrentTime() {
         return new DateTime();
-    }
-
-    private OAuthGrantType getGrantType(String grantTypeStrVal) {
-        OAuthGrantType grantType = OAuthGrantType.valueOf(grantTypeStrVal.replace("-", "_").toUpperCase());
-        logger.debug("Verified GrantType: {}", grantTypeStrVal);
-        return grantType;
-    }
-
-    private ApiError validate(AuthCredentials trParam, OAuthGrantType grantType) {
-
-        if (OAuthGrantType.PASSWORD == grantType) {
-            return inputValidator.validate(trParam, Default.class, BasicCredentialsCheck.class);
-        }
-
-        if (OAuthGrantType.REFRESH_TOKEN == grantType) {
-            return inputValidator.validate(trParam, Default.class, RefreshTokenCredentialsCheck.class);
-        }
-
-        return inputValidator.validate(trParam);
     }
 }

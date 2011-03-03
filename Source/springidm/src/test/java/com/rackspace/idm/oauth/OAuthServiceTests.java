@@ -1,5 +1,6 @@
 package com.rackspace.idm.oauth;
 
+import com.rackspace.idm.validation.InputValidator;
 import junit.framework.Assert;
 
 import org.apache.commons.configuration.Configuration;
@@ -46,6 +47,7 @@ public class OAuthServiceTests {
     AuthorizationService mockAuthorizationService;
     OAuthService oauthService;
     AuthHeaderHelper authHeaderHelper;
+    InputValidator inputValidator;
 
     String customerId = "123-456-789";
     String clientId = "DELETE_My_ClientId";
@@ -68,10 +70,12 @@ public class OAuthServiceTests {
         mockRefreshTokenService = EasyMock.createMock(RefreshTokenService.class);
         mockAuthorizationService = EasyMock.createNiceMock(AuthorizationService.class);
         authHeaderHelper = new AuthHeaderHelper();
+        inputValidator = EasyMock.createMock(InputValidator.class);
+
         Configuration appConfig = new PropertiesConfiguration();
         appConfig.addProperty("idm.clientId", clientId);
         oauthService = new DefaultOAuthService(mockUserService, mockClientService, mockAccessTokenService,
-            mockRefreshTokenService, mockAuthorizationService, appConfig);
+            mockRefreshTokenService, mockAuthorizationService, appConfig, inputValidator);
     }
 
     @Test

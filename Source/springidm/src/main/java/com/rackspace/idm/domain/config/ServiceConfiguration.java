@@ -76,6 +76,8 @@ public class ServiceConfiguration {
     private EndpointDao endpointDao;
     @Autowired
     private XdcAccessTokenDao xdcTokenDao;
+    @Autowired
+    private InputValidator inputValidator;
 
     @Value("#{memcacheStatusRepository}")
     private PingableService memcacheService;
@@ -93,7 +95,6 @@ public class ServiceConfiguration {
      * Use for unit tests.
      * 
      * @param config
-     * @param logger
      */
     public ServiceConfiguration(Configuration config) {
         this.config = config;
@@ -199,7 +200,7 @@ public class ServiceConfiguration {
     @Bean
     public OAuthService oauthService() {
         return new DefaultOAuthService(userService(), clientService(), tokenService(), refreshTokenService(),
-            authorizationService(), config);
+            authorizationService(), config, inputValidator);
     }
 
     @Bean

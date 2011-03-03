@@ -13,6 +13,9 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.rackspace.idm.api.error.ApiError;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.OAuthService;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +24,6 @@ import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.api.converter.AuthConverter;
-import com.rackspace.idm.domain.entity.AccessToken;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.EndpointService;
@@ -44,6 +45,8 @@ public class AuthResource {
     private AccessTokenService accessTokenService;
     private AuthorizationService authorizationService;
     private EndpointService endpointService;
+    private OAuthService oauthService;
+
     private AuthConverter authConverter;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -51,10 +54,12 @@ public class AuthResource {
     public AuthResource(AuthConverter authConverter,
         EndpointService endpointService,
         AuthorizationService authorizationService,
-        AccessTokenService accessTokenService) {
+        AccessTokenService accessTokenService,
+        OAuthService oauthService) {
         this.authConverter = authConverter;
         this.authorizationService = authorizationService;
         this.accessTokenService = accessTokenService;
+        this.oauthService = oauthService;
         this.endpointService = endpointService;
     }
 
@@ -230,5 +235,73 @@ public class AuthResource {
 
         return Response.ok(
             this.authConverter.toCloudAuthJaxb(userToken, endpoints)).build();
+    }
+
+    /**
+     * Gets an Access Token for Auth with MossoId and Api Key
+     *
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}mossoCredentials
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}cloudAuth
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userDisabled
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     *
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param creds Mosso Credentials
+     */
+    @POST
+    @Path("username")
+    public Response authByUsernameAndPassword(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        com.rackspace.idm.jaxb.AuthCredentials creds) {
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo.getPath());
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
+        AuthCredentials trParam = new AuthCredentials();
+        trParam.setClientId(creds.getClientId());
+        trParam.setClientSecret(creds.getClientSecret());
+        trParam.setGrantType(creds.getGrantType().value());
+        trParam.setPassword(creds.getPassword());
+        trParam.setRefreshToken(creds.getRefreshToken());
+        trParam.setUsername(creds.getUsername());
+
+        OAuthGrantType grantType = this.oauthService.getGrantType(trParam.getGrantType());
+        ApiError err = this.oauthService.validateGrantType(trParam, grantType);
+        if (err != null) {
+            String msg = String.format("Bad request parameters: %s", err.getMessage());
+            logger.warn(msg);
+            throw new BadRequestException(msg);
+        }
+
+        DateTime currentTime = this.getCurrentTime();
+        AuthData authData = oauthService.getTokens(grantType, trParam, currentTime);
+
+        AccessToken userToken = authData.getAccessToken();
+
+        List<CloudEndpoint> endpoints = this.endpointService
+            .getEndpointsForUser(userToken.getTokenUser().getUsername());
+
+        return Response.ok(
+            this.authConverter.toCloudAuthJaxb(userToken, endpoints)).build();
+    }
+
+    protected DateTime getCurrentTime() {
+        return new DateTime();
     }
 }

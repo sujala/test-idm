@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.AuthData;
@@ -67,4 +68,20 @@ public interface OAuthService {
      * @param customerId
      */
     void revokeTokensGloballyForCustomer(String customerId);
+
+    /**
+     * Convert string to OAuth Grant Type.
+     *
+     * @param grantTypeString
+     */
+    OAuthGrantType getGrantType(String grantTypeString);
+
+
+    /**
+     * Validate a grant type
+     *
+     * @param trParam
+     * @param grantType
+     */
+    ApiError validateGrantType(AuthCredentials trParam, OAuthGrantType grantType);
 }
