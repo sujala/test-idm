@@ -8,6 +8,7 @@ import java.util.concurrent.Future;
 import net.spy.memcached.MemcachedClient;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
@@ -63,7 +64,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
             UserTokenStrings userTokenStrings = getOrCreateLookupMap(accessToken.getOwner());
             userTokenStrings.put(accessToken.getRequestor(), accessToken.getExpiration(), tokenString);
             Future<Boolean> resultByOwner = memcached.set(userTokenStrings.getOwnerId(),
-                userTokenStrings.getExpiration(), userTokenStrings);
+                userTokenStrings.getExpiration(new DateTime()), userTokenStrings);
             boolean addedByOwner = evaluateCacheOperation(resultByOwner, "set token by owner", accessToken);
             if (!addedByOwner) {
                 // Attempt a rollback of the previous operation before bailing
@@ -183,6 +184,9 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
 
     @Override
     public void deleteAllTokensForOwner(String owner) {
+        if (StringUtils.isBlank(owner)) {
+            throw new IllegalArgumentException("Null or empty owner value given.");
+        }
         UserTokenStrings userTokenStrings = getOrCreateLookupMap(owner);
         boolean isAllSuccessful = true;
         for (String tokenStr : userTokenStrings.getTokenStrings()) {
@@ -203,6 +207,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
     }
 
     @Override
+    @Deprecated
     public void deleteAllTokensForOwner(String owner, Set<String> tokenRequestors) {
         throw new UnsupportedOperationException("This method is no longer supported!");
     }
@@ -224,7 +229,6 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
     }
 
     private UserTokenStrings getOrCreateLookupMap(String tokenOwnerId) {
-        @SuppressWarnings("unchecked")
         UserTokenStrings userTokenStrings = (UserTokenStrings) memcached.get(tokenOwnerId);
         if (userTokenStrings == null) {
             userTokenStrings = new UserTokenStrings(tokenOwnerId);
@@ -240,7 +244,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         if (tokenStrings.size() == 0) {
             return memcached.delete(owner);
         }
-        return memcached.set(owner, userTokenStrings.getExpiration(), userTokenStrings);
+        return memcached.set(owner, userTokenStrings.getExpiration(new DateTime()), userTokenStrings);
     }
 
     private boolean evaluateCacheOperation(Future<Boolean> result, String operation, Object... operationParam) {

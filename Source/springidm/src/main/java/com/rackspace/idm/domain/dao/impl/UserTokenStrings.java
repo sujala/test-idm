@@ -46,15 +46,15 @@ public class UserTokenStrings implements Serializable, Auditable {
         return ownerId;
     }
 
-    public int getExpiration() {
+    int getExpiration(DateTime currentDateTime) {
         if (expirationTime == null) {
             return 0;
         }
-        int seconds = Seconds.secondsBetween(new DateTime(), expirationTime).getSeconds();
+        int seconds = Seconds.secondsBetween(currentDateTime, expirationTime).getSeconds();
         return (seconds < 0) ? 0 : seconds;
     }
 
-    public List<String> getTokenStrings() {
+    List<String> getTokenStrings() {
         Collection<String> tokenStrs = lookupByRequestor.values();
         return Collections.unmodifiableList(new ArrayList<String>(tokenStrs));
     }
@@ -100,7 +100,7 @@ public class UserTokenStrings implements Serializable, Auditable {
         private DateTime expiration;
 
         SerializationProxy(UserTokenStrings tokenStrings) {
-
+            this.ownerId = tokenStrings.ownerId;
             this.lookupByRequestor = tokenStrings.lookupByRequestor;
             this.expiration = tokenStrings.expirationTime;
         }

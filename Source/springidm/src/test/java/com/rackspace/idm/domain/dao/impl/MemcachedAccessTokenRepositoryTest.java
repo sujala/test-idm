@@ -13,11 +13,10 @@ import org.junit.Test;
 
 import com.rackspace.idm.domain.config.MemcachedConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
-import com.rackspace.idm.domain.dao.impl.MemcachedAccessTokenRepository;
 import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.test.stub.StubLogger;
 
 public class MemcachedAccessTokenRepositoryTest {
@@ -37,6 +36,7 @@ public class MemcachedAccessTokenRepositoryTest {
         tokenRequestors.add("rackspace_control_panael");
         MemcachedAccessTokenRepository tempRepo = new MemcachedAccessTokenRepository(mclient);
         tempRepo.delete(TOKEN_STRING);
+        tempRepo.delete("johneo");
     }
 
     @Before
@@ -86,7 +86,7 @@ public class MemcachedAccessTokenRepositoryTest {
             Assert.assertTrue(true);
         }
         try {
-            repo.deleteAllTokensForOwner(null, null);
+            repo.deleteAllTokensForOwner(null);
             Assert
                 .fail("did not throw an exception when bad param(s) was passed in!");
         } catch (IllegalArgumentException e) {
@@ -115,7 +115,7 @@ public class MemcachedAccessTokenRepositoryTest {
             Assert.assertTrue(true);
         }
         try {
-            repo.deleteAllTokensForOwner("  ", new HashSet<String>());
+            repo.deleteAllTokensForOwner("  ");
             Assert
                 .fail("did not throw an exception when bad param(s) was passed in!");
         } catch (IllegalArgumentException e) {
@@ -154,7 +154,7 @@ public class MemcachedAccessTokenRepositoryTest {
         Set<String> requestors = new HashSet<String>();
         requestors.add(requestor);
         requestors.add(anotherRequestor);
-        repo.deleteAllTokensForOwner(owner, requestors);
+        repo.deleteAllTokensForOwner(owner);
 
         Assert.assertNull(repo.findByTokenString(TOKEN_STRING));
         Assert.assertNull(repo.findByTokenString(anotherTokenString));
