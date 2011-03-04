@@ -172,6 +172,7 @@ public class ApiKeyResource {
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
      * @param username
+     * @param userApiKey
      */
     @PUT
     public Response setApiKey(@Context Request request,
@@ -186,13 +187,10 @@ public class ApiKeyResource {
 
         AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
-        // Racker's, Specific Clients, Admins and Users are authorized
+        // Rackers and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeClient(token,
-                request.getMethod(), uriInfo.getPath())
-            || authorizationService.authorizeAdmin(token, customerId)
-            || authorizationService.authorizeUser(token, customerId,
-                username);
+                request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",

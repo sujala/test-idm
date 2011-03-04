@@ -364,6 +364,7 @@ permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlR
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddUserBaseUrlRef
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteUserBaseUrlRef
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlRef
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::SetCustomerUserApiKey
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::UpdateUserMossoId
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::UpdateUserNastId
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::UpdateUserRPN
@@ -401,6 +402,7 @@ permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::UpdateCustomerU
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteCustomerUser
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetCustomerUserApiKey
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::ResetCustomerUserApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::SetCustomerUserApiKey
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::SetCustomerUserLock
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetCustomerUserPassword
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::ResetCustomerUserPassword
@@ -1055,6 +1057,14 @@ cn: ResetCustomerUserApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST customers/[^/]+/users/[^/]+/key
+
+dn: cn=SetCustomerUserApiKey,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: SetCustomerUserApiKey
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+blob: PUT customers/[^/]+/users/[^/]+/key
 
 dn: cn=ResetMyCustomerMyUserApiKey,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
