@@ -1,11 +1,6 @@
 package com.rackspace.idm.api.resource.customer.user;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -159,6 +154,60 @@ public class ApiKeyResource {
 
         UserApiKey userApiKey = new UserApiKey();
         userApiKey.setApiKey(apiKey);
+
+        return Response.ok(userApiKey).build();
+    }
+
+    /**
+     * Set a user's API key.
+     *
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userApiKey
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     *
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param username
+     */
+    @PUT
+    public Response setApiKey(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("username") String username,
+        com.rackspace.idm.jaxb.UserApiKey userApiKey) {
+
+        logger.debug("Reseting Cloud Auth service API key for User: {}",
+            username);
+
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+
+        // Racker's, Specific Clients, Admins and Users are authorized
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeClient(token,
+                request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(token, customerId)
+            || authorizationService.authorizeUser(token, customerId,
+                username);
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
+        // get user to update
+        User user = checkAndGetUser(customerId, username);
+
+        // generate random api key
+        String apiKey = userApiKey.getApiKey();
+        user.setApiKey(apiKey);
+        this.userService.updateUser(user);
 
         return Response.ok(userApiKey).build();
     }
