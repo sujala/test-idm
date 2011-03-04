@@ -14,30 +14,31 @@ import org.slf4j.LoggerFactory;
 public class CryptHelper {
 	private static final String ALOGRITHM = "PBEWithMD5AndTripleDES";
 
-	static Logger logger = LoggerFactory.getLogger(CryptHelper.class);
+	Logger logger = LoggerFactory.getLogger(CryptHelper.class);
 
 	// Salt
-	static byte[] salt = { (byte) 0xc7, (byte) 0x73, (byte) 0x21, (byte) 0x8c,
+	private static byte[] salt = { (byte) 0xc7, (byte) 0x73, (byte) 0x21, (byte) 0x8c,
 			(byte) 0x7e, (byte) 0xc8, (byte) 0xee, (byte) 0x99 };
 
 	// Iteration count
-	static int count = 20;
+	private static int count = 20;
 
 	// Create PBE parameter set
-	static PBEParameterSpec pbeParamSpec = new PBEParameterSpec(salt, count);
+	private static PBEParameterSpec pbeParamSpec = new PBEParameterSpec(salt, count);
 
-	static SecretKey pbeKey;
 
-	static PBEKeySpec pbeKeySpec = new PBEKeySpec(
+	private static PBEKeySpec pbeKeySpec = new PBEKeySpec(
 			"this is a super secret key!".toCharArray());
+	
 	static SecretKeyFactory keyFac;
+	private static SecretKey pbeKey;
 	static {
 		try {
 			keyFac = SecretKeyFactory.getInstance(ALOGRITHM);
 			pbeKey = keyFac.generateSecret(pbeKeySpec);
 
 		} catch (Exception e) {
-			logger.error("Error initializing", e);
+			LoggerFactory.getLogger(CryptHelper.class).error("Error initializing", e);
 		}
 	}
 
