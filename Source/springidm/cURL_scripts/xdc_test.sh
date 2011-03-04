@@ -6,7 +6,7 @@ curl http://127.0.0.1:8080/v1.0/token \
     --data '{"grant_type":"PASSWORD", "client_id":"ABCDEF", "client_secret":"password", "username":"mkovacs", "password":"password"}' \
     --dump-header /tmp/curl_out_header.txt
 
-#JEO-3e5d64de2c7e475894c90ff1c9da0fea
+#JEO-0266ae503fa04d5088b16c4c0fd0aa3b
 
 
 # User token from the DEV "data center"
@@ -17,7 +17,7 @@ curl http://10.127.7.166:8080/v1.0/token \
     --data '{"grant_type":"PASSWORD", "client_id":"ABCDEF", "client_secret":"password", "username":"mkovacs", "password":"password"}' \
     --dump-header /tmp/curl_out_header.txt
 
-#DEV-bf42bb246de14f369d295402fde35a96
+#DEV-9ccc655a7abb4502952310fc312592df
 
 
 # User token from the QA "data center"
@@ -39,7 +39,7 @@ curl http://127.0.0.1:8080/v1.0/token \
     --data '{"grant_type":"NONE", "client_id":"18e7a7032733486cd32f472d7bd58f709ac0d221", "client_secret":"password"}' \
     --dump-header /tmp/curl_out_header.txt
 
-# JEO-9496f75ed29841f985ec60b42ee4d076
+#JEO-e75dbca83e874f92b1e791ce5ac8f6e6
 
 
 # Client token for Customer IDM from the QA "data center"
@@ -50,7 +50,7 @@ curl http://10.127.7.164:8080/v1.0/token \
     --data '{"grant_type":"NONE", "client_id":"18e7a7032733486cd32f472d7bd58f709ac0d221", "client_secret":"password"}' \
     --dump-header /tmp/curl_out_header.txt
 
-#QA-a831d25e2b9f4a9c88901ae31044513c
+#QA-ad04b53896ff4259a98feeb4bc417c47
 
 
 # Get the QA-issued token through the local "data center"
@@ -77,6 +77,14 @@ curl "http://127.0.0.1:8080/v1.0/token/QA-dd9ef126375d417c86b6b86085fc2afc" \
 	--header "Content-Type:application/json" \
 	--header "Accept:application/json" \
 	--header "Authorization:OAuth JEO-417dc078d0d84c57a493ccc20a218ecb" \
+    --dump-header /tmp/curl_out_header.txt
+
+# Delete user token from another DC using Customer IDM's local token for credentials.
+curl "http://127.0.0.1:8080/v1.0/token/DEV-9ccc655a7abb4502952310fc312592df" \
+    --request DELETE \
+	--header "Content-Type:application/json" \
+	--header "Accept:application/json" \
+	--header "Authorization:OAuth JEO-e75dbca83e874f92b1e791ce5ac8f6e6" \
     --dump-header /tmp/curl_out_header.txt
 
 

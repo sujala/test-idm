@@ -1,9 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.configuration.Configuration;
@@ -18,12 +15,12 @@ import com.rackspace.idm.domain.dao.AccessTokenDao;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.XdcAccessTokenDao;
 import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
@@ -349,39 +346,25 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
     @Override
     public void deleteAllForOwner(String owner) {
-        Set<String> allClientIds = getAllTokenRequestors();
-        tokenDao.deleteAllTokensForOwner(owner, Collections.unmodifiableSet(allClientIds));
-    }
-
-    private Set<String> getAllTokenRequestors() {
-        Set<String> allClientIds = new HashSet<String>();
-        for (Client client : clientDao.findAll()) {
-            allClientIds.add(client.getClientId());
-        }
-        return allClientIds;
+        tokenDao.deleteAllTokensForOwner(owner);
     }
 
     @Override
     public void deleteAllGloballyForOwner(String owner) {
         // Start with the local tokens.
-        tokenDao.deleteAllTokensForOwner(owner, getAllTokenRequestors());
-
+        tokenDao.deleteAllTokensForOwner(owner);
         xdcTokenDao.deleteAllTokensForOwner(owner);
     }
 
     @Override
     public void deleteAllGloballyForCustomer(String customerId, List<User> users, List<Client> clients) {
         // Start with the local token
-        Set<String> allTokenRequestors = getAllTokenRequestors();
         for (User user : users) {
-            tokenDao.deleteAllTokensForOwner(user.getUsername(), allTokenRequestors);
+            tokenDao.deleteAllTokensForOwner(user.getUsername());
         }
 
-        Set<String> clientRequestors = new HashSet<String>();
         for (Client client : clients) {
-            clientRequestors.clear();
-            clientRequestors.add(client.getClientId());
-            tokenDao.deleteAllTokensForOwner(client.getClientId(), clientRequestors);
+            tokenDao.deleteAllTokensForOwner(client.getClientId());
         }
 
         xdcTokenDao.deleteAllTokensForCustomer(customerId);
