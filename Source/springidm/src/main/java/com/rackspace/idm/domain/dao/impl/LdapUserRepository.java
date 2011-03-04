@@ -1005,6 +1005,16 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                     ATTR_RACKSPACE_REGION, uNew.getRegion()));
             }
         }
+        
+        if (uNew.getPersonId() != null) {
+            if (StringUtils.isBlank(uNew.getPersonId())) {
+                mods.add(new Modification(ModificationType.DELETE,
+                    ATTR_RACKSPACE_PERSON_NUMBER));
+            } else if (!uNew.getPersonId().equals(uOld.getPersonId())) {
+                mods.add(new Modification(ModificationType.REPLACE,
+                    ATTR_RACKSPACE_PERSON_NUMBER, uNew.getPersonId()));
+            }
+        }        
 
         if (uNew.getLocale() != null
             && !uNew.getPreferredLang().equals(uOld.getPreferredLang())) {

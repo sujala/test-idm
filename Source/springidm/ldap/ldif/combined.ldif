@@ -366,6 +366,7 @@ permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteUserBaseU
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlRef
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::UpdateUserMossoId
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::UpdateUserNastId
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::UpdateUserRPN
 status: ACTIVE
 softDeleted: FALSE
 userPassword: password
@@ -622,6 +623,14 @@ cn: UpdateUserNastId
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT users/[^/]+/nastId
+
+dn: cn=UpdateUserRPN,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: UpdateUserRPN
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+blob: PUT customers/[^/]/users/[^/]+/rpn
 
 dn: cn=GetUserBaseUrlRefs,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
