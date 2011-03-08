@@ -238,6 +238,15 @@ public class DefaultAccessTokenService implements AccessTokenService {
         return accessToken;
     }
 
+    public AccessToken getTokenByUsernameAndPassword(BaseClient client, String username, String password,
+        int expirationSeconds, DateTime currentTime) {
+
+        UserAuthenticationResult authResult = userService.authenticate(username, password);
+
+        AccessToken accessToken = getTokenByApiCredentials(client, authResult, expirationSeconds, currentTime);
+        return accessToken;
+    }
+
     public AccessToken getAccessTokenForClient(String clientId, DateTime expiresAfter) {
         logger.debug("Getting Token For Client: {}", clientId);
         Client client = clientDao.findByClientId(clientId);

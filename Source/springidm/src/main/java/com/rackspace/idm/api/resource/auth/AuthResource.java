@@ -45,7 +45,6 @@ public class AuthResource {
     private AccessTokenService accessTokenService;
     private AuthorizationService authorizationService;
     private EndpointService endpointService;
-    private OAuthService oauthService;
 
     private AuthConverter authConverter;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -54,12 +53,10 @@ public class AuthResource {
     public AuthResource(AuthConverter authConverter,
         EndpointService endpointService,
         AuthorizationService authorizationService,
-        AccessTokenService accessTokenService,
-        OAuthService oauthService) {
+        AccessTokenService accessTokenService) {
         this.authConverter = authConverter;
         this.authorizationService = authorizationService;
         this.accessTokenService = accessTokenService;
-        this.oauthService = oauthService;
         this.endpointService = endpointService;
     }
 
@@ -273,26 +270,13 @@ public class AuthResource {
             throw new ForbiddenException(errMsg);
         }
 
-        AuthCredentials trParam = new AuthCredentials();
-        trParam.setClientId(creds.getClientId());
-        trParam.setClientSecret(creds.getClientSecret());
-        trParam.setGrantType(creds.getGrantType().value());
-        trParam.setPassword(creds.getPassword());
-        trParam.setRefreshToken(creds.getRefreshToken());
-        trParam.setUsername(creds.getUsername());
-
-        OAuthGrantType grantType = this.oauthService.getGrantType(trParam.getGrantType());
-        ApiError err = this.oauthService.validateGrantType(trParam, grantType);
-        if (err != null) {
-            String msg = String.format("Bad request parameters: %s", err.getMessage());
-            logger.warn(msg);
-            throw new BadRequestException(msg);
-        }
+        int expirationSeconds = accessTokenService
+            .getCloudAuthDefaultTokenExpirationSeconds();
 
         DateTime currentTime = this.getCurrentTime();
-        AuthData authData = oauthService.getTokens(grantType, trParam, currentTime);
-
-        AccessToken userToken = authData.getAccessToken();
+        AccessToken userToken = accessTokenService
+            .getTokenByUsernameAndPassword(token.getTokenClient(), creds.getUsername(),
+                creds.getPassword(), expirationSeconds, currentTime);
 
         List<CloudEndpoint> endpoints = this.endpointService
             .getEndpointsForUser(userToken.getTokenUser().getUsername());

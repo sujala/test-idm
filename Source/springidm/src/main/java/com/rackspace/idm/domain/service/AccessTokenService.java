@@ -14,6 +14,9 @@ public interface AccessTokenService {
 
     boolean authenticateAccessToken(String accessTokenStr);
 
+    AccessToken getTokenByUsernameAndPassword(BaseClient client, String username, String password,
+        int expirationSeconds, DateTime currentTime);
+
     AccessToken getTokenByUsernameAndApiCredentials(BaseClient client, String username, String apiKey,
         int expirationSeconds, DateTime currentTime);
 
