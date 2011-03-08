@@ -4,7 +4,9 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
@@ -123,6 +125,8 @@ public class DefinedPermissionResource {
 
         return Response.ok(permission).build();
     }
+    
+    
 
     /**
      * Deletes a Client defined permission.
@@ -243,4 +247,46 @@ public class DefinedPermissionResource {
         return Response.ok(permissionConverter.toPermissionJaxb(permission))
             .build();
     }
+    
+    @POST
+    @Path("grant")
+    public Response grantPermissionToClient(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId,
+        @PathParam("permissionId") String permissionId,
+        com.rackspace.idm.jaxb.Client targetClient) {
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Only the client who "owns" the permission is allowed to grant it to other clients.
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || (token.isClientToken() && token.getTokenClient().getClientId()
+                .equals(clientId));
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+        
+        Permission permissionToGrant = this.clientService
+            .getDefinedPermissionByClientIdAndPermissionId(clientId,
+                permissionId);
+
+        if (!customerId.equals(permissionToGrant.getCustomerId())) {
+            String errorMsg = String.format("Permission Not Found: %s",
+                permissionId);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+        
+        this.clientService.grantPermission(targetClient.getClientId(), permissionToGrant);
+        
+     
+        return Response.ok().build();
+    }    
 }

@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.entity;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,7 +59,7 @@ public class BaseClient implements Serializable {
     protected void setPermissions(List<Permission> permissions) {
         this.permissions = permissions;
     }
-
+    
     @Override
     public int hashCode() {
         final int prime = 31;

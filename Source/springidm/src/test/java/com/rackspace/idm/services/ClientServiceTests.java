@@ -368,6 +368,38 @@ public class ClientServiceTests {
         
         EasyMock.verify(mockClientDao);
     }
+    
+    @Test
+    public void shouldGrantPermission() {
+        Permission resource = getFakePermission();
+        Client client = getFakeClient();
+        String clientId = client.getClientId();
+    
+        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(client);
+
+        mockClientDao.save(client);
+        EasyMock.replay(mockClientDao);
+        
+        clientService.grantPermission(clientId, resource);
+        
+        EasyMock.verify(mockClientDao);
+    }
+    
+    @Test(expected = NotFoundException.class)
+    public void shouldNotGrantPermissionBecauseTargetClientDoesNotExist() {
+        Permission resource = getFakePermission();
+        Client client = getFakeClient();
+        String clientId = client.getClientId();
+    
+        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(null);
+        
+        mockClientDao.save(client);
+        EasyMock.replay(mockClientDao);
+        
+        clientService.grantPermission(clientId, resource);
+        
+        EasyMock.verify(mockClientDao);        
+    }
 
     @Test
     public void shouldResetClientSecret() {

@@ -102,8 +102,8 @@ public class DefaultClientService implements ClientService {
         }
 
         Permission exists = clientDao
-            .getDefinedPermissionByClientIdAndPermissionId(
-                permission.getClientId(), permission.getPermissionId());
+            .getDefinedPermissionByClientIdAndPermissionId(permission
+                .getClientId(), permission.getPermissionId());
 
         if (exists != null) {
             logger
@@ -180,6 +180,28 @@ public class DefaultClientService implements ClientService {
         client.setSoftDeleted(true);
         this.clientDao.save(client);
         logger.info("Soft Deleted cilent: {}", clientId);
+    }
+
+    public void grantPermission(String clientId, Permission p) {
+        Client targetClient = this.clientDao.findByClientId(clientId);
+
+        if (targetClient == null) {
+            String errorMsg = String.format("Client Not Found: %s", clientId);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+
+        List<Permission> newList = new ArrayList<Permission>();
+        newList.add(p);
+        
+        List<Permission> originalList = targetClient.getPermissions();
+        if (originalList != null) {
+            newList.addAll(originalList);
+        }
+        
+        targetClient.setPermissions(newList);
+ 
+        clientDao.save(targetClient);
     }
 
     public void updateDefinedPermission(Permission permission) {

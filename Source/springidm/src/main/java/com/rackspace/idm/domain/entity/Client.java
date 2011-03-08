@@ -156,7 +156,7 @@ public class Client extends BaseClient implements Auditable {
         // BaseClient
         this.permissions = permissions;
     }
-
+    
     public void setDefaults() {
         this.setLocked(false);
         this.setSoftDeleted(false);

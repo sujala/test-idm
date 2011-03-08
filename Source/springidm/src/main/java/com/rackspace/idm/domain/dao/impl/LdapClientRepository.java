@@ -1225,10 +1225,35 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_SOFT_DELETED, String.valueOf(cNew.isSoftDeleted())));
         }
-
+        
+        
+        if (cNew.getPermissions() != null
+            && cNew.getPermissions() != cOld.getPermissions()) {
+            
+            // First remove the old permissions
+            if (cOld.getPermissions() != null) {
+                for(Permission p: cOld.getPermissions()) {
+                    mods.add(new Modification(ModificationType.DELETE,
+                        ATTR_PERMISSION, p.getPermissionLDAPserialization()));
+                }    
+            }
+            
+            // Add the new permissions
+            if (cNew.getPermissions() != null) {
+                for(Permission p: cNew.getPermissions()) {
+                    mods.add(new Modification(ModificationType.ADD,
+                        ATTR_PERMISSION, p.getPermissionLDAPserialization()));
+                }
+            }
+            
+            // Doing the above seems better than trying to programmatically
+            // find out whether a permission was added or removed (by comparing
+            // the new and the old permission sets).
+            // LDAP modifications can be faster than programmatic check, I think.
+        }
         return mods;
     }
-
+    
     List<Modification> getPermissionModifications(Permission rOld,
         Permission rNew) {
         List<Modification> mods = new ArrayList<Modification>();

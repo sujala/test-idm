@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.apache.commons.configuration.Configuration;
 import org.junit.After;
@@ -192,7 +193,43 @@ public class LdapClientRepositoryTest {
 
         repo.delete(newClient.getClientId());
     }
+    
+    @Test
+    public void shouldUpdateGrantedPermissionsOfClient() {
+        Client newClient = addNewTestClient();
+        String clientId = newClient.getClientId();
+        
+        newClient.setClientSecretObj(ClientSecret.newInstance("My_New_Secret"));
+        
+        Permission p = new Permission();
+        p.setClientId(newClient.getClientId());
+        p.setCustomerId(newClient.getCustomerId());
+        p.setPermissionId("Dummy Permission");
+        p.setType("String");
+        
+        List<Permission> permissions = new ArrayList<Permission>();
+        permissions.add(p);
+        
+        newClient.setPermissions(permissions);
+        
+        try {
+            repo.save(newClient);
+        } catch (IllegalStateException e) {
+            repo.delete(newClient.getClientId());
+            Assert.fail("Could not save the record: " + e.getMessage());
+        }
 
+        Client changedClient = repo.findByClientId(clientId);
+        
+        List<Permission> newPermissionList = changedClient.getPermissions();
+        Permission newP = newPermissionList.get(0);
+        
+        Assert.assertEquals(permissions.get(0).getPermissionLDAPserialization(), 
+            newP.getPermissionLDAPserialization());
+        
+        repo.delete(newClient.getClientId());
+    }
+    
     @Test
     public void shouldAuthenticateForCorrectCredentials() {
         ClientAuthenticationResult authenticated = repo.authenticate("ABCDEF", "password");
@@ -575,6 +612,8 @@ public class LdapClientRepositoryTest {
     }
 
     private Client createTestClientInstance() {
+        Random ran = new Random();
+        //int random = ran.nextInt();
         Client newClient = new Client("DELETE_My_ClientId", ClientSecret
             .newInstance("DELETE_My_Client_Secret"), "DELETE_My_Name", "inum",
             "iname", "RCN-123-456-789", ClientStatus.ACTIVE);

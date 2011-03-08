@@ -46,6 +46,8 @@ public interface ClientService {
 
     List<Permission> getDefinedPermissionsByClientId(String clientId);
     
+    void grantPermission(String clientId, Permission p);
+    
     void removeUserFromClientGroup(String username, ClientGroup clientGroup);
 
     ClientSecret resetClientSecret(Client client);
