@@ -6,6 +6,7 @@ import java.util.concurrent.Future;
 
 import net.spy.memcached.MemcachedClient;
 
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -18,14 +19,16 @@ import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.util.PingableService;
 
 public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableService {
-    private MemcachedClient memcached;
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
-
     public static final DateTimeFormatter DATE_PARSER = DateTimeFormat.forPattern("yyyyMMddHHmmss.SSS'Z");
+    private static final String USER_TOKEN_KEY_POSTFIX = "@ENDUSER";
 
-    public MemcachedAccessTokenRepository(MemcachedClient memcached) {
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private MemcachedClient memcached;
+    private Configuration config;
 
+    public MemcachedAccessTokenRepository(MemcachedClient memcached, Configuration config) {
         this.memcached = memcached;
+        this.config = config;
     }
 
     @Override
@@ -68,10 +71,10 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
             resultByOwner = memcached.set(accessToken.getOwner(), accessToken.getExpiration(),
                 accessToken.getTokenString());
         } else {
-            // Try adding the tokenString with the owner_requestor as the key
+            // Try adding the tokenString with the owner as the key
             UserTokenStrings userTokenStrings = getOrCreateLookupMap(accessToken.getOwner());
             userTokenStrings.put(accessToken.getRequestor(), accessToken.getExpiration(), tokenString);
-            resultByOwner = memcached.set(userTokenStrings.getOwnerId(),
+            resultByOwner = memcached.set(getKeyByOwner(accessToken.getOwner(), accessToken.isTrusted()),
                 userTokenStrings.getExpiration(new DateTime()), userTokenStrings);
         }
 
@@ -115,7 +118,8 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
             deleteResult = memcached.delete(token.getOwner());
         } else {
             // delete pointer to token
-            UserTokenStrings userTokenStrings = getOrCreateLookupMap(token.getOwner());
+            UserTokenStrings userTokenStrings = getOrCreateLookupMap(getKeyByOwner(token.getOwner(),
+                token.isTrusted()));
             deleteResult = removeUserTokensByRequestor(userTokenStrings, token.getOwner(),
                 token.getRequestor());
         }
@@ -157,7 +161,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         if (token.isClientToken()) {
             tokenStrByRequestor = (String) memcached.get(token.getOwner());
         } else {
-            userTokenStrings = getOrCreateLookupMap(token.getOwner());
+            userTokenStrings = getOrCreateLookupMap(getKeyByOwner(token.getOwner(), token.isTrusted()));
             tokenStrByRequestor = userTokenStrings.get(token.getRequestor());
         }
 
@@ -197,7 +201,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         if (isClientToken) {
             tokenStrByRequestor = (String) memcached.get(owner);
         } else {
-            userTokenStrings = getOrCreateLookupMap(owner);
+            userTokenStrings = getOrCreateLookupMap(getKeyByOwner(owner, isRackerRequestor(requestor)));
             tokenStrByRequestor = userTokenStrings.get(requestor);
         }
 
@@ -224,33 +228,61 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
 
     @Override
     public void deleteAllTokensForOwner(String owner) {
+        // NOTE: Will assume that the owner is not a Racker. Find another way to
+        // revoke tokens for all Rackers.
+
         if (StringUtils.isBlank(owner)) {
             throw new IllegalArgumentException("Null or empty owner value given.");
         }
 
-        boolean isAllSuccessful = true;
+        // At this point, we don't know whether this is a client token or an
+        // user token.
+
+        boolean isClientOwner;
         Object byOwnerObj = memcached.get(owner);
-        if (byOwnerObj instanceof String) {
-            // This is a client token
-            Future<Boolean> result = memcached.delete((String) byOwnerObj);
-            isAllSuccessful = evaluateCacheOperation(result, "delete the client access token by owner ID", owner);
+        if (byOwnerObj == null) {
+            // Try with user prefix; remember, we are not dealing with Racker
+            // tokens for this method call.
+            byOwnerObj = memcached.get(getKeyByOwner(owner, false));
+            if (byOwnerObj == null) {
+                // There's nothing for this owner
+                logger.debug("There is no token associated with owner {}.", owner);
+                return;
+            } else {
+                // Is a user.
+                isClientOwner = false;
+            }
         } else {
-            // User token
-            UserTokenStrings userTokenStrings = getOrCreateLookupMap(owner);
+            // Don't know yet.
+            if (byOwnerObj instanceof String) {
+                isClientOwner = true;
+            } else {
+                // Is the UserTokenStrings type, i.e., the owner is a user.
+                isClientOwner = false;
+            }
+        }
+
+        boolean isSuccessfulForAllOps = true;
+        if (isClientOwner) {
+            Future<Boolean> result = memcached.delete((String) byOwnerObj);
+            isSuccessfulForAllOps = evaluateCacheOperation(result,
+                "delete the client access token by owner ID", owner);
+        } else {
+            UserTokenStrings userTokenStrings = (UserTokenStrings) byOwnerObj;
             for (String tokenStr : userTokenStrings.getTokenStrings()) {
                 Future<Boolean> result = memcached.delete(tokenStr);
                 boolean successful = evaluateCacheOperation(result, "delete a token from a list for owner",
                     tokenStr);
-                isAllSuccessful = isAllSuccessful && successful;
+                isSuccessfulForAllOps = isSuccessfulForAllOps && successful;
             }
         }
 
         Future<Boolean> result = memcached.delete(owner);
         boolean success = evaluateCacheOperation(result, "delete all tokens associated with owner", owner);
-        isAllSuccessful = isAllSuccessful && success;
-        if (!isAllSuccessful) {
+        isSuccessfulForAllOps = isSuccessfulForAllOps && success;
+        if (!isSuccessfulForAllOps) {
             String errMsg = String.format("Failed to delete some or all tokens for owner %s", owner);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new IllegalStateException(errMsg);
         }
     }
@@ -305,5 +337,21 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
             logger.error(failedErrMsg);
             return false;
         }
+    }
+
+    private String getKeyByOwner(String owner, boolean isTrusted) {
+        if (isTrusted) {
+            return owner;
+        }
+
+        return owner + USER_TOKEN_KEY_POSTFIX;
+    }
+
+    private boolean isRackerRequestor(String requestor) {
+        if (requestor.equals(config.getString("racker.client_id"))) {
+            return true;
+        }
+
+        return false;
     }
 }

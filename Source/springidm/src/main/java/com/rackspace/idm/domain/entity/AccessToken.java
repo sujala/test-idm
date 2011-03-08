@@ -102,7 +102,7 @@ public final class AccessToken extends Token implements Serializable {
         idmScope = IDM_SCOPE.SET_PASSWORD;
     }
 
-    public boolean getIsTrusted() {
+    public boolean isTrusted() {
         return this.isTrusted;
     }
 

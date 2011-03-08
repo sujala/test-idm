@@ -6,6 +6,8 @@ import java.util.Set;
 import junit.framework.Assert;
 import net.spy.memcached.MemcachedClient;
 
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -31,10 +33,11 @@ public class MemcachedAccessTokenRepositoryTest {
     @BeforeClass
     public static void setUpBeforeClass() {
         MemcachedClient mclient = new MemcachedConfiguration(
-            new PropertyFileConfiguration().getConfigFromClasspath(),
-            new StubLogger()).memcacheClient();
+            new PropertyFileConfiguration().getConfigFromClasspath(), new StubLogger()).memcacheClient();
         tokenRequestors.add("rackspace_control_panael");
-        MemcachedAccessTokenRepository tempRepo = new MemcachedAccessTokenRepository(mclient);
+        Configuration config = new PropertiesConfiguration();
+        config.addProperty("racker.client_id", "RACKER");
+        MemcachedAccessTokenRepository tempRepo = new MemcachedAccessTokenRepository(mclient, config);
         tempRepo.delete(TOKEN_STRING);
         tempRepo.delete("johneo");
     }
@@ -42,9 +45,10 @@ public class MemcachedAccessTokenRepositoryTest {
     @Before
     public void setUp() {
         MemcachedClient mclient = new MemcachedConfiguration(
-            new PropertyFileConfiguration().getConfigFromClasspath(),
-            new StubLogger()).memcacheClient();
-        repo = new MemcachedAccessTokenRepository(mclient);
+            new PropertyFileConfiguration().getConfigFromClasspath(), new StubLogger()).memcacheClient();
+        Configuration config = new PropertiesConfiguration();
+        config.addProperty("racker.client_id", "RACKER");
+        repo = new MemcachedAccessTokenRepository(mclient, config);
         token = getNewToken(60);
     }
 
@@ -52,72 +56,62 @@ public class MemcachedAccessTokenRepositoryTest {
     public void shouldNotAcceptBadParams() {
         try {
             repo.save(null);
-            Assert
-                .fail("did not throw an exception when bad param(s) was passed in!");
+            Assert.fail("did not throw an exception when bad param(s) was passed in!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
         try {
             repo.save(new AccessToken(null, null, getTestUser(), null, null));
-            Assert
-                .fail("did not throw an exception when bad param(s) was passed in!");
+            Assert.fail("did not throw an exception when bad param(s) was passed in!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
         try {
             repo.delete(null);
-            Assert
-                .fail("did not throw an exception when bad param(s) was passed in!");
+            Assert.fail("did not throw an exception when bad param(s) was passed in!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
         try {
             repo.findByTokenString(null);
-            Assert
-                .fail("did not throw an exception when bad param(s) was passed in!");
+            Assert.fail("did not throw an exception when bad param(s) was passed in!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
         try {
             repo.findTokenForOwner(null, null);
-            Assert
-                .fail("did not throw an exception when bad param(s) was passed in!");
+            Assert.fail("did not throw an exception when bad param(s) was passed in!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
         try {
             repo.deleteAllTokensForOwner(null);
-            Assert
-                .fail("did not throw an exception when bad param(s) was passed in!");
+            Assert.fail("did not throw an exception when bad param(s) was passed in!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
 
         try {
             repo.delete(" ");
-            Assert
-                .fail("did not throw an exception when bad param(s) was passed in!");
+            Assert.fail("did not throw an exception when bad param(s) was passed in!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
         try {
             repo.findByTokenString(" ");
-            Assert
-                .fail("did not throw an exception when bad param(s) was passed in!");
+            Assert.fail("did not throw an exception when bad param(s) was passed in!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
         try {
             repo.findTokenForOwner(" ", " ");
-            Assert
-                .fail("did not throw an exception when bad param(s) was passed in!");
+            Assert.fail("did not throw an exception when bad param(s) was passed in!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
         try {
             repo.deleteAllTokensForOwner("  ");
-            Assert
-                .fail("did not throw an exception when bad param(s) was passed in!");
+            Assert.fail("did not throw an exception when bad param(s) was passed in!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
@@ -126,10 +120,8 @@ public class MemcachedAccessTokenRepositoryTest {
     @Test
     public void shouldAddAndGetToken() {
         repo.save(token);
-        Assert.assertEquals(token, repo.findByTokenString(token
-            .getTokenString()));
-        Assert.assertEquals(token, repo.findTokenForOwner(token.getOwner(),
-            token.getRequestor()));
+        Assert.assertEquals(token, repo.findByTokenString(token.getTokenString()));
+        Assert.assertEquals(token, repo.findTokenForOwner(token.getOwner(), token.getRequestor()));
     }
 
     @Test
@@ -137,8 +129,7 @@ public class MemcachedAccessTokenRepositoryTest {
         repo.save(token);
         repo.delete(token.getTokenString());
         Assert.assertNull(repo.findByTokenString(token.getTokenString()));
-        Assert.assertNull(repo.findTokenForOwner(token.getOwner(), token
-            .getRequestor()));
+        Assert.assertNull(repo.findTokenForOwner(token.getOwner(), token.getRequestor()));
     }
 
     @Test
@@ -164,23 +155,24 @@ public class MemcachedAccessTokenRepositoryTest {
 
     public void shouldNotOverwriteTokenOnPasswordReset() {
         AccessToken resetToken = new AccessToken("reset me now", new DateTime().plusSeconds(60),
-                getTestUser(), getTestClient(), IDM_SCOPE.FULL);
+            getTestUser(), getTestClient(), IDM_SCOPE.FULL);
         repo.save(resetToken);
         Assert.assertNotNull(repo.findByTokenString(token.getTokenString()));
     }
+
     private AccessToken getNewToken(int expInSeconds) {
-        return new AccessToken(TOKEN_STRING, new DateTime()
-            .plusSeconds(expInSeconds), getTestUser(), getTestClient(), IDM_SCOPE.FULL);
+        return new AccessToken(TOKEN_STRING, new DateTime().plusSeconds(expInSeconds), getTestUser(),
+            getTestClient(), IDM_SCOPE.FULL);
     }
-    
+
     private BaseUser getTestUser() {
         return new BaseUser("johneo", "customerId");
     }
-    
+
     private BaseClient getTestClient() {
         return new BaseClient("controlpanel", "customerId");
     }
-    
+
     private BaseClient getTestClient2() {
         return new BaseClient("clientId2", "customerId");
     }

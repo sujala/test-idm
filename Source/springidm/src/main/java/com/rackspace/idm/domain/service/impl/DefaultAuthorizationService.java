@@ -26,7 +26,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     public boolean authorizeRacker(AccessToken token) {
-        return token.getIsTrusted();
+        return token.isTrusted();
     }
 
     public boolean authorizeRackspaceClient(AccessToken token) {

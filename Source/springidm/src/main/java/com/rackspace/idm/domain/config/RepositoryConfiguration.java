@@ -75,7 +75,7 @@ public class RepositoryConfiguration {
 
     @Bean
     public AccessTokenDao accessTokenRepository() {
-        return new MemcachedAccessTokenRepository(memcached);
+        return new MemcachedAccessTokenRepository(memcached, appConfig);
     }
 
     @Bean
@@ -105,6 +105,6 @@ public class RepositoryConfiguration {
     
     @Bean(name = "memcacheStatusRepository")
     public PingableService memcacheStatusRepository() {
-        return new MemcachedAccessTokenRepository(memcached);
+        return new MemcachedAccessTokenRepository(memcached, appConfig);
     }
 }
