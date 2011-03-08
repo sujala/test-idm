@@ -7,7 +7,6 @@ import junit.framework.Assert;
 import net.spy.memcached.MemcachedClient;
 
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -23,7 +22,9 @@ import com.rackspace.idm.test.stub.StubLogger;
 
 public class MemcachedAccessTokenRepositoryTest {
 
+    private static final String ANOTHER_TOKEN_STRING = "DELETE_ME_GOOD_TOO!";
     private static final String TOKEN_STRING = "DELETE_ME_GOOD!";
+    private static final String TRUSTED_TOKEN_STRING = "DELETE_THIS_TRUSTED";
     private static final Set<String> tokenRequestors = new HashSet<String>();
     private MemcachedAccessTokenRepository repo;
     private String owner = "johneo";
@@ -32,22 +33,22 @@ public class MemcachedAccessTokenRepositoryTest {
 
     @BeforeClass
     public static void setUpBeforeClass() {
-        MemcachedClient mclient = new MemcachedConfiguration(
-            new PropertyFileConfiguration().getConfigFromClasspath(), new StubLogger()).memcacheClient();
+        Configuration config = new PropertyFileConfiguration().getConfigFromClasspath();
+        MemcachedClient mclient = new MemcachedConfiguration(config, new StubLogger()).memcacheClient();
         tokenRequestors.add("rackspace_control_panael");
-        Configuration config = new PropertiesConfiguration();
-        config.addProperty("racker.client_id", "RACKER");
         MemcachedAccessTokenRepository tempRepo = new MemcachedAccessTokenRepository(mclient, config);
         tempRepo.delete(TOKEN_STRING);
-        tempRepo.delete("johneo");
+        tempRepo.delete(ANOTHER_TOKEN_STRING);
+        tempRepo.delete(TRUSTED_TOKEN_STRING);
+        tempRepo.deleteAllTokensForOwner("johneo");
+        mclient.delete("johneo"); // Make sure to get rid of any stray trusted
+                                  // tokens
     }
 
     @Before
     public void setUp() {
-        MemcachedClient mclient = new MemcachedConfiguration(
-            new PropertyFileConfiguration().getConfigFromClasspath(), new StubLogger()).memcacheClient();
-        Configuration config = new PropertiesConfiguration();
-        config.addProperty("racker.client_id", "RACKER");
+        Configuration config = new PropertyFileConfiguration().getConfigFromClasspath();
+        MemcachedClient mclient = new MemcachedConfiguration(config, new StubLogger()).memcacheClient();
         repo = new MemcachedAccessTokenRepository(mclient, config);
         token = getNewToken(60);
     }
@@ -133,36 +134,100 @@ public class MemcachedAccessTokenRepositoryTest {
     }
 
     @Test
-    public void shoulddeleteAllTokensForOwner() {
+    public void shouldDeleteAllTokensForOwner() {
         repo.save(token);
         AccessToken anotherToken = getNewToken(60);
-        String anotherTokenString = "DELETE_ME_GOOD_TOO!";
-        anotherToken.setTokenString(anotherTokenString);
+        anotherToken.setTokenString(ANOTHER_TOKEN_STRING);
         String anotherRequestor = getTestClient2().getClientId();
         anotherToken.setTokenClient(getTestClient2());
         repo.save(anotherToken);
 
-        Set<String> requestors = new HashSet<String>();
-        requestors.add(requestor);
-        requestors.add(anotherRequestor);
         repo.deleteAllTokensForOwner(owner);
 
         Assert.assertNull(repo.findByTokenString(TOKEN_STRING));
-        Assert.assertNull(repo.findByTokenString(anotherTokenString));
+        Assert.assertNull(repo.findByTokenString(ANOTHER_TOKEN_STRING));
         Assert.assertNull(repo.findTokenForOwner(owner, requestor));
         Assert.assertNull(repo.findTokenForOwner(owner, anotherRequestor));
     }
 
+    @Test
     public void shouldNotOverwriteTokenOnPasswordReset() {
-        AccessToken resetToken = new AccessToken("reset me now", new DateTime().plusSeconds(60),
-            getTestUser(), getTestClient(), IDM_SCOPE.FULL);
+        repo.save(token);
+        AccessToken resetToken = new AccessToken("reset_me_now", new DateTime().plusSeconds(60),
+            getTestUser(), getTestClient(), IDM_SCOPE.SET_PASSWORD);
         repo.save(resetToken);
         Assert.assertNotNull(repo.findByTokenString(token.getTokenString()));
+    }
+
+    @Test
+    public void shouldSaveAndFindClientToken() {
+        AccessToken clientToken = getNewToken(60);
+        clientToken.setTokenClient(getTestClient2());
+        clientToken.setTokenUser(null);
+        Assert.assertTrue(clientToken.isClientToken());
+        repo.save(clientToken);
+        AccessToken foundByTokenStr = repo.findByTokenString(clientToken.getTokenString());
+        Assert.assertEquals(clientToken, foundByTokenStr);
+        AccessToken foundByOwner = repo.findTokenForOwner(clientToken.getOwner(), clientToken.getRequestor());
+        Assert.assertEquals(clientToken, foundByOwner);
+    }
+
+    @Test
+    public void shouldSaveAndRevokeClientToken() {
+        AccessToken clientToken = getNewToken(60);
+        clientToken.setTokenClient(getTestClient2());
+        clientToken.setTokenUser(null);
+        Assert.assertTrue(clientToken.isClientToken());
+        repo.save(clientToken);
+        repo.delete(clientToken.getTokenString());
+        Assert.assertNull(repo.findByTokenString(clientToken.getTokenString()));
+        repo.save(clientToken);
+        repo.deleteAllTokensForOwner(clientToken.getOwner());
+        Assert.assertNull(repo.findByTokenString(clientToken.getTokenString()));
+    }
+
+    @Test
+    public void shouldSaveAndFindTrustedToken() {
+        AccessToken trustedToken = getNewTrustedToken(600);
+        Assert.assertTrue(trustedToken.isTrusted());
+        repo.save(trustedToken);
+        AccessToken foundByTokenStr = repo.findByTokenString(trustedToken.getTokenString());
+        Assert.assertEquals(trustedToken, foundByTokenStr);
+        AccessToken foundByOwner = repo.findTokenForOwner(trustedToken.getOwner(),
+            trustedToken.getRequestor());
+        Assert.assertEquals(trustedToken, foundByOwner);
+    }
+
+    @Test
+    public void shouldSaveAndRevokeTrustedToken() {
+        AccessToken trustedToken = getNewTrustedToken(60);
+        Assert.assertTrue(trustedToken.isTrusted());
+        repo.save(trustedToken);
+        repo.delete(trustedToken.getTokenString());
+        Assert.assertNull(repo.findByTokenString(trustedToken.getTokenString()));
+        repo.save(trustedToken);
+        repo.deleteAllTokensForOwner(trustedToken.getOwner());
+        Assert.assertNull(repo.findByTokenString(trustedToken.getTokenString()));
+    }
+
+    @Test
+    public void shouldNotHaveCollisionBetweenRegularAndTrustedTokens() {
+        AccessToken regular = getNewToken(60);
+        repo.save(regular);
+        AccessToken trusted = getNewTrustedToken(60);
+        repo.save(trusted);
+        Assert.assertEquals(regular, repo.findByTokenString(regular.getTokenString()));
+        Assert.assertEquals(trusted, repo.findByTokenString(trusted.getTokenString()));
     }
 
     private AccessToken getNewToken(int expInSeconds) {
         return new AccessToken(TOKEN_STRING, new DateTime().plusSeconds(expInSeconds), getTestUser(),
             getTestClient(), IDM_SCOPE.FULL);
+    }
+
+    private AccessToken getNewTrustedToken(int expInSeconds) {
+        return new AccessToken(TRUSTED_TOKEN_STRING, new DateTime().plusSeconds(expInSeconds), getTestUser(),
+            getRackspaceTestClient(), IDM_SCOPE.FULL, true);
     }
 
     private BaseUser getTestUser() {
@@ -175,5 +240,9 @@ public class MemcachedAccessTokenRepositoryTest {
 
     private BaseClient getTestClient2() {
         return new BaseClient("clientId2", "customerId");
+    }
+
+    private BaseClient getRackspaceTestClient() {
+        return new BaseClient("RACKER", "RACKSPACE");
     }
 }

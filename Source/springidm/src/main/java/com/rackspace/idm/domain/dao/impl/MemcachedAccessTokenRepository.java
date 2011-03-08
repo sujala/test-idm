@@ -35,13 +35,13 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
     public void save(AccessToken accessToken) {
         // Validate params
         if (accessToken == null) {
-            logger.error("Token is null");
+            logger.warn("Token is null");
             throw new IllegalArgumentException("Token is null");
         }
         String tokenString = accessToken.getTokenString();
         if (StringUtils.isBlank(tokenString) || accessToken.getExpirationTime() == null) {
             String errMsg = "Token string and/or expiration time values are not present in the given token.";
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
         logger.debug("Adding token: {}", accessToken);
@@ -57,7 +57,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         if (!addedByTokenStr) {
             String errMsg = String.format("Failed to add token by token string with parameter %s",
                 accessToken);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new IllegalStateException(errMsg);
         }
         // do not overwrite client token if password reset flow
@@ -72,10 +72,13 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
                 accessToken.getTokenString());
         } else {
             // Try adding the tokenString with the owner as the key
-            UserTokenStrings userTokenStrings = getOrCreateLookupMap(accessToken.getOwner());
+            UserTokenStrings userTokenStrings = getOrCreateLookupMap(accessToken.getOwner(),
+                accessToken.isTrusted());
             userTokenStrings.put(accessToken.getRequestor(), accessToken.getExpiration(), tokenString);
-            resultByOwner = memcached.set(getKeyByOwner(accessToken.getOwner(), accessToken.isTrusted()),
-                userTokenStrings.getExpiration(new DateTime()), userTokenStrings);
+
+            String keyByOwner = getKeyByOwner(accessToken.getOwner(), accessToken.isTrusted());
+            int expiration = userTokenStrings.getExpiration(new DateTime());
+            resultByOwner = memcached.set(keyByOwner, expiration, userTokenStrings);
         }
 
         boolean addedByOwner = evaluateCacheOperation(resultByOwner, "set token by owner", accessToken);
@@ -84,7 +87,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
             // with an exception
             memcached.delete(tokenString);
             String errMsg = String.format("Failed to add token by owner with parameter %s", accessToken);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new IllegalStateException(errMsg);
         }
 
@@ -94,7 +97,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
     @Override
     public void delete(String tokenString) {
         if (StringUtils.isBlank(tokenString)) {
-            logger.error("Token string is null or empty");
+            logger.warn("Token string is null or empty");
             throw new IllegalArgumentException("Token string is null or empty");
         }
         logger.debug("Deleting token with value {}", tokenString);
@@ -118,16 +121,15 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
             deleteResult = memcached.delete(token.getOwner());
         } else {
             // delete pointer to token
-            UserTokenStrings userTokenStrings = getOrCreateLookupMap(getKeyByOwner(token.getOwner(),
-                token.isTrusted()));
-            deleteResult = removeUserTokensByRequestor(userTokenStrings, token.getOwner(),
-                token.getRequestor());
+            UserTokenStrings userTokenStrings = getOrCreateLookupMap(token.getOwner(), token.isTrusted());
+            String keyByOwner = getKeyByOwner(token.getOwner(), token.isTrusted());
+            deleteResult = removeUserTokensByRequestor(userTokenStrings, keyByOwner, token.getRequestor());
         }
         boolean deletedByOwner = evaluateCacheOperation(deleteResult, "delete token by owner", tokenString);
 
         if (!deletedByTokenStr || !deletedByOwner) {
             String errMsg = String.format("Failed to delete token %s", tokenString);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new IllegalStateException(errMsg);
         }
 
@@ -140,7 +142,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
     public AccessToken findByTokenString(String tokenString) {
 
         if (StringUtils.isBlank(tokenString)) {
-            logger.error("Token string is null or empty");
+            logger.warn("Token string is null or empty");
             throw new IllegalArgumentException("Token string is null or empty");
         }
         logger.debug("Finding token with value {}", tokenString);
@@ -161,7 +163,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         if (token.isClientToken()) {
             tokenStrByRequestor = (String) memcached.get(token.getOwner());
         } else {
-            userTokenStrings = getOrCreateLookupMap(getKeyByOwner(token.getOwner(), token.isTrusted()));
+            userTokenStrings = getOrCreateLookupMap(token.getOwner(), token.isTrusted());
             tokenStrByRequestor = userTokenStrings.get(token.getRequestor());
         }
 
@@ -173,11 +175,12 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         // The corresponding entry stored with key of owner_requestor was not
         // found or did not match. Therefore, the data is in an inconsistent
         // state.
-        logger.error("Token cache in an inconsistent state. Deleting {}", token);
+        logger.warn("Token cache in an inconsistent state. Deleting {}", token);
         if (token.isClientToken()) {
             memcached.delete(token.getOwner());
         } else {
-            removeUserTokensByRequestor(userTokenStrings, token.getOwner(), token.getRequestor());
+            String keyByOwner = getKeyByOwner(token.getOwner(), token.isTrusted());
+            removeUserTokensByRequestor(userTokenStrings, keyByOwner, token.getRequestor());
         }
         memcached.delete(tokenString);
 
@@ -191,7 +194,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
     @Override
     public AccessToken findTokenForOwner(String owner, String requestor) {
         if (StringUtils.isBlank(owner)) {
-            logger.error("Owner value is null or empty");
+            logger.warn("Owner value is null or empty");
             throw new IllegalArgumentException("Owner value is null or empty");
         }
         logger.debug("Finding token with owner {} and requestor {}", owner, requestor);
@@ -201,7 +204,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         if (isClientToken) {
             tokenStrByRequestor = (String) memcached.get(owner);
         } else {
-            userTokenStrings = getOrCreateLookupMap(getKeyByOwner(owner, isRackerRequestor(requestor)));
+            userTokenStrings = getOrCreateLookupMap(owner, isRackerRequestor(requestor));
             tokenStrByRequestor = userTokenStrings.get(requestor);
         }
 
@@ -218,7 +221,8 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
             if (isClientToken) {
                 memcached.delete(owner);
             } else {
-                removeUserTokensByRequestor(userTokenStrings, owner, requestor);
+                String keyByOwner = getKeyByOwner(owner, isRackerRequestor(requestor));
+                removeUserTokensByRequestor(userTokenStrings, keyByOwner, requestor);
             }
             return null;
         }
@@ -275,15 +279,15 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
                     tokenStr);
                 isSuccessfulForAllOps = isSuccessfulForAllOps && successful;
             }
+
+            Future<Boolean> result = memcached.delete(getKeyByOwner(owner, false));
+            boolean success = evaluateCacheOperation(result, "delete all tokens associated with owner", owner);
+            isSuccessfulForAllOps = isSuccessfulForAllOps && success;
         }
 
-        Future<Boolean> result = memcached.delete(owner);
-        boolean success = evaluateCacheOperation(result, "delete all tokens associated with owner", owner);
-        isSuccessfulForAllOps = isSuccessfulForAllOps && success;
         if (!isSuccessfulForAllOps) {
             String errMsg = String.format("Failed to delete some or all tokens for owner %s", owner);
             logger.warn(errMsg);
-            throw new IllegalStateException(errMsg);
         }
     }
 
@@ -303,8 +307,9 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         }
     }
 
-    private UserTokenStrings getOrCreateLookupMap(String tokenOwnerId) {
-        UserTokenStrings userTokenStrings = (UserTokenStrings) memcached.get(tokenOwnerId);
+    private UserTokenStrings getOrCreateLookupMap(String tokenOwnerId, boolean isTrusted) {
+        String keyByOwner = getKeyByOwner(tokenOwnerId, isTrusted);
+        UserTokenStrings userTokenStrings = (UserTokenStrings) memcached.get(keyByOwner);
         if (userTokenStrings == null) {
             userTokenStrings = new UserTokenStrings(tokenOwnerId);
         }
@@ -329,12 +334,12 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
             String threadErrMsg = String.format(
                 "Could not confirm success of the operation \"%s\" with prameters %s", operation,
                 operationParam);
-            logger.error(threadErrMsg);
+            logger.warn(threadErrMsg);
             return false;
         } catch (ExecutionException eex) {
             String failedErrMsg = String.format("Failed to perform %s with parameter(s): %s", operation,
                 operationParam);
-            logger.error(failedErrMsg);
+            logger.warn(failedErrMsg);
             return false;
         }
     }
