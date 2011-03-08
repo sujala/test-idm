@@ -183,13 +183,7 @@ public class DefaultClientService implements ClientService {
     }
 
     public void grantPermission(String clientId, Permission p) {
-        Client targetClient = this.clientDao.findByClientId(clientId);
-
-        if (targetClient == null) {
-            String errorMsg = String.format("Client Not Found: %s", clientId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
+        Client targetClient = getClient(clientId);
 
         List<Permission> newList = new ArrayList<Permission>();
         newList.add(p);
@@ -203,6 +197,40 @@ public class DefaultClientService implements ClientService {
  
         clientDao.save(targetClient);
     }
+    
+    public void revokePermission(String clientId, Permission p) {
+        
+        Client targetClient = getClient(clientId);
+        
+        List<Permission> originalList = targetClient.getPermissions();
+        if (originalList != null) {        
+            
+            List<Permission> newList = new ArrayList<Permission>();
+            for(Permission r: originalList) {
+                if (!r.getPermissionId().equals(p.getPermissionId())) {
+                    newList.add(r);
+                }
+            }
+            if (newList.size() > 0) { 
+                targetClient.setPermissions(newList);
+            }
+            else {
+                targetClient.setPermissions(null);
+            }
+        }
+        
+        clientDao.save(targetClient);
+    }
+
+    private Client getClient(String clientId) {
+        Client targetClient = this.clientDao.findByClientId(clientId);
+        if (targetClient == null) {
+            String errorMsg = String.format("Client Not Found: %s", clientId);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+        return targetClient;
+    }   
 
     public void updateDefinedPermission(Permission permission) {
         clientDao.updateDefinedPermission(permission);

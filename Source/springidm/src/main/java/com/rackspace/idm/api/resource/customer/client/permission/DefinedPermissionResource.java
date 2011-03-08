@@ -248,7 +248,7 @@ public class DefinedPermissionResource {
             .build();
     }
     
-    @POST
+    @PUT
     @Path("grant")
     public Response grantPermissionToClient(@Context Request request,
         @Context UriInfo uriInfo,
@@ -286,7 +286,48 @@ public class DefinedPermissionResource {
         
         this.clientService.grantPermission(targetClient.getClientId(), permissionToGrant);
         
-     
         return Response.ok().build();
     }    
+    
+    
+    @PUT
+    @Path("revoke")
+    public Response revokePermissionToClient(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId,
+        @PathParam("permissionId") String permissionId,
+        com.rackspace.idm.jaxb.Client targetClient) {
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Only the client who "owns" the permission is allowed to grant it to other clients.
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || (token.isClientToken() && token.getTokenClient().getClientId()
+                .equals(clientId));
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+        
+        Permission permissionToRevoke = this.clientService
+            .getDefinedPermissionByClientIdAndPermissionId(clientId,
+                permissionId);
+
+        if (!customerId.equals(permissionToRevoke.getCustomerId())) {
+            String errorMsg = String.format("Permission Not Found: %s",
+                permissionId);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+        
+        this.clientService.revokePermission(targetClient.getClientId(), permissionToRevoke);
+        
+        return Response.ok().build();
+    }   
 }

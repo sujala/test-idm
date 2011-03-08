@@ -99,7 +99,8 @@ public class Permission implements Serializable, Auditable {
         }
 
         return this.customerId + LDAP_SEPERATOR + this.clientId
-                + LDAP_SEPERATOR + this.permissionId;
+                + LDAP_SEPERATOR + this.permissionId; // + LDAP_SEPERATOR 
+                //+ uniqueId + LDAP_SEPERATOR + type + LDAP_SEPERATOR + value;
     }
 
     @Override

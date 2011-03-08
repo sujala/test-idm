@@ -400,6 +400,28 @@ public class ClientServiceTests {
         
         EasyMock.verify(mockClientDao);        
     }
+    
+    @Test
+    public void shouldRevokePermission() {
+        Permission resource = getFakePermission();
+        Client client = getFakeClient();
+        String clientId = client.getClientId();
+        
+        List<Permission> permissions = new ArrayList<Permission>();
+        permissions.add(resource);
+        
+        client.setPermissions(permissions);
+    
+        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(client);
+
+        mockClientDao.save(client);
+        EasyMock.replay(mockClientDao);
+        
+        clientService.revokePermission(clientId, resource);
+        
+        EasyMock.verify(mockClientDao);
+    }   
+    
 
     @Test
     public void shouldResetClientSecret() {

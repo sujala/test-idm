@@ -1251,6 +1251,12 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             // the new and the old permission sets).
             // LDAP modifications can be faster than programmatic check, I think.
         }
+        
+        // Case when revoking a permission leaves no permissions on the client. 
+        if (cNew.getPermissions() == null) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_PERMISSION));
+        }
+        
         return mods;
     }
     

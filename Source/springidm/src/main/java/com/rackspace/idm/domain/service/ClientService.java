@@ -48,6 +48,8 @@ public interface ClientService {
     
     void grantPermission(String clientId, Permission p);
     
+    void revokePermission(String clientId, Permission p);
+    
     void removeUserFromClientGroup(String username, ClientGroup clientGroup);
 
     ClientSecret resetClientSecret(Client client);
