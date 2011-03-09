@@ -174,6 +174,13 @@ public class CustomerUsersResource {
             throw new ForbiddenException(errMsg);
         }
 
+        if (user.getApiKey() != null) {
+            String errMsg = String.format("Setting the apiKey is Forbidden from this call for user %s",
+                user.getUsername());
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
         user.setCustomerId(customerId);
 
         User userDO = userConverter.toUserDO(user);

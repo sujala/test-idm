@@ -52,7 +52,7 @@ public class ApiKeyResource {
 
     /**
      * Gets an user's API key.
-     * 
+     *
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userApiKey
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -60,7 +60,7 @@ public class ApiKeyResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
+     *
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
      * @param username
@@ -73,7 +73,7 @@ public class ApiKeyResource {
         @PathParam("username") String username) {
         logger.debug("Reseting Cloud Auth service API key for User: {}",
             username);
-        
+
         AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Specific Clients and Users are authorized
@@ -102,7 +102,7 @@ public class ApiKeyResource {
 
     /**
      * Resets a user's API key.
-     * 
+     *
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userApiKey
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -110,7 +110,7 @@ public class ApiKeyResource {
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
+     *
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
      * @param username
@@ -121,10 +121,10 @@ public class ApiKeyResource {
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
-        
+
         logger.debug("Reseting Cloud Auth service API key for User: {}",
             username);
-        
+
         AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients, Admins and Users are authorized

@@ -155,6 +155,13 @@ public class UserResource {
             throw new ForbiddenException(errMsg);
         }
 
+        if (inputUser.getApiKey() != null) {
+            String errMsg = String.format("Setting the apiKey is Forbidden from this call for user %s",
+                inputUser.getUsername());
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
         User updatedUser = userConverter.toUserDO(inputUser);
 
         logger.debug("Updating User: {}", username);
