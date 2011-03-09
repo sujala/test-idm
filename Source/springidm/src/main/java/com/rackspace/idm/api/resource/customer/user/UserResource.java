@@ -174,56 +174,6 @@ public class UserResource {
         return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
     }
     
-
-    /**
-     * Updates RPN of an user.
-     * 
-     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param username username
-     */
-    @PUT
-    @Path("rpn")
-    public Response updateUserRPN(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username,@PathParam("customerId") String customerId,
-        com.rackspace.idm.jaxb.User jaxbUser) {
-
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
-
-        // Specific clients are authorized
-        boolean authorized = authorizationService.authorizeRackspaceClient(token);
-   
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-        
-
-        User user = checkAndGetUser(customerId, username);
-
-        user.setPersonId(jaxbUser.getPersonId());
-
-        this.userService.updateUser(user);
-
-        logger.debug("Updated RPN for User: {}", user);
-
-        return Response.ok(userConverter.toUserJaxb(user)).build();
-    }
-    
-    
     /**
      * Deletes a user.
      * 
