@@ -435,6 +435,8 @@ permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlR
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddUserBaseUrlRef
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteUserBaseUrlRef
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlRef
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GrantDefinedPermissionToClient
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::RevokeDefinedPermissionFromClient
 RCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 status: ACTIVE
@@ -937,6 +939,22 @@ cn: DeleteMyCustomerClientDefinedPermission
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: DELETE customers/{customerId}/clients/[^/]+/permissions/defined/[^/]+
+
+dn: cn=GrantDefinedPermissionToClient,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: GrantDefinedPermissionToClient
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+blob: PUT customers/{customerId}/clients/[^/]+/permissions/defined/[^/]+/grant
+
+dn: cn=RevokeDefinedPermissionFromClient,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: RevokeDefinedPermissionFromClient
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+blob: PUT customers/{customerId}/clients/[^/]+/permissions/defined/[^/]+/revoke
 
 dn: cn=GetCustomerRoles,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top

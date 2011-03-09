@@ -258,7 +258,8 @@ public class DefinedPermissionResource {
         @PathParam("permissionId") String permissionId,
         com.rackspace.idm.jaxb.Client targetClient) {
 
-        checkGrantRevokePermissionAuthorization(authHeader, clientId);
+        checkGrantRevokePermissionAuthorization(authHeader, clientId, 
+            request.getMethod(), uriInfo.getPath());
         
         Permission permissionToGrant = checkAndGetPermission(customerId, clientId, permissionId);
         
@@ -278,7 +279,8 @@ public class DefinedPermissionResource {
         @PathParam("permissionId") String permissionId,
         com.rackspace.idm.jaxb.Client targetClient) {
 
-        checkGrantRevokePermissionAuthorization(authHeader, clientId);
+        checkGrantRevokePermissionAuthorization(authHeader, clientId, 
+            request.getMethod(), uriInfo.getPath());
         
         Permission permissionToRevoke = checkAndGetPermission(customerId, clientId, permissionId);         
      
@@ -287,14 +289,14 @@ public class DefinedPermissionResource {
         return Response.ok().build();
     }
     
-    private void checkGrantRevokePermissionAuthorization(String authHeader, String clientId) {
+    private void checkGrantRevokePermissionAuthorization(String authHeader, String clientId, 
+        String method, String uri) {
         AccessToken token = this.accessTokenService
         .getAccessTokenByAuthHeader(authHeader);
 
-        // Only the client who "owns" the permission is allowed to grant or revoke it.
-        boolean authorized = authorizationService.authorizeRacker(token)
-            || (token.isClientToken() && token.getTokenClient().getClientId()
-                .equals(clientId));
+        // Only the client who "owns" the permission and IDM is allowed to grant or revoke it.
+        boolean authorized = (token.isClientToken() && token.getTokenClient().getClientId()
+                .equals(clientId)) || authorizationService.authorizeClient(token, method, uri);
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
