@@ -185,7 +185,6 @@ public class LdapClientRepositoryTest {
             repo.save(newClient);
         } catch (IllegalStateException e) {
             repo.delete(newClient.getClientId());
-            e.printStackTrace();
             Assert.fail("Could not save the record: " + e.getMessage());
         }
 
@@ -194,43 +193,6 @@ public class LdapClientRepositoryTest {
 
         repo.delete(newClient.getClientId());
     }
-    
-    /*@Test
-    public void shouldUpdateGrantedPermissionsOfClient() {
-        Client newClient = addNewTestClient();
-        String clientId = newClient.getClientId();
-        
-        newClient.setClientSecretObj(ClientSecret.newInstance("My_New_Secret"));
-        
-        Permission p = new Permission();
-        p.setClientId(newClient.getClientId());
-        p.setCustomerId(newClient.getCustomerId());
-        p.setPermissionId("Dummy Permission");
-        p.setType("String");
-        
-        List<Permission> permissions = new ArrayList<Permission>();
-        permissions.add(p);
-        
-        newClient.setPermissions(permissions);
-        
-        try {
-            repo.save(newClient);
-        } catch (IllegalStateException e) {
-            repo.delete(newClient.getClientId());
-            Assert.fail("Could not save the record: " + e.getMessage());
-        }
-
-        Client changedClient = repo.findByClientId(clientId);
-        
-        List<Permission> newPermissionList = changedClient.getPermissions();
-        Permission newP = newPermissionList.get(0);
-        
-        Assert.assertEquals(permissions.get(0).getPermissionLDAPserialization(), 
-            newP.getPermissionLDAPserialization());
-        
-        repo.delete(newClient.getClientId());
-    }
-    */
      
     @Test
     public void shouldAuthenticateForCorrectCredentials() {
