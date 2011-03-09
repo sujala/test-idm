@@ -181,6 +181,19 @@ public class UserServiceTests {
         Assert.assertTrue(retrievedUser.getUsername().equals(username));
         EasyMock.verify(mockUserDao);
     }
+    
+    @Test
+    public void shouldGetUserByRPN() {
+        User user = getFakeUser();
+
+        EasyMock.expect(mockUserDao.findByRPN(user.getPersonId())).andReturn(user);
+        EasyMock.replay(mockUserDao);
+
+        User retrievedUser = userService.getUserByRPN(user.getPersonId());
+
+        Assert.assertTrue(retrievedUser.getUsername().equals(username));
+        EasyMock.verify(mockUserDao);
+    }   
 
     @Test
     public void shouldDeleteUser() {

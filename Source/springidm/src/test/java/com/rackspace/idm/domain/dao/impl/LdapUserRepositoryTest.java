@@ -189,6 +189,16 @@ public class LdapUserRepositoryTest {
 
         repo.delete(newUser.getUsername());
     }
+    
+    @Test
+    public void shouldFindOneUserThatExistsByRPN() {
+        User newUser = addNewTestUser();
+        User user = repo.findByRPN(newUser.getPersonId());
+        Assert.assertNotNull(user);
+        Assert.assertEquals("deleteme", user.getUsername());
+
+        repo.delete(newUser.getUsername());
+    }   
 
     @Test
     public void shouldNotFindOneUserThatDoesNotExistsByNastId() {
