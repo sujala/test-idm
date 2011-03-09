@@ -258,31 +258,9 @@ public class DefinedPermissionResource {
         @PathParam("permissionId") String permissionId,
         com.rackspace.idm.jaxb.Client targetClient) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
-
-        // Only the client who "owns" the permission is allowed to grant it to other clients.
-        boolean authorized = authorizationService.authorizeRacker(token)
-            || (token.isClientToken() && token.getTokenClient().getClientId()
-                .equals(clientId));
-
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        checkGrantRevokePermissionAuthorization(authHeader, clientId);
         
-        Permission permissionToGrant = this.clientService
-            .getDefinedPermissionByClientIdAndPermissionId(clientId,
-                permissionId);
-
-        if (!customerId.equals(permissionToGrant.getCustomerId())) {
-            String errorMsg = String.format("Permission Not Found: %s",
-                permissionId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
+        Permission permissionToGrant = checkAndGetPermission(customerId, clientId, permissionId);
         
         this.clientService.grantPermission(targetClient.getClientId(), permissionToGrant);
         
@@ -300,10 +278,20 @@ public class DefinedPermissionResource {
         @PathParam("permissionId") String permissionId,
         com.rackspace.idm.jaxb.Client targetClient) {
 
+        checkGrantRevokePermissionAuthorization(authHeader, clientId);
+        
+        Permission permissionToRevoke = checkAndGetPermission(customerId, clientId, permissionId);         
+     
+        this.clientService.revokePermission(targetClient.getClientId(), permissionToRevoke);
+        
+        return Response.ok().build();
+    }
+    
+    private void checkGrantRevokePermissionAuthorization(String authHeader, String clientId) {
         AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        .getAccessTokenByAuthHeader(authHeader);
 
-        // Only the client who "owns" the permission is allowed to grant it to other clients.
+        // Only the client who "owns" the permission is allowed to grant or revoke it.
         boolean authorized = authorizationService.authorizeRacker(token)
             || (token.isClientToken() && token.getTokenClient().getClientId()
                 .equals(clientId));
@@ -314,20 +302,19 @@ public class DefinedPermissionResource {
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
-        
-        Permission permissionToRevoke = this.clientService
-            .getDefinedPermissionByClientIdAndPermissionId(clientId,
-                permissionId);
+    }
+    
+    private Permission checkAndGetPermission(String customerId, String clientId, String permissionId) {
+        Permission permission = this.clientService
+        .getDefinedPermissionByClientIdAndPermissionId(clientId,
+            permissionId);
 
-        if (!customerId.equals(permissionToRevoke.getCustomerId())) {
+        if (!customerId.equals(permission.getCustomerId())) {
             String errorMsg = String.format("Permission Not Found: %s",
                 permissionId);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
-        
-        this.clientService.revokePermission(targetClient.getClientId(), permissionToRevoke);
-        
-        return Response.ok().build();
-    }   
+        return permission;
+    }
 }
