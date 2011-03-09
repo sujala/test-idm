@@ -25,6 +25,8 @@ public interface UserService {
     String generateApiKey();
 
     User getUser(String username);
+    
+    User getUserByRPN(String rpn);
 
     User getUserByNastId(String natsId);
 

@@ -246,6 +246,19 @@ public class DefaultUserService implements UserService {
         logger.debug("Got User: {}", user);
         return user;
     }
+    
+    public User getUserByRPN(String rpn) {
+        logger.debug("Getting User: {}", rpn);
+        User user = userDao.findByRPN(rpn);
+        
+        if (user != null) {
+            user.setGroups(clientService.getClientGroupsForUser(user
+                .getUsername()));
+        }
+        logger.debug("Got User: {}", user);
+        return user;
+    }
+   
 
     public boolean isUsernameUnique(String username) {
         return userDao.isUsernameUnique(username);

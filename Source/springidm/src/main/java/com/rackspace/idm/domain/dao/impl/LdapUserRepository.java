@@ -308,6 +308,26 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         return user;
     }
+    
+    public User findByRPN(String rpn) {
+        getLogger().debug("Doing search for rpn " + rpn);
+        if (StringUtils.isBlank(rpn)) {
+            getLogger().error("Null or Empty rpn parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty rpn parameter.");
+        }
+        
+        String searchFilter = new LdapSearchBuilder()
+        .addEqualAttribute(ATTR_RACKSPACE_PERSON_NUMBER, rpn)
+        .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+        .build();
+
+        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
+
+        getLogger().debug("Found User - {}", user);
+        
+        return user;
+    }
 
     public User findByUsername(String username) {
         // This method returns a user whether or not the user has been soft-deleted
@@ -329,6 +349,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         return user;
     }
+    
+    
 
     public User findUser(String customerId, String username) {
 

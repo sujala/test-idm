@@ -469,7 +469,10 @@ public class UsersResource {
         return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
 
     }
-
+    
+   
+    
+   
     /**
      * Updates mossoId of an user.
      * 
@@ -613,7 +616,8 @@ public class UsersResource {
         logger.debug("Updated RPN for User: {}", user);
 
         return Response.ok(userConverter.toUserJaxb(user)).build();
-    }   
+    }
+     
 
     private User checkAndGetUser(String username) {
         User user = this.userService.getUser(username);

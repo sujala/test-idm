@@ -29,6 +29,8 @@ public interface UserDao {
     User findByMossoId(int mossoId);
 
     User findByNastId(String nastId);
+    
+    User findByRPN(String rpn);
 
     User findByUsername(String username);
 

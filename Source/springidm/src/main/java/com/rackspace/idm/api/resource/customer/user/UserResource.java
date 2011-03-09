@@ -117,7 +117,9 @@ public class UserResource {
         logger.debug("Got User :{}", user);
         return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
     }
-
+    
+  
+   
     /**
      * Updates a user.
      * 

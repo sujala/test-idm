@@ -232,4 +232,55 @@ public class CustomerUsersResource {
     public UserResource getUserResource() {
         return userResource;
     }
+    
+    
+    /**
+     * Gets a user by providing the user's RPN.
+     * 
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param user rpn
+     */
+    @GET
+    @Path("rpn/{rpn}")
+    public Response getUserBasedOnRPN(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,@PathParam("customerId") String customerId,
+        @PathParam("rpn") String rpn) {
+
+        AccessToken token = accessTokenService.getAccessTokenByAuthHeader(authHeader);
+
+        // Racker's, Rackspace Clients, Specific Clients, Admins and User's are
+        // authorized
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeRackspaceClient(token)
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeAdmin(token, customerId)
+            || authorizationService.authorizeUser(token, customerId, rpn);
+        
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call", token);
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+        
+        logger.debug("Getting User with RPN: {}", rpn);
+        
+        User user = this.userService.getUserByRPN(rpn);
+        if (user == null) {          
+            String errorMsg = String.format("User not found: %s - %s", rpn);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+        
+        logger.debug("Got User :{}", user);
+        return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
+    }          
 }
