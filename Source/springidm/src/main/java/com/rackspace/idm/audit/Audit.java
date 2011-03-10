@@ -100,6 +100,7 @@ public class Audit {
 	static {
 		List<String> temp = new ArrayList<String>();
 		temp.add(LdapRepository.ATTR_PASSWORD);
+		temp.add(LdapRepository.ATTR_CLEAR_PASSWORD);
 		temp.add(LdapRepository.ATTR_RACKSPACE_API_KEY);
 		secrets = Collections.unmodifiableList(temp);
 	}

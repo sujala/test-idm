@@ -10,12 +10,14 @@ import org.slf4j.LoggerFactory;
 @Aspect
 public class TraceLogger {
 
-	@Around("execution(* com.rackspace.idm..*.*(..))")
-	public Object trcae(ProceedingJoinPoint joinPoint) throws Throwable {
+	@Around("execution(* com.rackspace.idm.api..*.*(..)) " +
+			"|| execution(* com.rackspace.idm.domain.dao.impl..*.*(..))" +
+			"|| execution(* com.rackspace.idm.domain.service.impl..*.*(..))")
+	public Object trace(ProceedingJoinPoint joinPoint) throws Throwable {
 		Signature sig = joinPoint.getSignature();
 		StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        LoggerFactory.getLogger(sig.getDeclaringTypeName()).trace(joinPoint + " entered");
+        LoggerFactory.getLogger(sig.getDeclaringTypeName()).trace(joinPoint + " enter");
 
         Object retVal = joinPoint.proceed();
 

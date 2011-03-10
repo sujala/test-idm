@@ -34,10 +34,9 @@ public class LdapConfiguration {
 
     @Autowired
     private Configuration config;
-    private Logger logger;
+    private Logger logger=LoggerFactory.getLogger(LdapConfiguration.class);
 
     public LdapConfiguration() {
-        logger = LoggerFactory.getLogger(LdapConfiguration.class);
     }
 
     /**
@@ -46,9 +45,8 @@ public class LdapConfiguration {
      * @param config
      * @param logger
      */
-    public LdapConfiguration(Configuration config, Logger logger) {
+    public LdapConfiguration(Configuration config) {
         this.config = config;
-        this.logger = logger;
     }
 
     /**
@@ -60,6 +58,7 @@ public class LdapConfiguration {
         String[] serverList = config.getStringArray("ldap.serverList");
         String[] hosts = new String[0];
         int[] ports = new int[0];
+        boolean isSSL = false;
 
         for(String server : serverList) {
             // split on space and comma
@@ -69,6 +68,9 @@ public class LdapConfiguration {
                 hosts = (String[]) ArrayUtils.add(hosts, parts[0]);
                 // default LDAP port is 636
                 int port = parts.length > 1 && StringUtils.isNotBlank(parts[1]) ? Integer.valueOf(parts[1]) : DEFAULT_SERVER_PORT;
+                if(port != 389) {
+                	isSSL = true;
+                }
                 ports = ArrayUtils.add(ports, port);
             }
         }
@@ -87,7 +89,12 @@ public class LdapConfiguration {
         LDAPConnectionPool connPool = null;
         try {
             SSLUtil sslUtil = new SSLUtil(new TrustAllTrustManager());
-            ServerSet serverSet = new RoundRobinServerSet(hosts, ports, sslUtil.createSSLSocketFactory());
+            ServerSet serverSet;
+            if(isSSL) {
+				serverSet = new RoundRobinServerSet(hosts, ports, sslUtil.createSSLSocketFactory());
+            } else {
+            	serverSet = new RoundRobinServerSet(hosts, ports);
+            }
             BindRequest bind = new SimpleBindRequest(bindDn, password);
             connPool = new LDAPConnectionPool(serverSet, bind, initPoolSize, maxPoolSize);
         } catch (LDAPException e) {

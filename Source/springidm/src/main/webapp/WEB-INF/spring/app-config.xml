@@ -26,24 +26,16 @@
 		A standalone connection pool such as Commons DBCP is a good choice for use outside an
 		application server environment, including web applications running in a web container without
 		JTA, or integration testing using the org.springframework.test package.
-	-->
 	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close"
 			p:driverClassName="${jdbc.driverClassName}" p:url="${jdbc.url}" p:username="${jdbc.username}"
 			p:password="${jdbc.password}"/>
 
+	-->
 	<!-- Transaction manager for a single JDBC DataSource (alternative to JTA)
--->
 	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
 			p:dataSource-ref="dataSource"/>
 			
-	<bean id="exporter" class="org.springframework.jmx.export.MBeanExporter" lazy-init="false">
-    	<property name="beans">
-      		<map>
-        		<entry key="com.rackspace.idm:name=healthMonitoringBean" value-ref="healthMonitoringBean"/>
-        		<entry key="com.rackspace.idm:name=loggerMonitoringBean" value-ref="loggerMonitoringBean"/>
-      		</map>
-    	</property>
-  	</bean>
+-->
 
 	<!-- ========================= COMPONENT DEFINITIONS =========================
 -->
@@ -58,9 +50,15 @@
 	
 	<!-- Scans within the base package of the application for @Components to configure as beans-->
 	<context:component-scan base-package="com.rackspace.idm" />
-
-	<!-- RESTEasy config -->
-	<!-- <import resource="classpath:springmvc-resteasy.xml" /> -->
+	
+	<bean id="exporter" class="org.springframework.jmx.export.MBeanExporter" lazy-init="false">
+    	<property name="beans">
+      		<map>
+        		<entry key="com.rackspace.idm:name=healthMonitoringBean" value-ref="healthMonitoringBean"/>
+        		<entry key="com.rackspace.idm:name=loggerMonitoringBean" value-ref="loggerMonitoringBean"/>
+      		</map>
+    	</property>
+  	</bean>
 
 	<!--
 		Instruct Spring to perform automatic transaction management on annotated classes.

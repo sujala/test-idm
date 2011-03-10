@@ -16,7 +16,7 @@ import com.unboundid.ldap.sdk.ModificationType;
 public class AuditTest {
 
 	@Before
-	public void before() {
+	public void before() { 
 		MDC.put(Audit.HOST_IP, "127.0.0.1");
 		MDC.put(Audit.REMOTE_IP, "10.127.7.164");
 		MDC.put(Audit.PATH, "/token");

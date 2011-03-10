@@ -41,6 +41,11 @@ public class CryptHelper {
 			LoggerFactory.getLogger(CryptHelper.class).error("Error initializing", e);
 		}
 	}
+	
+	private static CryptHelper instance = new CryptHelper();
+	public static CryptHelper getinstance() {
+		return instance;
+	}
 
 	public byte[] encrypt(String cleartext) throws GeneralSecurityException {
 		byte[] ciphertext = new byte[] {};
@@ -61,6 +66,9 @@ public class CryptHelper {
 
 	public String decrypt(byte[] ciphertext) throws GeneralSecurityException {
 		String result = "";
+		if(ciphertext == null || ciphertext.length < 1) {
+			return result;
+		}
 		try {
 			Cipher pbeCipher = Cipher.getInstance(ALOGRITHM);
 			// Initialize PBE Cipher with key and parameters

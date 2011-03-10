@@ -15,6 +15,7 @@ import javax.ws.rs.ext.Provider;
 import org.apache.commons.lang.StringUtils;
 import org.omg.CORBA.portable.ApplicationException;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -58,7 +59,7 @@ import com.rackspace.idm.jaxb.UsernameConflict;
 @Provider
 public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
     private ResourceBundle faultMessageConfig;
-    private Logger logger;
+    private Logger logger = LoggerFactory.getLogger(ApiExceptionMapper.class);
 
     @Context
     private HttpHeaders headers;
@@ -66,7 +67,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
     @Autowired
     public ApiExceptionMapper(ResourceBundle faultMessageConfig, LoggerFactoryWrapper loggerWrapper) {
         this.faultMessageConfig = faultMessageConfig;
-        this.logger = loggerWrapper.getLogger(getClass());
     }
 
     public Response toResponse(Throwable thrown) {
@@ -162,6 +162,8 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             }
         }
 
+        
+        logger.error(e.getCause().getMessage());
         return toResponse(new ServerError(), e, 500);
     }
 
