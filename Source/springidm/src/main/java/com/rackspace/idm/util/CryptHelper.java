@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CryptHelper {
-	private static final String ALOGRITHM = "PBEWithMD5AndTripleDES";
+	private static final String ALOGRITHM = "PBEWithMD5AndDES";
 
 	Logger logger = LoggerFactory.getLogger(CryptHelper.class);
 
