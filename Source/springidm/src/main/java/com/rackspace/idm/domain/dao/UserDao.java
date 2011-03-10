@@ -22,8 +22,6 @@ public interface UserDao {
 
     Users findByCustomerId(String customerId, int offset, int limit);
 
-    User findByEmail(String email);
-
     User findByInum(String inum);
 
     User findByMossoId(int mossoId);

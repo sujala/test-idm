@@ -31,7 +31,7 @@ public class LdapRoleRepositoryTest {
 
     private static LdapConnectionPools getConnPools() {
         LdapConfiguration config = new LdapConfiguration(
-            new PropertyFileConfiguration().getConfigFromClasspath(), new StubLogger());
+            new PropertyFileConfiguration().getConfigFromClasspath());
         return config.connectionPools();
     }
 

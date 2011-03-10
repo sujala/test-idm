@@ -54,7 +54,7 @@ public class LdapClientRepositoryTest {
 
     private static LdapConnectionPools getConnPools() {
         return new LdapConfiguration(new PropertyFileConfiguration()
-            .getConfigFromClasspath(), new StubLogger()).connectionPools();
+            .getConfigFromClasspath()).connectionPools();
     }
 
     @Before

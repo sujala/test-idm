@@ -1,12 +1,8 @@
 package com.rackspace.idm.services;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 
 import junit.framework.Assert;
 
@@ -16,14 +12,23 @@ import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.dao.AccessTokenDao;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Customer;
+import com.rackspace.idm.domain.entity.CustomerStatus;
+import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserAuthenticationResult;
+import com.rackspace.idm.domain.entity.UserCredential;
+import com.rackspace.idm.domain.entity.UserHumanName;
+import com.rackspace.idm.domain.entity.UserLocale;
+import com.rackspace.idm.domain.entity.UserStatus;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.EmailService;
 import com.rackspace.idm.domain.service.UserService;
@@ -31,7 +36,6 @@ import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.jaxb.CustomParamsList;
 import com.rackspace.idm.jaxb.PasswordRecovery;
-import com.rackspace.idm.test.stub.StubLogger;
 
 public class UserServiceTests {
 
@@ -110,8 +114,6 @@ public class UserServiceTests {
             .andReturn(user);
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername()))
             .andReturn(true);
-        EasyMock.expect(mockUserDao.findByEmail(user.getEmail())).andReturn(
-            null);
         mockUserDao.add((User) EasyMock.anyObject(), EasyMock.eq(customerDN));
         EasyMock.replay(mockUserDao);
         userService.addUser(user);
@@ -126,8 +128,6 @@ public class UserServiceTests {
         EasyMock.replay(mockCustomerDao);
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername()))
             .andReturn(true);
-        EasyMock.expect(mockUserDao.findByEmail(user.getEmail())).andReturn(
-            null);
         EasyMock.replay(mockUserDao);
         userService.addUser(user);
     }
@@ -204,8 +204,6 @@ public class UserServiceTests {
     @Test
     public void shouldUpdateUser() {
         User user = getFakeUser();
-        EasyMock.expect(mockUserDao.findByEmail(user.getEmail())).andReturn(
-            user);
         mockUserDao.save(user);
         EasyMock.replay(mockUserDao);
 

@@ -498,7 +498,7 @@
                     <encoding>UTF-8</encoding>
                     <verbose>false</verbose>
                     <show>public</show>
-                    <subpackages>com.rackspace.idm.rest.resources</subpackages>
+                    <subpackages>com.rackspace.idm.api.resource</subpackages>
                     <doclet>com.sun.jersey.wadl.resourcedoc.ResourceDoclet</doclet>
                     <docletArtifacts>
                         <docletArtifact>
@@ -536,7 +536,7 @@
                     <formatWadlFile>true</formatWadlFile>
                     <baseUri>${environment.url.prefix}</baseUri>
                     <packagesResourceConfig>
-                        <param>com.rackspace.idm.rest.resources</param>
+                        <param>com.rackspace.idm.api.resource</param>
                     </packagesResourceConfig>
                     <wadlGenerators>
                         <wadlGeneratorDescription>
