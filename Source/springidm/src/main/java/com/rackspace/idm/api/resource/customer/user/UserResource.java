@@ -14,6 +14,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -155,7 +156,7 @@ public class UserResource {
             throw new ForbiddenException(errMsg);
         }
 
-        if (inputUser.getApiKey() != null) {
+        if (inputUser.getApiKey() != null && !StringUtils.isEmpty(inputUser.getApiKey().getApiKey())) {
             String errMsg = String.format("Setting the apiKey is Forbidden from this call for user %s",
                 inputUser.getUsername());
             logger.warn(errMsg);

@@ -174,7 +174,7 @@ public class CustomerUsersResource {
             throw new ForbiddenException(errMsg);
         }
 
-        if (user.getApiKey() != null) {
+        if (user.getApiKey() != null && !StringUtils.isEmpty(user.getApiKey().getApiKey())) {
             String errMsg = String.format("Setting the apiKey is Forbidden from this call for user %s",
                 user.getUsername());
             logger.warn(errMsg);
