@@ -874,7 +874,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             }
         }
 
-        if (uNew.getApiKey() != null) {
+        if (uNew.getApiKey() != null && !StringUtils.isEmpty(uNew.getApiKey())) {
             if (StringUtils.isBlank(uNew.getApiKey())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_API_KEY));
             } else if (!StringUtils.equals(uOld.getApiKey(), uNew.getApiKey())) {
