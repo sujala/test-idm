@@ -92,6 +92,7 @@ public class DefinedPermissionResource {
 
         // Racker's or the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeCustomerIdm(token)
             || (token.isClientToken() && token.getTokenClient().getClientId()
                 .equals(clientId));
 
@@ -102,11 +103,30 @@ public class DefinedPermissionResource {
             throw new ForbiddenException(errMsg);
         }
 
+        if (!permission.getPermissionId().equals(permissionId)) {
+            String errMsg = "PermissionId mismatch";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+
+        if (!permission.getCustomerId().equals(customerId)) {
+            String errMsg = "CustomerId mismatch";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+
+        if (!permission.getClientId().equals(clientId)) {
+            String errMsg = "ClientId mismatch";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+
         Permission permissionDO = this.clientService
             .getDefinedPermissionByClientIdAndPermissionId(clientId,
                 permissionId);
 
-        if (!customerId.equals(permissionDO.getCustomerId())) {
+        if (permissionDO == null
+            || !customerId.equals(permissionDO.getCustomerId())) {
             String errorMsg = String.format("Permission Not Found: %s",
                 permissionId);
             logger.warn(errorMsg);
@@ -125,8 +145,6 @@ public class DefinedPermissionResource {
 
         return Response.ok(permission).build();
     }
-    
-    
 
     /**
      * Deletes a Client defined permission.
@@ -157,6 +175,7 @@ public class DefinedPermissionResource {
 
         // Racker's or the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeCustomerIdm(token)
             || (token.isClientToken() && token.getTokenClient().getClientId()
                 .equals(clientId));
 
@@ -171,7 +190,8 @@ public class DefinedPermissionResource {
             .getDefinedPermissionByClientIdAndPermissionId(clientId,
                 permissionId);
 
-        if (!customerId.equals(permission.getCustomerId())) {
+        if (permission == null
+            || !customerId.equals(permission.getCustomerId())) {
             String errorMsg = String.format("Permission Not Found: %s",
                 permissionId);
             logger.warn(errorMsg);

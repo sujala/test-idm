@@ -167,6 +167,7 @@ public class DefinedPermissionsResource {
 
         // Racker's or the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeCustomerIdm(token)
             || (token.isClientToken() && token.getTokenClient().getClientId()
                 .equals(clientId));
 
@@ -176,9 +177,18 @@ public class DefinedPermissionsResource {
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
-
-        permission.setClientId(clientId);
-        permission.setCustomerId(customerId);
+        
+        if (!permission.getCustomerId().equals(customerId)) {
+            String errMsg = "CustomerId mismatch";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+        
+        if (!permission.getClientId().equals(clientId)) {
+            String errMsg = "ClientId mismatch";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
 
         Permission permissionDO = permissionConverter
             .toPermissionDO(permission);
@@ -194,6 +204,10 @@ public class DefinedPermissionsResource {
             String errorMsg = ex.getMessage();
             logger.warn(errorMsg);
             throw new PermissionConflictException(errorMsg);
+        } catch (IllegalStateException e) {
+            String errMsg = e.getMessage();
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
         }
 
         String location = uriInfo.getPath() + permission.getPermissionId();
