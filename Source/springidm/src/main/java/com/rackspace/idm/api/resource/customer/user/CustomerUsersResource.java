@@ -28,7 +28,6 @@ import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.AccessTokenService;
@@ -64,11 +63,9 @@ public class CustomerUsersResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomerUsersResource(AccessTokenService accessTokenService,
-        UserResource userResource, UserService userService,
-        CustomerService customerService, UserConverter userConverter,
-        InputValidator inputValidator,
-        PasswordComplexityService passwordComplexityService,
+    public CustomerUsersResource(AccessTokenService accessTokenService, UserResource userResource,
+        UserService userService, CustomerService customerService, UserConverter userConverter,
+        InputValidator inputValidator, PasswordComplexityService passwordComplexityService,
         AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.userResource = userResource;
@@ -96,36 +93,30 @@ public class CustomerUsersResource {
      * @param customerId RCN
      */
     @GET
-    public Response getUsers(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
+    public Response getUsers(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @QueryParam("offset") int offset, @QueryParam("limit") int limit) {
 
         logger.debug("Getting Customer Users: {}", customerId);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         Customer customer = this.customerService.getCustomer(customerId);
         if (customer == null) {
-            String errorMsg = String.format("Customer not found: %s",
-                customerId);
+            String errorMsg = String.format("Customer not found: %s", customerId);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
@@ -154,22 +145,18 @@ public class CustomerUsersResource {
      */
     @POST
     public Response addUser(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         com.rackspace.idm.jaxb.User user) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -193,16 +180,10 @@ public class CustomerUsersResource {
 
         logger.debug("Adding User: {}", user.getUsername());
 
-        if (userDO.getPasswordObj() == null
-            || StringUtils.isBlank(userDO.getPasswordObj().getValue())) {
-            Password newpassword = Password.generateRandom();
-            userDO.setPasswordObj(newpassword);
-        } else {
+        if (userDO.getPasswordObj() != null && !StringUtils.isBlank(userDO.getPasswordObj().getValue())) {
             String password = userDO.getPasswordObj().getValue();
-            if (!passwordComplexityService.checkPassword(password)
-                .isValidPassword()) {
-                String errorMsg = String
-                    .format("Invalid password %s", password);
+            if (!passwordComplexityService.checkPassword(password).isValidPassword()) {
+                String errorMsg = String.format("Invalid password %s", password);
                 logger.warn(errorMsg);
                 throw new PasswordValidationException(errorMsg);
             }

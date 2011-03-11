@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.Users;
@@ -36,9 +37,12 @@ public interface UserService {
 
     boolean isUsernameUnique(String username);
 
-    void sendRecoveryEmail(String username, String userEmail, PasswordRecovery recoveryParam, String tokenString);
+    void sendRecoveryEmail(String username, String userEmail, PasswordRecovery recoveryParam,
+        String tokenString);
 
     void updateUser(User user);
+
+    Password resetUserPassword(User user);
 
     void updateUserStatus(User user, String statusStr);
 }

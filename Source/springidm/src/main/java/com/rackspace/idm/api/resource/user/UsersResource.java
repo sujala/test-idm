@@ -6,27 +6,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-
-import com.rackspace.idm.domain.entity.AccessToken;
-import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
-import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.Password;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.AccessTokenService;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ClientService;
-import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.PasswordComplexityService;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.*;
 
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
@@ -38,6 +31,25 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import com.rackspace.idm.api.converter.EndPointConverter;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
+import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.Customer;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.CustomerService;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.PasswordComplexityService;
+import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.CustomerConflictException;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.DuplicateUsernameException;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.PasswordValidationException;
 import com.rackspace.idm.jaxb.BaseURLRef;
 import com.rackspace.idm.validation.InputValidator;
 
@@ -64,13 +76,11 @@ public class UsersResource {
     private Configuration config;
 
     @Autowired
-    public UsersResource(AccessTokenService accessTokenService,
-        CustomerService customerService, UserService userService,
-        InputValidator inputValidator, UserConverter userConverter,
-        PasswordComplexityService passwordComplexityService,
-        AuthorizationService authorizationService,
-        EndpointService endpointService, EndPointConverter endpointConverter,
-        ClientService clientService, Configuration config) {
+    public UsersResource(AccessTokenService accessTokenService, CustomerService customerService,
+        UserService userService, InputValidator inputValidator, UserConverter userConverter,
+        PasswordComplexityService passwordComplexityService, AuthorizationService authorizationService,
+        EndpointService endpointService, EndPointConverter endpointConverter, ClientService clientService,
+        Configuration config) {
         this.accessTokenService = accessTokenService;
         this.customerService = customerService;
         this.userService = userService;
@@ -102,21 +112,17 @@ public class UsersResource {
      * @param user New User
      */
     @POST
-    public Response addFirstUser(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        com.rackspace.idm.jaxb.User user) {
+    public Response addFirstUser(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, com.rackspace.idm.jaxb.User user) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -130,26 +136,16 @@ public class UsersResource {
         }
 
         if (!this.userService.isUsernameUnique(userDO.getUsername())) {
-            String errorMsg = String.format(
-                "A user with username '%s' already exists.",
-                userDO.getUsername());
+            String errorMsg = String
+                .format("A user with username '%s' already exists.", userDO.getUsername());
             logger.warn(errorMsg);
             throw new DuplicateUsernameException(errorMsg);
         }
 
-        // If a blank or null password is passed into the method we
-        // generate a random password for the user else we check the password
-        // against our password complexity rules.
-        if (userDO.getPasswordObj() == null
-            || StringUtils.isBlank(userDO.getPasswordObj().getValue())) {
-            Password newpassword = Password.generateRandom();
-            userDO.setPasswordObj(newpassword);
-        } else {
+        if (userDO.getPasswordObj() != null && !StringUtils.isBlank(userDO.getPasswordObj().getValue())) {
             String password = userDO.getPasswordObj().getValue();
-            if (!passwordComplexityService.checkPassword(password)
-                .isValidPassword()) {
-                String errorMsg = String
-                    .format("Invalid password %s", password);
+            if (!passwordComplexityService.checkPassword(password).isValidPassword()) {
+                String errorMsg = String.format("Invalid password %s", password);
                 logger.warn(errorMsg);
                 throw new PasswordValidationException(errorMsg);
             }
@@ -162,8 +158,7 @@ public class UsersResource {
         try {
             this.customerService.addCustomer(customer);
         } catch (DuplicateException ex) {
-            String errorMsg = String.format(
-                "A customer with customerId '%s' already exists.",
+            String errorMsg = String.format("A customer with customerId '%s' already exists.",
                 customer.getCustomerId());
             logger.warn(errorMsg);
             throw new CustomerConflictException(errorMsg);
@@ -175,15 +170,14 @@ public class UsersResource {
             // Roll Back the Add Customer call
             this.customerService.deleteCustomer(customer.getCustomerId());
             // Then throw the error
-            String errorMsg = String.format(
-                "A user with username '%s' already exists.",
-                userDO.getUsername());
+            String errorMsg = String
+                .format("A user with username '%s' already exists.", userDO.getUsername());
             logger.warn(errorMsg);
             throw new DuplicateUsernameException(errorMsg);
         }
 
-        ClientGroup idmAdmin = this.clientService.getClientGroup(
-            getRackspaceCustomerId(), getIdmClientId(), getIdmAdminGroupName());
+        ClientGroup idmAdmin = this.clientService.getClientGroup(getRackspaceCustomerId(), getIdmClientId(),
+            getIdmAdminGroupName());
 
         this.clientService.addUserToClientGroup(userDO.getUsername(), idmAdmin);
 
@@ -194,8 +188,8 @@ public class UsersResource {
 
         logger.debug("Added User: {}", userDO);
 
-        String locationUri = String.format("/customers/%s/users/%s",
-            customer.getCustomerId(), user.getUsername());
+        String locationUri = String.format("/customers/%s/users/%s", customer.getCustomerId(),
+            user.getUsername());
 
         user = userConverter.toUserJaxb(userDO);
 
@@ -206,8 +200,7 @@ public class UsersResource {
             logger.warn("Customer Location URI error");
         }
 
-        return Response.ok(user).location(uri)
-            .status(HttpServletResponse.SC_CREATED).build();
+        return Response.ok(user).location(uri).status(HttpServletResponse.SC_CREATED).build();
     }
 
     /**
@@ -225,30 +218,24 @@ public class UsersResource {
      */
     @GET
     @Path("{username}/servicecatalog")
-    public Response getServiceCatalog(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username) {
+    public Response getServiceCatalog(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
-        List<CloudEndpoint> endpoints = this.endpointService
-            .getEndpointsForUser(username);
+        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(username);
 
-        return Response.ok(this.endpointConverter.toServiceCatalog(endpoints))
-            .build();
+        return Response.ok(this.endpointConverter.toServiceCatalog(endpoints)).build();
     }
 
     /**
@@ -266,30 +253,24 @@ public class UsersResource {
      */
     @GET
     @Path("{username}/baseurlrefs")
-    public Response getBaseUrlRefs(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username) {
+    public Response getBaseUrlRefs(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
-        List<CloudEndpoint> endpoints = this.endpointService
-            .getEndpointsForUser(username);
+        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(username);
 
-        return Response.ok(this.endpointConverter.toBaseUrlRefs(endpoints))
-            .build();
+        return Response.ok(this.endpointConverter.toBaseUrlRefs(endpoints)).build();
     }
 
     /**
@@ -309,27 +290,23 @@ public class UsersResource {
      */
     @PUT
     @Path("{username}/baseurlrefs")
-    public Response addBaseUrlRef(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username, BaseURLRef baseUrlRef) {
+    public Response addBaseUrlRef(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
+        BaseURLRef baseUrlRef) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
-        this.endpointService.addBaseUrlToUser(baseUrlRef.getId(),
-            baseUrlRef.isV1Default(), username);
+        this.endpointService.addBaseUrlToUser(baseUrlRef.getId(), baseUrlRef.isV1Default(), username);
 
         return Response.ok().status(HttpServletResponse.SC_CREATED).build();
     }
@@ -350,38 +327,31 @@ public class UsersResource {
      */
     @GET
     @Path("{username}/baseurlrefs/{baseUrlId}")
-    public Response getBaseUrlRef(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username,
+    public Response getBaseUrlRef(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
         @PathParam("baseUrlId") int baseUrlId) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
-        CloudEndpoint endpoint = this.endpointService.getEndpointForUser(
-            username, baseUrlId);
+        CloudEndpoint endpoint = this.endpointService.getEndpointForUser(username, baseUrlId);
 
         if (endpoint == null) {
-            String errMsg = String.format("BaseUrlId %s not found for user %s",
-                baseUrlId, username);
+            String errMsg = String.format("BaseUrlId %s not found for user %s", baseUrlId, username);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
-        return Response.ok(this.endpointConverter.toBaseUrlRef(endpoint))
-            .build();
+        return Response.ok(this.endpointConverter.toBaseUrlRef(endpoint)).build();
     }
 
     /**
@@ -400,22 +370,18 @@ public class UsersResource {
      */
     @DELETE
     @Path("{username}/baseurlrefs/{baseUrlId}")
-    public Response deleteBaseUrlRef(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username,
+    public Response deleteBaseUrlRef(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
         @PathParam("baseUrlId") int baseUrlId) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -442,21 +408,17 @@ public class UsersResource {
     @GET
     @Path("{username}")
     public Response getUser(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username) {
+        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Rackers, Rackspace Clients, Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath());
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -490,22 +452,18 @@ public class UsersResource {
      */
     @PUT
     @Path("{username}/mossoId")
-    public Response updateUserMossoId(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username,
+    public Response updateUserMossoId(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
         com.rackspace.idm.jaxb.User jaxbUser) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Specific clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -513,7 +471,7 @@ public class UsersResource {
         User user = checkAndGetUser(username);
 
         user.setMossoId(jaxbUser.getMossoId());
-        
+
         this.userService.updateUser(user);
 
         logger.debug("Updated MossoId for User: {}", user);
@@ -538,22 +496,18 @@ public class UsersResource {
      */
     @PUT
     @Path("{username}/nastId")
-    public Response updateUserNastId(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username,
+    public Response updateUserNastId(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
         com.rackspace.idm.jaxb.User jaxbUser) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Specific clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -566,8 +520,7 @@ public class UsersResource {
 
         logger.debug("Updated NastID for User: {}", user);
 
-        return Response.ok(
-            userConverter.toUserWithOnlyNastId(user)).build();
+        return Response.ok(userConverter.toUserWithOnlyNastId(user)).build();
     }
     
     
@@ -630,7 +583,7 @@ public class UsersResource {
 
         return user;
     }
-    
+
     private String getIdmAdminGroupName() {
         return config.getString("idm.AdminGroupName");
     }

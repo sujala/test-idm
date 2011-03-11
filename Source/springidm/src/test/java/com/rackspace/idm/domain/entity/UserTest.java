@@ -9,29 +9,21 @@ import javax.validation.Validator;
 
 import junit.framework.Assert;
 
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.entity.Password;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserCredential;
-import com.rackspace.idm.domain.entity.UserHumanName;
-import com.rackspace.idm.domain.entity.UserLocale;
-import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.validation.MessageTexts;
 
 public class UserTest {
 
     private User getTestUser() {
         Password pwd = Password.newInstance("delete_my_password");
-        User newUser = new User("delete.me", "RCN-DELETE-ME_NOW",
-            "bademail@example.com", new UserHumanName("delete_my_firstname",
-                "delete_my_middlename", "delete_my_lastname"), new UserLocale(
-                Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd,
-                "What is your favourite colur?", "Yellow. No, Blue! Arrrrgh!"),
-            "USA", "MY DISPLAY NAME", "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE.5556",
-            "@Rackspace.TestCustomer*delete.me",
-            "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE", "XXX", UserStatus.ACTIVE,
+        User newUser = new User("delete.me", "RCN-DELETE-ME_NOW", "bademail@example.com", new UserHumanName(
+            "delete_my_firstname", "delete_my_middlename", "delete_my_lastname"), new UserLocale(
+            Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd, "What is your favourite colur?",
+            "Yellow. No, Blue! Arrrrgh!"), "USA", "MY DISPLAY NAME", "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE.5556",
+            "@Rackspace.TestCustomer*delete.me", "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE", "XXX", UserStatus.ACTIVE,
             "RPN-111-222-333");
         return newUser;
     }
@@ -47,16 +39,15 @@ public class UserTest {
     }
 
     private User getModifiedUser() {
-        Password plainPwd = Password
-            .newInstance("Hi. I'm a plaintext password.");
+        Password plainPwd = Password.newInstance("Hi. I'm a plaintext password.");
         User modUser = new User("joe_user");
         modUser.setPasswordObj(plainPwd);
         return modUser;
     }
 
     private User getUnmodifiedUser() {
-        Password fakeHashedPwd = Password
-            .existingInstance("Hello. Just imagine that I'm an one-way hash.");
+        Password fakeHashedPwd = Password.existingInstance("Hello. Just imagine that I'm an one-way hash.",
+            new DateTime(), false);
         User unmodUser = new User("joe_user");
         unmodUser.setPasswordObj(fakeHashedPwd);
         return unmodUser;
@@ -64,8 +55,8 @@ public class UserTest {
 
     @Test
     public void shouldCompareCorrectlyWhenPasswordsAreBothHashed() {
-        Password anotherFakeHashedPwd = Password
-            .existingInstance("Hello. Just imagine that I'm also an one-way hash. But different.");
+        Password anotherFakeHashedPwd = Password.existingInstance(
+            "Hello. Just imagine that I'm also an one-way hash. But different.", new DateTime(), false);
         User unmodUserWithDiffPwd = new User("joe_user");
         unmodUserWithDiffPwd.setPasswordObj(anotherFakeHashedPwd);
 
@@ -78,8 +69,7 @@ public class UserTest {
 
     @Test
     public void shouldCompareCorrectlyWhenPasswordsAreBothPlain() {
-        Password anotherPlainPwd = Password
-            .newInstance("Hi. I'm another plaintext password. But different.");
+        Password anotherPlainPwd = Password.newInstance("Hi. I'm another plaintext password. But different.");
         User modUserWithDiffPwd = new User("joe_user");
         modUserWithDiffPwd.setPasswordObj(anotherPlainPwd);
 
@@ -273,10 +263,8 @@ public class UserTest {
 
     @Test
     public void shouldRunValidations() {
-        Validator validator = Validation.buildDefaultValidatorFactory()
-            .getValidator();
-        Set<ConstraintViolation<User>> violations = validator
-            .validate(new User());
+        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+        Set<ConstraintViolation<User>> violations = validator.validate(new User());
         Assert.assertEquals(3, violations.size());
         System.out.println(violations);
     }
@@ -284,8 +272,7 @@ public class UserTest {
     @Test
     public void shouldAllowValidUserName() {
         User user = getTestUser();
-        Validator validator = Validation.buildDefaultValidatorFactory()
-            .getValidator();
+        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         Assert.assertTrue(violations.isEmpty());
     }
@@ -294,12 +281,10 @@ public class UserTest {
     public void shouldNotAllowUserNameLongerThan32Chars() {
         User user = getTestUser();
         user.setUsername("o12345678901234567890123456789012"); // 33 chars
-        Validator validator = Validation.buildDefaultValidatorFactory()
-            .getValidator();
+        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         Assert.assertEquals(1, violations.size());
-        Assert.assertEquals("length must be between 1 and 32", violations
-            .iterator().next().getMessage());
+        Assert.assertEquals("length must be between 1 and 32", violations.iterator().next().getMessage());
         System.out.println(violations);
     }
 
@@ -307,8 +292,7 @@ public class UserTest {
     public void shouldAllowUserNameLongerThatBeginsWithNumber() {
         User user = getTestUser();
         user.setUsername("4BCDEFG");
-        Validator validator = Validation.buildDefaultValidatorFactory()
-            .getValidator();
+        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         Assert.assertEquals(0, violations.size());
 
@@ -331,8 +315,7 @@ public class UserTest {
     public void shouldAllowValidEmail() {
         User user = getTestUser();
         user.setEmail("valid-email-format@example.com");
-        Validator validator = Validation.buildDefaultValidatorFactory()
-            .getValidator();
+        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         Assert.assertTrue(violations.isEmpty());
     }
@@ -342,12 +325,10 @@ public class UserTest {
         User user = getTestUser();
         user.setEmail("invalidemail");
 
-        Validator validator = Validation.buildDefaultValidatorFactory()
-            .getValidator();
+        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         Assert.assertEquals(1, violations.size());
-        Assert.assertEquals(MessageTexts.EMAIL, violations.iterator().next()
-            .getMessage());
+        Assert.assertEquals(MessageTexts.EMAIL, violations.iterator().next().getMessage());
         System.out.println(violations);
     }
 
@@ -356,12 +337,10 @@ public class UserTest {
         User user = getTestUser();
         user.setEmail("invalidemail@baddomaincom");
 
-        Validator validator = Validation.buildDefaultValidatorFactory()
-            .getValidator();
+        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         Assert.assertEquals(1, violations.size());
-        Assert.assertEquals(MessageTexts.EMAIL, violations.iterator().next()
-            .getMessage());
+        Assert.assertEquals(MessageTexts.EMAIL, violations.iterator().next().getMessage());
         System.out.println(violations);
     }
 }

@@ -103,6 +103,8 @@ public abstract class LdapRepository {
     public static final String ATTR_UID = "uid";
     public static final String ATTR_UPDATED_DATE = "modifyTimestamp";
     public static final String ATTR_SOFT_DELETED_DATE = "softDeletedTimestamp";
+    public static final String ATTR_PASSWORD_UPDATED_TIMESTAMP = "passwordUpdatedTimestamp";
+    public static final String ATTR_PASSWORD_SELF_UPDATED = "passwordSelfUpdated";
 
     // Definitions for LDAP DNs
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
