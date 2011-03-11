@@ -65,12 +65,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         user.setUniqueId(userDN);
 
-
         LDAPResult result;
         Audit audit = Audit.log(user).add();
         try {
             Attribute[] attributes = getAddAttributes(user);
-            result = getAppConnPool().add(userDN, attributes);      
+            result = getAppConnPool().add(userDN, attributes);
         } catch (LDAPException ldapEx) {
             String errorString = String.format("Error adding user %s - %s", user, ldapEx);
             audit.fail(errorString);
@@ -266,24 +265,21 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         return user;
     }
-    
+
     public User findByRPN(String rpn) {
         getLogger().debug("Doing search for rpn " + rpn);
         if (StringUtils.isBlank(rpn)) {
             getLogger().error("Null or Empty rpn parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty rpn parameter.");
+            throw new IllegalArgumentException("Null or Empty rpn parameter.");
         }
-        
-        String searchFilter = new LdapSearchBuilder()
-        .addEqualAttribute(ATTR_RACKSPACE_PERSON_NUMBER, rpn)
-        .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-        .build();
+
+        String searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_RACKSPACE_PERSON_NUMBER, rpn)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON).build();
 
         User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
-        
+
         return user;
     }
 
@@ -305,8 +301,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         return user;
     }
-    
-    
 
     public User findUser(String customerId, String username) {
 
@@ -416,14 +410,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         LDAPResult result = null;
         try {
-        	List<Modification> mods = getModifications(oldUser, user);
-        	audit.modify(mods);
-        	
-        	if (mods.size() < 1) {
-        		// No changes!
-        		return;
-        	}
-            result = getAppConnPool().modify(oldUser.getUniqueId(), mods);           
+            List<Modification> mods = getModifications(oldUser, user);
+            audit.modify(mods);
+
+            if (mods.size() < 1) {
+                // No changes!
+                return;
+            }
+            result = getAppConnPool().modify(oldUser.getUniqueId(), mods);
         } catch (LDAPException ldapEx) {
 
             if (ResultCode.UNWILLING_TO_PERFORM.equals(ldapEx.getResultCode())
@@ -432,15 +426,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 throw new StalePasswordException("Past 10 passwords for the user cannot be re-used.");
             }
 
-            getLogger().error("Error updating user {} - {}",
-                user.getUsername(), ldapEx);
+            getLogger().error("Error updating user {} - {}", user.getUsername(), ldapEx);
             audit.fail("Error updating user");
             throw new IllegalStateException(ldapEx);
         } catch (GeneralSecurityException e) {
-        	getLogger().error(e.getMessage());
-        	audit.fail("encryption error");
-        	throw new IllegalStateException(e);
-		}
+            getLogger().error(e.getMessage());
+            audit.fail("encryption error");
+            throw new IllegalStateException(e);
+        }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
             String errorString = String.format("Error updating user %s - %s", user.getUsername(),
@@ -546,7 +539,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     private Attribute[] getAddAttributes(User user) throws GeneralSecurityException {
-    	CryptHelper cryptHelper = CryptHelper.getinstance();
+        CryptHelper cryptHelper = CryptHelper.getinstance();
 
         List<Attribute> atts = new ArrayList<Attribute>();
 
@@ -561,7 +554,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (!StringUtils.isBlank(user.getFirstname())) {
-			atts.add(new Attribute(ATTR_GIVEN_NAME, cryptHelper.encrypt(user.getFirstname())));
+            atts.add(new Attribute(ATTR_GIVEN_NAME, cryptHelper.encrypt(user.getFirstname())));
         }
 
         if (!StringUtils.isBlank(user.getIname())) {
@@ -601,13 +594,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (!StringUtils.isBlank(user.getSecretAnswer())) {
-            atts.add(new Attribute(ATTR_PASSWORD_SECRET_A, cryptHelper.encrypt(user
-                .getSecretAnswer())));
+            atts.add(new Attribute(ATTR_PASSWORD_SECRET_A, cryptHelper.encrypt(user.getSecretAnswer())));
         }
 
         if (!StringUtils.isBlank(user.getSecretQuestion())) {
-            atts.add(new Attribute(ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(user
-                .getSecretQuestion())));
+            atts.add(new Attribute(ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(user.getSecretQuestion())));
         }
 
         if (!StringUtils.isBlank(user.getLastname())) {
@@ -625,8 +616,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         atts.add(new Attribute(ATTR_UID, user.getUsername()));
 
         if (!StringUtils.isBlank(user.getPasswordObj().getValue())) {
-            atts.add(new Attribute(ATTR_PASSWORD, user.getPasswordObj()
-                .getValue()));
+            atts.add(new Attribute(ATTR_PASSWORD, user.getPasswordObj().getValue()));
             atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(user.getPassword())));
         }
 
@@ -687,18 +677,17 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                     contentCount = vlvResponse.getContentCount();
                 }
             }
-        	for (SearchResultEntry entry : searchResult.getSearchEntries()) {
-        		userList.add(getUser(entry));
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                userList.add(getUser(entry));
             }
 
         } catch (LDAPException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
         } catch (GeneralSecurityException e) {
-        	getLogger().error(e.getMessage());
-        	throw new IllegalStateException(e);
-		}
-
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        }
 
         getLogger().debug("Found users {}", userList);
 
@@ -715,28 +704,25 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     private User getSingleUser(String searchFilter, String[] searchAttributes) {
         User user = null;
         SearchResult searchResult = null;
-        try {   
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                searchFilter, searchAttributes);
+        try {
+            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB, searchFilter, searchAttributes);
 
-	        if (searchResult.getEntryCount() == 1) {
-	            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-	            user = getUser(e);
-	        } else if (searchResult.getEntryCount() > 1) {
-	            String errMsg = String.format(
-	                "More than one entry was found for user search - %s",
-	                searchFilter);
-	            getLogger().error(errMsg);
-	            throw new IllegalStateException(errMsg);
-	        }
-        }
-        catch (LDAPSearchException ldapEx) {     
-        	getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-        	throw new IllegalStateException(ldapEx);
+            if (searchResult.getEntryCount() == 1) {
+                SearchResultEntry e = searchResult.getSearchEntries().get(0);
+                user = getUser(e);
+            } else if (searchResult.getEntryCount() > 1) {
+                String errMsg = String.format("More than one entry was found for user search - %s",
+                    searchFilter);
+                getLogger().error(errMsg);
+                throw new IllegalStateException(errMsg);
+            }
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
         } catch (GeneralSecurityException e) {
-        	getLogger().error("Encryption error",e);
-        	throw new IllegalStateException(e);
-		}
+            getLogger().error("Encryption error", e);
+            throw new IllegalStateException(e);
+        }
 
         getLogger().debug("Found User - {}", user);
 
@@ -744,7 +730,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     private User getUser(SearchResultEntry resultEntry) throws GeneralSecurityException {
-    	CryptHelper cryptHelper = CryptHelper.getinstance();
+        CryptHelper cryptHelper = CryptHelper.getinstance();
         User user = new User();
         user.setUniqueId(resultEntry.getDN());
         user.setUsername(resultEntry.getAttributeValue(ATTR_UID));
@@ -757,15 +743,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         user.setMiddlename(resultEntry.getAttributeValue(ATTR_MIDDLE_NAME));
         user.setOrgInum(resultEntry.getAttributeValue(ATTR_O));
         user.setPrefferedLang(resultEntry.getAttributeValue(ATTR_LANG));
-        user.setCustomerId(resultEntry
-            .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
-        user.setPersonId(resultEntry
-            .getAttributeValue(ATTR_RACKSPACE_PERSON_NUMBER));
+        user.setCustomerId(resultEntry.getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
+        user.setPersonId(resultEntry.getAttributeValue(ATTR_RACKSPACE_PERSON_NUMBER));
         user.setApiKey(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_RACKSPACE_API_KEY)));
-        user.setSecretQuestion(cryptHelper.decrypt(resultEntry
-            .getAttributeValueBytes(ATTR_PASSWORD_SECRET_Q)));
-        user.setSecretAnswer(cryptHelper.decrypt(resultEntry
-            .getAttributeValueBytes(ATTR_PASSWORD_SECRET_A)));
+        user.setSecretQuestion(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_Q)));
+        user.setSecretAnswer(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_A)));
 
         String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
         if (statusStr != null) {
@@ -773,11 +755,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         user.setLastname(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_SN)));
-        user.setTimeZoneObj(DateTimeZone.forID(resultEntry
-            .getAttributeValue(ATTR_TIME_ZONE)));
+        user.setTimeZoneObj(DateTimeZone.forID(resultEntry.getAttributeValue(ATTR_TIME_ZONE)));
 
-        Password pwd = Password.existingInstance(cryptHelper.decrypt(resultEntry
-            .getAttributeValueBytes(ATTR_CLEAR_PASSWORD)));
+        String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD));
+        Date lastUpdates = resultEntry.getAttributeValueAsDate(ATTR_PASSWORD_UPDATED_TIMESTAMP);
+        Boolean wasSelfUpdated = resultEntry.getAttributeValueAsBoolean(ATTR_PASSWORD_SELF_UPDATED);
+        Password pwd = Password.existingInstance(ecryptedPwd, new DateTime(lastUpdates), wasSelfUpdated);
         user.setPasswordObj(pwd);
 
         user.setRegion(resultEntry.getAttributeValue(ATTR_RACKSPACE_REGION));
@@ -837,7 +820,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     List<Modification> getModifications(User uOld, User uNew) throws GeneralSecurityException {
-    	CryptHelper cryptHelper = CryptHelper.getinstance();
+        CryptHelper cryptHelper = CryptHelper.getinstance();
         List<Modification> mods = new ArrayList<Modification>();
 
         if (uNew.getCountry() != null) {
@@ -850,23 +833,19 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         if (uNew.getDisplayName() != null) {
             if (StringUtils.isBlank(uNew.getDisplayName())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_DISPLAY_NAME));
-            } else if (!StringUtils.equals(uOld.getDisplayName(),
-                uNew.getDisplayName())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_DISPLAY_NAME, cryptHelper.encrypt(uNew.getDisplayName())));
+                mods.add(new Modification(ModificationType.DELETE, ATTR_DISPLAY_NAME));
+            } else if (!StringUtils.equals(uOld.getDisplayName(), uNew.getDisplayName())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_DISPLAY_NAME, cryptHelper
+                    .encrypt(uNew.getDisplayName())));
             }
         }
 
         if (uNew.getFirstname() != null) {
             if (StringUtils.isBlank(uNew.getFirstname())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_GIVEN_NAME));
-            } else if (!StringUtils.equals(uOld.getFirstname(),
-                uNew.getFirstname())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_GIVEN_NAME, cryptHelper.encrypt(uNew.getFirstname())));
+                mods.add(new Modification(ModificationType.DELETE, ATTR_GIVEN_NAME));
+            } else if (!StringUtils.equals(uOld.getFirstname(), uNew.getFirstname())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_GIVEN_NAME, cryptHelper.encrypt(uNew
+                    .getFirstname())));
             }
         }
 
@@ -882,8 +861,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             if (StringUtils.isBlank(uNew.getEmail())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_MAIL));
             } else if (!StringUtils.equals(uOld.getEmail(), uNew.getEmail())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_MAIL,
-                		cryptHelper.encrypt(uNew.getEmail())));
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_MAIL, cryptHelper.encrypt(uNew
+                    .getEmail())));
             }
         }
 
@@ -899,40 +878,35 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             if (StringUtils.isBlank(uNew.getApiKey())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_API_KEY));
             } else if (!StringUtils.equals(uOld.getApiKey(), uNew.getApiKey())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_RACKSPACE_API_KEY, cryptHelper.encrypt(uNew.getApiKey())));
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_API_KEY, cryptHelper
+                    .encrypt(uNew.getApiKey())));
             }
         }
 
         if (uNew.getSecretAnswer() != null) {
             if (StringUtils.isBlank(uNew.getSecretAnswer())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_PASSWORD_SECRET_A));
-            } else if (!StringUtils.equals(uOld.getSecretAnswer(),
-                uNew.getSecretAnswer())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_PASSWORD_SECRET_A, cryptHelper.encrypt(uNew.getSecretAnswer())));
+                mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_A));
+            } else if (!StringUtils.equals(uOld.getSecretAnswer(), uNew.getSecretAnswer())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_A, cryptHelper
+                    .encrypt(uNew.getSecretAnswer())));
             }
         }
 
         if (uNew.getSecretQuestion() != null) {
             if (StringUtils.isBlank(uNew.getSecretQuestion())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_PASSWORD_SECRET_Q));
-            } else if (!StringUtils.equals(uOld.getSecretQuestion(),
-                uNew.getSecretQuestion())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(uNew.getSecretQuestion())));
+                mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_Q));
+            } else if (!StringUtils.equals(uOld.getSecretQuestion(), uNew.getSecretQuestion())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_Q, cryptHelper
+                    .encrypt(uNew.getSecretQuestion())));
             }
         }
 
         if (uNew.getLastname() != null) {
             if (StringUtils.isBlank(uNew.getLastname())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_SN));
-            } else if (!StringUtils.equals(uOld.getLastname(),
-                uNew.getLastname())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_SN,
-                		cryptHelper.encrypt(uNew.getLastname())));
+            } else if (!StringUtils.equals(uOld.getLastname(), uNew.getLastname())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_SN, cryptHelper.encrypt(uNew
+                    .getLastname())));
             }
         }
 
@@ -969,8 +943,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD, uNew.getPasswordObj()
                 .getValue()));
 
-            mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(uNew.getPasswordObj().getValue())));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(uNew
+                .getPasswordObj().getValue())));
         }
 
         if (uNew.isLocked() != null && uNew.isLocked() != uOld.isLocked()) {
