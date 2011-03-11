@@ -202,7 +202,6 @@ public class ApiKeyResource {
         // get user to update
         User user = checkAndGetUser(customerId, username);
 
-        // generate random api key
         String apiKey = userApiKey.getApiKey();
         user.setApiKey(apiKey);
         this.userService.updateUser(user);
