@@ -93,8 +93,9 @@ public class DefinedPermissionResource {
         // Racker's or the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token.isClientToken() && token.getTokenClient().getClientId()
-                .equals(clientId));
+            || (authorizationService.authorizeClient(token,
+                request.getMethod(), uriInfo.getPath()) && token
+                .getTokenClient().getClientId().equals(clientId));
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
@@ -176,8 +177,9 @@ public class DefinedPermissionResource {
         // Racker's or the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token.isClientToken() && token.getTokenClient().getClientId()
-                .equals(clientId));
+            || (authorizationService.authorizeClient(token,
+                request.getMethod(), uriInfo.getPath()) && token
+                .getTokenClient().getClientId().equals(clientId));
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
@@ -234,8 +236,9 @@ public class DefinedPermissionResource {
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || (authorizationService.authorizeClient(token,
+                request.getMethod(), uriInfo.getPath()) && token
+                .getTokenClient().getClientId().equals(clientId))
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
@@ -267,7 +270,7 @@ public class DefinedPermissionResource {
         return Response.ok(permissionConverter.toPermissionJaxb(permission))
             .build();
     }
-    
+
     @PUT
     @Path("grant")
     public Response grantPermissionToClient(@Context Request request,
@@ -278,17 +281,18 @@ public class DefinedPermissionResource {
         @PathParam("permissionId") String permissionId,
         com.rackspace.idm.jaxb.Client targetClient) {
 
-        checkGrantRevokePermissionAuthorization(authHeader, clientId, 
+        checkGrantRevokePermissionAuthorization(authHeader, clientId,
             request.getMethod(), uriInfo.getPath());
-        
-        Permission permissionToGrant = checkAndGetPermission(customerId, clientId, permissionId);
-        
-        this.clientService.grantPermission(targetClient.getClientId(), permissionToGrant);
-        
+
+        Permission permissionToGrant = checkAndGetPermission(customerId,
+            clientId, permissionId);
+
+        this.clientService.grantPermission(targetClient.getClientId(),
+            permissionToGrant);
+
         return Response.ok().build();
-    }    
-    
-    
+    }
+
     @PUT
     @Path("revoke")
     public Response revokePermissionToClient(@Context Request request,
@@ -299,24 +303,28 @@ public class DefinedPermissionResource {
         @PathParam("permissionId") String permissionId,
         com.rackspace.idm.jaxb.Client targetClient) {
 
-        checkGrantRevokePermissionAuthorization(authHeader, clientId, 
+        checkGrantRevokePermissionAuthorization(authHeader, clientId,
             request.getMethod(), uriInfo.getPath());
-        
-        Permission permissionToRevoke = checkAndGetPermission(customerId, clientId, permissionId);         
-     
-        this.clientService.revokePermission(targetClient.getClientId(), permissionToRevoke);
-        
+
+        Permission permissionToRevoke = checkAndGetPermission(customerId,
+            clientId, permissionId);
+
+        this.clientService.revokePermission(targetClient.getClientId(),
+            permissionToRevoke);
+
         return Response.ok().build();
     }
-    
-    private void checkGrantRevokePermissionAuthorization(String authHeader, String clientId, 
-        String method, String uri) {
-        AccessToken token = this.accessTokenService
-        .getAccessTokenByAuthHeader(authHeader);
 
-        // Only the client who "owns" the permission and IDM is allowed to grant or revoke it.
-        boolean authorized = (token.isClientToken() && token.getTokenClient().getClientId()
-                .equals(clientId)) || authorizationService.authorizeClient(token, method, uri);
+    private void checkGrantRevokePermissionAuthorization(String authHeader,
+        String clientId, String method, String uri) {
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Only the client who "owns" the permission and IDM is allowed to grant
+        // or revoke it.
+        boolean authorized = (token.isClientToken() && token.getTokenClient()
+            .getClientId().equals(clientId))
+            || authorizationService.authorizeClient(token, method, uri);
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
@@ -325,11 +333,12 @@ public class DefinedPermissionResource {
             throw new ForbiddenException(errMsg);
         }
     }
-    
-    private Permission checkAndGetPermission(String customerId, String clientId, String permissionId) {
+
+    private Permission checkAndGetPermission(String customerId,
+        String clientId, String permissionId) {
         Permission permission = this.clientService
-        .getDefinedPermissionByClientIdAndPermissionId(clientId,
-            permissionId);
+            .getDefinedPermissionByClientIdAndPermissionId(clientId,
+                permissionId);
 
         if (!customerId.equals(permission.getCustomerId())) {
             String errorMsg = String.format("Permission Not Found: %s",

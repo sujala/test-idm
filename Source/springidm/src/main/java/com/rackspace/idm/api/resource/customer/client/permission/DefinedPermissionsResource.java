@@ -168,7 +168,8 @@ public class DefinedPermissionsResource {
         // Racker's or the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token.isClientToken() && token.getTokenClient().getClientId()
+            || (authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo.getPath()) && token.getTokenClient().getClientId()
                 .equals(clientId));
 
         if (!authorized) {
