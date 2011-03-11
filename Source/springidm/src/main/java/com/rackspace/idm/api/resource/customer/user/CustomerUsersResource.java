@@ -262,7 +262,7 @@ public class CustomerUsersResource {
         logger.debug("Getting User with RPN: {}", rpn);
         
         User user = this.userService.getUserByRPN(rpn);
-        if (user == null) {          
+        if (user == null || !user.getCustomerId().equals(customerId)) {          
             String errorMsg = String.format("User not found: %s - %s", rpn);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
