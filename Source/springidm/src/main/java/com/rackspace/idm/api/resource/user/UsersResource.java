@@ -431,10 +431,7 @@ public class UsersResource {
         return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
 
     }
-    
-   
-    
-   
+
     /**
      * Updates mossoId of an user.
      * 
@@ -522,8 +519,7 @@ public class UsersResource {
 
         return Response.ok(userConverter.toUserWithOnlyNastId(user)).build();
     }
-    
-    
+
     /**
      * Updates RPN of an user.
      * 
@@ -541,25 +537,21 @@ public class UsersResource {
      */
     @PUT
     @Path("{username}/rpn")
-    public Response updateUserRPN(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("username") String username,@PathParam("customerId") String customerId,
-        com.rackspace.idm.jaxb.User jaxbUser) {
+    public Response updateUserRPN(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
+        @PathParam("customerId") String customerId, com.rackspace.idm.jaxb.User jaxbUser) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Specific clients are authorized
         boolean authorized = authorizationService.authorizeRackspaceClient(token);
-   
+
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+            String errMsg = String.format("Token %s Forbidden from this call", token);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
-        
+
         User user = checkAndGetUser(username);
 
         user.setPersonId(jaxbUser.getPersonId());
@@ -570,7 +562,6 @@ public class UsersResource {
 
         return Response.ok(userConverter.toUserJaxb(user)).build();
     }
-     
 
     private User checkAndGetUser(String username) {
         User user = this.userService.getUser(username);

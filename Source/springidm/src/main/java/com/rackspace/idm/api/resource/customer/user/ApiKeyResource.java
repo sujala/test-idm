@@ -148,7 +148,7 @@ public class ApiKeyResource {
         // generate random api key
         String apiKey = userService.generateApiKey();
         user.setApiKey(apiKey);
-        this.userService.updateUser(user);
+        this.userService.updateUser(user, false);
 
         logger.debug("Reset Cloud Auth service API key for user: {}", user);
 
@@ -204,7 +204,7 @@ public class ApiKeyResource {
 
         String apiKey = userApiKey.getApiKey();
         user.setApiKey(apiKey);
-        this.userService.updateUser(user);
+        this.userService.updateUser(user, false);
 
         return Response.ok(userApiKey).build();
     }

@@ -204,10 +204,10 @@ public class UserServiceTests {
     @Test
     public void shouldUpdateUser() {
         User user = getFakeUser();
-        mockUserDao.save(user);
+        mockUserDao.save(user, false);
         EasyMock.replay(mockUserDao);
 
-        userService.updateUser(user);
+        userService.updateUser(user, false);
     }
 
     @Test
@@ -293,7 +293,7 @@ public class UserServiceTests {
         String statusStr = "active";
         User user = getFakeUser();
 
-        mockUserDao.save(user);
+        mockUserDao.save(user,false);
         EasyMock.replay(mockUserDao);
 
         userService.updateUserStatus(user, statusStr);
@@ -306,7 +306,7 @@ public class UserServiceTests {
         String statusStr = "inactive";
         User user = getFakeUser();
 
-        mockUserDao.save(user);
+        mockUserDao.save(user, false);
         EasyMock.replay(mockUserDao);
 
         userService.updateUserStatus(user, statusStr);

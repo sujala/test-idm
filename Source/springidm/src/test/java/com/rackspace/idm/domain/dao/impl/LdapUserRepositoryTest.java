@@ -128,7 +128,7 @@ public class LdapUserRepositoryTest {
         }
 
         try {
-            repo.save(null);
+            repo.save(null, false);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
@@ -255,7 +255,7 @@ public class LdapUserRepositoryTest {
 
         newUser.setSoftDeleted(true);
 
-        repo.save(newUser);
+        repo.save(newUser, false);
 
         User deletedUser = repo.findByUsername(newUser.getUsername());
         User notFound = repo.findUser(newUser.getCustomerId(), newUser.getUsername());
@@ -265,7 +265,7 @@ public class LdapUserRepositoryTest {
 
         deletedUser.setSoftDeleted(false);
 
-        repo.save(deletedUser);
+        repo.save(deletedUser, false);
 
         User restoredUser = repo.findUser(deletedUser.getCustomerId(), deletedUser.getUsername());
         Assert.assertNotNull(restoredUser);
@@ -279,7 +279,7 @@ public class LdapUserRepositoryTest {
         User newUser = addNewTestUser();
         newUser.setSoftDeleted(true);
 
-        repo.save(newUser);
+        repo.save(newUser, false);
 
         User softDeletedUser = repo.findByUsername(newUser.getUsername());
 
@@ -287,7 +287,7 @@ public class LdapUserRepositoryTest {
 
         softDeletedUser.setSoftDeleted(false);
 
-        repo.save(softDeletedUser);
+        repo.save(softDeletedUser, false);
 
         User unSoftDeletedUser = repo.findUser(newUser.getCustomerId(), newUser.getUsername());
 
@@ -321,7 +321,7 @@ public class LdapUserRepositoryTest {
         newUser.setPasswordObj(Password.existingInstance("password", new DateTime(), false));
 
         try {
-            repo.save(newUser);
+            repo.save(newUser, false);
         } catch (IllegalStateException e) {
             repo.delete(newUser.getUsername());
             Assert.fail("Could not save the record: " + e.getMessage());
@@ -352,7 +352,7 @@ public class LdapUserRepositoryTest {
 
         // save user
         try {
-            repo.save(changedUser);
+            repo.save(changedUser, true);
         } catch (IllegalStateException e) {
             repo.delete(newUser.getUsername());
             Assert.fail("Could not save the record: " + e.getMessage());
@@ -374,7 +374,7 @@ public class LdapUserRepositoryTest {
         cUser.setLastname("changed_last_name");
         cUser.setPasswordObj(Password.newInstance("newpassword!"));
 
-        List<Modification> mods = repo.getModifications(user, cUser);
+        List<Modification> mods = repo.getModifications(user, cUser, false);
 
         Assert.assertEquals(5, mods.size());
         Assert.assertEquals("newpassword!", mods.get(3).getAttribute()

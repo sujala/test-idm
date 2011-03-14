@@ -170,9 +170,9 @@ public class UserResource {
         user.copyChanges(updatedUser);
         validateParam(user);
 
-        boolean isSelfUpdate = username.equals(token.getOwner());
         try {
-            this.userService.updateUser(user, isSelfUpdate);
+            // Password can only be updated via the UserPasswordResource
+            this.userService.updateUser(user, false);
         } catch (DuplicateException ex) {
             String errorMsg = ex.getMessage();
             logger.error(errorMsg);

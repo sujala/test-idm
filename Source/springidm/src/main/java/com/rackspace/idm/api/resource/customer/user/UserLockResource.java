@@ -99,7 +99,7 @@ public class UserLockResource {
         }
 
         user.setLocked(inputUser.isLocked());
-        this.userService.updateUser(user);
+        this.userService.updateUser(user, false);
         if (inputUser.isLocked()) {
             oauthService.revokeTokensGloballyForOwner(username);
         }

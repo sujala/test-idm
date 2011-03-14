@@ -225,7 +225,8 @@ public class UserPasswordResource {
         User user = checkAndGetUser(customerId, username);
 
         user.setPasswordObj(Password.newInstance(userCred.getNewPassword().getPassword()));
-        this.userService.updateUser(user);
+        boolean isSelfUpdate = token.getOwner().equals(username);
+        this.userService.updateUser(user, isSelfUpdate);
         logger.debug("Updated password for user: {}", user);
         return Response.ok(userCred).build();
     }
