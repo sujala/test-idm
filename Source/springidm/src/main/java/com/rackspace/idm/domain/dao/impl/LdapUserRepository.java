@@ -393,8 +393,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user == null;
     }
 
-    /* (non-Javadoc)
-     * @see com.rackspace.idm.domain.dao.UserDao#save(com.rackspace.idm.domain.entity.User, boolean)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.rackspace.idm.domain.dao.UserDao#save(com.rackspace.idm.domain.entity
+     * .User, boolean)
      */
     @Override
     public void save(User user, boolean hasSelfUpdatedPassword) {
@@ -625,6 +629,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         if (!StringUtils.isBlank(user.getPasswordObj().getValue())) {
             atts.add(new Attribute(ATTR_PASSWORD, user.getPasswordObj().getValue()));
             atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(user.getPassword())));
+            atts.add(new Attribute(ATTR_PASSWORD_SELF_UPDATED, Boolean.FALSE.toString()));
+            atts.add(new Attribute(ATTR_PASSWORD_UPDATED_TIMESTAMP, DATE_PARSER.print(new DateTime())));
         }
 
         if (!StringUtils.isBlank(user.getRegion())) {

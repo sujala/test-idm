@@ -52,6 +52,7 @@ public final class Password {
         return value;
     }
 
+    @Deprecated
     public String getValueNoPrefix() {
         String val = value;
 
@@ -97,6 +98,11 @@ public final class Password {
         if (StringUtils.isBlank(existingPassword)) {
             throw new IllegalArgumentException("Null or blank password was passed in");
         }
+
+        if (lasteUpdated == null) {
+            throw new IllegalArgumentException("Null date entered.");
+        }
+
         return new Password(existingPassword, false, lasteUpdated, wasSelfUpdated);
     }
 
