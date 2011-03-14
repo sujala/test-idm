@@ -472,7 +472,7 @@ public class UsersResource {
 
         user.setMossoId(jaxbUser.getMossoId());
 
-        this.userService.updateUser(user);
+        this.userService.updateUser(user, false);
 
         logger.debug("Updated MossoId for User: {}", user);
 
@@ -516,7 +516,7 @@ public class UsersResource {
 
         user.setNastId(jaxbUser.getNastId());
 
-        this.userService.updateUser(user);
+        this.userService.updateUser(user, false);
 
         logger.debug("Updated NastID for User: {}", user);
 
@@ -564,7 +564,7 @@ public class UsersResource {
 
         user.setPersonId(jaxbUser.getPersonId());
 
-        this.userService.updateUser(user);
+        this.userService.updateUser(user, false);
 
         logger.debug("Updated RPN for User: {}", user);
 

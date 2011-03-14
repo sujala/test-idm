@@ -306,16 +306,18 @@ public class DefaultUserService implements UserService {
 
     }
 
-    public void updateUser(User user) {
+    @Override
+    public void updateUser(User user, boolean hasSelfUpdatedPassword) {
         logger.info("Updating User: {}", user);
-        this.userDao.save(user);
+        this.userDao.save(user, hasSelfUpdatedPassword);
         logger.info("Updated User: {}", user);
     }
 
+    @Override
     public void updateUserStatus(User user, String statusStr) {
         UserStatus status = Enum.valueOf(UserStatus.class, statusStr.toUpperCase());
         user.setStatus(status);
-        this.userDao.save(user);
+        this.userDao.save(user, false);
 
         logger.info("Updated User's status: {}, {}", user, status);
     }
@@ -326,7 +328,7 @@ public class DefaultUserService implements UserService {
                                                                // ever reset his
                                                                // own password?
         user.setPasswordObj(newPassword);
-        userDao.save(user);
+        userDao.save(user, false);
         logger.debug("Updated password for user: {}", user);
 
         return newPassword.toExisting();

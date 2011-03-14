@@ -129,9 +129,10 @@ public class UserPasswordResource {
         AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
+        boolean isSelfUpdate = username.equals(token.getOwner());
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
-            || authorizationService.authorizeAdmin(token, customerId);
+            || (authorizationService.authorizeAdmin(token, customerId) && !isSelfUpdate);
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call", token);

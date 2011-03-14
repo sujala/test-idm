@@ -107,7 +107,7 @@ public class UserSoftDeleteResource {
 
         user.setSoftDeleted(softDelete);
 
-        this.userService.updateUser(user);
+        this.userService.updateUser(user, false);
 
         if (softDelete) {
             oauthService.revokeTokensGloballyForOwner(username);

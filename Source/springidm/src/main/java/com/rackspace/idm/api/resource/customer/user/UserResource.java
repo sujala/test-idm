@@ -118,9 +118,7 @@ public class UserResource {
         logger.debug("Got User :{}", user);
         return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
     }
-    
-  
-   
+
     /**
      * Updates a user.
      * 
@@ -172,8 +170,9 @@ public class UserResource {
         user.copyChanges(updatedUser);
         validateParam(user);
 
+        boolean isSelfUpdate = username.equals(token.getOwner());
         try {
-            this.userService.updateUser(user);
+            this.userService.updateUser(user, isSelfUpdate);
         } catch (DuplicateException ex) {
             String errorMsg = ex.getMessage();
             logger.error(errorMsg);
@@ -183,7 +182,7 @@ public class UserResource {
         logger.debug("Updated User: {}", user);
         return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
     }
-    
+
     /**
      * Deletes a user.
      * 

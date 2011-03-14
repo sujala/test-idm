@@ -27,7 +27,7 @@ public interface UserDao {
     User findByMossoId(int mossoId);
 
     User findByNastId(String nastId);
-    
+
     User findByRPN(String rpn);
 
     User findByUsername(String username);
@@ -40,7 +40,11 @@ public interface UserDao {
 
     boolean isUsernameUnique(String username);
 
-    void save(User user);
+    /**
+     * @param user User instance with update changes
+     * @param hasSelfUpdatedPassword True if the user is changing his/her own password.
+     */
+    void save(User user, boolean hasSelfUpdatedPassword);
 
     void setAllUsersLocked(String customerId, boolean locked);
 }

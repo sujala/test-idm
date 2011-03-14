@@ -8,7 +8,9 @@ import java.util.List;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Seconds;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.UserDao;
@@ -18,6 +20,7 @@ import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.PasswordValidationException;
 import com.rackspace.idm.exception.StalePasswordException;
 import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.util.CryptHelper;
@@ -41,7 +44,6 @@ import com.unboundid.ldap.sdk.controls.VirtualListViewRequestControl;
 import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
 
 public class LdapUserRepository extends LdapRepository implements UserDao {
-
     private static final String[] ATTR_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE,
         ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
 
@@ -391,7 +393,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user == null;
     }
 
-    public void save(User user) {
+    /* (non-Javadoc)
+     * @see com.rackspace.idm.domain.dao.UserDao#save(com.rackspace.idm.domain.entity.User, boolean)
+     */
+    @Override
+    public void save(User user, boolean hasSelfUpdatedPassword) {
         getLogger().info("Updating user {}", user);
         if (user == null || StringUtils.isBlank(user.getUsername())) {
             getLogger().error("User instance is null or its userName has no value");
@@ -410,7 +416,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         LDAPResult result = null;
         try {
-            List<Modification> mods = getModifications(oldUser, user);
+            List<Modification> mods = getModifications(oldUser, user, hasSelfUpdatedPassword);
             audit.modify(mods);
 
             if (mods.size() < 1) {
@@ -452,12 +458,13 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Updated user - {}", user);
     }
 
+    @Override
     public void setAllUsersLocked(String customerId, boolean isLocked) {
         Users users = this.findFirst100ByCustomerIdAndLock(customerId, !isLocked);
         if (users.getUsers() != null && users.getUsers().size() > 0) {
             for (User user : users.getUsers()) {
                 user.setLocked(isLocked);
-                this.save(user);
+                this.save(user, false);
             }
         }
         if (users.getTotalRecords() > 0) {
@@ -819,9 +826,28 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return new UserAuthenticationResult(user, isAuthenticated);
     }
 
-    List<Modification> getModifications(User uOld, User uNew) throws GeneralSecurityException {
+    List<Modification> getModifications(User uOld, User uNew, boolean isSelfUpdate)
+        throws GeneralSecurityException {
         CryptHelper cryptHelper = CryptHelper.getinstance();
         List<Modification> mods = new ArrayList<Modification>();
+
+        if (uNew.getPasswordObj().isNew()) {
+            if (isSelfUpdate) {
+                Password oldPwd = uOld.getPasswordObj();
+                int secsSinceLastChange = Seconds.secondsBetween(oldPwd.getLastUpdated(), new DateTime())
+                    .getSeconds();
+                if (oldPwd.wasSelfUpdated() && secsSinceLastChange < DateTimeConstants.SECONDS_PER_DAY) {
+                    throw new PasswordValidationException(
+                        "Users cannot change own password more than once in a 24-hour period.");
+                }
+            }
+
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD, uNew.getPasswordObj()
+                .getValue()));
+
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(uNew
+                .getPasswordObj().getValue())));
+        }
 
         if (uNew.getCountry() != null) {
             if (StringUtils.isBlank(uNew.getCountry())) {
@@ -937,14 +963,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         if (uNew.getTimeZoneObj() != null && !uNew.getTimeZone().equals(uOld.getTimeZone())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_TIME_ZONE, uNew.getTimeZone()));
-        }
-
-        if (uNew.getPasswordObj().isNew()) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD, uNew.getPasswordObj()
-                .getValue()));
-
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(uNew
-                .getPasswordObj().getValue())));
         }
 
         if (uNew.isLocked() != null && uNew.isLocked() != uOld.isLocked()) {

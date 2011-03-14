@@ -147,7 +147,7 @@ public class UserSecretResource {
 
         user.setSecretQuestion(userSecret.getSecretQuestion());
         user.setSecretAnswer(userSecret.getSecretAnswer());
-        this.userService.updateUser(user);
+        this.userService.updateUser(user, false);
 
         logger.debug("Updated Secret Q&A for user: {}", user);
 

@@ -40,7 +40,7 @@ public interface UserService {
     void sendRecoveryEmail(String username, String userEmail, PasswordRecovery recoveryParam,
         String tokenString);
 
-    void updateUser(User user);
+    void updateUser(User user, boolean hasSelfUpdatedPassword);
 
     Password resetUserPassword(User user);
 
