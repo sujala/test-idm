@@ -91,7 +91,7 @@ public class DefaultUserService implements UserService {
         user.setStatus(UserStatus.ACTIVE);
 
         if (user.getPasswordObj() == null || StringUtils.isBlank(user.getPassword())) {
-            Password newpassword = Password.generateRandom(true);
+            Password newpassword = Password.generateRandom(false); // False, since a user wouldn't add himself.
             user.setPasswordObj(newpassword);
         } else
 
