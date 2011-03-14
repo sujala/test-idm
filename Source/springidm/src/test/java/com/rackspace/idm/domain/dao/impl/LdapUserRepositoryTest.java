@@ -25,6 +25,7 @@ import com.rackspace.idm.domain.entity.UserLocale;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
 import com.unboundid.ldap.sdk.Modification;
+import com.unboundid.ldap.sdk.ModificationType;
 
 public class LdapUserRepositoryTest {
 
@@ -182,7 +183,7 @@ public class LdapUserRepositoryTest {
 
         repo.delete(newUser.getUsername());
     }
-    
+
     @Test
     public void shouldFindOneUserThatExistsByRPN() {
         User newUser = addNewTestUser();
@@ -191,7 +192,7 @@ public class LdapUserRepositoryTest {
         Assert.assertEquals("deleteme", user.getUsername());
 
         repo.delete(newUser.getUsername());
-    }   
+    }
 
     @Test
     public void shouldNotFindOneUserThatDoesNotExistsByNastId() {
@@ -372,12 +373,15 @@ public class LdapUserRepositoryTest {
         cUser.setEmail("changed@deleteme.com");
         cUser.setFirstname("changed_first_name");
         cUser.setLastname("changed_last_name");
-        cUser.setPasswordObj(Password.newInstance("newpassword!"));
+        Password newPassword = Password.newInstance("newpassword!");
+        cUser.setPasswordObj(newPassword);
 
         List<Modification> mods = repo.getModifications(user, cUser, false);
 
         Assert.assertEquals(5, mods.size());
-        Assert.assertEquals("newpassword!", mods.get(3).getAttribute()
+        String expectedPasswordValue = new Modification(ModificationType.REPLACE, LdapRepository.ATTR_PASSWORD,
+            "newpassword!", newPassword.getValue()).getAttribute().getValue();
+        Assert.assertEquals(expectedPasswordValue, mods.get(0).getAttribute()
             .getValue());
     }
 
