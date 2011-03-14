@@ -33,6 +33,7 @@ import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
 import com.rackspace.idm.exception.PasswordValidationException;
 import com.rackspace.idm.exception.PermissionConflictException;
 import com.rackspace.idm.exception.StalePasswordException;
@@ -46,6 +47,7 @@ import com.rackspace.idm.jaxb.Forbidden;
 import com.rackspace.idm.jaxb.IdmFault;
 import com.rackspace.idm.jaxb.ItemNotFound;
 import com.rackspace.idm.jaxb.MethodNotAllowed;
+import com.rackspace.idm.jaxb.PasswordSelfUpdateTooSoonFault;
 import com.rackspace.idm.jaxb.PasswordValidationFault;
 import com.rackspace.idm.jaxb.PermissionIdConflict;
 import com.rackspace.idm.jaxb.ServerError;
@@ -99,6 +101,9 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         }
         if (e instanceof PasswordValidationException) {
             return toResponse(new PasswordValidationFault(), e, 400);
+        }
+        if (e instanceof PasswordSelfUpdateTooSoonException) {
+            return toResponse(new PasswordSelfUpdateTooSoonFault(), e, 400);
         }
         if (e instanceof StalePasswordException) {
             return toResponse(new StalePasswordFault(), e, 409);
@@ -162,7 +167,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             }
         }
 
-        
         logger.error(e.getCause().getMessage());
         return toResponse(new ServerError(), e, 500);
     }

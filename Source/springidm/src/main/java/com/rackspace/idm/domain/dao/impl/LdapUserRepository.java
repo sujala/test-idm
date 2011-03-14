@@ -20,7 +20,7 @@ import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.PasswordValidationException;
+import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
 import com.rackspace.idm.exception.StalePasswordException;
 import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.util.CryptHelper;
@@ -844,8 +844,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 int secsSinceLastChange = Seconds.secondsBetween(oldPwd.getLastUpdated(), currentTime)
                     .getSeconds();
                 if (oldPwd.wasSelfUpdated() && secsSinceLastChange < DateTimeConstants.SECONDS_PER_DAY) {
-                    throw new PasswordValidationException(
-                        "Users cannot change own password more than once in a 24-hour period.");
+                    throw new PasswordSelfUpdateTooSoonException();
                 }
             }
 

@@ -313,28 +313,28 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
-	
-	   <element name="clientGroupConflict" type="idm:ClientGroupConflictFault">
-        <annotation>
-            <xsd:documentation xml:lang="EN"
-                xmlns="http://www.w3.org/1999/xhtml">
-                <p>
-                    A client group with that name already exists.
+
+	<element name="clientGroupConflict" type="idm:ClientGroupConflictFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					A client group with that name already exists.
              </p>
-            </xsd:documentation>
-            <xsd:appinfo>
-                <xsdxt:samples>
-                    <xsdxt:sample>
-                        <xsdxt:code type="application/xml" href="../samples/clientgroup_conflict.xml" />
-                    </xsdxt:sample>
-                    <xsdxt:sample>
-                        <xsdxt:code type="application/json" href="../samples/clientgroup_conflict.json" />
-                    </xsdxt:sample>
-                </xsdxt:samples>
-            </xsd:appinfo>
-        </annotation>
-    </element>
-	
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../samples/clientgroup_conflict.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/clientgroup_conflict.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
 	<element name="serviceUnavailable" type="idm:ServiceUnavailableFault">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -369,6 +369,30 @@
 					<xsdxt:sample>
 						<xsdxt:code type="application/xml"
 							href="../samples/passwordvalidationfault.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+
+	<element name="passwordSelfUpdateTooSoonFault" type="idm:PasswordSelfUpdateTooSoonFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					User or admin attempted to update his/her own password more than
+					once in the 24-hour period since the last self-update.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml"
+							href="../samples/passwordselfupdatetoosoonfault.xml" />
 					</xsdxt:sample>
 					<xsdxt:sample>
 						<xsdxt:code type="application/json" href="../samples/.json" />
@@ -584,6 +608,12 @@
 	</complexType>
 
 	<complexType name="PasswordValidationFault">
+		<complexContent>
+			<extension base="idm:IdmFault"></extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="PasswordSelfUpdateTooSoonFault">
 		<complexContent>
 			<extension base="idm:IdmFault"></extension>
 		</complexContent>

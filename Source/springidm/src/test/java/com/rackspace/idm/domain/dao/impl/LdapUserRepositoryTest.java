@@ -24,7 +24,7 @@ import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.exception.PasswordValidationException;
+import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
 
@@ -490,7 +490,7 @@ public class LdapUserRepositoryTest {
         repo.delete(newUser.getUsername());
     }
 
-    @Test(expected = PasswordValidationException.class)
+    @Test(expected = PasswordSelfUpdateTooSoonException.class)
     public void shouldNotAllowPasswordSelfUpdateWithin24Hours() {
         User newUser = addNewTestUser();
         Password pwd0 = Password.newInstance("newPassword0");
