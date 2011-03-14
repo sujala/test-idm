@@ -24,6 +24,7 @@ import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
+import com.rackspace.idm.exception.PasswordValidationException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
 
@@ -348,8 +349,8 @@ public class LdapUserRepositoryTest {
 
         // update password
         Password newpass = Password.newInstance("newpass");
-        newUser.setPasswordObj(newpass);
-        Assert.assertTrue(newUser.getPasswordObj().isNew());
+        changedUser.setPasswordObj(newpass);
+        Assert.assertTrue(changedUser.getPasswordObj().isNew());
 
         // save user
         try {
@@ -378,11 +379,11 @@ public class LdapUserRepositoryTest {
 
         List<Modification> mods = repo.getModifications(user, cUser, false);
 
-        Assert.assertEquals(5, mods.size());
-        String expectedPasswordValue = new Modification(ModificationType.REPLACE, LdapRepository.ATTR_PASSWORD,
-            "newpassword!", newPassword.getValue()).getAttribute().getValue();
-        Assert.assertEquals(expectedPasswordValue, mods.get(0).getAttribute()
-            .getValue());
+        Assert.assertEquals(7, mods.size()); // 5 if the password hadn't been
+                                             // changed
+        String expectedPasswordValue = new Modification(ModificationType.REPLACE,
+            LdapRepository.ATTR_PASSWORD, "newpassword!", newPassword.getValue()).getAttribute().getValue();
+        Assert.assertEquals(expectedPasswordValue, mods.get(2).getAttribute().getValue());
     }
 
     @Test
@@ -487,6 +488,17 @@ public class LdapUserRepositoryTest {
         Assert.assertTrue(newUser.isMaxLoginFailuresExceded());
 
         repo.delete(newUser.getUsername());
+    }
+
+    @Test(expected = PasswordValidationException.class)
+    public void shouldNotAllowPasswordSelfUpdateWithin24Hours() {
+        User newUser = addNewTestUser();
+        Password pwd0 = Password.newInstance("newPassword0");
+        newUser.setPasswordObj(pwd0);
+        repo.save(newUser, true);
+        Password pwd1 = Password.newInstance("newPassword1");
+        newUser.setPasswordObj(pwd1);
+        repo.save(newUser, true);
     }
 
     private User addNewTestUser() {

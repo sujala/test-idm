@@ -837,10 +837,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         CryptHelper cryptHelper = CryptHelper.getinstance();
         List<Modification> mods = new ArrayList<Modification>();
 
+        DateTime currentTime = new DateTime();
         if (uNew.getPasswordObj().isNew()) {
             if (isSelfUpdate) {
                 Password oldPwd = uOld.getPasswordObj();
-                int secsSinceLastChange = Seconds.secondsBetween(oldPwd.getLastUpdated(), new DateTime())
+                int secsSinceLastChange = Seconds.secondsBetween(oldPwd.getLastUpdated(), currentTime)
                     .getSeconds();
                 if (oldPwd.wasSelfUpdated() && secsSinceLastChange < DateTimeConstants.SECONDS_PER_DAY) {
                     throw new PasswordValidationException(
@@ -848,9 +849,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 }
             }
 
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SELF_UPDATED, Boolean
+                .toString(isSelfUpdate)));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_UPDATED_TIMESTAMP, DATE_PARSER
+                .print(currentTime)));
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD, uNew.getPasswordObj()
                 .getValue()));
-
             mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(uNew
                 .getPasswordObj().getValue())));
         }
@@ -981,7 +985,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
             if (uNew.isSoftDeleted()) {
                 mods.add(new Modification(ModificationType.ADD, ATTR_SOFT_DELETED_DATE, String
-                    .valueOf(new DateTime())));
+                    .valueOf(currentTime)));
             } else {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_SOFT_DELETED_DATE));
             }
