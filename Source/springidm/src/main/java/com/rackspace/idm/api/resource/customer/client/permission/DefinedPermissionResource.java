@@ -306,7 +306,7 @@ public class DefinedPermissionResource {
         
         this.clientService.grantPermission(targetClient.getClientId(), permissionToGrant);
             
-        return Response.ok(permissionToGrant).build();
+        return Response.ok(permissionConverter.toPermissionJaxb(permissionToGrant)).build();
     }
 
     /**
@@ -345,7 +345,7 @@ public class DefinedPermissionResource {
         this.clientService.revokePermission(targetClient.getClientId(),
             permissionToRevoke);
 
-        return Response.ok(permissionToRevoke).build();
+        return Response.ok(permissionConverter.toPermissionJaxb(permissionToRevoke)).build();
     }
 
     private void checkGrantRevokePermissionAuthorization(String authHeader,
