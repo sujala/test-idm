@@ -15,13 +15,12 @@ import org.junit.Test;
 
 import com.rackspace.idm.domain.config.DataCenterEndpoints;
 import com.rackspace.idm.domain.config.MemcachedConfiguration;
-import com.rackspace.idm.domain.dao.impl.HttpAccessTokenRepository;
 import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Permission;
-import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.test.stub.StubLogger;
 import com.sun.jersey.api.client.Client;
 
@@ -55,7 +54,7 @@ public class HttpAccessTokenRepositoryTest {
     @Ignore("Inserts test token on the 'remote' server's memcached. Invoke manually for debugging the client service call.")
     public void deleteUserTokenInMemcached() {
         mcdRemote.delete(QA_TOKEN_STRING);
-        mcdRemote.delete(getTokenKeyByClientId(TOKEN_OWNER, TOKEN_REQUESTOR));
+        mcdRemote.delete(TOKEN_OWNER);
     }
 
     @Test
@@ -66,8 +65,11 @@ public class HttpAccessTokenRepositoryTest {
         // Add a token to a "cross-data-center" location, with expiration set in
         // seconds.
         mcdRemote.set(QA_TOKEN_STRING, tokenExpInSec, token);
-        mcdRemote.set(getTokenKeyByClientId(token.getOwner(), token.getRequestor()), tokenExpInSec,
-            token.getTokenString());
+        mcdRemote.set(
+            token.getOwner(),
+            tokenExpInSec,
+            getUserTokenStrings(token.getOwner(), token.getRequestor(), token.getExpiration(),
+                token.getTokenString()));
     }
 
     @Test
@@ -81,8 +83,10 @@ public class HttpAccessTokenRepositoryTest {
         Assert.assertNotNull(remoteToken.getTokenClient());
     }
 
-    private String getTokenKeyByClientId(String owner, String requestor) {
-        return owner + "_" + requestor;
+    private UserTokenStrings getUserTokenStrings(String owner, String requestor, int exp, String tokenString) {
+        UserTokenStrings uts = new UserTokenStrings(owner);
+        uts.put(requestor, exp, tokenString);
+        return uts;
     }
 
     @Test

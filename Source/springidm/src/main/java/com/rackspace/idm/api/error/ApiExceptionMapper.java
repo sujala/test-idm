@@ -103,7 +103,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             return toResponse(new PasswordValidationFault(), e, 400);
         }
         if (e instanceof PasswordSelfUpdateTooSoonException) {
-            return toResponse(new PasswordSelfUpdateTooSoonFault(), e, 400);
+            return toResponse(new PasswordSelfUpdateTooSoonFault(), e, 409);
         }
         if (e instanceof StalePasswordException) {
             return toResponse(new StalePasswordFault(), e, 409);
