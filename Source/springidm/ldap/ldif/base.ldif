@@ -766,7 +766,7 @@ objectClass: clientPermission
 cn: UpdateCustomerClientDefinedPermission
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: POST customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+
+blob: PUT customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+
 
 dn: cn=GetMyCustomerClientDefinedPermission,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
