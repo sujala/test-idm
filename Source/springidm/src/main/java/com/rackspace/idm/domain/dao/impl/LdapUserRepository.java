@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
@@ -81,7 +82,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             getLogger().error(e.getMessage());
             audit.fail("encryption error");
             throw new IllegalStateException(e);
-        }
+        } catch (InvalidCipherTextException e) {
+        	getLogger().error(e.getMessage());
+        	audit.fail("encryption error");
+        	throw new IllegalStateException(e);
+		}
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
             String errorString = String.format("Error adding user %s - %s", user.getUsername(),
@@ -443,7 +448,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             getLogger().error(e.getMessage());
             audit.fail("encryption error");
             throw new IllegalStateException(e);
-        }
+        } catch (InvalidCipherTextException e) {
+        	getLogger().error(e.getMessage());
+        	audit.fail("encryption error");
+        	throw new IllegalStateException(e);
+		}
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
             String errorString = String.format("Error updating user %s - %s", user.getUsername(),
@@ -549,8 +558,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return users;
     }
 
-    private Attribute[] getAddAttributes(User user) throws GeneralSecurityException {
-        CryptHelper cryptHelper = CryptHelper.getinstance();
+    private Attribute[] getAddAttributes(User user) throws GeneralSecurityException, InvalidCipherTextException {
+        CryptHelper cryptHelper = CryptHelper.getInstance();
 
         List<Attribute> atts = new ArrayList<Attribute>();
 
@@ -700,7 +709,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         } catch (GeneralSecurityException e) {
             getLogger().error(e.getMessage());
             throw new IllegalStateException(e);
-        }
+        } catch (InvalidCipherTextException e) {
+        	getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+		}
 
         getLogger().debug("Found users {}", userList);
 
@@ -735,15 +747,18 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         } catch (GeneralSecurityException e) {
             getLogger().error("Encryption error", e);
             throw new IllegalStateException(e);
-        }
+        } catch (InvalidCipherTextException e) {
+        	getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+		}
 
         getLogger().debug("Found User - {}", user);
 
         return user;
     }
 
-    private User getUser(SearchResultEntry resultEntry) throws GeneralSecurityException {
-        CryptHelper cryptHelper = CryptHelper.getinstance();
+    private User getUser(SearchResultEntry resultEntry) throws GeneralSecurityException, InvalidCipherTextException {
+        CryptHelper cryptHelper = CryptHelper.getInstance();
         User user = new User();
         user.setUniqueId(resultEntry.getDN());
         user.setUsername(resultEntry.getAttributeValue(ATTR_UID));
@@ -772,8 +787,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD));
         Date lastUpdates = resultEntry.getAttributeValueAsDate(ATTR_PASSWORD_UPDATED_TIMESTAMP);
-        Boolean wasSelfUpdated = resultEntry.getAttributeValueAsBoolean(ATTR_PASSWORD_SELF_UPDATED);
-        Password pwd = Password.existingInstance(ecryptedPwd, new DateTime(lastUpdates), wasSelfUpdated);
+        boolean wasSelfUpdated = resultEntry.getAttributeValueAsBoolean(ATTR_PASSWORD_SELF_UPDATED);
+        DateTime lasteUpdated = new DateTime(lastUpdates);
+		Password pwd = Password.existingInstance(ecryptedPwd, lasteUpdated, wasSelfUpdated);
         user.setPasswordObj(pwd);
 
         user.setRegion(resultEntry.getAttributeValue(ATTR_RACKSPACE_REGION));
@@ -833,8 +849,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     List<Modification> getModifications(User uOld, User uNew, boolean isSelfUpdate)
-        throws GeneralSecurityException {
-        CryptHelper cryptHelper = CryptHelper.getinstance();
+        throws GeneralSecurityException, InvalidCipherTextException {
+        CryptHelper cryptHelper = CryptHelper.getInstance();
         List<Modification> mods = new ArrayList<Modification>();
 
         DateTime currentTime = new DateTime();

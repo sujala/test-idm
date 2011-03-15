@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Locale;
 
 import org.apache.commons.configuration.Configuration;
+import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.After;
@@ -368,7 +369,7 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
-    public void shouldGenerateModifications() throws GeneralSecurityException {
+    public void shouldGenerateModifications() throws GeneralSecurityException, InvalidCipherTextException {
         User user = createTestUserInstance();
         User cUser = createTestUserInstance();
         cUser.setEmail("changed@deleteme.com");
