@@ -22,29 +22,37 @@ import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.test.stub.StubLogger;
-import com.sun.jersey.api.client.Client;
 
 public class HttpAccessTokenRepositoryTest {
     private static final String TOKEN_OWNER = "userTested";
     private static final String TOKEN_REQUESTOR = "controlpanel";
     private static final String IDM_CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221";
     private static final String QA_TOKEN_STRING = "QA-xdctesttokenstring";
-    private Client c = Client.create();
-    private MemcachedClient mcdRemote;
+    private MemcachedAccessTokenRepository tokenRepo;
     private HttpAccessTokenRepository repo;
+    private DataCenterEndpoints endpoints;
+    private Configuration config;
 
-    @Before
-    public void setUp() {
-        // Use the QA memcached server to simulated XDC token store
-        Configuration config = new PropertiesConfiguration();
+    public HttpAccessTokenRepositoryTest() {
+        // Config for memcached client
+        config = new PropertiesConfiguration();
         config.addProperty("memcached.serverList", "10.127.7.165:11211");
         config.addProperty("idm.clientId", IDM_CLIENT_ID);
         config.addProperty("idm.clientSecret", "password");
         String[] dcs = {"QA|http://10.127.7.164:8080/v1.0"};
         config.addProperty("dc", dcs);
 
-        DataCenterEndpoints endpoints = new DataCenterEndpoints(config);
-        mcdRemote = new MemcachedConfiguration(config, new StubLogger()).memcacheClient();
+        // Config for memcached repo
+        config.addProperty("racker.client_id", "RACKER");
+
+        endpoints = new DataCenterEndpoints(config);
+        MemcachedClient mcdRemote = new MemcachedConfiguration(config, new StubLogger()).memcacheClient();
+        tokenRepo = new MemcachedAccessTokenRepository(mcdRemote, config);
+    }
+
+    @Before
+    public void setUp() {
+
         // Delete any old token
         deleteUserTokenInMemcached();
         repo = new HttpAccessTokenRepository(endpoints, config);
@@ -53,8 +61,7 @@ public class HttpAccessTokenRepositoryTest {
     @Test
     @Ignore("Inserts test token on the 'remote' server's memcached. Invoke manually for debugging the client service call.")
     public void deleteUserTokenInMemcached() {
-        mcdRemote.delete(QA_TOKEN_STRING);
-        mcdRemote.delete(TOKEN_OWNER);
+        tokenRepo.delete(QA_TOKEN_STRING);
     }
 
     @Test
@@ -64,12 +71,7 @@ public class HttpAccessTokenRepositoryTest {
         AccessToken token = getNewToken(tokenExpInSec);
         // Add a token to a "cross-data-center" location, with expiration set in
         // seconds.
-        mcdRemote.set(QA_TOKEN_STRING, tokenExpInSec, token);
-        mcdRemote.set(
-            token.getOwner(),
-            tokenExpInSec,
-            getUserTokenStrings(token.getOwner(), token.getRequestor(), token.getExpiration(),
-                token.getTokenString()));
+        tokenRepo.save(token);
     }
 
     @Test
