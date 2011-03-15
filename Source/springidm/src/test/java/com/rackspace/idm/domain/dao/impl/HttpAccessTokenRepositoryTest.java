@@ -85,12 +85,6 @@ public class HttpAccessTokenRepositoryTest {
         Assert.assertNotNull(remoteToken.getTokenClient());
     }
 
-    private UserTokenStrings getUserTokenStrings(String owner, String requestor, int exp, String tokenString) {
-        UserTokenStrings uts = new UserTokenStrings(owner);
-        uts.put(requestor, exp, tokenString);
-        return uts;
-    }
-
     @Test
     public void shouldGetMyToken() {
         AccessToken idmTk = repo.getMyAccessToken("QA", false);
