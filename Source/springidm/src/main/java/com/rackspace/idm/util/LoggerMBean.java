@@ -18,6 +18,7 @@ public class LoggerMBean {
 	@ManagedOperation
 	public void setLogLevel(String level) {
 		l.setLevel(Level.toLevel(level));
+		l.info("Logger level for \"com.rackspace.idm\" set to " + l.getLevel());
 	}
 	
 }

@@ -167,7 +167,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             }
         }
 
-        logger.error(e.getCause().getMessage());
+        logger.error(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
         return toResponse(new ServerError(), e, 500);
     }
 
@@ -209,14 +209,16 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
 
         ResponseBuilder builder = Response.status(code).entity(fault);
         List<String> acceptHeaderVals = headers.getRequestHeader(HttpHeaders.ACCEPT);
-        boolean isOctetStreamResponse = acceptHeaderVals.get(0).equals(MediaType.APPLICATION_OCTET_STREAM);
-        if (isOctetStreamResponse) {
-            // Convert to a different response
-            MediaType respType = MediaType.APPLICATION_JSON_TYPE;
-            if (acceptHeaderVals.size() > 1) {
-                respType = MediaType.valueOf(acceptHeaderVals.get(1));
-            }
-            return builder.type(respType).build();
+        if(acceptHeaderVals != null && acceptHeaderVals.size() > 0) {
+	        boolean isOctetStreamResponse = acceptHeaderVals.get(0).equals(MediaType.APPLICATION_OCTET_STREAM);
+	        if (isOctetStreamResponse) {
+	            // Convert to a different response
+	            MediaType respType = MediaType.APPLICATION_JSON_TYPE;
+	            if (acceptHeaderVals.size() > 1) {
+	                respType = MediaType.valueOf(acceptHeaderVals.get(1));
+	            }
+	            return builder.type(respType).build();
+	        }
         }
 
         return builder.build();

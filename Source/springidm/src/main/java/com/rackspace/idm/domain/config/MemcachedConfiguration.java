@@ -40,7 +40,7 @@ public class MemcachedConfiguration {
         try {
             String serverList = config.getString("memcached.serverList");
             logger
-                .debug("Creating memcached client for servers {}", serverList);
+                .info("Creating memcached client for servers {}", serverList);
             return new MemcachedClient(new BinaryConnectionFactory(), AddrUtil
                 .getAddresses(serverList));
         } catch (IOException ex) {

@@ -98,7 +98,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         }
 
         // authentication failed if we reach this point
-        logger.error("Authentication Failed.");
+        logger.warn("Authentication Failed for {} ", authHeader);
         throw new NotAuthenticatedException("Authentication Failed.");
     }
 

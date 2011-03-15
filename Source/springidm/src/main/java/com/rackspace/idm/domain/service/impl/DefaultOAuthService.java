@@ -75,8 +75,8 @@ public class DefaultOAuthService implements OAuthService {
         ClientAuthenticationResult caResult = clientService.authenticate(trParam.getClientId(),
             trParam.getClientSecret());
         if (!caResult.isAuthenticated()) {
-            String message = "Bad Client credentials.";
-            logger.warn(message);
+            String message = "Bad Client credentials for clientId {}";
+            logger.warn(message, trParam.getClientId());
 			throw new NotAuthenticatedException(message);
         }
 
@@ -86,8 +86,8 @@ public class DefaultOAuthService implements OAuthService {
             UserAuthenticationResult uaResult = userService.authenticate(trParam.getUsername(),
                 trParam.getPassword());
             if (!uaResult.isAuthenticated()) {
-                String message = "Bad User credentials.";
-                logger.warn(message);
+                String message = "Bad User credentials for userName {}";
+                logger.warn(message, trParam.getUsername());
 				throw new NotAuthenticatedException(message);
             }
 
@@ -126,7 +126,7 @@ public class DefaultOAuthService implements OAuthService {
             .getAccessTokenByTokenString(tokenStringRequestingDelete);
         if (requestingToken == null) {
             String error = "No entry found for token " + tokenStringRequestingDelete;
-            logger.debug(error);
+            logger.warn(error);
             throw new IllegalStateException(error);
         }
 
@@ -135,13 +135,13 @@ public class DefaultOAuthService implements OAuthService {
             String errMsg;
             errMsg = String.format("Requesting token %s not authorized to revoke token %s locally.",
                 tokenStringRequestingDelete, tokenToDelete);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         if (deletedToken.getRequestor() == null) {
             String error = String.format("Token %s does not have a requestor", deletedToken.getTokenString());
-            logger.debug(error);
+            logger.warn(error);
             throw new IllegalStateException(error);
         }
         accessTokenService.delete(deletedToken.getTokenString());
@@ -150,11 +150,11 @@ public class DefaultOAuthService implements OAuthService {
 
     @Override
     public void revokeTokensGlobally(String tokenStringRequestingDelete, String tokenToDelete) {
-        logger.info("Deleting Token {}", tokenToDelete);
+        logger.debug("Deleting Token {}", tokenToDelete);
         AccessToken deletedToken = accessTokenService.getAccessTokenByTokenStringGlobally(tokenToDelete);
         if (deletedToken == null) {
             String error = "No entry found for token " + tokenToDelete;
-            logger.debug(error);
+            logger.warn(error);
             throw new NotFoundException(error);
         }
 
@@ -162,7 +162,7 @@ public class DefaultOAuthService implements OAuthService {
             .getAccessTokenByTokenStringGlobally(tokenStringRequestingDelete);
         if (requestingToken == null) {
             String error = "No entry found for token " + tokenStringRequestingDelete;
-            logger.debug(error);
+            logger.warn(error);
             throw new IllegalStateException(error);
         }
 
@@ -176,19 +176,19 @@ public class DefaultOAuthService implements OAuthService {
             String errMsg;
             errMsg = String.format("Requesting token %s not authorized to revoke token %s.",
                 tokenStringRequestingDelete, tokenToDelete);
-            logger.error(errMsg);
+            logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         if (deletedToken.getRequestor() == null) {
             String error = String.format("Token %s does not have a requestor", deletedToken.getTokenString());
-            logger.debug(error);
+            logger.warn(error);
             throw new IllegalStateException(error);
         }
         // This user is to be completely logged out of the system.
         deleteRefreshTokenByAccessToken(deletedToken);
         accessTokenService.deleteAllGloballyForOwner(deletedToken.getOwner());
-        logger.info("Deleted Token {}", deletedToken);
+        logger.debug("Deleted Token {}", deletedToken);
     }
 
     @Override
