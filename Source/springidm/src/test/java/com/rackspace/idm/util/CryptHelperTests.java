@@ -5,12 +5,13 @@ import java.util.Random;
 
 import junit.framework.Assert;
 
+import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.junit.Test;
 
 public class CryptHelperTests {
 
 	@Test
-	public void shouldEncrypAndDecrypt() throws GeneralSecurityException {
+	public void shouldEncrypAndDecrypt() throws GeneralSecurityException, InvalidCipherTextException {
 		String secret = "This is a secret";
 
 		CryptHelper crypto = new CryptHelper();
@@ -25,7 +26,7 @@ public class CryptHelperTests {
 	}
 	
 	@Test
-	public void shouldEncrypAndDecryptNothing() throws GeneralSecurityException {
+	public void shouldEncrypAndDecryptNothing() throws GeneralSecurityException, InvalidCipherTextException {
 		String secret = "";
 
 		CryptHelper crypto = new CryptHelper();
@@ -40,7 +41,7 @@ public class CryptHelperTests {
 	}
 	
 	@Test
-	public void shouldEncrypAndDecryptLongValues() throws GeneralSecurityException {
+	public void shouldEncrypAndDecryptLongValues() throws GeneralSecurityException, InvalidCipherTextException {
 		byte[] bs = new byte[1024];
 		new Random().nextBytes(bs);
 		String secret = new String(bs);

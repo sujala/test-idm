@@ -1,86 +1,110 @@
 package com.rackspace.idm.util;
 
 import java.security.GeneralSecurityException;
+import java.security.InvalidParameterException;
+import java.security.Security;
 
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.PBEParameterSpec;
-
-import org.slf4j.Logger;
+import org.apache.commons.lang.ArrayUtils;
+import org.bouncycastle.crypto.BufferedBlockCipher;
+import org.bouncycastle.crypto.CipherParameters;
+import org.bouncycastle.crypto.InvalidCipherTextException;
+import org.bouncycastle.crypto.PBEParametersGenerator;
+import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.generators.PKCS12ParametersGenerator;
+import org.bouncycastle.crypto.modes.CBCBlockCipher;
+import org.bouncycastle.crypto.paddings.PKCS7Padding;
+import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.LoggerFactory;
 
 public class CryptHelper {
-	private static final String ALOGRITHM = "PBEWithMD5AndDES";
-
-	Logger logger = LoggerFactory.getLogger(CryptHelper.class);
 
 	// Salt
-	private static byte[] salt = { (byte) 0xc7, (byte) 0x73, (byte) 0x21, (byte) 0x8c,
-			(byte) 0x7e, (byte) 0xc8, (byte) 0xee, (byte) 0x99 };
+	private static byte[] salt = { (byte) 0xc7, (byte) 0x73, (byte) 0x21, (byte) 0x8c, (byte) 0x7e, (byte) 0xc8,
+			(byte) 0xee, (byte) 0x99 };
 
-	// Iteration count
-	private static int count = 20;
+	// TODO: get this from config.properties
+	private static char[] password = "this is a super secret key!".toCharArray();
 
-	// Create PBE parameter set
-	private static PBEParameterSpec pbeParamSpec = new PBEParameterSpec(salt, count);
+	private static PBEParametersGenerator keyGenerator;
+	private static CipherParameters keyParams;
 
-
-	private static PBEKeySpec pbeKeySpec = new PBEKeySpec(
-			"this is a super secret key!".toCharArray());
-	
-	static SecretKeyFactory keyFac;
-	private static SecretKey pbeKey;
 	static {
 		try {
-			keyFac = SecretKeyFactory.getInstance(ALOGRITHM);
-			pbeKey = keyFac.generateSecret(pbeKeySpec);
-
+			Security.addProvider(new BouncyCastleProvider());
+			keyGenerator = new PKCS12ParametersGenerator(new SHA256Digest());
+			keyGenerator.init(PKCS12ParametersGenerator.PKCS12PasswordToBytes(password), salt, 20);
+			keyParams = keyGenerator.generateDerivedParameters(256, 128);
 		} catch (Exception e) {
 			LoggerFactory.getLogger(CryptHelper.class).error("Error initializing", e);
 		}
 	}
-	
+
+	public static void main(String[] args) {
+		String plainText = "hello world";
+		try {
+
+			CryptHelper crypt = CryptHelper.getInstance();
+			byte[] cipherText = crypt.encrypt(plainText);
+			System.out.println(ArrayUtils.toString(cipherText));
+			String decrypt = crypt.decrypt(cipherText);
+			System.out.println(new String(decrypt));
+			System.out.println("--");
+			cipherText = crypt.encrypt("");
+			System.out.println(ArrayUtils.toString(cipherText));
+			decrypt = crypt.decrypt(cipherText);
+			System.out.println(new String(decrypt));
+			System.out.println("--");
+			cipherText = crypt.encrypt(null);
+			System.out.println(ArrayUtils.toString(cipherText));
+			decrypt = crypt.decrypt(cipherText);
+			System.out.println(new String(decrypt));
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+	}
+
 	private static CryptHelper instance = new CryptHelper();
-	public static CryptHelper getinstance() {
+
+	public static CryptHelper getInstance() {
 		return instance;
 	}
 
-	public byte[] encrypt(String cleartext) throws GeneralSecurityException {
-		byte[] ciphertext = new byte[] {};
-		try {
-			Cipher pbeCipher = Cipher.getInstance(ALOGRITHM);
-			// Initialize PBE Cipher with key and parameters
-			pbeCipher.init(Cipher.ENCRYPT_MODE, pbeKey, pbeParamSpec);
-
-			// Encrypt the cleartext
-			ciphertext = pbeCipher.doFinal(cleartext.getBytes());
-
-		} catch (GeneralSecurityException e) {
-			logger.error("Encrypting", e);
-			throw(e);
+	public byte[] encrypt(String plainText) throws GeneralSecurityException, InvalidCipherTextException {
+		if(plainText == null) {
+			throw new InvalidParameterException("Null argument is not valid");
 		}
-		return ciphertext;
+		
+		BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()),
+				new PKCS7Padding());
+
+		cipher.init(true, keyParams);
+		final byte[] bytes = plainText.getBytes();
+		final byte[] processed = new byte[cipher.getOutputSize(bytes.length)];
+		int outputLength = cipher.processBytes(bytes, 0, bytes.length, processed, 0);
+		outputLength += cipher.doFinal(processed, outputLength);
+
+		final byte[] results = new byte[outputLength];
+		System.arraycopy(processed, 0, results, 0, outputLength);
+		return results;
 	}
 
-	public String decrypt(byte[] ciphertext) throws GeneralSecurityException {
-		String result = "";
-		if(ciphertext == null || ciphertext.length < 1) {
-			return result;
+	public String decrypt(final byte[] bytes) throws GeneralSecurityException, InvalidCipherTextException {
+		if(bytes == null || bytes.length < 1) {
+			return null;
 		}
-		try {
-			Cipher pbeCipher = Cipher.getInstance(ALOGRITHM);
-			// Initialize PBE Cipher with key and parameters
-			pbeCipher.init(Cipher.DECRYPT_MODE, pbeKey, pbeParamSpec);
+		
+		final BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()),
+				new PKCS7Padding());
+		cipher.init(false, keyParams);
 
-			byte[] bs = pbeCipher.doFinal(ciphertext);
+		final byte[] processed = new byte[cipher.getOutputSize(bytes.length)];
+		int outputLength = cipher.processBytes(bytes, 0, bytes.length, processed, 0);
+		outputLength += cipher.doFinal(processed, outputLength);
 
-			result = new String(bs);
-		} catch (GeneralSecurityException e) {
-			logger.error("Decrypting", e);
-			throw(e);
-		}
-		return result;
+		final byte[] results = new byte[outputLength];
+		System.arraycopy(processed, 0, results, 0, outputLength);
+		return new String(results);
 	}
 }
