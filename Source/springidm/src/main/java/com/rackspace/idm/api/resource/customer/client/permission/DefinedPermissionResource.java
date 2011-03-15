@@ -271,6 +271,23 @@ public class DefinedPermissionResource {
             .build();
     }
 
+    /**
+     * Grants a defined permission to a client.
+     * 
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}client
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}permission
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param clientId Client application ID
+     * @param permissionId Permission ID
+     */
     @PUT
     @Path("grant")
     public Response grantPermissionToClient(@Context Request request,
@@ -292,6 +309,23 @@ public class DefinedPermissionResource {
         return Response.ok(permissionToGrant).build();
     }
 
+    /**
+     * Revokes a defined permission from a client.
+     * 
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}client
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}permission
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param clientId Client application ID
+     * @param permissionId Permission ID
+     */
     @PUT
     @Path("revoke")
     public Response revokePermissionToClient(@Context Request request,
