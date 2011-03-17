@@ -20,11 +20,24 @@ objectClass: organization
 objectClass: extensibleObject
 o: rackspace
 
+dn: ou=internal,dc=rackspace,dc=com
+objectClass:top
+objectClass:organizationalUnit
+ou:internal
+
 dn: ou=BaseUrls,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit
 objectClass: extensibleObject
 ou: BaseUrls
+
+######################################## Admin User #######################################
+
+dn:cn=admin,ou=internal,dc=rackspace,dc=com
+objectClass:top
+objectClass:inetOrgPerson
+cn:admin
+userPassword:qwerty
 
 ######################################## BaseUrls #######################################
 dn:baseUrlId=111111,ou=BaseUrls,dc=rackspace,dc=com
