@@ -70,7 +70,7 @@ public abstract class LdapRepository {
     public static final String ATTR_LOCKED = "locked";
     public static final String ATTR_MAIL = "rsMail";
     public static final String ATTR_MEMBER = "member";
-    public static final String ATTR_MEMBER_OF = "isMemberOf";
+    public static final String ATTR_MEMBER_OF = "memberOf";
     public static final String ATTR_MIDDLE_NAME = "middleName";
     public static final String ATTR_MOSSO_ID = "rsMossoId";
     public static final String ATTR_NAME = "cn";
