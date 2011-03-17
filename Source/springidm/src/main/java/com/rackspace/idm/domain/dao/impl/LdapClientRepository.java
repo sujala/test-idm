@@ -57,7 +57,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             getLogger().error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
-        
+
         Audit audit = Audit.log(client).add();
 
         List<Attribute> atts = new ArrayList<Attribute>();
@@ -279,7 +279,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             getLogger().error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
-        
+
         Audit audit = Audit.log(permission).add();
 
         List<Attribute> atts = new ArrayList<Attribute>();
@@ -400,26 +400,23 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         String clientSecret) {
         BindResult result;
         Client client = findByClientId(clientId);
-        
+
         if (client == null) {
             return new ClientAuthenticationResult(null, false);
         }
-        
+
         Audit audit = Audit.authClient(client);
-        
+
         try {
-            result = getBindConnPool().bind(client.getUniqueId(),
-                clientSecret);
+            result = getBindConnPool().bind(client.getUniqueId(), clientSecret);
             audit.succeed();
         } catch (LDAPException e) {
             audit.fail(e.getMessage());
             if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
                 return new ClientAuthenticationResult(client, false);
             }
-            getLogger()
-            .error(
-                "Bind operation on clientId " + clientId
-                    + " failed.", e);
+            getLogger().error(
+                "Bind operation on clientId " + clientId + " failed.", e);
             throw new IllegalStateException(e);
         }
 
@@ -928,8 +925,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         LDAPResult result = null;
         Audit audit = Audit.log(client).modify(mods);
         try {
-            result = getAppConnPool().modify(oldClient.getUniqueId(),
-                mods);
+            result = getAppConnPool().modify(oldClient.getUniqueId(), mods);
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error("Error updating client {} - {}", client, ldapEx);
@@ -1067,9 +1063,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         String[] permissions = resultEntry.getAttributeValues(ATTR_PERMISSION);
 
         if (permissions != null && permissions.length > 0) {
-            
+
             List<Permission> perms = new ArrayList<Permission>();
-            
+
             for (String s : permissions) {
                 String[] split = s.split(Permission.LDAP_SEPERATOR);
 
@@ -1105,12 +1101,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         limit = limit > this.getLdapPagingLimitMax() ? this
             .getLdapPagingLimitMax() : limit;
 
-        // In the constructor below we're adding one to the offset because the
-        // Rackspace API standard calls for a 0 based offset while LDAP uses a
-        // 1 based offset.
-        VirtualListViewRequestControl vlvRequest = new VirtualListViewRequestControl(
-            offset + 1, 0, limit - 1, 0, null);
-
         int contentCount = 0;
 
         List<Client> clientList = new ArrayList<Client>();
@@ -1120,23 +1110,26 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
                 searchFilter);
 
-            request.setControls(new Control[]{sortRequest, vlvRequest});
+            request.setControls(new Control[]{sortRequest});
             searchResult = getAppConnPool().search(request);
-
-            for (Control c : searchResult.getResponseControls()) {
-                if (c instanceof VirtualListViewResponseControl) {
-                    VirtualListViewResponseControl vlvResponse = (VirtualListViewResponseControl) c;
-                    contentCount = vlvResponse.getContentCount();
-                }
-            }
 
         } catch (LDAPException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
         }
 
-        if (searchResult.getEntryCount() > 0) {
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+        contentCount = searchResult.getEntryCount();
+
+        if (offset < contentCount) {
+
+            int toIndex = offset + limit > contentCount ? contentCount : offset
+                + limit;
+            int fromIndex = offset;
+
+            List<SearchResultEntry> subList = searchResult.getSearchEntries()
+                .subList(fromIndex, toIndex);
+
+            for (SearchResultEntry entry : subList) {
                 clientList.add(getClient(entry));
             }
         }
@@ -1225,41 +1218,41 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_SOFT_DELETED, String.valueOf(cNew.isSoftDeleted())));
         }
-        
-        
+
         if (cNew.getPermissions() != null
             && cNew.getPermissions() != cOld.getPermissions()) {
-            
+
             // First remove the old permissions
             if (cOld.getPermissions() != null) {
-                for(Permission p: cOld.getPermissions()) {
+                for (Permission p : cOld.getPermissions()) {
                     mods.add(new Modification(ModificationType.DELETE,
                         ATTR_PERMISSION, p.getPermissionLDAPserialization()));
-                }    
+                }
             }
-            
+
             // Add the new permissions
             if (cNew.getPermissions() != null) {
-                for(Permission p: cNew.getPermissions()) {
+                for (Permission p : cNew.getPermissions()) {
                     mods.add(new Modification(ModificationType.ADD,
                         ATTR_PERMISSION, p.getPermissionLDAPserialization()));
                 }
             }
-            
+
             // Doing the above seems better than trying to programmatically
             // find out whether a permission was added or removed (by comparing
             // the new and the old permission sets).
-            // LDAP modifications can be faster than programmatic check, I think.
+            // LDAP modifications can be faster than programmatic check, I
+            // think.
         }
-        
-        // Case when revoking a permission leaves no permissions on the client. 
+
+        // Case when revoking a permission leaves no permissions on the client.
         if (cNew.getPermissions() == null) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PERMISSION));
         }
-        
+
         return mods;
     }
-    
+
     List<Modification> getPermissionModifications(Permission rOld,
         Permission rNew) {
         List<Modification> mods = new ArrayList<Modification>();
