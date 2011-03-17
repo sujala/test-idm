@@ -287,7 +287,7 @@ public class RefreshTokenRepositoryTest {
     private RefreshToken createTestTokenInstance() {
         RefreshToken newToken = new RefreshToken("DELETE_My_Token",
             LdapRefreshTokenRepository.DATE_PARSER
-                .parseDateTime(("20201231210627.3Z")), owner, requestor);
+                .parseDateTime(("20201231210627.3-0500")), owner, requestor);
         return newToken;
     }
 }
