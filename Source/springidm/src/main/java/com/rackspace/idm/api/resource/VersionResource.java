@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.URL;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -17,6 +18,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -157,6 +159,31 @@ public class VersionResource {
     public Response getXSLT(@PathParam("fileName") String fileName) {
 
         String myString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"></xsl:stylesheet>";
+
+        return Response.ok(myString).build();
+    }
+    
+    @GET
+    @Path("application.wadl")
+    public Response getWadl2() {
+    	return getWadl();
+	}
+    
+    @GET
+    @Path("idm.wadl")
+    public Response getWadl() {
+
+    	InputStream stream = getClass().getResourceAsStream("/application.wadl");
+    	if (stream == null) {
+            return Response.noContent().build();
+        }
+
+        String myString = null;
+        try {
+            myString = convertStreamToString(stream);
+        } catch (IOException e) {
+            // NOOP
+        }
 
         return Response.ok(myString).build();
     }

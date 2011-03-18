@@ -14,7 +14,7 @@
         <comRackspaceCloudGeneralTrcCodestyle>1.0beta7</comRackspaceCloudGeneralTrcCodestyle>
         <codestylePath>https://source.admin.stabletransit.com/thesystem/IDM</codestylePath>
         <checkstyle-plugin-version>2.5</checkstyle-plugin-version>
-        <jersey-release-version>1.4</jersey-release-version>
+        <jersey-release-version>1.1.5</jersey-release-version>
         <environment.url.prefix>http://idm.rackspace.com</environment.url.prefix>
     </properties>
     <dependencies>
@@ -134,7 +134,11 @@
             <artifactId>commons-configuration</artifactId>
             <version>1.6</version>
         </dependency>
-        
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.4</version>
+         </dependency>
         <dependency>
             <groupId>cglib</groupId>
             <artifactId>cglib</artifactId>
@@ -220,7 +224,7 @@
         <dependency>
         	<groupId>com.sun.jersey</groupId>
         	<artifactId>jersey-client</artifactId>
-        	<version>1.5</version>
+        	<version>1.1.5</version>
         	<scope>compile</scope>
         </dependency>
         <dependency>
