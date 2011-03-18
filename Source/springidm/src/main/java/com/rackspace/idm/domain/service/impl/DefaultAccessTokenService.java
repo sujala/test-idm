@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -19,9 +20,11 @@ import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
@@ -31,18 +34,36 @@ public class DefaultAccessTokenService implements AccessTokenService {
     private XdcAccessTokenDao xdcTokenDao;
     private ClientDao clientDao;
     private UserService userService;
+    private CustomerService customerService;
     private AuthHeaderHelper authHeaderHelper;
     private Configuration config;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultAccessTokenService(AccessTokenDao tokenDao, ClientDao clientDao, UserService userService,
+    public DefaultAccessTokenService(AccessTokenDao tokenDao, ClientDao clientDao, UserService userService, CustomerService customerService,
         XdcAccessTokenDao xdcTokenDao, AuthHeaderHelper authHeaderHelper, Configuration config) {
         this.tokenDao = tokenDao;
         this.clientDao = clientDao;
         this.userService = userService;
+        this.customerService = customerService;
         this.xdcTokenDao = xdcTokenDao;
         this.authHeaderHelper = authHeaderHelper;
         this.config = config;
+    }
+    
+    @Override
+    public boolean authenticateAccessToken(String accessTokenStr) {
+        logger.debug("Authorizing Token: {}", accessTokenStr);
+        Boolean authenticated = false;
+
+        // check token is valid and not expired
+        AccessToken accessToken = getAccessTokenByTokenStringGlobally(accessTokenStr);
+        if (accessToken != null && !accessToken.isExpired(new DateTime()) && !passwordRotationDurationElapsed(accessToken))  {
+            authenticated = true;
+            MDC.put(Audit.WHO, accessToken.getAuditString());
+        }
+
+        logger.debug("Authorized Token: {} : {}", accessTokenStr, authenticated);
+        return authenticated;
     }
 
     public int getDefaultTokenExpirationSeconds() {
@@ -108,6 +129,24 @@ public class DefaultAccessTokenService implements AccessTokenService {
         logger.debug("Got Token For Client: {} - {}", client.getClientId(), token);
         return token;
     }
+    
+    @Override
+    public AccessToken getAccessTokenByTokenStringGlobally(String tokenString) {
+        AccessToken token = tokenDao.findByTokenString(tokenString);
+
+        // Check if token is from other data center.
+        if (token == null && !tokenString.startsWith(getDataCenterPrefix())) {
+            try {
+                token = xdcTokenDao.findByTokenString(tokenString);
+            } catch (Exception e) {
+                logger.warn("Exception occurred while attempting xdc token retrieval", e);
+            }
+            if (token != null) {
+                tokenDao.save(token);
+            }
+        }
+        return token;
+    }   
 
     @Override
     public AccessToken createAccessTokenForUser(BaseUser user, BaseClient client, int expirationSeconds) {
@@ -260,21 +299,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
         return token;
     }
 
-    @Override
-    public boolean authenticateAccessToken(String accessTokenStr) {
-        logger.debug("Authorizing Token: {}", accessTokenStr);
-        Boolean authenticated = false;
-
-        // check token is valid and not expired
-        AccessToken accessToken = getAccessTokenByTokenStringGlobally(accessTokenStr);
-        if (accessToken != null && !accessToken.isExpired(new DateTime())) {
-            authenticated = true;
-            MDC.put(Audit.WHO, accessToken.getAuditString());
-        }
-
-        logger.debug("Authorized Token: {} : {}", accessTokenStr, authenticated);
-        return authenticated;
-    }
+    
 
     public AccessToken getTokenByBasicCredentials(BaseClient client, BaseUser user, int expirationSeconds,
         DateTime currentTime) {
@@ -379,26 +404,49 @@ public class DefaultAccessTokenService implements AccessTokenService {
         xdcTokenDao.deleteAllTokensForCustomer(customerId);
     }
 
-    @Override
-    public AccessToken getAccessTokenByTokenStringGlobally(String tokenString) {
-        AccessToken token = tokenDao.findByTokenString(tokenString);
-
-        // Check if token is from other data center.
-        if (token == null && !tokenString.startsWith(getDataCenterPrefix())) {
-            try {
-                token = xdcTokenDao.findByTokenString(tokenString);
-            } catch (Exception e) {
-                logger.warn("Exception occurred while attempting xdc token retrieval", e);
-            }
-            if (token != null) {
-                tokenDao.save(token);
-            }
-        }
-        return token;
-    }
+   
 
     private String generateTokenWithDcPrefix() {
         String token = UUID.randomUUID().toString().replace("-", "");
         return String.format("%s%s", getDataCenterPrefix(), token);
+    }
+    
+    private boolean passwordRotationDurationElapsed(AccessToken accessToken) {
+     
+        boolean rotationNeeded = false;
+        
+        BaseUser baseUser = (BaseUser) accessToken.getTokenUser();
+        if (baseUser == null) {
+            return false;
+        }
+        
+        User user = userService.getUser(baseUser.getUsername());
+        DateTime timeOfLastPwdChange = user.getPasswordObj().getLastUpdated();
+        Customer customer = customerService.getCustomer(user.getCustomerId());
+        boolean passwordRotationPolicyEnabled = customer.getPasswordRotationEnabled();
+        
+        if (passwordRotationPolicyEnabled) {
+            int passwordRotationDurationInDays = customer.getPasswordRotationDuration();
+            
+            DateTime currentTime = new DateTime();
+            
+            int monthOfLastChange = timeOfLastPwdChange.getMonthOfYear();
+            int yearOfLastChange = timeOfLastPwdChange.getYear();
+            int dayOfLastChange = timeOfLastPwdChange.getDayOfYear();
+            
+            int currentMonth = currentTime.getMonthOfYear();
+            int currentYear = currentTime.getYear();
+            int today = currentTime.getDayOfYear();
+            
+            if (yearOfLastChange == currentYear) {
+                rotationNeeded = dayOfLastChange + passwordRotationDurationInDays > today;
+            }
+            else {
+                int numOfYears = currentYear - yearOfLastChange;
+                rotationNeeded = numOfYears*365 + dayOfLastChange + passwordRotationDurationInDays > today;
+            }
+        }
+        
+        return rotationNeeded;
     }
 }

@@ -21,6 +21,9 @@ public class Customer implements Auditable {
 
     private Boolean locked = null;
     private Boolean softDeleted = null;
+    
+    private int passwordRotationDuration; // this is in days
+    private Boolean passwordRotationEnabled = null;
 
     public Customer() {
     }
@@ -33,6 +36,22 @@ public class Customer implements Auditable {
         this.status = status;
         this.seeAlso = seeAlso;
         this.owner = owner;
+    }
+    
+    public Boolean getPasswordRotationEnabled() {
+        return passwordRotationEnabled;
+    }
+    
+    public void setPasswordRotationEnabled(Boolean passwordRotationEnabled) {
+        this.passwordRotationEnabled = passwordRotationEnabled;
+    }
+    
+    public int getPasswordRotationDuration() {
+        return passwordRotationDuration;
+    }
+    
+    public void setPasswordRotationDuration(int passwordRotationDuration) {
+        this.passwordRotationDuration = passwordRotationDuration;
     }
 
     public Boolean getSoftDeleted() {
@@ -218,6 +237,19 @@ public class Customer implements Auditable {
         } else if (!uniqueId.equals(other.uniqueId)) {
             return false;
         }
+        if (passwordRotationEnabled != null) {
+            if (other.passwordRotationEnabled != null) {
+                if (passwordRotationEnabled != other.passwordRotationEnabled) {
+                    return false;
+                }
+            }
+            if (other.passwordRotationEnabled == null) {
+                return false;
+            }
+        }
+        if (passwordRotationDuration != other.passwordRotationDuration) {
+            return false;
+        }
         return true;
     }
 
@@ -226,7 +258,8 @@ public class Customer implements Auditable {
         return "Customer [customerId=" + customerId + ", iname=" + iname
             + ", inum=" + inum + ", owner=" + owner + ", seeAlso=" + seeAlso
             + ", softDeleted=" + softDeleted + ", status=" + status
-            + ", uniqueId=" + uniqueId + "]";
+            + ", uniqueId=" + uniqueId + ", passwordRotationEnabled=" + passwordRotationEnabled 
+            + ", passwordEnabledDuration=" + passwordRotationDuration + "]" ;
     }
 
     @Override

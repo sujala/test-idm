@@ -21,6 +21,7 @@ import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
+import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.TokenDefaultAttributes;
 import com.rackspace.idm.domain.entity.User;
@@ -30,6 +31,7 @@ import com.rackspace.idm.domain.entity.UserLocale;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultAccessTokenService;
 import com.rackspace.idm.test.stub.StubLogger;
@@ -41,6 +43,7 @@ public class AccessTokenServiceTests {
     RefreshTokenDao mockRefreshTokenDao;
     ClientDao mockClientDao;
     UserService mockUserService;
+    CustomerService mockCustomerService;
     AccessTokenService tokenService;
     XdcAccessTokenDao mockWebClientAccessTokenDao;
 
@@ -86,12 +89,13 @@ public class AccessTokenServiceTests {
         mockRefreshTokenDao = EasyMock.createMock(RefreshTokenDao.class);
         mockClientDao = EasyMock.createMock(ClientDao.class);
         mockUserService = EasyMock.createMock(UserService.class);
+        mockCustomerService = EasyMock.createMock(CustomerService.class);
         mockWebClientAccessTokenDao = EasyMock.createMock(XdcAccessTokenDao.class);
         defaultAttributes = new TokenDefaultAttributes(defaultTokenExpirationSeconds,
             cloudAuthExpirationSeconds, maxTokenExpirationSeconds, minTokenExpirationSeconds,
             dataCenterPrefix, isTrustedServer);
         Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
-        tokenService = new DefaultAccessTokenService(mockTokenDao, mockClientDao, mockUserService,
+        tokenService = new DefaultAccessTokenService(mockTokenDao, mockClientDao, mockUserService, mockCustomerService,
             mockWebClientAccessTokenDao, new AuthHeaderHelper(), appConfig);
     }
 
@@ -406,6 +410,16 @@ public class AccessTokenServiceTests {
     public void shouldAuthenticateToken() throws Exception {
         EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
         EasyMock.replay(mockTokenDao);
+        
+        Customer customer = new Customer();
+        customer.setPasswordRotationEnabled(false);
+        
+        EasyMock.expect(mockCustomerService.getCustomer(customerId)).andReturn(customer);
+        EasyMock.replay(mockCustomerService);
+        
+        User user = getFakeUser();
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
+        EasyMock.replay(mockUserService);
 
         boolean isAuthenticated = tokenService.authenticateAccessToken(tokenString);
         Assert.assertTrue(isAuthenticated);

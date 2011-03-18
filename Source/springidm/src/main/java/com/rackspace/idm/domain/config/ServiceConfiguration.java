@@ -102,7 +102,7 @@ public class ServiceConfiguration {
 
     @Bean
     public AccessTokenService tokenService() {
-        return new DefaultAccessTokenService(accessTokenDao, clientDao, userService(), xdcTokenDao,
+        return new DefaultAccessTokenService(accessTokenDao, clientDao, userService(), customerService(), xdcTokenDao,
             authHeaderHelper(), config);
     }
 

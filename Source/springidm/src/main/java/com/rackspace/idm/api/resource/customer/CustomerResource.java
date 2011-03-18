@@ -4,6 +4,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -27,6 +28,7 @@ import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 
@@ -170,6 +172,73 @@ public class CustomerResource {
 
         return Response.noContent().build();
     }
+    
+    /**
+     * Updates customer's password rotation policy resource
+     * 
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}customer
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     */
+    @PUT
+    @Path("passwordRotationPolicy")
+    public Response updatePasswordRotationCustomer(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId, 
+        com.rackspace.idm.jaxb.PasswordRotationPolicy passwordRotationPolicy) {
+
+        logger.debug("Updating Customer's Password Rotation Policy: {}", customerId);
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Racker's, Rackspace Clients and Specific Clients are authorized
+        /*boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeRackspaceClient(token);
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }*/
+        
+        int duration = passwordRotationPolicy.getDuration();
+        boolean enabled = passwordRotationPolicy.getEnabled();
+        
+        if (enabled) {
+            if (duration < 0) {
+                String errorMsg = String.format("Password rotation duration cannot be negative.");
+                logger.warn(errorMsg);
+                throw new BadRequestException(errorMsg);
+            }
+        }
+
+        Customer customer = this.customerService.getCustomer(customerId);
+        if (customer == null) {
+            String errorMsg = String.format("Customer not found: %s",
+                customerId);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+
+        customer.setPasswordRotationEnabled(enabled);
+        customer.setPasswordRotationDuration(duration);
+        
+        this.customerService.updateCustomer(customer);
+        
+        logger.debug("Updated password rotation policy for customer {}", customerId);
+        return Response.ok(passwordRotationPolicy).build();
+    }
+   
 
     @Path("actions/lock")
     public CustomerLockResource getCustomerLockResource() {

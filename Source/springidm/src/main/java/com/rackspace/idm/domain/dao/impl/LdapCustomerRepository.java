@@ -536,7 +536,17 @@ public class LdapCustomerRepository extends LdapRepository implements
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_SOFT_DELETED, String.valueOf(cNew.getSoftDeleted())));
         }
-
+        
+        if (cNew.getPasswordRotationEnabled() != null
+            && cNew.getPasswordRotationEnabled() != cOld.getPasswordRotationEnabled()) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_ROTATION_ENABLED, 
+                String.valueOf(cNew.getPasswordRotationEnabled())));
+        }
+        
+        if (cNew.getPasswordRotationDuration() != cOld.getPasswordRotationDuration()) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_ROTATION_DURATION, 
+                String.valueOf(cNew.getPasswordRotationDuration())));
+        }
         return mods;
     }
 }

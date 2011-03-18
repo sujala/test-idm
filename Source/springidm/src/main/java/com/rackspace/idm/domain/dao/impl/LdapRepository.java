@@ -97,6 +97,8 @@ public abstract class LdapRepository {
     public static final String ATTR_SERVICE = "service";
     public static final String ATTR_SN = "rsSn";
     public static final String ATTR_SOFT_DELETED = "softDeleted";
+    public static final String ATTR_PASSWORD_ROTATION_ENABLED = "passwordRotationEnabled";
+    public static final String ATTR_PASSWORD_ROTATION_DURATION = "passwordRotationDuration";
     public static final String ATTR_STATUS = "status";
     public static final String ATTR_TIME_ZONE = "timeZone";
     public static final String ATTR_TOKEN_OWNER = "tokenOwner";
