@@ -23,6 +23,7 @@ import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.DeleteRequest;
+import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
@@ -36,8 +37,6 @@ import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
 import com.unboundid.ldap.sdk.controls.SubtreeDeleteRequestControl;
-import com.unboundid.ldap.sdk.controls.VirtualListViewRequestControl;
-import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
 
 public class LdapClientRepository extends LdapRepository implements ClientDao {
     private static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {
@@ -535,7 +534,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     public List<Client> findAll() {
         getLogger().debug("Search all clients");
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEAPPLICATION).build();
@@ -571,7 +570,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 "Null or Empty clientId parameter.");
         }
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_CLIENT_ID, clientId)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
@@ -593,7 +592,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 "Null or Empty clientId parameter.");
         }
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_CLIENT_ID, clientId)
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
@@ -616,7 +615,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 "Null or Empty client name parameter.");
         }
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_NAME, clientName)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
@@ -633,7 +632,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         ClientGroup group = null;
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder().addEqualAttribute(
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
             ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
 
         try {
@@ -670,7 +669,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             throw new IllegalArgumentException("Null or Empty Inum parameter.");
         }
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_INUM, inum)
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEAPPLICATION).build();
@@ -691,7 +690,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 "Null or Empty customerId parameter.");
         }
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
@@ -710,7 +709,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         ClientGroup group = null;
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_NAME, groupName)
             .addEqualAttribute(ATTR_CLIENT_ID, clientId)
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
@@ -753,7 +752,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder().addEqualAttribute(
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
             ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
 
         try {
@@ -782,7 +781,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         Permission permission = null;
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_NAME, permissionId)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTPERMISSION)
             .build();
@@ -817,7 +816,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         List<Permission> permissions = new ArrayList<Permission>();
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder().addEqualAttribute(
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
             ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTPERMISSION).build();
 
         try {
@@ -1014,7 +1013,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         int limit = 100;
         int offset = 0;
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
             .addEqualAttribute(ATTR_LOCKED, String.valueOf(isLocked))
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
@@ -1090,7 +1089,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return clientGroup;
     }
 
-    private Clients getMultipleClients(String searchFilter, int offset,
+    private Clients getMultipleClients(Filter searchFilter, int offset,
         int limit) {
 
         ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
@@ -1158,7 +1157,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return permission;
     }
 
-    private Client getSingleClient(String searchFilter) {
+    private Client getSingleClient(Filter searchFilter) {
         Client client = null;
         SearchResult searchResult = null;
         try {

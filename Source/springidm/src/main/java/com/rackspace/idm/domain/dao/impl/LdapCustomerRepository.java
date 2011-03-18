@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.DeleteRequest;
+import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
@@ -241,7 +242,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         getLogger().debug("Search all customers");
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEORGANIZATION).build();
@@ -306,7 +307,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         Customer customer = null;
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_INUM, customerInum)
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEORGANIZATION).build();
@@ -446,7 +447,7 @@ public class LdapCustomerRepository extends LdapRepository implements
     private SearchResult getCustomerSearchResult(String customerId) {
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,

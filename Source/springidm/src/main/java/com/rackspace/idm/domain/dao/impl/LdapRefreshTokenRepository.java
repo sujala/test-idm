@@ -11,6 +11,7 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.entity.RefreshToken;
 import com.unboundid.ldap.sdk.Attribute;
+import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
@@ -65,7 +66,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
         getLogger().debug("Deleting all refresh tokens for user {}", username);
         int delCount = 0;
 
-        String searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_TOKEN_OWNER, username)
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_TOKEN_OWNER, username)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN).build();
 
         SearchResult searchResult = null;
@@ -97,7 +98,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
         getLogger().debug("Deleting all refresh tokens for user {} and client {}", username, clientId);
         int delCount = 0;
 
-        String searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_TOKEN_OWNER, username)
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_TOKEN_OWNER, username)
             .addEqualAttribute(ATTR_TOKEN_REQUESTOR, clientId)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN).build();
 
@@ -126,7 +127,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
         getLogger().debug("Search all refresh tokens");
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS,
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS,
             OBJECTCLASS_RACKSPACETOKEN).build();
 
         try {
@@ -181,7 +182,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
         RefreshToken token = null;
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_TOKEN_OWNER, owner)
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_TOKEN_OWNER, owner)
             .addEqualAttribute(ATTR_TOKEN_REQUESTOR, requestor)
             .addGreaterOrEqualAttribute(ATTR_EXPIRATION, DATE_PARSER.print(validAfter))
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN).build();
@@ -329,7 +330,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
     private String getTokenDnByTokenString(String tokenString) {
         String dn = null;
 
-        String searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_O, tokenString)
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_O, tokenString)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN).build();
 
         SearchResult searchResult = null;
@@ -353,7 +354,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
     private SearchResult getTokenSearchResult(String tokenString) {
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_O, tokenString)
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_O, tokenString)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN).build();
 
         try {

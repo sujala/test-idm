@@ -29,6 +29,7 @@ import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Control;
+import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
@@ -41,8 +42,6 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
-import com.unboundid.ldap.sdk.controls.VirtualListViewRequestControl;
-import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
 
 public class LdapUserRepository extends LdapRepository implements UserDao {
     private static final String[] ATTR_SEARCH_ATTRIBUTES = {"*",
@@ -207,7 +206,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public Users findAll(int offset, int limit) {
         getLogger().debug("Search all users");
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .addEqualAttribute(ATTR_SOFT_DELETED, "FALSE").build();
         Users users = getMultipleUsers(searchFilter, ATTR_SEARCH_ATTRIBUTES,
@@ -228,7 +227,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "Null or Empty customerId parameter.");
         }
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
@@ -252,7 +251,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalArgumentException("Null or Empty inum parameter.");
         }
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_INUM, inum)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
@@ -267,7 +266,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public User findByMossoId(int mossoId) {
         getLogger().debug("Doing search for nastId " + mossoId);
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_MOSSO_ID, String.valueOf(mossoId))
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
@@ -287,7 +286,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "Null or Empty nastId parameter.");
         }
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_NAST_ID, nastId)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
@@ -306,7 +305,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalArgumentException("Null or Empty rpn parameter.");
         }
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_RACKSPACE_PERSON_NUMBER, rpn)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
@@ -328,7 +327,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "Null or Empty username parameter.");
         }
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_UID, username)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
@@ -357,7 +356,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 "Null or Empty username parameter.");
         }
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_UID, username)
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
@@ -383,7 +382,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_UID, username)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
@@ -433,7 +432,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     public boolean isUsernameUnique(String username) {
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_UID, username)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
@@ -607,7 +606,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         int limit = 100;
         int offset = 0;
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
             .addEqualAttribute(ATTR_LOCKED, String.valueOf(isLocked))
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
@@ -747,7 +746,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return attributes;
     }
 
-    private Users getMultipleUsers(String searchFilter,
+    private Users getMultipleUsers(Filter searchFilter,
         String[] searchAttributes, int offset, int limit) {
 
         ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
@@ -809,7 +808,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return users;
     }
 
-    private User getSingleUser(String searchFilter, String[] searchAttributes) {
+    private User getSingleUser(Filter searchFilter, String[] searchAttributes) {
         User user = null;
         SearchResult searchResult = null;
         try {

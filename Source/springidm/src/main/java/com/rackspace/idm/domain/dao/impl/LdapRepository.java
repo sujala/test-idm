@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
 public abstract class LdapRepository {
@@ -179,10 +180,6 @@ public abstract class LdapRepository {
             this.value = value;
         }
 
-        public String getQueryString() {
-            return String.format("(%s)", attribute + comparer + value);
-        }
-
         public String getDnString() {
             return attribute + comparer + value;
         }
@@ -218,46 +215,43 @@ public abstract class LdapRepository {
             return searchString;
         }
     }
-
+    
     protected static class LdapSearchBuilder {
-        private List<QueryPair> queryPairs;
-
+        List<Filter> filters;
+        
         public LdapSearchBuilder() {
-            queryPairs = new ArrayList<QueryPair>();
+            filters = new ArrayList<Filter>();
         }
-
-        public LdapSearchBuilder addEqualAttribute(String attribute,
-            String value) {
-            queryPairs.add(new QueryPair(attribute, "=", value));
+        
+        public LdapSearchBuilder addEqualAttribute(String attribute, String value) {
+            Filter filter = Filter.createEqualityFilter(attribute, value);
+            filters.add(filter);
             return this;
         }
-
-        public LdapSearchBuilder addGreaterOrEqualAttribute(String attribute,
-            String value) {
-            queryPairs.add(new QueryPair(attribute, ">=", value));
+        
+        public LdapSearchBuilder addEqualAttribute(String attribute, byte[] value ) {
+            Filter filter = Filter.createEqualityFilter(attribute, value);
+            filters.add(filter);
             return this;
         }
-
-        public String build() {
-            if (queryPairs.size() == 0) {
-                return "";
+        
+        public LdapSearchBuilder addGreaterOrEqualAttribute(String attribute, String value) {
+            Filter filter = Filter.createGreaterOrEqualFilter(attribute, value);
+            filters.add(filter);
+            return this;
+        }
+        
+        public Filter build() {
+            if (filters.size() == 0) {
+                return Filter.createEqualityFilter(ATTR_OBJECT_CLASS, "*");
             }
             
-            StringBuilder builder = new StringBuilder();
-
-            for (QueryPair pair : queryPairs) {
-                builder.append(pair.getQueryString());
+            if (filters.size() == 1) {
+                return filters.get(0);
             }
-
-            String searchString = builder.toString();
-
-            if (queryPairs.size() > 0) {
-                searchString = String.format("(&%s)", searchString);
-            }
-
-            return searchString;
+            
+            return Filter.createANDFilter(filters);
         }
     }
-    
    
 }

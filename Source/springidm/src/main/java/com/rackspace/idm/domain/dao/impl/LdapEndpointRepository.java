@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.EndPoints;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.Attribute;
+import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
@@ -182,7 +183,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         CloudBaseUrl baseUrl = null;
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_BASEURL_ID, String.valueOf(baseUrlId))
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
 
@@ -212,7 +213,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder().addEqualAttribute(
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
             ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
 
         try {
@@ -335,7 +336,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         Integer mossoId = null;
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_UID, username)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();

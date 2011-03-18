@@ -15,6 +15,7 @@ import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
+import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
@@ -211,7 +212,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         Role role = null;
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder().addEqualAttribute(
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
             ATTR_INUM, inum).build();
 
         try {
@@ -300,7 +301,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
     private SearchResult getRoleSearchResult(String roleName, String customerId) {
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_NAME, roleName)
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEGROUP)
@@ -329,7 +330,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         List<Role> roles = new ArrayList<Role>();
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder()
+        Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEGROUP)
             .build();
@@ -376,7 +377,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         Role role = null;
         SearchResult searchResult = null;
 
-        String searchFilter = new LdapSearchBuilder().addEqualAttribute(
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
             ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEGROUP).build();
 
         try {
