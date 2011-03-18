@@ -36,7 +36,6 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
-import com.unboundid.ldap.sdk.controls.SubtreeDeleteRequestControl;
 
 public class LdapClientRepository extends LdapRepository implements ClientDao {
     private static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {
@@ -434,28 +433,25 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         Client client = this.findByClientId(clientId);
         String clientDN = client.getUniqueId();
 
-        LDAPResult result = null;
         Audit audit = Audit.log(client).delete();
 
         try {
             String ouGroupsDn = new LdapDnBuilder(clientDN).addAttriubte(
                 ATTR_OU, OU_GROUPS_NAME).build();
             DeleteRequest request = new DeleteRequest(ouGroupsDn);
-            result = getAppConnPool().delete(request);
+            getAppConnPool().delete(request);
         } catch (LDAPException ldapEx) {
             audit.fail(ldapEx.getExceptionMessage());
             getLogger().error("Could not perform delete for client {} - {}",
                 clientId, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
-
-        result = null;
 
         try {
             String ouPermissionsDn = new LdapDnBuilder(clientDN).addAttriubte(
                 ATTR_OU, OU_PERMISSIONS_NAME).build();
             DeleteRequest request = new DeleteRequest(ouPermissionsDn);
-            result = getAppConnPool().delete(request);
+            getAppConnPool().delete(request);
         } catch (LDAPException ldapEx) {
             audit.fail(ldapEx.getExceptionMessage());
             getLogger().error("Could not perform delete for client {} - {}",
@@ -463,11 +459,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             throw new IllegalStateException(ldapEx);
         }
 
-        result = null;
-
         try {
             DeleteRequest request = new DeleteRequest(clientDN);
-            result = getAppConnPool().delete(request);
+            getAppConnPool().delete(request);
 
         } catch (LDAPException ldapEx) {
             audit.fail(ldapEx.getExceptionMessage());
@@ -498,19 +492,14 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                         customerId, clientId, name));
         }
 
-        LDAPResult result = null;
         Audit audit = Audit.log(group).delete();
         try {
-            result = getAppConnPool().delete(group.getUniqueId());
+            getAppConnPool().delete(group.getUniqueId());
         } catch (LDAPException ldapEx) {
             audit.fail(ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
         }
 
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail(result.getResultCode().toString());
-            throw new IllegalStateException();
-        }
         audit.succeed();
         getLogger().info("Deleted clientGroup {}", group);
     }
