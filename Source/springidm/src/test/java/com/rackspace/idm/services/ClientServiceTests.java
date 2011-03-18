@@ -185,6 +185,12 @@ public class ClientServiceTests {
     @Test
     public void shouldDeleteClient() {
         mockClientDao.delete(clientId);
+        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(getFakeClient());
+        EasyMock.expect(mockClientDao.getDefinedPermissionsByClientId(clientId)).andReturn(getFakePermissionList());
+        mockClientDao.deleteDefinedPermission(getFakePermission());
+        EasyMock.expect(mockClientDao.getClientGroupsByClientId(clientId)).andReturn(getFakeClientGroupList());
+        mockClientDao.deleteClientGroup(customerId, clientId, groupName);
+        
         EasyMock.replay(mockClientDao);
         
         clientService.delete(clientId);
@@ -601,6 +607,12 @@ public class ClientServiceTests {
         customerStatus, customerSeeAlso, owner);
     }
     
+    private List<Permission> getFakePermissionList() {
+        List<Permission> perms = new ArrayList<Permission>();
+        perms.add(getFakePermission());
+        return perms;
+    }
+    
     private Permission getFakePermission() {
         Permission res = new Permission();
         res.setClientId(clientId);
@@ -608,6 +620,12 @@ public class ClientServiceTests {
         res.setPermissionId(resourceId);
         res.setValue(resourceValue);
         return res;
+    }
+    
+    private List<ClientGroup> getFakeClientGroupList() {
+        List<ClientGroup> groups = new ArrayList<ClientGroup>();
+        groups.add(getFakeClientGroup());
+        return groups;
     }
     
     private ClientGroup getFakeClientGroup() {

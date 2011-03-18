@@ -1,5 +1,8 @@
 package com.rackspace.idm.services;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Before;
@@ -9,9 +12,13 @@ import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.RoleDao;
 import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.Role;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.impl.DefaultCustomerService;
 import com.rackspace.idm.exception.DuplicateException;
@@ -32,6 +39,8 @@ public class CustomerServiceTests {
     String customerSeeAlso = "SeeAlso";
     String customerOwner = "Owner";
     String customerCountry = "USA";
+    String username = "username";
+    String clientId = "clientId";
 
     @Before
     public void setUp() throws Exception {
@@ -79,9 +88,17 @@ public class CustomerServiceTests {
     @Test
     public void shouldDeleteCustomer() {
         mockCustomerDao.delete(customerId);
-        EasyMock.replay(mockCustomerDao);
+        EasyMock.expect(mockCustomerDao.findByCustomerId(customerId)).andReturn(getFakeCustomer());
+        EasyMock.replay(mockCustomerDao);   
+        EasyMock.expect(mockUserDao.findByCustomerId(customerId, 0, 100)).andReturn(getFakeUsers());
+        mockUserDao.delete(username);
+        EasyMock.replay(mockUserDao);
+        EasyMock.expect(mockClientDao.getByCustomerId(customerId, 0, 100)).andReturn(getFakeClients());
+        mockClientDao.delete(clientId);
+        EasyMock.replay(mockClientDao);
         service.deleteCustomer(customerId);
         EasyMock.verify(mockCustomerDao);
+        EasyMock.verify(mockUserDao);
     }
 
     @Test
@@ -145,5 +162,37 @@ public class CustomerServiceTests {
     private Customer getFakeCustomer() {
         return new Customer(customerId, customerInum, customerIname,
             customerStatus, customerSeeAlso, customerOwner);
+    }
+    
+    private User getFakeUser() {
+        return new User(username);
+    }
+    
+    private Users getFakeUsers() {
+        Users users = new Users();
+        List<User> userList = new ArrayList<User>();
+        userList.add(getFakeUser());
+        users.setLimit(100);
+        users.setOffset(0);
+        users.setTotalRecords(1);
+        users.setUsers(userList);
+        return users;
+    }
+    
+    private Client getFakeClient() {
+        Client client = new Client();
+        client.setClientId(clientId);
+        return client;
+    }
+    
+    private Clients getFakeClients() {
+        Clients clients = new Clients();
+        List<Client> clientList = new ArrayList<Client>();
+        clientList.add(getFakeClient());
+        clients.setLimit(100);
+        clients.setOffset(0);
+        clients.setTotalRecords(1);
+        clients.setClients(clientList);
+        return clients;
     }
 }

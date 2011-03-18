@@ -395,9 +395,9 @@ public class LdapUserRepositoryTest {
         repo.delete(user.getUsername());
     }
 
-    // @Test
+    @Test
     public void shouldAuthenticateForCorrectCredentials() {
-        UserAuthenticationResult result = repo.authenticate("mkovacs", "password");
+        UserAuthenticationResult result = repo.authenticate("mkovacs", "P@$$w0rd");
         Assert.assertTrue(result.isAuthenticated());
     }
 

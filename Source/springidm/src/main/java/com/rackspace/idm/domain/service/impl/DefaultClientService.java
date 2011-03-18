@@ -77,6 +77,26 @@ public class DefaultClientService implements ClientService {
     }
 
     public void delete(String clientId) {
+        Client client = clientDao.findByClientId(clientId);
+        
+        if (client == null) {
+            String errMsg = String.format("Client with clientId %s not found.", clientId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
+        List<Permission> permissions = clientDao.getDefinedPermissionsByClientId(clientId);
+        
+        for (Permission perm : permissions) {
+            clientDao.deleteDefinedPermission(perm);
+        }
+        
+        List<ClientGroup> groups = clientDao.getClientGroupsByClientId(clientId);
+        
+        for (ClientGroup group : groups) {
+            clientDao.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
+        }
+        
         clientDao.delete(clientId);
     }
 

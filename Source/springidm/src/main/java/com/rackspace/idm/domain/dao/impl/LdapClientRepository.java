@@ -436,25 +436,44 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         LDAPResult result = null;
         Audit audit = Audit.log(client).delete();
-        try {
-            DeleteRequest request = new DeleteRequest(clientDN);
-            request.addControl(new SubtreeDeleteRequestControl());
-            result = getAppConnPool().delete(request);
 
+        try {
+            String ouGroupsDn = new LdapDnBuilder(clientDN).addAttriubte(
+                ATTR_OU, OU_GROUPS_NAME).build();
+            DeleteRequest request = new DeleteRequest(ouGroupsDn);
+            result = getAppConnPool().delete(request);
         } catch (LDAPException ldapEx) {
-            audit.fail();
+            audit.fail(ldapEx.getExceptionMessage());
             getLogger().error("Could not perform delete for client {} - {}",
                 clientId, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
-            getLogger().error("Error deleting client {} - {}", clientId,
-                result.getResultCode());
-            throw new IllegalStateException(String.format(
-                "LDAP error encountered when deleting client: %s - %s",
-                clientId, result.getResultCode().toString()));
+        result = null;
+
+        try {
+            String ouPermissionsDn = new LdapDnBuilder(clientDN).addAttriubte(
+                ATTR_OU, OU_PERMISSIONS_NAME).build();
+            DeleteRequest request = new DeleteRequest(ouPermissionsDn);
+            result = getAppConnPool().delete(request);
+        } catch (LDAPException ldapEx) {
+            audit.fail(ldapEx.getExceptionMessage());
+            getLogger().error("Could not perform delete for client {} - {}",
+                clientId, ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        result = null;
+
+        try {
+            DeleteRequest request = new DeleteRequest(clientDN);
+            result = getAppConnPool().delete(request);
+
+        } catch (LDAPException ldapEx) {
+            audit.fail(ldapEx.getExceptionMessage());
+            getLogger().error("Could not perform delete for client {} - {}",
+                clientId, ldapEx);
+            throw new IllegalStateException(ldapEx);
         }
 
         audit.succeed();

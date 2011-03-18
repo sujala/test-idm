@@ -8,6 +8,7 @@ import org.apache.commons.lang.StringUtils;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.CustomerDao;
+import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapDnBuilder;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.util.InumHelper;
@@ -210,6 +211,49 @@ public class LdapCustomerRepository extends LdapRepository implements
         Audit audit = Audit.log(customer).delete();
 
         LDAPResult result = null;
+        
+        try {
+            String ouGroupsDn = new LdapDnBuilder(customerDN).addAttriubte(
+                ATTR_OU, OU_GROUPS_NAME).build();
+            DeleteRequest request = new DeleteRequest(ouGroupsDn);
+            result = getAppConnPool().delete(request);
+        } catch (LDAPException ldapEx) {
+            audit.fail(ldapEx.getExceptionMessage());
+            getLogger().error("Could not perform delete for customer {} - {}",
+                customerId, ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+        
+        result = null;
+        
+        try {
+            String ouApplicationsDn = new LdapDnBuilder(customerDN).addAttriubte(
+                ATTR_OU, OU_APPLICATIONS_NAME).build();
+            DeleteRequest request = new DeleteRequest(ouApplicationsDn);
+            result = getAppConnPool().delete(request);
+        } catch (LDAPException ldapEx) {
+            audit.fail(ldapEx.getExceptionMessage());
+            getLogger().error("Could not perform delete for customer {} - {}",
+                customerId, ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+        
+        result = null;
+        
+        try {
+            String ouPeopleDn = new LdapDnBuilder(customerDN).addAttriubte(
+                ATTR_OU, OU_PEOPLE_NAME).build();
+            DeleteRequest request = new DeleteRequest(ouPeopleDn);
+            result = getAppConnPool().delete(request);
+        } catch (LDAPException ldapEx) {
+            audit.fail(ldapEx.getExceptionMessage());
+            getLogger().error("Could not perform delete for customer {} - {}",
+                customerId, ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+        
+        result = null;
+        
         try {
             DeleteRequest request = new DeleteRequest(customerDN);
             request.addControl(new SubtreeDeleteRequestControl());
