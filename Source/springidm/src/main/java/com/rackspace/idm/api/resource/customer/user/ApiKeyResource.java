@@ -161,6 +161,7 @@ public class ApiKeyResource {
     /**
      * Set a user's API key.
      *
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userApiKey
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userApiKey
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
