@@ -4,6 +4,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -152,6 +153,66 @@ public class ClientGroupResource {
         }
 
         return Response.ok(groupConverter.toClientGroupJaxb(group)).build();
+    }
+
+    /**
+     * Updates a Client group
+     * 
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}clientGroup
+     * @response.representation.200.qname http://docs.rackspacecloud.com/idm/api/v1.0}clientGroup
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param clientId Client application ID
+     * @param groupName Group name
+     * @param clientGroup New client group
+     */
+    @PUT
+    public Response updateClientGroup(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId,
+        @PathParam("groupName") String groupName,
+        com.rackspace.idm.jaxb.ClientGroup clientGroup) {
+
+        AccessToken token = this.accessTokenService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Racker's, CustomerIdm and the specified client are authorized
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeCustomerIdm(token)
+            || (token.isClientToken() && token.getTokenClient().getClientId()
+                .equals(clientId));
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call",
+                token);
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
+        ClientGroup group = this.clientService.getClientGroup(
+            clientGroup.getCustomerId(), clientGroup.getClientId(),
+            clientGroup.getName());
+
+        if (group == null) {
+            String errMsg = String
+                .format(
+                    "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.",
+                    groupName, clientId, customerId);
+            logger.warn(errMsg);
+        }
+
+        this.clientService.updateClientGroup(group);
+
+        return Response.ok(group).build();
     }
 
     @Path("members")
