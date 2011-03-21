@@ -12,7 +12,7 @@ public class MatcherTest {
 
 	@Test
 	public void testMatcher() {
-		String s = "LDAPConnectionPool(name='bind', serverSet=RoundRobinServerSet(servers={localhost:389, server:686}), maxConnections=1000)";
+		String s = "LDAPConnectionPool(name='bind', serverSet=RoundRobinServerSet(servers={localhost:389,server:686}), maxConnections=1000)";
 		Matcher matcher = Pattern.compile(".*\\{(.*)\\}.*").matcher(s);
 		
 		boolean found = matcher.find();
@@ -28,6 +28,6 @@ public class MatcherTest {
 		}
 		
 		Assert.assertTrue(found);
-		Assert.assertEquals(serverList, "localhost:389");
+		Assert.assertEquals(serverList, "localhost:389,server:686");
 	}
 }
