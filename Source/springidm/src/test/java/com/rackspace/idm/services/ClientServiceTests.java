@@ -452,6 +452,17 @@ public class ClientServiceTests {
     }
     
     @Test
+    public void shouldUpdateClientGroup() {
+        ClientGroup resource = getFakeClientGroup();
+        mockClientDao.updateClientGroup(resource);
+        EasyMock.replay(mockClientDao);
+        
+        clientService.updateClientGroup(resource);
+        
+        EasyMock.verify(mockClientDao);
+    }
+    
+    @Test
     public void ShouldGetClientGroup() {
         ClientGroup group = getFakeClientGroup();
         EasyMock.expect(mockClientDao.getClientGroup(customerId, clientId, groupName)).andReturn(group);

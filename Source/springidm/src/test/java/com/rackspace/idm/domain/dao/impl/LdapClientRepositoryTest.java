@@ -295,6 +295,20 @@ public class LdapClientRepositoryTest {
     }
     
     @Test
+    public void shouldUpdateClientGroup() {
+        Client testClient = addNewTestClient();
+        ClientGroup group = createNewTestClientGroup(testClient);
+        repo.addClientGroup(group);
+        group.setType("My New Type");
+        repo.updateClientGroup(group);
+        ClientGroup returnedGroup = repo.findClientGroupByUniqueId(group.getUniqueId());
+        Assert.assertNotNull(returnedGroup);
+        Assert.assertEquals(returnedGroup.getType(), "My New Type");
+        repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
+        repo.delete(testClient.getClientId());
+    }
+    
+    @Test
     public void shouldNotAddClientGroupForNonExistentClient() {
         ClientGroup group = new ClientGroup("SOMEBADCLIENTID", "RACKSPACE", "NEWGROUP", "TYPE");
         
