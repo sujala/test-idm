@@ -907,6 +907,47 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().info("Removed user {} from group {}", userUniqueId, group);
     }
 
+    public void updateClientGroup(ClientGroup group) {
+        getLogger().debug("Updating client group {}", group);
+
+        if (group == null || StringUtils.isBlank(group.getUniqueId())) {
+            getLogger().error(
+                "ClientGroup instance is null or its uniqueId is blank.");
+            throw new IllegalArgumentException(
+                "Bad parameter: The Client instance is null or its uniqueId is blank.");
+        }
+
+        ClientGroup oldGroup = this.findClientGroupByUniqueId(group
+            .getUniqueId());
+
+        if (group.getType().equalsIgnoreCase(oldGroup.getType())) {
+            return;
+        }
+
+        List<Modification> mods = new ArrayList<Modification>();
+
+        if (group.getType() != null && StringUtils.isBlank(group.getType())) {
+            mods.add(new Modification(ModificationType.DELETE, ATTR_GROUP_TYPE));
+        } else {
+            mods.add(new Modification(ModificationType.REPLACE,
+                ATTR_GROUP_TYPE, group.getType()));
+        }
+
+        LDAPResult result = null;
+        Audit audit = Audit.log(group).modify(mods);
+        try {
+            result = getAppConnPool().modify(oldGroup.getUniqueId(), mods);
+        } catch (LDAPException ldapEx) {
+            audit.fail();
+            getLogger().error("Error updating clientGroup {} - {}", group,
+                ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        audit.succeed();
+        getLogger().debug("Updated clientGroup {}", group.getName());
+    }
+
     public void save(Client client) {
         getLogger().debug("Updating client {}", client);
 

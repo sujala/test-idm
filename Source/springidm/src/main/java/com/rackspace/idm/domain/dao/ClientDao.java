@@ -27,7 +27,7 @@ public interface ClientDao {
     void deleteDefinedPermission(Permission permission);
 
     List<Client> findAll();
-    
+
     Client getClient(String customerId, String clientId);
 
     Client findByClientId(String clientId);
@@ -39,7 +39,7 @@ public interface ClientDao {
     ClientGroup findClientGroupByUniqueId(String uniqueId);
 
     Clients getByCustomerId(String customerId, int offset, int limit);
-    
+
     ClientGroup getClientGroup(String customerId, String clientId,
         String groupName);
 
@@ -57,6 +57,8 @@ public interface ClientDao {
     void save(Client client);
 
     void setAllClientLocked(String customerId, boolean locked);
+
+    void updateClientGroup(ClientGroup group);
 
     void updateDefinedPermission(Permission permission);
 }
