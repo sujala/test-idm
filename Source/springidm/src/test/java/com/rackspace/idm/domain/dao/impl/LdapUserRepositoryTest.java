@@ -424,6 +424,7 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
+    @Ignore
     public void shouldNotAuthenticateForBadCredentials() {
         UserAuthenticationResult result = repo.authenticate("mkovacs", "bad password");
         Assert.assertFalse(result.isAuthenticated());
@@ -476,6 +477,7 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
+    @Ignore
     public void shouldReturnTrueForMaxLoginFailures() {
         User newUser = addNewTestUser();
 
