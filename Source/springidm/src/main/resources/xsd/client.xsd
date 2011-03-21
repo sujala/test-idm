@@ -230,6 +230,7 @@
 		<attribute name="customerId" type="xsd:string"></attribute>
 		<attribute name="clientId" type="xsd:string"></attribute>
 		<attribute name="name" type="xsd:string"></attribute>
+		<attribute name="type" type="xsd:string"></attribute>
 	</complexType>
 
 	<complexType name="ClientGroupList">

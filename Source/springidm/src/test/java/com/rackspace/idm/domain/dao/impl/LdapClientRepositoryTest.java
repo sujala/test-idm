@@ -296,7 +296,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldNotAddClientGroupForNonExistentClient() {
-        ClientGroup group = new ClientGroup("SOMEBADCLIENTID", "RACKSPACE", "NEWGROUP");
+        ClientGroup group = new ClientGroup("SOMEBADCLIENTID", "RACKSPACE", "NEWGROUP", "TYPE");
         
         try {
             repo.addClientGroup(group);
@@ -591,7 +591,7 @@ public class LdapClientRepositoryTest {
     }
     
     private ClientGroup createNewTestClientGroup(Client client) {
-        return new ClientGroup (client.getClientId(), client.getCustomerId(), "New Group");
+        return new ClientGroup (client.getClientId(), client.getCustomerId(), "New Group", "TYPE");
     }
 
     private Client createTestClientInstance() {

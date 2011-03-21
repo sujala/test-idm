@@ -11,14 +11,24 @@ public class ClientGroup implements Serializable, Auditable{
     private String name = null;
     private String clientId = null;
     private String customerId = null;
-    
+    private String type = null;
+
     public ClientGroup() {
     }
     
-    public ClientGroup(String clientId, String customerId, String name) {
+    public ClientGroup(String clientId, String customerId, String name, String type) {
         this.clientId = clientId;
         this.customerId = customerId;
         this.name = name;
+        this.type = type;
+    }
+    
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
     
     public String getUniqueId() {
@@ -62,11 +72,12 @@ public class ClientGroup implements Serializable, Auditable{
         result = prime * result
             + ((customerId == null) ? 0 : customerId.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((type == null) ? 0 : type.hashCode());
         result = prime * result
             + ((uniqueId == null) ? 0 : uniqueId.hashCode());
         return result;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -100,6 +111,13 @@ public class ClientGroup implements Serializable, Auditable{
         } else if (!name.equals(other.name)) {
             return false;
         }
+        if (type == null) {
+            if (other.type != null) {
+                return false;
+            }
+        } else if (!type.equals(other.type)) {
+            return false;
+        }
         if (uniqueId == null) {
             if (other.uniqueId != null) {
                 return false;
@@ -109,13 +127,14 @@ public class ClientGroup implements Serializable, Auditable{
         }
         return true;
     }
-    
+
     @Override
     public String toString() {
         return "ClientGroup [uniqueId=" + uniqueId + ", name=" + name
-            + ", clientId=" + clientId + ", customerId=" + customerId + "]";
+            + ", clientId=" + clientId + ", customerId=" + customerId
+            + ", type=" + type + "]";
     }
-    
+
     /**
      * Used by Java serialization. Produces the serialized form of the Token
      * class.
@@ -150,15 +169,17 @@ public class ClientGroup implements Serializable, Auditable{
         private String name = null;
         private String clientId = null;
         private String customerId = null;
+        private String type = null;
 
         SerializationProxy(ClientGroup clientGroup) {
             this.clientId = clientGroup.clientId;
             this.customerId = clientGroup.customerId;
             this.name = clientGroup.name;
+            this.type = clientGroup.type;
         }
 
         private Object readResolve() {
-            return new ClientGroup(clientId, customerId, name);
+            return new ClientGroup(clientId, customerId, name, type);
         }
 
     }

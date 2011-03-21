@@ -19,7 +19,7 @@ public class BaseUserTest {
     @Test
     public void shouldSerializeAndDeserialzie() {
 
-        ClientGroup group = new ClientGroup("clientId", "customerId", "groupName");
+        ClientGroup group = new ClientGroup("clientId", "customerId", "groupName", "type");
         List<ClientGroup> groups = new ArrayList<ClientGroup>();
         groups.add(group);
         BaseUser bu = new BaseUser("username", "customerId", groups);

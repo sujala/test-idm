@@ -98,7 +98,7 @@ public class HttpAccessTokenRepositoryTest {
 
     private BaseUser getTestUser() {
 
-        ClientGroup group = new ClientGroup("customerId", "clientId", "name");
+        ClientGroup group = new ClientGroup("customerId", "clientId", "name", "type");
         List<ClientGroup> groups = new ArrayList<ClientGroup>();
         groups.add(group);
 

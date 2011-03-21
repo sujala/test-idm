@@ -237,6 +237,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         if (!StringUtils.isBlank(clientGroup.getName())) {
             atts.add(new Attribute(ATTR_NAME, clientGroup.getName()));
         }
+        if (!StringUtils.isBlank(clientGroup.getType())) {
+            atts.add(new Attribute(ATTR_GROUP_TYPE, clientGroup.getType()));
+        }
 
         String groupDN = new LdapDnBuilder(client.getUniqueId())
             .addAttriubte(ATTR_NAME, clientGroup.getName())
@@ -1094,6 +1097,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         clientGroup.setName(resultEntry.getAttributeValue(ATTR_NAME));
         clientGroup.setCustomerId(resultEntry
             .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
+        clientGroup.setType(ATTR_GROUP_TYPE);
         return clientGroup;
     }
 

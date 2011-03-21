@@ -14,6 +14,7 @@ public class GroupConverter {
         group.setName(jaxbGroup.getName());
         group.setClientId(jaxbGroup.getClientId());
         group.setCustomerId(jaxbGroup.getCustomerId());
+        group.setType(jaxbGroup.getType());
         return group;
     }
     
@@ -37,6 +38,7 @@ public class GroupConverter {
         jaxbGroup.setClientId(group.getClientId());
         jaxbGroup.setCustomerId(group.getCustomerId());
         jaxbGroup.setName(group.getName());
+        jaxbGroup.setType(group.getType());
         return jaxbGroup;
     }
     

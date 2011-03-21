@@ -56,6 +56,7 @@ public class ClientServiceTests {
     String resourceValue = "resourceValue";
     
     String groupName = "groupName";
+    String groupType = "groupType";
     
     String userDN = "userDN";
     String groupDN = "groupDN";
@@ -629,7 +630,7 @@ public class ClientServiceTests {
     }
     
     private ClientGroup getFakeClientGroup() {
-        ClientGroup group = new ClientGroup(clientId, customerId, groupName);
+        ClientGroup group = new ClientGroup(clientId, customerId, groupName, groupType);
         group.setUniqueId(groupDN);
         return group;
     }

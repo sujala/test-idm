@@ -51,7 +51,7 @@ objectClasses: ( 1.3.6.1.4.1.20988.2.2.4 NAME 'rsToken' SUP top STRUCTURAL MUST 
 objectClasses: ( 1.3.6.1.4.1.20988.2.2.5 NAME 'rsGroup' SUP groupOfNames STRUCTURAL MUST ( inum ) MAY ( c $ cn $ groupType $ iname $ o $ permission $ RCN $ status $ softDeleted ) )
 objectClasses: ( 1.3.6.1.4.1.20988.2.2.6 NAME 'clientPermission' SUP top STRUCTURAL MUST ( cn $ clientId $ RCN $ blob ) MAY ( permissionType ) )
 objectClasses: ( 1.3.6.1.4.1.20988.2.2.7 NAME 'baseUrl' SUP top STRUCTURAL MUST ( baseUrlId $ baseUrlType $ service $ def $ publicUrl ) MAY ( rsRegion $ internalUrl $ adminUrl ) )
-objectClasses: ( 1.3.6.1.4.1.20988.2.2.8 NAME 'clientGroup' SUP groupOfNames STRUCTURAL MUST ( cn $ clientId $ RCN ) MAY ( c $ displayName $ permission ) )
+objectClasses: ( 1.3.6.1.4.1.20988.2.2.8 NAME 'clientGroup' SUP groupOfNames STRUCTURAL MUST ( cn $ clientId $ RCN ) MAY ( c $ displayName $ permission $ groupType ) )
 ds-update-time:: AAABKLZPnxA=
 modifiersname: cn=Directory Manager,cn=Root DNs,cn=config
 
