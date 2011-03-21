@@ -428,7 +428,7 @@ public class AccessTokenServiceTests {
     }
     
     @Test
-    public void shouldAuthenticateTokenPasswordRotationNotNeededDurationWithinYear() throws Exception {
+    public void shouldAuthenticateToken_PasswordRotationNotNeeded_DurationWithinYear() throws Exception {
         EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
         EasyMock.replay(mockTokenDao);
         
@@ -472,7 +472,7 @@ public class AccessTokenServiceTests {
     }
     
     @Test
-    public void shouldAuthenticateTokenPasswordRotationNotNeededDurationMoreThanYear() throws Exception {
+    public void shouldAuthenticateToken_PasswordRotationNotNeeded_DurationMoreThanYear() throws Exception {
         EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
         EasyMock.replay(mockTokenDao);
         
@@ -516,7 +516,7 @@ public class AccessTokenServiceTests {
     }   
     
     @Test
-    public void shouldNotAuthenticateTokenPasswordRotationNeededDurationWithinYear() throws Exception {
+    public void shouldNotAuthenticateToken_PasswordRotationNeeded_DurationWithinYear() throws Exception {
         EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
         EasyMock.replay(mockTokenDao);
         
@@ -560,7 +560,7 @@ public class AccessTokenServiceTests {
     }  
     
     @Test
-    public void shouldNotAuthenticateTokenPasswordRotationNeededDurationMoreThanYear() throws Exception {
+    public void shouldNotAuthenticateToken_PasswordRotationNeeded_DurationMoreThanYear() throws Exception {
         EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
         EasyMock.replay(mockTokenDao);
         
@@ -604,7 +604,7 @@ public class AccessTokenServiceTests {
     }
     
     @Test
-    public void shouldNotAuthenticateTokenPasswordRotationNeededLastUpdateBeforeLeapYear() throws Exception {
+    public void shouldNotAuthenticateToken_PasswordRotationNeeded_LastUpdateBeforeLeapYear() throws Exception {
         EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
         EasyMock.replay(mockTokenDao);
         
@@ -651,7 +651,7 @@ public class AccessTokenServiceTests {
     }         
     
     @Test
-    public void shouldNotAuthenticateTokenPasswordRotationNeededLastUpdateBeforeTwoLeapYears() throws Exception {
+    public void shouldNotAuthenticateToken_PasswordRotationNeeded_LastUpdateBeforeTwoLeapYears() throws Exception {
         EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
         EasyMock.replay(mockTokenDao);
         
