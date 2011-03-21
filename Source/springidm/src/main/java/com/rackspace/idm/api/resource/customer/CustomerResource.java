@@ -200,8 +200,8 @@ public class CustomerResource {
         AccessToken token = this.accessTokenService
             .getAccessTokenByAuthHeader(authHeader);
 
-        // Racker's, Rackspace Clients and Specific Clients are authorized
-        /*boolean authorized = authorizationService.authorizeRacker(token)
+        // Racker's and Rackspace Clients are authorized
+        boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token);
 
         if (!authorized) {
@@ -209,7 +209,7 @@ public class CustomerResource {
                 token);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
-        }*/
+        }
         
         int duration = passwordRotationPolicy.getDuration();
         boolean enabled = passwordRotationPolicy.getEnabled();
