@@ -10,6 +10,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
@@ -85,7 +86,9 @@ public class UserGroupsResource {
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
-        @PathParam("username") String username) {
+        @PathParam("username") String username,
+        @QueryParam("clientId") String clientId,
+        @QueryParam("type") String type) {
 
         logger.debug("Getting groups for User: {}", username);
 
@@ -110,9 +113,8 @@ public class UserGroupsResource {
 
         User user = checkAndGetUser(customerId, username);
 
-        // get roles for user
         List<ClientGroup> groups = this.clientService
-            .getClientGroupsForUser(username);
+            .getClientGroupsForUserByClientIdAndType(username, clientId, type);
         logger.debug("Got groups for User: {} - {}", user, groups);
 
         com.rackspace.idm.jaxb.ClientGroups outputGroups = groupConverter
