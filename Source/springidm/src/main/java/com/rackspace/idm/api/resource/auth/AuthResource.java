@@ -235,9 +235,9 @@ public class AuthResource {
     }
 
     /**
-     * Gets an Access Token for Auth with MossoId and Api Key
+     * Gets an Access Token for Auth with Username and Password
      *
-     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}mossoCredentials
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}authCredentials
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}cloudAuth
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -247,7 +247,7 @@ public class AuthResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      *
      * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param creds Mosso Credentials
+     * @param creds Auth Credentials
      */
     @POST
     @Path("username")
