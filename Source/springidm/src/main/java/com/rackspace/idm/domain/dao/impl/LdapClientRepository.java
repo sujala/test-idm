@@ -933,10 +933,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 ATTR_GROUP_TYPE, group.getType()));
         }
 
-        LDAPResult result = null;
         Audit audit = Audit.log(group).modify(mods);
         try {
-            result = getAppConnPool().modify(oldGroup.getUniqueId(), mods);
+            getAppConnPool().modify(oldGroup.getUniqueId(), mods);
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error("Error updating clientGroup {} - {}", group,
