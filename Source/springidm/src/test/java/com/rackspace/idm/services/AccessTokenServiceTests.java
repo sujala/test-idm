@@ -428,6 +428,27 @@ public class AccessTokenServiceTests {
     }
     
     @Test
+    public void shouldAuthenticateToken_PasswordRotation_NotEnabled() throws Exception {
+        EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
+        EasyMock.replay(mockTokenDao);
+        
+        Customer customer = new Customer();
+        customer.setPasswordRotationEnabled(null);
+        
+        EasyMock.expect(mockCustomerService.getCustomer(customerId)).andReturn(customer);
+        EasyMock.replay(mockCustomerService);
+        
+        User user = getFakeUser();
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
+        EasyMock.replay(mockUserService);
+
+        boolean isAuthenticated = tokenService.authenticateAccessToken(tokenString);
+        Assert.assertTrue(isAuthenticated);
+
+        EasyMock.verify(mockTokenDao);
+    }  
+    
+    @Test
     public void shouldAuthenticateToken_PasswordRotationNotNeeded_DurationWithinYear() throws Exception {
         EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
         EasyMock.replay(mockTokenDao);
@@ -468,7 +489,6 @@ public class AccessTokenServiceTests {
         Assert.assertTrue(isAuthenticated);
 
         EasyMock.verify(mockTokenDao);
-        
     }
     
     @Test

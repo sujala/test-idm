@@ -432,9 +432,9 @@ public class DefaultAccessTokenService implements AccessTokenService {
             return false;
         }
         
-        boolean passwordRotationPolicyEnabled = customer.getPasswordRotationEnabled();
+        Boolean passwordRotationPolicyEnabled = customer.getPasswordRotationEnabled();
         
-        if (passwordRotationPolicyEnabled) {
+        if (passwordRotationPolicyEnabled != null && passwordRotationPolicyEnabled) {
             int passwordRotationDurationInDays = customer.getPasswordRotationDuration();
              
             DateTime timeOfLastPwdChange = user.getPasswordObj().getLastUpdated();
