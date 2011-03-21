@@ -12,44 +12,47 @@ import com.rackspace.idm.domain.entity.Permission;
 public interface ClientService {
 
     void add(Client client);
-    
+
     void addClientGroup(ClientGroup clientGroup);
 
     void addDefinedPermission(Permission permission);
-    
+
     void addUserToClientGroup(String username, ClientGroup clientGroup);
 
     ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 
     void delete(String clientId);
-    
+
     void deleteClientGroup(String customerId, String clientId, String name);
 
     void deleteDefinedPermission(Permission permission);
-    
+
     Clients getByCustomerId(String customerId, int offset, int limit);
 
     Client getById(String clientId);
-    
+
     Client getByName(String clientName);
-    
+
     Client getClient(String customerId, String clientId);
-    
-    ClientGroup getClientGroup(String customerId, String clientId, String groupName);
+
+    ClientGroup getClientGroup(String customerId, String clientId,
+        String groupName);
 
     List<ClientGroup> getClientGroupsByClientId(String clientId);
 
     List<ClientGroup> getClientGroupsForUser(String username);
 
+    List<ClientGroup> getClientGroupsForUserByClientIdAndType(String username, String clientId, String type);
+
     Permission getDefinedPermissionByClientIdAndPermissionId(String clientId,
         String permissionId);
 
     List<Permission> getDefinedPermissionsByClientId(String clientId);
-    
+
     void grantPermission(String clientId, Permission p);
-    
+
     void revokePermission(String clientId, Permission p);
-    
+
     void removeUserFromClientGroup(String username, ClientGroup clientGroup);
 
     ClientSecret resetClientSecret(Client client);
@@ -57,6 +60,8 @@ public interface ClientService {
     void save(Client client);
 
     void softDelete(String clientId);
+
+    void updateClientGroup(ClientGroup group);
 
     void updateDefinedPermission(Permission permission);
 }

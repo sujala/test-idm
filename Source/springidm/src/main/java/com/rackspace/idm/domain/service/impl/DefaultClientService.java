@@ -78,25 +78,29 @@ public class DefaultClientService implements ClientService {
 
     public void delete(String clientId) {
         Client client = clientDao.findByClientId(clientId);
-        
+
         if (client == null) {
-            String errMsg = String.format("Client with clientId %s not found.", clientId);
+            String errMsg = String.format("Client with clientId %s not found.",
+                clientId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        
-        List<Permission> permissions = clientDao.getDefinedPermissionsByClientId(clientId);
-        
+
+        List<Permission> permissions = clientDao
+            .getDefinedPermissionsByClientId(clientId);
+
         for (Permission perm : permissions) {
             clientDao.deleteDefinedPermission(perm);
         }
-        
-        List<ClientGroup> groups = clientDao.getClientGroupsByClientId(clientId);
-        
+
+        List<ClientGroup> groups = clientDao
+            .getClientGroupsByClientId(clientId);
+
         for (ClientGroup group : groups) {
-            clientDao.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
+            clientDao.deleteClientGroup(group.getCustomerId(),
+                group.getClientId(), group.getName());
         }
-        
+
         clientDao.delete(clientId);
     }
 
@@ -122,8 +126,8 @@ public class DefaultClientService implements ClientService {
         }
 
         Permission exists = clientDao
-            .getDefinedPermissionByClientIdAndPermissionId(permission
-                .getClientId(), permission.getPermissionId());
+            .getDefinedPermissionByClientIdAndPermissionId(
+                permission.getClientId(), permission.getPermissionId());
 
         if (exists != null) {
             logger
@@ -207,38 +211,37 @@ public class DefaultClientService implements ClientService {
 
         List<Permission> newList = new ArrayList<Permission>();
         newList.add(p);
-        
+
         List<Permission> originalList = targetClient.getPermissions();
         if (originalList != null) {
             newList.addAll(originalList);
         }
-        
+
         targetClient.setPermissions(newList);
- 
+
         clientDao.save(targetClient);
     }
-    
+
     public void revokePermission(String clientId, Permission p) {
-        
+
         Client targetClient = getClient(clientId);
-        
+
         List<Permission> originalList = targetClient.getPermissions();
-        if (originalList != null) {        
-            
+        if (originalList != null) {
+
             List<Permission> newList = new ArrayList<Permission>();
-            for(Permission r: originalList) {
+            for (Permission r : originalList) {
                 if (!r.getPermissionId().equals(p.getPermissionId())) {
                     newList.add(r);
                 }
             }
-            if (newList.size() > 0) { 
+            if (newList.size() > 0) {
                 targetClient.setPermissions(newList);
-            }
-            else {
+            } else {
                 targetClient.setPermissions(null);
             }
         }
-        
+
         clientDao.save(targetClient);
     }
 
@@ -250,7 +253,7 @@ public class DefaultClientService implements ClientService {
             throw new NotFoundException(errorMsg);
         }
         return targetClient;
-    }   
+    }
 
     public void updateDefinedPermission(Permission permission) {
         clientDao.updateDefinedPermission(permission);
@@ -321,6 +324,42 @@ public class DefaultClientService implements ClientService {
         }
     }
 
+    public List<ClientGroup> getClientGroupsForUserByClientIdAndType(String username,
+        String clientId, String type) {
+
+        logger.info("Getting Groups for User: {}", username);
+        String[] groupIds = userDao.getGroupIdsForUser(username);
+
+        if (groupIds == null) {
+            return null;
+        }
+
+        boolean filterByClient = !StringUtils.isBlank(clientId);
+        boolean filterByType = !StringUtils.isBlank(type);
+
+        List<ClientGroup> groups = new ArrayList<ClientGroup>();
+
+        for (String groupId : groupIds) {
+            boolean addGroup = true;
+            ClientGroup group = clientDao.findClientGroupByUniqueId(groupId);
+            if (group != null) {
+                if (filterByClient
+                    && !group.getClientId().equalsIgnoreCase(clientId)) {
+                    addGroup = false;
+                }
+                if (filterByType && !group.getType().equalsIgnoreCase(type)) {
+                    addGroup = false;
+                }
+                if (addGroup) {
+                    groups.add(group);
+                }
+            }
+        }
+
+        logger.info("Got Groups for User: {} - {}", username, groups);
+        return groups;
+    }
+
     public List<ClientGroup> getClientGroupsForUser(String username) {
         logger.info("Getting Groups for User: {}", username);
         String[] groupIds = userDao.getGroupIdsForUser(username);
@@ -340,5 +379,10 @@ public class DefaultClientService implements ClientService {
 
         logger.info("Got Groups for User: {} - {}", username, groups);
         return groups;
+    }
+
+    public void updateClientGroup(ClientGroup group) {
+
+        clientDao.updateClientGroup(group);
     }
 }
