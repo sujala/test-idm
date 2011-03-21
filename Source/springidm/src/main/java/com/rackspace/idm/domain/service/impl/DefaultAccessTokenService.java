@@ -421,32 +421,74 @@ public class DefaultAccessTokenService implements AccessTokenService {
         }
         
         User user = userService.getUser(baseUser.getUsername());
-        DateTime timeOfLastPwdChange = user.getPasswordObj().getLastUpdated();
+        
+        if (user == null) {
+            return false;
+        }
+        
         Customer customer = customerService.getCustomer(user.getCustomerId());
+        
+        if (customer == null) {
+            return false;
+        }
+        
         boolean passwordRotationPolicyEnabled = customer.getPasswordRotationEnabled();
         
         if (passwordRotationPolicyEnabled) {
             int passwordRotationDurationInDays = customer.getPasswordRotationDuration();
-            
-            DateTime currentTime = new DateTime();
-            
-            int monthOfLastChange = timeOfLastPwdChange.getMonthOfYear();
+             
+            DateTime timeOfLastPwdChange = user.getPasswordObj().getLastUpdated();
             int yearOfLastChange = timeOfLastPwdChange.getYear();
             int dayOfLastChange = timeOfLastPwdChange.getDayOfYear();
             
-            int currentMonth = currentTime.getMonthOfYear();
+            DateTime currentTime = new DateTime();
             int currentYear = currentTime.getYear();
             int today = currentTime.getDayOfYear();
             
-            if (yearOfLastChange == currentYear) {
-                rotationNeeded = dayOfLastChange + passwordRotationDurationInDays > today;
-            }
+            int numOfYearsSinceLastChange = currentYear - yearOfLastChange;
+                 
+            if (numOfYearsSinceLastChange > 0) {
+                
+                int daysInYrOfChange = 0;
+                if (yearOfLastChange % 4 == 0) {
+                    daysInYrOfChange = 366 - dayOfLastChange;
+                }
+                else {
+                    daysInYrOfChange = 365 - dayOfLastChange;
+                }
+                
+                int leapYears = getNumOfLeapYears(currentYear, yearOfLastChange+1); // Year of change already considered, so "+1"                  
+                int nonLeapYears = numOfYearsSinceLastChange - leapYears - 1; // Year of change already considered, so "-1". 
+                int numOfDaysSinceChange = daysInYrOfChange + (leapYears * 366 + nonLeapYears * 365) + today; 
+                
+                if ( numOfDaysSinceChange > passwordRotationDurationInDays ) {
+                    rotationNeeded = true;
+                }
+             } 
             else {
-                int numOfYears = currentYear - yearOfLastChange;
-                rotationNeeded = numOfYears*365 + dayOfLastChange + passwordRotationDurationInDays > today;
+                if ( today - dayOfLastChange > passwordRotationDurationInDays) {
+                    rotationNeeded = true;
+                 }
             }
         }
-        
         return rotationNeeded;
+    }
+    
+    private int getNumOfLeapYears(int currentYear, int yearOfLastChange) {
+        int count = 0;
+        
+        if (currentYear % 4 == 0) {
+            count++;
+        }
+        
+        if (yearOfLastChange % 4 == 0) {
+            count++;
+        }
+        
+        int numOfLeapYearsInBetween = (currentYear - yearOfLastChange) / 4;
+        
+        count += (numOfLeapYearsInBetween);
+        
+        return count;
     }
 }
