@@ -55,6 +55,8 @@
       		<map>
         		<entry key="com.rackspace.idm:name=healthMonitoringBean" value-ref="healthMonitoringBean"/>
         		<entry key="com.rackspace.idm:name=loggerMonitoringBean" value-ref="loggerMonitoringBean"/>
+        		<entry key="com.rackspace.idm:name=ldapMonitoringBean" value-ref="ldapMonitoringBean"/>
+        		<entry key="com.rackspace.idm:name=memcacheMonitoringBean" value-ref="memcacheMonitoringBean"/>
       		</map>
     	</property>
   	</bean>

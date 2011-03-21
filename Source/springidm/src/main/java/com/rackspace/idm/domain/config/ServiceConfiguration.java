@@ -45,7 +45,9 @@ import com.rackspace.idm.domain.service.impl.DefaultRefreshTokenService;
 import com.rackspace.idm.domain.service.impl.DefaultRoleService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
+import com.rackspace.idm.util.LdapMBean;
 import com.rackspace.idm.util.LoggerMBean;
+import com.rackspace.idm.util.MemcacheMBean;
 import com.rackspace.idm.util.PingableService;
 import com.rackspace.idm.validation.InputValidator;
 
@@ -119,6 +121,16 @@ public class ServiceConfiguration {
     @Bean
     public LoggerMBean loggerMonitoringBean() {
     	return new LoggerMBean();
+    }
+    
+    @Bean
+    public LdapMBean ldapMonitoringBean() {
+    	return new LdapMBean();
+    }
+    
+    @Bean
+    public MemcacheMBean memcacheMonitoringBean() {
+    	return new MemcacheMBean();
     }
 
     @Bean
