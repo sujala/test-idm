@@ -301,11 +301,12 @@ public class LdapClientRepositoryTest {
         repo.addClientGroup(group);
         group.setType("My New Type");
         repo.updateClientGroup(group);
-        ClientGroup returnedGroup = repo.findClientGroupByUniqueId(group.getUniqueId());
-        Assert.assertNotNull(returnedGroup);
-        Assert.assertEquals(returnedGroup.getType(), "My New Type");
+        ClientGroup returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         repo.delete(testClient.getClientId());
+        
+        Assert.assertNotNull(returnedGroup);
+        Assert.assertTrue(group.getType().equalsIgnoreCase("My New Type"));
     }
     
     @Test
