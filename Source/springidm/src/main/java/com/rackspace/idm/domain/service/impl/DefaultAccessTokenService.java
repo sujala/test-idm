@@ -175,6 +175,12 @@ public class DefaultAccessTokenService implements AccessTokenService {
     public AccessToken createPasswordResetAccessTokenForUser(User user, String clientId) {
         return createPasswordResetAccessTokenForUser(user, clientId, getDefaultTokenExpirationSeconds());
     }
+    
+    @Override
+    public AccessToken createPasswordResetAccessTokenForUser(String userName, String clientId) {
+        User user = userService.getUser(userName);
+        return createPasswordResetAccessTokenForUser(user, clientId, getDefaultTokenExpirationSeconds());
+    }   
 
     @Override
     public AccessToken createPasswordResetAccessTokenForUser(User user, String clientId,
@@ -403,24 +409,22 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
         xdcTokenDao.deleteAllTokensForCustomer(customerId);
     }
-
-   
-
-    private String generateTokenWithDcPrefix() {
-        String token = UUID.randomUUID().toString().replace("-", "");
-        return String.format("%s%s", getDataCenterPrefix(), token);
-    }
     
-    private boolean passwordRotationDurationElapsed(AccessToken accessToken) {
-     
-        boolean rotationNeeded = false;
-        
+    @Override
+    public boolean passwordRotationDurationElapsed(AccessToken accessToken) {
         BaseUser baseUser = (BaseUser) accessToken.getTokenUser();
         if (baseUser == null) {
             return false;
         }
+        return passwordRotationDurationElapsed(baseUser.getUsername());
+    }
+    
+    @Override
+    public boolean passwordRotationDurationElapsed(String userName) {
+     
+        boolean rotationNeeded = false;
         
-        User user = userService.getUser(baseUser.getUsername());
+        User user = userService.getUser(userName);
         
         if (user == null) {
             return false;
@@ -472,6 +476,12 @@ public class DefaultAccessTokenService implements AccessTokenService {
             }
         }
         return rotationNeeded;
+    }
+    
+ 
+    private String generateTokenWithDcPrefix() {
+        String token = UUID.randomUUID().toString().replace("-", "");
+        return String.format("%s%s", getDataCenterPrefix(), token);
     }
     
     private int getNumOfLeapYears(int currentYear, int yearAfterLastChange) {

@@ -44,6 +44,8 @@ public interface AccessTokenService {
     AccessToken createPasswordResetAccessTokenForUser(User user, String clientId);
 
     AccessToken createPasswordResetAccessTokenForUser(User user, String clientId, int expirationTimeInSeconds);
+    
+    AccessToken createPasswordResetAccessTokenForUser(String userName, String clientId);    
 
     AccessToken createAccessTokenForClient(BaseClient client);
 
@@ -66,4 +68,8 @@ public interface AccessTokenService {
     void deleteAllGloballyForOwner(String owner);
 
     void deleteAllGloballyForCustomer(String customerId, List<User> users, List<Client> clients);
+
+    boolean passwordRotationDurationElapsed(AccessToken accessToken);
+
+    boolean passwordRotationDurationElapsed(String userName);
 }

@@ -83,6 +83,7 @@ public class DefaultOAuthService implements OAuthService {
         AccessToken accessToken = null;
         RefreshToken refreshToken = null;
         if (PASSWORD == grantType) {
+            
             UserAuthenticationResult uaResult = userService.authenticate(trParam.getUsername(),
                 trParam.getPassword());
             if (!uaResult.isAuthenticated()) {
@@ -90,7 +91,7 @@ public class DefaultOAuthService implements OAuthService {
                 logger.warn(message, trParam.getUsername());
 				throw new NotAuthenticatedException(message);
             }
-
+            
             accessToken = accessTokenService.getTokenByBasicCredentials(caResult.getClient(),
                 uaResult.getUser(), expirationSeconds, currentTime);
             refreshToken = getRefreshTokenForUser(uaResult.getUser().getUsername(), caResult.getClient()

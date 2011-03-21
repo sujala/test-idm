@@ -104,6 +104,14 @@ public class TokenResource {
         trParam.setRefreshToken(creds.getRefreshToken());
         trParam.setUsername(creds.getUsername());
 
+        if ( tokenService.passwordRotationDurationElapsed(creds.getUsername())) {
+            AccessToken resetToken = tokenService.createPasswordResetAccessTokenForUser
+                                 (creds.getUsername(), creds.getClientId());
+            AuthData authData = new AuthData();
+            authData.setAccessToken(resetToken);
+            return Response.ok(authConverter.toAuthDataJaxb(authData)).build();
+        }
+        
         // if request includes an authHeader then the values for clientId and
         // clientSecret need to be parsed out. Also, the AuthHeader values will
         // override the values for client_id and client_secret passed in the
