@@ -474,20 +474,16 @@ public class DefaultAccessTokenService implements AccessTokenService {
         return rotationNeeded;
     }
     
-    private int getNumOfLeapYears(int currentYear, int yearOfLastChange) {
+    private int getNumOfLeapYears(int currentYear, int yearAfterLastChange) {
         int count = 0;
-        
-        if (currentYear % 4 == 0) {
+            
+        if (yearAfterLastChange % 4 == 0) {
             count++;
         }
         
-        if (yearOfLastChange % 4 == 0) {
-            count++;
-        }
+        int numOfLeapYearsInBetween = (currentYear - yearAfterLastChange) / 4;
         
-        int numOfLeapYearsInBetween = (currentYear - yearOfLastChange) / 4;
-        
-        count += (numOfLeapYearsInBetween);
+        count += numOfLeapYearsInBetween;
         
         return count;
     }
