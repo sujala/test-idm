@@ -59,12 +59,12 @@ public class LdapMBean {
 	}
 	
 	@ManagedAttribute
-	public Map<String,Boolean> getServerConnectionStatus() {
+	public Map<String,String> getServerConnectionStatus() {
 		String s = connPools.getAppConnPool().toString();
 		// Sample: LDAPConnectionPool(name='bind', serverSet=RoundRobinServerSet(servers={server1:389, server2:389}), maxConnections=1000)
 		Matcher matcher = Pattern.compile(".*\\{(.*)\\}.*").matcher(s);
 		
-		Map<String,Boolean> result = new HashMap<String, Boolean>();
+		Map<String,String> result = new HashMap<String, String>();
 		
 		boolean found = matcher.find();
 		if(found) {
@@ -75,10 +75,11 @@ public class LdapMBean {
 				try {
 					LDAPConnection con;
 					con = new LDAPConnection(StringUtils.strip(hostPort[0]), Integer.parseInt(hostPort[1]));
-					result.put(server, true);
+					connPools.getAppConnPool().getHealthCheck().ensureConnectionValidForContinuedUse(con);
+					result.put(server, "up");
 					con.close();
 				} catch (LDAPException e) {
-					result.put(server, false);
+					result.put(server, "down");
 				}
 			}
 		}
