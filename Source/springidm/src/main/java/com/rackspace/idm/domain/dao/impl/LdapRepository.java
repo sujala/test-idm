@@ -87,7 +87,7 @@ public abstract class LdapRepository {
     public static final String ATTR_PERMISSION = "permission";
     public static final String ATTR_PERMISSION_TYPE = "permissionType";
     public static final String ATTR_PUBLIC_URL = "publicUrl";
-    public static final String ATTR_PWD_ACCOUNT_LOCKOUT_TIME = "pwdAccountLockedTime";
+    public static final String ATTR_PWD_ACCOUNT_LOCKOUT_TIME = "dxPwdFailedTime";
     public static final String ATTR_RACKSPACE_API_KEY = "rsApiKey";
     public static final String ATTR_RACKSPACE_CUSTOMER_NUMBER = "RCN";
     public static final String ATTR_RACKSPACE_PERSON_NUMBER = "RPN";

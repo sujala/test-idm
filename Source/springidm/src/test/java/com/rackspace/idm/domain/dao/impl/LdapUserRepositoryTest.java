@@ -215,17 +215,16 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
-    @Ignore("Inums are random now")
     public void shouldFindOneUserThatExistsByInum() {
-        User user = repo.findByInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111");
+        User mkovacs = repo.findByUsername("mkovacs");
+        User user = repo.findByInum(mkovacs.getInum());
         Assert.assertNotNull(user);
         Assert.assertEquals("Kovacs", user.getLastname());
     }
 
     @Test
-    @Ignore
     public void shouldNotFindUserThatDoesNotExistByInum() {
-        User user = repo.findByUsername("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1112");
+        User user = repo.findByUsername("BADINUM");
         Assert.assertNull(user);
     }
 
@@ -424,7 +423,6 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
-    @Ignore
     public void shouldNotAuthenticateForBadCredentials() {
         UserAuthenticationResult result = repo.authenticate("mkovacs", "bad password");
         Assert.assertFalse(result.isAuthenticated());
@@ -477,7 +475,6 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
-    @Ignore
     public void shouldReturnTrueForMaxLoginFailures() {
         User newUser = addNewTestUser();
 
@@ -485,12 +482,10 @@ public class LdapUserRepositoryTest {
             Password password = Password.generateRandom(false);
             repo.authenticate(newUser.getUsername(), password.getValue());
         }
-
         newUser = repo.findByUsername(newUser.getUsername());
+        repo.delete(newUser.getUsername());
 
         Assert.assertTrue(newUser.isMaxLoginFailuresExceded());
-
-        repo.delete(newUser.getUsername());
     }
 
     @Test(expected = PasswordSelfUpdateTooSoonException.class)
