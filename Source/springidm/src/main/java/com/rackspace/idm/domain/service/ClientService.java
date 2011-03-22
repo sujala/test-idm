@@ -64,4 +64,6 @@ public interface ClientService {
     void updateClientGroup(ClientGroup group);
 
     void updateDefinedPermission(Permission permission);
+    
+    
 }

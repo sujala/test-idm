@@ -107,11 +107,12 @@ public class DefaultUserService implements UserService {
 
     public UserAuthenticationResult authenticate(String username, String password) {
         logger.debug("Authenticating User: {}", username);
-
+        
         if (isTrustedServer) {
             boolean authenticated = authDao.authenticate(username, password);
             logger.debug("Authenticated Racker {} : {}", username, authenticated);
-            return new UserAuthenticationResult(new BaseUser(username), authenticated);
+            User user = getUserWithPasswordRotationDurationSet(username);
+            return new UserAuthenticationResult(user, authenticated);
         }
 
         UserAuthenticationResult result = userDao.authenticate(username, password);
@@ -119,12 +120,23 @@ public class DefaultUserService implements UserService {
         if (result.isAuthenticated()) {
             List<ClientGroup> groups = this.clientService.getClientGroupsForUser(result.getUser()
                 .getUsername());
-            BaseUser user = new BaseUser(result.getUser().getUsername(), result.getUser().getCustomerId(),
+            User user = getUserWithPasswordRotationDurationSet(username);
+            BaseUser baseUser = new BaseUser(result.getUser().getUsername(), result.getUser().getCustomerId(),
                 groups);
-            result = new UserAuthenticationResult(user, result.isAuthenticated());
+            baseUser.setPasswordRotationDuration(user.getPasswordRotationDuration());
+            baseUser.setLastPasswordUpdateTimeStamp(user.getPasswordObj().getLastUpdated());
+            result = new UserAuthenticationResult(baseUser, result.isAuthenticated());
         }
         logger.debug("Authenticated User: {} : {}", username, result);
         return result;
+    }
+
+    private User getUserWithPasswordRotationDurationSet(String username) {
+        User user = userDao.findByUsername(username);
+        Customer customer = customerDao.findByCustomerId(user.getCustomerId());
+        int passwordRotationDuration = customer.getPasswordRotationDuration();
+        user.setPasswordRotationDuration(passwordRotationDuration);
+        return user;
     }
 
     public UserAuthenticationResult authenticateWithApiKey(String username, String apiKey) {
@@ -133,9 +145,12 @@ public class DefaultUserService implements UserService {
         if (authenticated.isAuthenticated()) {
             List<ClientGroup> groups = this.clientService.getClientGroupsForUser(authenticated.getUser()
                 .getUsername());
-            BaseUser user = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser()
+            BaseUser baseUser = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser()
                 .getCustomerId(), groups);
-            authenticated = new UserAuthenticationResult(user, authenticated.isAuthenticated());
+            User user = getUserWithPasswordRotationDurationSet(username);
+            baseUser.setPasswordRotationDuration(user.getPasswordRotationDuration());
+            baseUser.setLastPasswordUpdateTimeStamp(user.getPasswordObj().getLastUpdated());
+            authenticated = new UserAuthenticationResult(baseUser, authenticated.isAuthenticated());
         }
         logger.debug("Authenticated User: {} by API Key - {}", username, authenticated);
         return authenticated;
@@ -147,9 +162,12 @@ public class DefaultUserService implements UserService {
         if (authenticated.isAuthenticated()) {
             List<ClientGroup> groups = this.clientService.getClientGroupsForUser(authenticated.getUser()
                 .getUsername());
-            BaseUser user = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser()
+            BaseUser baseUser = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser()
                 .getCustomerId(), groups);
-            authenticated = new UserAuthenticationResult(user, authenticated.isAuthenticated());
+            User user = getUserWithPasswordRotationDurationSet(authenticated.getUser().getUsername());
+            baseUser.setPasswordRotationDuration(user.getPasswordRotationDuration());
+            baseUser.setLastPasswordUpdateTimeStamp(user.getPasswordObj().getLastUpdated());
+            authenticated = new UserAuthenticationResult(baseUser, authenticated.isAuthenticated());
         }
         logger.debug("Authenticated User with MossoId {} and API Key - {}", mossoId, authenticated);
         return authenticated;
@@ -161,9 +179,12 @@ public class DefaultUserService implements UserService {
         if (authenticated.isAuthenticated()) {
             List<ClientGroup> groups = this.clientService.getClientGroupsForUser(authenticated.getUser()
                 .getUsername());
-            BaseUser user = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser()
+            BaseUser baseUser = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser()
                 .getCustomerId(), groups);
-            authenticated = new UserAuthenticationResult(user, authenticated.isAuthenticated());
+            User user = getUserWithPasswordRotationDurationSet(authenticated.getUser().getUsername());
+            baseUser.setPasswordRotationDuration(user.getPasswordRotationDuration());
+            baseUser.setLastPasswordUpdateTimeStamp(user.getPasswordObj().getLastUpdated());
+            authenticated = new UserAuthenticationResult(baseUser, authenticated.isAuthenticated());
         }
         logger.debug("Authenticated User with NastId {} and API Key - {}", nastId, authenticated);
         return authenticated;

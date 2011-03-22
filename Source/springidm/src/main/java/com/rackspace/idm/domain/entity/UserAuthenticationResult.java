@@ -1,12 +1,17 @@
 package com.rackspace.idm.domain.entity;
 
+import org.joda.time.DateTime;
+
 public class UserAuthenticationResult extends AuthenticationResult {
 
     private BaseUser user;
+    
+    private DateTime timeToPasswordExpiration;
 
     public UserAuthenticationResult(BaseUser user, boolean authenticated) {
         super(authenticated);
         this.user = user;
+        timeToPasswordExpiration = getTimeToPasswordExpiry();
     }
     public BaseUser getUser() {
         return user;
@@ -41,6 +46,8 @@ public class UserAuthenticationResult extends AuthenticationResult {
         }
         return true;
     }
-
-
+    
+    private DateTime getTimeToPasswordExpiry() {
+        return null;
+    }
 }

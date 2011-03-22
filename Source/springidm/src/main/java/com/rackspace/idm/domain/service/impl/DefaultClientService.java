@@ -385,4 +385,6 @@ public class DefaultClientService implements ClientService {
 
         clientDao.updateClientGroup(group);
     }
+    
+    
 }

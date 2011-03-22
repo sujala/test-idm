@@ -949,7 +949,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             getLogger().error(errMsg);
             throw new UserDisabledException(errMsg);
         }
-
+        
         return new UserAuthenticationResult(user, isAuthenticated);
     }
 

@@ -117,7 +117,7 @@ public class DefaultCustomerService implements CustomerService {
         this.customerDao.save(customer);
         logger.info("Updated Customer: {}", customer);
     }
-
+    
     private List<User> getUserListForCustomerId(String customerId) {
         int offset = 0;
         int limit = 100;

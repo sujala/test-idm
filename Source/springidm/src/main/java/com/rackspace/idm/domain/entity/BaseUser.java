@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 import org.hibernate.validator.constraints.Length;
+import org.joda.time.DateTime;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -24,9 +25,10 @@ public class BaseUser implements Serializable {
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     protected String customerId = null;
     protected List<ClientGroup> groups;
+    protected Integer passwordRotationDuration;
+    protected DateTime lastUpdateOfPassword;
 
     public BaseUser() {
-        
     }
 
     public BaseUser(String username) {
@@ -43,6 +45,13 @@ public class BaseUser implements Serializable {
         this.username = username;
         this.customerId = customerId;
     }
+    
+    public BaseUser(String username, String customerId, List<ClientGroup> groups, int passwordRotationDuration) {
+        this.username = username;
+        this.customerId = customerId;
+        this.groups = groups;
+        this.passwordRotationDuration = passwordRotationDuration;    
+    }  
 
     public String getUsername() {
         return username;
@@ -66,6 +75,18 @@ public class BaseUser implements Serializable {
 
     protected void setGroups(List<ClientGroup> groups) {
         this.groups = groups;
+    }
+    
+    public Integer getPasswordRotationDuration() {
+        return passwordRotationDuration;
+    }
+    
+    public void setPasswordRotationDuration(Integer passwordRotationDuration) {
+        this.passwordRotationDuration = passwordRotationDuration;
+    }
+    
+    public void setLastPasswordUpdateTimeStamp(DateTime lastUpdateOfPassword) {
+        this.lastUpdateOfPassword = lastUpdateOfPassword;
     }
 
     @Override
