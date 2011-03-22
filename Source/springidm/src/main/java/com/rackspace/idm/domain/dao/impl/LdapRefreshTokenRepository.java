@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
@@ -318,9 +319,13 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
     private RefreshToken getToken(SearchResultEntry resultEntry) {
         RefreshToken token = new RefreshToken();
         token.setTokenString(resultEntry.getAttributeValue(ATTR_O));
-        String expirationStr = resultEntry.getAttributeValue(ATTR_EXPIRATION);
-        DateTime expiration = DATE_PARSER.parseDateTime(expirationStr);
-        token.setExpirationTime(expiration);
+        
+        Date expiration = resultEntry.getAttributeValueAsDate(ATTR_EXPIRATION);
+        if (expiration != null) {
+            DateTime expDate = new DateTime(expiration);
+            token.setExpirationTime(expDate);
+        }
+        
         token.setOwner(resultEntry.getAttributeValue(ATTR_TOKEN_OWNER));
         token.setRequestor(resultEntry.getAttributeValue(ATTR_TOKEN_REQUESTOR));
         return token;
