@@ -47,6 +47,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.TokenExpiredException;
+import com.rackspace.idm.jaxb.AuthGrantType;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.BasicCredentialsCheck;
 import com.rackspace.idm.validation.InputValidator;
@@ -104,7 +105,8 @@ public class TokenResource {
         trParam.setRefreshToken(creds.getRefreshToken());
         trParam.setUsername(creds.getUsername());
 
-        if ( tokenService.passwordRotationDurationElapsed(creds.getUsername())) {
+        if ( creds.getGrantType().equals(AuthGrantType.PASSWORD) 
+        		&& tokenService.passwordRotationDurationElapsed(creds.getUsername())) {
             AccessToken resetToken = tokenService.createPasswordResetAccessTokenForUser
                                  (creds.getUsername(), creds.getClientId());
             AuthData authData = new AuthData();
