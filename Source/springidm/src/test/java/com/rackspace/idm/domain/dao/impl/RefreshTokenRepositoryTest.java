@@ -196,7 +196,7 @@ public class RefreshTokenRepositoryTest {
     @Test
     public void shouldFindUnexpiredToken() {
         RefreshToken addedToken = addNewTestToken();
-        DateTime goodDate = new DateTime(2020, 6, 1, 11, 0, 0, 0);
+        DateTime goodDate = new DateTime(2010, 6, 1, 11, 0, 0, 0);
         RefreshToken token = repo.findTokenForOwner(owner, requestor, goodDate);
         Assert.assertNotNull(token);
         repo.delete(addedToken.getTokenString());
@@ -286,8 +286,7 @@ public class RefreshTokenRepositoryTest {
 
     private RefreshToken createTestTokenInstance() {
         RefreshToken newToken = new RefreshToken("DELETE_My_Token",
-            LdapRefreshTokenRepository.DATE_PARSER
-                .parseDateTime(("20201231210627.3-0500")), owner, requestor);
+            new DateTime(), owner, requestor);
         return newToken;
     }
 }
