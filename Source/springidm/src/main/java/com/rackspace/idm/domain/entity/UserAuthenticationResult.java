@@ -6,15 +6,20 @@ public class UserAuthenticationResult extends AuthenticationResult {
 
     private BaseUser user;
     
-    private DateTime timeToPasswordExpiration;
+    private DateTime passwordExpirationDate;
 
     public UserAuthenticationResult(BaseUser user, boolean authenticated) {
         super(authenticated);
         this.user = user;
-        timeToPasswordExpiration = getTimeToPasswordExpiry();
     }
+    
     public BaseUser getUser() {
         return user;
+    }
+    
+    public DateTime getPasswordExpirationDate() {
+        passwordExpirationDate = calculatePasswordExpirationDate();
+        return passwordExpirationDate;
     }
 
     @Override
@@ -47,7 +52,52 @@ public class UserAuthenticationResult extends AuthenticationResult {
         return true;
     }
     
-    private DateTime getTimeToPasswordExpiry() {
-        return null;
+    private DateTime calculatePasswordExpirationDate() {
+        int futureDayWhenPwdExpires = user.getPasswordRotationDuration();
+        DateTime lastPasswordChange = user.getLastPasswordUpdateTimeStamp();
+        
+        if (lastPasswordChange == null) {
+            return null;
+        }
+        
+        int monthsOfDayInYear [] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+        
+        int yearOfLastUpdate = lastPasswordChange.getYear();
+        int dayOfLastUpdate = lastPasswordChange.getDayOfYear();
+        
+        futureDayWhenPwdExpires += dayOfLastUpdate;
+       
+        int yearOfPasswordExpiration = yearOfLastUpdate;
+        int month = -1;
+        
+        while (futureDayWhenPwdExpires >= 366) {
+            if (isLeap(yearOfPasswordExpiration)) {
+                futureDayWhenPwdExpires -= 366;
+            }
+            else {
+                futureDayWhenPwdExpires -= 365;        
+            }            
+            yearOfPasswordExpiration++;
+        }
+        
+        while (futureDayWhenPwdExpires >= 31) {
+            
+            month++;
+            if (month == 1) {
+                if (isLeap(yearOfPasswordExpiration) ) {
+                    futureDayWhenPwdExpires -= 29;
+                    continue;
+                }
+            }
+            
+            futureDayWhenPwdExpires -= monthsOfDayInYear[month];
+        }
+        
+        DateTime passwordExpiryDate = new DateTime(yearOfPasswordExpiration, month + 2, futureDayWhenPwdExpires,0,0,0,0);
+        return passwordExpiryDate;
+    }
+    
+    private boolean isLeap(int year) {
+        return year % 4 == 0;
     }
 }

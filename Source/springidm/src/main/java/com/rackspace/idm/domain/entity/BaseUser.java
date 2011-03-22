@@ -46,13 +46,6 @@ public class BaseUser implements Serializable {
         this.customerId = customerId;
     }
     
-    public BaseUser(String username, String customerId, List<ClientGroup> groups, int passwordRotationDuration) {
-        this.username = username;
-        this.customerId = customerId;
-        this.groups = groups;
-        this.passwordRotationDuration = passwordRotationDuration;    
-    }  
-
     public String getUsername() {
         return username;
     }
@@ -87,6 +80,10 @@ public class BaseUser implements Serializable {
     
     public void setLastPasswordUpdateTimeStamp(DateTime lastUpdateOfPassword) {
         this.lastUpdateOfPassword = lastUpdateOfPassword;
+    }
+    
+    public DateTime getLastPasswordUpdateTimeStamp() {
+        return lastUpdateOfPassword;
     }
 
     @Override
