@@ -15,6 +15,7 @@ import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AuthCredentials;
@@ -33,6 +34,7 @@ import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.RefreshTokenService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -71,6 +73,10 @@ public class DefaultOAuthService implements OAuthService {
     public AuthData getTokens(OAuthGrantType grantType, AuthCredentials trParam, DateTime currentTime)
         throws NotAuthenticatedException {
         int expirationSeconds = accessTokenService.getDefaultTokenExpirationSeconds();
+        
+        if (StringUtils.isBlank(trParam.getClientId())) {
+            throw new BadRequestException("client_id cannot be blank");
+        }
 
         ClientAuthenticationResult caResult = clientService.authenticate(trParam.getClientId(),
             trParam.getClientSecret());
@@ -83,6 +89,10 @@ public class DefaultOAuthService implements OAuthService {
         AccessToken accessToken = null;
         RefreshToken refreshToken = null;
         if (PASSWORD == grantType) {
+            
+            if (StringUtils.isBlank(trParam.getUsername())) {
+                throw new BadRequestException("username cannot be blank");
+            }
             
             UserAuthenticationResult uaResult = userService.authenticate(trParam.getUsername(),
                 trParam.getPassword());
