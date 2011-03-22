@@ -56,6 +56,10 @@ public class UserAuthenticationResult extends AuthenticationResult {
         int futureDayWhenPwdExpires = user.getPasswordRotationDuration();
         DateTime lastPasswordChange = user.getLastPasswordUpdateTimeStamp();
         
+        if (futureDayWhenPwdExpires == 0) {
+            return lastPasswordChange;
+        }
+        
         if (lastPasswordChange == null) {
             return null;
         }
