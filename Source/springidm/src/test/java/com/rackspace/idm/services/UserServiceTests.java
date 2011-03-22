@@ -220,9 +220,7 @@ public class UserServiceTests {
         User user = new User();
         user.setUsername(username);
         user.setPasswordRotationDuration(10);
-        
-        //DateTime today = new DateTime();
-        
+ 
         int year = 2011;
         int monthOfYear = 3;
         int dayOfMonth = 1;
@@ -245,9 +243,100 @@ public class UserServiceTests {
         Assert.assertEquals(year, passwordExpirationDate.getYear());
         Assert.assertEquals(monthOfYear, passwordExpirationDate.getMonthOfYear());
         Assert.assertEquals(dayOfMonth + 10, passwordExpirationDate.getDayOfMonth());
-        
-        
     }
+    
+    @Test
+    public void shouldGetPasswordExpiryDate2() {
+        
+        User user = new User();
+        user.setUsername(username);
+        user.setPasswordRotationDuration(366);
+ 
+        int year = 2011;
+        int monthOfYear = 3;
+        int dayOfMonth = 1;
+        int hourOfDay = 1;
+        int minuteOfHour = 1;
+        int secondOfMinute = 1;
+        int millisOfSecond = 1;
+         
+        DateTime lastUpdated = new DateTime(year, monthOfYear, dayOfMonth,
+        hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+         
+        Password passwordToUse = Password.existingInstance("testPass", lastUpdated, false);
+         
+        user.setPasswordObj(passwordToUse);
+        user.setLastPasswordUpdateTimeStamp(lastUpdated);
+       
+        UserAuthenticationResult uaResult = new UserAuthenticationResult(user, false);
+        DateTime passwordExpirationDate = uaResult.getPasswordExpirationDate();
+        
+        Assert.assertEquals(2012, passwordExpirationDate.getYear());
+        Assert.assertEquals(monthOfYear, passwordExpirationDate.getMonthOfYear());
+        Assert.assertEquals(dayOfMonth, passwordExpirationDate.getDayOfMonth());
+    } 
+    
+    @Test
+    public void shouldGetPasswordExpiryDate3() {
+        
+        User user = new User();
+        user.setUsername(username);
+        user.setPasswordRotationDuration(365);
+ 
+        int year = 2011;
+        int monthOfYear = 3;
+        int dayOfMonth = 1;
+        int hourOfDay = 1;
+        int minuteOfHour = 1;
+        int secondOfMinute = 1;
+        int millisOfSecond = 1;
+         
+        DateTime lastUpdated = new DateTime(year, monthOfYear, dayOfMonth,
+        hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+         
+        Password passwordToUse = Password.existingInstance("testPass", lastUpdated, false);
+         
+        user.setPasswordObj(passwordToUse);
+        user.setLastPasswordUpdateTimeStamp(lastUpdated);
+       
+        UserAuthenticationResult uaResult = new UserAuthenticationResult(user, false);
+        DateTime passwordExpirationDate = uaResult.getPasswordExpirationDate();
+        
+        Assert.assertEquals(2012, passwordExpirationDate.getYear());
+        Assert.assertEquals(monthOfYear - 1, passwordExpirationDate.getMonthOfYear());
+        Assert.assertEquals(29, passwordExpirationDate.getDayOfMonth());
+    }
+    
+    @Test
+    public void shouldGetPasswordExpiryDate4() {
+        
+        User user = new User();
+        user.setUsername(username);
+        user.setPasswordRotationDuration(1827);
+ 
+        int year = 2011;
+        int monthOfYear = 3;
+        int dayOfMonth = 1;
+        int hourOfDay = 1;
+        int minuteOfHour = 1;
+        int secondOfMinute = 1;
+        int millisOfSecond = 1;
+         
+        DateTime lastUpdated = new DateTime(year, monthOfYear, dayOfMonth,
+        hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+         
+        Password passwordToUse = Password.existingInstance("testPass", lastUpdated, false);
+         
+        user.setPasswordObj(passwordToUse);
+        user.setLastPasswordUpdateTimeStamp(lastUpdated);
+       
+        UserAuthenticationResult uaResult = new UserAuthenticationResult(user, false);
+        DateTime passwordExpirationDate = uaResult.getPasswordExpirationDate();
+        
+        Assert.assertEquals(2016, passwordExpirationDate.getYear());
+        Assert.assertEquals(monthOfYear, passwordExpirationDate.getMonthOfYear());
+        Assert.assertEquals(dayOfMonth, passwordExpirationDate.getDayOfMonth());
+    }    
 
     @Test
     public void shouldAuthenticateUser() {

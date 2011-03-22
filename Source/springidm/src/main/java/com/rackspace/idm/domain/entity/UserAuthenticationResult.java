@@ -80,7 +80,7 @@ public class UserAuthenticationResult extends AuthenticationResult {
             yearOfPasswordExpiration++;
         }
         
-        while (futureDayWhenPwdExpires >= 31) {
+        while (futureDayWhenPwdExpires >= 30) {
             
             month++;
             if (month == 1) {
@@ -92,6 +92,7 @@ public class UserAuthenticationResult extends AuthenticationResult {
             
             futureDayWhenPwdExpires -= monthsOfDayInYear[month];
         }
+        
         
         DateTime passwordExpiryDate = new DateTime(yearOfPasswordExpiration, month + 2, futureDayWhenPwdExpires,0,0,0,0);
         return passwordExpiryDate;
