@@ -25,6 +25,7 @@
 			<xsdxt:link rev="index" href="role.xsd" />
 			<xsdxt:link rev="index" href="permission.xsd" />
 			<xsdxt:link rev="index" href="password_recovery.xsd" />
+			<xsdxt:link rev="index" href="passwordRotationPolicy.xsd" />
 			   
             <!--           
                 JAXB vendor extension to avoid having to use JAXBElement wrapper
@@ -133,6 +134,7 @@
 			</xsd:documentation>
 		</annotation>
 	</include>
+	
 	<include schemaLocation="password_recovery.xsd">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -141,4 +143,14 @@
 			</xsd:documentation>
 		</annotation>
 	</include>
+	
+	<include schemaLocation="passwordRotationPolicy.xsd">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>Password rotation policy.</p>
+			</xsd:documentation>
+		</annotation>
+	</include>
+	
 </schema>

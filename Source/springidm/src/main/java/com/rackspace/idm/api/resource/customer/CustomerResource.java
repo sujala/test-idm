@@ -212,7 +212,7 @@ public class CustomerResource {
         }
         
         int duration = passwordRotationPolicy.getDuration();
-        boolean enabled = passwordRotationPolicy.getEnabled();
+        boolean enabled = passwordRotationPolicy.isEnabled();
         
         if (enabled) {
             if (duration < 0) {
