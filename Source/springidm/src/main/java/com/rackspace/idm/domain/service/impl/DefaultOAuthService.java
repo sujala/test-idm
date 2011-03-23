@@ -101,7 +101,9 @@ public class DefaultOAuthService implements OAuthService {
                                  (trParam.getUsername(), trParam.getClientId());
                 AuthData authData = new AuthData();
                 authData.setAccessToken(resetToken);
-                authData.setMessage("Password expired. This token can be used only to reset password.");
+                
+                authData.setPasswordResetOnlyToken(true);
+                authData.setUserPasswordExpirationDate(userService.getUserPasswordExpirationDate(trParam.getUsername()));
                 return authData;
             }
             

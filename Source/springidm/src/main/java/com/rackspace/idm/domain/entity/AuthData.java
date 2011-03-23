@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.entity;
 
 import java.util.List;
 
+import org.joda.time.DateTime;
+
 public class AuthData {
 
     private AccessToken accessToken;
@@ -9,7 +11,8 @@ public class AuthData {
     private BaseUser user;
     private BaseClient client;
     private List<Permission> permissions;
-    private String message;
+    private Boolean passwordResetOnlyToken = null;
+    private DateTime userPasswordExpirationDate = null;
     
     public AuthData() {
     }
@@ -59,12 +62,21 @@ public class AuthData {
         this.permissions = permissions;
     }
     
-    public void setMessage(String message) {
-        this.message = message;
+    public void setPasswordResetOnlyToken(boolean passwordResetOnlyToken) {
+        this.passwordResetOnlyToken = passwordResetOnlyToken;
     }
     
-    public String getMessage() {
-        return message;
+    public Boolean getPasswordResetOnlyToken() {
+        return passwordResetOnlyToken;
     }
+    
+    public DateTime getUserPasswordExpirationDate() {
+        return userPasswordExpirationDate;
+    }
+    
+    public void setUserPasswordExpirationDate(DateTime passwordExpirationDate) {
+        this.userPasswordExpirationDate = passwordExpirationDate;
+    }
+    
     
 }

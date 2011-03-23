@@ -1,6 +1,11 @@
 package com.rackspace.idm.api.converter;
 
+import java.util.GregorianCalendar;
 import java.util.List;
+
+import javax.xml.datatype.*;
+
+import org.joda.time.DateTime;
 
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AuthData;
@@ -58,10 +63,34 @@ public class AuthConverter {
                 .toPermissionListJaxb(auth.getPermissions()));
         }
         
-        if (auth.getMessage() != null) {
-            authJaxb.setMessage(auth.getMessage());
+        if (auth.getPasswordResetOnlyToken() != null && auth.getPasswordResetOnlyToken()) {
+            authJaxb.setIsPasswordResetOnlyToken(auth.getPasswordResetOnlyToken());
         }
-
+        
+        DateTime passwordExpirationDate = auth.getUserPasswordExpirationDate();
+        
+        if (auth.getUserPasswordExpirationDate() != null) {    
+            GregorianCalendar gc = new GregorianCalendar();
+            gc.setTime(passwordExpirationDate.toDate());
+            
+            XMLGregorianCalendar xmlPasswordExpirationDate = null;
+            try {
+                xmlPasswordExpirationDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(gc);
+            } catch (DatatypeConfigurationException e) {
+                
+                e.printStackTrace();
+            }
+            
+            authJaxb.setPasswordExpirationDate(xmlPasswordExpirationDate);
+        }
+        
+        DateTime today = new DateTime();
+        int daysToPasswordExpiry = passwordExpirationDate.getDayOfYear() - today.getDayOfYear();
+        
+        if (daysToPasswordExpiry > 0) {
+            authJaxb.setDaysUntilPasswordExpiration(daysToPasswordExpiry);
+        }
+        
         return authJaxb;
     }
 

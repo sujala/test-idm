@@ -167,8 +167,10 @@
 				</annotation>
 			</element>
 			<element name="permissions" type="idm:PermissionList" minOccurs="0" maxOccurs="1"></element>
-			<element name="message" type="string" minOccurs="0" maxOccurs="0"></element>
 			</sequence>
+			<attribute name="isPasswordResetOnlyToken" type="xsd:boolean" use="required"></attribute>
+			<attribute name="passwordExpirationDate" type="xsd:date" use="required"></attribute>
+			<attribute name="daysUntilPasswordExpiration" type="xsd:int" use="required"></attribute>
 	</complexType>
 
 	<complexType name="AuthCredentials">
