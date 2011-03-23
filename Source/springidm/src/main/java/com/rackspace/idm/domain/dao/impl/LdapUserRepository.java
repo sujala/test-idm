@@ -974,7 +974,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_PASSWORD_SELF_UPDATED, Boolean.toString(isSelfUpdate)));
-            mods.add(new Modification(ModificationType.REPLACE, StaticUtils
+            mods.add(new Modification(ModificationType.REPLACE, 
+            		ATTR_PASSWORD_UPDATED_TIMESTAMP, StaticUtils
                 .encodeGeneralizedTime(currentTime.toDate())));
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD,
                 uNew.getPasswordObj().getValue()));
