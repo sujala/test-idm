@@ -413,6 +413,10 @@ public class DefaultClientService implements ClientService {
             .getDefinedPermissionByClientIdAndPermissionId(
                 permission.getClientId(), permission.getPermissionId());
         
+        if (p == null) {
+            throw new NotFoundException("Permission Not Found");
+        }
+        
         return this.clientDao.getClientsThatHavePermission(permission);
     }
     
