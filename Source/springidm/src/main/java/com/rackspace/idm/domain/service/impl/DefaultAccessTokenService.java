@@ -33,17 +33,16 @@ public class DefaultAccessTokenService implements AccessTokenService {
     private XdcAccessTokenDao xdcTokenDao;
     private ClientDao clientDao;
     private UserService userService;
-    private CustomerService customerService;
+    
     private AuthHeaderHelper authHeaderHelper;
     private Configuration config;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultAccessTokenService(AccessTokenDao tokenDao, ClientDao clientDao, UserService userService, CustomerService customerService,
+    public DefaultAccessTokenService(AccessTokenDao tokenDao, ClientDao clientDao, UserService userService,
         XdcAccessTokenDao xdcTokenDao, AuthHeaderHelper authHeaderHelper, Configuration config) {
         this.tokenDao = tokenDao;
         this.clientDao = clientDao;
-        this.userService = userService;
-        this.customerService = customerService;
+        this.userService = userService;     
         this.xdcTokenDao = xdcTokenDao;
         this.authHeaderHelper = authHeaderHelper;
         this.config = config;
@@ -417,83 +416,26 @@ public class DefaultAccessTokenService implements AccessTokenService {
         }
         return passwordRotationDurationElapsed(baseUser.getUsername());
     }
-    
+     
     @Override
     public boolean passwordRotationDurationElapsed(String userName) {
-     
         boolean rotationNeeded = false;
         
-        User user = userService.getUser(userName);
-        
-        if (user == null) {
-            return false;
+        DateTime passwordExpirationDate = userService.getUserPasswordExpirationDate(userName);
+         
+        if (passwordExpirationDate == null) {
+            return rotationNeeded;
         }
         
-        Customer customer = customerService.getCustomer(user.getCustomerId());
-        
-        if (customer == null) {
-            return false;
+        if (!passwordExpirationDate.isAfterNow()) {
+            rotationNeeded = true;
         }
-        
-        Boolean passwordRotationPolicyEnabled = customer.getPasswordRotationEnabled();
-        
-        if (passwordRotationPolicyEnabled != null && passwordRotationPolicyEnabled) {
-            int passwordRotationDurationInDays = customer.getPasswordRotationDuration();
-             
-            DateTime timeOfLastPwdChange = user.getPasswordObj().getLastUpdated();
-            int yearOfLastChange = timeOfLastPwdChange.getYear();
-            int dayOfLastChange = timeOfLastPwdChange.getDayOfYear();
-            
-            DateTime currentTime = new DateTime();
-            int currentYear = currentTime.getYear();
-            int today = currentTime.getDayOfYear();
-            
-            int numOfYearsSinceLastChange = currentYear - yearOfLastChange;
-                 
-            if (numOfYearsSinceLastChange > 0) {
-                
-                int daysInYrOfChange = 0;
-                if (yearOfLastChange % 4 == 0) {
-                    daysInYrOfChange = 366 - dayOfLastChange;
-                }
-                else {
-                    daysInYrOfChange = 365 - dayOfLastChange;
-                }
-                
-                int leapYears = getNumOfLeapYears(currentYear, yearOfLastChange+1); // Year of change already considered, so "+1"                  
-                int nonLeapYears = numOfYearsSinceLastChange - leapYears - 1; // Year of change already considered, so "-1". 
-                int numOfDaysSinceChange = daysInYrOfChange + (leapYears * 366 + nonLeapYears * 365) + today; 
-                
-                if ( numOfDaysSinceChange > passwordRotationDurationInDays ) {
-                    rotationNeeded = true;
-                }
-             } 
-            else {
-                if ( today - dayOfLastChange > passwordRotationDurationInDays) {
-                    rotationNeeded = true;
-                 }
-            }
-        }
+       
         return rotationNeeded;
     }
-    
  
     private String generateTokenWithDcPrefix() {
         String token = UUID.randomUUID().toString().replace("-", "");
         return String.format("%s%s", getDataCenterPrefix(), token);
-    }
-    
-    private int getNumOfLeapYears(int currentYear, int yearAfterLastChange) {
-        int count = 0;
-            
-        if (yearAfterLastChange % 4 == 0) {
-            count++;
-        }
-        
-        int numOfLeapYearsInBetween = (currentYear - yearAfterLastChange) / 4;
-        
-        count += numOfLeapYearsInBetween;
-        
-        return count;
     }
 }

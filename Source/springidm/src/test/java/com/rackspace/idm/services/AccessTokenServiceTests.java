@@ -95,8 +95,7 @@ public class AccessTokenServiceTests {
             cloudAuthExpirationSeconds, maxTokenExpirationSeconds, minTokenExpirationSeconds,
             dataCenterPrefix, isTrustedServer);
         Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
-        tokenService = new DefaultAccessTokenService(mockTokenDao, mockClientDao, mockUserService, mockCustomerService,
-            mockWebClientAccessTokenDao, new AuthHeaderHelper(), appConfig);
+        tokenService = new DefaultAccessTokenService(mockTokenDao, mockClientDao, mockUserService, mockWebClientAccessTokenDao, new AuthHeaderHelper(), appConfig);
     }
 
     @Test
@@ -419,6 +418,7 @@ public class AccessTokenServiceTests {
         
         User user = getFakeUser();
         EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
+        EasyMock.expect(mockUserService.getUserPasswordExpirationDate(username)).andReturn(null);
         EasyMock.replay(mockUserService);
 
         boolean isAuthenticated = tokenService.authenticateAccessToken(tokenString);
@@ -440,6 +440,7 @@ public class AccessTokenServiceTests {
         
         User user = getFakeUser();
         EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
+        EasyMock.expect(mockUserService.getUserPasswordExpirationDate(username)).andReturn(null);
         EasyMock.replay(mockUserService);
 
         boolean isAuthenticated = tokenService.authenticateAccessToken(tokenString);
@@ -482,6 +483,7 @@ public class AccessTokenServiceTests {
         user.setPasswordObj(passwordToUse);
         
         EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
+        EasyMock.expect(mockUserService.getUserPasswordExpirationDate(username)).andReturn(today.plusDays(passwordRotationDuration));
         
         EasyMock.replay(mockUserService);
         
@@ -525,6 +527,7 @@ public class AccessTokenServiceTests {
         user.setPasswordObj(passwordToUse);
         
         EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
+        EasyMock.expect(mockUserService.getUserPasswordExpirationDate(username)).andReturn(today.plusDays(passwordRotationDuration));
         
         EasyMock.replay(mockUserService);
         
@@ -569,7 +572,7 @@ public class AccessTokenServiceTests {
         user.setPasswordObj(passwordToUse);
         
         EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
-        
+        EasyMock.expect(mockUserService.getUserPasswordExpirationDate(username)).andReturn(today.minusDays(passwordRotationDuration));
         EasyMock.replay(mockUserService);
         
         boolean isAuthenticated = tokenService.authenticateAccessToken(tokenString);
@@ -613,6 +616,7 @@ public class AccessTokenServiceTests {
         user.setPasswordObj(passwordToUse);
         
         EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
+        EasyMock.expect(mockUserService.getUserPasswordExpirationDate(username)).andReturn(today.minusDays(passwordRotationDuration));
         
         EasyMock.replay(mockUserService);
         
@@ -660,6 +664,7 @@ public class AccessTokenServiceTests {
         user.setPasswordObj(passwordToUse);
         
         EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
+        EasyMock.expect(mockUserService.getUserPasswordExpirationDate(username)).andReturn(today.minusDays(passwordRotationDuration));
         
         EasyMock.replay(mockUserService);
         
@@ -711,6 +716,7 @@ public class AccessTokenServiceTests {
         user.setPasswordObj(passwordToUse);
         
         EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
+        EasyMock.expect(mockUserService.getUserPasswordExpirationDate(username)).andReturn(today.minusDays(passwordRotationDuration));
         
         EasyMock.replay(mockUserService);
         

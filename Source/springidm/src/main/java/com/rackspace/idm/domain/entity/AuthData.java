@@ -9,6 +9,7 @@ public class AuthData {
     private BaseUser user;
     private BaseClient client;
     private List<Permission> permissions;
+    private String message;
     
     public AuthData() {
     }
@@ -56,6 +57,14 @@ public class AuthData {
     
     public void setPermissions(List<Permission> permissions) {
         this.permissions = permissions;
+    }
+    
+    public void setMessage(String message) {
+        this.message = message;
+    }
+    
+    public String getMessage() {
+        return message;
     }
     
 }

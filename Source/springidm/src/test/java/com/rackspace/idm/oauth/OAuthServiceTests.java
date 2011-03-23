@@ -124,8 +124,11 @@ public class OAuthServiceTests {
         ClientAuthenticationResult caResult = new ClientAuthenticationResult(testClient, true);
         EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
 
+        EasyMock.expect(mockAccessTokenService.passwordRotationDurationElapsed(user.getUsername())).andReturn(false);
+        
         EasyMock.replay(mockUserService, mockAccessTokenService, mockRefreshTokenService, mockClientService);
 
+        
         AuthData authData = oauthService.getTokens(grantType, authCredentials, currentTime);
 
         Assert.assertNotNull(authData.getAccessToken());
@@ -223,6 +226,8 @@ public class OAuthServiceTests {
                 authCredentials.getClientId())).andReturn(testRefreshToken);
 
         EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
+        
+        EasyMock.expect(mockAccessTokenService.passwordRotationDurationElapsed(uaResult.getUser().getUsername())).andReturn(false);
 
         EasyMock.replay(mockUserService, mockAccessTokenService, mockRefreshTokenService, mockClientService);
 
@@ -266,7 +271,10 @@ public class OAuthServiceTests {
         mockRefreshTokenService.resetTokenExpiration(fakeRefreshToken);
         EasyMock.expectLastCall();
 
+        EasyMock.expect(mockAccessTokenService.passwordRotationDurationElapsed(testuser.getUsername())).andReturn(false);
+        
         EasyMock.replay(mockUserService, mockClientService, mockAccessTokenService, mockRefreshTokenService);
+        
 
         AuthData authData = oauthService.getTokens(grantType, authCredentials, currentTime);
 

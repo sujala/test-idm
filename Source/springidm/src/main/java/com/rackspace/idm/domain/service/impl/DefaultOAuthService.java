@@ -38,8 +38,10 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.jaxb.AuthGrantType;
 
 import javax.validation.groups.Default;
+import javax.ws.rs.core.Response;
 
 public class DefaultOAuthService implements OAuthService {
     private UserService userService;
@@ -92,6 +94,15 @@ public class DefaultOAuthService implements OAuthService {
             
             if (StringUtils.isBlank(trParam.getUsername())) {
                 throw new BadRequestException("username cannot be blank");
+            }
+            
+            if (accessTokenService.passwordRotationDurationElapsed(trParam.getUsername())) {
+                AccessToken resetToken = accessTokenService.createPasswordResetAccessTokenForUser
+                                 (trParam.getUsername(), trParam.getClientId());
+                AuthData authData = new AuthData();
+                authData.setAccessToken(resetToken);
+                authData.setMessage("Password expired. This token can be used only to reset password.");
+                return authData;
             }
             
             UserAuthenticationResult uaResult = userService.authenticate(trParam.getUsername(),

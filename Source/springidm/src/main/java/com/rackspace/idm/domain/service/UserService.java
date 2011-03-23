@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service;
 
+import org.joda.time.DateTime;
+
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
@@ -45,4 +47,6 @@ public interface UserService {
     Password resetUserPassword(User user);
 
     void updateUserStatus(User user, String statusStr);
+
+    DateTime getUserPasswordExpirationDate(String userName);
 }

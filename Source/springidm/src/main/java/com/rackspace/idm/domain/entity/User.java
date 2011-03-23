@@ -49,7 +49,7 @@ public class User extends BaseUser implements Auditable {
     private DateTime softDeletedTimestamp;
     
     private Boolean maxLoginFailuresExceded = null;
-
+    
     public User() {
         // Needed by JAX-RS
     }
@@ -411,7 +411,7 @@ public class User extends BaseUser implements Auditable {
     public void setGroups(List<ClientGroup> groups) {
         this.groups = groups;
     }
-
+    
     public void setDefaults() {
         if (this.preference.getLocale() == null) {
             this.setPrefferedLang(GlobalConstants.USER_PREFERRED_LANG_DEFAULT);

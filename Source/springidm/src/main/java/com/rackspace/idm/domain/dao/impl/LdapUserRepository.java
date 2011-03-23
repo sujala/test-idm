@@ -1166,7 +1166,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                     ATTR_MOSSO_ID, String.valueOf(uNew.getMossoId())));
             }
         }
-
+ 
         return mods;
     }
 

@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.mail.EmailException;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
+import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.EmailService;
 import com.rackspace.idm.domain.service.UserService;
@@ -51,6 +53,7 @@ public class DefaultUserService implements UserService {
     private CustomerDao customerDao;
     private EmailService emailService;
     private ClientService clientService;
+    
     private TemplateProcessor tproc = new TemplateProcessor();
     private boolean isTrustedServer;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -111,7 +114,8 @@ public class DefaultUserService implements UserService {
         if (isTrustedServer) {
             boolean authenticated = authDao.authenticate(username, password);
             logger.debug("Authenticated Racker {} : {}", username, authenticated);
-            User user = getUserWithPasswordRotationDurationSet(username);
+            BaseUser user = new BaseUser(username); //getUserWithPasswordRotationDurationSet(username);
+            user.setPasswordExpirationDate(getUserPasswordExpirationDate(username));
             return new UserAuthenticationResult(user, authenticated);
         }
 
@@ -120,23 +124,15 @@ public class DefaultUserService implements UserService {
         if (result.isAuthenticated()) {
             List<ClientGroup> groups = this.clientService.getClientGroupsForUser(result.getUser()
                 .getUsername());
-            User user = getUserWithPasswordRotationDurationSet(username);
+            
             BaseUser baseUser = new BaseUser(result.getUser().getUsername(), result.getUser().getCustomerId(),
                 groups);
-            baseUser.setPasswordRotationDuration(user.getPasswordRotationDuration());
-            baseUser.setLastPasswordUpdateTimeStamp(user.getPasswordObj().getLastUpdated());
+            baseUser.setPasswordExpirationDate(getUserPasswordExpirationDate(username));
+            
             result = new UserAuthenticationResult(baseUser, result.isAuthenticated());
         }
         logger.debug("Authenticated User: {} : {}", username, result);
         return result;
-    }
-
-    private User getUserWithPasswordRotationDurationSet(String username) {
-        User user = userDao.findByUsername(username);
-        Customer customer = customerDao.findByCustomerId(user.getCustomerId());
-        int passwordRotationDuration = customer.getPasswordRotationDuration();
-        user.setPasswordRotationDuration(passwordRotationDuration);
-        return user;
     }
 
     public UserAuthenticationResult authenticateWithApiKey(String username, String apiKey) {
@@ -147,9 +143,9 @@ public class DefaultUserService implements UserService {
                 .getUsername());
             BaseUser baseUser = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser()
                 .getCustomerId(), groups);
-            User user = getUserWithPasswordRotationDurationSet(username);
-            baseUser.setPasswordRotationDuration(user.getPasswordRotationDuration());
-            baseUser.setLastPasswordUpdateTimeStamp(user.getPasswordObj().getLastUpdated());
+ 
+            baseUser.setPasswordExpirationDate(getUserPasswordExpirationDate(authenticated.getUser()
+                .getUsername()));
             authenticated = new UserAuthenticationResult(baseUser, authenticated.isAuthenticated());
         }
         logger.debug("Authenticated User: {} by API Key - {}", username, authenticated);
@@ -164,9 +160,8 @@ public class DefaultUserService implements UserService {
                 .getUsername());
             BaseUser baseUser = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser()
                 .getCustomerId(), groups);
-            User user = getUserWithPasswordRotationDurationSet(authenticated.getUser().getUsername());
-            baseUser.setPasswordRotationDuration(user.getPasswordRotationDuration());
-            baseUser.setLastPasswordUpdateTimeStamp(user.getPasswordObj().getLastUpdated());
+     
+            baseUser.setPasswordExpirationDate(getUserPasswordExpirationDate(baseUser.getUsername()));
             authenticated = new UserAuthenticationResult(baseUser, authenticated.isAuthenticated());
         }
         logger.debug("Authenticated User with MossoId {} and API Key - {}", mossoId, authenticated);
@@ -181,9 +176,8 @@ public class DefaultUserService implements UserService {
                 .getUsername());
             BaseUser baseUser = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser()
                 .getCustomerId(), groups);
-            User user = getUserWithPasswordRotationDurationSet(authenticated.getUser().getUsername());
-            baseUser.setPasswordRotationDuration(user.getPasswordRotationDuration());
-            baseUser.setLastPasswordUpdateTimeStamp(user.getPasswordObj().getLastUpdated());
+         
+            baseUser.setPasswordExpirationDate(getUserPasswordExpirationDate(baseUser.getUsername()));
             authenticated = new UserAuthenticationResult(baseUser, authenticated.isAuthenticated());
         }
         logger.debug("Authenticated User with NastId {} and API Key - {}", nastId, authenticated);
@@ -354,6 +348,36 @@ public class DefaultUserService implements UserService {
 
         return newPassword.toExisting();
     }
+    
+    @Override
+    public DateTime getUserPasswordExpirationDate(String userName) {
+        
+        DateTime passwordExpirationDate = null;
+        
+        User user = getUser(userName);
+        
+        if (user == null) {
+            return null;
+        }
+        
+        Customer customer = customerDao.findByCustomerId(user.getCustomerId());
+        
+        if (customer == null) {
+            return null;
+        }
+        
+        Boolean passwordRotationPolicyEnabled = customer.getPasswordRotationEnabled();
+        
+        if (passwordRotationPolicyEnabled != null && passwordRotationPolicyEnabled) {
+            int passwordRotationDurationInDays = customer.getPasswordRotationDuration();
+            
+            DateTime timeOfLastPwdChange = user.getPasswordObj().getLastUpdated();
+            
+            passwordExpirationDate = timeOfLastPwdChange.plusDays(passwordRotationDurationInDays);         
+        }
+        
+        return passwordExpirationDate;
+    }    
 
     private Map<String, String> getCustomParamsMap(PasswordRecovery recoveryParam) {
         List<CustomParam> customParams = null;

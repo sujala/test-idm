@@ -57,6 +57,10 @@ public class AuthConverter {
             authJaxb.setPermissions(permissionConverter
                 .toPermissionListJaxb(auth.getPermissions()));
         }
+        
+        if (auth.getMessage() != null) {
+            authJaxb.setMessage(auth.getMessage());
+        }
 
         return authJaxb;
     }

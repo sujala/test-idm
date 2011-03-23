@@ -6,8 +6,6 @@ public class UserAuthenticationResult extends AuthenticationResult {
 
     private BaseUser user;
     
-    private DateTime passwordExpirationDate;
-
     public UserAuthenticationResult(BaseUser user, boolean authenticated) {
         super(authenticated);
         this.user = user;
@@ -17,9 +15,8 @@ public class UserAuthenticationResult extends AuthenticationResult {
         return user;
     }
     
-    public DateTime getPasswordExpirationDate() {
-        passwordExpirationDate = calculatePasswordExpirationDate();
-        return passwordExpirationDate;
+    public DateTime getUserPasswordExpirationDate() {
+        return user.getPasswordExpirationDate();
     }
 
     @Override
@@ -51,7 +48,8 @@ public class UserAuthenticationResult extends AuthenticationResult {
         }
         return true;
     }
-    
+   
+    /*
     private DateTime calculatePasswordExpirationDate() {
         int futureDayWhenPwdExpires = user.getPasswordRotationDuration();
         DateTime lastPasswordChange = user.getLastPasswordUpdateTimeStamp();
@@ -105,4 +103,5 @@ public class UserAuthenticationResult extends AuthenticationResult {
     private boolean isLeap(int year) {
         return year % 4 == 0;
     }
+    */
 }

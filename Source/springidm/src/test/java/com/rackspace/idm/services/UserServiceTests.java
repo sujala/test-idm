@@ -19,7 +19,9 @@ import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.Password;
@@ -30,6 +32,7 @@ import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
+import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.EmailService;
 import com.rackspace.idm.domain.service.UserService;
@@ -50,6 +53,7 @@ public class UserServiceTests {
     EmailService mockEmailService;
     AuthDao mockRackerDao;
     ClientService mockClientService;
+    AccessTokenService mockAccessTokenService;
 
     String customerId = "123456";
     String username = "testuser";
@@ -215,12 +219,27 @@ public class UserServiceTests {
     }
     
     @Test
+    public void testingDateTime() {
+     
+        DateTime d = new DateTime();
+        DateTime newD = d.plusDays(1000);
+        
+        String ds = d.toString();
+        String newDs = newD.toString();
+        
+        
+        //Assert.assertEquals(year, passwordExpirationDate.getYear());
+        //Assert.assertEquals(monthOfYear, passwordExpirationDate.getMonthOfYear());
+        //Assert.assertEquals(dayOfMonth + 10, passwordExpirationDate.getDayOfMonth());
+    }
+    
+    @Test
     public void shouldGetPasswordExpiryDate1() {
      
         User user = new User();
+        
         user.setUsername(username);
-        user.setPasswordRotationDuration(10);
- 
+        
         int year = 2011;
         int monthOfYear = 3;
         int dayOfMonth = 1;
@@ -235,10 +254,12 @@ public class UserServiceTests {
         Password passwordToUse = Password.existingInstance("testPass", lastUpdated, false);
          
         user.setPasswordObj(passwordToUse);
-        user.setLastPasswordUpdateTimeStamp(lastUpdated);
+ 
+        BaseUser baseUser = user.getBaseUser();
+        baseUser.setPasswordExpirationDate(lastUpdated.plusDays(10));
        
-        UserAuthenticationResult uaResult = new UserAuthenticationResult(user, false);
-        DateTime passwordExpirationDate = uaResult.getPasswordExpirationDate();
+        UserAuthenticationResult uaResult = new UserAuthenticationResult(baseUser, false);
+        DateTime passwordExpirationDate = uaResult.getUserPasswordExpirationDate();
         
         Assert.assertEquals(year, passwordExpirationDate.getYear());
         Assert.assertEquals(monthOfYear, passwordExpirationDate.getMonthOfYear());
@@ -250,7 +271,7 @@ public class UserServiceTests {
         
         User user = new User();
         user.setUsername(username);
-        user.setPasswordRotationDuration(366);
+     
  
         int year = 2011;
         int monthOfYear = 3;
@@ -266,10 +287,13 @@ public class UserServiceTests {
         Password passwordToUse = Password.existingInstance("testPass", lastUpdated, false);
          
         user.setPasswordObj(passwordToUse);
-        user.setLastPasswordUpdateTimeStamp(lastUpdated);
+        //user.setLastPasswordUpdateTimeStamp(lastUpdated);
        
-        UserAuthenticationResult uaResult = new UserAuthenticationResult(user, false);
-        DateTime passwordExpirationDate = uaResult.getPasswordExpirationDate();
+        BaseUser baseUser = user.getBaseUser();
+        baseUser.setPasswordExpirationDate(lastUpdated.plusDays(366));
+        
+        UserAuthenticationResult uaResult = new UserAuthenticationResult(baseUser, false);
+        DateTime passwordExpirationDate = uaResult.getUserPasswordExpirationDate();
         
         Assert.assertEquals(2012, passwordExpirationDate.getYear());
         Assert.assertEquals(monthOfYear, passwordExpirationDate.getMonthOfYear());
@@ -281,7 +305,6 @@ public class UserServiceTests {
         
         User user = new User();
         user.setUsername(username);
-        user.setPasswordRotationDuration(365);
  
         int year = 2011;
         int monthOfYear = 3;
@@ -297,10 +320,13 @@ public class UserServiceTests {
         Password passwordToUse = Password.existingInstance("testPass", lastUpdated, false);
          
         user.setPasswordObj(passwordToUse);
-        user.setLastPasswordUpdateTimeStamp(lastUpdated);
+        //user.setLastPasswordUpdateTimeStamp(lastUpdated);
+        
+        BaseUser baseUser = user.getBaseUser();
+        baseUser.setPasswordExpirationDate(lastUpdated.plusDays(365));    
        
-        UserAuthenticationResult uaResult = new UserAuthenticationResult(user, false);
-        DateTime passwordExpirationDate = uaResult.getPasswordExpirationDate();
+        UserAuthenticationResult uaResult = new UserAuthenticationResult(baseUser, false);
+        DateTime passwordExpirationDate = uaResult.getUserPasswordExpirationDate();
         
         Assert.assertEquals(2012, passwordExpirationDate.getYear());
         Assert.assertEquals(monthOfYear - 1, passwordExpirationDate.getMonthOfYear());
@@ -312,7 +338,7 @@ public class UserServiceTests {
         
         User user = new User();
         user.setUsername(username);
-        user.setPasswordRotationDuration(1827);
+    
  
         int year = 2011;
         int monthOfYear = 3;
@@ -328,10 +354,13 @@ public class UserServiceTests {
         Password passwordToUse = Password.existingInstance("testPass", lastUpdated, false);
          
         user.setPasswordObj(passwordToUse);
-        user.setLastPasswordUpdateTimeStamp(lastUpdated);
+        //user.setLastPasswordUpdateTimeStamp(lastUpdated);
+        
+        BaseUser baseUser = user.getBaseUser();
+        baseUser.setPasswordExpirationDate(lastUpdated.plusDays(1827));
        
-        UserAuthenticationResult uaResult = new UserAuthenticationResult(user, false);
-        DateTime passwordExpirationDate = uaResult.getPasswordExpirationDate();
+        UserAuthenticationResult uaResult = new UserAuthenticationResult(baseUser, false);
+        DateTime passwordExpirationDate = uaResult.getUserPasswordExpirationDate();
         
         Assert.assertEquals(2016, passwordExpirationDate.getYear());
         Assert.assertEquals(monthOfYear, passwordExpirationDate.getMonthOfYear());
@@ -343,7 +372,7 @@ public class UserServiceTests {
         
         User user = new User();
         user.setUsername(username);
-        user.setPasswordRotationDuration(0);
+     
  
         int year = 2011;
         int monthOfYear = 3;
@@ -359,10 +388,13 @@ public class UserServiceTests {
         Password passwordToUse = Password.existingInstance("testPass", lastUpdated, false);
          
         user.setPasswordObj(passwordToUse);
-        user.setLastPasswordUpdateTimeStamp(lastUpdated);
+        //user.setLastPasswordUpdateTimeStamp(lastUpdated);
+        
+        BaseUser baseUser = user.getBaseUser();
+        baseUser.setPasswordExpirationDate(lastUpdated.plusDays(0)); 
        
-        UserAuthenticationResult uaResult = new UserAuthenticationResult(user, false);
-        DateTime passwordExpirationDate = uaResult.getPasswordExpirationDate();
+        UserAuthenticationResult uaResult = new UserAuthenticationResult(baseUser, false);
+        DateTime passwordExpirationDate = uaResult.getUserPasswordExpirationDate();
         
         Assert.assertEquals(2011, passwordExpirationDate.getYear());
         Assert.assertEquals(monthOfYear, passwordExpirationDate.getMonthOfYear());
@@ -374,8 +406,7 @@ public class UserServiceTests {
         
         User user = new User();
         user.setUsername(username);
-        user.setPasswordRotationDuration(1);
- 
+    
         int year = 2011;
         int monthOfYear = 3;
         int dayOfMonth = 1;
@@ -390,10 +421,13 @@ public class UserServiceTests {
         Password passwordToUse = Password.existingInstance("testPass", lastUpdated, false);
          
         user.setPasswordObj(passwordToUse);
-        user.setLastPasswordUpdateTimeStamp(lastUpdated);
+        //user.setLastPasswordUpdateTimeStamp(lastUpdated);
+        
+        BaseUser baseUser = user.getBaseUser();
+        baseUser.setPasswordExpirationDate(lastUpdated.plusDays(1));  
        
-        UserAuthenticationResult uaResult = new UserAuthenticationResult(user, false);
-        DateTime passwordExpirationDate = uaResult.getPasswordExpirationDate();
+        UserAuthenticationResult uaResult = new UserAuthenticationResult(baseUser, false);
+        DateTime passwordExpirationDate = uaResult.getUserPasswordExpirationDate();
         
         Assert.assertEquals(2011, passwordExpirationDate.getYear());
         Assert.assertEquals(monthOfYear, passwordExpirationDate.getMonthOfYear());
@@ -408,7 +442,7 @@ public class UserServiceTests {
         
         setupUserAndCustomerWithPasswordRotationInfo(username);
         
-        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(null);
+        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(null).times(2);
         EasyMock.replay(mockClientService);
         UserAuthenticationResult uaResult = userService.authenticate(username, password);
         Assert.assertTrue(uaResult.isAuthenticated());
@@ -449,6 +483,9 @@ public class UserServiceTests {
         
         setupUserAndCustomerWithPasswordRotationInfo(username);
 
+        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).times(2);
+        EasyMock.replay(mockClientService);
+        
         UserAuthenticationResult authenticated = userService
             .authenticateWithApiKey(username, apiKey);
 
@@ -464,6 +501,9 @@ public class UserServiceTests {
         
         setupUserAndCustomerWithPasswordRotationInfo(username);
 
+        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).times(2);
+        EasyMock.replay(mockClientService);
+        
         UserAuthenticationResult authenticated = userService
             .authenticateWithNastIdAndApiKey(nastId, apiKey);
 
@@ -478,6 +518,9 @@ public class UserServiceTests {
             .andReturn(getTrueAuthenticationResult());
         
         setupUserAndCustomerWithPasswordRotationInfo(username);
+        
+        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).times(2);
+        EasyMock.replay(mockClientService);  
         
         UserAuthenticationResult authenticated = userService
             .authenticateWithMossoIdAndApiKey(mossoId, apiKey);
@@ -621,6 +664,9 @@ public class UserServiceTests {
         
         testCustomer.setCustomerId("RACKSPACE");
         testCustomer.setPasswordRotationDuration(10);
+        
+        testUser.setInum("12345");
+        testUser.setUsername(passedUsername);
         
         EasyMock.expect(mockCustomerDao.findByCustomerId(testUser.getCustomerId())).andReturn(testCustomer);
         EasyMock.replay(mockCustomerDao);

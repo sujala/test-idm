@@ -25,9 +25,8 @@ public class BaseUser implements Serializable {
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     protected String customerId = null;
     protected List<ClientGroup> groups;
-    protected Integer passwordRotationDuration;
-    protected DateTime lastUpdateOfPassword;
-
+    protected DateTime passwordExpirationDate;
+  
     public BaseUser() {
     }
 
@@ -69,21 +68,13 @@ public class BaseUser implements Serializable {
     protected void setGroups(List<ClientGroup> groups) {
         this.groups = groups;
     }
-    
-    public Integer getPasswordRotationDuration() {
-        return passwordRotationDuration;
+      
+    public void setPasswordExpirationDate(DateTime passwordExpirationDate) {
+        this.passwordExpirationDate = passwordExpirationDate;
     }
     
-    public void setPasswordRotationDuration(Integer passwordRotationDuration) {
-        this.passwordRotationDuration = passwordRotationDuration;
-    }
-    
-    public void setLastPasswordUpdateTimeStamp(DateTime lastUpdateOfPassword) {
-        this.lastUpdateOfPassword = lastUpdateOfPassword;
-    }
-    
-    public DateTime getLastPasswordUpdateTimeStamp() {
-        return lastUpdateOfPassword;
+    public DateTime getPasswordExpirationDate() {
+        return passwordExpirationDate;
     }
 
     @Override

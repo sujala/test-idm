@@ -104,7 +104,7 @@ public class ServiceConfiguration {
 
     @Bean
     public AccessTokenService tokenService() {
-        return new DefaultAccessTokenService(accessTokenDao, clientDao, userService(), customerService(), xdcTokenDao,
+        return new DefaultAccessTokenService(accessTokenDao, clientDao, userService(), xdcTokenDao,
             authHeaderHelper(), config);
     }
 
@@ -205,8 +205,7 @@ public class ServiceConfiguration {
     @Bean
     public UserService userService() {
         boolean isTrustedServer = config.getBoolean("ldap.server.trusted", false);
-        return new DefaultUserService(userRepo, authDao, customerDao, emailService(), clientService(),
-            isTrustedServer);
+        return new DefaultUserService(userRepo, authDao, customerDao, emailService(), clientService(),isTrustedServer);
     }
 
     @Bean

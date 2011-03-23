@@ -167,7 +167,8 @@
 				</annotation>
 			</element>
 			<element name="permissions" type="idm:PermissionList" minOccurs="0" maxOccurs="1"></element>
-		</sequence>
+			<element name="message" type="string" minOccurs="0" maxOccurs="0"></element>
+			</sequence>
 	</complexType>
 
 	<complexType name="AuthCredentials">
