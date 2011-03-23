@@ -65,5 +65,5 @@ public interface ClientService {
 
     void updateDefinedPermission(Permission permission);
     
-    
+    List<Client> getClientsThatHavePermission(Permission permission);
 }

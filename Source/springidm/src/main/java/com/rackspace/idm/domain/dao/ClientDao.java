@@ -61,4 +61,10 @@ public interface ClientDao {
     void updateClientGroup(ClientGroup group);
 
     void updateDefinedPermission(Permission permission);
+    
+    List<Client> getClientsThatHavePermission(Permission permission);
+    
+    void grantPermissionToClient(Permission permission, Client client);
+    
+    void revokePermissionFromClient(Permission permission, Client client);
 }

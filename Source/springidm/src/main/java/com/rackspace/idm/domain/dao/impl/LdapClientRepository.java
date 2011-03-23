@@ -617,6 +617,45 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return client;
     }
 
+    public List<Client> getClientsThatHavePermission(Permission permission) {
+        getLogger().debug("Doing search for clients that have permission {}",
+            permission);
+
+        if (permission == null) {
+            String errMsg = "Null permission passed in";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_PERMISSION,
+                permission.getPermissionLDAPserialization())
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+
+        List<Client> clientList = new ArrayList<Client>();
+        SearchResult searchResult = null;
+        try {
+
+            SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
+                searchFilter);
+
+            searchResult = getAppConnPool().search(request);
+
+        } catch (LDAPException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+
+        for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+            clientList.add(getClient(entry));
+        }
+        
+        getLogger().debug("Found Clients - {}", clientList);
+
+        return clientList;
+    }
+
     public Client findByClientname(String clientName) {
         getLogger().debug("Searching for client {}", clientName);
 
@@ -857,6 +896,108 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         } while (client != null);
 
         return inum;
+    }
+
+    public void grantPermissionToClient(Permission permission, Client client) {
+
+        getLogger().info("Adding permission {} to {}", permission, client);
+
+        if (permission == null || StringUtils.isBlank(permission.getUniqueId())) {
+            String errMsg = "Null permission passed in or permission uniqueId was blank";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
+
+        if (client == null || StringUtils.isBlank(client.getUniqueId())) {
+            String errMsg = "Null client passed in or client uniqueId was blank";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
+
+        List<Modification> mods = new ArrayList<Modification>();
+        mods.add(new Modification(ModificationType.ADD, ATTR_PERMISSION,
+            permission.getPermissionLDAPserialization()));
+
+        LDAPResult result;
+        Audit audit = Audit.log(client).modify(mods);
+
+        try {
+            result = getAppConnPool().modify(client.getUniqueId(), mods);
+        } catch (LDAPException ldapEx) {
+            getLogger().error("Error adding permission to client {} - {}",
+                permission, ldapEx);
+
+            if (ldapEx.getResultCode().equals(
+                ResultCode.ATTRIBUTE_OR_VALUE_EXISTS)) {
+                throw new DuplicateException("Client already has permission");
+            }
+
+            audit.fail(ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail(result.getResultCode().toString());
+            throw new IllegalStateException(
+                String
+                    .format(
+                        "LDAP error encountered when adding permission to client: %s - %s",
+                        permission, result.getResultCode().toString()));
+        }
+
+        audit.succeed();
+
+        getLogger()
+            .info("Added permission {} to client {}", permission, client);
+    }
+
+    public void revokePermissionFromClient(Permission permission, Client client) {
+        getLogger().info("Revoking permission {} from client {}", permission,
+            client);
+
+        if (permission == null || StringUtils.isBlank(permission.getUniqueId())) {
+            String errMsg = "Null permission passed in or permission uniqueId was blank";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
+
+        if (client == null || StringUtils.isBlank(client.getUniqueId())) {
+            String errMsg = "Null client passed in or client uniqueId was blank";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
+
+        List<Modification> mods = new ArrayList<Modification>();
+        mods.add(new Modification(ModificationType.DELETE, ATTR_PERMISSION,
+            permission.getPermissionLDAPserialization()));
+
+        LDAPResult result;
+        Audit audit = Audit.log(client).modify(mods);
+        try {
+            result = getAppConnPool().modify(client.getUniqueId(), mods);
+        } catch (LDAPException ldapEx) {
+            audit.fail(ldapEx.getMessage());
+            getLogger().error("Error revoking permission from client {} - {}",
+                permission, ldapEx);
+            if (ldapEx.getResultCode().equals(ResultCode.NO_SUCH_ATTRIBUTE)) {
+                throw new NotFoundException("Client doesn't have permission");
+            }
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail(result.getResultCode().toString());
+            getLogger().error("Error revoking permission from client {} - {}",
+                permission, result.getResultCode());
+            throw new IllegalStateException(
+                String
+                    .format(
+                        "LDAP error encountered when revoking permission from client: %s - %s",
+                        permission, result.getResultCode().toString()));
+        }
+        audit.succeed();
+        getLogger().info("Revoked permission {} from client {}", permission,
+            client);
     }
 
     public void removeUserFromGroup(String userUniqueId, ClientGroup group) {
@@ -1268,37 +1409,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             && cNew.isSoftDeleted() != cOld.isSoftDeleted()) {
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_SOFT_DELETED, String.valueOf(cNew.isSoftDeleted())));
-        }
-
-        if (cNew.getPermissions() != null
-            && cNew.getPermissions() != cOld.getPermissions()) {
-
-            // First remove the old permissions
-            if (cOld.getPermissions() != null) {
-                for (Permission p : cOld.getPermissions()) {
-                    mods.add(new Modification(ModificationType.DELETE,
-                        ATTR_PERMISSION, p.getPermissionLDAPserialization()));
-                }
-            }
-
-            // Add the new permissions
-            if (cNew.getPermissions() != null) {
-                for (Permission p : cNew.getPermissions()) {
-                    mods.add(new Modification(ModificationType.ADD,
-                        ATTR_PERMISSION, p.getPermissionLDAPserialization()));
-                }
-            }
-
-            // Doing the above seems better than trying to programmatically
-            // find out whether a permission was added or removed (by comparing
-            // the new and the old permission sets).
-            // LDAP modifications can be faster than programmatic check, I
-            // think.
-        }
-
-        // Case when revoking a permission leaves no permissions on the client.
-        if (cNew.getPermissions() == null) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_PERMISSION));
         }
 
         return mods;

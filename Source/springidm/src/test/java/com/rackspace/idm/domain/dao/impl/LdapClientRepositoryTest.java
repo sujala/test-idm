@@ -218,8 +218,7 @@ public class LdapClientRepositoryTest {
 
         List<Modification> mods = repo.getModifications(client, cClient);
 
-        // There is one more modification corresponding to the revoked permission.
-        Assert.assertEquals(3, mods.size());
+        Assert.assertEquals(2, mods.size());
         Assert.assertEquals("changed_client_secret", mods.get(0).getAttribute()
             .getValue());
         Assert.assertEquals(ClientStatus.INACTIVE.toString(), mods.get(1)
@@ -592,6 +591,27 @@ public class LdapClientRepositoryTest {
         }
         
         repo.delete(testClient.getClientId());
+    }
+    
+    @Test
+    public void shouldGrantAndRevokePermissionToClient() {
+        Client testClient = addNewTestClient();
+        Permission permission = createTestPermissionInstance();
+        permission.setUniqueId("XXX");
+        repo.grantPermissionToClient(permission, testClient);
+        
+        Client returned = repo.getClient(testClient.getCustomerId(), testClient.getClientId());
+        
+        Assert.assertNotNull(returned);
+        Assert.assertNotNull(returned.getPermissions());
+        Assert.assertTrue(returned.getPermissions().get(0).getPermissionId().equals("DELETE_My_Permission"));
+        
+        repo.revokePermissionFromClient(permission, testClient);
+        returned = repo.getClient(testClient.getCustomerId(), testClient.getClientId());
+        repo.delete(testClient.getClientId());
+        
+        Assert.assertNotNull(returned);
+        Assert.assertNull(returned.getPermissions());
     }
 
     @After

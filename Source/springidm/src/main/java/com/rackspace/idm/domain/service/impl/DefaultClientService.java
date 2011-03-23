@@ -142,6 +142,18 @@ public class DefaultClientService implements ClientService {
     }
 
     public void deleteDefinedPermission(Permission permission) {
+        Permission p = this.clientDao.getDefinedPermissionByClientIdAndPermissionId(permission.getClientId(), permission.getPermissionId());
+        
+        if (p == null) {
+            throw new NotFoundException("Defined Permission not found.");
+        }
+        
+        List<Client> clientsWithPermission = this.clientDao.getClientsThatHavePermission(p);
+        
+        for (Client client : clientsWithPermission) {
+            this.revokePermission(client.getClientId(), p);
+        }
+        
         clientDao.deleteDefinedPermission(permission);
     }
 
@@ -209,40 +221,50 @@ public class DefaultClientService implements ClientService {
     public void grantPermission(String clientId, Permission p) {
         Client targetClient = getClient(clientId);
 
-        List<Permission> newList = new ArrayList<Permission>();
-        newList.add(p);
-
-        List<Permission> originalList = targetClient.getPermissions();
-        if (originalList != null) {
-            newList.addAll(originalList);
+        if (targetClient == null) {
+            throw new NotFoundException("Client Not Found");
         }
 
-        targetClient.setPermissions(newList);
+        Permission permission = this.clientDao
+            .getDefinedPermissionByClientIdAndPermissionId(p.getClientId(),
+                p.getPermissionId());
 
-        clientDao.save(targetClient);
+        if (permission == null) {
+            throw new NotFoundException("Permission Not Found");
+        }
+
+        try {
+            clientDao.grantPermissionToClient(permission, targetClient);
+        } catch (DuplicateException drx) {
+            logger.warn("Client {} already has permission {}", targetClient,
+                permission);
+            return;
+        }
     }
 
     public void revokePermission(String clientId, Permission p) {
 
         Client targetClient = getClient(clientId);
 
-        List<Permission> originalList = targetClient.getPermissions();
-        if (originalList != null) {
-
-            List<Permission> newList = new ArrayList<Permission>();
-            for (Permission r : originalList) {
-                if (!r.getPermissionId().equals(p.getPermissionId())) {
-                    newList.add(r);
-                }
-            }
-            if (newList.size() > 0) {
-                targetClient.setPermissions(newList);
-            } else {
-                targetClient.setPermissions(null);
-            }
+        if (targetClient == null) {
+            throw new NotFoundException("Client Not Found");
         }
 
-        clientDao.save(targetClient);
+        Permission permission = this.clientDao
+            .getDefinedPermissionByClientIdAndPermissionId(p.getClientId(),
+                p.getPermissionId());
+
+        if (permission == null) {
+            throw new NotFoundException("Permission Not Found");
+        }
+
+        try {
+            clientDao.revokePermissionFromClient(permission, targetClient);
+        } catch (NotFoundException nfe) {
+            logger.warn("Client {} doesn't have permission {}", targetClient,
+                permission);
+            return;
+        }
     }
 
     private Client getClient(String clientId) {
@@ -324,8 +346,8 @@ public class DefaultClientService implements ClientService {
         }
     }
 
-    public List<ClientGroup> getClientGroupsForUserByClientIdAndType(String username,
-        String clientId, String type) {
+    public List<ClientGroup> getClientGroupsForUserByClientIdAndType(
+        String username, String clientId, String type) {
 
         logger.info("Getting Groups for User: {}", username);
         String[] groupIds = userDao.getGroupIdsForUser(username);
@@ -384,6 +406,14 @@ public class DefaultClientService implements ClientService {
     public void updateClientGroup(ClientGroup group) {
 
         clientDao.updateClientGroup(group);
+    }
+
+    public List<Client> getClientsThatHavePermission(Permission permission) {
+        Permission p = this.clientDao
+            .getDefinedPermissionByClientIdAndPermissionId(
+                permission.getClientId(), permission.getPermissionId());
+        
+        return this.clientDao.getClientsThatHavePermission(permission);
     }
     
     
