@@ -16,10 +16,12 @@ import org.apache.commons.lang.StringUtils;
 import org.omg.CORBA.portable.ApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.ErrorMsg;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.LoggerFactoryWrapper;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.BaseUrlConflictException;
@@ -179,7 +181,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         String faultClassName = fault.getClass().getSimpleName();
         try {
             msg = faultMessageConfig.getString(faultClassName + ".msg");
-            dtl = faultMessageConfig.getString(faultClassName + ".dtl");
         } catch (Exception e) {
             // Unable to load the message or details! Most likey no entry has
             // been made
@@ -196,13 +197,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             }
         }
 
-        if (StringUtils.isBlank(dtl)) {
-            if (t == null) {
-                dtl = ErrorMsg.SERVER_ERROR;
-            } else {
-                dtl = t.getMessage();
-            }
-        }
+        dtl = MDC.get(Audit.GUUID);
 
         fault.setMessage(msg);
         fault.setDetails(dtl);
