@@ -25,7 +25,6 @@ public class BaseUser implements Serializable {
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     protected String customerId = null;
     protected List<ClientGroup> groups;
-    protected DateTime passwordExpirationDate;
   
     public BaseUser() {
     }
@@ -67,14 +66,6 @@ public class BaseUser implements Serializable {
 
     protected void setGroups(List<ClientGroup> groups) {
         this.groups = groups;
-    }
-      
-    public void setPasswordExpirationDate(DateTime passwordExpirationDate) {
-        this.passwordExpirationDate = passwordExpirationDate;
-    }
-    
-    public DateTime getPasswordExpirationDate() {
-        return passwordExpirationDate;
     }
 
     @Override

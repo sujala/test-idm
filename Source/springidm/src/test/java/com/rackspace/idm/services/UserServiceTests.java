@@ -240,11 +240,11 @@ public class UserServiceTests {
     public void shouldAuthenticateUser() {
         EasyMock.expect(mockUserDao.authenticate(username, password)).andReturn(
             this.getTrueAuthenticationResult());
-        
-        setupUserAndCustomerWithPasswordRotationInfo(username);
-        
-        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(null).times(2);
+            
+        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(null);
         EasyMock.replay(mockClientService);
+        
+        EasyMock.replay(mockUserDao);
         UserAuthenticationResult uaResult = userService.authenticate(username, password);
         Assert.assertTrue(uaResult.isAuthenticated());
         EasyMock.verify(mockUserDao);
@@ -270,7 +270,7 @@ public class UserServiceTests {
             .andReturn(true);
         EasyMock.replay(mockRackerDao);
         
-        setupUserAndCustomerWithPasswordRotationInfo("racker");
+      
         
         UserAuthenticationResult uaResult = trustedUserService.authenticate("racker", password);
         Assert.assertTrue(uaResult.isAuthenticated());
@@ -282,9 +282,10 @@ public class UserServiceTests {
         EasyMock.expect(mockUserDao.authenticateByAPIKey(username, apiKey))
             .andReturn(getTrueAuthenticationResult());
         
-        setupUserAndCustomerWithPasswordRotationInfo(username);
+   
 
-        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).times(2);
+        EasyMock.replay(mockUserDao);
+        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>());
         EasyMock.replay(mockClientService);
         
         UserAuthenticationResult authenticated = userService
@@ -300,9 +301,11 @@ public class UserServiceTests {
             mockUserDao.authenticateByNastIdAndAPIKey(nastId, apiKey))
             .andReturn(getTrueAuthenticationResult());
         
-        setupUserAndCustomerWithPasswordRotationInfo(username);
+    
+        
+        EasyMock.replay(mockUserDao);
 
-        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).times(2);
+        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>());
         EasyMock.replay(mockClientService);
         
         UserAuthenticationResult authenticated = userService
@@ -317,10 +320,11 @@ public class UserServiceTests {
         EasyMock.expect(
             mockUserDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey))
             .andReturn(getTrueAuthenticationResult());
+     
         
-        setupUserAndCustomerWithPasswordRotationInfo(username);
+        EasyMock.replay(mockUserDao);
         
-        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).times(2);
+        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>());
         EasyMock.replay(mockClientService);  
         
         UserAuthenticationResult authenticated = userService
@@ -457,21 +461,5 @@ public class UserServiceTests {
 
     private UserAuthenticationResult getFalseAuthenticationResult() {
         return new UserAuthenticationResult(null, false);
-    }
-    
-    private void setupUserAndCustomerWithPasswordRotationInfo(String passedUsername) {
-        testUser = new User();
-        testCustomer = new Customer();
-        
-        testCustomer.setCustomerId("RACKSPACE");
-        testCustomer.setPasswordRotationDuration(10);
-        
-        testUser.setInum("12345");
-        testUser.setUsername(passedUsername);
-        
-        EasyMock.expect(mockCustomerDao.findByCustomerId(testUser.getCustomerId())).andReturn(testCustomer);
-        EasyMock.replay(mockCustomerDao);
-        EasyMock.expect(mockUserDao.findByUsername(passedUsername)).andReturn(testUser);
-        EasyMock.replay(mockUserDao);
     }
 }

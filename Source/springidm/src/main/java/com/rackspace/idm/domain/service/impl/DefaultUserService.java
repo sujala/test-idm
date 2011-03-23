@@ -114,8 +114,7 @@ public class DefaultUserService implements UserService {
         if (isTrustedServer) {
             boolean authenticated = authDao.authenticate(username, password);
             logger.debug("Authenticated Racker {} : {}", username, authenticated);
-            BaseUser user = new BaseUser(username); //getUserWithPasswordRotationDurationSet(username);
-            user.setPasswordExpirationDate(getUserPasswordExpirationDate(username));
+            BaseUser user = new BaseUser(username);
             return new UserAuthenticationResult(user, authenticated);
         }
 
@@ -127,8 +126,7 @@ public class DefaultUserService implements UserService {
             
             BaseUser baseUser = new BaseUser(result.getUser().getUsername(), result.getUser().getCustomerId(),
                 groups);
-            baseUser.setPasswordExpirationDate(getUserPasswordExpirationDate(username));
-            
+           
             result = new UserAuthenticationResult(baseUser, result.isAuthenticated());
         }
         logger.debug("Authenticated User: {} : {}", username, result);
@@ -143,9 +141,7 @@ public class DefaultUserService implements UserService {
                 .getUsername());
             BaseUser baseUser = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser()
                 .getCustomerId(), groups);
- 
-            baseUser.setPasswordExpirationDate(getUserPasswordExpirationDate(authenticated.getUser()
-                .getUsername()));
+             
             authenticated = new UserAuthenticationResult(baseUser, authenticated.isAuthenticated());
         }
         logger.debug("Authenticated User: {} by API Key - {}", username, authenticated);
@@ -160,8 +156,7 @@ public class DefaultUserService implements UserService {
                 .getUsername());
             BaseUser baseUser = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser()
                 .getCustomerId(), groups);
-     
-            baseUser.setPasswordExpirationDate(getUserPasswordExpirationDate(baseUser.getUsername()));
+            
             authenticated = new UserAuthenticationResult(baseUser, authenticated.isAuthenticated());
         }
         logger.debug("Authenticated User with MossoId {} and API Key - {}", mossoId, authenticated);
@@ -176,8 +171,7 @@ public class DefaultUserService implements UserService {
                 .getUsername());
             BaseUser baseUser = new BaseUser(authenticated.getUser().getUsername(), authenticated.getUser()
                 .getCustomerId(), groups);
-         
-            baseUser.setPasswordExpirationDate(getUserPasswordExpirationDate(baseUser.getUsername()));
+            
             authenticated = new UserAuthenticationResult(baseUser, authenticated.isAuthenticated());
         }
         logger.debug("Authenticated User with NastId {} and API Key - {}", nastId, authenticated);

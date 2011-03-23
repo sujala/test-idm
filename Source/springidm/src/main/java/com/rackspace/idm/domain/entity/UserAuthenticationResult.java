@@ -15,10 +15,6 @@ public class UserAuthenticationResult extends AuthenticationResult {
         return user;
     }
     
-    public DateTime getUserPasswordExpirationDate() {
-        return user.getPasswordExpirationDate();
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
