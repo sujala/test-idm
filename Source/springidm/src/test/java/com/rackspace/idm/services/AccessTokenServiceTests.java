@@ -16,7 +16,6 @@ import com.rackspace.idm.domain.dao.AccessTokenDao;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.dao.XdcAccessTokenDao;
-import com.rackspace.idm.domain.dao.impl.MemcachedAccessTokenRepository;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientSecret;
@@ -34,7 +33,6 @@ import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultAccessTokenService;
-import com.rackspace.idm.test.stub.StubLogger;
 import com.rackspace.idm.util.AuthHeaderHelper;
 
 public class AccessTokenServiceTests {
@@ -52,7 +50,7 @@ public class AccessTokenServiceTests {
     String username = "mkovacs";
     String tokenString = "XXXXXX";
     String authHeader = "OAuth " + tokenString;
-    DateTime tokenExpiration = MemcachedAccessTokenRepository.DATE_PARSER.parseDateTime("20201231210627.3Z");
+    DateTime tokenExpiration = new DateTime().plusDays(1);
     String tokenOwner = "mkovacs";
     String clientId = "SomeClientId";
     String clientDn = "inum=@!FFFF.FFFF.FFFF.FFFF!DDDD.DDDD,ou=Applications,dc=rackspace,dc=com";

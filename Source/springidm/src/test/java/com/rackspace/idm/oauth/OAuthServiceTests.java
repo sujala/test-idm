@@ -10,7 +10,6 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.dao.impl.MemcachedAccessTokenRepository;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.AuthData;
@@ -81,7 +80,7 @@ public class OAuthServiceTests {
     @Test
     public void shouldAssertTokenIsExpired() throws Exception {
         AccessToken accessToken = new AccessToken(tokenVal,
-            MemcachedAccessTokenRepository.DATE_PARSER.parseDateTime("20001231210627.300Z"), getFakeUser(),
+        		new DateTime().plusDays(-1), getFakeUser(),
             getTestClient(), IDM_SCOPE.FULL);
         Assert.assertTrue(accessToken.isExpired(new DateTime()));
     }
@@ -203,8 +202,7 @@ public class OAuthServiceTests {
 
         RefreshToken testRefreshToken = getFakeRefreshToken();
         AccessToken testAccessToken = getFakeAccessToken();
-        testAccessToken.setExpirationTime(MemcachedAccessTokenRepository.DATE_PARSER
-            .parseDateTime("20000101000000.300Z"));
+        testAccessToken.setExpirationTime(new DateTime().minusDays(1));
         DateTime currentTime = new DateTime();
 
         UserAuthenticationResult uaResult = new UserAuthenticationResult(getFakeUser(), true);
@@ -315,8 +313,7 @@ public class OAuthServiceTests {
         authCredentials.setGrantType("refresh-token");
 
         RefreshToken testRefreshToken = getFakeRefreshToken();
-        testRefreshToken.setExpirationTime(MemcachedAccessTokenRepository.DATE_PARSER
-            .parseDateTime("20000101000000.300Z"));
+        testRefreshToken.setExpirationTime(new DateTime().minusDays(1));
         DateTime currentTime = new DateTime();
 
         EasyMock.expect(mockRefreshTokenService.getRefreshTokenByTokenString(refreshTokenVal)).andReturn(
@@ -395,13 +392,13 @@ public class OAuthServiceTests {
     // helpers
     private AccessToken getFakeAccessToken() {
         return new AccessToken(tokenVal,
-            MemcachedAccessTokenRepository.DATE_PARSER.parseDateTime("20201231210627.300Z"), getFakeUser(),
+    		new DateTime().plusYears(1), getFakeUser(),
             getTestClient(), IDM_SCOPE.FULL);
     }
 
     private AccessToken getFakeClientAccessToken() {
         return new AccessToken(tokenVal,
-            MemcachedAccessTokenRepository.DATE_PARSER.parseDateTime("20201231210627.300Z"), null,
+        		new DateTime().plusYears(1), null,
             getTestClient(), IDM_SCOPE.FULL);
     }
 

@@ -19,7 +19,6 @@ import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.util.PingableService;
 
 public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableService {
-    public static final DateTimeFormatter DATE_PARSER = DateTimeFormat.forPattern("yyyyMMddHHmmss.SSS'Z");
     private static final String USER_TOKEN_KEY_POSTFIX = "@ENDUSER";
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
