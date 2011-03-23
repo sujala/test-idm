@@ -1,0 +1,39 @@
+#
+# Initialization file written by DXnewdsa
+#
+# logging and tracing
+source "../logging/RackLogging.dxc";
+
+# schema
+clear schema;
+source "../schema/Rackspace.dxg";
+
+# knowledge
+clear dsas;
+source "../knowledge/RackKnowledge.dxg";
+
+# operational settings
+source "../settings/RackSettings.dxc";
+
+# service limits
+source "../limits/RackLimits.dxc";
+
+# access controls
+clear access;
+source "../access/RackAccess.dxc";
+
+# ssl
+source "../ssld/default.dxc";
+
+# replication agreements (rarely used)
+# source "../replication/";
+
+# multiwrite DISP recovery
+#set multi-write-disp-recovery = false;
+set multi-write-disp-recovery = true;
+
+# grid configuration
+set dxgrid-db-location = "data";
+set dxgrid-db-size = 500;
+set cache-index = all-attributes;
+set lookup-cache = true;
