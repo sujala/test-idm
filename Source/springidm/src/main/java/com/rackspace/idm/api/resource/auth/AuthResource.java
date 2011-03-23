@@ -13,9 +13,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.OAuthService;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

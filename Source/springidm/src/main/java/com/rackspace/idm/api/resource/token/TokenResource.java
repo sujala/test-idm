@@ -3,7 +3,6 @@ package com.rackspace.idm.api.resource.token;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.groups.Default;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -49,9 +48,6 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.TokenExpiredException;
 import com.rackspace.idm.jaxb.AuthGrantType;
 import com.rackspace.idm.util.AuthHeaderHelper;
-import com.rackspace.idm.validation.BasicCredentialsCheck;
-import com.rackspace.idm.validation.InputValidator;
-import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
 
 /**
  * Management of OAuth 2.0 token used by IDM.
@@ -63,19 +59,17 @@ public class TokenResource {
     private AccessTokenService tokenService;
     private OAuthService oauthService;
     private AuthHeaderHelper authHeaderHelper;
-    private InputValidator inputValidator;
     private AuthConverter authConverter;
     private AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(TokenResource.class);
 
     @Autowired(required = true)
     public TokenResource(AccessTokenService tokenService, OAuthService oauthService,
-        AuthHeaderHelper authHeaderHelper, InputValidator inputValidator, AuthConverter authConverter,
+        AuthHeaderHelper authHeaderHelper, AuthConverter authConverter,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.tokenService = tokenService;
         this.oauthService = oauthService;
         this.authHeaderHelper = authHeaderHelper;
-        this.inputValidator = inputValidator;
         this.authConverter = authConverter;
         this.authorizationService = authorizationService;
     }
