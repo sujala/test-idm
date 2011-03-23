@@ -42,6 +42,7 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
+import com.unboundid.util.StaticUtils;
 
 public class LdapUserRepository extends LdapRepository implements UserDao {
     private static final String[] ATTR_SEARCH_ATTRIBUTES = {"*",
@@ -716,8 +717,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 .encrypt(user.getPassword())));
             atts.add(new Attribute(ATTR_PASSWORD_SELF_UPDATED, Boolean.FALSE
                 .toString()));
-            atts.add(new Attribute(ATTR_PASSWORD_UPDATED_TIMESTAMP, DATE_PARSER
-                .print(new DateTime())));
+            atts.add(new Attribute(ATTR_PASSWORD_UPDATED_TIMESTAMP, StaticUtils
+                .encodeGeneralizedTime(new DateTime().toDate())));
         }
 
         if (!StringUtils.isBlank(user.getRegion())) {
@@ -949,7 +950,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             getLogger().error(errMsg);
             throw new UserDisabledException(errMsg);
         }
-        
+
         return new UserAuthenticationResult(user, isAuthenticated);
     }
 
@@ -973,8 +974,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_PASSWORD_SELF_UPDATED, Boolean.toString(isSelfUpdate)));
-            mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_PASSWORD_UPDATED_TIMESTAMP, DATE_PARSER.print(currentTime)));
+            mods.add(new Modification(ModificationType.REPLACE, StaticUtils
+                .encodeGeneralizedTime(currentTime.toDate())));
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD,
                 uNew.getPasswordObj().getValue()));
             mods.add(new Modification(ModificationType.REPLACE,

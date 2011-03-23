@@ -22,10 +22,13 @@ import com.unboundid.ldap.sdk.ResultCode;
 import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.util.StaticUtils;
 
-public class LdapRefreshTokenRepository extends LdapRepository implements RefreshTokenDao {
+public class LdapRefreshTokenRepository extends LdapRepository implements
+    RefreshTokenDao {
 
-    public LdapRefreshTokenRepository(LdapConnectionPools connPools, Configuration config) {
+    public LdapRefreshTokenRepository(LdapConnectionPools connPools,
+        Configuration config) {
         super(connPools, config);
     }
 
@@ -34,25 +37,29 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
         getLogger().info("Deleting refresh token - {}", tokenString);
         if (StringUtils.isBlank(tokenString)) {
             getLogger().error("Null or Empty tokenString paramenter");
-            throw new IllegalArgumentException("Null or Empty tokenString parameter.");
+            throw new IllegalArgumentException(
+                "Null or Empty tokenString parameter.");
         }
 
         Audit audit = Audit.log(tokenString).delete();
         LDAPResult result = null;
         try {
-            result = getAppConnPool().delete(getTokenDnByTokenstring(tokenString));
+            result = getAppConnPool().delete(
+                getTokenDnByTokenstring(tokenString));
         } catch (LDAPException ldapEx) {
             audit.fail();
-            getLogger().error("Error deleting refreshToken {} - {}", tokenString, ldapEx);
+            getLogger().error("Error deleting refreshToken {} - {}",
+                tokenString, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
             audit.fail();
-            getLogger().error("Error deleting refreshToken {} - {}", tokenString, result.getResultCode());
+            getLogger().error("Error deleting refreshToken {} - {}",
+                tokenString, result.getResultCode());
             throw new IllegalStateException(String.format(
-                "LDAP error encountered when deleting refreshToken: %s - %s" + tokenString, result
-                    .getResultCode().toString()));
+                "LDAP error encountered when deleting refreshToken: %s - %s"
+                    + tokenString, result.getResultCode().toString()));
         }
 
         audit.succeed();
@@ -67,14 +74,19 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
         getLogger().debug("Deleting all refresh tokens for user {}", username);
         int delCount = 0;
 
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_TOKEN_OWNER, username)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN).build();
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_TOKEN_OWNER, username)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN)
+            .build();
 
         SearchResult searchResult = null;
         try {
-            searchResult = getAppConnPool().search(TOKEN_BASE_DN, SearchScope.ONE, searchFilter);
+            searchResult = getAppConnPool().search(TOKEN_BASE_DN,
+                SearchScope.ONE, searchFilter);
         } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for refreshToken for Owner: {} - {}", username, ldapEx);
+            getLogger().error(
+                "Error searching for refreshToken for Owner: {} - {}",
+                username, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
@@ -88,26 +100,35 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
             }
         }
 
-        getLogger().debug("{} refreshTokens were deleted for user {}", delCount, username);
+        getLogger().debug("{} refreshTokens were deleted for user {}",
+            delCount, username);
     }
 
     public void deleteTokenForUserByClientId(String username, String clientId) {
         if (StringUtils.isBlank(username) || StringUtils.isBlank(clientId)) {
             getLogger().error("Username and ClientId cannot be blank.");
-            throw new IllegalArgumentException("Username and ClientId cannot be blank.");
+            throw new IllegalArgumentException(
+                "Username and ClientId cannot be blank.");
         }
-        getLogger().debug("Deleting all refresh tokens for user {} and client {}", username, clientId);
+        getLogger().debug(
+            "Deleting all refresh tokens for user {} and client {}", username,
+            clientId);
         int delCount = 0;
 
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_TOKEN_OWNER, username)
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_TOKEN_OWNER, username)
             .addEqualAttribute(ATTR_TOKEN_REQUESTOR, clientId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN).build();
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN)
+            .build();
 
         SearchResult searchResult = null;
         try {
-            searchResult = getAppConnPool().search(TOKEN_BASE_DN, SearchScope.ONE, searchFilter);
+            searchResult = getAppConnPool().search(TOKEN_BASE_DN,
+                SearchScope.ONE, searchFilter);
         } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for refreshToken for Owner: {} - {}", username, ldapEx);
+            getLogger().error(
+                "Error searching for refreshToken for Owner: {} - {}",
+                username, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
@@ -121,22 +142,26 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
             }
         }
 
-        getLogger().debug("{} refreshTokens were deleted for user {}", delCount, username);
+        getLogger().debug("{} refreshTokens were deleted for user {}",
+            delCount, username);
     }
 
     public List<RefreshToken> findAll() {
         getLogger().debug("Search all refresh tokens");
         SearchResult searchResult = null;
 
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS,
-            OBJECTCLASS_RACKSPACETOKEN).build();
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
+            ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN).build();
 
         try {
-            searchResult = getAppConnPool().search(TOKEN_BASE_DN, SearchScope.ONE, searchFilter);
+            searchResult = getAppConnPool().search(TOKEN_BASE_DN,
+                SearchScope.ONE, searchFilter);
         } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for all refresh tokens under DN {} - {}", TOKEN_BASE_DN,
-                ldapEx);
-            System.out.println("Could not perform search for DN " + TOKEN_BASE_DN);
+            getLogger().error(
+                "Error searching for all refresh tokens under DN {} - {}",
+                TOKEN_BASE_DN, ldapEx);
+            System.out.println("Could not perform search for DN "
+                + TOKEN_BASE_DN);
             throw new IllegalStateException(ldapEx);
         }
 
@@ -146,7 +171,8 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
             tokens.add(token);
         }
 
-        getLogger().debug("Found {} tokens under DN {}", tokens.size(), TOKEN_BASE_DN);
+        getLogger().debug("Found {} tokens under DN {}", tokens.size(),
+            TOKEN_BASE_DN);
         return tokens;
     }
 
@@ -154,7 +180,8 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
         getLogger().debug("Searching for refreshToken {}", tokenString);
         if (StringUtils.isBlank(tokenString)) {
             getLogger().error("Null or Empty tokenString parameter");
-            throw new IllegalArgumentException("Null or Empty tokenString parameter.");
+            throw new IllegalArgumentException(
+                "Null or Empty tokenString parameter.");
         }
 
         RefreshToken token = null;
@@ -164,15 +191,19 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
             SearchResultEntry e = searchResult.getSearchEntries().get(0);
             token = getToken(e);
         } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error("More than one entry was found for refreshToken {}", tokenString);
-            throw new IllegalStateException("More than one entry was found for this refreshToken");
+            getLogger().error(
+                "More than one entry was found for refreshToken {}",
+                tokenString);
+            throw new IllegalStateException(
+                "More than one entry was found for this refreshToken");
         }
         getLogger().debug("Found token - {}", token);
 
         return token;
     }
 
-    public RefreshToken findTokenForOwner(String owner, String requestor, DateTime validAfter) {
+    public RefreshToken findTokenForOwner(String owner, String requestor,
+        DateTime validAfter) {
         getLogger().debug("Searching for refresh token for Owner: {}", owner);
         if (StringUtils.isBlank(owner) || StringUtils.isBlank(requestor)) {
             String error = "Null or Empty owner or requestor parameter";
@@ -183,27 +214,36 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
         RefreshToken token = null;
         SearchResult searchResult = null;
 
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_TOKEN_OWNER, owner)
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_TOKEN_OWNER, owner)
             .addEqualAttribute(ATTR_TOKEN_REQUESTOR, requestor)
-            .addGreaterOrEqualAttribute(ATTR_EXPIRATION, DATE_PARSER.print(validAfter))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN).build();
+            .addGreaterOrEqualAttribute(ATTR_EXPIRATION,
+                StaticUtils.encodeGeneralizedTime(validAfter.toDate()))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN)
+            .build();
 
         try {
-            searchResult = getAppConnPool().search(TOKEN_BASE_DN, SearchScope.ONE, searchFilter);
+            searchResult = getAppConnPool().search(TOKEN_BASE_DN,
+                SearchScope.ONE, searchFilter);
         } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for refreshToken for Onwer: {} - {}", owner, ldapEx);
+            getLogger().error(
+                "Error searching for refreshToken for Onwer: {} - {}", owner,
+                ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (searchResult.getEntryCount() > 0) {
             for (SearchResultEntry entry : searchResult.getSearchEntries()) {
                 RefreshToken rToken = this.getToken(entry);
-                if (token == null || rToken.getExpirationTime().isAfter(token.getExpirationTime())) {
+                if (token == null
+                    || rToken.getExpirationTime().isAfter(
+                        token.getExpirationTime())) {
                     token = rToken;
                 }
             }
         }
-        getLogger().debug("Found refreshToken for Owner: {} - {}", owner, token);
+        getLogger()
+            .debug("Found refreshToken for Owner: {} - {}", owner, token);
 
         return token;
     }
@@ -215,8 +255,11 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
             SearchResultEntry e = searchResult.getSearchEntries().get(0);
             dn = e.getDN();
         } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error("More than one entry was found for tokenString {}", tokenString);
-            throw new IllegalStateException("More than one entry was found for this tokenString");
+            getLogger()
+                .error("More than one entry was found for tokenString {}",
+                    tokenString);
+            throw new IllegalStateException(
+                "More than one entry was found for this tokenString");
         }
         return dn;
     }
@@ -225,30 +268,35 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
         getLogger().info("Saving Refresh Token - {}", refreshToken);
         if (refreshToken == null) {
             getLogger().error("Null instance of Token was passed");
-            throw new IllegalArgumentException("Null instance of RefreshToken was passed.");
+            throw new IllegalArgumentException(
+                "Null instance of RefreshToken was passed.");
         }
 
         List<Attribute> atts = new ArrayList<Attribute>();
 
-        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_TOKEN_OBJECT_CLASS_VALUES));
+        atts.add(new Attribute(ATTR_OBJECT_CLASS,
+            ATTR_TOKEN_OBJECT_CLASS_VALUES));
 
         if (!StringUtils.isBlank(refreshToken.getTokenString())) {
             atts.add(new Attribute(ATTR_O, refreshToken.getTokenString()));
         }
         if (refreshToken.getExpirationTime() != null) {
-            atts.add(new Attribute(ATTR_EXPIRATION, DATE_PARSER.print(refreshToken.getExpirationTime())));
+            atts.add(new Attribute(ATTR_EXPIRATION, StaticUtils
+                .encodeGeneralizedTime(refreshToken.getExpirationTime()
+                    .toDate())));
         }
         if (!StringUtils.isBlank(refreshToken.getOwner())) {
             atts.add(new Attribute(ATTR_TOKEN_OWNER, refreshToken.getOwner()));
         }
         if (!StringUtils.isBlank(refreshToken.getRequestor())) {
-            atts.add(new Attribute(ATTR_TOKEN_REQUESTOR, refreshToken.getRequestor()));
+            atts.add(new Attribute(ATTR_TOKEN_REQUESTOR, refreshToken
+                .getRequestor()));
         }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
 
-        String tokenDN = new LdapDnBuilder(TOKEN_BASE_DN).addAttriubte(ATTR_O, refreshToken.getTokenString())
-            .build();
+        String tokenDN = new LdapDnBuilder(TOKEN_BASE_DN).addAttriubte(ATTR_O,
+            refreshToken.getTokenString()).build();
 
         Audit audit = Audit.log(refreshToken).add();
         LDAPResult result;
@@ -256,16 +304,19 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
             result = getAppConnPool().add(tokenDN, attributes);
         } catch (LDAPException ldapEx) {
             audit.fail();
-            getLogger().error("Error adding RefreshToken {} - {}", refreshToken, ldapEx);
+            getLogger().error("Error adding RefreshToken {} - {}",
+                refreshToken, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
             audit.fail();
-            getLogger().error("Error adding RefreshToken {} - {}", refreshToken, result.getResultCode());
+            getLogger().error("Error adding RefreshToken {} - {}",
+                refreshToken, result.getResultCode());
             throw new IllegalArgumentException(String.format(
-                "LDAP error encountered when adding RefreshToken: %s - %s", refreshToken.getTokenString(),
-                result.getResultCode().toString()));
+                "LDAP error encountered when adding RefreshToken: %s - %s",
+                refreshToken.getTokenString(), result.getResultCode()
+                    .toString()));
         }
 
         audit.succeed();
@@ -277,14 +328,16 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
         getLogger().info("Updating refresh token {}", refreshToken);
         if (refreshToken == null) {
             getLogger().error("Error updating RefreshToken: instance is null");
-            throw new IllegalArgumentException("Bad parameter: The RefreshToken instance is null.");
+            throw new IllegalArgumentException(
+                "Bad parameter: The RefreshToken instance is null.");
         }
 
         String tokenString = refreshToken.getTokenString();
         RefreshToken oldRefreshToken = this.findByTokenString(tokenString);
 
         if (oldRefreshToken == null) {
-            getLogger().error("No record found for refreshToken {}", tokenString);
+            getLogger().error("No record found for refreshToken {}",
+                tokenString);
             throw new IllegalArgumentException("RefreshToken not found.");
         }
 
@@ -296,20 +349,23 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
         Audit audit = Audit.log(refreshToken).modify();
         LDAPResult result = null;
         try {
-            result = getAppConnPool().modify(getTokenDnByTokenString(tokenString),
+            result = getAppConnPool().modify(
+                getTokenDnByTokenString(tokenString),
                 getModifications(oldRefreshToken, refreshToken));
         } catch (LDAPException ldapEx) {
             audit.fail();
-            getLogger().error("Error updating refreshToken {} - {}", tokenString, ldapEx);
+            getLogger().error("Error updating refreshToken {} - {}",
+                tokenString, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
             audit.fail();
-            getLogger().error("Error updating refreshToken {} - {}", tokenString, result.getResultCode());
+            getLogger().error("Error updating refreshToken {} - {}",
+                tokenString, result.getResultCode());
             throw new IllegalArgumentException(String.format(
-                "LDAP error encountered when updating refreshToken: %s - %s" + tokenString, result
-                    .getResultCode().toString()));
+                "LDAP error encountered when updating refreshToken: %s - %s"
+                    + tokenString, result.getResultCode().toString()));
         }
 
         audit.succeed();
@@ -319,13 +375,13 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
     private RefreshToken getToken(SearchResultEntry resultEntry) {
         RefreshToken token = new RefreshToken();
         token.setTokenString(resultEntry.getAttributeValue(ATTR_O));
-        
+
         Date expiration = resultEntry.getAttributeValueAsDate(ATTR_EXPIRATION);
         if (expiration != null) {
             DateTime expDate = new DateTime(expiration);
             token.setExpirationTime(expDate);
         }
-        
+
         token.setOwner(resultEntry.getAttributeValue(ATTR_TOKEN_OWNER));
         token.setRequestor(resultEntry.getAttributeValue(ATTR_TOKEN_REQUESTOR));
         return token;
@@ -335,14 +391,18 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
     private String getTokenDnByTokenString(String tokenString) {
         String dn = null;
 
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_O, tokenString)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN).build();
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_O, tokenString)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN)
+            .build();
 
         SearchResult searchResult = null;
         try {
-            searchResult = getAppConnPool().search(TOKEN_BASE_DN, SearchScope.SUB, searchFilter);
+            searchResult = getAppConnPool().search(TOKEN_BASE_DN,
+                SearchScope.SUB, searchFilter);
         } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for refreshToken {} - {}", tokenString, ldapEx);
+            getLogger().error("Error searching for refreshToken {} - {}",
+                tokenString, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
@@ -350,8 +410,11 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
             SearchResultEntry e = searchResult.getSearchEntries().get(0);
             dn = e.getDN();
         } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error("More than one entry was found for refreshToken {}", tokenString);
-            throw new IllegalStateException("More than one entry was found for this refresh token");
+            getLogger().error(
+                "More than one entry was found for refreshToken {}",
+                tokenString);
+            throw new IllegalStateException(
+                "More than one entry was found for this refresh token");
         }
         return dn;
     }
@@ -359,13 +422,17 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
     private SearchResult getTokenSearchResult(String tokenString) {
         SearchResult searchResult = null;
 
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_O, tokenString)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN).build();
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_O, tokenString)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN)
+            .build();
 
         try {
-            searchResult = getAppConnPool().search(TOKEN_BASE_DN, SearchScope.SUB, searchFilter);
+            searchResult = getAppConnPool().search(TOKEN_BASE_DN,
+                SearchScope.SUB, searchFilter);
         } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for token {} - {}", tokenString, ldapEx);
+            getLogger().error("Error searching for token {} - {}", tokenString,
+                ldapEx);
             throw new IllegalStateException(ldapEx);
         }
         return searchResult;
@@ -375,16 +442,19 @@ public class LdapRefreshTokenRepository extends LdapRepository implements Refres
         List<Modification> mods = new ArrayList<Modification>();
 
         if (!StringUtils.equals(tOld.getOwner(), tNew.getOwner())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_TOKEN_OWNER, tNew.getOwner()));
+            mods.add(new Modification(ModificationType.REPLACE,
+                ATTR_TOKEN_OWNER, tNew.getOwner()));
         }
 
         if (!StringUtils.equals(tOld.getRequestor(), tNew.getRequestor())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_TOKEN_REQUESTOR, tNew.getRequestor()));
+            mods.add(new Modification(ModificationType.REPLACE,
+                ATTR_TOKEN_REQUESTOR, tNew.getRequestor()));
         }
 
         if (!tOld.getExpirationTime().equals(tNew.getExpirationTime())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_EXPIRATION, DATE_PARSER.print(tNew
-                .getExpirationTime())));
+            mods.add(new Modification(ModificationType.REPLACE,
+                ATTR_EXPIRATION, StaticUtils.encodeGeneralizedTime(tNew
+                    .getExpirationTime().toDate())));
         }
 
         return mods;

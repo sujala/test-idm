@@ -390,8 +390,8 @@ public class LdapUserRepositoryTest {
     public void shouldRetrieveAllRecords() {
         User user = addNewTestUser();
         Users users = repo.findAll(0, 100);
-        Assert.assertTrue(users.getUsers().size() > 1);
         repo.delete(user.getUsername());
+        Assert.assertTrue(users.getUsers().size() > 1);
     }
 
     @Test

@@ -14,8 +14,6 @@ import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
 public abstract class LdapRepository {
-    protected static final DateTimeFormatter DATE_PARSER = DateTimeFormat
-        .forPattern("yyyyMMddHHmmss.SSSZ");
 
     // Definitions for LDAP Objectclasses
     protected static final String OBJECTCLASS_BASEURL = "baseUrl";
