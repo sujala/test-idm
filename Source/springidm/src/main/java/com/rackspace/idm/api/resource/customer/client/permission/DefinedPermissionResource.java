@@ -99,7 +99,7 @@ public class DefinedPermissionResource {
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+                token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -183,7 +183,7 @@ public class DefinedPermissionResource {
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+                token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -243,7 +243,7 @@ public class DefinedPermissionResource {
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+                token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -361,7 +361,7 @@ public class DefinedPermissionResource {
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
-                token);
+                token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }

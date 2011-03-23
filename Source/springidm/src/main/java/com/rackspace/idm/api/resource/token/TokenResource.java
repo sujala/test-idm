@@ -170,7 +170,7 @@ public class TokenResource {
             || authorizationService.authorizeClient(authToken, request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", authToken);
+            String errMsg = String.format("Token %s Forbidden from this call", authToken.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -211,7 +211,7 @@ public class TokenResource {
         boolean authorized = authorizationService.authorizeCustomerIdm(callingToken);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", callingToken);
+            String errMsg = String.format("Token %s Forbidden from this call", callingToken.getTokenString());
             logger.warn(errMsg);
             return Response.status(Status.FORBIDDEN).build();
         }

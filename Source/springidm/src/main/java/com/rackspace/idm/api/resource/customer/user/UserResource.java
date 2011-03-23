@@ -107,7 +107,7 @@ public class UserResource {
             || authorizationService.authorizeUser(token, customerId, username);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token);
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -149,7 +149,7 @@ public class UserResource {
             || authorizationService.authorizeUser(token, customerId, username);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token);
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -212,7 +212,7 @@ public class UserResource {
             uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token);
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }

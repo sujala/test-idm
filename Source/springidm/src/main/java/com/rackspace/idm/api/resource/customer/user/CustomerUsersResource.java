@@ -109,7 +109,7 @@ public class CustomerUsersResource {
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token);
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -156,7 +156,7 @@ public class CustomerUsersResource {
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token);
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -254,7 +254,7 @@ public class CustomerUsersResource {
             || authorizationService.authorizeUser(token, customerId, rpn);
         
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token);
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
