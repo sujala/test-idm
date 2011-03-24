@@ -209,6 +209,8 @@ public class ClientGroupResource {
                     groupName, clientId, customerId);
             logger.warn(errMsg);
         }
+        
+        group.setType(clientGroup.getType());
 
         this.clientService.updateClientGroup(group);
 
