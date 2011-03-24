@@ -99,6 +99,20 @@ public class ClientServiceTests {
         Assert.assertTrue(retrievedClient.getName().equals(name));
         EasyMock.verify(mockClientDao);
     }
+    
+    @Test
+    public void shouldGetClientByCustomerIdAndClientId() {
+
+        Client client = getFakeClient();
+        EasyMock.expect(mockClientDao.getClient(customerId, clientId)).andReturn(
+            client);
+        EasyMock.replay(mockClientDao);
+
+        Client retrievedClient = clientService.getClient(customerId, clientId);
+
+        Assert.assertTrue(retrievedClient.getName().equals(name));
+        EasyMock.verify(mockClientDao);
+    }
 
     @Test
     public void shouldReturnNullForNonExistentClientByName() {
@@ -569,7 +583,16 @@ public class ClientServiceTests {
         
         Assert.assertTrue(returnedClients.size() == 1);
     }
-
+    
+    @Test(expected = NotFoundException.class)
+    public void shouldNotGetClientsThatHavePermissionForNonExistentPermission() {
+        EasyMock.expect(mockClientDao.getDefinedPermissionByClientIdAndPermissionId(clientId, resourceId)).andReturn(null);
+        EasyMock.replay(mockClientDao);
+        
+        List<Client> returnedClients = clientService.getClientsThatHavePermission(getFakePermission());
+        
+        Assert.assertTrue(returnedClients.size() == 1);
+    }
     @Test
     public void shouldRevokePermission() {
         Permission resource = getFakePermission();
@@ -743,6 +766,21 @@ public class ClientServiceTests {
         EasyMock.verify(mockClientDao);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotRemoveUserFromClientGroupForBlankUserName() {
+        clientService.removeUserFromClientGroup("", null);
+        EasyMock.verify(mockUserDao);
+        EasyMock.verify(mockClientDao);
+    }
+    
+    @Test(expected = NotFoundException.class)
+    public void shouldNotRemoveUserFromClientGroupForNonExistentUser() {
+        ClientGroup group = getFakeClientGroup();
+        EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(null);
+        EasyMock.replay(mockUserDao);
+        clientService.removeUserFromClientGroup(username, group);
+    }
+    
     @Test
     public void shouldRemoveUserFromClientGroupThatUserIsNotAMemberOf() {
         ClientGroup group = getFakeClientGroup();
