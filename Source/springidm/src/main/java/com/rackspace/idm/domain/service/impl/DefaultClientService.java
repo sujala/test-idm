@@ -352,14 +352,14 @@ public class DefaultClientService implements ClientService {
         logger.info("Getting Groups for User: {}", username);
         String[] groupIds = userDao.getGroupIdsForUser(username);
 
+        List<ClientGroup> groups = new ArrayList<ClientGroup>();
+
         if (groupIds == null) {
-            return null;
+            return groups;
         }
 
         boolean filterByClient = !StringUtils.isBlank(clientId);
         boolean filterByType = !StringUtils.isBlank(type);
-
-        List<ClientGroup> groups = new ArrayList<ClientGroup>();
 
         for (String groupId : groupIds) {
             boolean addGroup = true;
