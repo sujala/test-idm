@@ -427,10 +427,6 @@ public class DefaultAccessTokenService implements AccessTokenService {
             return true;
         }
         
-        //if (!passwordExpirationDate.isAfterNow()) {
-        //    rotationNeeded = true;
-        //}
-       
         return rotationNeeded;
     }
  
