@@ -151,7 +151,7 @@ public class DefaultClientService implements ClientService {
         List<Client> clientsWithPermission = this.clientDao.getClientsThatHavePermission(p);
         
         for (Client client : clientsWithPermission) {
-            this.revokePermission(client.getClientId(), p);
+            this.clientDao.revokePermissionFromClient(p, client);
         }
         
         clientDao.deleteDefinedPermission(permission);
@@ -219,7 +219,7 @@ public class DefaultClientService implements ClientService {
     }
 
     public void grantPermission(String clientId, Permission p) {
-        Client targetClient = getClient(clientId);
+        Client targetClient = this.clientDao.findByClientId(clientId);
 
         if (targetClient == null) {
             throw new NotFoundException("Client Not Found");
@@ -386,11 +386,11 @@ public class DefaultClientService implements ClientService {
         logger.info("Getting Groups for User: {}", username);
         String[] groupIds = userDao.getGroupIdsForUser(username);
 
-        if (groupIds == null) {
-            return null;
-        }
-
         List<ClientGroup> groups = new ArrayList<ClientGroup>();
+
+        if (groupIds == null) {
+            return groups;
+        }
 
         for (String groupId : groupIds) {
             ClientGroup group = clientDao.findClientGroupByUniqueId(groupId);

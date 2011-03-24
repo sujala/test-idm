@@ -209,6 +209,26 @@ public class ClientServiceTests {
 
         EasyMock.verify(mockClientDao);
     }
+    
+    @Test(expected = NotFoundException.class)
+    public void shouldThrowNotFoundExceptionForDeleteNonExistentClient() {
+        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
+            null);
+
+        EasyMock.replay(mockClientDao);
+
+        clientService.delete(clientId);
+    }
+    
+    @Test(expected = NotFoundException.class)
+    public void shouldThrowNotFoundExceptionForDeleteNonExistentPermission() {
+        EasyMock.expect(mockClientDao.getDefinedPermissionByClientIdAndPermissionId(clientId, resourceId)).andReturn(
+            null);
+
+        EasyMock.replay(mockClientDao);
+
+        clientService.deleteDefinedPermission(getFakePermission());
+    }
 
     @Test
     public void shouldSaveClient() {
@@ -401,12 +421,16 @@ public class ClientServiceTests {
     @Test
     public void shouldDeletePermission() {
         Permission resource = getFakePermission();
+        List<Client> clients = new ArrayList<Client>();
+        clients.add(getFakeClient());
+        
         EasyMock.expect(
             mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
                 resource.getClientId(), resource.getPermissionId())).andReturn(
             resource);
         EasyMock.expect(mockClientDao.getClientsThatHavePermission(resource))
-            .andReturn(new ArrayList<Client>());
+            .andReturn(clients);
+        mockClientDao.revokePermissionFromClient(getFakePermission(), getFakeClient());
 
         mockClientDao.deleteDefinedPermission(resource);
         EasyMock.replay(mockClientDao);
@@ -450,6 +474,100 @@ public class ClientServiceTests {
         clientService.grantPermission(clientId, resource);
 
         EasyMock.verify(mockClientDao);
+    }
+    
+    @Test(expected = NotFoundException.class)
+    public void shouldNotGrantPermissionBecausePermissionDoesNotExist() {
+        Permission resource = getFakePermission();
+        Client client = getFakeClient();
+        String clientId = client.getClientId();
+
+        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(client);
+        EasyMock.expect(mockClientDao.getDefinedPermissionByClientIdAndPermissionId(clientId, resourceId)).andReturn(null);
+
+        mockClientDao.save(client);
+        EasyMock.replay(mockClientDao);
+
+        clientService.grantPermission(clientId, resource);
+
+        EasyMock.verify(mockClientDao);
+    }
+    
+    @Test(expected = NotFoundException.class)
+    public void shouldNotRevokePermissionBecauseTargetClientDoesNotExist() {
+        Permission resource = getFakePermission();
+        Client client = getFakeClient();
+        String clientId = client.getClientId();
+
+        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(null);
+
+        mockClientDao.save(client);
+        EasyMock.replay(mockClientDao);
+
+        clientService.revokePermission(clientId, resource);
+
+        EasyMock.verify(mockClientDao);
+    }
+    
+    @Test(expected = NotFoundException.class)
+    public void shouldNotRevokePermissionBecausePermissionDoesNotExist() {
+        Permission resource = getFakePermission();
+        Client client = getFakeClient();
+        String clientId = client.getClientId();
+
+        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(client);
+        EasyMock.expect(mockClientDao.getDefinedPermissionByClientIdAndPermissionId(clientId, resourceId)).andReturn(null);
+
+        mockClientDao.save(client);
+        EasyMock.replay(mockClientDao);
+
+        clientService.revokePermission(clientId, resource);
+
+        EasyMock.verify(mockClientDao);
+    }
+    
+    @Test
+    public void shouldGetClientGroupsForUser() {
+        String[] groupIds = {"first", "second"};
+        EasyMock.expect(mockUserDao.getGroupIdsForUser(username)).andReturn(groupIds);
+        EasyMock.replay(mockUserDao);
+        
+        ClientGroup group1 = getFakeClientGroup();
+        ClientGroup group2 = getFakeClientGroup();
+        group2.setName("Some Other Name");
+        group2.setType("Another Type");
+        
+        EasyMock.expect(mockClientDao.findClientGroupByUniqueId("first")).andReturn(group1);
+        EasyMock.expect(mockClientDao.findClientGroupByUniqueId("second")).andReturn(group2);
+        EasyMock.replay(mockClientDao);
+        
+        List<ClientGroup> groups = clientService.getClientGroupsForUser(username);
+        
+        Assert.assertTrue(groups.size() == 2);
+        Assert.assertTrue(groups.get(0).getName().equals(groupName));
+    }
+    
+    @Test
+    public void shouldGetNoClientGroupsForUserWithNoMemberships() {
+        EasyMock.expect(mockUserDao.getGroupIdsForUser(username)).andReturn(null);
+        EasyMock.replay(mockUserDao);
+        
+        List<ClientGroup> groups = clientService.getClientGroupsForUser(username);
+        
+        Assert.assertTrue(groups.size() == 0);
+    }
+    
+    @Test
+    public void shouldGetClientsThatHavePermission() {
+        List<Client> clients = new ArrayList<Client>();
+        clients.add(getFakeClient());
+        EasyMock.expect(mockClientDao.getDefinedPermissionByClientIdAndPermissionId(clientId, resourceId)).andReturn(getFakePermission());
+        EasyMock.expect(mockClientDao.getClientsThatHavePermission(getFakePermission())).andReturn(clients);
+        EasyMock.replay(mockClientDao);
+        
+        List<Client> returnedClients = clientService.getClientsThatHavePermission(getFakePermission());
+        
+        Assert.assertTrue(returnedClients.size() == 1);
     }
 
     @Test
