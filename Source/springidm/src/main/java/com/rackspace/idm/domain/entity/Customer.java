@@ -22,7 +22,7 @@ public class Customer implements Auditable {
     private Boolean locked = null;
     private Boolean softDeleted = null;
     
-    private int passwordRotationDuration; // this is in days
+    private Integer passwordRotationDuration; // this is in days
     private Boolean passwordRotationEnabled = null;
 
     public Customer() {
@@ -46,11 +46,11 @@ public class Customer implements Auditable {
         this.passwordRotationEnabled = passwordRotationEnabled;
     }
     
-    public int getPasswordRotationDuration() {
+    public Integer getPasswordRotationDuration() {
         return passwordRotationDuration;
     }
     
-    public void setPasswordRotationDuration(int passwordRotationDuration) {
+    public void setPasswordRotationDuration(Integer passwordRotationDuration) {
         this.passwordRotationDuration = passwordRotationDuration;
     }
 

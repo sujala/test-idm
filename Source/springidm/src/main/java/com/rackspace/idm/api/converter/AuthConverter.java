@@ -69,7 +69,7 @@ public class AuthConverter {
         
         DateTime passwordExpirationDate = auth.getUserPasswordExpirationDate();
         
-        if (auth.getUserPasswordExpirationDate() != null) {    
+        if (passwordExpirationDate != null) {    
             GregorianCalendar gc = new GregorianCalendar();
             gc.setTime(passwordExpirationDate.toDate());
             
@@ -82,13 +82,13 @@ public class AuthConverter {
             }
             
             authJaxb.setPasswordExpirationDate(xmlPasswordExpirationDate);
-        }
-        
-        DateTime today = new DateTime();
-        int daysToPasswordExpiry = passwordExpirationDate.getDayOfYear() - today.getDayOfYear();
-        
-        if (daysToPasswordExpiry > 0) {
-            authJaxb.setDaysUntilPasswordExpiration(daysToPasswordExpiry);
+            
+            DateTime today = new DateTime();
+            int daysToPasswordExpiry = passwordExpirationDate.getDayOfYear() - today.getDayOfYear();
+            
+            if (daysToPasswordExpiry > 0) {
+                authJaxb.setDaysUntilPasswordExpiration(daysToPasswordExpiry);
+            } 
         }
         
         return authJaxb;

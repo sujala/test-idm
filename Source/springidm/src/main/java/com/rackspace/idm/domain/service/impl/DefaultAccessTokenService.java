@@ -423,13 +423,13 @@ public class DefaultAccessTokenService implements AccessTokenService {
         
         DateTime passwordExpirationDate = userService.getUserPasswordExpirationDate(userName);
          
-        if (passwordExpirationDate == null) {
-            return rotationNeeded;
+        if (passwordExpirationDate != null && passwordExpirationDate.isBeforeNow()) {
+            return true;
         }
         
-        if (!passwordExpirationDate.isAfterNow()) {
-            rotationNeeded = true;
-        }
+        //if (!passwordExpirationDate.isAfterNow()) {
+        //    rotationNeeded = true;
+        //}
        
         return rotationNeeded;
     }

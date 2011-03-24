@@ -466,6 +466,10 @@ public class LdapCustomerRepository extends LdapRepository implements
             .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
         customer.setInum(resultEntry.getAttributeValue(ATTR_INUM));
         customer.setIname(resultEntry.getAttributeValue(ATTR_INAME));
+        
+        customer.setPasswordRotationDuration(resultEntry.getAttributeValueAsInteger(ATTR_PASSWORD_ROTATION_DURATION));
+        customer.setPasswordRotationEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_PASSWORD_ROTATION_ENABLED));    
+        
         String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
         if (statusStr != null) {
             customer.setStatus(Enum.valueOf(CustomerStatus.class,
@@ -483,7 +487,7 @@ public class LdapCustomerRepository extends LdapRepository implements
             customer.setLocked(resultEntry
                 .getAttributeValueAsBoolean(ATTR_LOCKED));
         }
-
+ 
         return customer;
     }
 

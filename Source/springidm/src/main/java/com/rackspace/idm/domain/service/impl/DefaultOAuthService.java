@@ -7,16 +7,15 @@ import static com.rackspace.idm.domain.entity.OAuthGrantType.REFRESH_TOKEN;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.validation.BasicCredentialsCheck;
-import com.rackspace.idm.validation.InputValidator;
-import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
+import javax.validation.groups.Default;
+
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.AuthData;
@@ -38,10 +37,9 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.jaxb.AuthGrantType;
-
-import javax.validation.groups.Default;
-import javax.ws.rs.core.Response;
+import com.rackspace.idm.validation.BasicCredentialsCheck;
+import com.rackspace.idm.validation.InputValidator;
+import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
 
 public class DefaultOAuthService implements OAuthService {
     private UserService userService;
@@ -96,6 +94,14 @@ public class DefaultOAuthService implements OAuthService {
                 throw new BadRequestException("username cannot be blank");
             }
             
+            UserAuthenticationResult uaResult = userService.authenticate(trParam.getUsername(),
+                trParam.getPassword());
+            if (!uaResult.isAuthenticated()) {
+                String message = "Bad User credentials for userName {}";
+                logger.warn(message, trParam.getUsername());
+				throw new NotAuthenticatedException(message);
+            }
+            
             if (accessTokenService.passwordRotationDurationElapsed(trParam.getUsername())) {
                 AccessToken resetToken = accessTokenService.createPasswordResetAccessTokenForUser
                                  (trParam.getUsername(), trParam.getClientId());
@@ -105,14 +111,6 @@ public class DefaultOAuthService implements OAuthService {
                 authData.setPasswordResetOnlyToken(true);
                 authData.setUserPasswordExpirationDate(userService.getUserPasswordExpirationDate(trParam.getUsername()));
                 return authData;
-            }
-            
-            UserAuthenticationResult uaResult = userService.authenticate(trParam.getUsername(),
-                trParam.getPassword());
-            if (!uaResult.isAuthenticated()) {
-                String message = "Bad User credentials for userName {}";
-                logger.warn(message, trParam.getUsername());
-				throw new NotAuthenticatedException(message);
             }
             
             accessToken = accessTokenService.getTokenByBasicCredentials(caResult.getClient(),
