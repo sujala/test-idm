@@ -22,6 +22,7 @@ import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.impl.DefaultCustomerService;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.test.stub.StubLogger;
 
 public class CustomerServiceTests {
@@ -99,6 +100,13 @@ public class CustomerServiceTests {
         service.deleteCustomer(customerId);
         EasyMock.verify(mockCustomerDao);
         EasyMock.verify(mockUserDao);
+    }
+    
+    @Test(expected = NotFoundException.class)
+    public void shouldNotDeleteNonExistentCustomer() {
+        EasyMock.expect(mockCustomerDao.findByCustomerId(customerId)).andReturn(null);
+        EasyMock.replay(mockCustomerDao);   
+        service.deleteCustomer(customerId);
     }
 
     @Test

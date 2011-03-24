@@ -118,6 +118,24 @@ public class RefreshTokenServiceTests {
         RefreshToken refreshToken = null;
         refreshTokenService.resetTokenExpiration(refreshToken);
     }
+    
+    @Test
+    public void shouldDeleteAllTokensForUser() {
+        mockRefreshTokenDao.deleteAllTokensForUser(username);
+        EasyMock.replay(mockRefreshTokenDao);
+        
+        refreshTokenService.deleteAllTokensForUser(username);
+        EasyMock.verify(mockRefreshTokenDao);
+    }
+    
+    @Test
+    public void shouldDeleteTokenForUserByClientId() {
+        mockRefreshTokenDao.deleteTokenForUserByClientId(username, clientId);
+        EasyMock.replay(mockRefreshTokenDao);
+        
+        refreshTokenService.deleteTokenForUserByClientId(username, clientId);
+        EasyMock.verify(mockRefreshTokenDao);
+    }
 
     // helper functions
     private RefreshToken getFakeRefreshToken() {
