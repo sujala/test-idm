@@ -1,5 +1,6 @@
 package com.rackspace.idm.util;
 
+import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.security.InvalidParameterException;
 import java.security.Security;
@@ -37,7 +38,7 @@ public class CryptHelper {
 			keyGenerator.init(PKCS12ParametersGenerator.PKCS12PasswordToBytes(password), salt, 20);
 			keyParams = keyGenerator.generateDerivedParameters(256, 128);
 		} catch (Exception e) {
-			LoggerFactory.getLogger(CryptHelper.class).error("Error initializing", e);
+			LoggerFactory.getLogger(CryptHelper.class).error("Error initializing encryption provider", e);
 		}
 	}
 
@@ -80,7 +81,12 @@ public class CryptHelper {
 				new PKCS7Padding());
 
 		cipher.init(true, keyParams);
-		final byte[] bytes = plainText.getBytes();
+		byte[] bytes;
+		try {
+			bytes = plainText.getBytes("UTF8");
+		} catch (UnsupportedEncodingException e) {
+			bytes = plainText.getBytes();
+		}
 		final byte[] processed = new byte[cipher.getOutputSize(bytes.length)];
 		int outputLength = cipher.processBytes(bytes, 0, bytes.length, processed, 0);
 		outputLength += cipher.doFinal(processed, outputLength);
@@ -105,6 +111,10 @@ public class CryptHelper {
 
 		final byte[] results = new byte[outputLength];
 		System.arraycopy(processed, 0, results, 0, outputLength);
-		return new String(results);
+		try {
+			return new String(results, "UTF8");
+		} catch (UnsupportedEncodingException e) {
+			return new String(results);
+		}
 	}
 }

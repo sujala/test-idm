@@ -17,11 +17,11 @@ public class TraceLogger {
 		Signature sig = joinPoint.getSignature();
 		StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        LoggerFactory.getLogger(sig.getDeclaringTypeName()).trace(joinPoint + " enter");
+        LoggerFactory.getLogger(sig.getDeclaringTypeName()).trace("{} : enter", joinPoint);
 
         Object retVal = joinPoint.proceed();
 
-		LoggerFactory.getLogger(sig.getDeclaringTypeName()).trace(joinPoint + " : exit " + stopWatch.getTime() + " ms");
+		LoggerFactory.getLogger(sig.getDeclaringTypeName()).trace("{} : exit {} ms", joinPoint , stopWatch.getTime());
 		return retVal;
 	}
 }

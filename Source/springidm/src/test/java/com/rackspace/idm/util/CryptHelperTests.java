@@ -1,10 +1,10 @@
 package com.rackspace.idm.util;
 
 import java.security.GeneralSecurityException;
-import java.util.Random;
 
 import junit.framework.Assert;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.junit.Test;
 
@@ -42,10 +42,7 @@ public class CryptHelperTests {
 	
 	@Test
 	public void shouldEncrypAndDecryptLongValues() throws GeneralSecurityException, InvalidCipherTextException {
-		byte[] bs = new byte[1024];
-		new Random().nextBytes(bs);
-		String secret = new String(bs);
-
+		String secret = RandomStringUtils.random(1024);
 		CryptHelper crypto = new CryptHelper();
 		byte[] ciphertext = crypto.encrypt(secret);
 
