@@ -578,7 +578,51 @@ public class AccessTokenServiceTests {
 
         EasyMock.verify(mockTokenDao);
         
-    }  
+    }
+    
+    @Test
+    public void shouldNotAuthenticateToken_PasswordRotationNeeded_DurationOneDay() throws Exception {
+        EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
+        EasyMock.replay(mockTokenDao);
+        
+        int passwordRotationDuration = 1;
+        
+        Customer customer = new Customer();
+        customer.setPasswordRotationEnabled(true);
+        customer.setPasswordRotationDuration(passwordRotationDuration);
+        
+        EasyMock.expect(mockCustomerService.getCustomer(customerId)).andReturn(customer);
+        EasyMock.replay(mockCustomerService);
+        
+        User user = getFakeUser();
+        
+        DateTime today = new DateTime();
+        
+        int year = today.getYear();
+        int monthOfYear = today.getMonthOfYear();
+        int dayOfMonth = today.getDayOfMonth() - 2;
+        int hourOfDay = 1;
+        int minuteOfHour = 1;
+        int secondOfMinute = 1;
+        int millisOfSecond = 1;
+          
+        DateTime lastUpdated = new DateTime(year, monthOfYear, dayOfMonth, 
+            hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+        
+        Password passwordToUse = Password.existingInstance("testPass", lastUpdated, false);
+        
+        user.setPasswordObj(passwordToUse);
+        
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
+        EasyMock.expect(mockUserService.getUserPasswordExpirationDate(username)).andReturn(today.minusDays(passwordRotationDuration));
+        EasyMock.replay(mockUserService);
+        
+        boolean isAuthenticated = tokenService.authenticateAccessToken(tokenString);
+        Assert.assertFalse(isAuthenticated);
+
+        EasyMock.verify(mockTokenDao);
+        
+    }      
     
     @Test
     public void shouldNotAuthenticateToken_PasswordRotationNeeded_DurationMoreThanYear() throws Exception {
