@@ -14,7 +14,7 @@
 	<appender name="file" class="org.apache.log4j.RollingFileAppender">
 		<param name="File" value="/tmp/logs/idm.log" />
 		<param name="Append" value="true" />
-		<param name="MaxFileSize" value="500KB" />
+		<param name="MaxFileSize" value="20MB" />
 		<param name="MaxBackupIndex" value="1" />
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z} %-5p [%c] %m %X{GUUID} %n"/>
@@ -24,7 +24,7 @@
 	<appender name="audit" class="org.apache.log4j.RollingFileAppender">
 		<param name="File" value="/tmp/logs/audit.log" />
 		<param name="Append" value="true" />
-		<param name="MaxFileSize" value="500KB" />
+		<param name="MaxFileSize" value="20MB" />
 		<param name="MaxBackupIndex" value="9999" />
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z} %m %n"/>
