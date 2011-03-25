@@ -50,7 +50,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     // NOTE: This is pretty fragile way of handling the specific error, so we
     // need to look into more reliable way of detecting this error.
-    private static final String STALE_PASSWORD_MESSAGE = "The provided new password was found in the password history for the user";
+    private static final String STALE_PASSWORD_MESSAGE = "Password match in history";
 
     public LdapUserRepository(LdapConnectionPools connPools,
         Configuration config) {
@@ -483,7 +483,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             result = getAppConnPool().modify(oldUser.getUniqueId(), mods);
         } catch (LDAPException ldapEx) {
 
-            if (ResultCode.UNWILLING_TO_PERFORM.equals(ldapEx.getResultCode())
+            if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
                 && STALE_PASSWORD_MESSAGE.equals(ldapEx.getMessage())) {
                 audit.fail(STALE_PASSWORD_MESSAGE);
                 throw new StalePasswordException(
