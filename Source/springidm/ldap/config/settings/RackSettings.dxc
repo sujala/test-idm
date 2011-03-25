@@ -21,6 +21,7 @@ set password-policy = true;
 set password-retries = 6;
 set password-max-suspension = 1800;
 set password-history = 10;
+set password-enforce-quality-on-reset = true;
 
 # multiwrite timer
 # set multi-write-retry-time = 60;      # this is the default value
