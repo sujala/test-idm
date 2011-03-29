@@ -180,7 +180,15 @@ public class DefaultUserService implements UserService {
 
     public void deleteUser(String username) {
         logger.info("Deleting User: {}", username);
+        
+        List<ClientGroup> groupsOfWhichUserIsMember = this.clientService.getClientGroupsForUser(username);
+        
+        for(ClientGroup g : groupsOfWhichUserIsMember) {
+            this.clientService.removeUserFromClientGroup(username, g);
+        }
+        
         this.userDao.delete(username);
+        
         logger.info("Deleted User: {}", username);
     }
 

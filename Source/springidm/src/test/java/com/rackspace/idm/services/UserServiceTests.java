@@ -203,12 +203,25 @@ public class UserServiceTests {
         Assert.assertTrue(retrievedUser.getUsername().equals(username));
         EasyMock.verify(mockUserDao);
     }   
-
+    
     @Test
     public void shouldDeleteUser() {
         mockUserDao.delete(username);
+        EasyMock.replay(mockUserDao);
+
+        
+        List<ClientGroup> groups = new ArrayList<ClientGroup>();
+        ClientGroup group = new ClientGroup("tempClient", customerId, "tempClient", "tempClient");
+        groups.add(group);
+
+        
+        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(groups);
+        mockClientService.removeUserFromClientGroup(username, group);
+        EasyMock.replay(mockClientService);
         userService.deleteUser(username);
-    }
+        EasyMock.verify(mockUserDao);
+        EasyMock.verify(mockClientService);
+    }  
 
     @Test
     public void shouldUpdateUser() {
