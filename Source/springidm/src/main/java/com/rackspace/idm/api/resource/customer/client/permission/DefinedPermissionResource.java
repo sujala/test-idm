@@ -372,7 +372,7 @@ public class DefinedPermissionResource {
             .getDefinedPermissionByClientIdAndPermissionId(clientId,
                 permissionId);
 
-        if (!customerId.equals(permission.getCustomerId())) {
+        if (permission == null || !customerId.equals(permission.getCustomerId())) {
             String errorMsg = String.format("Permission Not Found: %s",
                 permissionId);
             logger.warn(errorMsg);
