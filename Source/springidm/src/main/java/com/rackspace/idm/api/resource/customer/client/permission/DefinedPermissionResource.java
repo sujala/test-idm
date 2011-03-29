@@ -300,12 +300,14 @@ public class DefinedPermissionResource {
         checkGrantRevokePermissionAuthorization(authHeader, clientId,
             request.getMethod(), uriInfo.getPath());
 
-        
-        Permission permissionToGrant = checkAndGetPermission(customerId, clientId, permissionId);
-        
-        this.clientService.grantPermission(targetClient.getClientId(), permissionToGrant);
-            
-        return Response.ok(permissionConverter.toPermissionJaxb(permissionToGrant)).build();
+        Permission permissionToGrant = checkAndGetPermission(customerId,
+            clientId, permissionId);
+
+        this.clientService.grantPermission(targetClient.getClientId(),
+            permissionToGrant);
+
+        return Response.ok(
+            permissionConverter.toPermissionJaxb(permissionToGrant)).build();
     }
 
     /**
@@ -344,7 +346,8 @@ public class DefinedPermissionResource {
         this.clientService.revokePermission(targetClient.getClientId(),
             permissionToRevoke);
 
-        return Response.ok(permissionConverter.toPermissionJaxb(permissionToRevoke)).build();
+        return Response.ok(
+            permissionConverter.toPermissionJaxb(permissionToRevoke)).build();
     }
 
     private void checkGrantRevokePermissionAuthorization(String authHeader,
@@ -372,7 +375,9 @@ public class DefinedPermissionResource {
             .getDefinedPermissionByClientIdAndPermissionId(clientId,
                 permissionId);
 
-        if (permission == null || !customerId.equals(permission.getCustomerId())) {
+        if (permission == null
+            || !customerId.equalsIgnoreCase(permission.getCustomerId())
+            || !clientId.equalsIgnoreCase(permission.getClientId())) {
             String errorMsg = String.format("Permission Not Found: %s",
                 permissionId);
             logger.warn(errorMsg);
