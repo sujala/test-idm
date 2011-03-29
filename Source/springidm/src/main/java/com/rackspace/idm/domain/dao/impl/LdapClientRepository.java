@@ -39,7 +39,7 @@ import com.unboundid.ldap.sdk.controls.SortKey;
 
 public class LdapClientRepository extends LdapRepository implements ClientDao {
     private static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {
-        ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_GROUP_TYPE,
+        ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_CLIENT_ID, ATTR_GROUP_TYPE,
         ATTR_NAME};
 
     public LdapClientRepository(LdapConnectionPools connPools,
