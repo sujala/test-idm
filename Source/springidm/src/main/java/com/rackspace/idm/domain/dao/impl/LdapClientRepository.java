@@ -687,7 +687,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         try {
             searchResult = getAppConnPool().search(uniqueId, SearchScope.BASE,
-                searchFilter);
+                searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
