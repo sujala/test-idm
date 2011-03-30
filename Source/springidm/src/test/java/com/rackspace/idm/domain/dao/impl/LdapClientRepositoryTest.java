@@ -305,7 +305,7 @@ public class LdapClientRepositoryTest {
         repo.delete(testClient.getClientId());
         
         Assert.assertNotNull(returnedGroup);
-        Assert.assertTrue(group.getType().equalsIgnoreCase("My New Type"));
+        Assert.assertTrue(returnedGroup.getType().equalsIgnoreCase("My New Type"));
     }
     
     @Test

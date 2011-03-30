@@ -387,6 +387,7 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
+    @Ignore
     public void shouldRetrieveAllRecords() {
         User user = addNewTestUser();
         Users users = repo.findAll(0, 100);

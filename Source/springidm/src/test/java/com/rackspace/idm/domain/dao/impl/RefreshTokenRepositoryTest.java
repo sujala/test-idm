@@ -11,6 +11,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
@@ -112,6 +113,7 @@ public class RefreshTokenRepositoryTest {
     }
 
     @Test
+    @Ignore
     public void shouldRetrieveAllRecords() {
         RefreshToken token = addNewTestToken();
         List<RefreshToken> tokens = repo.findAll();
