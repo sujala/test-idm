@@ -14,6 +14,7 @@ import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.DeleteRequest;
 import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
@@ -90,9 +91,11 @@ public class LdapCustomerRepository extends LdapRepository implements
         String customerApplicationsDN = new LdapDnBuilder(customerDN)
             .addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME).build();
 
+        LDAPConnection conn = null;
         Audit audit = Audit.log(customer).add();
         try {
-            result = getAppConnPool().add(customerDN, attributes);
+            conn = getAppConnPool().getConnection();
+            result = conn.add(customerDN, attributes);
         } catch (LDAPException ldapEx) {
         	audit.fail();
             getLogger()
@@ -115,7 +118,7 @@ public class LdapCustomerRepository extends LdapRepository implements
             new Attribute(ATTR_OU, OU_GROUPS_NAME)};
 
         try {
-            result = getAppConnPool().add(customerGroupsDN, groupAttributes);
+            result = conn.add(customerGroupsDN, groupAttributes);
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error("Error adding customer groups {} - {}", customer,
@@ -142,7 +145,7 @@ public class LdapCustomerRepository extends LdapRepository implements
             new Attribute(ATTR_OU, OU_PEOPLE_NAME)};
 
         try {
-            result = getAppConnPool().add(customerPeopleDN, peopleAttributes);
+            result = conn.add(customerPeopleDN, peopleAttributes);
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error("Error adding customer people {} - {}", customer,
@@ -169,7 +172,7 @@ public class LdapCustomerRepository extends LdapRepository implements
             new Attribute(ATTR_OU, "applications")};
 
         try {
-            result = getAppConnPool().add(customerApplicationsDN,
+            result = conn.add(customerApplicationsDN,
                 applicationAttributes);
         } catch (LDAPException ldapEx) {
             audit.fail();
@@ -191,6 +194,8 @@ public class LdapCustomerRepository extends LdapRepository implements
                             .toString()));
         }
         audit.succeed();
+        
+        getAppConnPool().releaseConnection(conn);
 
         getLogger().debug("Added customer {}", customer);
     }
