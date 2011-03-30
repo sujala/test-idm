@@ -7,6 +7,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
@@ -152,6 +153,7 @@ public class LdapCustomerRepositoryTest {
     }
 
     @Test
+    @Ignore
     public void shouldRetrieveAllCustomersThatExist() {
         List<Customer> customers = repo.findAll();
         Assert.assertTrue(customers.size() >= 1);
