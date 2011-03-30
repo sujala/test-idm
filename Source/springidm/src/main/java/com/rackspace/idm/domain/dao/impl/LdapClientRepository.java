@@ -1278,7 +1278,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         clientGroup.setName(resultEntry.getAttributeValue(ATTR_NAME));
         clientGroup.setCustomerId(resultEntry
             .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
-        clientGroup.setType(ATTR_GROUP_TYPE);
+        clientGroup.setType(resultEntry.getAttributeValue(ATTR_GROUP_TYPE));
         return clientGroup;
     }
 

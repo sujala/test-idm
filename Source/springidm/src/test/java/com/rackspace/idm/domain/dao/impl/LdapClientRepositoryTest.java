@@ -298,6 +298,7 @@ public class LdapClientRepositoryTest {
         Client testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group);
+        group = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         group.setType("My New Type");
         repo.updateClientGroup(group);
         ClientGroup returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
@@ -306,6 +307,11 @@ public class LdapClientRepositoryTest {
         
         Assert.assertNotNull(returnedGroup);
         Assert.assertTrue(returnedGroup.getType().equalsIgnoreCase("My New Type"));
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotUpdateClientGroup() {
+        repo.updateClientGroup(null);
     }
     
     @Test
