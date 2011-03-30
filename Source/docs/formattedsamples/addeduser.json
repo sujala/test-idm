@@ -17,10 +17,9 @@
   "displayName": "John Smith",
   "prefLanguage": "US_en",
   "inum": "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111",
-  "iname": "@Example.Smith*John",
   "timeZone": "America/Chicago",
   "region": "SAT",
   "status": "ACTIVE",
-  "isLocked": false,
-  "isSoftDeleted": false
+  "locked": false,
+  "softDeleted": false
 }

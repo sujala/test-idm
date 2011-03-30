@@ -1,9 +1,11 @@
 {
-  "roles": {
-    "role": [
+  "groups": {
+    "clientGroup": [
       {
+        "customerId" : "RCN-000-000-000",
+        "clientId" : "ab4820dhcb39347",
         "name": "Admin",
-        "type": "RackspaceDefined"
+        "type": "Role"
       }
     ]},
   "username": "jqsmith",
@@ -17,9 +19,8 @@
   "displayName": "John Smith",
   "prefLanguage": "US_en",
   "inum": "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111",
-  "iname": "@Example.Smith*John",
   "region": "America/Chicago",
   "status": "ACTIVE",
-  "isLocked": false,
-  "isSoftDeleted": false
+  "locked": false,
+  "softDeleted": false
 }

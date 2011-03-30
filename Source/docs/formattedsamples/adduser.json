@@ -17,9 +17,5 @@
   "displayName": "John Smith",
   "prefLanguage": "US_en",
   "inum": "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111",
-  "iname": "@Example.Smith*John",
-  "region": "America/Chicago",
-  "status": "ACTIVE",
-  "isLocked": false,
-  "isSoftDeleted": false
+  "region": "America/Chicago"
 }

@@ -1,8 +1,4 @@
 {
-   "secret": null,
-   "password": null,
-   "apiKey": null,
-   "roles": null,
    "username": "qauser",
    "customerId": "RCN-QATestingCustomer",
    "customerInum": "@!FFFF.FFFF.FFFF.FFFF!EEEE.999",
@@ -14,15 +10,11 @@
    "displayName": "qauser",
    "prefLanguage": "en-us",
    "inum": "@!FFFF.FFFF.FFFF.FFFF!EEEE.999!10001",
-   "iname": "@Rackspace.TestCustomer*QATester",
-   "region": null,
    "status": "ACTIVE",
    "locked": false,
    "softDeleted": false,
    "country": "USA",
    "timeZone": "America/Chicago",
    "mossoId": 999112358,
-   "nastId": "nastid-qauser",
-   "created": null,
-   "updated": null
+   "nastId": "nastid-qauser"
 }

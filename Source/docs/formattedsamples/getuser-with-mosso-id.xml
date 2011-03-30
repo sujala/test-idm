@@ -12,7 +12,6 @@
     displayName="qauser" 
     prefLanguage="en-us"
     inum="@!FFFF.FFFF.FFFF.FFFF!EEEE.999!10001" 
-    iname="@Rackspace.TestCustomer*QATester"
     status="ACTIVE" 
     locked="false" 
     softDeleted="false" 

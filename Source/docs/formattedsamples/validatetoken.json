@@ -4,43 +4,18 @@
         "expires_in": "3600"
     },
     "user" : {
-        "roles": { "role": [
+        "groups": { "clientGroup": [
               {
+                "customerId" : "RCN-000-000-000",
+                "clientId" : "ab48a9efdfedb23ty3494",
                 "name": "Admin",
                 "type": "RackspaceDefined"
               }]},
           "username": "jqsmith",
           "customerId": "RCN-000-000-000",
-          "customerInum": "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE",
-          "email": "john.smith@example.org",
-          "personId": "RPN-111-111-111",
-          "firstName": "John",
-          "middleName": "Quincy",
-          "lastName": "Smith",
-          "displayName": "John Smith",
-          "prefLanguage": "US_en",
-          "inum": "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111",
-          "timeZone": "America/Chicago",
-          "region": "SAT",
-          "status": "ACTIVE",
-          "locked": false,
-          "softDeleted": false
      },
      "client": { 
           "clientId": "ab4820dhcb39347",
           "customerId": "RCN-000-000-000",
-          "name": "Test Application2",
-          "inum": "@FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!0001",
-          "status": "ACTIVE",
-          "locked": false,
-          "softDeleted": false
-     },
-     "permissions": { "permission": [
-          {
-            "id": "CloudServers-1",
-            "clientId": "CS",
-            "customerId": "RCN-000-000-000"
-          }
-        ]
      }
 }

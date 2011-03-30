@@ -4,7 +4,6 @@
     softDeleted="false" 
     locked="false" 
     status="ACTIVE"
-    iname="@Rackspace*Rackspace*ControlPanel" 
     inum="@FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!0001"
     name="Test Application2" 
     customerId="RCN-000-000-000" 

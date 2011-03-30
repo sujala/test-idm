@@ -2,7 +2,7 @@
 
 <user 
     xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
-	isSoftDeleted="false" isLocked="false" 
+	softDeleted="false" locked="false" 
     status="ACTIVE" timeZone="America/Chicago"
 	region="SAT" iname="@Example.Smith*John" 
 	inum="@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111"

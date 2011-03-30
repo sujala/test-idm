@@ -2,9 +2,8 @@
 
 <user 
     xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
-	isSoftDeleted="false" isLocked="false" 
+	softDeleted="false" locked="false" 
     tatus="ACTIVE" region="America/Chicago"
-	iname="@Example.Smith*John" 
 	inum="@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111"
 	prefLanguage="US_en" displayName="John Smith" 
 	lastName="Smith" middleName="Quincy" 
@@ -13,9 +12,11 @@
 	customerInum="@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE" 
 	customerId="RCN-000-000-000"
 	username="jqsmith">
-	<roles>
-		<role type="RackspaceDefined" 
-            name="Admin">
-		</role>
-	</roles>
+	<groups>
+		<clientGroup 
+            customerId="RCN-000-000-000",
+            clientId="ab4820dhcb39347",
+            type="Role" 
+            name="Admin" />
+	</groups>
 </user>

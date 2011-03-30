@@ -2,7 +2,7 @@
 
 <user 
     xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
-    isSoftDeleted="false" isLocked="false" 
+    softDeleted="false" locked="false" 
     status="ACTIVE" timeZone="America/Chicago"
     region="SAT" iname="@Example.Smith*John" 
     inum="@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111"
@@ -16,10 +16,9 @@
     <secret secretAnswer="Francis" 
         secretQuestion="What is your dogs name?" />
     <password password="C@n+f001me!" />
-    <roles>
-        <role type="RackspaceDefined" 
+    <groups>
+        <clientGroup type="RackspaceDefined" 
             customerInum="@FFFF.FFFF.FFFF.FFFF!EEEE.EEEE"
-            customerId="RCN-000-000-000" name="Admin">
-        </role>
-    </roles>
+            customerId="RCN-000-000-000" name="Admin" />
+    </groups>
 </user>
