@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -19,6 +20,7 @@ import com.rackspace.idm.api.converter.PasswordRulesConverter;
 import com.rackspace.idm.domain.entity.PasswordComplexityResult;
 import com.rackspace.idm.domain.entity.PasswordRule;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
+import com.rackspace.idm.exception.BadRequestException;
 
 /**
  * Password Complexity Rules
@@ -66,6 +68,7 @@ public class PasswordRulesResource {
     /**
      * Validates a password against the password complexity rules
      * 
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}userPassword
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}passwordValidation
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -77,16 +80,20 @@ public class PasswordRulesResource {
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param password The password to validate.
      */
-    @GET
-    @Path("/validation/{password}")
+    @POST
+    @Path("/validation")
     public Response checkPassword(
-        @PathParam("password") String password) {
+        com.rackspace.idm.jaxb.UserPassword password) {
+        
+        if (password == null) {
+            throw new BadRequestException("Password cannot be blank");
+        }
 
         logger.debug("Checking password {} against password complexity rules",
             password);
 
         PasswordComplexityResult result = passwordComplexityService
-            .checkPassword(password);
+            .checkPassword(password.getPassword());
 
         com.rackspace.idm.jaxb.PasswordValidation jaxbValidation = passwordRulesConverter
             .toPasswordValidationJaxb(result);
