@@ -24,6 +24,7 @@ import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.DeleteRequest;
 import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
@@ -115,9 +116,12 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             .addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME).build();
 
         client.setUniqueId(clientDN);
+        
+        LDAPConnection conn = null;
 
         try {
-            result = getAppConnPool().add(clientDN, attributes);
+            conn = getAppConnPool().getConnection();
+            result = conn.add(clientDN, attributes);
         } catch (LDAPException ldapEx) {
             audit.fail(ldapEx.getMessage());
             getLogger().error("Error adding client {} - {}", client, ldapEx);
@@ -145,7 +149,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             new Attribute(ATTR_OU, OU_PERMISSIONS_NAME)};
 
         try {
-            result = getAppConnPool().add(clientPermissionsDN,
+            result = conn.add(clientPermissionsDN,
                 permissionAttributes);
         } catch (LDAPException ldapEx) {
             audit.fail(ldapEx.getMessage());
@@ -170,7 +174,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             new Attribute(ATTR_OU, OU_GROUPS_NAME)};
 
         try {
-            result = getAppConnPool().add(clientGroupsDN, groupAttributes);
+            result = conn.add(clientGroupsDN, groupAttributes);
         } catch (LDAPException ldapEx) {
             audit.fail(ldapEx.getMessage());
             getLogger().error("Error adding client groups ou: {} - {}",
@@ -188,6 +192,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         audit.succeed();
+        
+        getAppConnPool().releaseConnection(conn);
 
         getLogger().debug("Added client {}", client);
     }
