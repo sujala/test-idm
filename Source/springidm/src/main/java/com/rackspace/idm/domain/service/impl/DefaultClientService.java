@@ -383,7 +383,7 @@ public class DefaultClientService implements ClientService {
     }
 
     public List<ClientGroup> getClientGroupsForUser(String username) {
-        logger.info("Getting Groups for User: {}", username);
+        logger.debug("Getting Groups for User: {}", username);
         String[] groupIds = userDao.getGroupIdsForUser(username);
 
         List<ClientGroup> groups = new ArrayList<ClientGroup>();
@@ -399,7 +399,7 @@ public class DefaultClientService implements ClientService {
             }
         }
 
-        logger.info("Got Groups for User: {} - {}", username, groups);
+        logger.debug("Got Groups for User: {} - {}", username, groups);
         return groups;
     }
 
