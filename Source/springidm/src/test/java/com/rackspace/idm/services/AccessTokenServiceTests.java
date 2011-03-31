@@ -79,6 +79,8 @@ public class AccessTokenServiceTests {
     int minTokenExpirationSeconds = 10;
     String dataCenterPrefix = "DEV";
     boolean isTrustedServer = false;
+    
+    Configuration mockConfiguration;
 
     @Before
     public void setUp() throws Exception {
@@ -579,6 +581,104 @@ public class AccessTokenServiceTests {
         EasyMock.verify(mockTokenDao);
         
     }
+    
+    @Test
+    public void shouldNotAuthenticateToken_PasswordRotationNeeded_ButTrustedServer() throws Exception {
+        
+        mockConfiguration = EasyMock.createMock(Configuration.class);
+        
+        EasyMock.expect(mockConfiguration.getBoolean("ldap.server.trusted", false)).andReturn(true);
+        
+        EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
+        EasyMock.replay(mockTokenDao);
+        
+        int passwordRotationDuration = 30;
+        
+        Customer customer = new Customer();
+        customer.setPasswordRotationEnabled(true);
+        customer.setPasswordRotationDuration(passwordRotationDuration);
+        
+        EasyMock.expect(mockCustomerService.getCustomer(customerId)).andReturn(customer);
+        EasyMock.replay(mockCustomerService);
+        
+        User user = getFakeUser();
+        
+        DateTime today = new DateTime();
+        
+        int year = today.getYear();
+        int monthOfYear = today.getMonthOfYear() - 1;
+        int dayOfMonth = 1;
+        int hourOfDay = 1;
+        int minuteOfHour = 1;
+        int secondOfMinute = 1;
+        int millisOfSecond = 1;
+          
+        DateTime lastUpdated = new DateTime(year, monthOfYear, dayOfMonth, 
+            hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+        
+        Password passwordToUse = Password.existingInstance("testPass", lastUpdated, false);
+        
+        user.setPasswordObj(passwordToUse);
+        
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
+        EasyMock.expect(mockUserService.getUserPasswordExpirationDate(username)).andReturn(today.minusDays(passwordRotationDuration));
+        EasyMock.replay(mockUserService);
+        
+        boolean isAuthenticated = tokenService.authenticateAccessToken(tokenString);
+        Assert.assertFalse(isAuthenticated);
+
+        EasyMock.verify(mockTokenDao);
+        
+    }
+    
+    @Test
+    public void shouldNotAuthenticateToken_PasswordRotationNeeded_NotTrustedServer() throws Exception {
+        
+        mockConfiguration = EasyMock.createMock(Configuration.class);
+        
+        EasyMock.expect(mockConfiguration.getBoolean("ldap.server.trusted", false)).andReturn(false);
+        
+        EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
+        EasyMock.replay(mockTokenDao);
+        
+        int passwordRotationDuration = 30;
+        
+        Customer customer = new Customer();
+        customer.setPasswordRotationEnabled(true);
+        customer.setPasswordRotationDuration(passwordRotationDuration);
+        
+        EasyMock.expect(mockCustomerService.getCustomer(customerId)).andReturn(customer);
+        EasyMock.replay(mockCustomerService);
+        
+        User user = getFakeUser();
+        
+        DateTime today = new DateTime();
+        
+        int year = today.getYear();
+        int monthOfYear = today.getMonthOfYear() - 1;
+        int dayOfMonth = 1;
+        int hourOfDay = 1;
+        int minuteOfHour = 1;
+        int secondOfMinute = 1;
+        int millisOfSecond = 1;
+          
+        DateTime lastUpdated = new DateTime(year, monthOfYear, dayOfMonth, 
+            hourOfDay, minuteOfHour, secondOfMinute, millisOfSecond);
+        
+        Password passwordToUse = Password.existingInstance("testPass", lastUpdated, false);
+        
+        user.setPasswordObj(passwordToUse);
+        
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
+        EasyMock.expect(mockUserService.getUserPasswordExpirationDate(username)).andReturn(today.minusDays(passwordRotationDuration));
+        EasyMock.replay(mockUserService);
+        
+        boolean isAuthenticated = tokenService.authenticateAccessToken(tokenString);
+        Assert.assertFalse(isAuthenticated);
+
+        EasyMock.verify(mockTokenDao);
+        
+    }      
     
     @Test
     public void shouldNotAuthenticateToken_PasswordRotationNeeded_DurationOneDay() throws Exception {
