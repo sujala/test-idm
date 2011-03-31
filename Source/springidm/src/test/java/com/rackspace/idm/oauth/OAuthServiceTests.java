@@ -185,7 +185,61 @@ public class OAuthServiceTests {
         
         Assert.assertTrue(authData.getPasswordResetOnlyToken());
         Assert.assertNotNull(authData.getUserPasswordExpirationDate());
-    }   
+    }
+    
+    @Test
+    public void shouldNotGetPasswordResetTokenForRacker() {
+        
+        Configuration mockConfiguration = EasyMock.createMock(Configuration.class);
+        
+        oauthService = new DefaultOAuthService(mockUserService, mockClientService, mockAccessTokenService,
+            mockRefreshTokenService, mockAuthorizationService, mockConfiguration, inputValidator);
+        
+        EasyMock.expect(mockConfiguration.getBoolean("ldap.server.trusted", false)).andReturn(true);
+        EasyMock.replay(mockConfiguration);
+
+        OAuthGrantType grantType = OAuthGrantType.PASSWORD;
+        AuthCredentials authCredentials = getTestAuthCredentials();
+        authCredentials.setGrantType("password");
+
+        RefreshToken testRefreshToken = getFakeRefreshToken();
+        AccessToken testAccessToken = getFakeAccessToken();
+        AccessToken passwordResetToken = getFakeAccessToken();
+        DateTime currentTime = new DateTime();
+
+        User user = getFakeUser();
+        Client testClient = getTestClient();
+        UserAuthenticationResult uaResult = new UserAuthenticationResult(user, true);
+        EasyMock.expect(mockUserService.authenticate(authCredentials.getUsername(), userpass.getValue()))
+            .andReturn(uaResult);
+        EasyMock.expect(mockAccessTokenService.getDefaultTokenExpirationSeconds()).andReturn(3600);
+        EasyMock
+            .expect(
+                mockAccessTokenService.getTokenByBasicCredentials(testClient, user, expireInSeconds,
+                    currentTime)).andReturn(testAccessToken);
+
+        EasyMock.expect(
+            mockRefreshTokenService.getRefreshTokenByUserAndClient(authCredentials.getUsername(),
+                authCredentials.getClientId(), currentTime)).andReturn(null);
+        EasyMock.expect(
+            mockRefreshTokenService.createRefreshTokenForUser(authCredentials.getUsername(),
+                authCredentials.getClientId())).andReturn(testRefreshToken);
+
+        ClientAuthenticationResult caResult = new ClientAuthenticationResult(testClient, true);
+        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret)).andReturn(caResult);
+       
+        EasyMock.expect(mockAccessTokenService.createPasswordResetAccessTokenForUser
+            (user.getUsername(), clientId)).andReturn(passwordResetToken);
+        
+        EasyMock.expect(mockAccessTokenService.passwordRotationDurationElapsed(user.getUsername())).andReturn(true);
+        EasyMock.expect(mockUserService.getUserPasswordExpirationDate(user.getUsername())).andReturn(new DateTime());
+        
+        EasyMock.replay(mockUserService, mockAccessTokenService, mockRefreshTokenService, mockClientService);
+
+        AuthData authData = oauthService.getTokens(grantType, authCredentials, currentTime);
+
+        Assert.assertNotNull(authData.getAccessToken());
+    }       
     
     @Test
     public void shouldGetTokenWithGrantTypeNone() {
