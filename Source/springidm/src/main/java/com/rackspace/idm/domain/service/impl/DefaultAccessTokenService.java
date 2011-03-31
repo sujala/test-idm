@@ -409,15 +409,6 @@ public class DefaultAccessTokenService implements AccessTokenService {
     }
     
     @Override
-    public boolean passwordRotationDurationElapsed(AccessToken accessToken) {
-        BaseUser baseUser = (BaseUser) accessToken.getTokenUser();
-        if (baseUser == null) {
-            return false;
-        }
-        return passwordRotationDurationElapsed(baseUser.getUsername());
-    }
-     
-    @Override
     public boolean passwordRotationDurationElapsed(String userName) {
         boolean rotationNeeded = false;
         

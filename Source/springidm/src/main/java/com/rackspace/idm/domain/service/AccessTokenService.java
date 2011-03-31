@@ -69,7 +69,5 @@ public interface AccessTokenService {
 
     void deleteAllGloballyForCustomer(String customerId, List<User> users, List<Client> clients);
 
-    boolean passwordRotationDurationElapsed(AccessToken accessToken);
-
     boolean passwordRotationDurationElapsed(String userName);
 }
