@@ -200,7 +200,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
         if (isClientToken) {
             tokenStrByRequestor = (String) memcached.get(owner);
         } else {
-            userTokenStrings = getOrCreateLookupMap(owner, isRackerRequestor(requestor));
+            userTokenStrings = getOrCreateLookupMap(owner, isTrusted());
             tokenStrByRequestor = userTokenStrings.get(requestor);
         }
 
@@ -217,7 +217,7 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
             if (isClientToken) {
                 memcached.delete(owner);
             } else {
-                String keyByOwner = getKeyByOwner(owner, isRackerRequestor(requestor));
+                String keyByOwner = getKeyByOwner(owner, isTrusted());
                 removeUserTokensByRequestor(userTokenStrings, keyByOwner, requestor);
             }
             return null;
@@ -331,12 +331,8 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao {
 
         return owner + USER_TOKEN_KEY_POSTFIX;
     }
-
-    private boolean isRackerRequestor(String requestor) {
-        if (requestor.equals(config.getString("racker.client_id"))) {
-            return true;
-        }
-
-        return false;
+    
+    private boolean isTrusted() {
+        return config.getBoolean("ldap.server.trusted", false);
     }
 }
