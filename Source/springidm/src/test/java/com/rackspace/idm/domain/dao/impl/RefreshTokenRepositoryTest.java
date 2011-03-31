@@ -246,6 +246,8 @@ public class RefreshTokenRepositoryTest {
     public void shouldNotUpdateIfNoChanges() {
 
         RefreshToken token = addNewTestToken();
+        
+        token = repo.findByTokenString(token.getTokenString());
 
         String editedOwner = token.getOwner();
         String editedRequestor = token.getRequestor();
