@@ -193,9 +193,9 @@ public class MemcachedAccessTokenRepositoryTest {
         repo.save(trustedToken);
         AccessToken foundByTokenStr = repo.findByTokenString(trustedToken.getTokenString());
         Assert.assertEquals(trustedToken, foundByTokenStr);
-        AccessToken foundByOwner = repo.findTokenForOwner(trustedToken.getOwner(),
-            trustedToken.getRequestor());
-        Assert.assertEquals(trustedToken, foundByOwner);
+//        AccessToken foundByOwner = repo.findTokenForOwner(trustedToken.getOwner(),
+//            trustedToken.getRequestor());
+//        Assert.assertEquals(trustedToken, foundByOwner);
     }
 
     @Test
