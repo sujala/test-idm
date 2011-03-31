@@ -102,7 +102,7 @@ public class DefaultOAuthService implements OAuthService {
 				throw new NotAuthenticatedException(message);
             }
             
-            if (accessTokenService.passwordRotationDurationElapsed(trParam.getUsername())) {
+            if (!isTrustedServer() && accessTokenService.passwordRotationDurationElapsed(trParam.getUsername())) {
                 AccessToken resetToken = accessTokenService.createPasswordResetAccessTokenForUser
                                  (trParam.getUsername(), trParam.getClientId());
                 AuthData authData = new AuthData();
@@ -396,4 +396,8 @@ public class DefaultOAuthService implements OAuthService {
     private int getPagingLimit() {
         return config.getInt("ldap.paging.limit.max");
     }
+    
+    private boolean isTrustedServer() {
+        return config.getBoolean("ldap.server.trusted", false);
+    }   
 }
