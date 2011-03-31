@@ -27,7 +27,6 @@ import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.EmailService;
 import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.HealthMonitoringService;
 import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
 import com.rackspace.idm.domain.service.RefreshTokenService;
@@ -48,7 +47,6 @@ import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.util.LdapMBean;
 import com.rackspace.idm.util.LoggerMBean;
 import com.rackspace.idm.util.MemcacheMBean;
-import com.rackspace.idm.util.PingableService;
 import com.rackspace.idm.validation.InputValidator;
 
 /**
@@ -81,12 +79,6 @@ public class ServiceConfiguration {
     @Autowired
     private InputValidator inputValidator;
 
-    @Value("#{memcacheStatusRepository}")
-    private PingableService memcacheService;
-
-    @Value("#{ldapStatusRepository}")
-    private PingableService ldapRepository;
-
     @Autowired
     private Configuration config;
 
@@ -111,11 +103,6 @@ public class ServiceConfiguration {
     @Bean
     public AuthHeaderHelper authHeaderHelper() {
         return new AuthHeaderHelper();
-    }
-
-    @Bean
-    public HealthMonitoringService healthMonitoringBean() {
-        return new HealthMonitoringService(memcacheService, ldapRepository);
     }
     
     @Bean

@@ -11,7 +11,6 @@ import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.EndpointDao;
-import com.rackspace.idm.domain.dao.LdapStatusRepository;
 import com.rackspace.idm.domain.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.dao.RoleDao;
 import com.rackspace.idm.domain.dao.UserDao;
@@ -26,7 +25,6 @@ import com.rackspace.idm.domain.dao.impl.LdapRefreshTokenRepository;
 import com.rackspace.idm.domain.dao.impl.LdapRoleRepository;
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
 import com.rackspace.idm.domain.dao.impl.MemcachedAccessTokenRepository;
-import com.rackspace.idm.util.PingableService;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
 /**
@@ -96,15 +94,5 @@ public class RepositoryConfiguration {
     @Bean(name = "xdcTokenDao")
     public XdcAccessTokenDao xdcTokenDao() {
         return new HttpAccessTokenRepository(dcEnpoints(), appConfig);
-    }
-    
-    @Bean(name = "ldapStatusRepository")
-    public PingableService ldapStatusRepository() {
-        return new LdapStatusRepository(connPools,appConfig);
-    }
-    
-    @Bean(name = "memcacheStatusRepository")
-    public PingableService memcacheStatusRepository() {
-        return new MemcachedAccessTokenRepository(memcached, appConfig);
     }
 }

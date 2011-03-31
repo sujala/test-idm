@@ -9,16 +9,13 @@ import net.spy.memcached.MemcachedClient;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.domain.dao.AccessTokenDao;
 import com.rackspace.idm.domain.entity.AccessToken;
-import com.rackspace.idm.util.PingableService;
 
-public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableService {
+public class MemcachedAccessTokenRepository implements AccessTokenDao {
     private static final String USER_TOKEN_KEY_POSTFIX = "@ENDUSER";
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -287,22 +284,6 @@ public class MemcachedAccessTokenRepository implements AccessTokenDao, PingableS
         if (!isSuccessfulForAllOps) {
             String errMsg = String.format("Failed to delete some or all tokens for owner %s", owner);
             logger.warn(errMsg);
-        }
-    }
-
-    public boolean isAlive() {
-
-        try {
-            // this call and subsequent give us correct answer if any of the
-            // server is down.
-            memcached.getStats();
-            if (memcached.getUnavailableServers().size() > 0) {
-                return false;
-            } else {
-                return true;
-            }
-        } catch (RuntimeException runtimeExp) {
-            return false;
         }
     }
 
