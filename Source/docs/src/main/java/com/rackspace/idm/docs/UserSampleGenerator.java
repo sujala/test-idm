@@ -96,7 +96,7 @@ public class UserSampleGenerator extends SampleGenerator {
         Roles roles = of.createRoles();
         roles.getRoles().add(role);
         
-        user.setRoles(roles);
+//        user.setRoles(roles);
         
         return user;
     }
