@@ -57,9 +57,9 @@
       <year>2011</year>
       <holder>Rackspace Hosting, Inc.</holder>
     </copyright>
-    <releaseinfo>API v1.0.2011.12</releaseinfo>
+    <releaseinfo>API v1.0.2011.14</releaseinfo>
     <productname>Identity Management (IdM)</productname>
-    <pubdate>1/27/11</pubdate>
+    <pubdate>3/31/11</pubdate>
     <abstract>
       <para> This document is intended for software developers interested in developing applications
         which utilizes Customer Identity Management System as the authentication engine. It includes
@@ -482,41 +482,40 @@
             serviceUnavailable(<returnvalue>503</returnvalue>)</simpara>
         &NO_REQUEST;
       </section>
+    </section>
+    <section>
+      <title>Customer Operations </title>
       <section>
-        <title>Get Token Permissions</title>
+        <title>Get a Customer</title>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
             <tr>
               <td colspan="1"> &GET; </td>
-              <td colspan="4">/token/<parameter>tokenId</parameter>/permissions</td>
-              <td colspan="3"> Gets a list of permissions for the token.</td>
+              <td colspan="4">/customers/<parameter>customerId</parameter></td>
+              <td colspan="3">Get a customer.</td>
             </tr>
           </tbody>
         </informaltable>
-        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
-        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), forbidden
-            (<returnvalue>403</returnvalue>), userDisabled(<returnvalue>403</returnvalue>),
-          badRequest (<errorcode>400</errorcode>), itemNotFound (<errorcode>404</errorcode>),
-            idmFault(<returnvalue>500</returnvalue>),
-            serviceUnavailable(<returnvalue>503</returnvalue>)</simpara>
+        <simpara>&CODES;<returnvalue>204</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>),
+            forbidden(<errorcode>403</errorcode>), itemNotFound(<errorcode>404</errorcode>),
+          badRequest (<errorcode>400</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
         <example>
-          <title>XML Permission List Response</title>
+          <title>XML Customer Response</title>
           <programlisting language="xml">
-<xi:include href="../../formattedsamples/permissions.xml" parse="text"/>
+<xi:include href="../../formattedsamples/customer.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Permission List Response</title>
+          <title>JSON Customer Response</title>
           <programlisting language="javascript">
-<xi:include href="../../formattedsamples/permissions.json" parse="text"/>
+<xi:include href="../../formattedsamples/customer.json" parse="text"/>
 </programlisting>
         </example>
       </section>
-    </section>
-    <section>
-      <title>Customer Operations </title>
       <section>
         <title>Set Customer Lock Status </title>
         <informaltable rules="all">
@@ -534,41 +533,95 @@
             forbidden(<errorcode>403</errorcode>), itemNotFound(<errorcode>404</errorcode>),
           badRequest (<errorcode>400</errorcode>), idmFault (<errorcode>500</errorcode>),
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
-      </section>
-      
-      
+      <example>
+        <title>XML Customer Lock Request</title>
+        <programlisting language="xml">
+<xi:include href="../../formattedsamples/customerlock.xml" parse="text"/>
+</programlisting>
+      </example>
+      <example>
+        <title>JSON Customer Lock Request</title>
+        <programlisting language="javascript">
+<xi:include href="../../formattedsamples/customerlock.json" parse="text"/>
+</programlisting>
+      </example>
+      <example>
+        <title>XML Customer Lock Response</title>
+        <programlisting language="xml">
+<xi:include href="../../formattedsamples/customerlock.xml" parse="text"/>
+</programlisting>
+      </example>
+      <example>
+        <title>JSON Customer Lock Response</title>
+        <programlisting language="javascript">
+<xi:include href="../../formattedsamples/customerlock.json" parse="text"/>
+</programlisting>
+      </example>
+       </section>     
       <section>
-          <title>Reset client secret</title>
+          <title>Delete a Customer</title>
           <informaltable rules="all">
             &LONG_URI_REFHEAD;
             <tbody>
               <tr>
-                <td colspan="1"> &POST; </td>
-                <td colspan="4"
-                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/secret</td>
-                <td colspan="3">Reset client secret.</td>         
+                <td colspan="1"> &DELETE; </td>
+                <td colspan="4">/customers/<parameter>customerId</parameter></td>
+                <td colspan="3">Delete a Customer.</td>         
               </tr>
             </tbody>
           </informaltable>
-          <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+          <simpara>&CODES;<returnvalue>204</returnvalue></simpara>
           <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
             (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
             (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
-            &NO_REQUEST;
-          <example>     
-            <title>XML Response</title>
-            <programlisting language="xml">
-<xi:include href="../../formattedsamples/client-credentials-response.xml" parse="text"/>
-</programlisting>
-          </example>
-          <example>
-            <title>JSON Response</title>
-            <programlisting language="javascript">
-<xi:include href="../../formattedsamples/client-credentials-response.json" parse="text"/>
-</programlisting>
-          </example>       
+            &NO_REQUEST;       
         </section>
+      <section>
+        <title>Set Customer Password Rotation Policy</title>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &PUT; </td>
+              <td colspan="4"
+                >/customers/<parameter>customerId</parameter>/passwordRotationPolicy</td>
+              <td colspan="3">Sets the password rotation policy for a customer.</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), forbidden
+            (<returnvalue>403</returnvalue>), userDisabled(<returnvalue>403</returnvalue>),
+          badRequest (<errorcode>400</errorcode>), itemNotFound (<errorcode>404</errorcode>),
+            idmFault(<returnvalue>500</returnvalue>),
+            serviceUnavailable(<returnvalue>503</returnvalue>)</simpara>
+        &NO_REQUEST;
+        <example>
+          <title>XML Password Rotation Policy Request</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/passwordrotation.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Password Rotation Policy Request</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/passwordrotation.json" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>XML Password Rotation Policy Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/passwordrotation.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Password Rotation Policy Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/passwordrotation.json" parse="text"/>
+</programlisting>
+        </example>
+      </section>
     </section>
     <section>
       <title>User Operations</title>
@@ -678,7 +731,7 @@
             <tr>
               <td colspan="1"> &GET; </td>
               <td colspan="4"
-                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter></td>
+                  >/customers/<parameter>customerId</parameter>/users/<parameter>username</parameter></td>
               <td colspan="3">Get a user. </td>
             </tr>
           </tbody>
@@ -938,53 +991,54 @@
         </example>
       </section>
       <section>
-        <title>Add Role for a User</title>
+        <title>Add User to Customer IdM Group</title>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
             <tr>
               <td colspan="1"> &PUT; </td>
               <td colspan="4"
-                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter>/roles/<parameter>roleName</parameter></td>
-              <td colspan="3">Add a role to a user.</td>
+                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter>/groups/<parameter>groupName</parameter></td>
+              <td colspan="3">Add a user to a Customer IdM group</td>
             </tr>
           </tbody>
         </informaltable>
-        <simpara>&CODES;204</simpara>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
         <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
             (<errorcode>400</errorcode>), forbidden(<errorcode>403</errorcode>), itemNotFound
             (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
       </section>
       <section>
-        <title>Delete Role from a User</title>
+        <title>Remove User from Customer IdM Group</title>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
             <tr>
               <td colspan="1"> &DELETE; </td>
               <td colspan="4"
-                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter>/roles/<parameter>roleName</parameter></td>
-              <td colspan="3">Delete a role from a user.</td>
+                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter>/groups/<parameter>groupName</parameter></td>
+              <td colspan="3">Remove a user from a customer IdM group</td>
             </tr>
           </tbody>
         </informaltable>
-        <simpara>&CODES;204</simpara>
+        <simpara>&CODES;<returnvalue>204</returnvalue></simpara>
         <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
             (<errorcode>400</errorcode>), forbidden(<errorcode>403</errorcode>), itemNotFound
             (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
       </section>
       <section>
-        <title>Get a user's roles</title>
+        <title>Get the Groups That a User is a Member Of</title>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
             <tr>
               <td colspan="1"> &GET; </td>
               <td colspan="4"
-                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter>/roles/</td>
-              <td colspan="3">Get a user&apos;s roles</td>
+                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter>/groups?clientId=<parameter>clientId</parameter>&amp;type=<parameter>type</parameter></td>
+              <td colspan="3">Get a user's groups optionally filtered by
+                  <parameter>clientId</parameter> and/or <parameter>type</parameter></td>
             </tr>
           </tbody>
         </informaltable>
@@ -994,15 +1048,15 @@
             (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         <example>
-          <title>XML User Roles Response</title>
+          <title>XML User Groups Response</title>
           <programlisting language="xml">
-<xi:include href="../../formattedsamples/roles.xml" parse="text"/>
+<xi:include href="../../formattedsamples/clientGroups.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Roles Response</title>
+          <title>JSON User Groups Response</title>
           <programlisting language="javascript">
-<xi:include href="../../formattedsamples/roles.json" parse="text"/>
+<xi:include href="../../formattedsamples/clientGroups.json" parse="text"/>
 </programlisting>
         </example>
       </section>
@@ -1033,6 +1087,49 @@
         </example>
         <example>
           <title>JSON User Auth Key Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/user_api_key.json" parse="text"/>
+</programlisting>
+        </example>
+      </section>
+      <section>
+        <title>Set Auth Service Key</title>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &PUT; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/users/<parameter>username</parameter>/key</td>
+              <td colspan="3">Set a user's Auth key. </td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue>, <returnvalue>203</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden(<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        <example>
+          <title>XML Set Auth Key Reqeust</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/user_api_key.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Set Auth Key Request</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/user_api_key.json" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>XML Set Auth Key Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/user_api_key.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Set Auth Key Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/user_api_key.json" parse="text"/>
 </programlisting>
@@ -1876,6 +1973,222 @@
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
       </section>
+      <section>
+        <title>Reset Customer Application Secret</title>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &POST; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/secret</td>
+              <td colspan="3">Reset client secret.</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+        <example>
+          <title>XML Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/client-credentials-response.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/client-credentials-response.json" parse="text"/>
+</programlisting>
+        </example>
+      </section>
+      <section>
+        <title>Add a Group for a Customer Application</title>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &POST; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/groups</td>
+              <td colspan="3">Add a group for a <parameter>clientId</parameter> of a
+                  <parameter>customerId</parameter></td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>201</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        <example>
+          <title>XML Add a Group Request</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/clientGroup.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Add a Group Request</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/clientGroup.json" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>XML Add a Defined Permission Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/clientGroup.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Add a Defined Permission Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/clientGroup.json" parse="text"/>
+</programlisting>
+        </example>
+      </section>
+      <section>
+        <title>Get all Groups for a Customer Application</title>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &GET; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/groups</td>
+              <td colspan="3">Get all groups for a <parameter>clientId</parameter> of a
+                  <parameter>customerId</parameter></td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+        <example>
+          <title>XML Defined Permissions Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/clientGroups.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Defined Permissions Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/clientGroups.json" parse="text"/>
+</programlisting>
+        </example>
+      </section>
+      <section>
+        <title>Update a Group for a Customer Application</title>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &PUT; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/groups/<parameter>groupName</parameter></td>
+              <td colspan="3">Update a group for a <parameter>clientId</parameter> of a
+                  <parameter>customerId</parameter></td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>201</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        <example>
+          <title>XML Update a Defined Permission Request</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/clientGroup.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Update a Defined Permission Request</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/clientGroup.json" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>XML Update a Defined Permission Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/clientGroup.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Update a Defined Permission Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/clientGroup.json" parse="text"/>
+</programlisting>
+        </example>
+      </section>
+      <section>
+        <title>Delete a Group for a Customer Application</title>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &DELETE; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/groups/<parameter>groupName</parameter></td>
+              <td colspan="3">Delete a group for a <parameter>clientId</parameter> of a
+                  <parameter>customerId</parameter></td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>204</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+      </section>
+      <section>
+        <title>Add a User to a Group for a Customer Application</title>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &PUT; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/groups/<parameter>groupName</parameter>/members/<parameter>username</parameter></td>
+              <td colspan="3">Add a user to a group for a <parameter>clientId</parameter> of a
+                  <parameter>customerId</parameter></td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+      </section>
+      <section>
+        <title>Remove a User from a Group for a Customer Application</title>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &DELETE; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/groups/<parameter>groupName</parameter>/mbmers/<parameter>username</parameter></td>
+              <td colspan="3">Remove a user from a group for a <parameter>clientId</parameter> of a
+                  <parameter>customerId</parameter></td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>204</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+      </section>
     </section>
     <section>
       <title>Password Operations </title>
@@ -1914,8 +2227,8 @@
           &LONG_URI_REFHEAD;
           <tbody>
             <tr>
-              <td colspan="1"> &GET; </td>
-              <td colspan="4">/passwordrules/validation/<parameter>password</parameter></td>
+              <td colspan="1"> &POST; </td>
+              <td colspan="4">/passwordrules/validation</td>
               <td colspan="3">Check Password Validation for <parameter>password</parameter></td>
             </tr>
           </tbody>
@@ -1925,6 +2238,18 @@
             (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
             (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        <example>
+          <title>XML Password Validation Request</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/user_password.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Password Validation Request</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/user_password.json" parse="text"/>
+</programlisting>
+        </example>
         <example>
           <title>XML Password Validation Response</title>
           <programlisting language="xml">
@@ -2190,28 +2515,5 @@
           
         </section>
     </section>
-  </chapter>
-  
-  <chapter>
-      <title>Code Examples</title>
-      <section>
-      <title>PHP Sample</title>
-      <example>
-        <title>IdmService.php</title>
-        <programlisting language="php"><xi:include href="../../code-samples/idm-service.php" parse="text" /></programlisting>
-      </example>
-      </section>
-    
-      <section>
-        <title>Java Sample</title>
-        <example>
-          <title>HttpClientService.java</title>
-          <programlisting language="php"><xi:include href="../../code-samples/HttpClientService.java" parse="text" /></programlisting>
-        </example>
-        <example>
-          <title>IdmService.java</title>
-          <programlisting language="php"><xi:include href="../../code-samples/IdmService.java" parse="text" /></programlisting>
-        </example>
-      </section>
   </chapter>
 </book>
