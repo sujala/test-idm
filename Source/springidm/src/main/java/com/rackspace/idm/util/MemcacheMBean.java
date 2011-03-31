@@ -3,14 +3,21 @@ package com.rackspace.idm.util;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.spy.memcached.MemcachedClient;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedResource;
+
+import com.unboundid.ldap.sdk.LDAPConnection;
+import com.unboundid.ldap.sdk.LDAPException;
 
 @ManagedResource
 public class MemcacheMBean {
@@ -37,5 +44,26 @@ public class MemcacheMBean {
 			list.add(socketAddress.toString());
 		}
 		return list;
+	}
+	
+	@ManagedAttribute
+    public Map<String,String> getServerConnectionStatus() {
+      
+	    Map<String,String> result = new HashMap<String, String>();
+	    
+	    List<String> availableServerList = getAvailableServers();
+	    List<String> unavailableServerList = getUnavailableServers();
+	    
+	    for(String server : availableServerList) {
+	        server = server.replaceAll("/", "");
+	        result.put(server, "up");
+	    }
+	    
+	    for(String server : unavailableServerList) {
+	        server = server.replaceAll("/", "");
+	        result.put(server, "down");
+	    }
+	    
+	    return result;
 	}
 }
