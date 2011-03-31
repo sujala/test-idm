@@ -341,8 +341,11 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
             throw new IllegalArgumentException("RefreshToken not found.");
         }
 
-        if (refreshToken.equals(oldRefreshToken)) {
-            // No changes!
+        List<Modification> mods = getModifications(oldRefreshToken,
+            refreshToken);
+
+        if (mods.size() == 0) {
+            // no changes
             return;
         }
 
@@ -350,7 +353,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         LDAPResult result = null;
         try {
             result = getAppConnPool().modify(oldRefreshToken.getUniqueId(),
-                getModifications(oldRefreshToken, refreshToken));
+                mods);
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error("Error updating refreshToken {} - {}",
