@@ -55,7 +55,8 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
         // check token is valid and not expired
         AccessToken accessToken = getAccessTokenByTokenStringGlobally(accessTokenStr);
-        if (accessToken != null && !accessToken.isExpired(new DateTime()) && !passwordRotationDurationElapsed(accessToken))  {
+        if (accessToken != null && !accessToken.isExpired(new DateTime()) 
+            && (!passwordRotationDurationElapsed(accessToken) || isTrustedServer()))  {
             authenticated = true;
             MDC.put(Audit.WHO, accessToken.getAuditString());
         }
