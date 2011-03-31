@@ -349,8 +349,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         Audit audit = Audit.log(refreshToken).modify();
         LDAPResult result = null;
         try {
-            result = getAppConnPool().modify(
-                getTokenDnByTokenString(tokenString),
+            result = getAppConnPool().modify(oldRefreshToken.getUniqueId(),
                 getModifications(oldRefreshToken, refreshToken));
         } catch (LDAPException ldapEx) {
             audit.fail();
@@ -374,6 +373,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
 
     private RefreshToken getToken(SearchResultEntry resultEntry) {
         RefreshToken token = new RefreshToken();
+        token.setUniqueId(resultEntry.getDN());
         token.setTokenString(resultEntry.getAttributeValue(ATTR_O));
 
         Date expiration = resultEntry.getAttributeValueAsDate(ATTR_EXPIRATION);
@@ -385,38 +385,6 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
         token.setOwner(resultEntry.getAttributeValue(ATTR_TOKEN_OWNER));
         token.setRequestor(resultEntry.getAttributeValue(ATTR_TOKEN_REQUESTOR));
         return token;
-    }
-
-    // helper funcs
-    private String getTokenDnByTokenString(String tokenString) {
-        String dn = null;
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_O, tokenString)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACETOKEN)
-            .build();
-
-        SearchResult searchResult = null;
-        try {
-            searchResult = getAppConnPool().search(TOKEN_BASE_DN,
-                SearchScope.SUB, searchFilter);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for refreshToken {} - {}",
-                tokenString, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            dn = e.getDN();
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error(
-                "More than one entry was found for refreshToken {}",
-                tokenString);
-            throw new IllegalStateException(
-                "More than one entry was found for this refresh token");
-        }
-        return dn;
     }
 
     private SearchResult getTokenSearchResult(String tokenString) {
