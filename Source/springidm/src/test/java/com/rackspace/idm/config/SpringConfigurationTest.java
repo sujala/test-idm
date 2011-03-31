@@ -35,7 +35,6 @@ import com.rackspace.idm.api.resource.nast.NastUserResource;
 import com.rackspace.idm.api.resource.passwordrule.PasswordRulesResource;
 import com.rackspace.idm.api.resource.token.TokenResource;
 import com.rackspace.idm.api.resource.user.UsersResource;
-import com.rackspace.idm.domain.service.HealthMonitoringService;
 
 public class SpringConfigurationTest {
 
@@ -137,8 +136,5 @@ public class SpringConfigurationTest {
         
         VersionResource versionResource = ctx.getBean(VersionResource.class);
         Assert.assertNotNull(versionResource);
-        
-        HealthMonitoringService healthMonitoringService = ctx.getBean(HealthMonitoringService.class);
-        Assert.assertNotNull(healthMonitoringService);
     }
 }
