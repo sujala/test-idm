@@ -429,8 +429,6 @@ public class AccessTokenServiceTests {
     
     @Test
     public void shouldAuthenticateToken_PasswordRotation_NotEnabled() throws Exception {
-        //EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
-        //EasyMock.replay(mockTokenDao);
         
         Customer customer = new Customer();
         customer.setPasswordRotationEnabled(null);
@@ -445,14 +443,10 @@ public class AccessTokenServiceTests {
 
         boolean isAuthenticated = tokenService.passwordRotationDurationElapsed(user.getUsername());
         Assert.assertFalse(isAuthenticated);
-
-        //EasyMock.verify(mockTokenDao);
     }  
     
     @Test
     public void shouldAuthenticateToken_PasswordRotationNotNeeded_DurationWithinYear() throws Exception {
-        //EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
-        //EasyMock.replay(mockTokenDao);
         
         int passwordRotationDuration = 30;
         
@@ -465,7 +459,7 @@ public class AccessTokenServiceTests {
         
         User user = getFakeUser();
         
-        DateTime today = new DateTime();
+        DateTime today = new DateTime(2011,3,24,0,0,0,0);
         
         int year = today.getYear();
         int monthOfYear = today.getMonthOfYear();
@@ -489,15 +483,11 @@ public class AccessTokenServiceTests {
         
         boolean isAuthenticated = tokenService.passwordRotationDurationElapsed(user.getUsername());
         Assert.assertFalse(isAuthenticated);
-
-        //EasyMock.verify(mockTokenDao);
     }
     
     @Test
     public void shouldAuthenticateToken_PasswordRotationNotNeeded_DurationMoreThanYear() throws Exception {
-        //EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
-        //EasyMock.replay(mockTokenDao);
-        
+  
         int passwordRotationDuration = 400;
         
         Customer customer = new Customer();
@@ -509,7 +499,7 @@ public class AccessTokenServiceTests {
         
         User user = getFakeUser();
         
-        DateTime today = new DateTime();
+        DateTime today = new DateTime(2011,3,24,0,0,0,0);
         
         int year = today.getYear() - 1 ;
         int monthOfYear = today.getMonthOfYear();
@@ -533,9 +523,6 @@ public class AccessTokenServiceTests {
         
         boolean isAuthenticated = tokenService.passwordRotationDurationElapsed(user.getUsername());
         Assert.assertFalse(isAuthenticated);
-
-        //EasyMock.verify(mockTokenDao);
-        
     }   
     
     @Test
@@ -552,7 +539,7 @@ public class AccessTokenServiceTests {
         
         User user = getFakeUser();
         
-        DateTime today = new DateTime();
+        DateTime today = new DateTime(2011,3,24,0,0,0,0);
         
         int year = today.getYear();
         int monthOfYear = today.getMonthOfYear() - 1;
@@ -632,7 +619,7 @@ public class AccessTokenServiceTests {
         
         User user = getFakeUser();
         
-        DateTime today = new DateTime();
+        DateTime today = new DateTime(2011,3,24,0,0,0,0);
         
         int year = today.getYear() - 2;
         int monthOfYear = today.getMonthOfYear();
@@ -672,7 +659,7 @@ public class AccessTokenServiceTests {
         
         User user = getFakeUser();
         
-        DateTime today = new DateTime();
+        DateTime today = new DateTime(2011,3,24,0,0,0,0);
         
         int year = today.getYear() - 2;;  
         
@@ -714,7 +701,7 @@ public class AccessTokenServiceTests {
         
         User user = getFakeUser();
         
-        DateTime today = new DateTime();
+        DateTime today = new DateTime(2011,3,24,0,0,0,0);
         
         int year = today.getYear() - 2;
         
