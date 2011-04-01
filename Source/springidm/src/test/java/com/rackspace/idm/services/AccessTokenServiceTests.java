@@ -593,7 +593,7 @@ public class AccessTokenServiceTests {
         
         User user = getFakeUser();
         
-        DateTime today = new DateTime();
+        DateTime today = new DateTime(2011,3,24,0,0,0,0);
         
         int year = today.getYear();
         int monthOfYear = today.getMonthOfYear();
