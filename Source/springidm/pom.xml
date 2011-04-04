@@ -16,6 +16,7 @@
         <checkstyle-plugin-version>2.5</checkstyle-plugin-version>
         <jersey-release-version>1.1.5</jersey-release-version>
         <environment.url.prefix>http://idm.rackspace.com</environment.url.prefix>
+        <wadlBuildFilesPath>target/wadl</wadlBuildFilesPath>
     </properties>
     <dependencies>
         <!-- Spring -->
@@ -506,7 +507,7 @@
                     </docletArtifacts>
                     <useStandardDocletOptions>false</useStandardDocletOptions>
                     <additionalparam>-output
-                        ${project.build.outputDirectory}/resourcedoc.xml
+                        ${wadlBuildFilesPath}/resourcedoc.xml
                     </additionalparam>
                 </configuration>
             </plugin>
@@ -561,7 +562,7 @@
                             <properties>
                                 <property>
                                     <name>resourceDocFile</name>
-                                    <value>${project.build.outputDirectory}/resourcedoc.xml</value>
+                                    <value>${wadlBuildFilesPath}/resourcedoc.xml</value>
                                 </property>
                             </properties>
                         </wadlGeneratorDescription>
