@@ -34,6 +34,7 @@ import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * Client groups resource.
@@ -50,9 +51,8 @@ public class ClientGroupsResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public ClientGroupsResource(AccessTokenService accessTokenService,
-        ClientService clientService, GroupConverter groupConverter,
-        ClientGroupResource clientGroupResource,
+    public ClientGroupsResource(AccessTokenService accessTokenService, ClientService clientService,
+        GroupConverter groupConverter, ClientGroupResource clientGroupResource,
         AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.clientService = clientService;
@@ -77,39 +77,32 @@ public class ClientGroupsResource {
      * @param clientId Client application ID
      */
     @GET
-    public Response getClientGroups(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
+    public Response getClientGroups(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients andSpecific Clients are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath());
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         Client client = this.clientService.getById(clientId);
         if (client == null || !client.getCustomerId().equals(customerId)) {
-            String errMsg = String.format("Client with Id %s not found.",
-                clientId);
+            String errMsg = String.format("Client with Id %s not found.", clientId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
-        List<ClientGroup> groups = this.clientService
-            .getClientGroupsByClientId(clientId);
+        List<ClientGroup> groups = this.clientService.getClientGroupsByClientId(clientId);
 
         return Response.ok(groupConverter.toClientGroupsJaxb(groups)).build();
     }
@@ -132,37 +125,34 @@ public class ClientGroupsResource {
      * @param clientGroup New client group
      */
     @POST
-    public Response addClientGroup(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId,
-        com.rackspace.idm.jaxb.ClientGroup clientGroup) {
-
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+    public Response addClientGroup(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId, EntityHolder<com.rackspace.idm.jaxb.ClientGroup> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token.isClientToken() && token.getTokenClient().getClientId()
-                .equals(clientId));
+            || (token.isClientToken() && token.getTokenClient().getClientId().equals(clientId));
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
-        
+
+        com.rackspace.idm.jaxb.ClientGroup clientGroup = holder.getEntity();
         if (!clientGroup.getCustomerId().toLowerCase().equals(customerId.toLowerCase())) {
             throw new BadRequestException("CustomerId in clientGroup does not match CustomerId in url");
         }
-        
+
         if (!clientGroup.getClientId().toLowerCase().equals(clientId.toLowerCase())) {
             throw new BadRequestException("ClientId in clientGroup does not match ClientId in url");
         }
-        
+
         if (StringUtils.isBlank(clientGroup.getName())) {
             throw new BadRequestException("Client Group Name cannot be blank");
         }
@@ -180,8 +170,8 @@ public class ClientGroupsResource {
             logger.warn("Group Location URI error");
         }
 
-        return Response.ok(groupConverter.toClientGroupJaxb(group))
-            .location(uri).status(HttpServletResponse.SC_CREATED).build();
+        return Response.ok(groupConverter.toClientGroupJaxb(group)).location(uri)
+            .status(HttpServletResponse.SC_CREATED).build();
     }
 
     @Path("{groupName}")

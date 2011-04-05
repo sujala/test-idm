@@ -46,7 +46,6 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.TokenExpiredException;
-import com.rackspace.idm.jaxb.AuthGrantType;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.core.provider.EntityHolder;
 

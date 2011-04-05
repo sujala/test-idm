@@ -13,7 +13,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import com.rackspace.idm.domain.entity.*;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,14 +21,18 @@ import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.api.converter.AuthConverter;
+import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.jaxb.AuthCredentials;
 import com.rackspace.idm.jaxb.MossoCredentials;
 import com.rackspace.idm.jaxb.NastCredentials;
 import com.rackspace.idm.jaxb.UsernameCredentials;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * Backward Compatible Auth Methods
@@ -48,10 +51,8 @@ public class AuthResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public AuthResource(AuthConverter authConverter,
-        EndpointService endpointService,
-        AuthorizationService authorizationService,
-        AccessTokenService accessTokenService) {
+    public AuthResource(AuthConverter authConverter, EndpointService endpointService,
+        AuthorizationService authorizationService, AccessTokenService accessTokenService) {
         this.authConverter = authConverter;
         this.authorizationService = authorizationService;
         this.accessTokenService = accessTokenService;
@@ -74,25 +75,24 @@ public class AuthResource {
      * @param creds User Credentials
      */
     @POST
-    public Response getUsernameAuth(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        UsernameCredentials creds) {
-
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+    public Response getUsernameAuth(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, EntityHolder<UsernameCredentials> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
+        UsernameCredentials creds = holder.getEntity();
         String username = creds.getUsername();
         String apiKey = creds.getKey();
 
@@ -102,18 +102,15 @@ public class AuthResource {
             throw new BadRequestException(errMsg);
         }
 
-        int expirationSeconds = accessTokenService
-            .getCloudAuthDefaultTokenExpirationSeconds();
+        int expirationSeconds = accessTokenService.getCloudAuthDefaultTokenExpirationSeconds();
 
-        AccessToken userToken = accessTokenService
-            .getTokenByUsernameAndApiCredentials(token.getTokenClient(),
-                username, apiKey, expirationSeconds, new DateTime());
+        AccessToken userToken = accessTokenService.getTokenByUsernameAndApiCredentials(
+            token.getTokenClient(), username, apiKey, expirationSeconds, new DateTime());
 
-        List<CloudEndpoint> endpoints = this.endpointService
-            .getEndpointsForUser(userToken.getTokenUser().getUsername());
+        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userToken.getTokenUser()
+            .getUsername());
 
-        return Response.ok(
-            this.authConverter.toCloudAuthJaxb(userToken, endpoints)).build();
+        return Response.ok(this.authConverter.toCloudAuthJaxb(userToken, endpoints)).build();
     }
 
     /**
@@ -133,24 +130,24 @@ public class AuthResource {
      */
     @POST
     @Path("mosso")
-    public Response getMossoAuth(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, MossoCredentials creds) {
-
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+    public Response getMossoAuth(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, EntityHolder<MossoCredentials> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
+        MossoCredentials creds = holder.getEntity();
         int mossoId = creds.getMossoId();
         String apiKey = creds.getKey();
 
@@ -160,18 +157,15 @@ public class AuthResource {
             throw new BadRequestException(errMsg);
         }
 
-        int expirationSeconds = accessTokenService
-            .getCloudAuthDefaultTokenExpirationSeconds();
+        int expirationSeconds = accessTokenService.getCloudAuthDefaultTokenExpirationSeconds();
 
-        AccessToken userToken = accessTokenService
-            .getTokenByMossoIdAndApiCredentials(token.getTokenClient(),
-                mossoId, apiKey, expirationSeconds, new DateTime());
+        AccessToken userToken = accessTokenService.getTokenByMossoIdAndApiCredentials(token.getTokenClient(),
+            mossoId, apiKey, expirationSeconds, new DateTime());
 
-        List<CloudEndpoint> endpoints = this.endpointService
-            .getEndpointsForUser(userToken.getTokenUser().getUsername());
+        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userToken.getTokenUser()
+            .getUsername());
 
-        return Response.ok(
-            this.authConverter.toCloudAuthJaxb(userToken, endpoints)).build();
+        return Response.ok(this.authConverter.toCloudAuthJaxb(userToken, endpoints)).build();
     }
 
     /**
@@ -191,24 +185,24 @@ public class AuthResource {
      */
     @Path("nast")
     @POST
-    public Response getNastAuth(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, NastCredentials creds) {
-
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+    public Response getNastAuth(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, EntityHolder<NastCredentials> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
+        NastCredentials creds = holder.getEntity();
         String nastId = creds.getNastId();
         String apiKey = creds.getKey();
 
@@ -218,18 +212,15 @@ public class AuthResource {
             throw new BadRequestException(errMsg);
         }
 
-        int expirationSeconds = accessTokenService
-            .getCloudAuthDefaultTokenExpirationSeconds();
+        int expirationSeconds = accessTokenService.getCloudAuthDefaultTokenExpirationSeconds();
 
-        AccessToken userToken = accessTokenService
-            .getTokenByNastIdAndApiCredentials(token.getTokenClient(), nastId,
-                apiKey, expirationSeconds, new DateTime());
+        AccessToken userToken = accessTokenService.getTokenByNastIdAndApiCredentials(token.getTokenClient(),
+            nastId, apiKey, expirationSeconds, new DateTime());
 
-        List<CloudEndpoint> endpoints = this.endpointService
-            .getEndpointsForUser(userToken.getTokenUser().getUsername());
+        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userToken.getTokenUser()
+            .getUsername());
 
-        return Response.ok(
-            this.authConverter.toCloudAuthJaxb(userToken, endpoints)).build();
+        return Response.ok(this.authConverter.toCloudAuthJaxb(userToken, endpoints)).build();
     }
 
     /**
@@ -249,38 +240,35 @@ public class AuthResource {
      */
     @POST
     @Path("username")
-    public Response authByUsernameAndPassword(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response authByUsernameAndPassword(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
-        com.rackspace.idm.jaxb.AuthCredentials creds) {
-
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        EntityHolder<com.rackspace.idm.jaxb.AuthCredentials> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
-        int expirationSeconds = accessTokenService
-            .getCloudAuthDefaultTokenExpirationSeconds();
+        int expirationSeconds = accessTokenService.getCloudAuthDefaultTokenExpirationSeconds();
 
         DateTime currentTime = this.getCurrentTime();
-        AccessToken userToken = accessTokenService
-            .getTokenByUsernameAndPassword(token.getTokenClient(), creds.getUsername(),
-                creds.getPassword(), expirationSeconds, currentTime);
+        AuthCredentials creds = holder.getEntity();
+        AccessToken userToken = accessTokenService.getTokenByUsernameAndPassword(token.getTokenClient(),
+            creds.getUsername(), creds.getPassword(), expirationSeconds, currentTime);
 
-        List<CloudEndpoint> endpoints = this.endpointService
-            .getEndpointsForUser(userToken.getTokenUser().getUsername());
+        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userToken.getTokenUser()
+            .getUsername());
 
-        return Response.ok(
-            this.authConverter.toCloudAuthJaxb(userToken, endpoints)).build();
+        return Response.ok(this.authConverter.toCloudAuthJaxb(userToken, endpoints)).build();
     }
 
     protected DateTime getCurrentTime() {

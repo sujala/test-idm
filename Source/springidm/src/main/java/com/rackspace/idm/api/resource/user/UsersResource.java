@@ -114,8 +114,10 @@ public class UsersResource {
      */
     @POST
     public Response addFirstUser(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, com.rackspace.idm.jaxb.User user) {
-
+        @HeaderParam("Authorization") String authHeader, EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
         AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
@@ -128,6 +130,7 @@ public class UsersResource {
             throw new ForbiddenException(errMsg);
         }
 
+        com.rackspace.idm.jaxb.User user = holder.getEntity();
         User userDO = userConverter.toUserDO(user);
         userDO.setDefaults();
 

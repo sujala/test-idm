@@ -39,6 +39,7 @@ import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * Client applications that belong to a customer.
@@ -59,11 +60,9 @@ public class CustomerClientsResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomerClientsResource(AccessTokenService accessTokenService,
-        CustomerService customerService, InputValidator inputValidator,
-        ClientConverter clientConverter, ClientService clientService,
-        CustomerClientResource customerClientResource,
-        AuthorizationService authorizationService) {
+    public CustomerClientsResource(AccessTokenService accessTokenService, CustomerService customerService,
+        InputValidator inputValidator, ClientConverter clientConverter, ClientService clientService,
+        CustomerClientResource customerClientResource, AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.customerService = customerService;
         this.clientService = clientService;
@@ -88,36 +87,30 @@ public class CustomerClientsResource {
      * @param customerId RCN
      */
     @GET
-    public Response getClients(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
+    public Response getClients(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @QueryParam("offset") int offset, @QueryParam("limit") int limit) {
 
         logger.debug("Getting Customer Clients: {}", customerId);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         Customer customer = this.customerService.getCustomer(customerId);
         if (customer == null) {
-            String errorMsg = String.format("Customer not found: %s",
-                customerId);
+            String errorMsg = String.format("Customer not found: %s", customerId);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
@@ -147,28 +140,26 @@ public class CustomerClientsResource {
      * @param client New Client.
      */
     @POST
-    public Response addClient(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        com.rackspace.idm.jaxb.Client client) {
-
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+    public Response addClient(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        EntityHolder<com.rackspace.idm.jaxb.Client> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
+        com.rackspace.idm.jaxb.Client client = holder.getEntity();
         client.setCustomerId(customerId);
 
         Client clientDO = clientConverter.toClientDO(client);
@@ -189,8 +180,7 @@ public class CustomerClientsResource {
 
         logger.info("Added Client: {}", clientDO);
 
-        client = clientConverter
-            .toClientJaxbWithPermissionsAndCredentials(clientDO);
+        client = clientConverter.toClientJaxbWithPermissionsAndCredentials(clientDO);
 
         String location = uriInfo.getPath() + clientDO.getClientId();
 
@@ -201,8 +191,7 @@ public class CustomerClientsResource {
             logger.warn("Client Location URI error");
         }
 
-        return Response.ok(client).location(uri)
-            .status(HttpServletResponse.SC_CREATED).build();
+        return Response.ok(client).location(uri).status(HttpServletResponse.SC_CREATED).build();
     }
 
     @Path("{clientId}")

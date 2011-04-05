@@ -42,6 +42,7 @@ import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.PasswordValidationException;
 import com.rackspace.idm.validation.InputValidator;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * A customers users.
@@ -146,8 +147,10 @@ public class CustomerUsersResource {
     @POST
     public Response addUser(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        com.rackspace.idm.jaxb.User user) {
-
+        EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
         AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
@@ -161,6 +164,7 @@ public class CustomerUsersResource {
             throw new ForbiddenException(errMsg);
         }
 
+        com.rackspace.idm.jaxb.User user = holder.getEntity();
         if (user.getApiKey() != null && !StringUtils.isEmpty(user.getApiKey().getApiKey())) {
             String errMsg = String.format("Setting the apiKey is Forbidden from this call for user %s",
                 user.getUsername());
@@ -220,8 +224,7 @@ public class CustomerUsersResource {
     public UserResource getUserResource() {
         return userResource;
     }
-    
-    
+
     /**
      * Gets a user by providing the user's RPN.
      * 
@@ -240,7 +243,7 @@ public class CustomerUsersResource {
     @GET
     @Path("rpn/{rpn}")
     public Response getUserBasedOnRPN(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,@PathParam("customerId") String customerId,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("rpn") String rpn) {
 
         AccessToken token = accessTokenService.getAccessTokenByAuthHeader(authHeader);
@@ -252,23 +255,23 @@ public class CustomerUsersResource {
             || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId)
             || authorizationService.authorizeUser(token, customerId, rpn);
-        
+
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.error(errMsg);
             throw new ForbiddenException(errMsg);
         }
-        
+
         logger.debug("Getting User with RPN: {}", rpn);
-        
+
         User user = this.userService.getUserByRPN(rpn);
-        if (user == null || !user.getCustomerId().equalsIgnoreCase(customerId)) {          
+        if (user == null || !user.getCustomerId().equalsIgnoreCase(customerId)) {
             String errorMsg = String.format("User not found: %s", rpn);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
-        
+
         logger.debug("Got User :{}", user);
         return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
-    }          
+    }
 }

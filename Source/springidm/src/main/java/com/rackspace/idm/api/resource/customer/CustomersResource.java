@@ -1,5 +1,25 @@
 package com.rackspace.idm.api.resource.customer;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.api.converter.CustomerConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.AccessToken;
@@ -12,16 +32,7 @@ import com.rackspace.idm.exception.CustomerConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.validation.InputValidator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-import java.net.URI;
-import java.net.URISyntaxException;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * Rackspace Customers.
@@ -41,9 +52,8 @@ public class CustomersResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomersResource(AccessTokenService accessTokenService,
-        CustomerResource customerResource, CustomerService customerService,
-        InputValidator inputValidator, CustomerConverter customerConverter,
+    public CustomersResource(AccessTokenService accessTokenService, CustomerResource customerResource,
+        CustomerService customerService, InputValidator inputValidator, CustomerConverter customerConverter,
         AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.customerResource = customerResource;
@@ -69,25 +79,24 @@ public class CustomersResource {
      * @param inputCustomer New Customer
      */
     @POST
-    public Response addCustomer(@Context UriInfo uriInfo,
-        @Context Request request,
-        @HeaderParam("Authorization") String authHeader,
-        com.rackspace.idm.jaxb.Customer inputCustomer) {
-
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+    public Response addCustomer(@Context UriInfo uriInfo, @Context Request request,
+        @HeaderParam("Authorization") String authHeader, EntityHolder<com.rackspace.idm.jaxb.Customer> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
+        com.rackspace.idm.jaxb.Customer inputCustomer = holder.getEntity();
         Customer customer = customerConverter.toCustomerDO(inputCustomer);
         customer.setDefaults();
 
@@ -101,8 +110,7 @@ public class CustomersResource {
         try {
             this.customerService.addCustomer(customer);
         } catch (DuplicateException ex) {
-            String errorMsg = String.format(
-                "A customer with that customerId already exists: %s",
+            String errorMsg = String.format("A customer with that customerId already exists: %s",
                 customer.getCustomerId());
             logger.warn(errorMsg);
             throw new CustomerConflictException(errorMsg);
@@ -119,8 +127,8 @@ public class CustomersResource {
             logger.warn("Customer Location URI error");
         }
 
-        return Response.ok(customerConverter.toJaxbCustomer(customer))
-            .location(uri).status(HttpServletResponse.SC_CREATED).build();
+        return Response.ok(customerConverter.toJaxbCustomer(customer)).location(uri)
+            .status(HttpServletResponse.SC_CREATED).build();
     }
 
     @Path("{customerId}")

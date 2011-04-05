@@ -35,6 +35,7 @@ import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.jaxb.BaseURL;
 import com.rackspace.idm.validation.InputValidator;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * A Cloud Auth BaseUrl
@@ -53,10 +54,8 @@ public class BaseUrlsResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public BaseUrlsResource(AccessTokenService accessTokenService,
-        AuthorizationService authorizationService,
-        EndpointService endpointService, EndPointConverter endpointConverter,
-        InputValidator inputValidator) {
+    public BaseUrlsResource(AccessTokenService accessTokenService, AuthorizationService authorizationService,
+        EndpointService endpointService, EndPointConverter endpointConverter, InputValidator inputValidator) {
         this.accessTokenService = accessTokenService;
         this.authorizationService = authorizationService;
         this.endpointConverter = endpointConverter;
@@ -77,20 +76,17 @@ public class BaseUrlsResource {
      * @param authHeader HTTP Authorization header for authenticating the caller.
      */
     @GET
-    public Response getBaseUrls(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response getBaseUrls(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -114,24 +110,24 @@ public class BaseUrlsResource {
      * @param baseUrl baseUrl
      */
     @POST
-    public Response addBaseUrl(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, BaseURL baseUrl) {
-
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+    public Response addBaseUrl(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, EntityHolder<BaseURL> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
+        BaseURL baseUrl = holder.getEntity();
         CloudBaseUrl url = this.endpointConverter.toBaseUrlDO(baseUrl);
 
         ApiError err = inputValidator.validate(url);
@@ -141,8 +137,7 @@ public class BaseUrlsResource {
 
         this.endpointService.addBaseUrl(url);
 
-        String location = uriInfo.getPath()
-            + String.valueOf(url.getBaseUrlId());
+        String location = uriInfo.getPath() + String.valueOf(url.getBaseUrlId());
 
         URI uri = null;
         try {
@@ -169,21 +164,17 @@ public class BaseUrlsResource {
      */
     @GET
     @Path("{baseUrlId}")
-    public Response getBaseUrl(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("baseUrlId") int baseUrlId) {
+    public Response getBaseUrl(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("baseUrlId") int baseUrlId) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -191,8 +182,7 @@ public class BaseUrlsResource {
         CloudBaseUrl url = this.endpointService.getBaseUrlById(baseUrlId);
 
         if (url == null) {
-            String errMsg = String.format("BaseUrl with id %s not found.",
-                baseUrlId);
+            String errMsg = String.format("BaseUrl with id %s not found.", baseUrlId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
@@ -215,34 +205,29 @@ public class BaseUrlsResource {
      */
     @DELETE
     @Path("{baseUrlId}")
-    public Response deleteBaseUrl(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("baseUrlId") int baseUrlId) {
+    public Response deleteBaseUrl(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("baseUrlId") int baseUrlId) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
-        
+
         CloudBaseUrl url = this.endpointService.getBaseUrlById(baseUrlId);
-        
+
         if (url == null) {
-            String errMsg = String.format("BaseUrlId %s not found",
-                baseUrlId);
+            String errMsg = String.format("BaseUrlId %s not found", baseUrlId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        
+
         this.endpointService.deleteBaseUrl(baseUrlId);
 
         return Response.noContent().build();

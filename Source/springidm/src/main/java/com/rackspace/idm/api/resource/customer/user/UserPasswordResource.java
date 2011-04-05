@@ -311,8 +311,10 @@ public class UserPasswordResource {
     @Path("recoveryemail")
     public Response sendRecoveryEmail(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("username") String username, PasswordRecovery recoveryParam) {
-
+        @PathParam("username") String username, EntityHolder<PasswordRecovery> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
         logger.debug("Sending password recovery email for User: {}", username);
 
         AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
@@ -346,6 +348,7 @@ public class UserPasswordResource {
             throw new IdmException(errorMsg);
         }
 
+        PasswordRecovery recoveryParam = holder.getEntity();
         if (StringUtils.isBlank(recoveryParam.getCallbackUrl())) {
             String errorMsg = "callbackUrl is a required parameter.";
             logger.warn(errorMsg);

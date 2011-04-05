@@ -38,6 +38,7 @@ import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.PermissionConflictException;
 import com.rackspace.idm.validation.InputValidator;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * Client defined permissions.
@@ -57,12 +58,9 @@ public class DefinedPermissionsResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public DefinedPermissionsResource(
-        DefinedPermissionResource definedPermissionResource,
-        ClientService clientService, PermissionConverter permissionConverter,
-        InputValidator inputValidator,
-        AuthorizationService authorizationService,
-        AccessTokenService accessTokenService) {
+    public DefinedPermissionsResource(DefinedPermissionResource definedPermissionResource,
+        ClientService clientService, PermissionConverter permissionConverter, InputValidator inputValidator,
+        AuthorizationService authorizationService, AccessTokenService accessTokenService) {
         this.definedPermissionResource = definedPermissionResource;
         this.permissionConverter = permissionConverter;
         this.inputValidator = inputValidator;
@@ -87,44 +85,36 @@ public class DefinedPermissionsResource {
      * @param clientId Client application ID
      */
     @GET
-    public Response getClientDefinedPermissions(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
+    public Response getClientDefinedPermissions(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         Client client = this.clientService.getById(clientId);
         if (client == null || !client.getCustomerId().equals(customerId)) {
-            String errMsg = String.format("Client with Id %s not found.",
-                clientId);
+            String errMsg = String.format("Client with Id %s not found.", clientId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
-        List<Permission> defineds = this.clientService
-            .getDefinedPermissionsByClientId(clientId);
+        List<Permission> defineds = this.clientService.getDefinedPermissionsByClientId(clientId);
 
         if (defineds == null) {
-            String errorMsg = String.format(
-                "Permissions Not Found for client: %s", clientId);
+            String errorMsg = String.format("Permissions Not Found for client: %s", clientId);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
@@ -133,8 +123,7 @@ public class DefinedPermissionsResource {
 
         permset.setDefineds(defineds);
 
-        return Response.ok(permissionConverter.toPermissionsJaxb(permset))
-            .build();
+        return Response.ok(permissionConverter.toPermissionsJaxb(permset)).build();
     }
 
     /**
@@ -155,44 +144,40 @@ public class DefinedPermissionsResource {
      * @param permission New permission
      */
     @POST
-    public Response addClientPermission(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId,
-        com.rackspace.idm.jaxb.Permission permission) {
-
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+    public Response addClientPermission(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId, EntityHolder<com.rackspace.idm.jaxb.Permission> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's or the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath()) && token.getTokenClient().getClientId()
-                .equals(clientId));
+            || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath()) && token
+                .getTokenClient().getClientId().equals(clientId));
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
-        
+
+        com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
         if (!permission.getCustomerId().equals(customerId)) {
             String errMsg = "CustomerId mismatch";
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
-        
+
         if (!permission.getClientId().equals(clientId)) {
             String errMsg = "ClientId mismatch";
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
 
-        Permission permissionDO = permissionConverter
-            .toPermissionDO(permission);
+        Permission permissionDO = permissionConverter.toPermissionDO(permission);
 
         ApiError err = inputValidator.validate(permissionDO);
         if (err != null) {
@@ -220,8 +205,7 @@ public class DefinedPermissionsResource {
             logger.warn("Permission Location URI error");
         }
 
-        return Response.ok(permission).location(uri)
-            .status(HttpServletResponse.SC_CREATED).build();
+        return Response.ok(permission).location(uri).status(HttpServletResponse.SC_CREATED).build();
     }
 
     @Path("{permissionId}")
