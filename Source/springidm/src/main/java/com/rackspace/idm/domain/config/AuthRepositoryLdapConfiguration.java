@@ -53,7 +53,6 @@ public class AuthRepositoryLdapConfiguration {
         try {
             config = new PropertiesConfiguration("auth.repository.properties");
         } catch (ConfigurationException e) {
-            System.out.println(e);
             logger.error("Could not load LDAP config file.", e);
             throw new IllegalStateException(LDAP_CONFIG_ERROR_STRING, e);
         }

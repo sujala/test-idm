@@ -160,8 +160,6 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
             getLogger().error(
                 "Error searching for all refresh tokens under DN {} - {}",
                 TOKEN_BASE_DN, ldapEx);
-            System.out.println("Could not perform search for DN "
-                + TOKEN_BASE_DN);
             throw new IllegalStateException(ldapEx);
         }
 

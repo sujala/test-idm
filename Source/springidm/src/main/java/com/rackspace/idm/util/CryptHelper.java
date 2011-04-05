@@ -42,30 +42,6 @@ public class CryptHelper {
 		}
 	}
 
-	public static void main(String[] args) {
-		String plainText = "hello world";
-		try {
-
-			CryptHelper crypt = CryptHelper.getInstance();
-			byte[] cipherText = crypt.encrypt(plainText);
-			System.out.println(ArrayUtils.toString(cipherText));
-			String decrypt = crypt.decrypt(cipherText);
-			System.out.println(new String(decrypt));
-			System.out.println("--");
-			cipherText = crypt.encrypt("");
-			System.out.println(ArrayUtils.toString(cipherText));
-			decrypt = crypt.decrypt(cipherText);
-			System.out.println(new String(decrypt));
-			System.out.println("--");
-			cipherText = crypt.encrypt(null);
-			System.out.println(ArrayUtils.toString(cipherText));
-			decrypt = crypt.decrypt(cipherText);
-			System.out.println(new String(decrypt));
-		} catch (Exception e) {
-			System.out.println(e);
-		}
-	}
-
 	private static CryptHelper instance = new CryptHelper();
 
 	public static CryptHelper getInstance() {
