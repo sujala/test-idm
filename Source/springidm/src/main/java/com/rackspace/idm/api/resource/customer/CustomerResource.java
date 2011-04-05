@@ -31,6 +31,8 @@ import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.jaxb.PasswordRotationPolicy;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * A Rackspace Customer.
@@ -53,9 +55,8 @@ public class CustomerResource {
 
     @Autowired
     public CustomerResource(AccessTokenService accessTokenService,
-        CustomerClientsResource customerClientsResource,
-        CustomerLockResource customerLockResource, RolesResource rolesResource,
-        CustomerUsersResource customerUsersResource,
+        CustomerClientsResource customerClientsResource, CustomerLockResource customerLockResource,
+        RolesResource rolesResource, CustomerUsersResource customerUsersResource,
         CustomerService customerService, CustomerConverter customerConverter,
         AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
@@ -83,39 +84,32 @@ public class CustomerResource {
      * @param customerId RCN
      */
     @GET
-    public Response getCustomer(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId) {
+    public Response getCustomer(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId) {
 
         logger.debug("Getting Customer: {}", customerId);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath());
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         Customer customer = this.customerService.getCustomer(customerId);
         if (customer == null) {
-            String errorMsg = String.format("Customer not found: %s",
-                customerId);
+            String errorMsg = String.format("Customer not found: %s", customerId);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
-        com.rackspace.idm.jaxb.Customer outputCustomer = customerConverter
-            .toJaxbCustomer(customer);
+        com.rackspace.idm.jaxb.Customer outputCustomer = customerConverter.toJaxbCustomer(customer);
 
         logger.debug("Got Customer :{}", customer);
         return Response.ok(outputCustomer).build();
@@ -136,23 +130,19 @@ public class CustomerResource {
      * @param customerId RCN
      */
     @DELETE
-    public Response deleteCustomer(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId) {
+    public Response deleteCustomer(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId) {
 
         logger.info("Deleting Customer :{}", customerId);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -160,8 +150,7 @@ public class CustomerResource {
         Customer customer = this.customerService.getCustomer(customerId);
 
         if (customer == null) {
-            String errorMsg = String.format("Customer not found: %s",
-                customerId);
+            String errorMsg = String.format("Customer not found: %s", customerId);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
@@ -172,7 +161,7 @@ public class CustomerResource {
 
         return Response.noContent().build();
     }
-    
+
     /**
      * Updates customer's password rotation policy resource
      * 
@@ -189,31 +178,29 @@ public class CustomerResource {
      */
     @PUT
     @Path("passwordRotationPolicy")
-    public Response updatePasswordRotationCustomer(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId, 
-        com.rackspace.idm.jaxb.PasswordRotationPolicy passwordRotationPolicy) {
-
+    public Response updatePasswordRotationCustomer(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        EntityHolder<com.rackspace.idm.jaxb.PasswordRotationPolicy> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
         logger.debug("Updating Customer's Password Rotation Policy: {}", customerId);
-
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's and Rackspace Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
-        
+
+        PasswordRotationPolicy passwordRotationPolicy = holder.getEntity();
         int duration = passwordRotationPolicy.getDuration();
         boolean enabled = passwordRotationPolicy.isEnabled();
-        
+
         if (enabled) {
             if (duration < 0) {
                 String errorMsg = String.format("Password rotation duration cannot be negative.");
@@ -224,21 +211,19 @@ public class CustomerResource {
 
         Customer customer = this.customerService.getCustomer(customerId);
         if (customer == null) {
-            String errorMsg = String.format("Customer not found: %s",
-                customerId);
+            String errorMsg = String.format("Customer not found: %s", customerId);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
         customer.setPasswordRotationEnabled(enabled);
         customer.setPasswordRotationDuration(duration);
-        
+
         this.customerService.updateCustomer(customer);
-        
+
         logger.debug("Updated password rotation policy for customer {}", customerId);
         return Response.ok(passwordRotationPolicy).build();
     }
-   
 
     @Path("actions/lock")
     public CustomerLockResource getCustomerLockResource() {

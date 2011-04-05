@@ -39,6 +39,8 @@ import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.jaxb.PasswordRecovery;
+import com.rackspace.idm.jaxb.UserCredentials;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * User Password.
@@ -171,9 +173,11 @@ public class UserPasswordResource {
     @PUT
     public Response setUserPassword(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("username") String username, com.rackspace.idm.jaxb.UserCredentials userCred,
+        @PathParam("username") String username, EntityHolder<com.rackspace.idm.jaxb.UserCredentials> holder,
         @QueryParam("recovery") boolean isRecovery) {
-
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
         AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         boolean authorized = false;
@@ -195,6 +199,7 @@ public class UserPasswordResource {
             throw new ForbiddenException(errMsg);
         }
 
+        UserCredentials userCred = holder.getEntity();
         if (!passwordComplexityService.checkPassword(userCred.getNewPassword().getPassword())
             .isValidPassword()) {
             String errorMsg = String.format("Invalid password %s", userCred.getNewPassword().getPassword());

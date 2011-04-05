@@ -48,6 +48,7 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.TokenExpiredException;
 import com.rackspace.idm.jaxb.AuthGrantType;
 import com.rackspace.idm.util.AuthHeaderHelper;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * Management of OAuth 2.0 token used by IDM.
@@ -90,8 +91,12 @@ public class TokenResource {
      */
     @POST
     public Response getAccessToken(@HeaderParam("Authorization") String authHeader,
-        com.rackspace.idm.jaxb.AuthCredentials creds) {
+        EntityHolder<com.rackspace.idm.jaxb.AuthCredentials> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
         
+        com.rackspace.idm.jaxb.AuthCredentials creds = holder.getEntity();
         AuthCredentials trParam = new AuthCredentials();
         trParam.setClientId(creds.getClientId());
         trParam.setClientSecret(creds.getClientSecret());

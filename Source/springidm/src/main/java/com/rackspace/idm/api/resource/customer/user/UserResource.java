@@ -32,6 +32,7 @@ import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * A User.
@@ -138,8 +139,10 @@ public class UserResource {
     @PUT
     public Response updateUser(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("username") String username, com.rackspace.idm.jaxb.User inputUser) {
-
+        @PathParam("username") String username, EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
         AccessToken token = accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients, Admins and User's are authorized
@@ -154,6 +157,7 @@ public class UserResource {
             throw new ForbiddenException(errMsg);
         }
 
+        com.rackspace.idm.jaxb.User inputUser = holder.getEntity();
         if (inputUser.getApiKey() != null && !StringUtils.isEmpty(inputUser.getApiKey().getApiKey())) {
             String errMsg = String.format("Setting the apiKey is Forbidden from this call for user %s",
                 inputUser.getUsername());

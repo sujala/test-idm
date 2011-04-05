@@ -24,6 +24,7 @@ import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * Customer lock.
@@ -39,8 +40,8 @@ public class CustomerLockResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomerLockResource(CustomerService customerService,
-        AuthorizationService authorizationService, OAuthService oauthService) {
+    public CustomerLockResource(CustomerService customerService, AuthorizationService authorizationService,
+        OAuthService oauthService) {
         this.customerService = customerService;
         this.authorizationService = authorizationService;
         this.oauthService = oauthService;
@@ -60,23 +61,24 @@ public class CustomerLockResource {
      * @param customerId RCN
      */
     @PUT
-    public Response setCustomerLockStatus(@Context Request request,
-        @Context UriInfo uriInfo, @PathParam("customerId") String customerId,
-        @HeaderParam("Authorization") String authHeader,
-        com.rackspace.idm.jaxb.Customer inputCustomer) {
+    public Response setCustomerLockStatus(@Context Request request, @Context UriInfo uriInfo,
+        @PathParam("customerId") String customerId, @HeaderParam("Authorization") String authHeader,
+        EntityHolder<com.rackspace.idm.jaxb.Customer> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
 
+        com.rackspace.idm.jaxb.Customer inputCustomer = holder.getEntity();
         logger.debug("Getting Customer: {}", customerId);
 
         AccessToken token = oauthService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath());
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -89,8 +91,7 @@ public class CustomerLockResource {
 
         Customer customer = this.customerService.getCustomer(customerId);
         if (customer == null) {
-            String errorMsg = String.format("Customer not found: %s",
-                customerId);
+            String errorMsg = String.format("Customer not found: %s", customerId);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
@@ -99,8 +100,7 @@ public class CustomerLockResource {
         this.customerService.setCustomerLocked(customer, isLocked);
         logger.debug("Successfully locked customer: {}", customer);
 
-        logger.debug("Revoking all user tokens for customer {}",
-            customer.getCustomerId());
+        logger.debug("Revoking all user tokens for customer {}", customer.getCustomerId());
 
         if (isLocked) {
             oauthService.revokeTokensGloballyForCustomer(customerId);

@@ -25,8 +25,10 @@ import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * a client group resource.
@@ -43,9 +45,8 @@ public class ClientGroupResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public ClientGroupResource(AccessTokenService accessTokenService,
-        ClientService clientService, GroupConverter groupConverter,
-        ClientGroupMembersResource clientGroupMembersResource,
+    public ClientGroupResource(AccessTokenService accessTokenService, ClientService clientService,
+        GroupConverter groupConverter, ClientGroupMembersResource clientGroupMembersResource,
         AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.clientService = clientService;
@@ -71,25 +72,19 @@ public class ClientGroupResource {
      * @param groupName Group name
      */
     @DELETE
-    public Response deleteClientGroup(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId,
-        @PathParam("groupName") String groupName) {
+    public Response deleteClientGroup(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId, @PathParam("groupName") String groupName) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token.isClientToken() && token.getTokenClient().getClientId()
-                .equals(clientId));
+            || (token.isClientToken() && token.getTokenClient().getClientId().equals(clientId));
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -116,38 +111,30 @@ public class ClientGroupResource {
      * @param groupName Group name
      */
     @GET
-    public Response getClientGroup(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId,
-        @PathParam("groupName") String groupName) {
+    public Response getClientGroup(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId, @PathParam("groupName") String groupName) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients and Specific Clients are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath());
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
-        ClientGroup group = this.clientService.getClientGroup(customerId,
-            clientId, groupName);
+        ClientGroup group = this.clientService.getClientGroup(customerId, clientId, groupName);
 
         if (group == null) {
-            String errMsg = String
-                .format(
-                    "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.",
-                    groupName, clientId, customerId);
+            String errMsg = String.format(
+                "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.", groupName, clientId,
+                customerId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
@@ -174,42 +161,37 @@ public class ClientGroupResource {
      * @param clientGroup New client group
      */
     @PUT
-    public Response updateClientGroup(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId,
-        @PathParam("groupName") String groupName,
-        com.rackspace.idm.jaxb.ClientGroup clientGroup) {
-
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+    public Response updateClientGroup(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId, @PathParam("groupName") String groupName,
+        EntityHolder<com.rackspace.idm.jaxb.ClientGroup> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token.isClientToken() && token.getTokenClient().getClientId()
-                .equals(clientId));
+            || (token.isClientToken() && token.getTokenClient().getClientId().equals(clientId));
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
-        ClientGroup group = this.clientService.getClientGroup(
-            clientGroup.getCustomerId(), clientGroup.getClientId(),
-            clientGroup.getName());
+        com.rackspace.idm.jaxb.ClientGroup clientGroup = holder.getEntity();
+        ClientGroup group = this.clientService.getClientGroup(clientGroup.getCustomerId(),
+            clientGroup.getClientId(), clientGroup.getName());
 
         if (group == null) {
-            String errMsg = String
-                .format(
-                    "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.",
-                    groupName, clientId, customerId);
+            String errMsg = String.format(
+                "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.", groupName, clientId,
+                customerId);
             logger.warn(errMsg);
         }
-        
+
         group.setType(clientGroup.getType());
 
         this.clientService.updateClientGroup(group);

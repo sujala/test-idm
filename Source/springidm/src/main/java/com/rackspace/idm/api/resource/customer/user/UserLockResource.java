@@ -25,6 +25,7 @@ import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * User lock.
@@ -40,7 +41,7 @@ public class UserLockResource {
     private UserConverter userConverter;
     private AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
-    
+
     @Autowired
     public UserLockResource(OAuthService oauthService, UserService userService, UserConverter userConverter,
         AuthorizationService authorizationService) {
@@ -70,8 +71,10 @@ public class UserLockResource {
     @PUT
     public Response setUserLock(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("username") String username, com.rackspace.idm.jaxb.User inputUser) {
-
+        @PathParam("username") String username, EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
         logger.info("Locking User: {} - {}", username);
 
         AccessToken token = this.oauthService.getAccessTokenByAuthHeader(authHeader);
@@ -86,6 +89,7 @@ public class UserLockResource {
             throw new ForbiddenException(errMsg);
         }
 
+        com.rackspace.idm.jaxb.User inputUser = holder.getEntity();
         if (inputUser.isLocked() == null) {
             String errMsg = "Invalid value for locked sent in.";
             logger.warn(errMsg);

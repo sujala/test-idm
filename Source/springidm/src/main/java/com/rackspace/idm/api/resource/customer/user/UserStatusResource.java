@@ -26,6 +26,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.jaxb.UserStatus;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * A user status
@@ -71,8 +72,10 @@ public class UserStatusResource {
     @PUT
     public Response setUserStatus(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("username") String username, com.rackspace.idm.jaxb.User inputUser) {
-
+        @PathParam("username") String username, EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
         logger.debug("Updating Status for User: {}", username);
 
         AccessToken token = this.oauthService.getAccessTokenByAuthHeader(authHeader);
@@ -90,7 +93,7 @@ public class UserStatusResource {
 
         // get user to update
         User user = checkAndGetUser(customerId, username);
-
+        com.rackspace.idm.jaxb.User inputUser = holder.getEntity();
         String statusStr;
         try {
             statusStr = inputUser.getStatus().value();

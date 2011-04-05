@@ -22,6 +22,7 @@ import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * User soft delete flag
@@ -39,9 +40,8 @@ public class UserSoftDeleteResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public UserSoftDeleteResource(OAuthService oauthService,
-        UserService userService, UserConverter userConverter,
-        AuthorizationService authorizationService) {
+    public UserSoftDeleteResource(OAuthService oauthService, UserService userService,
+        UserConverter userConverter, AuthorizationService authorizationService) {
         this.oauthService = oauthService;
         this.userService = userService;
         this.userConverter = userConverter;
@@ -65,17 +65,16 @@ public class UserSoftDeleteResource {
      * @param username username
      */
     @PUT
-    public Response setUserSoftDelete(
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("username") String username,
-        com.rackspace.idm.jaxb.User inputUser) {
+    public Response setUserSoftDelete(@HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId, @PathParam("username") String username,
+        EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
+        com.rackspace.idm.jaxb.User inputUser = holder.getEntity();
+        logger.debug("Updating SoftDelete for User: {} - {}", username, inputUser.isSoftDeleted());
 
-        logger.debug("Updating SoftDelete for User: {} - {}", username,
-            inputUser.isSoftDeleted());
-
-        AccessToken token = this.oauthService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.oauthService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
@@ -83,8 +82,7 @@ public class UserSoftDeleteResource {
             || authorizationService.authorizeCustomerIdm(token);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -99,8 +97,7 @@ public class UserSoftDeleteResource {
 
         User user = this.userService.getUser(username);
         if (user == null || !user.getCustomerId().equalsIgnoreCase(customerId)) {
-            String errorMsg = String.format("User not found: %s - %s",
-                customerId, username);
+            String errorMsg = String.format("User not found: %s - %s", customerId, username);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
@@ -115,7 +112,6 @@ public class UserSoftDeleteResource {
 
         logger.info("Updated SoftDelete for user: {} - []", user);
 
-        return Response.ok(userConverter.toUserWithOnlySoftDeletedJaxb(user))
-            .build();
+        return Response.ok(userConverter.toUserWithOnlySoftDeletedJaxb(user)).build();
     }
 }

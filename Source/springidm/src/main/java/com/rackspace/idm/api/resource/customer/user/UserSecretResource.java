@@ -27,6 +27,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.jaxb.UserSecret;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * A users secret question and answer
@@ -43,8 +44,8 @@ public class UserSecretResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public UserSecretResource(AccessTokenService accessTokenService,
-        UserService userService, AuthorizationService authorizationService) {
+    public UserSecretResource(AccessTokenService accessTokenService, UserService userService,
+        AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
         this.userService = userService;
         this.authorizationService = authorizationService;
@@ -66,24 +67,20 @@ public class UserSecretResource {
      * @param username username
      */
     @GET
-    public Response getUserSecret(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
+    public Response getUserSecret(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
         logger.debug("Getting Secret Q&A for User: {}", username);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -117,27 +114,25 @@ public class UserSecretResource {
      * @param username username
      */
     @PUT
-    public Response setUserSecret(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("username") String username,
-        com.rackspace.idm.jaxb.UserSecret userSecret) {
-
+    public Response setUserSecret(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        @PathParam("username") String username, EntityHolder<com.rackspace.idm.jaxb.UserSecret> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
+        UserSecret userSecret = holder.getEntity();
         validateUserSecretParam(userSecret);
 
         logger.debug("Updating Secret Q&A for User: {}", username);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's and User's are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeUser(token, customerId, username);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -178,8 +173,7 @@ public class UserSecretResource {
     }
 
     private void handleUserNotFoundError(String customerId, String username) {
-        String errorMsg = String.format("User not found: %s - %s", customerId,
-            username);
+        String errorMsg = String.format("User not found: %s - %s", customerId, username);
         logger.error(errorMsg);
         throw new NotFoundException(errorMsg);
     }
