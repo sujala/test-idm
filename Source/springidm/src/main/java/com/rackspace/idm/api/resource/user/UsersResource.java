@@ -115,20 +115,7 @@ public class UsersResource {
     @POST
     public Response addFirstUser(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, EntityHolder<com.rackspace.idm.jaxb.User> holder) {
-        if (!holder.hasEntity()) {
-            throw new BadRequestException("Request body missing.");
-        }
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
-
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
-
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizeMossoIdNastIdUpdate(request, uriInfo, authHeader, holder);
 
         com.rackspace.idm.jaxb.User user = holder.getEntity();
         User userDO = userConverter.toUserDO(user);
@@ -459,20 +446,8 @@ public class UsersResource {
     public Response updateUserMossoId(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
         EntityHolder<com.rackspace.idm.jaxb.User> holder) {
-        if (!holder.hasEntity()) {
-            throw new BadRequestException("Request body missing.");
-        }
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
-
-        // Specific clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
-
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        
+        authorizeMossoIdNastIdUpdate(request, uriInfo, authHeader, holder);
 
         User user = checkAndGetUser(username);
         com.rackspace.idm.jaxb.User jaxbUser = holder.getEntity();
@@ -485,6 +460,7 @@ public class UsersResource {
         return Response.ok(userConverter.toUserWithOnlyMossoId(user)).build();
     }
 
+    
     /**
      * Updates nastId of an user.
      * 
@@ -505,20 +481,8 @@ public class UsersResource {
     public Response updateUserNastId(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
         EntityHolder<com.rackspace.idm.jaxb.User> holder) {
-        if (!holder.hasEntity()) {
-            throw new BadRequestException("Request body missing.");
-        }
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
-
-        // Specific clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
-
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        
+        authorizeMossoIdNastIdUpdate(request, uriInfo, authHeader, holder);
 
         User user = checkAndGetUser(username);
         com.rackspace.idm.jaxb.User jaxbUser = holder.getEntity();
@@ -588,7 +552,25 @@ public class UsersResource {
 
         return user;
     }
+    
+    private void authorizeMossoIdNastIdUpdate(Request request, UriInfo uriInfo,
+        String authHeader, EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
+        // Specific clients are authorized
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+    }
+   
     private String getIdmAdminGroupName() {
         return config.getString("idm.AdminGroupName");
     }
