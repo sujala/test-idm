@@ -90,15 +90,7 @@ public class CustomerClientResource {
             throw new ForbiddenException(errMsg);
         }
 
-        Client client = this.clientService.getById(clientId);
-
-        if (client == null
-            || !client.getCustomerId().toLowerCase()
-                .equals(customerId.toLowerCase())) {
-            String errorMsg = String.format("Client Not Found: %s", clientId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
+        Client client = checkAndGetClient(customerId, clientId);
 
         logger.debug("Got Client: {}", client);
 
@@ -108,6 +100,7 @@ public class CustomerClientResource {
         return Response.ok(returnedClient).build();
     }
 
+   
     /**
      * Delete a client.
      *
@@ -145,15 +138,7 @@ public class CustomerClientResource {
             throw new ForbiddenException(errMsg);
         }
 
-        Client client = this.clientService.getById(clientId);
-
-        if (client == null
-            || !client.getCustomerId().toLowerCase()
-                .equals(customerId.toLowerCase())) {
-            String errorMsg = String.format("Client Not Found: %s", clientId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
+        Client client = checkAndGetClient(customerId, clientId);
 
         logger.debug("Got Client: {}", client);
 
@@ -202,15 +187,7 @@ public class CustomerClientResource {
             throw new ForbiddenException(errMsg);
         }
 
-        Client client = this.clientService.getById(clientId);
-
-        if (client == null
-            || !client.getCustomerId().toLowerCase()
-                .equals(customerId.toLowerCase())) {
-            String errorMsg = String.format("Client Not Found: %s", clientId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
+        Client client = checkAndGetClient(customerId, clientId);
 
         logger.debug("Got Client: {}", client);
 
@@ -244,4 +221,17 @@ public class CustomerClientResource {
     public PermissionsResource getPermissionsResource() {
         return permissionsResource;
     }
+    
+    private Client checkAndGetClient(String customerId, String clientId) {
+        Client client = this.clientService.getById(clientId);
+
+        if (client == null
+            || !client.getCustomerId().toLowerCase()
+                .equals(customerId.toLowerCase())) {
+            String errorMsg = String.format("Client Not Found: %s", clientId);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+        return client;
+    }   
 }
