@@ -37,7 +37,7 @@ public class UserConverter {
         user.setMiddlename(jaxbUser.getMiddleName());
         user.setOrgInum(jaxbUser.getCustomerInum());
         user.setPersonId(jaxbUser.getPersonId());
-        user.setPrefferedLang(jaxbUser.getPrefLanguage());
+        user.setPreferredLang(jaxbUser.getPrefLanguage());
         user.setRegion(jaxbUser.getRegion());
 
         user.setSoftDeleted(jaxbUser.isSoftDeleted());

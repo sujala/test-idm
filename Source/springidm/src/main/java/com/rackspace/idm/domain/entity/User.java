@@ -274,21 +274,21 @@ public class User extends BaseUser implements Auditable {
         return preference.getLocale();
     }
 
-    public void setLocale(Locale prefferedLang) {
-        if (prefferedLang != null) {
-            this.preference.setLocale(prefferedLang);
+    public void setLocale(Locale preferredLang) {
+        if (preferredLang != null) {
+            this.preference.setLocale(preferredLang);
         }
     }
 
     public String getPreferredLang() {
-        return preference.getPrefferedLang();
+        return preference.getPreferredLang();
     }
 
-    public void setPrefferedLang(String prefferedLang) {
-        if (StringUtils.isBlank(prefferedLang)) {
+    public void setPreferredLang(String preferredLang) {
+        if (StringUtils.isBlank(preferredLang)) {
             return;
         }
-        preference.setPrefferedLang(prefferedLang);
+        preference.setPreferredLang(preferredLang);
     }
 
     public DateTimeZone getTimeZoneObj() {
@@ -414,7 +414,7 @@ public class User extends BaseUser implements Auditable {
     
     public void setDefaults() {
         if (this.preference.getLocale() == null) {
-            this.setPrefferedLang(GlobalConstants.USER_PREFERRED_LANG_DEFAULT);
+            this.setPreferredLang(GlobalConstants.USER_PREFERRED_LANG_DEFAULT);
         }
 
         if (this.getTimeZoneObj() == null) {
@@ -461,7 +461,7 @@ public class User extends BaseUser implements Auditable {
         }
 
         if (!StringUtils.isBlank(modifiedUser.getPreferredLang())) {
-            setPrefferedLang(modifiedUser.getPreferredLang());
+            setPreferredLang(modifiedUser.getPreferredLang());
         }
 
         if (!StringUtils.isBlank(modifiedUser.getTimeZone())) {
@@ -733,7 +733,7 @@ public class User extends BaseUser implements Auditable {
 
         public Builder setLocale(String preferredLanguage, String timeZone,
             String country) {
-            user.setPrefferedLang(preferredLanguage);
+            user.setPreferredLang(preferredLanguage);
             user.setTimeZone(timeZone);
             user.setCountry(country);
 

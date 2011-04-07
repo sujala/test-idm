@@ -11,18 +11,18 @@ import java.util.Locale;
 import org.joda.time.DateTimeZone;
 
 public class UserLocaleTests {
-    private Locale prefferedLang = Locale.US;
+    private Locale preferredLang = Locale.US;
     private DateTimeZone timeZone = DateTimeZone.forID("America/Chicago");
 
     private UserLocale getTestLocale() {
-        return new UserLocale(prefferedLang, timeZone);
+        return new UserLocale(preferredLang, timeZone);
     }
 
     @Test
     public void shouldReturnToString() {
         UserLocale loc = getTestLocale();
 
-        Assert.assertEquals("UserPreference [prefferedLang=" + prefferedLang
+        Assert.assertEquals("UserPreference [preferredLang=" + preferredLang
             + ", timeZone=" + timeZone + "]", loc.toString());
     }
     

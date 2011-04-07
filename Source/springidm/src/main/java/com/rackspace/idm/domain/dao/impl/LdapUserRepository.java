@@ -859,7 +859,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .getAttributeValueBytes(ATTR_MAIL)));
         user.setMiddlename(resultEntry.getAttributeValue(ATTR_MIDDLE_NAME));
         user.setOrgInum(resultEntry.getAttributeValue(ATTR_O));
-        user.setPrefferedLang(resultEntry.getAttributeValue(ATTR_LANG));
+        user.setPreferredLang(resultEntry.getAttributeValue(ATTR_LANG));
         user.setCustomerId(resultEntry
             .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
         user.setPersonId(resultEntry

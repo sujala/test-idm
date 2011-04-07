@@ -8,7 +8,7 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTimeZone;
 
 public class UserLocale {
-    private Locale prefferedLang = null;
+    private Locale preferredLang = null;
     private DateTimeZone timeZone = null;
 
     /**
@@ -18,31 +18,31 @@ public class UserLocale {
 
     }
 
-    public UserLocale(Locale prefferedLang, DateTimeZone timeZone) {
-        this.prefferedLang = prefferedLang;
+    public UserLocale(Locale preferredLang, DateTimeZone timeZone) {
+        this.preferredLang = preferredLang;
         this.timeZone = timeZone;
     }
 
     @XmlTransient
     public Locale getLocale() {
-        return prefferedLang;
+        return preferredLang;
     }
 
     /**
      * Discourage the use of the setter outside User
      * 
-     * @param prefferedLang
+     * @param preferredLang
      */
-    public void setLocale(Locale prefferedLang) {
-        this.prefferedLang = prefferedLang;
+    public void setLocale(Locale preferredLang) {
+        this.preferredLang = preferredLang;
     }
 
-    public String getPrefferedLang() {
-        return prefferedLang != null ? prefferedLang.toString() : null;
+    public String getPreferredLang() {
+        return preferredLang != null ? preferredLang.toString() : null;
     }
 
-    public void setPrefferedLang(String lang) {
-        prefferedLang = parseLocale(lang);
+    public void setPreferredLang(String lang) {
+        preferredLang = parseLocale(lang);
     }
 
     private Locale parseLocale(String lang) {
@@ -77,7 +77,7 @@ public class UserLocale {
         final int prime = 31;
         int result = 1;
         result = prime * result
-                + ((prefferedLang == null) ? 0 : prefferedLang.hashCode());
+                + ((preferredLang == null) ? 0 : preferredLang.hashCode());
         result = prime * result
                 + ((timeZone == null) ? 0 : timeZone.getID().hashCode());
         return result;
@@ -95,11 +95,11 @@ public class UserLocale {
             return false;
         }
         UserLocale other = (UserLocale) obj;
-        if (prefferedLang == null) {
-            if (other.prefferedLang != null) {
+        if (preferredLang == null) {
+            if (other.preferredLang != null) {
                 return false;
             }
-        } else if (!prefferedLang.equals(other.prefferedLang)) {
+        } else if (!preferredLang.equals(other.preferredLang)) {
             return false;
         }
         if (timeZone == null) {
@@ -114,7 +114,7 @@ public class UserLocale {
 
     @Override
     public String toString() {
-        return "UserPreference [prefferedLang=" + prefferedLang + ", timeZone="
+        return "UserPreference [preferredLang=" + preferredLang + ", timeZone="
                 + timeZone + "]";
     }
 }
