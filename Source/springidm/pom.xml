@@ -327,28 +327,6 @@
 							<contextPath>/v1.0</contextPath>
 						</configuration>
 						<executions>
-
-
-							<execution>
-								<id>start-jetty</id>
-								<phase>pre-integration-test</phase>
-								<goals>
-									<goal>run-exploded</goal>
-								</goals>
-								<configuration>
-									<scanIntervalSeconds>0</scanIntervalSeconds>
-									<daemon>true</daemon>
-								</configuration>
-							</execution>
-							<execution>
-								<id>stop-jetty</id>
-								<phase>post-integration-test</phase>
-								<goals>
-									<goal>stop</goal>
-								</goals>
-							</execution>
-<!--
-
 							<execution>
 								<id>start-jetty</id>
 								<phase>pre-integration-test</phase>
@@ -367,7 +345,6 @@
 									<goal>stop</goal>
 								</goals>
 							</execution>
--->
 						</executions>
 					</plugin>
 				</plugins>
