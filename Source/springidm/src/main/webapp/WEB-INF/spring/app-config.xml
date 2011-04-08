@@ -49,17 +49,6 @@
 	
 	<!-- Scans within the base package of the application for @Components to configure as beans-->
 	<context:component-scan base-package="com.rackspace.idm" />
-	
-	<bean id="exporter" class="org.springframework.jmx.export.MBeanExporter" lazy-init="false">
-    	<property name="beans">
-      		<map>
-        		<entry key="com.rackspace.idm:name=healthMonitoringBean" value-ref="healthMonitoringBean"/>
-        		<entry key="com.rackspace.idm:name=loggerMonitoringBean" value-ref="loggerMonitoringBean"/>
-        		<entry key="com.rackspace.idm:name=ldapMonitoringBean" value-ref="ldapMonitoringBean"/>
-        		<entry key="com.rackspace.idm:name=memcacheMonitoringBean" value-ref="memcacheMonitoringBean"/>
-      		</map>
-    	</property>
-  	</bean>
 
 	<!--
 		Instruct Spring to perform automatic transaction management on annotated classes.
