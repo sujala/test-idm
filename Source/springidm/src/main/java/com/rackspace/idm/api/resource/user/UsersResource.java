@@ -212,19 +212,8 @@ public class UsersResource {
     public Response getServiceCatalog(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("username") String username) {
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
-
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
-
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-
-        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(username);
+        List<CloudEndpoint> endpoints = checkAndGetEndPoints(request, uriInfo,
+            authHeader, username);
 
         return Response.ok(this.endpointConverter.toServiceCatalog(endpoints)).build();
     }
@@ -247,19 +236,8 @@ public class UsersResource {
     public Response getBaseUrlRefs(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("username") String username) {
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
-
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
-
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-
-        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(username);
+        List<CloudEndpoint> endpoints = checkAndGetEndPoints(request, uriInfo,
+            authHeader, username);
 
         return Response.ok(this.endpointConverter.toBaseUrlRefs(endpoints)).build();
     }
@@ -570,6 +548,24 @@ public class UsersResource {
             throw new ForbiddenException(errMsg);
         }
     }
+    
+    private List<CloudEndpoint> checkAndGetEndPoints(Request request,
+        UriInfo uriInfo, String authHeader, String username) {
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+
+        // Only Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
+
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+
+        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(username);
+        return endpoints;
+    }   
    
     private String getIdmAdminGroupName() {
         return config.getString("idm.AdminGroupName");
