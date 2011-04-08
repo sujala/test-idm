@@ -169,23 +169,7 @@ public class BaseUrlsResource {
 
         AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
-
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-
-        CloudBaseUrl url = this.endpointService.getBaseUrlById(baseUrlId);
-
-        if (url == null) {
-            String errMsg = String.format("BaseUrl with id %s not found.", baseUrlId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
+        CloudBaseUrl url = checkAndGetUrl(request, uriInfo, baseUrlId, token);
 
         return Response.ok(this.endpointConverter.toBaseUrl(url)).build();
     }
@@ -210,6 +194,15 @@ public class BaseUrlsResource {
 
         AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
+        CloudBaseUrl url = checkAndGetUrl(request, uriInfo,baseUrlId,token);
+            
+        this.endpointService.deleteBaseUrl(baseUrlId);
+
+        return Response.noContent().build();
+    }
+
+    private CloudBaseUrl checkAndGetUrl(Request request, UriInfo uriInfo,
+        int baseUrlId, AccessToken token) {
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
             uriInfo.getPath());
@@ -223,13 +216,11 @@ public class BaseUrlsResource {
         CloudBaseUrl url = this.endpointService.getBaseUrlById(baseUrlId);
 
         if (url == null) {
-            String errMsg = String.format("BaseUrlId %s not found", baseUrlId);
+            String errMsg = String.format("BaseUrl with id %s not found.", baseUrlId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-
-        this.endpointService.deleteBaseUrl(baseUrlId);
-
-        return Response.noContent().build();
+        return url;
     }
+    
 }
