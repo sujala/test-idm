@@ -270,6 +270,28 @@
 			<build>
 				<plugins>
 					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<version>2.8</version>
+						<configuration>
+							<argLine>-javaagent:${jacoco.agent.path}=destfile=${jacoco.file.path}</argLine>
+						</configuration>
+						<executions>
+							<execution>
+								<id>integration-test</id>
+								<goals>
+									<goal>integration-test</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>verify</id>
+								<goals>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
 						<groupId>eviware</groupId>
 						<artifactId>maven-soapui-pro-plugin</artifactId>
 						<version>3.6.1</version>
@@ -283,7 +305,7 @@
 						<executions>
 							<execution>
 								<id>soapui-test</id>
-								<phase>test</phase>
+								<phase>integration-test</phase>
 								<goals>
 									<goal>test</goal>
 								</goals>
@@ -305,9 +327,31 @@
 							<contextPath>/v1.0</contextPath>
 						</configuration>
 						<executions>
+
+
 							<execution>
 								<id>start-jetty</id>
-								<phase>process-test-classes</phase>
+								<phase>pre-integration-test</phase>
+								<goals>
+									<goal>run-exploded</goal>
+								</goals>
+								<configuration>
+									<scanIntervalSeconds>0</scanIntervalSeconds>
+									<daemon>true</daemon>
+								</configuration>
+							</execution>
+							<execution>
+								<id>stop-jetty</id>
+								<phase>post-integration-test</phase>
+								<goals>
+									<goal>stop</goal>
+								</goals>
+							</execution>
+<!--
+
+							<execution>
+								<id>start-jetty</id>
+								<phase>pre-integration-test</phase>
 								<goals>
 									<goal>run</goal>
 								</goals>
@@ -318,11 +362,12 @@
 							</execution>
 							<execution>
 								<id>stop-jetty</id>
-								<phase>test</phase>
+								<phase>post-integration-test</phase>
 								<goals>
 									<goal>stop</goal>
 								</goals>
 							</execution>
+-->
 						</executions>
 					</plugin>
 				</plugins>
@@ -574,62 +619,6 @@
 						</wadlGeneratorDescription>
 					</wadlGenerators>
 				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>eviware</groupId>
-				<artifactId>maven-soapui-pro-plugin</artifactId>
-				<version>3.6.1</version>
-				<configuration>
-					<projectFile>soapui/idm-api-qa-soapui-project.xml</projectFile>
-					<junitReport>true</junitReport>
-					<outputFolder>soapui/localhost-test-results</outputFolder>
-					<testFailIgnore>true</testFailIgnore>
-					<endpoint>http://localhost:8181</endpoint>
-				</configuration>
-				<executions>
-					<execution>
-						<id>soapui-test</id>
-						<phase>test</phase>
-						<goals>
-							<goal>test</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.mortbay.jetty</groupId>
-				<artifactId>maven-jetty-plugin</artifactId>
-				<configuration>
-					<connectors>
-						<connector implementation="org.mortbay.jetty.nio.SelectChannelConnector">
-							<port>8181</port>
-							<maxIdleTime>60000</maxIdleTime>
-						</connector>
-					</connectors>
-					<stopPort>8081</stopPort>
-					<stopKey>stop</stopKey>
-					<contextPath>/v1.0</contextPath>
-				</configuration>
-				<executions>
-					<execution>
-						<id>start-jetty</id>
-						<phase>process-test-classes</phase>
-						<goals>
-							<goal>run</goal>
-						</goals>
-						<configuration>
-							<scanIntervalSeconds>0</scanIntervalSeconds>
-							<daemon>true</daemon>
-						</configuration>
-					</execution>
-					<execution>
-						<id>stop-jetty</id>
-						<phase>test</phase>
-						<goals>
-							<goal>stop</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
 		<resources>
