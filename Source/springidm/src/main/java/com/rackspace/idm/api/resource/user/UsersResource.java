@@ -115,7 +115,8 @@ public class UsersResource {
     @POST
     public Response addFirstUser(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, EntityHolder<com.rackspace.idm.jaxb.User> holder) {
-        authorizeMossoIdNastIdUpdate(request, uriInfo, authHeader, holder);
+        
+        authorizeRequest(request, uriInfo, authHeader, holder);
 
         com.rackspace.idm.jaxb.User user = holder.getEntity();
         User userDO = userConverter.toUserDO(user);
@@ -425,7 +426,7 @@ public class UsersResource {
         @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
         EntityHolder<com.rackspace.idm.jaxb.User> holder) {
         
-        authorizeMossoIdNastIdUpdate(request, uriInfo, authHeader, holder);
+        authorizeRequest(request, uriInfo, authHeader, holder);
 
         User user = checkAndGetUser(username);
         com.rackspace.idm.jaxb.User jaxbUser = holder.getEntity();
@@ -460,7 +461,7 @@ public class UsersResource {
         @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
         EntityHolder<com.rackspace.idm.jaxb.User> holder) {
         
-        authorizeMossoIdNastIdUpdate(request, uriInfo, authHeader, holder);
+        authorizeRequest(request, uriInfo, authHeader, holder);
 
         User user = checkAndGetUser(username);
         com.rackspace.idm.jaxb.User jaxbUser = holder.getEntity();
@@ -531,7 +532,7 @@ public class UsersResource {
         return user;
     }
     
-    private void authorizeMossoIdNastIdUpdate(Request request, UriInfo uriInfo,
+    private void authorizeRequest(Request request, UriInfo uriInfo,
         String authHeader, EntityHolder<com.rackspace.idm.jaxb.User> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
