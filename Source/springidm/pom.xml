@@ -193,13 +193,6 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>com.lunatech.doclets</groupId>
-			<artifactId>jax-doclets</artifactId>
-			<version>0.7</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/lib/jax-doclets-0.7.jar</systemPath>
-		</dependency>
-		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-validator</artifactId>
 			<version>4.0.2.GA</version>
@@ -324,11 +317,6 @@
 							<stopPort>8081</stopPort>
 							<stopKey>stop</stopKey>
 							<contextPath>/v1.0</contextPath>
-<!--
-							<webAppConfig>
-								<contextPath>/v1.0</contextPath>
-							</webAppConfig>
--->
 						</configuration>
 						<executions>
 							<execution>
