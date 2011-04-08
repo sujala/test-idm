@@ -260,41 +260,6 @@
 
 	<profiles>
 		<profile>
-			<id>soapui-qa</id>
-			<activation>
-				<property>
-					<name>soapui-qa</name>
-				</property>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>eviware</groupId>
-						<artifactId>maven-soapui-pro-plugin</artifactId>
-						<version>3.6.1</version>
-						<configuration>
-							<projectFile>soapui/idm-api-qa-soapui-project.xml</projectFile>
-							<junitReport>true</junitReport>
-							<outputFolder>soapui/qa-test-results</outputFolder>
-							<testFailIgnore>false</testFailIgnore>
-						</configuration>
-						<executions>
-							<execution>
-								<id>soapUI</id>
-								<!--Run as part of the integration-test phase in the Maven lifecycle -->
-								<phase>integration-test</phase>
-								<goals>
-									<!--Run the test phase of eviware:maven-soapui-plugin -->
-									<goal>test</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
 			<id>soapui-localhost</id>
 			<activation>
 				<property>
@@ -321,7 +286,7 @@
 						<executions>
 							<execution>
 								<id>start-jetty</id>
-								<phase>pre-integration-test</phase>
+								<phase>process-test-classes</phase>
 								<goals>
 									<goal>run</goal>
 								</goals>
@@ -332,7 +297,7 @@
 							</execution>
 							<execution>
 								<id>stop-jetty</id>
-								<phase>post-integration-test</phase>
+								<phase>test</phase>
 								<goals>
 									<goal>stop</goal>
 								</goals>
@@ -352,8 +317,8 @@
 						</configuration>
 						<executions>
 							<execution>
-								<id>soap-integration-test</id>
-								<phase>integration-test</phase>
+								<id>soapui-test</id>
+								<phase>test</phase>
 								<goals>
 									<goal>test</goal>
 								</goals>
