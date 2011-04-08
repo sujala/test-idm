@@ -1,5 +1,8 @@
 package com.rackspace.idm.domain.config;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.validation.Validation;
 import javax.validation.Validator;
 
@@ -7,8 +10,8 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.jmx.export.MBeanExporter;
 
 import com.rackspace.idm.domain.dao.AccessTokenDao;
 import com.rackspace.idm.domain.dao.AuthDao;
@@ -104,20 +107,20 @@ public class ServiceConfiguration {
     public AuthHeaderHelper authHeaderHelper() {
         return new AuthHeaderHelper();
     }
-    
+
     @Bean
     public LoggerMBean loggerMonitoringBean() {
-    	return new LoggerMBean();
+        return new LoggerMBean();
     }
-    
+
     @Bean
     public LdapMBean ldapMonitoringBean() {
-    	return new LdapMBean();
+        return new LdapMBean();
     }
-    
+
     @Bean
     public MemcacheMBean memcacheMonitoringBean() {
-    	return new MemcacheMBean();
+        return new MemcacheMBean();
     }
 
     @Bean
@@ -192,7 +195,8 @@ public class ServiceConfiguration {
     @Bean
     public UserService userService() {
         boolean isTrustedServer = config.getBoolean("ldap.server.trusted", false);
-        return new DefaultUserService(userRepo, authDao, customerDao, emailService(), clientService(),isTrustedServer);
+        return new DefaultUserService(userRepo, authDao, customerDao, emailService(), clientService(),
+            isTrustedServer);
     }
 
     @Bean
@@ -204,5 +208,16 @@ public class ServiceConfiguration {
     @Bean
     public AuthorizationService authorizationService() {
         return new DefaultAuthorizationService(clientDao, config);
+    }
+
+    @Bean
+    public MBeanExporter exporter() {
+        MBeanExporter exp = new MBeanExporter();
+        Map<String, Object> beans = new HashMap<String, Object>();
+        beans.put("com.rackspace.idm:name=loggerMonitoringBean", loggerMonitoringBean());
+        beans.put("com.rackspace.idm:name=ldapMonitoringBean", ldapMonitoringBean());
+        beans.put("com.rackspace.idm:name=memcacheMonitoringBean", memcacheMonitoringBean());
+        exp.setBeans(beans);
+        return exp;
     }
 }
