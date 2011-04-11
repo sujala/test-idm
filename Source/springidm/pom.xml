@@ -408,7 +408,7 @@
 		<url>http://10.127.7.163:8080/</url>
 	</ciManagement>
 	<scm>
-		<url>https://source.admin.stabletransit.com/thesystem/IDM/trunk/Source/springidm</url>
+		<url>https://source.core.rackspace.com/svnroot/customeridm/trunk/Source/springidm</url>
 	</scm>
 	<organization>
 		<name>Rackspace</name>
@@ -595,6 +595,16 @@
 							</properties>
 						</wadlGeneratorDescription>
 					</wadlGenerators>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>eviware</groupId>
+				<artifactId>maven-soapui-pro-plugin</artifactId>
+				<version>3.6.1</version>
+				<configuration>
+					<projectFile>soapui/idm-api-qa-soapui-project.xml</projectFile>
+					<junitReport>true</junitReport>
+					<outputFolder>soapui/test-results</outputFolder>
 				</configuration>
 			</plugin>
 		</plugins>
