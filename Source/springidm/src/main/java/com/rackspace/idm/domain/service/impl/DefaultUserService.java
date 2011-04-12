@@ -80,14 +80,14 @@ public class DefaultUserService implements UserService {
             throw new DuplicateException(String.format("Username %s already exists", user.getUsername()));
         }
 
-        Customer customer = customerDao.findByCustomerId(customerId);
+        Customer customer = customerDao.getCustomerByCustomerId(customerId);
 
         if (customer == null) {
             logger.warn("Couldn't add user {} because customer doesn't exist", user);
             throw new IllegalStateException("Customer doesn't exist");
         }
 
-        String customerDN = customerDao.getCustomerDnByCustomerId(customerId);
+        String customerDN = customer.getUniqueId();
 
         user.setOrgInum(customer.getInum());
         user.setInum(userDao.getUnusedUserInum(customer.getInum()));
@@ -104,7 +104,7 @@ public class DefaultUserService implements UserService {
                 "The password appears to be an existing instance. It must be a new instance!");
         }
 
-        userDao.add(user, customerDN);
+        userDao.addUser(user, customerDN);
         logger.info("Added User: {}", user);
     }
 
@@ -187,7 +187,7 @@ public class DefaultUserService implements UserService {
             this.clientService.removeUserFromClientGroup(username, g);
         }
         
-        this.userDao.delete(username);
+        this.userDao.deleteUser(username);
         
         logger.info("Deleted User: {}", username);
     }
@@ -203,7 +203,7 @@ public class DefaultUserService implements UserService {
     public Users getByCustomerId(String customerId, int offset, int limit) {
         logger.debug("Getting Users for Cutomer: {}", customerId);
 
-        Users users = this.userDao.findByCustomerId(customerId, offset, limit);
+        Users users = this.userDao.getUsersByCustomerId(customerId, offset, limit);
 
         logger.debug("Got Users for Customer: {}", customerId);
 
@@ -212,7 +212,7 @@ public class DefaultUserService implements UserService {
 
     public User getUser(String username) {
         logger.debug("Getting User: {}", username);
-        User user = userDao.findByUsername(username);
+        User user = userDao.getUserByUsername(username);
         if (user == null) {
             logger.warn("No user found for user name {}", username);
             return null;
@@ -231,7 +231,7 @@ public class DefaultUserService implements UserService {
 
     public User getUser(String customerId, String username) {
         logger.debug("Getting User: {} - {}", customerId, username);
-        User user = userDao.findUser(customerId, username);
+        User user = userDao.getUserByCustomerIdAndUsername(customerId, username);
         if (user == null) {
             return null;
         }
@@ -242,7 +242,7 @@ public class DefaultUserService implements UserService {
 
     public User getUserByMossoId(int mossoId) {
         logger.debug("Getting User: {}", mossoId);
-        User user = userDao.findByMossoId(mossoId);
+        User user = userDao.getUserByMossoId(mossoId);
         if (user != null) {
             user.setGroups(clientService.getClientGroupsForUser(user.getUsername()));
         }
@@ -252,7 +252,7 @@ public class DefaultUserService implements UserService {
 
     public User getUserByNastId(String nastId) {
         logger.debug("Getting User: {}", nastId);
-        User user = userDao.findByNastId(nastId);
+        User user = userDao.getUserByNastId(nastId);
         if (user != null) {
             user.setGroups(clientService.getClientGroupsForUser(user.getUsername()));
         }
@@ -262,7 +262,7 @@ public class DefaultUserService implements UserService {
     
     public User getUserByRPN(String rpn) {
         logger.debug("Getting User: {}", rpn);
-        User user = userDao.findByRPN(rpn);
+        User user = userDao.getUserByRPN(rpn);
         
         if (user != null) {
             user.setGroups(clientService.getClientGroupsForUser(user
@@ -326,7 +326,7 @@ public class DefaultUserService implements UserService {
     @Override
     public void updateUser(User user, boolean hasSelfUpdatedPassword) {
         logger.info("Updating User: {}", user);
-        this.userDao.save(user, hasSelfUpdatedPassword);
+        this.userDao.updateUser(user, hasSelfUpdatedPassword);
         logger.info("Updated User: {}", user);
     }
 
@@ -334,7 +334,7 @@ public class DefaultUserService implements UserService {
     public void updateUserStatus(User user, String statusStr) {
         UserStatus status = Enum.valueOf(UserStatus.class, statusStr.toUpperCase());
         user.setStatus(status);
-        this.userDao.save(user, false);
+        this.userDao.updateUser(user, false);
 
         logger.info("Updated User's status: {}, {}", user, status);
     }
@@ -345,7 +345,7 @@ public class DefaultUserService implements UserService {
                                                                // ever reset his
                                                                // own password?
         user.setPasswordObj(newPassword);
-        userDao.save(user, false);
+        userDao.updateUser(user, false);
         logger.debug("Updated password for user: {}", user);
 
         return newPassword.toExisting();
@@ -362,7 +362,7 @@ public class DefaultUserService implements UserService {
             return null;
         }
         
-        Customer customer = customerDao.findByCustomerId(user.getCustomerId());
+        Customer customer = customerDao.getCustomerByCustomerId(user.getCustomerId());
         
         if (customer == null) {
             return null;

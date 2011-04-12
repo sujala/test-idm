@@ -198,7 +198,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
             throw new IllegalArgumentException(String.format("User %s is missing i-number", owner));
         }
 
-        Client tokenRequestor = clientDao.findByClientId(clientId);
+        Client tokenRequestor = clientDao.getClientByClientId(clientId);
         if (tokenRequestor == null) {
             String error = "No entry found for clientId " + clientId;
             logger.debug(error);
@@ -241,7 +241,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
     public AccessToken createAccessTokenForUser(String username, String clientId, int expirationTimeInSeconds) {
         logger.debug("Creating Access Token For User: {}", username);
 
-        Client tokenRequestor = clientDao.findByClientId(clientId);
+        Client tokenRequestor = clientDao.getClientByClientId(clientId);
         if (tokenRequestor == null) {
             String error = "No entry found for clientId " + clientId;
             logger.debug(error);
@@ -292,7 +292,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
     public AccessToken getAccessTokenForClient(String clientId, DateTime expiresAfter) {
         logger.debug("Getting Token For Client: {}", clientId);
-        Client client = clientDao.findByClientId(clientId);
+        Client client = clientDao.getClientByClientId(clientId);
         if (client == null) {
             String error = "No entry found for clientId " + clientId;
             logger.debug(error);

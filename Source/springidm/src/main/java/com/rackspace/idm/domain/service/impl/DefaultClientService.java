@@ -35,7 +35,7 @@ public class DefaultClientService implements ClientService {
     public void add(Client client) {
         logger.debug("Adding Client: {}", client);
         Customer customer = customerDao
-            .findByCustomerId(client.getCustomerId());
+            .getCustomerByCustomerId(client.getCustomerId());
 
         if (customer == null) {
             logger.warn(
@@ -44,7 +44,7 @@ public class DefaultClientService implements ClientService {
             throw new NotFoundException("Customer doesn't exist");
         }
 
-        Client exists = clientDao.findByClientname(client.getName());
+        Client exists = clientDao.getClientByClientname(client.getName());
 
         if (exists != null) {
             logger.warn(
@@ -66,7 +66,7 @@ public class DefaultClientService implements ClientService {
         client.setOrgInum(customer.getInum());
         client.setInum(clientDao.getUnusedClientInum(customer.getInum()));
 
-        clientDao.add(client, customer.getUniqueId());
+        clientDao.addClient(client, customer.getUniqueId());
         logger.debug("Added Client: {}", client);
     }
 
@@ -77,7 +77,7 @@ public class DefaultClientService implements ClientService {
     }
 
     public void delete(String clientId) {
-        Client client = clientDao.findByClientId(clientId);
+        Client client = clientDao.getClientByClientId(clientId);
 
         if (client == null) {
             String errMsg = String.format("Client with clientId %s not found.",
@@ -101,12 +101,12 @@ public class DefaultClientService implements ClientService {
                 group.getClientId(), group.getName());
         }
 
-        clientDao.delete(clientId);
+        clientDao.deleteClient(clientId);
     }
 
     public void addDefinedPermission(Permission permission) {
 
-        Customer customer = customerDao.findByCustomerId(permission
+        Customer customer = customerDao.getCustomerByCustomerId(permission
             .getCustomerId());
 
         if (customer == null) {
@@ -116,7 +116,7 @@ public class DefaultClientService implements ClientService {
             throw new IllegalStateException("Customer doesn't exist");
         }
 
-        Client client = clientDao.findByClientId(permission.getClientId());
+        Client client = clientDao.getClientByClientId(permission.getClientId());
 
         if (client == null) {
             logger.warn(
@@ -159,19 +159,19 @@ public class DefaultClientService implements ClientService {
 
     public Clients getByCustomerId(String customerId, int offset, int limit) {
 
-        return clientDao.getByCustomerId(customerId, offset, limit);
+        return clientDao.getClientsByCustomerId(customerId, offset, limit);
     }
 
     public Client getById(String clientId) {
-        return clientDao.findByClientId(clientId);
+        return clientDao.getClientByClientId(clientId);
     }
 
     public Client getClient(String customerId, String clientId) {
-        return clientDao.getClient(customerId, clientId);
+        return clientDao.getClientByCustomerIdAndClientId(customerId, clientId);
     }
 
     public Client getByName(String clientName) {
-        return clientDao.findByClientname(clientName);
+        return clientDao.getClientByClientname(clientName);
     }
 
     public Permission getDefinedPermissionByClientIdAndPermissionId(
@@ -198,7 +198,7 @@ public class DefaultClientService implements ClientService {
         try {
             clientSecret = ClientSecret.newInstance(HashHelper.getRandomSha1());
             client.setClientSecretObj(clientSecret);
-            clientDao.save(client);
+            clientDao.updateClient(client);
         } catch (NoSuchAlgorithmException e) {
             logger.error("Unsupported hashing algorithm - {}", e);
             throw new IllegalStateException("Unsupported hashing algorithm", e);
@@ -207,19 +207,19 @@ public class DefaultClientService implements ClientService {
     }
 
     public void save(Client client) {
-        clientDao.save(client);
+        clientDao.updateClient(client);
     }
 
     public void softDelete(String clientId) {
         logger.info("Soft Deleting client: {}", clientId);
-        Client client = this.clientDao.findByClientId(clientId);
+        Client client = this.clientDao.getClientByClientId(clientId);
         client.setSoftDeleted(true);
-        this.clientDao.save(client);
+        this.clientDao.updateClient(client);
         logger.info("Soft Deleted cilent: {}", clientId);
     }
 
     public void grantPermission(String clientId, Permission p) {
-        Client targetClient = this.clientDao.findByClientId(clientId);
+        Client targetClient = this.clientDao.getClientByClientId(clientId);
 
         if (targetClient == null) {
             throw new NotFoundException("Client Not Found");
@@ -268,7 +268,7 @@ public class DefaultClientService implements ClientService {
     }
 
     private Client getClient(String clientId) {
-        Client targetClient = this.clientDao.findByClientId(clientId);
+        Client targetClient = this.clientDao.getClientByClientId(clientId);
         if (targetClient == null) {
             String errorMsg = String.format("Client Not Found: %s", clientId);
             logger.warn(errorMsg);
@@ -290,7 +290,7 @@ public class DefaultClientService implements ClientService {
             throw new IllegalArgumentException("username cannot be blank");
         }
 
-        User user = userDao.findByUsername(username);
+        User user = userDao.getUserByUsername(username);
         if (user == null) {
             throw new NotFoundException(String.format(
                 "User with username %s not found", username));
@@ -333,7 +333,7 @@ public class DefaultClientService implements ClientService {
             throw new IllegalArgumentException("username cannot be blank");
         }
 
-        User user = userDao.findByUsername(username);
+        User user = userDao.getUserByUsername(username);
         if (user == null) {
             throw new NotFoundException();
         }
@@ -363,7 +363,7 @@ public class DefaultClientService implements ClientService {
 
         for (String groupId : groupIds) {
             boolean addGroup = true;
-            ClientGroup group = clientDao.findClientGroupByUniqueId(groupId);
+            ClientGroup group = clientDao.getClientGroupByUniqueId(groupId);
             if (group != null) {
                 if (filterByClient
                     && !group.getClientId().equalsIgnoreCase(clientId)) {
@@ -393,7 +393,7 @@ public class DefaultClientService implements ClientService {
         }
 
         for (String groupId : groupIds) {
-            ClientGroup group = clientDao.findClientGroupByUniqueId(groupId);
+            ClientGroup group = clientDao.getClientGroupByUniqueId(groupId);
             if (group != null) {
                 groups.add(group);
             }

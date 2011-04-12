@@ -38,7 +38,7 @@ public class DefaultCustomerService implements CustomerService {
         logger.info("Adding Customer: {}", customer);
 
         Customer exists = customerDao
-            .findByCustomerId(customer.getCustomerId());
+            .getCustomerByCustomerId(customer.getCustomerId());
 
         if (exists != null) {
             logger.warn(
@@ -50,7 +50,7 @@ public class DefaultCustomerService implements CustomerService {
 
         customer.setInum(customerDao.getUnusedCustomerInum());
 
-        this.customerDao.add(customer);
+        this.customerDao.addCustomer(customer);
 
         logger.info("Added Customer: {}", customer);
     }
@@ -58,7 +58,7 @@ public class DefaultCustomerService implements CustomerService {
     public void deleteCustomer(String customerId) {
         logger.info("Deleting Customer: {}", customerId);
         
-        Customer customer = customerDao.findByCustomerId(customerId);
+        Customer customer = customerDao.getCustomerByCustomerId(customerId);
         if (customer == null) {
             String errMsg = String.format("Customer with customerId %s not found.", customerId);
             logger.warn(errMsg);
@@ -67,21 +67,21 @@ public class DefaultCustomerService implements CustomerService {
         
         List<User> users = this.getUserListForCustomerId(customerId);
         for (User user : users) {
-            userDao.delete(user.getUsername());
+            userDao.deleteUser(user.getUsername());
         }
         
         List<Client> clients = this.getClientListForCustomerId(customerId);
         for (Client client : clients) {
-            clientDao.delete(client.getClientId());
+            clientDao.deleteClient(client.getClientId());
         }
         
-        this.customerDao.delete(customerId);
+        this.customerDao.deleteCustomer(customerId);
         logger.info("Deleted Customer: {}", customerId);
     }
 
     public Customer getCustomer(String customerId) {
         logger.info("Getting Customer: {}", customerId);
-        Customer customer = customerDao.findByCustomerId(customerId);
+        Customer customer = customerDao.getCustomerByCustomerId(customerId);
         logger.info("Got Customer: {}", customer);
         return customer;
     }
@@ -92,29 +92,29 @@ public class DefaultCustomerService implements CustomerService {
         String customerId = customer.getCustomerId();
 
         // lock all users under customer
-        userDao.setAllUsersLocked(customerId, locked);
+        userDao.setUsersLockedFlagByCustomerId(customerId, locked);
 
         // lock all applications under customer
-        clientDao.setAllClientLocked(customerId, locked);
+        clientDao.setClientsLockedFlagByCustomerId(customerId, locked);
 
         // lock customer
         customer.setLocked(locked);
-        customerDao.save(customer);
+        customerDao.updateCustomer(customer);
 
         logger.info("Locked customer: {}", customer);
     }
 
     public void softDeleteCustomer(String customerId) {
         logger.info("Soft Deleting customer: {}", customerId);
-        Customer customer = this.customerDao.findByCustomerId(customerId);
+        Customer customer = this.customerDao.getCustomerByCustomerId(customerId);
         customer.setSoftDeleted(true);
-        this.customerDao.save(customer);
+        this.customerDao.updateCustomer(customer);
         logger.info("Soft Deleted customer: {}", customerId);
     }
 
     public void updateCustomer(Customer customer) {
         logger.info("Updating Customer: {}", customer);
-        this.customerDao.save(customer);
+        this.customerDao.updateCustomer(customer);
         logger.info("Updated Customer: {}", customer);
     }
     
@@ -125,7 +125,7 @@ public class DefaultCustomerService implements CustomerService {
         Users users = null;
 
         do {
-            users = userDao.findByCustomerId(customerId, offset, limit);
+            users = userDao.getUsersByCustomerId(customerId, offset, limit);
             offset = offset + limit;
             userList.addAll(users.getUsers());
 
@@ -141,7 +141,7 @@ public class DefaultCustomerService implements CustomerService {
         Clients clients = null;
 
         do {
-            clients = clientDao.getByCustomerId(customerId, offset, limit);
+            clients = clientDao.getClientsByCustomerId(customerId, offset, limit);
             offset = offset + limit;
             clientList.addAll(clients.getClients());
 
