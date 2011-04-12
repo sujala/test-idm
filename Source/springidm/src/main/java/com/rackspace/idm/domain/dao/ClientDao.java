@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface ClientDao {
 
-    void add(Client client, String customerUniqueId);
+    void addClient(Client client, String customerUniqueId);
 
     void addClientGroup(ClientGroup clientGroup);
 
@@ -20,30 +20,32 @@ public interface ClientDao {
 
     ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 
-    void delete(String clientId);
+    void deleteClient(String clientId);
 
     void deleteClientGroup(String customerId, String clientId, String name);
 
     void deleteDefinedPermission(Permission permission);
 
-    List<Client> findAll();
+    List<Client> getAllClients();
 
-    Client getClient(String customerId, String clientId);
+    Client getClientByClientId(String clientId);
 
-    Client findByClientId(String clientId);
+    Client getClientByClientname(String clientName);
 
-    Client findByClientname(String clientName);
+    Client getClientByCustomerIdAndClientId(String customerId, String clientId);
 
-    Client findByInum(String inum);
-
-    ClientGroup findClientGroupByUniqueId(String uniqueId);
-
-    Clients getByCustomerId(String customerId, int offset, int limit);
+    Client getClientByInum(String inum);
 
     ClientGroup getClientGroup(String customerId, String clientId,
         String groupName);
 
+    ClientGroup getClientGroupByUniqueId(String uniqueId);
+
     List<ClientGroup> getClientGroupsByClientId(String clientId);
+
+    Clients getClientsByCustomerId(String customerId, int offset, int limit);
+
+    List<Client> getClientsThatHavePermission(Permission permission);
 
     Permission getDefinedPermissionByClientIdAndPermissionId(String clientId,
         String permissionId);
@@ -52,19 +54,17 @@ public interface ClientDao {
 
     String getUnusedClientInum(String customerInum);
 
-    void removeUserFromGroup(String userUniqueId, ClientGroup group);
-
-    void save(Client client);
-
-    void setAllClientLocked(String customerId, boolean locked);
-
-    void updateClientGroup(ClientGroup group);
-
-    void updateDefinedPermission(Permission permission);
-    
-    List<Client> getClientsThatHavePermission(Permission permission);
-    
     void grantPermissionToClient(Permission permission, Client client);
     
+    void removeUserFromGroup(String userUniqueId, ClientGroup group);
+
     void revokePermissionFromClient(Permission permission, Client client);
+
+    void setClientsLockedFlagByCustomerId(String customerId, boolean locked);
+    
+    void updateClient(Client client);
+    
+    void updateClientGroup(ClientGroup group);
+    
+    void updateDefinedPermission(Permission permission);
 }

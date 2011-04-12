@@ -34,7 +34,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         super(connPools, config);
     }
 
-    public void add(Customer customer) {
+    public void addCustomer(Customer customer) {
         getLogger().info("Adding customer {}", customer);
         if (customer == null) {
             getLogger().error("Null instance of Customer was passed.");
@@ -200,7 +200,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         getLogger().debug("Added customer {}", customer);
     }
 
-    public void delete(String customerId) {
+    public void deleteCustomer(String customerId) {
         getLogger().info("Deleting customer {}", customerId);
         if (StringUtils.isBlank(customerId)) {
             getLogger().error("Null or Empty customerId paramter");
@@ -208,7 +208,7 @@ public class LdapCustomerRepository extends LdapRepository implements
                 "Null or Empty customerId parameter.");
         }
         
-        Customer customer = findByCustomerId(customerId);
+        Customer customer = getCustomerByCustomerId(customerId);
 
         String customerDN = customer.getUniqueId();
         
@@ -286,7 +286,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         getLogger().info("Deleted customer {}", customerId);
     }
 
-    public List<Customer> findAll() {
+    public List<Customer> getAllCustomers() {
         getLogger().debug("Search all customers");
         SearchResult searchResult = null;
 
@@ -316,7 +316,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         return customers;
     }
 
-    public Customer findByCustomerId(String customerId) {
+    public Customer getCustomerByCustomerId(String customerId) {
         getLogger().debug("Doing search for customerId {}", customerId);
 
         if (StringUtils.isBlank(customerId)) {
@@ -343,7 +343,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         return customer;
     }
 
-    public Customer findByInum(String customerInum) {
+    public Customer getCustomerByInum(String customerInum) {
         getLogger().debug("Doing search for customerInum {}", customerInum);
 
         if (StringUtils.isBlank(customerInum)) {
@@ -385,34 +385,19 @@ public class LdapCustomerRepository extends LdapRepository implements
         return customer;
     }
 
-    public String getCustomerDnByCustomerId(String customerId) {
-        String dn = null;
-        SearchResult searchResult = getCustomerSearchResult(customerId);
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            dn = e.getDN();
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error(
-                "More than one entry was found for customerId {}", customerId);
-            throw new IllegalStateException(
-                "More than one entry was found for this customerId");
-        }
-        return dn;
-    }
-
     public String getUnusedCustomerInum() {
         // TODO: We might may this call to the XDI server in the future.
         Customer customer = null;
         String inum = "";
         do {
             inum = this.getRackspaceInumPrefix() + InumHelper.getRandomInum(2);
-            customer = findByInum(inum);
+            customer = getCustomerByInum(inum);
         } while (customer != null);
 
         return inum;
     }
 
-    public void save(Customer customer) {
+    public void updateCustomer(Customer customer) {
         getLogger().debug("Updating customer {}", customer);
 
         if (customer == null || StringUtils.isBlank(customer.getCustomerId())) {
@@ -422,7 +407,7 @@ public class LdapCustomerRepository extends LdapRepository implements
                 "Bad parameter: The Customer instance either null or its customerId has no value.");
         }
 
-        Customer oldCustomer = findByCustomerId(customer.getCustomerId());
+        Customer oldCustomer = getCustomerByCustomerId(customer.getCustomerId());
 
         if (oldCustomer == null) {
             getLogger().error("No record found for customer {}",
@@ -440,8 +425,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         List<Modification> mods = getModifications(oldCustomer, customer);
         Audit audit = Audit.log(oldCustomer).modify(mods);
         try {
-			result = getAppConnPool().modify(
-                getCustomerDnByCustomerId(customer.getCustomerId()),
+			result = getAppConnPool().modify(oldCustomer.getUniqueId(),
                 mods);
         } catch (LDAPException ldapEx) {
         	audit.fail();

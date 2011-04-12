@@ -5,19 +5,17 @@ import java.util.List;
 import com.rackspace.idm.domain.entity.Customer;
 
 public interface CustomerDao {
-    void add(Customer customer);
+    void addCustomer(Customer customer);
 
-    Customer findByCustomerId(String customerId);
+    Customer getCustomerByCustomerId(String customerId);
 
-    Customer findByInum(String inum);
+    Customer getCustomerByInum(String inum);
 
-    List<Customer> findAll();
+    List<Customer> getAllCustomers();
 
-    void save(Customer customer);
+    void updateCustomer(Customer customer);
 
-    void delete(String customerId);
-
-    String getCustomerDnByCustomerId(String customerId);
+    void deleteCustomer(String customerId);
 
     String getUnusedCustomerInum();
 }

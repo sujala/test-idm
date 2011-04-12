@@ -48,7 +48,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         super(connPools, config);
     }
 
-    public void add(Client client, String customerUniqueId) {
+    public void addClient(Client client, String customerUniqueId) {
         getLogger().info("Adding client {}", client);
 
         if (client == null) {
@@ -210,7 +210,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             throw new IllegalArgumentException(errMsg);
         }
 
-        Client client = this.getClient(clientGroup.getCustomerId(),
+        Client client = this.getClientByCustomerIdAndClientId(clientGroup.getCustomerId(),
             clientGroup.getClientId());
 
         if (client == null) {
@@ -311,7 +311,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             atts.add(new Attribute(ATTR_PERMISSION_TYPE, permission.getType()));
         }
 
-        Client client = this.getClient(permission.getCustomerId(),
+        Client client = this.getClientByCustomerIdAndClientId(permission.getCustomerId(),
             permission.getClientId());
 
         if (client == null) {
@@ -406,7 +406,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     public ClientAuthenticationResult authenticate(String clientId,
         String clientSecret) {
         BindResult result;
-        Client client = findByClientId(clientId);
+        Client client = getClientByClientId(clientId);
 
         if (client == null) {
             return new ClientAuthenticationResult(null, false);
@@ -431,7 +431,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             ResultCode.SUCCESS.equals(result.getResultCode()));
     }
 
-    public void delete(String clientId) {
+    public void deleteClient(String clientId) {
         getLogger().info("Deleting client {}", clientId);
         if (StringUtils.isBlank(clientId)) {
             getLogger().error("Null or Empty clientId paramter");
@@ -439,7 +439,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 "Null or Empty clientId parameter.");
         }
 
-        Client client = this.findByClientId(clientId);
+        Client client = this.getClientByClientId(clientId);
         String clientDN = client.getUniqueId();
 
         Audit audit = Audit.log(client).delete();
@@ -548,7 +548,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().info("Deleted permission {}", permission);
     }
 
-    public List<Client> findAll() {
+    public List<Client> getAllClients() {
         getLogger().debug("Search all clients");
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -578,7 +578,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return clients;
     }
 
-    public Client findByClientId(String clientId) {
+    public Client getClientByClientId(String clientId) {
         getLogger().debug("Doing search for clientId {}", clientId);
 
         if (StringUtils.isBlank(clientId)) {
@@ -600,7 +600,29 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return client;
     }
 
-    public Client getClient(String customerId, String clientId) {
+    public Client getClientByClientname(String clientName) {
+        getLogger().debug("Searching for client {}", clientName);
+
+        if (StringUtils.isBlank(clientName)) {
+            getLogger().error("Null or Empty client name parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty client name parameter.");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_NAME, clientName)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+
+        Client client = getSingleClient(searchFilter);
+
+        getLogger().debug("Found client - {}", client);
+
+        return client;
+    }
+
+    public Client getClientByCustomerIdAndClientId(String customerId, String clientId) {
         getLogger().debug("Doing search for clientId {}", clientId);
 
         if (StringUtils.isBlank(clientId)) {
@@ -621,6 +643,150 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().debug("Found client - {}", client);
 
         return client;
+    }
+
+    public Client getClientByInum(String inum) {
+        getLogger().debug("Doing search for Inum {}", inum);
+
+        if (StringUtils.isBlank(inum)) {
+            getLogger().error("Null or Empty Inum parameter");
+            throw new IllegalArgumentException("Null or Empty Inum parameter.");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_INUM, inum)
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+
+        Client client = getSingleClient(searchFilter);
+
+        getLogger().debug("Found client - {}", client);
+
+        return client;
+    }
+
+    public ClientGroup getClientGroup(String customerId, String clientId,
+        String groupName) {
+
+        ClientGroup group = null;
+        SearchResult searchResult = null;
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_NAME, groupName)
+            .addEqualAttribute(ATTR_CLIENT_ID, clientId)
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP)
+            .build();
+
+        try {
+            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
+                searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("Error searching for clientGroup {} - {}",
+                groupName, ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() == 1) {
+            SearchResultEntry e = searchResult.getSearchEntries().get(0);
+            group = getClientGroup(e);
+        } else if (searchResult.getEntryCount() > 1) {
+            getLogger().error("More than one entry was found for group {}",
+                clientId);
+            throw new IllegalStateException(
+                "More than one entry was found for this group");
+        }
+
+        return group;
+    }
+
+    public ClientGroup getClientGroupByUniqueId(String uniqueId) {
+        ClientGroup group = null;
+        SearchResult searchResult = null;
+
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
+            ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
+
+        try {
+            searchResult = getAppConnPool().search(uniqueId, SearchScope.BASE,
+                searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() == 1) {
+            SearchResultEntry e = searchResult.getSearchEntries().get(0);
+            if (e.getObjectClassAttribute().hasValue(OBJECTCLASS_CLIENTGROUP)) {
+                group = getClientGroup(e);
+            }
+        } else if (searchResult.getEntryCount() > 1) {
+            String errMsg = String.format(
+                "More than one entry was found for client search - %s",
+                uniqueId);
+            getLogger().error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
+        getLogger().debug("Found Client Group - {}", group);
+
+        return group;
+    }
+
+    public List<ClientGroup> getClientGroupsByClientId(String clientId) {
+
+        List<ClientGroup> groups = new ArrayList<ClientGroup>();
+
+        Client client = this.getClientByClientId(clientId);
+
+        if (client == null) {
+            throw new NotFoundException();
+        }
+
+        String searchDN = "ou=groups," + client.getUniqueId();
+
+        SearchResult searchResult = null;
+
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
+            ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
+
+        try {
+            searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
+                searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("Error searching for clientId {} - {}", clientId,
+                ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() > 0) {
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                groups.add(getClientGroup(entry));
+            }
+        }
+        return groups;
+    }
+
+    public Clients getClientsByCustomerId(String customerId, int offset, int limit) {
+        getLogger().debug("Doing search for customerId {}", customerId);
+
+        if (StringUtils.isBlank(customerId)) {
+            getLogger().error("Null or Empty customerId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty customerId parameter.");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+        Clients clients = getMultipleClients(searchFilter, offset, limit);
+
+        getLogger().debug("Found clients {} for customer {}", clients,
+            customerId);
+
+        return clients;
     }
 
     public List<Client> getClientsThatHavePermission(Permission permission) {
@@ -662,175 +828,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return clientList;
     }
 
-    public Client findByClientname(String clientName) {
-        getLogger().debug("Searching for client {}", clientName);
-
-        if (StringUtils.isBlank(clientName)) {
-            getLogger().error("Null or Empty client name parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty client name parameter.");
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_NAME, clientName)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEAPPLICATION).build();
-
-        Client client = getSingleClient(searchFilter);
-
-        getLogger().debug("Found client - {}", client);
-
-        return client;
-    }
-
-    public ClientGroup findClientGroupByUniqueId(String uniqueId) {
-        ClientGroup group = null;
-        SearchResult searchResult = null;
-
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
-            ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
-
-        try {
-            searchResult = getAppConnPool().search(uniqueId, SearchScope.BASE,
-                searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            if (e.getObjectClassAttribute().hasValue(OBJECTCLASS_CLIENTGROUP)) {
-                group = getClientGroup(e);
-            }
-        } else if (searchResult.getEntryCount() > 1) {
-            String errMsg = String.format(
-                "More than one entry was found for client search - %s",
-                uniqueId);
-            getLogger().error(errMsg);
-            throw new IllegalStateException(errMsg);
-        }
-
-        getLogger().debug("Found Client Group - {}", group);
-
-        return group;
-    }
-
-    public Client findByInum(String inum) {
-        getLogger().debug("Doing search for Inum {}", inum);
-
-        if (StringUtils.isBlank(inum)) {
-            getLogger().error("Null or Empty Inum parameter");
-            throw new IllegalArgumentException("Null or Empty Inum parameter.");
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_INUM, inum)
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEAPPLICATION).build();
-
-        Client client = getSingleClient(searchFilter);
-
-        getLogger().debug("Found client - {}", client);
-
-        return client;
-    }
-
-    public Clients getByCustomerId(String customerId, int offset, int limit) {
-        getLogger().debug("Doing search for customerId {}", customerId);
-
-        if (StringUtils.isBlank(customerId)) {
-            getLogger().error("Null or Empty customerId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty customerId parameter.");
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEAPPLICATION).build();
-        Clients clients = getMultipleClients(searchFilter, offset, limit);
-
-        getLogger().debug("Found clients {} for customer {}", clients,
-            customerId);
-
-        return clients;
-    }
-
-    public ClientGroup getClientGroup(String customerId, String clientId,
-        String groupName) {
-
-        ClientGroup group = null;
-        SearchResult searchResult = null;
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_NAME, groupName)
-            .addEqualAttribute(ATTR_CLIENT_ID, clientId)
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP)
-            .build();
-
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for clientGroup {} - {}",
-                groupName, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            group = getClientGroup(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error("More than one entry was found for group {}",
-                clientId);
-            throw new IllegalStateException(
-                "More than one entry was found for this group");
-        }
-
-        return group;
-    }
-
-    public List<ClientGroup> getClientGroupsByClientId(String clientId) {
-
-        List<ClientGroup> groups = new ArrayList<ClientGroup>();
-
-        Client client = this.findByClientId(clientId);
-
-        if (client == null) {
-            throw new NotFoundException();
-        }
-
-        String searchDN = "ou=groups," + client.getUniqueId();
-
-        SearchResult searchResult = null;
-
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
-            ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
-
-        try {
-            searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
-                searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for clientId {} - {}", clientId,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() > 0) {
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
-                groups.add(getClientGroup(entry));
-            }
-        }
-        return groups;
-    }
-
     public Permission getDefinedPermissionByClientIdAndPermissionId(
         String clientId, String permissionId) {
-        String clientDN = this.findByClientId(clientId).getUniqueId();
+        String clientDN = this.getClientByClientId(clientId).getUniqueId();
 
         String searchDN = "ou=permissions," + clientDN;
 
@@ -865,7 +865,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     public List<Permission> getDefinedPermissionsByClientId(String clientId) {
-        String clientDN = this.findByClientId(clientId).getUniqueId();
+        String clientDN = this.getClientByClientId(clientId).getUniqueId();
 
         String searchDN = "ou=permissions," + clientDN;
 
@@ -898,7 +898,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         String inum = "";
         do {
             inum = customerInum + InumHelper.getRandomInum(1);
-            client = findByInum(inum);
+            client = getClientByInum(inum);
         } while (client != null);
 
         return inum;
@@ -957,6 +957,54 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             .info("Added permission {} to client {}", permission, client);
     }
 
+    public void removeUserFromGroup(String userUniqueId, ClientGroup group) {
+        getLogger().info("Removing user {} from {}", userUniqueId, group);
+
+        if (StringUtils.isBlank(userUniqueId)) {
+            getLogger().error("Null user passed in or user uniqueId was blank");
+            throw new IllegalArgumentException(
+                "Null user passed in or user uniqueId was blank");
+        }
+
+        if (group == null || StringUtils.isBlank(group.getUniqueId())) {
+            getLogger().error(
+                "Null group passed in or group uniqueId was blank");
+            throw new IllegalArgumentException(
+                "Null group passed in or group uniqueId was blank");
+        }
+
+        List<Modification> mods = new ArrayList<Modification>();
+        mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER,
+            userUniqueId));
+
+        LDAPResult result;
+        Audit audit = Audit.log(group).modify(mods);
+        try {
+            result = getAppConnPool().modify(group.getUniqueId(), mods);
+        } catch (LDAPException ldapEx) {
+            audit.fail(ldapEx.getMessage());
+            getLogger().error("Error deleting user from group {} - {}", group,
+                ldapEx);
+            if (ldapEx.getResultCode().equals(ResultCode.NO_SUCH_ATTRIBUTE)) {
+                throw new NotFoundException("User isn't in group");
+            }
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
+            audit.fail(result.getResultCode().toString());
+            getLogger().error("Error removing user from group {} - {}", group,
+                result.getResultCode());
+            throw new IllegalStateException(
+                String
+                    .format(
+                        "LDAP error encountered when removing user from group: %s - %s",
+                        group, result.getResultCode().toString()));
+        }
+        audit.succeed();
+        getLogger().info("Removed user {} from group {}", userUniqueId, group);
+    }
+
     public void revokePermissionFromClient(Permission permission, Client client) {
         getLogger().info("Revoking permission {} from client {}", permission,
             client);
@@ -1006,95 +1054,21 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             client);
     }
 
-    public void removeUserFromGroup(String userUniqueId, ClientGroup group) {
-        getLogger().info("Removing user {} from {}", userUniqueId, group);
-
-        if (StringUtils.isBlank(userUniqueId)) {
-            getLogger().error("Null user passed in or user uniqueId was blank");
-            throw new IllegalArgumentException(
-                "Null user passed in or user uniqueId was blank");
-        }
-
-        if (group == null || StringUtils.isBlank(group.getUniqueId())) {
-            getLogger().error(
-                "Null group passed in or group uniqueId was blank");
-            throw new IllegalArgumentException(
-                "Null group passed in or group uniqueId was blank");
-        }
-
-        List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER,
-            userUniqueId));
-
-        LDAPResult result;
-        Audit audit = Audit.log(group).modify(mods);
-        try {
-            result = getAppConnPool().modify(group.getUniqueId(), mods);
-        } catch (LDAPException ldapEx) {
-            audit.fail(ldapEx.getMessage());
-            getLogger().error("Error deleting user from group {} - {}", group,
-                ldapEx);
-            if (ldapEx.getResultCode().equals(ResultCode.NO_SUCH_ATTRIBUTE)) {
-                throw new NotFoundException("User isn't in group");
+    public void setClientsLockedFlagByCustomerId(String customerId, boolean locked) {
+        Clients clients = this.findFirst100ByCustomerIdAndLock(customerId,
+            !locked);
+        if (clients.getClients() != null && clients.getClients().size() > 0) {
+            for (Client client : clients.getClients()) {
+                client.setLocked(locked);
+                this.updateClient(client);
             }
-            throw new IllegalStateException(ldapEx);
         }
-
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail(result.getResultCode().toString());
-            getLogger().error("Error removing user from group {} - {}", group,
-                result.getResultCode());
-            throw new IllegalStateException(
-                String
-                    .format(
-                        "LDAP error encountered when removing user from group: %s - %s",
-                        group, result.getResultCode().toString()));
+        if (clients.getTotalRecords() > 0) {
+            this.setClientsLockedFlagByCustomerId(customerId, locked);
         }
-        audit.succeed();
-        getLogger().info("Removed user {} from group {}", userUniqueId, group);
     }
 
-    public void updateClientGroup(ClientGroup group) {
-        getLogger().debug("Updating client group {}", group);
-
-        if (group == null || StringUtils.isBlank(group.getUniqueId())) {
-            getLogger().error(
-                "ClientGroup instance is null or its uniqueId is blank.");
-            throw new IllegalArgumentException(
-                "Bad parameter: The Client instance is null or its uniqueId is blank.");
-        }
-
-        ClientGroup oldGroup = this.findClientGroupByUniqueId(group
-            .getUniqueId());
-
-        if (group.getType().equalsIgnoreCase(oldGroup.getType())) {
-            return;
-        }
-
-        List<Modification> mods = new ArrayList<Modification>();
-
-        if (group.getType() != null && StringUtils.isBlank(group.getType())) {
-            mods.add(new Modification(ModificationType.DELETE, ATTR_GROUP_TYPE));
-        } else {
-            mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_GROUP_TYPE, group.getType()));
-        }
-
-        Audit audit = Audit.log(group).modify(mods);
-        try {
-            getAppConnPool().modify(oldGroup.getUniqueId(), mods);
-        } catch (LDAPException ldapEx) {
-            audit.fail();
-            getLogger().error("Error updating clientGroup {} - {}", group,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        audit.succeed();
-        getLogger().debug("Updated clientGroup {}", group.getName());
-    }
-
-    public void save(Client client) {
+    public void updateClient(Client client) {
         getLogger().debug("Updating client {}", client);
 
         if (client == null || StringUtils.isBlank(client.getClientId())) {
@@ -1104,7 +1078,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 "Bad parameter: The Client instance either null or its clientName has no value.");
         }
         String clientId = client.getClientId();
-        Client oldClient = findByClientId(clientId);
+        Client oldClient = getClientByClientId(clientId);
 
         if (oldClient == null) {
             getLogger().error("No record found for client {}", clientId);
@@ -1142,18 +1116,44 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().debug("Updated client {}", client.getName());
     }
 
-    public void setAllClientLocked(String customerId, boolean locked) {
-        Clients clients = this.findFirst100ByCustomerIdAndLock(customerId,
-            !locked);
-        if (clients.getClients() != null && clients.getClients().size() > 0) {
-            for (Client client : clients.getClients()) {
-                client.setLocked(locked);
-                this.save(client);
-            }
+    public void updateClientGroup(ClientGroup group) {
+        getLogger().debug("Updating client group {}", group);
+
+        if (group == null || StringUtils.isBlank(group.getUniqueId())) {
+            getLogger().error(
+                "ClientGroup instance is null or its uniqueId is blank.");
+            throw new IllegalArgumentException(
+                "Bad parameter: The Client instance is null or its uniqueId is blank.");
         }
-        if (clients.getTotalRecords() > 0) {
-            this.setAllClientLocked(customerId, locked);
+
+        ClientGroup oldGroup = this.getClientGroupByUniqueId(group
+            .getUniqueId());
+
+        if (group.getType().equalsIgnoreCase(oldGroup.getType())) {
+            return;
         }
+
+        List<Modification> mods = new ArrayList<Modification>();
+
+        if (group.getType() != null && StringUtils.isBlank(group.getType())) {
+            mods.add(new Modification(ModificationType.DELETE, ATTR_GROUP_TYPE));
+        } else {
+            mods.add(new Modification(ModificationType.REPLACE,
+                ATTR_GROUP_TYPE, group.getType()));
+        }
+
+        Audit audit = Audit.log(group).modify(mods);
+        try {
+            getAppConnPool().modify(oldGroup.getUniqueId(), mods);
+        } catch (LDAPException ldapEx) {
+            audit.fail();
+            getLogger().error("Error updating clientGroup {} - {}", group,
+                ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        audit.succeed();
+        getLogger().debug("Updated clientGroup {}", group.getName());
     }
 
     public void updateDefinedPermission(Permission permission) {

@@ -6,7 +6,7 @@ import com.rackspace.idm.domain.entity.Users;
 
 public interface UserDao {
 
-    void add(User user, String customerUniqueId);
+    void addUser(User user, String customerUniqueId);
 
     UserAuthenticationResult authenticate(String userName, String password);
 
@@ -16,35 +16,35 @@ public interface UserDao {
 
     UserAuthenticationResult authenticateByNastIdAndAPIKey(String nastId, String apiKey);
 
-    void delete(String username);
+    void deleteUser(String username);
 
-    Users findAll(int offset, int limit);
-
-    Users findByCustomerId(String customerId, int offset, int limit);
-
-    User findByInum(String inum);
-
-    User findByMossoId(int mossoId);
-
-    User findByNastId(String nastId);
-
-    User findByRPN(String rpn);
-
-    User findByUsername(String username);
-
-    User findUser(String customerId, String username);
+    Users getAllUsers(int offset, int limit);
 
     String[] getGroupIdsForUser(String username);
 
     String getUnusedUserInum(String customerInum);
 
+    User getUserByCustomerIdAndUsername(String customerId, String username);
+
+    User getUserByInum(String inum);
+
+    User getUserByMossoId(int mossoId);
+
+    User getUserByNastId(String nastId);
+
+    User getUserByRPN(String rpn);
+
+    User getUserByUsername(String username);
+
+    Users getUsersByCustomerId(String customerId, int offset, int limit);
+
     boolean isUsernameUnique(String username);
+
+    void setUsersLockedFlagByCustomerId(String customerId, boolean locked);
 
     /**
      * @param user User instance with update changes
      * @param hasSelfUpdatedPassword True if the user is changing his/her own password.
      */
-    void save(User user, boolean hasSelfUpdatedPassword);
-
-    void setAllUsersLocked(String customerId, boolean locked);
+    void updateUser(User user, boolean hasSelfUpdatedPassword);
 }
