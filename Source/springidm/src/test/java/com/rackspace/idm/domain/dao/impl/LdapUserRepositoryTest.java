@@ -40,17 +40,17 @@ public class LdapUserRepositoryTest {
     public static void cleanUpData() {
         final LdapConnectionPools pools = getConnPools();
         LdapUserRepository cleanUpRepo = getRepo(pools);
-        User deleteme = cleanUpRepo.findByUsername("deleteme");
+        User deleteme = cleanUpRepo.getUserByUsername("deleteme");
         if (deleteme != null) {
-            cleanUpRepo.delete("deleteme");
+            cleanUpRepo.deleteUser("deleteme");
         }
-        User deleteme2 = cleanUpRepo.findByUsername("delete.me");
+        User deleteme2 = cleanUpRepo.getUserByUsername("delete.me");
         if (deleteme2 != null) {
-            cleanUpRepo.delete("delete.me");
+            cleanUpRepo.deleteUser("delete.me");
         }
-        User deleteme3 = cleanUpRepo.findByUsername("delete,me");
+        User deleteme3 = cleanUpRepo.getUserByUsername("delete,me");
         if (deleteme3 != null) {
-            cleanUpRepo.delete("delete,me");
+            cleanUpRepo.deleteUser("delete,me");
         }
         pools.close();
     }
@@ -75,63 +75,63 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldNotAcceptNullOrBlankUsernameOrInum() {
         try {
-            repo.findByUsername(null);
+            repo.getUserByUsername(null);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
 
         try {
-            repo.findByUsername("     ");
+            repo.getUserByUsername("     ");
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
 
         try {
-            repo.findByNastId(null);
+            repo.getUserByNastId(null);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
 
         try {
-            repo.findByNastId("     ");
+            repo.getUserByNastId("     ");
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
 
         try {
-            repo.findByInum(null);
+            repo.getUserByInum(null);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
 
         try {
-            repo.findByInum("     ");
+            repo.getUserByInum("     ");
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
 
         try {
-            repo.add(null, "");
+            repo.addUser(null, "");
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
 
         try {
-            repo.delete("     ");
+            repo.deleteUser("     ");
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
 
         try {
-            repo.save(null, false);
+            repo.updateUser(null, false);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
@@ -161,7 +161,7 @@ public class LdapUserRepositoryTest {
 
     @Test
     public void shouldFindOneUserThatExistsByUsername() {
-        User user = repo.findByUsername("mkovacs");
+        User user = repo.getUserByUsername("mkovacs");
         Assert.assertNotNull(user);
         Assert.assertEquals("Kovacs", user.getLastname());
     }
@@ -169,71 +169,71 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldFindOneUserThatExistsByNastId() {
         User newUser = addNewTestUser();
-        User user = repo.findByNastId("TESTNASTID");
+        User user = repo.getUserByNastId("TESTNASTID");
         Assert.assertNotNull(user);
         Assert.assertEquals("deleteme", user.getUsername());
 
-        repo.delete(newUser.getUsername());
+        repo.deleteUser(newUser.getUsername());
     }
 
     @Test
     public void shouldFindOneUserThatExistsByMossoId() {
         User newUser = addNewTestUser();
-        User user = repo.findByMossoId(88888);
+        User user = repo.getUserByMossoId(88888);
         Assert.assertNotNull(user);
         Assert.assertEquals("deleteme", user.getUsername());
 
-        repo.delete(newUser.getUsername());
+        repo.deleteUser(newUser.getUsername());
     }
 
     @Test
     public void shouldFindOneUserThatExistsByRPN() {
         User newUser = addNewTestUser();
-        User user = repo.findByRPN(newUser.getPersonId());
+        User user = repo.getUserByRPN(newUser.getPersonId());
         Assert.assertNotNull(user);
         Assert.assertEquals("deleteme", user.getUsername());
 
-        repo.delete(newUser.getUsername());
+        repo.deleteUser(newUser.getUsername());
     }
 
     @Test
     public void shouldNotFindOneUserThatDoesNotExistsByNastId() {
-        User user = repo.findByNastId("NOTAREALNASTID");
+        User user = repo.getUserByNastId("NOTAREALNASTID");
         Assert.assertNull(user);
     }
 
     @Test
     public void shouldNotFindOneUserThatDoesNotExistsByMossoId() {
-        User user = repo.findByMossoId(0);
+        User user = repo.getUserByMossoId(0);
         Assert.assertNull(user);
     }
 
     @Test
     public void shouldNotFindUserThatDoesNotExistByUsername() {
-        User user = repo.findByUsername("hi. i don't exist.");
+        User user = repo.getUserByUsername("hi. i don't exist.");
         Assert.assertNull(user);
     }
 
     @Test
     public void shouldFindOneUserThatExistsByInum() {
-        User mkovacs = repo.findByUsername("mkovacs");
-        User user = repo.findByInum(mkovacs.getInum());
+        User mkovacs = repo.getUserByUsername("mkovacs");
+        User user = repo.getUserByInum(mkovacs.getInum());
         Assert.assertNotNull(user);
         Assert.assertEquals("Kovacs", user.getLastname());
     }
 
     @Test
     public void shouldNotFindUserThatDoesNotExistByInum() {
-        User user = repo.findByUsername("BADINUM");
+        User user = repo.getUserByUsername("BADINUM");
         Assert.assertNull(user);
     }
 
     @Test
     public void shouldAddNewUser() {
         User newUser = addNewTestUser();
-        User checkuser = repo.findByUsername(newUser.getUsername());
+        User checkuser = repo.getUserByUsername(newUser.getUsername());
         Assert.assertNotNull(checkuser);
-        repo.delete(newUser.getUsername());
+        repo.deleteUser(newUser.getUsername());
     }
 
     @Test
@@ -245,8 +245,8 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldDeleteUser() {
         User newUser = addNewTestUser();
-        repo.delete(newUser.getUsername());
-        User idontexist = repo.findByUsername(newUser.getUsername());
+        repo.deleteUser(newUser.getUsername());
+        User idontexist = repo.getUserByUsername(newUser.getUsername());
         Assert.assertNull(idontexist);
     }
 
@@ -257,22 +257,22 @@ public class LdapUserRepositoryTest {
 
         newUser.setSoftDeleted(true);
 
-        repo.save(newUser, false);
+        repo.updateUser(newUser, false);
 
-        User deletedUser = repo.findByUsername(newUser.getUsername());
-        User notFound = repo.findUser(newUser.getCustomerId(), newUser.getUsername());
+        User deletedUser = repo.getUserByUsername(newUser.getUsername());
+        User notFound = repo.getUserByCustomerIdAndUsername(newUser.getCustomerId(), newUser.getUsername());
 
         Assert.assertNotNull(deletedUser);
         Assert.assertNull(notFound);
 
         deletedUser.setSoftDeleted(false);
 
-        repo.save(deletedUser, false);
+        repo.updateUser(deletedUser, false);
 
-        User restoredUser = repo.findUser(deletedUser.getCustomerId(), deletedUser.getUsername());
+        User restoredUser = repo.getUserByCustomerIdAndUsername(deletedUser.getCustomerId(), deletedUser.getUsername());
         Assert.assertNotNull(restoredUser);
 
-        repo.delete(newUser.getUsername());
+        repo.deleteUser(newUser.getUsername());
     }
 
     @Test
@@ -281,21 +281,21 @@ public class LdapUserRepositoryTest {
         User newUser = addNewTestUser();
         newUser.setSoftDeleted(true);
 
-        repo.save(newUser, false);
+        repo.updateUser(newUser, false);
 
-        User softDeletedUser = repo.findByUsername(newUser.getUsername());
+        User softDeletedUser = repo.getUserByUsername(newUser.getUsername());
 
         Assert.assertNotNull(softDeletedUser.getSoftDeleteTimestamp());
 
         softDeletedUser.setSoftDeleted(false);
 
-        repo.save(softDeletedUser, false);
+        repo.updateUser(softDeletedUser, false);
 
-        User unSoftDeletedUser = repo.findUser(newUser.getCustomerId(), newUser.getUsername());
+        User unSoftDeletedUser = repo.getUserByCustomerIdAndUsername(newUser.getCustomerId(), newUser.getUsername());
 
         Assert.assertNull(unSoftDeletedUser.getSoftDeleteTimestamp());
 
-        repo.delete(newUser.getUsername());
+        repo.deleteUser(newUser.getUsername());
     }
 
     @Test
@@ -323,17 +323,17 @@ public class LdapUserRepositoryTest {
         newUser.setPasswordObj(Password.existingInstance("password", new DateTime(), false));
 
         try {
-            repo.save(newUser, false);
+            repo.updateUser(newUser, false);
         } catch (IllegalStateException e) {
-            repo.delete(newUser.getUsername());
+            repo.deleteUser(newUser.getUsername());
             Assert.fail("Could not save the record: " + e.getMessage());
         }
 
-        User changedUser = repo.findByUsername(userName);
+        User changedUser = repo.getUserByUsername(userName);
         Assert.assertNotNull(changedUser);
         Assert.assertFalse(changedUser.getPasswordObj().isNew());
 
-        repo.delete(newUser.getUsername());
+        repo.deleteUser(newUser.getUsername());
     }
 
     @Test
@@ -344,7 +344,7 @@ public class LdapUserRepositoryTest {
         String userName = newUser.getUsername();
 
         // get user
-        User changedUser = repo.findByUsername(userName);
+        User changedUser = repo.getUserByUsername(userName);
         Assert.assertFalse(changedUser.getPasswordObj().isNew());
 
         // update password
@@ -354,17 +354,17 @@ public class LdapUserRepositoryTest {
 
         // save user
         try {
-            repo.save(changedUser, true);
+            repo.updateUser(changedUser, true);
         } catch (IllegalStateException e) {
-            repo.delete(newUser.getUsername());
+            repo.deleteUser(newUser.getUsername());
             Assert.fail("Could not save the record: " + e.getMessage());
         }
 
-        changedUser = repo.findByUsername(userName);
+        changedUser = repo.getUserByUsername(userName);
         Assert.assertNotNull(changedUser);
 
         // delete test user
-        repo.delete(newUser.getUsername());
+        repo.deleteUser(newUser.getUsername());
     }
 
     @Test
@@ -390,8 +390,8 @@ public class LdapUserRepositoryTest {
     @Ignore
     public void shouldRetrieveAllRecords() {
         User user = addNewTestUser();
-        Users users = repo.findAll(0, 100);
-        repo.delete(user.getUsername());
+        Users users = repo.getAllUsers(0, 100);
+        repo.deleteUser(user.getUsername());
         Assert.assertTrue(users.getUsers().size() > 1);
     }
 
@@ -412,7 +412,7 @@ public class LdapUserRepositoryTest {
         User newUser = addNewTestUser();
         UserAuthenticationResult authenticated = repo.authenticateByNastIdAndAPIKey("TESTNASTID", "XXX");
         Assert.assertTrue(authenticated.isAuthenticated());
-        repo.delete(newUser.getUsername());
+        repo.deleteUser(newUser.getUsername());
     }
 
     @Test
@@ -420,7 +420,7 @@ public class LdapUserRepositoryTest {
         User newUser = addNewTestUser();
         UserAuthenticationResult authenticated = repo.authenticateByMossoIdAndAPIKey(88888, "XXX");
         Assert.assertTrue(authenticated.isAuthenticated());
-        repo.delete(newUser.getUsername());
+        repo.deleteUser(newUser.getUsername());
     }
 
     @Test
@@ -438,35 +438,35 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldAddNewUserWithPeriod() {
         User newUser = createTestUserInstanceWithPeriod();
-        repo.add(newUser, testCustomerDN);
-        User checkuser = repo.findByUsername(newUser.getUsername());
+        repo.addUser(newUser, testCustomerDN);
+        User checkuser = repo.getUserByUsername(newUser.getUsername());
         Assert.assertNotNull(checkuser);
-        repo.delete(newUser.getUsername());
+        repo.deleteUser(newUser.getUsername());
     }
 
     @Test
     public void shouldAddNewUserWithComma() {
         User newUser = createTestUserInstanceWithComma();
-        repo.add(newUser, testCustomerDN);
-        User checkuser = repo.findByUsername(newUser.getUsername());
+        repo.addUser(newUser, testCustomerDN);
+        User checkuser = repo.getUserByUsername(newUser.getUsername());
         Assert.assertNotNull(checkuser);
-        repo.delete(newUser.getUsername());
+        repo.deleteUser(newUser.getUsername());
     }
 
     @Test
     public void shouldSetAllUsersLocked() {
         User newUser = addNewTestUser();
-        repo.setAllUsersLocked(newUser.getCustomerId(), true);
+        repo.setUsersLockedFlagByCustomerId(newUser.getCustomerId(), true);
 
-        User changedUser = repo.findByUsername(newUser.getUsername());
+        User changedUser = repo.getUserByUsername(newUser.getUsername());
         Assert.assertEquals(changedUser.isLocked(), true);
 
-        repo.delete(newUser.getUsername());
+        repo.deleteUser(newUser.getUsername());
     }
 
     @Test
     public void shouldFindByCustomerID() {
-        Users users = repo.findByCustomerId("RACKSPACE", 0, 200);
+        Users users = repo.getUsersByCustomerId("RACKSPACE", 0, 200);
 
         Assert.assertTrue(users.getLimit() == 200);
         Assert.assertTrue(users.getOffset() == 0);
@@ -483,8 +483,8 @@ public class LdapUserRepositoryTest {
             Password password = Password.generateRandom(false);
             repo.authenticate(newUser.getUsername(), password.getValue());
         }
-        newUser = repo.findByUsername(newUser.getUsername());
-        repo.delete(newUser.getUsername());
+        newUser = repo.getUserByUsername(newUser.getUsername());
+        repo.deleteUser(newUser.getUsername());
 
         Assert.assertTrue(newUser.isMaxLoginFailuresExceded());
     }
@@ -494,15 +494,15 @@ public class LdapUserRepositoryTest {
         User newUser = addNewTestUser();
         Password pwd0 = Password.newInstance("newPassword0");
         newUser.setPasswordObj(pwd0);
-        repo.save(newUser, true);
+        repo.updateUser(newUser, true);
         Password pwd1 = Password.newInstance("newPassword1");
         newUser.setPasswordObj(pwd1);
-        repo.save(newUser, true);
+        repo.updateUser(newUser, true);
     }
 
     private User addNewTestUser() {
         User newUser = createTestUserInstance();
-        repo.add(newUser, testCustomerDN);
+        repo.addUser(newUser, testCustomerDN);
         return newUser;
     }
 

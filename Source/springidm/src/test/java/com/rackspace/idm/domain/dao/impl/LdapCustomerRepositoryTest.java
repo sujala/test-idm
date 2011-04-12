@@ -38,9 +38,9 @@ public class LdapCustomerRepositoryTest {
     public static void cleanUpData() {
         final LdapConnectionPools pools = getConnPools();
         LdapCustomerRepository cleanUpRepo = getRepo(pools);
-        Customer deleteme = cleanUpRepo.findByCustomerId(customerId);
+        Customer deleteme = cleanUpRepo.getCustomerByCustomerId(customerId);
         if (deleteme != null) {
-            cleanUpRepo.delete(customerId);
+            cleanUpRepo.deleteCustomer(customerId);
         }
         pools.close();
     }
@@ -73,28 +73,28 @@ public class LdapCustomerRepositoryTest {
     @Test
     public void shouldNotAcceptNullOrBlankCustomerId() {
         try {
-            repo.findByCustomerId(null);
+            repo.getCustomerByCustomerId(null);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
 
         try {
-            repo.findByCustomerId("     ");
+            repo.getCustomerByCustomerId("     ");
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
 
         try {
-            repo.delete("");
+            repo.deleteCustomer("");
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
 
         try {
-            repo.save(null);
+            repo.updateCustomer(null);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
@@ -112,23 +112,23 @@ public class LdapCustomerRepositoryTest {
         Customer newCustomer = addNewTestCustomer(newCustomerId,
             newCustomerName, newInum, newIname, status, seeAlso, newOwner,
             country);
-        Customer checkCustomer = repo.findByCustomerId(newCustomer
+        Customer checkCustomer = repo.getCustomerByCustomerId(newCustomer
             .getCustomerId());
         Assert.assertNotNull(checkCustomer);
         Assert.assertEquals(newCustomerId, checkCustomer.getCustomerId());
-        repo.delete(checkCustomer.getCustomerId());
+        repo.deleteCustomer(checkCustomer.getCustomerId());
     }
 
     @Test
     public void shouldFindOneCustomerThatExists() {
-        Customer customer = repo.findByCustomerId(customerId);
+        Customer customer = repo.getCustomerByCustomerId(customerId);
         Assert.assertNotNull(customer);
         Assert.assertEquals(customerId, customer.getCustomerId());
     }
 
     @Test
     public void shouldNotFindCustomerThatDoesNotExist() {
-        Customer customer = repo.findByCustomerId("hi. i don't exist.");
+        Customer customer = repo.getCustomerByCustomerId("hi. i don't exist.");
         Assert.assertNull(customer);
     }
 
@@ -140,7 +140,7 @@ public class LdapCustomerRepositoryTest {
 
     @Test
     public void shouldFindOneCustomerThatExistsByInum() {
-        Customer customer = repo.findByInum(inum);
+        Customer customer = repo.getCustomerByInum(inum);
         Assert.assertNotNull(customer);
         Assert.assertEquals(customerId, customer.getCustomerId());
     }
@@ -148,14 +148,14 @@ public class LdapCustomerRepositoryTest {
     @Test
     public void shouldNotFindCustomerThatDoesNotExistByInum() {
         Customer customer = repo
-            .findByInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.Idontexist");
+            .getCustomerByInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.Idontexist");
         Assert.assertNull(customer);
     }
 
     @Test
     @Ignore
     public void shouldRetrieveAllCustomersThatExist() {
-        List<Customer> customers = repo.findAll();
+        List<Customer> customers = repo.getAllCustomers();
         Assert.assertTrue(customers.size() >= 1);
     }
 
@@ -171,48 +171,40 @@ public class LdapCustomerRepositoryTest {
         Customer customerToDelete = addNewTestCustomer(delCustomerId,
             delCustomerName, delInum, delIname, status, seeAlso, delOwner,
             country);
-        repo.delete(customerToDelete.getCustomerId());
-        Customer idontexist = repo.findByCustomerId(customerToDelete
+        repo.deleteCustomer(customerToDelete.getCustomerId());
+        Customer idontexist = repo.getCustomerByCustomerId(customerToDelete
             .getCustomerId());
         Assert.assertNull(idontexist);
     }
 
     @Test
     public void shouldUpdateNonDnAttrOfCustomer() {
-        Customer testCustomer = repo.findByCustomerId(customerId);
+        Customer testCustomer = repo.getCustomerByCustomerId(customerId);
 
         // Update all non-DN attributes
         testCustomer.setIname("My_New_Iname");
         testCustomer.setStatus(CustomerStatus.INACTIVE);
 
         try {
-            repo.save(testCustomer);
+            repo.updateCustomer(testCustomer);
         } catch (IllegalStateException e) {
             Assert.fail("Could not save the record: " + e.getMessage());
         }
 
-        Customer changedCustomer = repo.findByCustomerId(customerId);
+        Customer changedCustomer = repo.getCustomerByCustomerId(customerId);
         Assert.assertEquals(testCustomer, changedCustomer);
 
         // Update only one attribute
         testCustomer.setIname("My_Changed_Name");
 
         try {
-            repo.save(testCustomer);
+            repo.updateCustomer(testCustomer);
         } catch (IllegalStateException e) {
             Assert.fail("Could not save the record: " + e.getMessage());
         }
 
-        changedCustomer = repo.findByCustomerId(customerId);
+        changedCustomer = repo.getCustomerByCustomerId(customerId);
         Assert.assertEquals(testCustomer, changedCustomer);
-    }
-
-    @Test
-    public void shouldGenerateCustomerDn() {
-        String dn = repo.getCustomerDnByCustomerId(customerId);
-        String expectedDn = String.format(
-            "o=%s,o=rackspace,dc=rackspace,dc=com", inum);
-        Assert.assertEquals(expectedDn, dn);
     }
 
     @Test
@@ -238,7 +230,7 @@ public class LdapCustomerRepositoryTest {
         Customer newCustomer = createTestCustomerInstance(customerId, inum,
             iname, status, seeAlso, owner);
         newCustomer.setSoftDeleted(softDeleted);
-        repo.add(newCustomer);
+        repo.addCustomer(newCustomer);
         return newCustomer;
     }
 
