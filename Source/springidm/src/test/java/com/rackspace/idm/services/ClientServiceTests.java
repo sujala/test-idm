@@ -77,7 +77,7 @@ public class ClientServiceTests {
     public void shouldGetClientByName() {
 
         Client client = getFakeClient();
-        EasyMock.expect(mockClientDao.findByClientname(name)).andReturn(client);
+        EasyMock.expect(mockClientDao.getClientByClientname(name)).andReturn(client);
         EasyMock.replay(mockClientDao);
 
         Client retrievedClient = clientService.getByName(name);
@@ -90,7 +90,7 @@ public class ClientServiceTests {
     public void shouldGetClientById() {
 
         Client client = getFakeClient();
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(
             client);
         EasyMock.replay(mockClientDao);
 
@@ -104,7 +104,7 @@ public class ClientServiceTests {
     public void shouldGetClientByCustomerIdAndClientId() {
 
         Client client = getFakeClient();
-        EasyMock.expect(mockClientDao.getClient(customerId, clientId)).andReturn(
+        EasyMock.expect(mockClientDao.getClientByCustomerIdAndClientId(customerId, clientId)).andReturn(
             client);
         EasyMock.replay(mockClientDao);
 
@@ -116,7 +116,7 @@ public class ClientServiceTests {
 
     @Test
     public void shouldReturnNullForNonExistentClientByName() {
-        EasyMock.expect(mockClientDao.findByClientname(name)).andReturn(null);
+        EasyMock.expect(mockClientDao.getClientByClientname(name)).andReturn(null);
         EasyMock.replay(mockClientDao);
 
         Client retrievedClient = clientService.getByName(name);
@@ -127,7 +127,7 @@ public class ClientServiceTests {
 
     @Test
     public void shouldReturnNullForNonExistentClientById() {
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(null);
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(null);
         EasyMock.replay(mockClientDao);
 
         Client retrievedClient = clientService.getById(clientId);
@@ -156,15 +156,15 @@ public class ClientServiceTests {
         Customer customer = getFakeCustomer();
 
         EasyMock.expect(
-            mockCustomerDao.findByCustomerId(client.getCustomerId()))
+            mockCustomerDao.getCustomerByCustomerId(client.getCustomerId()))
             .andReturn(customer);
         EasyMock.replay(mockCustomerDao);
 
-        EasyMock.expect(mockClientDao.findByClientname(client.getName()))
+        EasyMock.expect(mockClientDao.getClientByClientname(client.getName()))
             .andReturn(null);
         EasyMock.expect(mockClientDao.getUnusedClientInum(customer.getInum()))
             .andReturn(customer.getInum() + "!8888.8888");
-        mockClientDao.add((Client) EasyMock.anyObject(),
+        mockClientDao.addClient((Client) EasyMock.anyObject(),
             (String) EasyMock.anyObject());
         EasyMock.replay(mockClientDao);
 
@@ -178,7 +178,7 @@ public class ClientServiceTests {
         Client client = getFakeClient();
 
         EasyMock.expect(
-            mockCustomerDao.findByCustomerId(client.getCustomerId()))
+            mockCustomerDao.getCustomerByCustomerId(client.getCustomerId()))
             .andReturn(null);
         EasyMock.replay(mockCustomerDao);
 
@@ -191,11 +191,11 @@ public class ClientServiceTests {
         Customer customer = getFakeCustomer();
 
         EasyMock.expect(
-            mockCustomerDao.findByCustomerId(client.getCustomerId()))
+            mockCustomerDao.getCustomerByCustomerId(client.getCustomerId()))
             .andReturn(customer);
         EasyMock.replay(mockCustomerDao);
 
-        EasyMock.expect(mockClientDao.findByClientname(client.getName()))
+        EasyMock.expect(mockClientDao.getClientByClientname(client.getName()))
             .andReturn(client);
         EasyMock.replay(mockClientDao);
 
@@ -206,8 +206,8 @@ public class ClientServiceTests {
 
     @Test
     public void shouldDeleteClient() {
-        mockClientDao.delete(clientId);
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
+        mockClientDao.deleteClient(clientId);
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(
             getFakeClient());
         EasyMock
             .expect(mockClientDao.getDefinedPermissionsByClientId(clientId))
@@ -226,7 +226,7 @@ public class ClientServiceTests {
     
     @Test(expected = NotFoundException.class)
     public void shouldThrowNotFoundExceptionForDeleteNonExistentClient() {
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(
             null);
 
         EasyMock.replay(mockClientDao);
@@ -247,7 +247,7 @@ public class ClientServiceTests {
     @Test
     public void shouldSaveClient() {
         Client client = getFakeClient();
-        mockClientDao.save(client);
+        mockClientDao.updateClient(client);
         EasyMock.replay(mockClientDao);
 
         clientService.save(client);
@@ -259,9 +259,9 @@ public class ClientServiceTests {
     public void shouldSoftDeleteClient() {
         Client client = getFakeClient();
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(
             client);
-        mockClientDao.save(client);
+        mockClientDao.updateClient(client);
         EasyMock.replay(mockClientDao);
 
         clientService.softDelete(clientId);
@@ -281,7 +281,7 @@ public class ClientServiceTests {
         clients.setOffset(0);
         clients.setTotalRecords(2);
 
-        EasyMock.expect(mockClientDao.getByCustomerId(customerId, 0, 100))
+        EasyMock.expect(mockClientDao.getClientsByCustomerId(customerId, 0, 100))
             .andReturn(clients);
         EasyMock.replay(mockClientDao);
 
@@ -332,11 +332,11 @@ public class ClientServiceTests {
         Customer customer = getFakeCustomer();
         Permission resource = getFakePermission();
 
-        EasyMock.expect(mockCustomerDao.findByCustomerId(customerId))
+        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
             .andReturn(customer);
         EasyMock.replay(mockCustomerDao);
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(
             client);
         EasyMock.expect(
             mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
@@ -356,11 +356,11 @@ public class ClientServiceTests {
         Customer customer = getFakeCustomer();
         Permission resource = getFakePermission();
 
-        EasyMock.expect(mockCustomerDao.findByCustomerId(customerId))
+        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
             .andReturn(null);
         EasyMock.replay(mockCustomerDao);
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(
             client);
         EasyMock.expect(
             mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
@@ -380,11 +380,11 @@ public class ClientServiceTests {
         Customer customer = getFakeCustomer();
         Permission resource = getFakePermission();
 
-        EasyMock.expect(mockCustomerDao.findByCustomerId(customerId))
+        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
             .andReturn(customer);
         EasyMock.replay(mockCustomerDao);
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(null);
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(null);
         EasyMock.expect(
             mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
                 clientId, resourceId)).andReturn(null);
@@ -403,11 +403,11 @@ public class ClientServiceTests {
         Customer customer = getFakeCustomer();
         Permission resource = getFakePermission();
 
-        EasyMock.expect(mockCustomerDao.findByCustomerId(customerId))
+        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
             .andReturn(customer);
         EasyMock.replay(mockCustomerDao);
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(
             client);
         EasyMock.expect(
             mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
@@ -460,7 +460,7 @@ public class ClientServiceTests {
         Client client = getFakeClient();
         String clientId = client.getClientId();
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(
             client);
         EasyMock.expect(
             mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
@@ -480,9 +480,9 @@ public class ClientServiceTests {
         Client client = getFakeClient();
         String clientId = client.getClientId();
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(null);
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(null);
 
-        mockClientDao.save(client);
+        mockClientDao.updateClient(client);
         EasyMock.replay(mockClientDao);
 
         clientService.grantPermission(clientId, resource);
@@ -496,10 +496,10 @@ public class ClientServiceTests {
         Client client = getFakeClient();
         String clientId = client.getClientId();
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(client);
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(client);
         EasyMock.expect(mockClientDao.getDefinedPermissionByClientIdAndPermissionId(clientId, resourceId)).andReturn(null);
 
-        mockClientDao.save(client);
+        mockClientDao.updateClient(client);
         EasyMock.replay(mockClientDao);
 
         clientService.grantPermission(clientId, resource);
@@ -513,9 +513,9 @@ public class ClientServiceTests {
         Client client = getFakeClient();
         String clientId = client.getClientId();
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(null);
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(null);
 
-        mockClientDao.save(client);
+        mockClientDao.updateClient(client);
         EasyMock.replay(mockClientDao);
 
         clientService.revokePermission(clientId, resource);
@@ -529,10 +529,10 @@ public class ClientServiceTests {
         Client client = getFakeClient();
         String clientId = client.getClientId();
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(client);
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(client);
         EasyMock.expect(mockClientDao.getDefinedPermissionByClientIdAndPermissionId(clientId, resourceId)).andReturn(null);
 
-        mockClientDao.save(client);
+        mockClientDao.updateClient(client);
         EasyMock.replay(mockClientDao);
 
         clientService.revokePermission(clientId, resource);
@@ -551,8 +551,8 @@ public class ClientServiceTests {
         group2.setName("Some Other Name");
         group2.setType("Another Type");
         
-        EasyMock.expect(mockClientDao.findClientGroupByUniqueId("first")).andReturn(group1);
-        EasyMock.expect(mockClientDao.findClientGroupByUniqueId("second")).andReturn(group2);
+        EasyMock.expect(mockClientDao.getClientGroupByUniqueId("first")).andReturn(group1);
+        EasyMock.expect(mockClientDao.getClientGroupByUniqueId("second")).andReturn(group2);
         EasyMock.replay(mockClientDao);
         
         List<ClientGroup> groups = clientService.getClientGroupsForUser(username);
@@ -599,7 +599,7 @@ public class ClientServiceTests {
         Client client = getFakeClient();
         String clientId = client.getClientId();
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(
             client);
         EasyMock.expect(
             mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
@@ -619,7 +619,7 @@ public class ClientServiceTests {
         Client client = getFakeClient();
         String oldSecret = client.getClientSecret();
 
-        mockClientDao.save(client);
+        mockClientDao.updateClient(client);
         EasyMock.replay(mockClientDao);
 
         ClientSecret clientSecret = clientService.resetClientSecret(client);
@@ -677,7 +677,7 @@ public class ClientServiceTests {
     public void shouldAddUserToClientGroup() {
         ClientGroup group = getFakeClientGroup();
         User user = getFakeUser();
-        EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(user);
+        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
         EasyMock.replay(mockUserDao);
         mockClientDao.addUserToClientGroup(user.getUniqueId(), group);
         EasyMock.replay(mockClientDao);
@@ -716,7 +716,7 @@ public class ClientServiceTests {
     public void shouldNotAddUserToClientGroupForUserNotFound() {
         ClientGroup group = getFakeClientGroup();
         User user = getFakeUser();
-        EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(null);
+        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(null);
         EasyMock.replay(mockUserDao);
         mockClientDao.addUserToClientGroup(user.getUniqueId(), group);
         EasyMock.replay(mockClientDao);
@@ -729,7 +729,7 @@ public class ClientServiceTests {
     public void shouldNotAddUserToClientGroupForGroupNotFound() {
         ClientGroup group = getFakeClientGroup();
         User user = getFakeUser();
-        EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(user);
+        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
         EasyMock.replay(mockUserDao);
         mockClientDao.addUserToClientGroup(user.getUniqueId(), group);
         EasyMock.expectLastCall().andThrow(new NotFoundException());
@@ -743,7 +743,7 @@ public class ClientServiceTests {
     public void shouldAddUserToClientGroupForGroupNotFoundThatUserIsAlreadyAMemberOf() {
         ClientGroup group = getFakeClientGroup();
         User user = getFakeUser();
-        EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(user);
+        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
         EasyMock.replay(mockUserDao);
         mockClientDao.addUserToClientGroup(user.getUniqueId(), group);
         EasyMock.expectLastCall().andThrow(new DuplicateException());
@@ -757,7 +757,7 @@ public class ClientServiceTests {
     public void shouldRemoveUserFromClientGroup() {
         ClientGroup group = getFakeClientGroup();
         User user = getFakeUser();
-        EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(user);
+        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
         EasyMock.replay(mockUserDao);
         mockClientDao.removeUserFromGroup(user.getUniqueId(), group);
         EasyMock.replay(mockClientDao);
@@ -776,7 +776,7 @@ public class ClientServiceTests {
     @Test(expected = NotFoundException.class)
     public void shouldNotRemoveUserFromClientGroupForNonExistentUser() {
         ClientGroup group = getFakeClientGroup();
-        EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(null);
+        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(null);
         EasyMock.replay(mockUserDao);
         clientService.removeUserFromClientGroup(username, group);
     }
@@ -785,7 +785,7 @@ public class ClientServiceTests {
     public void shouldRemoveUserFromClientGroupThatUserIsNotAMemberOf() {
         ClientGroup group = getFakeClientGroup();
         User user = getFakeUser();
-        EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(user);
+        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
         EasyMock.replay(mockUserDao);
         mockClientDao.removeUserFromGroup(user.getUniqueId(), group);
         EasyMock.expectLastCall().andThrow(new NotFoundException());
@@ -833,8 +833,8 @@ public class ClientServiceTests {
         group2.setName("Some Other Name");
         group2.setType("Another Type");
         
-        EasyMock.expect(mockClientDao.findClientGroupByUniqueId("first")).andReturn(group1);
-        EasyMock.expect(mockClientDao.findClientGroupByUniqueId("second")).andReturn(group2);
+        EasyMock.expect(mockClientDao.getClientGroupByUniqueId("first")).andReturn(group1);
+        EasyMock.expect(mockClientDao.getClientGroupByUniqueId("second")).andReturn(group2);
         EasyMock.replay(mockClientDao);
         
         List<ClientGroup> groups = clientService.getClientGroupsForUserByClientIdAndType(username, clientId, groupType);
@@ -854,8 +854,8 @@ public class ClientServiceTests {
         group2.setName("Some Other Name");
         group2.setType("Another Type");
         
-        EasyMock.expect(mockClientDao.findClientGroupByUniqueId("first")).andReturn(group1);
-        EasyMock.expect(mockClientDao.findClientGroupByUniqueId("second")).andReturn(group2);
+        EasyMock.expect(mockClientDao.getClientGroupByUniqueId("first")).andReturn(group1);
+        EasyMock.expect(mockClientDao.getClientGroupByUniqueId("second")).andReturn(group2);
         EasyMock.replay(mockClientDao);
         
         List<ClientGroup> groups = clientService.getClientGroupsForUserByClientIdAndType(username, clientId, null);
@@ -874,8 +874,8 @@ public class ClientServiceTests {
         group2.setName("Some Other Name");
         group2.setType("Another Type");
         
-        EasyMock.expect(mockClientDao.findClientGroupByUniqueId("first")).andReturn(group1);
-        EasyMock.expect(mockClientDao.findClientGroupByUniqueId("second")).andReturn(group2);
+        EasyMock.expect(mockClientDao.getClientGroupByUniqueId("first")).andReturn(group1);
+        EasyMock.expect(mockClientDao.getClientGroupByUniqueId("second")).andReturn(group2);
         EasyMock.replay(mockClientDao);
         
         List<ClientGroup> groups = clientService.getClientGroupsForUserByClientIdAndType(username, null, null);

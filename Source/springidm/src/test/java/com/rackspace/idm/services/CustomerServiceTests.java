@@ -58,11 +58,11 @@ public class CustomerServiceTests {
     public void shouldAddCustomer() {
         Customer customer = getFakeCustomer();
 
-        EasyMock.expect(mockCustomerDao.findByCustomerId(customerId))
+        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
             .andReturn(null);
         EasyMock.expect(mockCustomerDao.getUnusedCustomerInum()).andReturn(
             "Inum");
-        mockCustomerDao.add(customer);
+        mockCustomerDao.addCustomer(customer);
         EasyMock.replay(mockCustomerDao);
 
         service.addCustomer(customer);
@@ -74,11 +74,11 @@ public class CustomerServiceTests {
     public void shouldNotAddDuplicateCustomer() {
         Customer customer = getFakeCustomer();
 
-        EasyMock.expect(mockCustomerDao.findByCustomerId(customerId))
+        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
             .andReturn(customer);
         EasyMock.expect(mockCustomerDao.getUnusedCustomerInum()).andReturn(
             "Inum");
-        mockCustomerDao.add(customer);
+        mockCustomerDao.addCustomer(customer);
         EasyMock.replay(mockCustomerDao);
 
         service.addCustomer(customer);
@@ -88,14 +88,14 @@ public class CustomerServiceTests {
 
     @Test
     public void shouldDeleteCustomer() {
-        mockCustomerDao.delete(customerId);
-        EasyMock.expect(mockCustomerDao.findByCustomerId(customerId)).andReturn(getFakeCustomer());
+        mockCustomerDao.deleteCustomer(customerId);
+        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId)).andReturn(getFakeCustomer());
         EasyMock.replay(mockCustomerDao);   
-        EasyMock.expect(mockUserDao.findByCustomerId(customerId, 0, 100)).andReturn(getFakeUsers());
-        mockUserDao.delete(username);
+        EasyMock.expect(mockUserDao.getUsersByCustomerId(customerId, 0, 100)).andReturn(getFakeUsers());
+        mockUserDao.deleteUser(username);
         EasyMock.replay(mockUserDao);
-        EasyMock.expect(mockClientDao.getByCustomerId(customerId, 0, 100)).andReturn(getFakeClients());
-        mockClientDao.delete(clientId);
+        EasyMock.expect(mockClientDao.getClientsByCustomerId(customerId, 0, 100)).andReturn(getFakeClients());
+        mockClientDao.deleteClient(clientId);
         EasyMock.replay(mockClientDao);
         service.deleteCustomer(customerId);
         EasyMock.verify(mockCustomerDao);
@@ -104,14 +104,14 @@ public class CustomerServiceTests {
     
     @Test(expected = NotFoundException.class)
     public void shouldNotDeleteNonExistentCustomer() {
-        EasyMock.expect(mockCustomerDao.findByCustomerId(customerId)).andReturn(null);
+        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId)).andReturn(null);
         EasyMock.replay(mockCustomerDao);   
         service.deleteCustomer(customerId);
     }
 
     @Test
     public void shouldGetCustomer() {
-        EasyMock.expect(mockCustomerDao.findByCustomerId(customerId))
+        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
             .andReturn(getFakeCustomer());
         EasyMock.replay(mockCustomerDao);
         Customer customer = service.getCustomer(customerId);
@@ -127,13 +127,13 @@ public class CustomerServiceTests {
         String customerId = customer.getCustomerId();
         boolean locked = true;
 
-        mockUserDao.setAllUsersLocked(customerId, locked);
+        mockUserDao.setUsersLockedFlagByCustomerId(customerId, locked);
         EasyMock.replay(mockUserDao);
 
-        mockClientDao.setAllClientLocked(customerId, locked);
+        mockClientDao.setClientsLockedFlagByCustomerId(customerId, locked);
         EasyMock.replay(mockClientDao);
 
-        mockCustomerDao.save(customer);
+        mockCustomerDao.updateCustomer(customer);
         EasyMock.replay(mockCustomerDao);
 
         service.setCustomerLocked(customer, locked);
@@ -147,10 +147,10 @@ public class CustomerServiceTests {
     public void shouldSoftDeleteCustomer() {
         Customer customer = getFakeCustomer();
 
-        EasyMock.expect(mockCustomerDao.findByCustomerId(customerId))
+        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
             .andReturn(customer);
         customer.setSoftDeleted(true);
-        mockCustomerDao.save(customer);
+        mockCustomerDao.updateCustomer(customer);
         EasyMock.replay(mockCustomerDao);
 
         service.softDeleteCustomer(customerId);
@@ -161,7 +161,7 @@ public class CustomerServiceTests {
     @Test
     public void shouldUpdateCustomer() {
         Customer customer = getFakeCustomer();
-        mockCustomerDao.save(customer);
+        mockCustomerDao.updateCustomer(customer);
         EasyMock.replay(mockCustomerDao);
         service.updateCustomer(customer);
         EasyMock.verify(mockCustomerDao);

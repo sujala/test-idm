@@ -72,6 +72,8 @@ public class UserServiceTests {
     String timeZone = "America/Chicago";
 
     String customerDN = "o=@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA,o=rackspace,dc=rackspace,dc=com";
+    
+    String userUniqueId = "uniqueId";
 
     String tokenString = "XXXX";
     String callbackUrl = "www.cp.com";
@@ -108,22 +110,16 @@ public class UserServiceTests {
     public void shouldAddUserToExistingCustomer() throws DuplicateException {
         User user = getFakeUser();
         Customer customer = getFakeCustomer();
-        EasyMock.expect(mockCustomerDao.findByCustomerId(customerId))
+        customer.setUniqueId(customerDN);
+        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
             .andReturn(customer);
-        EasyMock.expect(mockCustomerDao.getCustomerDnByCustomerId(customerId))
-            .andReturn(customerDN);
         EasyMock.replay(mockCustomerDao);
         EasyMock.expect(
             mockUserDao.getUnusedUserInum((String) EasyMock.anyObject()))
             .andReturn("@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA!3333.3333");
-        EasyMock
-            .expect(
-                mockUserDao
-                    .findByInum("@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA!3333.3333"))
-            .andReturn(user);
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername()))
             .andReturn(true);
-        mockUserDao.add((User) EasyMock.anyObject(), EasyMock.eq(customerDN));
+        mockUserDao.addUser((User) EasyMock.anyObject(), EasyMock.eq(customerDN));
         EasyMock.replay(mockUserDao);
         userService.addUser(user);
     }
@@ -132,7 +128,7 @@ public class UserServiceTests {
     public void shouldNotAddUserToNonExistentCustomer()
         throws DuplicateException {
         User user = getFakeUser();
-        EasyMock.expect(mockCustomerDao.findByCustomerId(customerId))
+        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
             .andReturn(null);
         EasyMock.replay(mockCustomerDao);
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername()))
@@ -156,7 +152,7 @@ public class UserServiceTests {
     public void shouldGetUser() {
         User user = getFakeUser();
 
-        EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(user);
+        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
         EasyMock.replay(mockUserDao);
 
         User retrievedUser = userService.getUser(username);
@@ -169,7 +165,7 @@ public class UserServiceTests {
     public void shouldGetUserByNastId() {
         User user = getFakeUser();
 
-        EasyMock.expect(mockUserDao.findByNastId(nastId)).andReturn(user);
+        EasyMock.expect(mockUserDao.getUserByNastId(nastId)).andReturn(user);
         EasyMock.replay(mockUserDao);
 
         User retrievedUser = userService.getUserByNastId(nastId);
@@ -182,7 +178,7 @@ public class UserServiceTests {
     public void shouldGetUserByMossoId() {
         User user = getFakeUser();
 
-        EasyMock.expect(mockUserDao.findByMossoId(mossoId)).andReturn(user);
+        EasyMock.expect(mockUserDao.getUserByMossoId(mossoId)).andReturn(user);
         EasyMock.replay(mockUserDao);
 
         User retrievedUser = userService.getUserByMossoId(mossoId);
@@ -195,7 +191,7 @@ public class UserServiceTests {
     public void shouldGetUserByRPN() {
         User user = getFakeUser();
 
-        EasyMock.expect(mockUserDao.findByRPN(user.getPersonId())).andReturn(user);
+        EasyMock.expect(mockUserDao.getUserByRPN(user.getPersonId())).andReturn(user);
         EasyMock.replay(mockUserDao);
 
         User retrievedUser = userService.getUserByRPN(user.getPersonId());
@@ -206,7 +202,7 @@ public class UserServiceTests {
     
     @Test
     public void shouldDeleteUser() {
-        mockUserDao.delete(username);
+        mockUserDao.deleteUser(username);
         EasyMock.replay(mockUserDao);
 
         
@@ -226,7 +222,7 @@ public class UserServiceTests {
     @Test
     public void shouldUpdateUser() {
         User user = getFakeUser();
-        mockUserDao.save(user, false);
+        mockUserDao.updateUser(user, false);
         EasyMock.replay(mockUserDao);
 
         userService.updateUser(user, false);
@@ -353,7 +349,7 @@ public class UserServiceTests {
         String statusStr = "active";
         User user = getFakeUser();
 
-        mockUserDao.save(user,false);
+        mockUserDao.updateUser(user,false);
         EasyMock.replay(mockUserDao);
 
         userService.updateUserStatus(user, statusStr);
@@ -366,7 +362,7 @@ public class UserServiceTests {
         String statusStr = "inactive";
         User user = getFakeUser();
 
-        mockUserDao.save(user, false);
+        mockUserDao.updateUser(user, false);
         EasyMock.replay(mockUserDao);
 
         userService.updateUserStatus(user, statusStr);
@@ -386,7 +382,7 @@ public class UserServiceTests {
         returnedUsers.setUsers(users);
 
         EasyMock
-            .expect(mockUserDao.findByCustomerId(customerId, offset, limit))
+            .expect(mockUserDao.getUsersByCustomerId(customerId, offset, limit))
             .andReturn(returnedUsers);
         EasyMock.replay(mockUserDao);
 
@@ -429,7 +425,7 @@ public class UserServiceTests {
         User user = getFakeUser();
         user.setInum("");
 
-        EasyMock.expect(mockUserDao.findByUsername(username)).andReturn(user);
+        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
         EasyMock.replay(mockUserDao);
         userService.getUser(username);
     }

@@ -143,7 +143,7 @@ public class AccessTokenServiceTests {
         EasyMock.expect(mockUserService.getUser(username)).andReturn(getFakeUser());
         EasyMock.replay(mockUserService);
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(getFakeClient());
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(getFakeClient());
         EasyMock.replay(mockClientDao);
 
         mockTokenDao.save(token);
@@ -166,7 +166,7 @@ public class AccessTokenServiceTests {
 
         User user = getFakeUser();
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(getFakeClient());
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(getFakeClient());
         EasyMock.replay(mockClientDao);
 
         mockTokenDao.save(token);
@@ -203,7 +203,7 @@ public class AccessTokenServiceTests {
         EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
         EasyMock.replay(mockUserService);
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(null);
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(null);
         EasyMock.replay(mockClientDao);
 
         mockTokenDao.save(token);
@@ -219,7 +219,7 @@ public class AccessTokenServiceTests {
 
         Client client = getFakeClient();
         client.setInum("");
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(client);
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(client);
         EasyMock.replay(mockClientDao);
 
         mockTokenDao.save(token);
@@ -241,7 +241,7 @@ public class AccessTokenServiceTests {
         EasyMock.expect(mockUserService.getUser(username)).andReturn(getFakeUser());
         EasyMock.replay(mockUserService);
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(null);
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(null);
         EasyMock.replay(mockClientDao);
 
         mockTokenDao.save(token);
@@ -257,7 +257,7 @@ public class AccessTokenServiceTests {
 
         Client client = getFakeClient();
         client.setClientId("");
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(client);
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(client);
         EasyMock.replay(mockClientDao);
 
         mockTokenDao.save(token);
@@ -338,7 +338,7 @@ public class AccessTokenServiceTests {
         EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
         EasyMock.replay(mockUserService);
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(null);
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(null);
         EasyMock.replay(mockClientDao);
 
         tokenService.getAccessTokenForUser(user, null, current);
@@ -348,7 +348,7 @@ public class AccessTokenServiceTests {
     public void shouldThrowErrorForGetTokenIfClientIsNull() {
         DateTime current = new DateTime();
 
-        EasyMock.expect(mockClientDao.findByClientId(clientId)).andReturn(null);
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(null);
         EasyMock.replay(mockClientDao);
 
         AccessToken retrievedToken = tokenService.getAccessTokenForClient(null, current);
