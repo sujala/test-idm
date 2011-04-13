@@ -42,19 +42,19 @@ import com.rackspace.idm.validation.InputValidator;
 import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
 
 public class DefaultOAuthService implements OAuthService {
-    private UserService userService;
-    private ClientService clientService;
-    private AccessTokenService accessTokenService;
-    private RefreshTokenService refreshTokenService;
+    private final UserService userService;
+    private final ClientService clientService;
+    private final AccessTokenService accessTokenService;
+    private final RefreshTokenService refreshTokenService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
-    private AuthorizationService authorizationService;
-    private Configuration config;
-    private InputValidator inputValidator;
+    private final AuthorizationService authorizationService;
+    private final Configuration config;
+    private final InputValidator inputValidator;
 
-    public DefaultOAuthService(UserService userService, ClientService clientService,
-        AccessTokenService accessTokenService, RefreshTokenService refreshTokenService,
-        AuthorizationService authorizationService, Configuration config,
-        InputValidator inputValidator) {
+    public DefaultOAuthService(final UserService userService, final ClientService clientService,
+            final AccessTokenService accessTokenService, final RefreshTokenService refreshTokenService,
+            final AuthorizationService authorizationService, final Configuration config,
+            final InputValidator inputValidator) {
         this.userService = userService;
         this.clientService = clientService;
         this.accessTokenService = accessTokenService;
@@ -65,58 +65,58 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     @Override
-    public AccessToken getAccessTokenByAuthHeader(String authHeader) {
+    public AccessToken getAccessTokenByAuthHeader(final String authHeader) {
         return accessTokenService.getAccessTokenByAuthHeader(authHeader);
     }
 
     @Override
-    public AuthData getTokens(OAuthGrantType grantType, AuthCredentials trParam, DateTime currentTime)
-        throws NotAuthenticatedException {
-        int expirationSeconds = accessTokenService.getDefaultTokenExpirationSeconds();
-        
+    public AuthData getTokens(final OAuthGrantType grantType, final AuthCredentials trParam, final DateTime currentTime)
+    throws NotAuthenticatedException {
+        final int expirationSeconds = accessTokenService.getDefaultTokenExpirationSeconds();
+
         if (StringUtils.isBlank(trParam.getClientId())) {
             throw new BadRequestException("client_id cannot be blank");
         }
 
-        ClientAuthenticationResult caResult = clientService.authenticate(trParam.getClientId(),
-            trParam.getClientSecret());
+        final ClientAuthenticationResult caResult = clientService.authenticate(trParam.getClientId(),
+                trParam.getClientSecret());
         if (!caResult.isAuthenticated()) {
-            String message = "Bad Client credentials for clientId {}";
-            logger.warn(message, trParam.getClientId());
-			throw new NotAuthenticatedException(message);
+            final String message = "Bad Client credentials for " + trParam.getClientId();
+            logger.warn(message);
+            throw new NotAuthenticatedException(message);
         }
 
         AccessToken accessToken = null;
         RefreshToken refreshToken = null;
         if (PASSWORD == grantType) {
-            
+
             if (StringUtils.isBlank(trParam.getUsername())) {
                 throw new BadRequestException("username cannot be blank");
             }
-            
-            UserAuthenticationResult uaResult = userService.authenticate(trParam.getUsername(),
-                trParam.getPassword());
+
+            final UserAuthenticationResult uaResult = userService.authenticate(trParam.getUsername(),
+                    trParam.getPassword());
             if (!uaResult.isAuthenticated()) {
-                String message = "Bad User credentials for userName {}";
-                logger.warn(message, trParam.getUsername());
-				throw new NotAuthenticatedException(message);
+                final String message = "Bad User credentials for " + trParam.getUsername();
+                logger.warn(message);
+                throw new NotAuthenticatedException(message);
             }
-            
+
             if (!isTrustedServer() && accessTokenService.passwordRotationDurationElapsed(trParam.getUsername())) {
-                AccessToken resetToken = accessTokenService.createPasswordResetAccessTokenForUser
-                                 (trParam.getUsername(), trParam.getClientId());
-                AuthData authData = new AuthData();
+                final AccessToken resetToken = accessTokenService.createPasswordResetAccessTokenForUser
+                (trParam.getUsername(), trParam.getClientId());
+                final AuthData authData = new AuthData();
                 authData.setAccessToken(resetToken);
-                
+
                 authData.setPasswordResetOnlyToken(true);
                 authData.setUserPasswordExpirationDate(userService.getUserPasswordExpirationDate(trParam.getUsername()));
                 return authData;
             }
-            
+
             accessToken = accessTokenService.getTokenByBasicCredentials(caResult.getClient(),
-                uaResult.getUser(), expirationSeconds, currentTime);
+                    uaResult.getUser(), expirationSeconds, currentTime);
             refreshToken = getRefreshTokenForUser(uaResult.getUser().getUsername(), caResult.getClient()
-                .getClientId(), currentTime);
+                    .getClientId(), currentTime);
             return new AuthData(accessToken, refreshToken);
         }
 
@@ -129,40 +129,41 @@ public class DefaultOAuthService implements OAuthService {
             return new AuthData(accessToken, refreshToken);
         }
 
-        String message = String.format("Unsupported GrantType: %s", grantType);
+        final String message = String.format("Unsupported GrantType: %s", grantType);
         logger.warn(message);
         throw new NotAuthenticatedException(message);
     }
 
-    public void revokeTokensLocally(String tokenStringRequestingDelete, String tokenToDelete) {
+    @Override
+    public void revokeTokensLocally(final String tokenStringRequestingDelete, final String tokenToDelete) {
         logger.info("Deleting Token {}", tokenToDelete);
 
-        AccessToken deletedToken = accessTokenService.getAccessTokenByTokenString(tokenToDelete);
+        final AccessToken deletedToken = accessTokenService.getAccessTokenByTokenString(tokenToDelete);
         if (deletedToken == null) {
-            String error = "No entry found for token " + tokenToDelete;
+            final String error = "No entry found for token " + tokenToDelete;
             logger.debug(error);
             throw new NotFoundException(error);
         }
 
-        AccessToken requestingToken = accessTokenService
-            .getAccessTokenByTokenString(tokenStringRequestingDelete);
+        final AccessToken requestingToken = accessTokenService
+        .getAccessTokenByTokenString(tokenStringRequestingDelete);
         if (requestingToken == null) {
-            String error = "No entry found for token " + tokenStringRequestingDelete;
+            final String error = "No entry found for token " + tokenStringRequestingDelete;
             logger.warn(error);
             throw new IllegalStateException(error);
         }
 
-        boolean isAuthorized = authorizationService.authorizeCustomerIdm(requestingToken);
+        final boolean isAuthorized = authorizationService.authorizeCustomerIdm(requestingToken);
         if (!isAuthorized) {
             String errMsg;
             errMsg = String.format("Requesting token %s not authorized to revoke token %s locally.",
-                tokenStringRequestingDelete, tokenToDelete);
+                    tokenStringRequestingDelete, tokenToDelete);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         if (deletedToken.getRequestor() == null) {
-            String error = String.format("Token %s does not have a requestor", deletedToken.getTokenString());
+            final String error = String.format("Token %s does not have a requestor", deletedToken.getTokenString());
             logger.warn(error);
             throw new IllegalStateException(error);
         }
@@ -171,39 +172,39 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     @Override
-    public void revokeTokensGlobally(String tokenStringRequestingDelete, String tokenToDelete) {
+    public void revokeTokensGlobally(final String tokenStringRequestingDelete, final String tokenToDelete) {
         logger.debug("Deleting Token {}", tokenToDelete);
-        AccessToken deletedToken = accessTokenService.getAccessTokenByTokenStringGlobally(tokenToDelete);
+        final AccessToken deletedToken = accessTokenService.getAccessTokenByTokenStringGlobally(tokenToDelete);
         if (deletedToken == null) {
-            String error = "No entry found for token " + tokenToDelete;
+            final String error = "No entry found for token " + tokenToDelete;
             logger.warn(error);
             throw new NotFoundException(error);
         }
 
-        AccessToken requestingToken = accessTokenService
-            .getAccessTokenByTokenStringGlobally(tokenStringRequestingDelete);
+        final AccessToken requestingToken = accessTokenService
+        .getAccessTokenByTokenStringGlobally(tokenStringRequestingDelete);
         if (requestingToken == null) {
-            String error = "No entry found for token " + tokenStringRequestingDelete;
+            final String error = "No entry found for token " + tokenStringRequestingDelete;
             logger.warn(error);
             throw new IllegalStateException(error);
         }
 
-        boolean isGoodAsIdm = authorizationService.authorizeCustomerIdm(requestingToken);
+        final boolean isGoodAsIdm = authorizationService.authorizeCustomerIdm(requestingToken);
         // Only CustomerIdm Client and Client that got token or the user of
         // the token are authorized to revoke token
-        boolean isAuthorized = isGoodAsIdm
-            || authorizationService.authorizeAsRequestorOrOwner(deletedToken, requestingToken);
+        final boolean isAuthorized = isGoodAsIdm
+        || authorizationService.authorizeAsRequestorOrOwner(deletedToken, requestingToken);
 
         if (!isAuthorized) {
             String errMsg;
             errMsg = String.format("Requesting token %s not authorized to revoke token %s.",
-                tokenStringRequestingDelete, tokenToDelete);
+                    tokenStringRequestingDelete, tokenToDelete);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         if (deletedToken.getRequestor() == null) {
-            String error = String.format("Token %s does not have a requestor", deletedToken.getTokenString());
+            final String error = String.format("Token %s does not have a requestor", deletedToken.getTokenString());
             logger.warn(error);
             throw new IllegalStateException(error);
         }
@@ -214,26 +215,26 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     @Override
-    public void revokeTokensLocallyForOwner(String authTokenString, String ownerId) {
-        AccessToken requestingToken = accessTokenService.getAccessTokenByTokenString(authTokenString);
+    public void revokeTokensLocallyForOwner(final String authTokenString, final String ownerId) {
+        final AccessToken requestingToken = accessTokenService.getAccessTokenByTokenString(authTokenString);
         if (requestingToken == null) {
-            String error = "No entry found for token " + authTokenString;
+            final String error = "No entry found for token " + authTokenString;
             logger.warn(error);
             throw new IllegalArgumentException(error);
         }
 
-        boolean isAuthorized = authorizationService.authorizeCustomerIdm(requestingToken);
+        final boolean isAuthorized = authorizationService.authorizeCustomerIdm(requestingToken);
 
         if (!isAuthorized) {
-            String errMsg = String.format("Requesting token %s not authorized to revoke token for owner %s.",
-                authTokenString, ownerId);
+            final String errMsg = String.format("Requesting token %s not authorized to revoke token for owner %s.",
+                    authTokenString, ownerId);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         if (requestingToken.getRequestor() == null) {
-            String error = String.format("Token %s does not have a requestor",
-                requestingToken.getTokenString());
+            final String error = String.format("Token %s does not have a requestor",
+                    requestingToken.getTokenString());
             logger.warn(error);
             throw new IllegalStateException(error);
         }
@@ -243,43 +244,43 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     @Override
-    public void revokeTokensGloballyForOwner(String ownerId) {
+    public void revokeTokensGloballyForOwner(final String ownerId) {
         refreshTokenService.deleteAllTokensForUser(ownerId);
         accessTokenService.deleteAllGloballyForOwner(ownerId);
         logger.debug("Deleted all access tokens for owner {}.", ownerId);
     }
 
     @Override
-    public void revokeTokensLocallyForCustomer(String authTokenString, String customerId) {
-        AccessToken requestingToken = accessTokenService.getAccessTokenByTokenString(authTokenString);
+    public void revokeTokensLocallyForCustomer(final String authTokenString, final String customerId) {
+        final AccessToken requestingToken = accessTokenService.getAccessTokenByTokenString(authTokenString);
         if (requestingToken == null) {
-            String error = "No entry found for token " + authTokenString;
+            final String error = "No entry found for token " + authTokenString;
             logger.warn(error);
             throw new IllegalArgumentException(error);
         }
 
-        boolean isAuthorized = authorizationService.authorizeCustomerIdm(requestingToken);
+        final boolean isAuthorized = authorizationService.authorizeCustomerIdm(requestingToken);
 
         if (!isAuthorized) {
-            String errMsg = String.format(
-                "Requesting token %s not authorized to revoke token for customer %s.", authTokenString,
-                customerId);
+            final String errMsg = String.format(
+                    "Requesting token %s not authorized to revoke token for customer %s.", authTokenString,
+                    customerId);
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         if (requestingToken.getRequestor() == null) {
-            String error = String.format("Token %s does not have a requestor",
-                requestingToken.getTokenString());
+            final String error = String.format("Token %s does not have a requestor",
+                    requestingToken.getTokenString());
             logger.warn(error);
             throw new IllegalStateException(error);
         }
 
-        for (User user : getAllUsersForCustomerId(customerId)) {
+        for (final User user : getAllUsersForCustomerId(customerId)) {
             accessTokenService.deleteAllForOwner(user.getUsername());
         }
 
-        for (Client client : getAllClientsForCustomerId(customerId)) {
+        for (final Client client : getAllClientsForCustomerId(customerId)) {
             accessTokenService.deleteAllForOwner(client.getClientId());
         }
 
@@ -288,25 +289,27 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     @Override
-    public void revokeTokensGloballyForCustomer(String customerId) {
-        List<User> usersList = getAllUsersForCustomerId(customerId);
-        for (User user : usersList) {
+    public void revokeTokensGloballyForCustomer(final String customerId) {
+        final List<User> usersList = getAllUsersForCustomerId(customerId);
+        for (final User user : usersList) {
             refreshTokenService.deleteAllTokensForUser(user.getUsername());
         }
 
-        List<Client> clientsList = getAllClientsForCustomerId(customerId);
+        final List<Client> clientsList = getAllClientsForCustomerId(customerId);
 
         accessTokenService.deleteAllGloballyForCustomer(customerId, usersList, clientsList);
         logger.debug("Deleted all access tokens for customer {}.", customerId);
     }
 
-    public OAuthGrantType getGrantType(String grantTypeStrVal) {
-        OAuthGrantType grantType = OAuthGrantType.valueOf(grantTypeStrVal.replace("-", "_").toUpperCase());
+    @Override
+    public OAuthGrantType getGrantType(final String grantTypeStrVal) {
+        final OAuthGrantType grantType = OAuthGrantType.valueOf(grantTypeStrVal.replace("-", "_").toUpperCase());
         logger.debug("Verified GrantType: {}", grantTypeStrVal);
         return grantType;
     }
 
-    public ApiError validateGrantType(AuthCredentials trParam, OAuthGrantType grantType) {
+    @Override
+    public ApiError validateGrantType(final AuthCredentials trParam, final OAuthGrantType grantType) {
 
         if (OAuthGrantType.PASSWORD == grantType) {
             return inputValidator.validate(trParam, Default.class, BasicCredentialsCheck.class);
@@ -320,31 +323,31 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     // private functions
-    private List<Client> getAllClientsForCustomerId(String customerId) {
-        List<Client> clientsList = new ArrayList<Client>();
+    private List<Client> getAllClientsForCustomerId(final String customerId) {
+        final List<Client> clientsList = new ArrayList<Client>();
         int total = 1; // This gets overwritten, just needs to be greater than
-                       // offset right now.
+        // offset right now.
         for (int offset = 0; offset < total; offset += getPagingLimit()) {
-            Clients clientsObj = clientService.getByCustomerId(customerId, offset, getPagingLimit());
+            final Clients clientsObj = clientService.getByCustomerId(customerId, offset, getPagingLimit());
             clientsList.addAll(clientsObj.getClients());
             total = clientsObj.getTotalRecords();
         }
         return clientsList;
     }
 
-    private List<User> getAllUsersForCustomerId(String customerId) {
-        List<User> usersList = new ArrayList<User>();
+    private List<User> getAllUsersForCustomerId(final String customerId) {
+        final List<User> usersList = new ArrayList<User>();
         int total = 1; // This gets overwritten, just needs to be greater than
-                       // offset right now.
+        // offset right now.
         for (int offset = 0; offset < total; offset += getPagingLimit()) {
-            Users usersObj = userService.getByCustomerId(customerId, offset, getPagingLimit());
+            final Users usersObj = userService.getByCustomerId(customerId, offset, getPagingLimit());
             usersList.addAll(usersObj.getUsers());
             total = usersObj.getTotalRecords();
         }
         return usersList;
     }
 
-    private void deleteRefreshTokenByAccessToken(AccessToken accessToken) {
+    private void deleteRefreshTokenByAccessToken(final AccessToken accessToken) {
         // Clients do not get Refresh Tokens so there is no need to
         // revoke one if the access token is for a client
         if (accessToken.isClientToken()) {
@@ -353,7 +356,7 @@ public class DefaultOAuthService implements OAuthService {
         refreshTokenService.deleteTokenForUserByClientId(accessToken.getOwner(), accessToken.getRequestor());
     }
 
-    private AccessToken getTokenByNoCredentials(Client client, int expirationSeconds, DateTime currentTime) {
+    private AccessToken getTokenByNoCredentials(final Client client, final int expirationSeconds, final DateTime currentTime) {
         AccessToken token = accessTokenService.getAccessTokenForClient(client, currentTime);
         if (token == null || token.isExpired(currentTime)) {
             token = accessTokenService.createAccessTokenForClient(client, expirationSeconds);
@@ -364,26 +367,26 @@ public class DefaultOAuthService implements OAuthService {
         return token;
     }
 
-    private AuthData getTokenByRefreshToken(String refreshTokenString, int expirationSeconds,
-        DateTime currentTime) {
-        RefreshToken refreshToken = refreshTokenService.getRefreshTokenByTokenString(refreshTokenString);
+    private AuthData getTokenByRefreshToken(final String refreshTokenString, final int expirationSeconds,
+            final DateTime currentTime) {
+        final RefreshToken refreshToken = refreshTokenService.getRefreshTokenByTokenString(refreshTokenString);
         if (refreshToken == null || refreshToken.isExpired(currentTime)) {
-            String msg = String
-                .format("Unauthorized Refresh Token: %s", refreshTokenString);
+            final String msg = String
+            .format("Unauthorized Refresh Token: %s", refreshTokenString);
             logger.warn(msg);
             throw new NotAuthenticatedException(msg);
         }
         refreshTokenService.resetTokenExpiration(refreshToken);
-        String username = refreshToken.getOwner();
-        String clientId = refreshToken.getRequestor();
-        AccessToken token = accessTokenService
-            .createAccessTokenForUser(username, clientId, expirationSeconds);
+        final String username = refreshToken.getOwner();
+        final String clientId = refreshToken.getRequestor();
+        final AccessToken token = accessTokenService
+        .createAccessTokenForUser(username, clientId, expirationSeconds);
         return new AuthData(token, refreshToken);
     }
 
-    private RefreshToken getRefreshTokenForUser(String username, String clientId, DateTime currentTime) {
+    private RefreshToken getRefreshTokenForUser(final String username, final String clientId, final DateTime currentTime) {
         RefreshToken refreshToken = refreshTokenService.getRefreshTokenByUserAndClient(username, clientId,
-            currentTime);
+                currentTime);
         if (refreshToken == null) {
             refreshToken = refreshTokenService.createRefreshTokenForUser(username, clientId);
         } else {
@@ -396,8 +399,8 @@ public class DefaultOAuthService implements OAuthService {
     private int getPagingLimit() {
         return config.getInt("ldap.paging.limit.max");
     }
-    
+
     private boolean isTrustedServer() {
         return config.getBoolean("ldap.server.trusted", false);
-    }   
+    }
 }
