@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.GlobalConstants.TokenDeleteByType;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AuthCredentials;
@@ -75,7 +77,8 @@ public interface OAuthService {
      * @param grantTypeString
      */
     OAuthGrantType getGrantType(String grantTypeString);
-
+    
+    void revokeTokensLocallyForOwnerOrCustomer(String idmAuthTokenStr, TokenDeleteByType queryType, String ownerId);
 
     /**
      * Validate a grant type

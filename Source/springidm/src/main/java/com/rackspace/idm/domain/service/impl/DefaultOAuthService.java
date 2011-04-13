@@ -7,14 +7,19 @@ import static com.rackspace.idm.domain.entity.OAuthGrantType.REFRESH_TOKEN;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.groups.Default;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.NotImplementedException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import com.rackspace.idm.ErrorMsg;
+import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.GlobalConstants.TokenDeleteByType;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AuthCredentials;
@@ -33,10 +38,12 @@ import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.RefreshTokenService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.ApiException;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.TokenExpiredException;
 import com.rackspace.idm.validation.BasicCredentialsCheck;
 import com.rackspace.idm.validation.InputValidator;
 import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
@@ -299,6 +306,20 @@ public class DefaultOAuthService implements OAuthService {
 
         accessTokenService.deleteAllGloballyForCustomer(customerId, usersList, clientsList);
         logger.debug("Deleted all access tokens for customer {}.", customerId);
+    }
+    
+    @Override
+    public void revokeTokensLocallyForOwnerOrCustomer(String idmAuthTokenStr, TokenDeleteByType queryType, String ownerId) {
+        if (GlobalConstants.TokenDeleteByType.owner == queryType) {
+            revokeTokensLocallyForOwner(idmAuthTokenStr, ownerId);
+            logger.warn("Revoked Token for owner {}", ownerId);
+        } else if (GlobalConstants.TokenDeleteByType.customer == queryType) {
+            revokeTokensLocallyForCustomer(idmAuthTokenStr, ownerId);
+            logger.warn("Revoked Token for customer {}", ownerId);
+        } else {
+            // If this happens, the developer forgot to implement this.
+            throw new NotImplementedException("querytype " + queryType + " is not supported.");
+        }  
     }
 
     @Override

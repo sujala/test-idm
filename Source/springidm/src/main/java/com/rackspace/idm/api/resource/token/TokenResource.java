@@ -296,24 +296,14 @@ public class TokenResource {
             logger.warn(msg);
             throw new IllegalArgumentException(msg);
         }
-
+        
         try {
-            if (GlobalConstants.TokenDeleteByType.owner == queryType) {
-                oauthService.revokeTokensLocallyForOwner(idmAuthTokenStr, id);
-                logger.warn("Revoked Token for owner {}", id);
-            } else if (GlobalConstants.TokenDeleteByType.customer == queryType) {
-                oauthService.revokeTokensLocallyForCustomer(idmAuthTokenStr, id);
-                logger.warn("Revoked Token for customer {}", id);
-            } else {
-                // If this happens, the developer forgot to implement this.
-                throw new NotImplementedException("querytype " + queryType + " is not supported.");
-            }
+            oauthService.revokeTokensLocallyForOwnerOrCustomer(idmAuthTokenStr, queryType, id);         
         } catch (TokenExpiredException ex) {
             String errorMsg = String.format("Authorization failed, token is expired: %s", authHeader);
             logger.warn(errorMsg);
             throw new ApiException(HttpServletResponse.SC_UNAUTHORIZED, ErrorMsg.UNAUTHORIZED, errorMsg);
         }
-
         return Response.noContent().build();
     }
 
