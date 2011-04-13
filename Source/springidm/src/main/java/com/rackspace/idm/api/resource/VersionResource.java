@@ -1,13 +1,5 @@
 package com.rackspace.idm.api.resource;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -28,6 +20,7 @@ import com.rackspace.idm.api.resource.nast.NastUserResource;
 import com.rackspace.idm.api.resource.passwordrule.PasswordRulesResource;
 import com.rackspace.idm.api.resource.token.TokenResource;
 import com.rackspace.idm.api.resource.user.UsersResource;
+import com.rackspace.idm.domain.service.ApiDocService;
 
 /**
  * API Version
@@ -47,15 +40,15 @@ public class VersionResource {
     private PasswordRulesResource passwordRulesResource;
     private TokenResource tokenResource;
     private BaseUrlsResource baseUrlsResource;
+    private ApiDocService apiDocService;
 
     private Configuration config;
 
     @Autowired
-    public VersionResource(AuthResource authResource,
-        UsersResource usersResource, CustomersResource customersResource,
-        MossoUserResource mossoUserResource, NastUserResource nastUserResource,
-        PasswordRulesResource passwordRulesResource,
-        TokenResource tokenResource, BaseUrlsResource baseUrlsResource,
+    public VersionResource(AuthResource authResource, UsersResource usersResource,
+        CustomersResource customersResource, MossoUserResource mossoUserResource,
+        NastUserResource nastUserResource, PasswordRulesResource passwordRulesResource,
+        TokenResource tokenResource, BaseUrlsResource baseUrlsResource, ApiDocService apiDocService,
         Configuration config) {
         this.authResource = authResource;
         this.usersResource = usersResource;
@@ -65,6 +58,7 @@ public class VersionResource {
         this.passwordRulesResource = passwordRulesResource;
         this.tokenResource = tokenResource;
         this.baseUrlsResource = baseUrlsResource;
+        this.apiDocService = apiDocService;
         this.config = config;
     }
 
@@ -84,14 +78,13 @@ public class VersionResource {
         com.rackspace.idm.jaxb.Version version = new com.rackspace.idm.jaxb.Version();
         version.setDocURL(config.getString("app.version.doc.url"));
         version.setId(config.getString("app.version"));
-        version.setStatus(Enum.valueOf(
-            com.rackspace.idm.jaxb.VersionStatus.class,
+        version.setStatus(Enum.valueOf(com.rackspace.idm.jaxb.VersionStatus.class,
             config.getString("app.version.status").toUpperCase()));
         version.setWadl(config.getString("app.version.wadl.url"));
 
         return Response.ok(version).build();
     }
-    
+
     @Path("customers")
     public CustomersResource getCustomersResource() {
         return customersResource;
@@ -135,76 +128,27 @@ public class VersionResource {
     @GET
     @Path("xsd/{fileName}")
     public Response getXSD(@PathParam("fileName") String fileName) {
-
-        InputStream stream = getClass().getResourceAsStream("/xsd/" + fileName);
-
-        if (stream == null) {
-            return Response.noContent().build();
-        }
-
-        String myString = null;
-        try {
-            myString = convertStreamToString(stream);
-        } catch (IOException e) {
-            // NOOP
-        }
-
-        return Response.ok(myString).build();
+        String xsdContent = apiDocService.getXsd(fileName);
+        return Response.ok(xsdContent).build();
     }
 
     @GET
     @Path("xslt/{fileName}")
     public Response getXSLT(@PathParam("fileName") String fileName) {
-
-        String myString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"></xsl:stylesheet>";
-
-        return Response.ok(myString).build();
+        String xsltContent = apiDocService.getXslt();
+        return Response.ok(xsltContent).build();
     }
-    
+
     @GET
     @Path("application.wadl")
     public Response getWadl2() {
-    	return getWadl();
-	}
-    
+        return getWadl();
+    }
+
     @GET
     @Path("idm.wadl")
     public Response getWadl() {
-
-    	InputStream stream = getClass().getResourceAsStream("/application.wadl");
-    	if (stream == null) {
-            return Response.noContent().build();
-        }
-
-        String myString = null;
-        try {
-            myString = convertStreamToString(stream);
-        } catch (IOException e) {
-            // NOOP
-        }
-
+        String myString = apiDocService.getWadl();
         return Response.ok(myString).build();
-    }
-
-    private String convertStreamToString(InputStream is) throws IOException {
-
-        if (is != null) {
-            Writer writer = new StringWriter();
-
-            char[] buffer = new char[1024];
-            try {
-                Reader reader = new BufferedReader(new InputStreamReader(is,
-                    "UTF-8"));
-                int n;
-                while ((n = reader.read(buffer)) != -1) {
-                    writer.write(buffer, 0, n);
-                }
-            } finally {
-                is.close();
-            }
-            return writer.toString();
-        } else {
-            return "";
-        }
     }
 }

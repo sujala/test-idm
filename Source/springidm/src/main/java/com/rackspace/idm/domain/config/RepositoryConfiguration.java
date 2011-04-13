@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
 import com.rackspace.idm.domain.dao.AccessTokenDao;
+import com.rackspace.idm.domain.dao.ApiDocDao;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
@@ -15,6 +16,7 @@ import com.rackspace.idm.domain.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.dao.RoleDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.dao.XdcAccessTokenDao;
+import com.rackspace.idm.domain.dao.impl.FileSystemApiDocRepository;
 import com.rackspace.idm.domain.dao.impl.HttpAccessTokenRepository;
 import com.rackspace.idm.domain.dao.impl.LdapAuthRepository;
 import com.rackspace.idm.domain.dao.impl.LdapClientRepository;
@@ -94,5 +96,10 @@ public class RepositoryConfiguration {
     @Bean(name = "xdcTokenDao")
     public XdcAccessTokenDao xdcTokenDao() {
         return new HttpAccessTokenRepository(dcEnpoints(), appConfig);
+    }
+
+    @Bean
+    public ApiDocDao apiDocDao() {
+        return new FileSystemApiDocRepository();
     }
 }

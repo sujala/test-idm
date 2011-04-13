@@ -27,14 +27,14 @@ import com.sun.jersey.spi.container.ContainerRequestFilter;
  *         several that are checked for in the if clauses below.
  */
 @Component
-public class AuthenticationFilter implements ContainerRequestFilter,
-        ApplicationContextAware {
+public class AuthenticationFilter implements ContainerRequestFilter, ApplicationContextAware {
     private AccessTokenService accessTokenService;
     private AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private Logger logger;
 
-    @Context HttpServletRequest req; 
-    
+    @Context
+    HttpServletRequest req;
+
     private ApplicationContext springCtx;
 
     public AuthenticationFilter() {
@@ -56,7 +56,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         String path = request.getPath();
         String method = request.getMethod();
 
-        if(req != null) {
+        if (req != null) {
             MDC.put(Audit.REMOTE_IP, req.getRemoteAddr());
             MDC.put(Audit.HOST_IP, req.getLocalAddr());
             MDC.put(Audit.PATH, path);
@@ -68,10 +68,14 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             return request;
         }
 
+        if ("GET".equals(method) && "idm.wadl".equals(path)) {
+            return request;
+        }
+
         if ("GET".equals(method) && path.startsWith("xsd")) {
             return request;
         }
-        
+
         if ("GET".equals(method) && path.startsWith("xslt")) {
             return request;
         }
@@ -86,10 +90,9 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         String authHeader = request.getHeaderValue(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || authHeader.isEmpty()) {
             throw new NotAuthenticatedException(
-                    "The request for the resource must include the Authorization header.");
+                "The request for the resource must include the Authorization header.");
         }
-        String tokenString = authHeaderHelper
-                .getTokenFromAuthHeader(authHeader);
+        String tokenString = authHeaderHelper.getTokenFromAuthHeader(authHeader);
         boolean authResult = getAccessTokenService().authenticateAccessToken(tokenString);
 
         if (authResult) {
@@ -103,15 +106,13 @@ public class AuthenticationFilter implements ContainerRequestFilter,
     }
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext)
-            throws BeansException {
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         springCtx = applicationContext;
     }
 
     private AccessTokenService getAccessTokenService() {
         if (accessTokenService == null) {
-            accessTokenService = springCtx
-                    .getBean(AccessTokenService.class);
+            accessTokenService = springCtx.getBean(AccessTokenService.class);
         }
 
         return accessTokenService;

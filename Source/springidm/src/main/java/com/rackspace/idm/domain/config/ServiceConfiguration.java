@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.jmx.export.MBeanExporter;
 
 import com.rackspace.idm.domain.dao.AccessTokenDao;
+import com.rackspace.idm.domain.dao.ApiDocDao;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
@@ -25,6 +26,7 @@ import com.rackspace.idm.domain.dao.XdcAccessTokenDao;
 import com.rackspace.idm.domain.entity.EmailSettings;
 import com.rackspace.idm.domain.entity.RefreshTokenDefaultAttributes;
 import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.ApiDocService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.CustomerService;
@@ -36,6 +38,7 @@ import com.rackspace.idm.domain.service.RefreshTokenService;
 import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultAccessTokenService;
+import com.rackspace.idm.domain.service.impl.DefaultApiDocService;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.domain.service.impl.DefaultClientService;
 import com.rackspace.idm.domain.service.impl.DefaultCustomerService;
@@ -79,6 +82,8 @@ public class ServiceConfiguration {
     private EndpointDao endpointDao;
     @Autowired
     private XdcAccessTokenDao xdcTokenDao;
+    @Autowired
+    private ApiDocDao apiDocDao;
     @Autowired
     private InputValidator inputValidator;
 
@@ -208,6 +213,11 @@ public class ServiceConfiguration {
     @Bean
     public AuthorizationService authorizationService() {
         return new DefaultAuthorizationService(clientDao, config);
+    }
+    
+    @Bean
+    public ApiDocService apiDocService() {
+        return new DefaultApiDocService(apiDocDao);
     }
 
     @Bean
