@@ -57,6 +57,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         super(connPools, config);
     }
 
+    @Override
     public void addUser(User user, String customerUniqueId) {
         getLogger().debug("Adding user - {}", user);
         if (user == null) {
@@ -71,11 +72,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         user.setUniqueId(userDN);
 
-        LDAPResult result;
         Audit audit = Audit.log(user).add();
         try {
             Attribute[] attributes = getAddAttributes(user);
-            result = getAppConnPool().add(userDN, attributes);
+            getAppConnPool().add(userDN, attributes);
         } catch (LDAPException ldapEx) {
             String errorString = String.format("Error adding user %s - %s",
                 user, ldapEx);
@@ -92,16 +92,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalStateException(e);
         }
 
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            String errorString = String.format("Error adding user %s - %s",
-                user.getUsername(), result.getResultCode());
-            audit.fail(errorString);
-            getLogger().error(errorString);
-            throw new IllegalStateException(String.format(
-                "LDAP error encountered when adding user: %s - %s",
-                user.getUsername(), result.getResultCode().toString()));
-        }
-
         // Now that it's in LDAP we'll set the password to the "existing" type
         user.setPasswordObj(user.getPasswordObj().toExisting());
 
@@ -110,6 +100,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Added user {}", user);
     }
 
+    @Override
     public UserAuthenticationResult authenticate(String username,
         String password) {
         getLogger().debug("Authenticating User {} by API Key ", username);
@@ -123,6 +114,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return authenticateByPassword(user, password);
     }
 
+    @Override
     public UserAuthenticationResult authenticateByAPIKey(String username,
         String apiKey) {
         getLogger().debug("Authenticating User {} by API Key ", username);
@@ -137,6 +129,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return authenticateUserByApiKey(user, apiKey);
     }
 
+    @Override
     public UserAuthenticationResult authenticateByMossoIdAndAPIKey(int mossoId,
         String apiKey) {
         getLogger().info("Authenticating User with MossoId {}", mossoId);
@@ -146,6 +139,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return authenticateUserByApiKey(user, apiKey);
     }
 
+    @Override
     public UserAuthenticationResult authenticateByNastIdAndAPIKey(
         String nastId, String apiKey) {
         getLogger().debug("Authenticating User with NastId {}", nastId);
@@ -160,6 +154,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return authenticateUserByApiKey(user, apiKey);
     }
 
+    @Override
     public void deleteUser(String username) {
         getLogger().info("Deleting username - {}", username);
         if (StringUtils.isBlank(username)) {
@@ -177,9 +172,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new NotFoundException(errorMsg);
         }
 
-        LDAPResult result = null;
         try {
-            result = getAppConnPool().delete(user.getUniqueId());
+            getAppConnPool().delete(user.getUniqueId());
         } catch (LDAPException ldapEx) {
             String errorString = String.format(
                 "Error deleting username %s - %s", username, ldapEx);
@@ -188,28 +182,16 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalStateException(ldapEx);
         }
 
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            String errorString = String.format(
-                "Error deleting username %s - %s", username,
-                result.getResultCode());
-            audit.fail(errorString);
-            getLogger().error(errorString);
-            throw new IllegalStateException(
-                String.format(
-                    "LDAP error encountered when deleting user: %s - %s"
-                        + username, result.getResultCode().toString()));
-        }
-
         audit.succeed();
         getLogger().info("Deleted username - {}", username);
     }
 
+    @Override
     public Users getAllUsers(int offset, int limit) {
         getLogger().debug("Search all users");
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .addEqualAttribute(ATTR_SOFT_DELETED, "FALSE").build();
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON).build();
         Users users = getMultipleUsers(searchFilter, ATTR_SEARCH_ATTRIBUTES,
             offset, limit);
 
@@ -219,6 +201,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     }
 
+    @Override
     public String[] getGroupIdsForUser(String username) {
         getLogger().debug("Getting GroupIds for User {}", username);
         if (StringUtils.isBlank(username)) {
@@ -261,6 +244,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return groupIds;
     }
 
+    @Override
     public String getUnusedUserInum(String customerInum) {
         // TODO: We might may this call to the XDI server in the future.
         if (StringUtils.isBlank(customerInum)) {
@@ -279,6 +263,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return inum;
     }
 
+    @Override
     public User getUserByCustomerIdAndUsername(String customerId, String username) {
 
         getLogger().debug(
@@ -310,6 +295,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
+    @Override
     public User getUserByInum(String inum) {
         // NOTE: This method returns a user regardless of whether the
         // softDeleted flag is set or not because this method is only
@@ -332,6 +318,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
+    @Override
     public User getUserByMossoId(int mossoId) {
         getLogger().debug("Doing search for nastId " + mossoId);
 
@@ -347,6 +334,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
+    @Override
     public User getUserByNastId(String nastId) {
         getLogger().debug("Doing search for nastId " + nastId);
         if (StringUtils.isBlank(nastId)) {
@@ -367,6 +355,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
+    @Override
     public User getUserByRPN(String rpn) {
         getLogger().debug("Doing search for rpn " + rpn);
         if (StringUtils.isBlank(rpn)) {
@@ -386,6 +375,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
+    @Override
     public User getUserByUsername(String username) {
         // This method returns a user whether or not the user has been
         // soft-deleted
@@ -408,6 +398,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
+    @Override
     public Users getUsersByCustomerId(String customerId, int offset, int limit) {
         getLogger().debug("Doing search for customerId {}", customerId);
 
@@ -431,6 +422,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return users;
     }
 
+    @Override
     public boolean isUsernameUnique(String username) {
 
         Filter searchFilter = new LdapSearchBuilder()
