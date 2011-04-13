@@ -1,5 +1,8 @@
 package com.rackspace.idm.oauth;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.rackspace.idm.validation.InputValidator;
 import junit.framework.Assert;
 
@@ -10,6 +13,7 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.rackspace.idm.GlobalConstants.TokenDeleteByType;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.AuthData;
@@ -18,6 +22,7 @@ import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
+import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.OAuthGrantType;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.RefreshToken;
@@ -26,6 +31,7 @@ import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserCredential;
 import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -48,6 +54,7 @@ public class OAuthServiceTests {
     OAuthService oauthService;
     AuthHeaderHelper authHeaderHelper;
     InputValidator inputValidator;
+    Configuration mockConfiguration;
 
     String customerId = "123-456-789";
     String clientId = "DELETE_My_ClientId";
@@ -71,6 +78,7 @@ public class OAuthServiceTests {
         mockAuthorizationService = EasyMock.createNiceMock(AuthorizationService.class);
         authHeaderHelper = new AuthHeaderHelper();
         inputValidator = EasyMock.createMock(InputValidator.class);
+        mockConfiguration = EasyMock.createMock(Configuration.class);
 
         Configuration appConfig = new PropertiesConfiguration();
         appConfig.addProperty("idm.clientId", clientId);
@@ -453,7 +461,85 @@ public class OAuthServiceTests {
 
         EasyMock.verify(mockAccessTokenService, mockRefreshTokenService, mockAuthorizationService);
     }
+    
+    @Test
+    public void shouldRevokeTokenForOwner() {
+        
+        AccessToken accessToken = getFakeAccessToken();
+        
+        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(tokenVal)).andReturn(accessToken
+            );
+  
+        mockAccessTokenService.deleteAllForOwner(accessToken.getOwner());
+        EasyMock.expectLastCall();
+        
+        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(accessToken)).andReturn(
+            true);
 
+        EasyMock.replay(mockAccessTokenService, mockRefreshTokenService, mockAuthorizationService);
+
+        TokenDeleteByType queryType = TokenDeleteByType.owner;
+        oauthService.revokeTokensLocallyForOwnerOrCustomer(tokenVal, queryType, accessToken.getOwner());
+        
+        EasyMock.verify(mockAccessTokenService, mockRefreshTokenService, mockAuthorizationService);
+    }
+    
+    @Test
+    public void shouldRevokeTokenForCustomer() {
+        
+        oauthService = new DefaultOAuthService(mockUserService, mockClientService, mockAccessTokenService,
+            mockRefreshTokenService, mockAuthorizationService, mockConfiguration, inputValidator);
+        
+        AccessToken accessToken = getFakeAccessToken();
+        
+        EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(tokenVal)).andReturn(accessToken
+            );
+        
+        EasyMock.expect(mockConfiguration.getInt("ldap.paging.limit.max")).andReturn(1).atLeastOnce();
+        EasyMock.replay(mockConfiguration);
+        
+        Users usersObj = new Users();
+        List<User> users = new ArrayList<User>();
+        User testUser = getFakeUser();
+        users.add(testUser);
+        usersObj.setUsers(users);
+        usersObj.setTotalRecords(1);
+        List<User> usersList = new ArrayList<User>();
+        usersList.addAll(usersObj.getUsers());
+        
+        EasyMock.expect(mockUserService.getByCustomerId(customerId, 0, 1)).andReturn(usersObj).atLeastOnce();
+        EasyMock.replay(mockUserService);
+        
+        Clients clientsObj = new Clients();
+        List<Client> clients = new ArrayList<Client>();
+        Client testClient = getTestClient();
+        clients.add(testClient);
+        clientsObj.setTotalRecords(1);
+        clientsObj.setClients(clients);
+        List<Client> clientsList = new ArrayList<Client>();
+        clientsList.addAll(clientsObj.getClients());
+        
+        EasyMock.expect(mockClientService.getByCustomerId(customerId, 0, 1)).andReturn(clientsObj);
+        EasyMock.replay(mockClientService);
+        
+        mockAccessTokenService.deleteAllForOwner(testUser.getUsername());
+        
+        mockAccessTokenService.deleteAllForOwner(testClient.getClientId());
+        
+        EasyMock.expectLastCall();
+        
+        
+        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(accessToken)).andReturn(
+            true);
+
+        EasyMock.replay(mockAccessTokenService, mockRefreshTokenService, mockAuthorizationService);
+
+        TokenDeleteByType queryType = TokenDeleteByType.customer;
+        oauthService.revokeTokensLocallyForOwnerOrCustomer(tokenVal, queryType, customerId);
+        
+        EasyMock.verify(mockAccessTokenService, mockRefreshTokenService, mockAuthorizationService);
+    }   
+    
     @Test(expected = NotFoundException.class)
     public void shouldNotRevokeTokenForTokenNotFound() {
         EasyMock.expect(mockAccessTokenService.getAccessTokenByTokenString(tokenVal)).andReturn(null);
