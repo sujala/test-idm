@@ -17,7 +17,6 @@ import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
@@ -33,6 +32,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         super(connPools, config);
     }
 
+    @Override
     public void add(Role role, String customerUniqueId) {
         getLogger().info("Adding role {}", role);
         if (role == null) {
@@ -80,8 +80,6 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
 
-        LDAPResult result;
-
         String roleDN = new LdapDnBuilder(customerUniqueId)
             .addAttriubte(ATTR_INUM, role.getInum())
             .addAttriubte(ATTR_OU, OU_GROUPS_NAME).build();
@@ -89,27 +87,20 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         role.setUniqueId(roleDN);
 
         Audit audit = Audit.log(role).add();
+
         try {
-            result = getAppConnPool().add(roleDN, attributes);
+            getAppConnPool().add(roleDN, attributes);
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error("Error adding role {} - {}", role, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
-            getLogger().error("Error adding role {} - {}", role.getName(),
-                result.getResultCode());
-            throw new IllegalStateException(String.format(
-                "LDAP error encountered when adding role: %s - %s",
-                role.getName(), result.getResultCode().toString()));
-        }
-
         audit.succeed();
         getLogger().debug("Added role {}", role);
     }
 
+    @Override
     public void addUserToRole(String userDN, String roleDN) {
 
         getLogger().info("Adding user {} to {}", userDN, roleDN);
@@ -128,9 +119,9 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         mods.add(new Modification(ModificationType.ADD, ATTR_MEMBER, userDN));
 
         Audit audit = Audit.log(roleDN).modify(mods);
-        LDAPResult result;
+        
         try {
-            result = getAppConnPool().modify(roleDN, mods);
+            getAppConnPool().modify(roleDN, mods);
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error("Error adding user to role {} - {}", roleDN,
@@ -143,22 +134,17 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
             throw new IllegalStateException(ldapEx);
         }
 
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
-            throw new IllegalStateException(String.format(
-                "LDAP error encountered when adding user to role: %s - %s",
-                roleDN, result.getResultCode().toString()));
-        }
-
         audit.succeed();
         getLogger().info("Added user {} to role {}", userDN, roleDN);
     }
 
+    @Override
     public void delete(String name, String customerId) {
         // TODO Auto-generated method stub
 
     }
 
+    @Override
     public void deleteUserFromRole(String userDN, String roleDN) {
         getLogger().info("Deleting user {} to {}", userDN, roleDN);
 
@@ -176,9 +162,9 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER, userDN));
 
         Audit audit = Audit.log(roleDN).modify(mods);
-        LDAPResult result;
+
         try {
-            result = getAppConnPool().modify(roleDN, mods);
+            getAppConnPool().modify(roleDN, mods);
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error("Error deleting user from role {} - {}", roleDN,
@@ -189,19 +175,11 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
             throw new IllegalStateException(ldapEx);
         }
 
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
-            getLogger().error("Error deleting user from role {} - {}", roleDN,
-                result.getResultCode());
-            throw new IllegalStateException(String.format(
-                "LDAP error encountered when deleting user from role: %s - %s",
-                roleDN, result.getResultCode().toString()));
-        }
-
         audit.succeed();
         getLogger().info("Deleted user {} from role {}", userDN, roleDN);
     }
 
+    @Override
     public Role findByInum(String inum) {
         getLogger().debug("Doing search for inum " + inum);
         if (StringUtils.isBlank(inum)) {
@@ -238,6 +216,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         return role;
     }
 
+    @Override
     public Role findByRoleNameAndCustomerId(String roleName, String customerId) {
         getLogger().debug("Doing search for role {}:{} ", roleName, customerId);
         if (StringUtils.isBlank(roleName)) {
@@ -270,6 +249,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         return role;
     }
 
+    @Override
     public void save(Role role) {
         // TODO Auto-generated method stub
 
@@ -318,6 +298,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         return searchResult;
     }
 
+    @Override
     public List<Role> findByCustomerId(String customerId) {
         getLogger().debug("Doing search for customerId {}", customerId);
 
@@ -356,6 +337,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         return roles;
     }
 
+    @Override
     public String getUnusedRoleInum(String customerInum) {
         if (StringUtils.isBlank(customerInum)) {
             getLogger().error("Null or empty customerInum value passesed in.");
@@ -373,6 +355,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         return inum;
     }
 
+    @Override
     public Role findRoleByUniqueId(String uniqueId) {
         Role role = null;
         SearchResult searchResult = null;

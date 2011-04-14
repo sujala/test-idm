@@ -16,11 +16,9 @@ import com.unboundid.ldap.sdk.DeleteRequest;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
-import com.unboundid.ldap.sdk.ResultCode;
 import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
@@ -34,6 +32,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         super(connPools, config);
     }
 
+    @Override
     public void addCustomer(Customer customer) {
         getLogger().info("Adding customer {}", customer);
         if (customer == null) {
@@ -77,8 +76,6 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
 
-        LDAPResult result;
-
         String customerDN = new LdapDnBuilder(BASE_DN).addAttriubte(ATTR_O,
             customer.getInum()).build();
 
@@ -95,21 +92,12 @@ public class LdapCustomerRepository extends LdapRepository implements
         Audit audit = Audit.log(customer).add();
         try {
             conn = getAppConnPool().getConnection();
-            result = conn.add(customerDN, attributes);
+            conn.add(customerDN, attributes);
         } catch (LDAPException ldapEx) {
         	audit.fail();
             getLogger()
                 .error("Error adding customer {} - {}", customer, ldapEx);
             throw new IllegalStateException(ldapEx);
-        }
-
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
-            getLogger().error("Error adding customerId {} - {}",
-                customer.getCustomerId(), result.getResultCode());
-            throw new IllegalStateException(String.format(
-                "LDAP error encountered when adding customerId: %s - %s",
-                customer.getCustomerId(), result.getResultCode().toString()));
         }
 
         // Add ou=groups under new customer entry
@@ -118,25 +106,12 @@ public class LdapCustomerRepository extends LdapRepository implements
             new Attribute(ATTR_OU, OU_GROUPS_NAME)};
 
         try {
-            result = conn.add(customerGroupsDN, groupAttributes);
+            conn.add(customerGroupsDN, groupAttributes);
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error("Error adding customer groups {} - {}", customer,
                 ldapEx);
             throw new IllegalStateException(ldapEx);
-        }
-
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
-            getLogger().error(
-                "Error adding customer groups for customerId {} - {}",
-                customer.getCustomerId(), result.getResultCode());
-            throw new IllegalStateException(
-                String
-                    .format(
-                        "LDAP error encountered when adding customer groups for customerId: %s - %s",
-                        customer.getCustomerId(), result.getResultCode()
-                            .toString()));
         }
 
         // Add ou=people under new customer entry
@@ -145,25 +120,12 @@ public class LdapCustomerRepository extends LdapRepository implements
             new Attribute(ATTR_OU, OU_PEOPLE_NAME)};
 
         try {
-            result = conn.add(customerPeopleDN, peopleAttributes);
+            conn.add(customerPeopleDN, peopleAttributes);
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error("Error adding customer people {} - {}", customer,
                 ldapEx);
             throw new IllegalStateException(ldapEx);
-        }
-
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
-            getLogger().error(
-                "Error adding customer people for customerId {} - {}",
-                customer.getCustomerId(), result.getResultCode());
-            throw new IllegalStateException(
-                String
-                    .format(
-                        "LDAP error encountered when adding customer people for customerId: %s - %s",
-                        customer.getCustomerId(), result.getResultCode()
-                            .toString()));
         }
 
         // Add ou=applications under new customer entry
@@ -172,7 +134,7 @@ public class LdapCustomerRepository extends LdapRepository implements
             new Attribute(ATTR_OU, "applications")};
 
         try {
-            result = conn.add(customerApplicationsDN,
+            conn.add(customerApplicationsDN,
                 applicationAttributes);
         } catch (LDAPException ldapEx) {
             audit.fail();
@@ -181,18 +143,6 @@ public class LdapCustomerRepository extends LdapRepository implements
             throw new IllegalStateException(ldapEx);
         }
 
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
-            getLogger().error(
-                "Error adding customer applications for customerId {} - {}",
-                customer.getCustomerId(), result.getResultCode());
-            throw new IllegalStateException(
-                String
-                    .format(
-                        "LDAP error encountered when adding customer applications for customerId: %s - %s",
-                        customer.getCustomerId(), result.getResultCode()
-                            .toString()));
-        }
         audit.succeed();
         
         getAppConnPool().releaseConnection(conn);
@@ -200,6 +150,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         getLogger().debug("Added customer {}", customer);
     }
 
+    @Override
     public void deleteCustomer(String customerId) {
         getLogger().info("Deleting customer {}", customerId);
         if (StringUtils.isBlank(customerId)) {
@@ -214,41 +165,38 @@ public class LdapCustomerRepository extends LdapRepository implements
         
         Audit audit = Audit.log(customer).delete();
 
-        LDAPResult result = null;
+        LDAPConnection conn = null;
         
         try {
+            conn = getAppConnPool().getConnection();
             String ouGroupsDn = new LdapDnBuilder(customerDN).addAttriubte(
                 ATTR_OU, OU_GROUPS_NAME).build();
             DeleteRequest request = new DeleteRequest(ouGroupsDn);
-            result = getAppConnPool().delete(request);
+            conn.delete(request);
         } catch (LDAPException ldapEx) {
             audit.fail(ldapEx.getExceptionMessage());
             getLogger().error("Could not perform delete for customer {} - {}",
                 customerId, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
-        
-        result = null;
         
         try {
             String ouApplicationsDn = new LdapDnBuilder(customerDN).addAttriubte(
                 ATTR_OU, OU_APPLICATIONS_NAME).build();
             DeleteRequest request = new DeleteRequest(ouApplicationsDn);
-            result = getAppConnPool().delete(request);
+            conn.delete(request);
         } catch (LDAPException ldapEx) {
             audit.fail(ldapEx.getExceptionMessage());
             getLogger().error("Could not perform delete for customer {} - {}",
                 customerId, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
-        
-        result = null;
         
         try {
             String ouPeopleDn = new LdapDnBuilder(customerDN).addAttriubte(
                 ATTR_OU, OU_PEOPLE_NAME).build();
             DeleteRequest request = new DeleteRequest(ouPeopleDn);
-            result = getAppConnPool().delete(request);
+            conn.delete(request);
         } catch (LDAPException ldapEx) {
             audit.fail(ldapEx.getExceptionMessage());
             getLogger().error("Could not perform delete for customer {} - {}",
@@ -256,12 +204,10 @@ public class LdapCustomerRepository extends LdapRepository implements
             throw new IllegalStateException(ldapEx);
         }
         
-        result = null;
-        
         try {
             DeleteRequest request = new DeleteRequest(customerDN);
             request.addControl(new SubtreeDeleteRequestControl());
-            result = getAppConnPool().delete(request);
+            conn.delete(request);
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error(
@@ -270,22 +216,12 @@ public class LdapCustomerRepository extends LdapRepository implements
             throw new IllegalStateException(ldapEx);
         }
 
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
-            getLogger().error(
-                "Error deleting customer groups for customerId {} - {}",
-                customerId, result.getResultCode());
-            throw new IllegalStateException(
-                String
-                    .format(
-                        "LDAP error encountered when deleting customer groups for customerId: %s - %s",
-                        customerId, result.getResultCode().toString()));
-        }
         audit.succeed();
 
         getLogger().info("Deleted customer {}", customerId);
     }
 
+    @Override
     public List<Customer> getAllCustomers() {
         getLogger().debug("Search all customers");
         SearchResult searchResult = null;
@@ -316,6 +252,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         return customers;
     }
 
+    @Override
     public Customer getCustomerByCustomerId(String customerId) {
         getLogger().debug("Doing search for customerId {}", customerId);
 
@@ -343,6 +280,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         return customer;
     }
 
+    @Override
     public Customer getCustomerByInum(String customerInum) {
         getLogger().debug("Doing search for customerInum {}", customerInum);
 
@@ -385,6 +323,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         return customer;
     }
 
+    @Override
     public String getUnusedCustomerInum() {
         // TODO: We might may this call to the XDI server in the future.
         Customer customer = null;
@@ -397,6 +336,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         return inum;
     }
 
+    @Override
     public void updateCustomer(Customer customer) {
         getLogger().debug("Updating customer {}", customer);
 
@@ -421,11 +361,10 @@ public class LdapCustomerRepository extends LdapRepository implements
             return;
         }
 
-        LDAPResult result = null;
         List<Modification> mods = getModifications(oldCustomer, customer);
         Audit audit = Audit.log(oldCustomer).modify(mods);
         try {
-			result = getAppConnPool().modify(oldCustomer.getUniqueId(),
+			getAppConnPool().modify(oldCustomer.getUniqueId(),
                 mods);
         } catch (LDAPException ldapEx) {
         	audit.fail();
@@ -434,14 +373,6 @@ public class LdapCustomerRepository extends LdapRepository implements
             throw new IllegalStateException(ldapEx);
         }
 
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail();
-            getLogger().error("Error updating customer {} - {}",
-                customer.getCustomerId(), result.getResultCode());
-            throw new IllegalArgumentException(String.format(
-                "LDAP error encountered when updating customer: %s - %s",
-                customer.getCustomerId(), result.getResultCode().toString()));
-        }
         audit.succeed();
 
         getLogger().debug("Updated customer {}", customer.getCustomerId());
