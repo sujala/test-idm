@@ -56,6 +56,8 @@ public interface ClientDao {
 
     void grantPermissionToClient(Permission permission, Client client);
     
+    boolean isUserInClientGroup(String username, String groupDN);
+    
     void removeUserFromGroup(String userUniqueId, ClientGroup group);
 
     void revokePermissionFromClient(Permission permission, Client client);

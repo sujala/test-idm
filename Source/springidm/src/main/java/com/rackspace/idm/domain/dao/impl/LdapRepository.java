@@ -8,11 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import com.rackspace.idm.audit.Audit;
+import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.LDAPSearchException;
+import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
@@ -116,17 +118,27 @@ public abstract class LdapRepository {
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
     protected static final String BASEURL_BASE_DN = "ou=BaseUrls,dc=rackspace,dc=com";
     protected static final String TOKEN_BASE_DN = "ou=Tokens,dc=rackspace,dc=com";
-    
+
     // Definitions for OU names
     protected static final String OU_GROUPS_NAME = "groups";
     protected static final String OU_PEOPLE_NAME = "people";
     protected static final String OU_APPLICATIONS_NAME = "applications";
     protected static final String OU_PERMISSIONS_NAME = "permissions";
+    
+    //Search Attributes
+    protected static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {
+        ATTR_OBJECT_CLASS, ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_CLIENT_ID, ATTR_GROUP_TYPE,
+        ATTR_NAME };
+    protected static final String[] ATTR_USER_SEARCH_ATTRIBUTES = {"*",
+        ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
+
+    
+    
 
     private final LdapConnectionPools conn;
     private final Configuration config;
-    
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());   
+
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected LdapRepository(LdapConnectionPools conn, Configuration config) {
         this.conn = conn;
@@ -137,6 +149,19 @@ public abstract class LdapRepository {
         return conn.getAppConnPool();
     }
 
+    protected LDAPConnection getAppPoolConnection(Audit audit) {
+        LDAPConnection conn = null;
+
+        try {
+            conn = getAppConnPool().getConnection();
+        } catch (LDAPException e) {
+            audit.fail(e.getMessage());
+            getLogger().error("Error getting connection to LDAP {}", e);
+        }
+
+        return conn;
+    }
+
     protected LDAPConnectionPool getBindConnPool() {
         return conn.getBindConnPool();
     }
@@ -144,28 +169,45 @@ public abstract class LdapRepository {
     protected Logger getLogger() {
         return logger;
     }
-    
-    protected void deleteEntryAndSubtree(LDAPConnection conn, String dn) {
-        
-        SearchResult searchResult = null;
-        
+
+    protected void addEntry(String entryDn, Attribute[] attributes, Audit audit) {
+        LDAPConnection conn = getAppPoolConnection(audit);
+        addEntry(conn, entryDn, attributes, audit);
+        getAppConnPool().releaseConnection(conn);
+    }
+
+    protected void addEntry(LDAPConnection conn, String entryDn,
+        Attribute[] attributes, Audit audit) {
         try {
-            
-            Filter filter = Filter.createEqualityFilter(ATTR_OBJECT_CLASS, "*");
-            searchResult = conn.search(dn, SearchScope.ONE, filter, ATTR_NO_ATTRIBUTES);
-            
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
-                deleteEntryAndSubtree(conn, entry.getDN());
-            }
-            
-            conn.delete(dn);
-            
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            conn.add(entryDn, attributes);
+        } catch (LDAPException ldapEx) {
+            audit.fail();
+            getLogger().error("Error adding entry {} - {}", entryDn, ldapEx);
             throw new IllegalStateException(ldapEx);
-        } catch (LDAPException e) {
-            getLogger().error("LDAP Search error - {}", e.getMessage());
-            throw new IllegalStateException(e);
+        }
+    }
+
+    protected void deleteEntryAndSubtree(String dn, Audit audit) {
+        LDAPConnection conn = getAppPoolConnection(audit);
+        this.deleteEntryAndSubtree(conn, dn, audit);
+        getAppConnPool().releaseConnection(conn);
+    }
+
+    protected void updateEntry(String entryDn, List<Modification> mods,
+        Audit audit) {
+        LDAPConnection conn = getAppPoolConnection(audit);
+        updateEntry(conn, entryDn, mods, audit);
+        getAppConnPool().releaseConnection(conn);
+    }
+
+    protected void updateEntry(LDAPConnection conn, String entryDn,
+        List<Modification> mods, Audit audit) {
+        try {
+            conn.modify(entryDn, mods);
+        } catch (LDAPException ldapEx) {
+            audit.fail();
+            getLogger().error("Error updating entry {} - {}", entryDn, ldapEx);
+            throw new IllegalStateException(ldapEx);
         }
     }
 
@@ -187,6 +229,28 @@ public abstract class LdapRepository {
 
     protected String getRackspaceInumPrefix() {
         return config.getString("rackspace.inum.prefix");
+    }
+
+    private void deleteEntryAndSubtree(LDAPConnection conn, String dn,
+        Audit audit) {
+
+        try {
+
+            Filter filter = Filter.createEqualityFilter(ATTR_OBJECT_CLASS,
+                "top");
+            SearchResult searchResult = conn.search(dn, SearchScope.ONE,
+                filter, ATTR_NO_ATTRIBUTES);
+
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                deleteEntryAndSubtree(conn, entry.getDN(), audit);
+            }
+
+            conn.delete(dn);
+
+        } catch (LDAPException e) {
+            getLogger().error("LDAP Search error - {}", e.getMessage());
+            throw new IllegalStateException(e);
+        }
     }
 
     private static class QueryPair {
@@ -244,43 +308,46 @@ public abstract class LdapRepository {
             return searchString;
         }
     }
-    
+
     protected static class LdapSearchBuilder {
         List<Filter> filters;
-        
+
         public LdapSearchBuilder() {
             filters = new ArrayList<Filter>();
         }
-        
-        public LdapSearchBuilder addEqualAttribute(String attribute, String value) {
+
+        public LdapSearchBuilder addEqualAttribute(String attribute,
+            String value) {
             Filter filter = Filter.createEqualityFilter(attribute, value);
             filters.add(filter);
             return this;
         }
-        
-        public LdapSearchBuilder addEqualAttribute(String attribute, byte[] value ) {
+
+        public LdapSearchBuilder addEqualAttribute(String attribute,
+            byte[] value) {
             Filter filter = Filter.createEqualityFilter(attribute, value);
             filters.add(filter);
             return this;
         }
-        
-        public LdapSearchBuilder addGreaterOrEqualAttribute(String attribute, String value) {
+
+        public LdapSearchBuilder addGreaterOrEqualAttribute(String attribute,
+            String value) {
             Filter filter = Filter.createGreaterOrEqualFilter(attribute, value);
             filters.add(filter);
             return this;
         }
-        
+
         public Filter build() {
             if (filters.size() == 0) {
                 return Filter.createEqualityFilter(ATTR_OBJECT_CLASS, "*");
             }
-            
+
             if (filters.size() == 1) {
                 return filters.get(0);
             }
-            
+
             return Filter.createANDFilter(filters);
         }
     }
-   
+
 }

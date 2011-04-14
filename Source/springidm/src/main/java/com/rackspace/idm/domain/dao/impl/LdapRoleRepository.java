@@ -41,44 +41,7 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
                 "Null instance of role was passed.");
         }
 
-        List<Attribute> atts = new ArrayList<Attribute>();
-
-        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_ROLE_OBJECT_CLASS_VALUES));
-
-        if (!StringUtils.isBlank(role.getName())) {
-            atts.add(new Attribute(ATTR_NAME, role.getName()));
-        }
-        if (!StringUtils.isBlank(role.getType())) {
-            atts.add(new Attribute(ATTR_GROUP_TYPE, role.getType()));
-        }
-        if (!StringUtils.isBlank(role.getIname())) {
-            atts.add(new Attribute(ATTR_INAME, role.getIname()));
-        }
-        if (!StringUtils.isBlank(role.getInum())) {
-            atts.add(new Attribute(ATTR_INUM, role.getInum()));
-        }
-        if (!StringUtils.isBlank(role.getOrgInum())) {
-            atts.add(new Attribute(ATTR_O, role.getOrgInum()));
-        }
-        if (!StringUtils.isBlank(role.getCustomerId())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, role
-                .getCustomerId()));
-        }
-        if (role.getStatus() != null) {
-            atts.add(new Attribute(ATTR_STATUS, role.getStatus().toString()));
-        }
-
-        if (role.getPermissions() != null && role.getPermissions().size() > 0) {
-            List<String> permissions = new ArrayList<String>();
-            for (Permission permission : role.getPermissions()) {
-                permissions.add(permission.getValue());
-            }
-            String[] perms = permissions
-                .toArray(new String[permissions.size()]);
-            atts.add(new Attribute(ATTR_PERMISSION, perms));
-        }
-
-        Attribute[] attributes = atts.toArray(new Attribute[0]);
+        Attribute[] attributes = getAddAttributesForRole(role);
 
         String roleDN = new LdapDnBuilder(customerUniqueId)
             .addAttriubte(ATTR_INUM, role.getInum())
@@ -87,14 +50,8 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
         role.setUniqueId(roleDN);
 
         Audit audit = Audit.log(role).add();
-
-        try {
-            getAppConnPool().add(roleDN, attributes);
-        } catch (LDAPException ldapEx) {
-            audit.fail();
-            getLogger().error("Error adding role {} - {}", role, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        
+        this.addEntry(roleDN, attributes, audit);
 
         audit.succeed();
         getLogger().debug("Added role {}", role);
@@ -180,6 +137,45 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
     }
 
     @Override
+    public List<Role> findByCustomerId(String customerId) {
+        getLogger().debug("Doing search for customerId {}", customerId);
+
+        if (StringUtils.isBlank(customerId)) {
+            getLogger().error("Null or Empty customerId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty customerId parameter.");
+        }
+
+        List<Role> roles = new ArrayList<Role>();
+        SearchResult searchResult = null;
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEGROUP)
+            .build();
+
+        try {
+            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
+                searchFilter);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error(
+                "Error searching for Roles for CustomerId {} - {}", customerId,
+                ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() > 0) {
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                roles.add(getRole(entry));
+            }
+        }
+
+        getLogger().debug("Found roles {} for customer {}", roles, customerId);
+
+        return roles;
+    }
+
+    @Override
     public Role findByInum(String inum) {
         getLogger().debug("Doing search for inum " + inum);
         if (StringUtils.isBlank(inum)) {
@@ -250,9 +246,105 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
     }
 
     @Override
+    public Role findRoleByUniqueId(String uniqueId) {
+        Role role = null;
+        SearchResult searchResult = null;
+
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
+            ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEGROUP).build();
+
+        try {
+            searchResult = getAppConnPool().search(uniqueId, SearchScope.BASE,
+                searchFilter);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() == 1) {
+            SearchResultEntry e = searchResult.getSearchEntries().get(0);
+            if (e.getObjectClassAttribute()
+                .hasValue(OBJECTCLASS_RACKSPACEGROUP)) {
+                role = getRole(e);
+            }
+        } else if (searchResult.getEntryCount() > 1) {
+            String errMsg = String.format(
+                "More than one entry was found for client search - %s",
+                uniqueId);
+            getLogger().error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
+        getLogger().debug("Found Role - {}", role);
+
+        return role;
+    }
+    
+    @Override
+    public String getUnusedRoleInum(String customerInum) {
+        if (StringUtils.isBlank(customerInum)) {
+            getLogger().error("Null or empty customerInum value passesed in.");
+            throw new IllegalArgumentException(
+                "Null or empty customerInum value passesed in.");
+        }
+
+        Role role = null;
+        String inum = "";
+        do {
+            inum = customerInum + InumHelper.getRandomInum(1);
+            role = findByInum(inum);
+        } while (role != null);
+
+        return inum;
+    }
+
+    @Override
     public void save(Role role) {
         // TODO Auto-generated method stub
 
+    }
+
+    private Attribute[] getAddAttributesForRole(Role role) {
+        List<Attribute> atts = new ArrayList<Attribute>();
+
+        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_ROLE_OBJECT_CLASS_VALUES));
+
+        if (!StringUtils.isBlank(role.getName())) {
+            atts.add(new Attribute(ATTR_NAME, role.getName()));
+        }
+        if (!StringUtils.isBlank(role.getType())) {
+            atts.add(new Attribute(ATTR_GROUP_TYPE, role.getType()));
+        }
+        if (!StringUtils.isBlank(role.getIname())) {
+            atts.add(new Attribute(ATTR_INAME, role.getIname()));
+        }
+        if (!StringUtils.isBlank(role.getInum())) {
+            atts.add(new Attribute(ATTR_INUM, role.getInum()));
+        }
+        if (!StringUtils.isBlank(role.getOrgInum())) {
+            atts.add(new Attribute(ATTR_O, role.getOrgInum()));
+        }
+        if (!StringUtils.isBlank(role.getCustomerId())) {
+            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, role
+                .getCustomerId()));
+        }
+        if (role.getStatus() != null) {
+            atts.add(new Attribute(ATTR_STATUS, role.getStatus().toString()));
+        }
+
+        if (role.getPermissions() != null && role.getPermissions().size() > 0) {
+            List<String> permissions = new ArrayList<String>();
+            for (Permission permission : role.getPermissions()) {
+                permissions.add(permission.getValue());
+            }
+            String[] perms = permissions
+                .toArray(new String[permissions.size()]);
+            atts.add(new Attribute(ATTR_PERMISSION, perms));
+        }
+
+        Attribute[] attributes = atts.toArray(new Attribute[0]);
+        
+        return attributes;
     }
 
     private Role getRole(SearchResultEntry resultEntry) {
@@ -296,97 +388,5 @@ public class LdapRoleRepository extends LdapRepository implements RoleDao {
             throw new IllegalStateException(ldapEx);
         }
         return searchResult;
-    }
-
-    @Override
-    public List<Role> findByCustomerId(String customerId) {
-        getLogger().debug("Doing search for customerId {}", customerId);
-
-        if (StringUtils.isBlank(customerId)) {
-            getLogger().error("Null or Empty customerId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty customerId parameter.");
-        }
-
-        List<Role> roles = new ArrayList<Role>();
-        SearchResult searchResult = null;
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEGROUP)
-            .build();
-
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                searchFilter);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error(
-                "Error searching for Roles for CustomerId {} - {}", customerId,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() > 0) {
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
-                roles.add(getRole(entry));
-            }
-        }
-
-        getLogger().debug("Found roles {} for customer {}", roles, customerId);
-
-        return roles;
-    }
-
-    @Override
-    public String getUnusedRoleInum(String customerInum) {
-        if (StringUtils.isBlank(customerInum)) {
-            getLogger().error("Null or empty customerInum value passesed in.");
-            throw new IllegalArgumentException(
-                "Null or empty customerInum value passesed in.");
-        }
-
-        Role role = null;
-        String inum = "";
-        do {
-            inum = customerInum + InumHelper.getRandomInum(1);
-            role = findByInum(inum);
-        } while (role != null);
-
-        return inum;
-    }
-
-    @Override
-    public Role findRoleByUniqueId(String uniqueId) {
-        Role role = null;
-        SearchResult searchResult = null;
-
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
-            ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEGROUP).build();
-
-        try {
-            searchResult = getAppConnPool().search(uniqueId, SearchScope.BASE,
-                searchFilter);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            if (e.getObjectClassAttribute()
-                .hasValue(OBJECTCLASS_RACKSPACEGROUP)) {
-                role = getRole(e);
-            }
-        } else if (searchResult.getEntryCount() > 1) {
-            String errMsg = String.format(
-                "More than one entry was found for client search - %s",
-                uniqueId);
-            getLogger().error(errMsg);
-            throw new IllegalStateException(errMsg);
-        }
-
-        getLogger().debug("Found Role - {}", role);
-
-        return role;
     }
 }

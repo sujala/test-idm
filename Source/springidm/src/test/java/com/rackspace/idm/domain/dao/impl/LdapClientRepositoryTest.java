@@ -410,8 +410,10 @@ public class LdapClientRepositoryTest {
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group,testClient.getUniqueId());
         repo.addUserToClientGroup(user.getUniqueId(), group);
+        boolean inGroup = repo.isUserInClientGroup("mkovacs", group.getUniqueId());
         repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         repo.deleteClient(testClient.getClientId());
+        Assert.assertTrue(inGroup);
     }
     
     @Test

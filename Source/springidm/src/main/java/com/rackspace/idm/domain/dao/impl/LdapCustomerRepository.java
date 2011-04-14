@@ -12,17 +12,14 @@ import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.DeleteRequest;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
-import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPSearchException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
 import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
-import com.unboundid.ldap.sdk.controls.SubtreeDeleteRequestControl;
 
 public class LdapCustomerRepository extends LdapRepository implements
     CustomerDao {
@@ -41,107 +38,43 @@ public class LdapCustomerRepository extends LdapRepository implements
                 "Null instance of Customer was passed.");
         }
 
-        List<Attribute> atts = new ArrayList<Attribute>();
-
-        atts.add(new Attribute(ATTR_OBJECT_CLASS,
-            ATTR_CUSTOMER_OBJECT_CLASS_VALUES));
-
-        if (!StringUtils.isBlank(customer.getIname())) {
-            atts.add(new Attribute(ATTR_INAME, customer.getIname()));
-        }
-
-        if (!StringUtils.isBlank(customer.getInum())) {
-            atts.add(new Attribute(ATTR_INUM, customer.getInum()));
-            atts.add(new Attribute(ATTR_O, customer.getInum()));
-        }
-
-        if (!StringUtils.isBlank(customer.getCustomerId())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customer
-                .getCustomerId()));
-        }
-
-        if (customer.getStatus() != null) {
-            atts.add(new Attribute(ATTR_STATUS, customer.getStatus().toString()));
-        }
-
-        if (customer.isLocked() != null) {
-            atts.add(new Attribute(ATTR_LOCKED, String.valueOf(customer
-                .isLocked())));
-        }
-
-        if (customer.getSoftDeleted() != null) {
-            atts.add(new Attribute(ATTR_SOFT_DELETED, String.valueOf(customer
-                .getSoftDeleted())));
-        }
-
-        Attribute[] attributes = atts.toArray(new Attribute[0]);
+        Attribute[] attributes = getAddAttributes(customer);
 
         String customerDN = new LdapDnBuilder(BASE_DN).addAttriubte(ATTR_O,
             customer.getInum()).build();
 
         customer.setUniqueId(customerDN);
-
-        String customerGroupsDN = new LdapDnBuilder(customerDN).addAttriubte(
-            ATTR_OU, OU_GROUPS_NAME).build();
-        String customerPeopleDN = new LdapDnBuilder(customerDN).addAttriubte(
-            ATTR_OU, OU_PEOPLE_NAME).build();
-        String customerApplicationsDN = new LdapDnBuilder(customerDN)
-            .addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME).build();
-
-        LDAPConnection conn = null;
+        
         Audit audit = Audit.log(customer).add();
-        try {
-            conn = getAppConnPool().getConnection();
-            conn.add(customerDN, attributes);
-        } catch (LDAPException ldapEx) {
-        	audit.fail();
-            getLogger()
-                .error("Error adding customer {} - {}", customer, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        LDAPConnection conn = getAppPoolConnection(audit);
+        this.addEntry(conn, customerDN, attributes, audit);
 
         // Add ou=groups under new customer entry
+        String customerGroupsDN = new LdapDnBuilder(customerDN).addAttriubte(
+            ATTR_OU, OU_GROUPS_NAME).build();
         Attribute[] groupAttributes = {
             new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
             new Attribute(ATTR_OU, OU_GROUPS_NAME)};
 
-        try {
-            conn.add(customerGroupsDN, groupAttributes);
-        } catch (LDAPException ldapEx) {
-            audit.fail();
-            getLogger().error("Error adding customer groups {} - {}", customer,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        this.addEntry(conn, customerGroupsDN, groupAttributes, audit);
 
         // Add ou=people under new customer entry
+        String customerPeopleDN = new LdapDnBuilder(customerDN).addAttriubte(
+            ATTR_OU, OU_PEOPLE_NAME).build();
         Attribute[] peopleAttributes = {
             new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
             new Attribute(ATTR_OU, OU_PEOPLE_NAME)};
 
-        try {
-            conn.add(customerPeopleDN, peopleAttributes);
-        } catch (LDAPException ldapEx) {
-            audit.fail();
-            getLogger().error("Error adding customer people {} - {}", customer,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        this.addEntry(conn, customerPeopleDN, peopleAttributes, audit);
 
         // Add ou=applications under new customer entry
+        String customerApplicationsDN = new LdapDnBuilder(customerDN)
+        .addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME).build();
         Attribute[] applicationAttributes = {
             new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
             new Attribute(ATTR_OU, "applications")};
-
-        try {
-            conn.add(customerApplicationsDN,
-                applicationAttributes);
-        } catch (LDAPException ldapEx) {
-            audit.fail();
-            getLogger().error("Error adding customer applications {} - {}",
-                customer, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        
+        this.addEntry(conn, customerApplicationsDN, applicationAttributes, audit);
 
         audit.succeed();
         
@@ -165,56 +98,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         
         Audit audit = Audit.log(customer).delete();
 
-        LDAPConnection conn = null;
-        
-        try {
-            conn = getAppConnPool().getConnection();
-            String ouGroupsDn = new LdapDnBuilder(customerDN).addAttriubte(
-                ATTR_OU, OU_GROUPS_NAME).build();
-            DeleteRequest request = new DeleteRequest(ouGroupsDn);
-            conn.delete(request);
-        } catch (LDAPException ldapEx) {
-            audit.fail(ldapEx.getExceptionMessage());
-            getLogger().error("Could not perform delete for customer {} - {}",
-                customerId, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-        
-        try {
-            String ouApplicationsDn = new LdapDnBuilder(customerDN).addAttriubte(
-                ATTR_OU, OU_APPLICATIONS_NAME).build();
-            DeleteRequest request = new DeleteRequest(ouApplicationsDn);
-            conn.delete(request);
-        } catch (LDAPException ldapEx) {
-            audit.fail(ldapEx.getExceptionMessage());
-            getLogger().error("Could not perform delete for customer {} - {}",
-                customerId, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-        
-        try {
-            String ouPeopleDn = new LdapDnBuilder(customerDN).addAttriubte(
-                ATTR_OU, OU_PEOPLE_NAME).build();
-            DeleteRequest request = new DeleteRequest(ouPeopleDn);
-            conn.delete(request);
-        } catch (LDAPException ldapEx) {
-            audit.fail(ldapEx.getExceptionMessage());
-            getLogger().error("Could not perform delete for customer {} - {}",
-                customerId, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-        
-        try {
-            DeleteRequest request = new DeleteRequest(customerDN);
-            request.addControl(new SubtreeDeleteRequestControl());
-            conn.delete(request);
-        } catch (LDAPException ldapEx) {
-            audit.fail();
-            getLogger().error(
-                "Could not perform delete for customerId {} - {}", customerId,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        this.deleteEntryAndSubtree(customerDN, audit);
 
         audit.succeed();
 
@@ -356,26 +240,59 @@ public class LdapCustomerRepository extends LdapRepository implements
                 "There is no exisiting record for the given customer instance.");
         }
 
-        if (customer.equals(oldCustomer)) {
-            // No changes!
+        List<Modification> mods = getModifications(oldCustomer, customer);
+        
+        if (mods.size() == 0) {
+            //no changes
             return;
         }
-
-        List<Modification> mods = getModifications(oldCustomer, customer);
+        
         Audit audit = Audit.log(oldCustomer).modify(mods);
-        try {
-			getAppConnPool().modify(oldCustomer.getUniqueId(),
-                mods);
-        } catch (LDAPException ldapEx) {
-        	audit.fail();
-            getLogger().error("Error updating customer {} - {}", customer,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        LDAPConnection conn = getAppPoolConnection(audit);
+        updateEntry(conn, oldCustomer.getUniqueId(), mods, audit);
 
         audit.succeed();
 
         getLogger().debug("Updated customer {}", customer.getCustomerId());
+    }
+    
+    private Attribute[] getAddAttributes(Customer customer) {
+        List<Attribute> atts = new ArrayList<Attribute>();
+
+        atts.add(new Attribute(ATTR_OBJECT_CLASS,
+            ATTR_CUSTOMER_OBJECT_CLASS_VALUES));
+
+        if (!StringUtils.isBlank(customer.getIname())) {
+            atts.add(new Attribute(ATTR_INAME, customer.getIname()));
+        }
+
+        if (!StringUtils.isBlank(customer.getInum())) {
+            atts.add(new Attribute(ATTR_INUM, customer.getInum()));
+            atts.add(new Attribute(ATTR_O, customer.getInum()));
+        }
+
+        if (!StringUtils.isBlank(customer.getCustomerId())) {
+            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customer
+                .getCustomerId()));
+        }
+
+        if (customer.getStatus() != null) {
+            atts.add(new Attribute(ATTR_STATUS, customer.getStatus().toString()));
+        }
+
+        if (customer.isLocked() != null) {
+            atts.add(new Attribute(ATTR_LOCKED, String.valueOf(customer
+                .isLocked())));
+        }
+
+        if (customer.getSoftDeleted() != null) {
+            atts.add(new Attribute(ATTR_SOFT_DELETED, String.valueOf(customer
+                .getSoftDeleted())));
+        }
+
+        Attribute[] attributes = atts.toArray(new Attribute[0]);
+        
+        return attributes;
     }
 
     private Customer getCustomer(SearchResultEntry resultEntry) {
@@ -471,6 +388,7 @@ public class LdapCustomerRepository extends LdapRepository implements
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_ROTATION_DURATION, 
                 String.valueOf(cNew.getPasswordRotationDuration())));
         }
+        
         return mods;
     }
 }

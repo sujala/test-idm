@@ -44,8 +44,6 @@ import com.unboundid.ldap.sdk.controls.SortKey;
 import com.unboundid.util.StaticUtils;
 
 public class LdapUserRepository extends LdapRepository implements UserDao {
-    private static final String[] ATTR_SEARCH_ATTRIBUTES = {"*",
-        ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
 
     // NOTE: This is pretty fragile way of handling the specific error, so we
     // need to look into more reliable way of detecting this error.
@@ -72,15 +70,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         user.setUniqueId(userDN);
 
         Audit audit = Audit.log(user).add();
+
+        Attribute[] attributes = null;
+
         try {
-            Attribute[] attributes = getAddAttributes(user);
-            getAppConnPool().add(userDN, attributes);
-        } catch (LDAPException ldapEx) {
-            String errorString = String.format("Error adding user %s - %s",
-                user, ldapEx);
-            audit.fail(errorString);
-            getLogger().error(errorString);
-            throw new IllegalStateException(ldapEx);
+            attributes = getAddAttributes(user);
+            addEntry(userDN, attributes, audit);
         } catch (GeneralSecurityException e) {
             getLogger().error(e.getMessage());
             audit.fail("encryption error");
@@ -171,15 +166,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new NotFoundException(errorMsg);
         }
 
-        try {
-            getAppConnPool().delete(user.getUniqueId());
-        } catch (LDAPException ldapEx) {
-            String errorString = String.format(
-                "Error deleting username %s - %s", username, ldapEx);
-            audit.fail(errorString);
-            getLogger().error(errorString);
-            throw new IllegalStateException(ldapEx);
-        }
+        this.deleteEntryAndSubtree(user.getUniqueId(), audit);
 
         audit.succeed();
         getLogger().info("Deleted username - {}", username);
@@ -189,9 +176,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public Users getAllUsers(int offset, int limit) {
         getLogger().debug("Search all users");
 
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON).build();
-        Users users = getMultipleUsers(searchFilter, ATTR_SEARCH_ATTRIBUTES,
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
+            ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON).build();
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,
             offset, limit);
 
         getLogger().debug("Found Users - {}", users);
@@ -263,7 +250,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public User getUserByCustomerIdAndUsername(String customerId, String username) {
+    public User getUserByCustomerIdAndUsername(String customerId,
+        String username) {
 
         getLogger().debug(
             "LdapUserRepository.findUser() - customerId: {}, username: {} ",
@@ -287,7 +275,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
+        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User for customer - {}, {}", customerId, user);
 
@@ -310,7 +298,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
+        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
 
@@ -326,7 +314,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
+        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
 
@@ -347,7 +335,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
+        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
 
@@ -367,7 +355,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
+        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
 
@@ -390,7 +378,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
+        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
 
         getLogger().debug("Found User - {}", user);
 
@@ -413,7 +401,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        Users users = getMultipleUsers(searchFilter, ATTR_SEARCH_ATTRIBUTES,
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,
             offset, limit);
 
         getLogger().debug("Found Users - {}", users);
@@ -429,13 +417,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        User user = getSingleUser(searchFilter, ATTR_SEARCH_ATTRIBUTES);
+        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
 
         return user == null;
     }
 
     @Override
-    public void setUsersLockedFlagByCustomerId(String customerId, boolean isLocked) {
+    public void setUsersLockedFlagByCustomerId(String customerId,
+        boolean isLocked) {
         Users users = this.findFirst100ByCustomerIdAndLock(customerId,
             !isLocked);
         if (users.getUsers() != null && users.getUsers().size() > 0) {
@@ -610,7 +599,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        Users users = getMultipleUsers(searchFilter, ATTR_SEARCH_ATTRIBUTES,
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,
             offset, limit);
 
         getLogger().debug("Found Users - {}", users);
@@ -970,9 +959,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_PASSWORD_SELF_UPDATED, Boolean.toString(isSelfUpdate)));
-            mods.add(new Modification(ModificationType.REPLACE, 
-            		ATTR_PASSWORD_UPDATED_TIMESTAMP, StaticUtils
-                .encodeGeneralizedTime(currentTime.toDate())));
+            mods.add(new Modification(ModificationType.REPLACE,
+                ATTR_PASSWORD_UPDATED_TIMESTAMP, StaticUtils
+                    .encodeGeneralizedTime(currentTime.toDate())));
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD,
                 uNew.getPasswordObj().getValue()));
             mods.add(new Modification(ModificationType.REPLACE,
@@ -1164,7 +1153,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                     ATTR_MOSSO_ID, String.valueOf(uNew.getMossoId())));
             }
         }
- 
+
         return mods;
     }
 }
