@@ -31,7 +31,6 @@ import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
@@ -450,13 +449,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.rackspace.idm.domain.dao.UserDao#save(com.rackspace.idm.domain.entity
-     * .User, boolean)
-     */
     @Override
     public void updateUser(User user, boolean hasSelfUpdatedPassword) {
         getLogger().info("Updating user {}", user);
@@ -477,7 +469,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Audit audit = Audit.log(user);
 
-        LDAPResult result = null;
         try {
             List<Modification> mods = getModifications(oldUser, user,
                 hasSelfUpdatedPassword);
@@ -487,7 +478,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 // No changes!
                 return;
             }
-            result = getAppConnPool().modify(oldUser.getUniqueId(), mods);
+            getAppConnPool().modify(oldUser.getUniqueId(), mods);
         } catch (LDAPException ldapEx) {
 
             if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
@@ -509,16 +500,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             getLogger().error(e.getMessage());
             audit.fail("encryption error");
             throw new IllegalStateException(e);
-        }
-
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            String errorString = String.format("Error updating user %s - %s",
-                user.getUsername(), result.getResultCode());
-            audit.fail(errorString);
-            getLogger().error(errorString);
-            throw new IllegalArgumentException(String.format(
-                "LDAP error encountered when updating user: %s - %s"
-                    + user.getUsername(), result.getResultCode().toString()));
         }
 
         // Now that its in LDAP we'll set the password to existing type

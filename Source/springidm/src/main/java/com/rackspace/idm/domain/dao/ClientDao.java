@@ -1,20 +1,20 @@
 package com.rackspace.idm.domain.dao;
 
+import java.util.List;
+
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Permission;
 
-import java.util.List;
-
 public interface ClientDao {
 
     void addClient(Client client, String customerUniqueId);
 
-    void addClientGroup(ClientGroup clientGroup);
+    void addClientGroup(ClientGroup clientGroup, String clientUniqueId);
 
-    void addDefinedPermission(Permission permission);
+    void addDefinedPermission(Permission permission, String clientUniqueId);
 
     void addUserToClientGroup(String userUniqueId, ClientGroup group);
 
