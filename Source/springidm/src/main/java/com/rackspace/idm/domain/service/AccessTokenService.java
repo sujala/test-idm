@@ -18,7 +18,7 @@ public interface AccessTokenService {
         int expirationSeconds, DateTime currentTime);
 
     AccessToken getTokenByUsernameAndApiCredentials(BaseClient client, String username, String apiKey,
-        int expirationSeconds, DateTime currentTime);
+        DateTime currentTime);
 
     AccessToken getTokenByNastIdAndApiCredentials(BaseClient client, String nastId, String apiKey,
         int expirationSeconds, DateTime currentTime);

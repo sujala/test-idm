@@ -102,10 +102,8 @@ public class AuthResource {
             throw new BadRequestException(errMsg);
         }
 
-        int expirationSeconds = accessTokenService.getCloudAuthDefaultTokenExpirationSeconds();
-
         AccessToken userToken = accessTokenService.getTokenByUsernameAndApiCredentials(
-            token.getTokenClient(), username, apiKey, expirationSeconds, new DateTime());
+            token.getTokenClient(), username, apiKey, new DateTime());
 
         List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userToken.getTokenUser()
             .getUsername());

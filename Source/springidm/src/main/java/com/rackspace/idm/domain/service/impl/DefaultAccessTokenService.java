@@ -19,11 +19,9 @@ import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.service.AccessTokenService;
-import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
@@ -33,7 +31,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
     private XdcAccessTokenDao xdcTokenDao;
     private ClientDao clientDao;
     private UserService userService;
-    
+
     private AuthHeaderHelper authHeaderHelper;
     private Configuration config;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -42,12 +40,12 @@ public class DefaultAccessTokenService implements AccessTokenService {
         XdcAccessTokenDao xdcTokenDao, AuthHeaderHelper authHeaderHelper, Configuration config) {
         this.tokenDao = tokenDao;
         this.clientDao = clientDao;
-        this.userService = userService;     
+        this.userService = userService;
         this.xdcTokenDao = xdcTokenDao;
         this.authHeaderHelper = authHeaderHelper;
         this.config = config;
     }
-    
+
     @Override
     public boolean authenticateAccessToken(String accessTokenStr) {
         logger.debug("Authorizing Token: {}", accessTokenStr);
@@ -55,7 +53,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
         // check token is valid and not expired
         AccessToken accessToken = getAccessTokenByTokenStringGlobally(accessTokenStr);
-        if (accessToken != null && !accessToken.isExpired(new DateTime()) )  {
+        if (accessToken != null && !accessToken.isExpired(new DateTime())) {
             authenticated = true;
             MDC.put(Audit.WHO, accessToken.getAuditString());
         }
@@ -127,7 +125,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
         logger.debug("Got Token For Client: {} - {}", client.getClientId(), token);
         return token;
     }
-    
+
     @Override
     public AccessToken getAccessTokenByTokenStringGlobally(String tokenString) {
         AccessToken token = tokenDao.findByTokenString(tokenString);
@@ -144,7 +142,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
             }
         }
         return token;
-    }   
+    }
 
     @Override
     public AccessToken createAccessTokenForUser(BaseUser user, BaseClient client, int expirationSeconds) {
@@ -173,12 +171,12 @@ public class DefaultAccessTokenService implements AccessTokenService {
     public AccessToken createPasswordResetAccessTokenForUser(User user, String clientId) {
         return createPasswordResetAccessTokenForUser(user, clientId, getDefaultTokenExpirationSeconds());
     }
-    
+
     @Override
     public AccessToken createPasswordResetAccessTokenForUser(String userName, String clientId) {
         User user = userService.getUser(userName);
         return createPasswordResetAccessTokenForUser(user, clientId, getDefaultTokenExpirationSeconds());
-    }   
+    }
 
     @Override
     public AccessToken createPasswordResetAccessTokenForUser(User user, String clientId,
@@ -303,8 +301,6 @@ public class DefaultAccessTokenService implements AccessTokenService {
         return token;
     }
 
-    
-
     public AccessToken getTokenByBasicCredentials(BaseClient client, BaseUser user, int expirationSeconds,
         DateTime currentTime) {
         AccessToken token = getAccessTokenForUser(user, client, currentTime);
@@ -321,11 +317,9 @@ public class DefaultAccessTokenService implements AccessTokenService {
     }
 
     public AccessToken getTokenByUsernameAndApiCredentials(BaseClient client, String username, String apiKey,
-        int expirationSeconds, DateTime currentTime) {
-
+        DateTime currentTime) {
         UserAuthenticationResult authResult = userService.authenticateWithApiKey(username, apiKey);
-
-        return getTokenByApiCredentials(client, authResult, expirationSeconds, currentTime);
+        return getTokenByApiCredentials(client, authResult, getDefaultTokenExpirationSeconds(), currentTime);
     }
 
     public AccessToken getTokenByNastIdAndApiCredentials(BaseClient client, String nastId, String apiKey,
@@ -407,20 +401,20 @@ public class DefaultAccessTokenService implements AccessTokenService {
 
         xdcTokenDao.deleteAllTokensForCustomer(customerId);
     }
-    
+
     @Override
     public boolean passwordRotationDurationElapsed(String userName) {
         boolean rotationNeeded = false;
-        
+
         DateTime passwordExpirationDate = userService.getUserPasswordExpirationDate(userName);
-         
+
         if (passwordExpirationDate != null && passwordExpirationDate.isBeforeNow()) {
             return true;
         }
-        
+
         return rotationNeeded;
     }
- 
+
     private String generateTokenWithDcPrefix() {
         String token = UUID.randomUUID().toString().replace("-", "");
         return String.format("%s%s", getDataCenterPrefix(), token);
