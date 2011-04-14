@@ -16,8 +16,8 @@ public interface ClientService {
     void addClientGroup(ClientGroup clientGroup);
 
     void addDefinedPermission(Permission permission);
-
-    void addUserToClientGroup(String username, ClientGroup clientGroup);
+    
+    void addUserToClientGroup(String username, String customerId, String clientId, String groupName);
 
     ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 

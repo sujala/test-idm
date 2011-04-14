@@ -88,20 +88,8 @@ public class ClientGroupMembersResource {
             throw new ForbiddenException(errMsg);
         }
 
-        ClientGroup group = this.clientService
-            .getClientGroup(customerId, clientId, groupName);
+        this.clientService.addUserToClientGroup(username, customerId, clientId, groupName);
         
-        if (group == null) {
-            String errMsg = String
-                .format(
-                    "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.",
-                    groupName, clientId, customerId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-
-        this.clientService.addUserToClientGroup(username, group);
-
         return Response.ok().build();
     }
 

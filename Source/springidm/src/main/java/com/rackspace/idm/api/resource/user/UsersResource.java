@@ -168,10 +168,11 @@ public class UsersResource {
             throw new DuplicateUsernameException(errorMsg);
         }
 
+        this.clientService.addUserToClientGroup(userDO.getUsername(), 
+            getRackspaceCustomerId(), getIdmClientId(), getIdmAdminGroupName());
+        
         ClientGroup idmAdmin = this.clientService.getClientGroup(getRackspaceCustomerId(), getIdmClientId(),
             getIdmAdminGroupName());
-
-        this.clientService.addUserToClientGroup(userDO.getUsername(), idmAdmin);
 
         // Add the new Admin role to the User Object
         List<ClientGroup> groups = new ArrayList<ClientGroup>();

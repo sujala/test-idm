@@ -173,7 +173,7 @@ public class UserGroupsResource {
         }
 
         // get user to update
-        User user = checkAndGetUser(customerId, username);
+        User user = userService.checkAndGetUser(customerId, username);
 
         if (user == null) {
             String errorMsg = String.format(
@@ -182,19 +182,19 @@ public class UserGroupsResource {
             throw new NotFoundException(errorMsg);
         }
 
-        ClientGroup group = this.clientService.getClientGroup(
-            getRackspaceCustomerId(), getIdmClientId(), groupName);
+        String customerName = getRackspaceCustomerId();
+        String clientId = getIdmClientId();
+        
+        this.clientService.addUserToClientGroup(username, customerName, clientId, groupName);
 
-        if (group == null) {
-            String errorMsg = String.format(
-                "Add User to Group Failed - Group not found: %s", groupName);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-
-        this.clientService.addUserToClientGroup(username, group);
-
-        logger.debug("Added user {} to group {}", user, group);
+        Object[] arg = new Object[3];
+        arg[0] = groupName;
+        arg[1] = customerName;
+        arg[2] = clientId;
+        
+        logger.debug("Added user {} to group {} for customer {} client {}", username, arg);
+        
+        logger.debug("Added user {} to group {} for customer {} client {}", username, groupName);
 
         return Response.noContent().build();
     }

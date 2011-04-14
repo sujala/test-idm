@@ -36,6 +36,8 @@ public interface UserService {
     User getUserByMossoId(int mossoId);
 
     User getUser(String customerId, String username);
+    
+    User checkAndGetUser(String customerId, String username);
 
     boolean isUsernameUnique(String username);
 

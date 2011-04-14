@@ -36,6 +36,7 @@ import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.EmailService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.jaxb.CustomParam;
 import com.rackspace.idm.jaxb.PasswordRecovery;
 import com.rackspace.idm.util.HashHelper;
@@ -214,6 +215,9 @@ public class DefaultUserService implements UserService {
         logger.debug("Getting User: {}", username);
         User user = userDao.getUserByUsername(username);
         if (user == null) {
+            
+            
+            
             logger.warn("No user found for user name {}", username);
             return null;
         }
@@ -379,8 +383,21 @@ public class DefaultUserService implements UserService {
         }
         
         return passwordExpirationDate;
-    }    
-
+    }
+    
+    @Override
+    public User checkAndGetUser(String customerId, String username) {
+        User user = this.getUser(customerId, username);
+        if (user == null) 
+        {
+            String errorMsg = String.format("User not found: %s - %s", customerId,
+                username);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+        return user;
+    }
+    
     private Map<String, String> getCustomParamsMap(PasswordRecovery recoveryParam) {
         List<CustomParam> customParams = null;
         if (recoveryParam.getCustomParams() == null) {

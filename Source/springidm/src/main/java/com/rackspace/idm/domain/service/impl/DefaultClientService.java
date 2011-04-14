@@ -319,29 +319,23 @@ public class DefaultClientService implements ClientService {
         clientDao.addClientGroup(clientGroup, client.getUniqueId());
     }
 
+   
+    
     @Override
-    public void addUserToClientGroup(String username, ClientGroup clientGroup) {
-        if (StringUtils.isBlank(username)) {
-            throw new IllegalArgumentException("username cannot be blank");
+    public void addUserToClientGroup(String username, String customerId, String clientId, String groupName) {
+        
+        ClientGroup group = this.getClientGroup(customerId, clientId, groupName);
+        
+        if (group == null) {
+            String errMsg = String
+                .format(
+                    "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.",
+                    groupName, clientId, customerId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
         }
 
-        User user = userDao.getUserByUsername(username);
-        if (user == null) {
-            throw new NotFoundException(String.format(
-                "User with username %s not found", username));
-        }
-
-        if (user.isDisabled()) {
-            throw new UserDisabledException(String.format(
-                "User %s is disabled and cannot be added to group", username));
-        }
-
-        try {
-            clientDao.addUserToClientGroup(user.getUniqueId(), clientGroup);
-        } catch (DuplicateException drx) {
-            logger.warn("User {} already in group {}", user, clientGroup);
-            return;
-        }
+        this.addUserToClientGroup(username, group);
     }
 
     @Override
@@ -461,6 +455,30 @@ public class DefaultClientService implements ClientService {
         }
         
         return this.clientDao.getClientsThatHavePermission(permission);
+    }
+    
+    private void addUserToClientGroup(String username, ClientGroup clientGroup) {
+        if (StringUtils.isBlank(username)) {
+            throw new IllegalArgumentException("username cannot be blank");
+        }
+
+        User user = userDao.getUserByUsername(username);
+        if (user == null) {
+            throw new NotFoundException(String.format(
+                "User with username %s not found", username));
+        }
+
+        if (user.isDisabled()) {
+            throw new UserDisabledException(String.format(
+                "User %s is disabled and cannot be added to group", username));
+        }
+
+        try {
+            clientDao.addUserToClientGroup(user.getUniqueId(), clientGroup);
+        } catch (DuplicateException drx) {
+            logger.warn("User {} already in group {}", user, clientGroup);
+            return;
+        }
     }
     
     

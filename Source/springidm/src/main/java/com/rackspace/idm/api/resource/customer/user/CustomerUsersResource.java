@@ -148,6 +148,7 @@ public class CustomerUsersResource {
     public Response addUser(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
