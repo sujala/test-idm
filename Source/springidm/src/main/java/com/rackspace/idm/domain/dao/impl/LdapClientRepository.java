@@ -25,7 +25,6 @@ import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
-import com.unboundid.ldap.sdk.LDAPSearchException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
 import com.unboundid.ldap.sdk.ResultCode;
@@ -425,7 +424,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         String groupName) {
 
         ClientGroup group = null;
-        SearchResult searchResult = null;
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_NAME, groupName)
@@ -434,23 +432,11 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP)
             .build();
 
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for clientGroup {} - {}",
-                groupName, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.SUB,
+            searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
 
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            group = getClientGroup(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error("More than one entry was found for group {}",
-                clientId);
-            throw new IllegalStateException(
-                "More than one entry was found for this group");
+        if (entry != null) {
+            group = getClientGroup(entry);
         }
 
         return group;
@@ -459,30 +445,15 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     @Override
     public ClientGroup getClientGroupByUniqueId(String uniqueId) {
         ClientGroup group = null;
-        SearchResult searchResult = null;
 
         Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
             ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
 
-        try {
-            searchResult = getAppConnPool().search(uniqueId, SearchScope.BASE,
-                searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
-        }
+        SearchResultEntry entry = this.getSingleEntry(uniqueId,
+            SearchScope.BASE, searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
 
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            if (e.getObjectClassAttribute().hasValue(OBJECTCLASS_CLIENTGROUP)) {
-                group = getClientGroup(e);
-            }
-        } else if (searchResult.getEntryCount() > 1) {
-            String errMsg = String.format(
-                "More than one entry was found for client search - %s",
-                uniqueId);
-            getLogger().error(errMsg);
-            throw new IllegalStateException(errMsg);
+        if (entry != null) {
+            group = getClientGroup(entry);
         }
 
         getLogger().debug("Found Client Group - {}", group);
@@ -503,22 +474,15 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         String searchDN = "ou=groups," + client.getUniqueId();
 
-        SearchResult searchResult = null;
-
         Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
             ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
 
-        try {
-            searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
-                searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for clientId {} - {}", clientId,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        List<SearchResultEntry> entries = this.getMultipleEntries(searchDN,
+            SearchScope.ONE, searchFilter, ATTR_NAME,
+            ATTR_GROUP_SEARCH_ATTRIBUTES);
 
-        if (searchResult.getEntryCount() > 0) {
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+        if (entries.size() > 0) {
+            for (SearchResultEntry entry : entries) {
                 groups.add(getClientGroup(entry));
             }
         }
@@ -541,6 +505,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEAPPLICATION).build();
+
         Clients clients = getMultipleClients(searchFilter, offset, limit);
 
         getLogger().debug("Found clients {} for customer {}", clients,
@@ -597,30 +562,17 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         String searchDN = "ou=permissions," + clientDN;
 
         Permission permission = null;
-        SearchResult searchResult = null;
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_NAME, permissionId)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTPERMISSION)
             .build();
 
-        try {
-            searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
-                searchFilter);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for permissionId {} - {}",
-                clientId, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        SearchResultEntry entry = this.getSingleEntry(searchDN,
+            SearchScope.ONE, searchFilter);
 
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            permission = getPermission(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error(
-                "More than one entry was found for permissionId {}", clientId);
-            throw new IllegalStateException(
-                "More than one entry was found for this permissionId");
+        if (entry != null) {
+            permission = getPermission(entry);
         }
 
         return permission;
@@ -633,25 +585,17 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         String searchDN = "ou=permissions," + clientDN;
 
         List<Permission> permissions = new ArrayList<Permission>();
-        SearchResult searchResult = null;
 
         Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
             ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTPERMISSION).build();
 
-        try {
-            searchResult = getAppConnPool().search(searchDN, SearchScope.ONE,
-                searchFilter);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for clientId {} - {}", clientId,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
+        List<SearchResultEntry> entries = this.getMultipleEntries(searchDN,
+            SearchScope.ONE, searchFilter, ATTR_NAME);
+
+        for (SearchResultEntry entry : entries) {
+            permissions.add(getPermission(entry));
         }
 
-        if (searchResult.getEntryCount() > 0) {
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
-                permissions.add(getPermission(entry));
-            }
-        }
         return permissions;
     }
 

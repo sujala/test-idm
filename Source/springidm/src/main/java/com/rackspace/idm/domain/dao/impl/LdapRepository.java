@@ -223,7 +223,7 @@ public abstract class LdapRepository {
     protected SearchResultEntry getSingleEntry(String baseDN, SearchScope scope, Filter searchFilter, String... attributes) {
         SearchResultEntry entry = null;
         try {
-            entry = getAppConnPool().searchForEntry(BASE_DN, SearchScope.SUB,
+            entry = getAppConnPool().searchForEntry(baseDN, scope,
                 searchFilter);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
