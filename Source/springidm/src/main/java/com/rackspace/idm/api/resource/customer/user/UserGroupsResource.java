@@ -192,9 +192,12 @@ public class UserGroupsResource {
         arg[1] = customerName;
         arg[2] = clientId;
         
-        logger.debug("Added user {} to group {} for customer {} client {}", username, arg);
+        String message = String
+        .format(
+            "Added user with name %s to group %s, clientId %s, and customerId %s.",
+            username, groupName, clientId, customerId);
         
-        logger.debug("Added user {} to group {} for customer {} client {}", username, groupName);
+        logger.debug(message);
 
         return Response.noContent().build();
     }
