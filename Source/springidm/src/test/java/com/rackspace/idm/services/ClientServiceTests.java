@@ -26,7 +26,6 @@ import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.impl.DefaultClientService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.test.stub.StubLogger;
 
 public class ClientServiceTests {
     ClientDao mockClientDao;
@@ -61,6 +60,8 @@ public class ClientServiceTests {
     String userDN = "userDN";
     String groupDN = "groupDN";
     String username = "username";
+    
+    String uniqueId = "uniqueId";
 
     @Before
     public void setUp() throws Exception {
@@ -329,6 +330,7 @@ public class ClientServiceTests {
     @Test
     public void shouldAddPermission() {
         Client client = getFakeClient();
+        client.setUniqueId(uniqueId);
         Customer customer = getFakeCustomer();
         Permission resource = getFakePermission();
 
@@ -341,7 +343,7 @@ public class ClientServiceTests {
         EasyMock.expect(
             mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
                 clientId, resourceId)).andReturn(null);
-        mockClientDao.addDefinedPermission(resource);
+        mockClientDao.addDefinedPermission(resource,uniqueId);
         EasyMock.replay(mockClientDao);
 
         clientService.addDefinedPermission(resource);
@@ -353,6 +355,7 @@ public class ClientServiceTests {
     @Test(expected = IllegalStateException.class)
     public void shouldNotAddPermissionIfCustomerNotFound() {
         Client client = getFakeClient();
+        client.setUniqueId(uniqueId);
         Customer customer = getFakeCustomer();
         Permission resource = getFakePermission();
 
@@ -365,7 +368,7 @@ public class ClientServiceTests {
         EasyMock.expect(
             mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
                 clientId, resourceId)).andReturn(null);
-        mockClientDao.addDefinedPermission(resource);
+        mockClientDao.addDefinedPermission(resource,uniqueId);
         EasyMock.replay(mockClientDao);
 
         clientService.addDefinedPermission(resource);
@@ -377,6 +380,7 @@ public class ClientServiceTests {
     @Test(expected = IllegalStateException.class)
     public void shouldNotAddPermissionIfClientNotFound() {
         Client client = getFakeClient();
+        client.setUniqueId(uniqueId);
         Customer customer = getFakeCustomer();
         Permission resource = getFakePermission();
 
@@ -388,7 +392,7 @@ public class ClientServiceTests {
         EasyMock.expect(
             mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
                 clientId, resourceId)).andReturn(null);
-        mockClientDao.addDefinedPermission(resource);
+        mockClientDao.addDefinedPermission(resource,uniqueId);
         EasyMock.replay(mockClientDao);
 
         clientService.addDefinedPermission(resource);
@@ -400,6 +404,7 @@ public class ClientServiceTests {
     @Test(expected = DuplicateException.class)
     public void shouldNotAddPermissionIfDuplicate() {
         Client client = getFakeClient();
+        client.setUniqueId(uniqueId);
         Customer customer = getFakeCustomer();
         Permission resource = getFakePermission();
 
@@ -412,7 +417,7 @@ public class ClientServiceTests {
         EasyMock.expect(
             mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
                 clientId, resourceId)).andReturn(resource);
-        mockClientDao.addDefinedPermission(resource);
+        mockClientDao.addDefinedPermission(resource,uniqueId);
         EasyMock.replay(mockClientDao);
 
         clientService.addDefinedPermission(resource);
@@ -797,8 +802,12 @@ public class ClientServiceTests {
 
     @Test
     public void ShouldAddClientGroup() {
+        Client client = getFakeClient();
+        client.setUniqueId(uniqueId);
+        
         ClientGroup group = getFakeClientGroup();
-        mockClientDao.addClientGroup(group);
+        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(client);
+        mockClientDao.addClientGroup(group, uniqueId);
         EasyMock.replay(mockClientDao);
         clientService.addClientGroup(group);
         EasyMock.verify(mockClientDao);

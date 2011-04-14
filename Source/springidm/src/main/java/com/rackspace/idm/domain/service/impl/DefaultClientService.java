@@ -11,7 +11,14 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
+import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ClientSecret;
+import com.rackspace.idm.domain.entity.Clients;
+import com.rackspace.idm.domain.entity.Customer;
+import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -20,9 +27,9 @@ import com.rackspace.idm.util.HashHelper;
 
 public class DefaultClientService implements ClientService {
 
-    private ClientDao clientDao;
-    private CustomerDao customerDao;
-    private UserDao userDao;
+    private final ClientDao clientDao;
+    private final CustomerDao customerDao;
+    private final UserDao userDao;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultClientService(ClientDao clientDao, CustomerDao customerDao,
@@ -32,6 +39,7 @@ public class DefaultClientService implements ClientService {
         this.userDao = userDao;
     }
 
+    @Override
     public void add(Client client) {
         logger.debug("Adding Client: {}", client);
         Customer customer = customerDao
@@ -76,6 +84,7 @@ public class DefaultClientService implements ClientService {
         return clientDao.authenticate(clientId, clientSecret);
     }
 
+    @Override
     public void delete(String clientId) {
         Client client = clientDao.getClientByClientId(clientId);
 
@@ -104,6 +113,7 @@ public class DefaultClientService implements ClientService {
         clientDao.deleteClient(clientId);
     }
 
+    @Override
     public void addDefinedPermission(Permission permission) {
 
         Customer customer = customerDao.getCustomerByCustomerId(permission
@@ -138,9 +148,10 @@ public class DefaultClientService implements ClientService {
                 "PermissionId %s already exists", client.getName()));
         }
 
-        clientDao.addDefinedPermission(permission);
+        clientDao.addDefinedPermission(permission, client.getUniqueId());
     }
 
+    @Override
     public void deleteDefinedPermission(Permission permission) {
         Permission p = this.clientDao.getDefinedPermissionByClientIdAndPermissionId(permission.getClientId(), permission.getPermissionId());
         
@@ -157,23 +168,28 @@ public class DefaultClientService implements ClientService {
         clientDao.deleteDefinedPermission(permission);
     }
 
+    @Override
     public Clients getByCustomerId(String customerId, int offset, int limit) {
 
         return clientDao.getClientsByCustomerId(customerId, offset, limit);
     }
 
+    @Override
     public Client getById(String clientId) {
         return clientDao.getClientByClientId(clientId);
     }
 
+    @Override
     public Client getClient(String customerId, String clientId) {
         return clientDao.getClientByCustomerIdAndClientId(customerId, clientId);
     }
 
+    @Override
     public Client getByName(String clientName) {
         return clientDao.getClientByClientname(clientName);
     }
 
+    @Override
     public Permission getDefinedPermissionByClientIdAndPermissionId(
         String clientId, String permissionId) {
         Permission permission = clientDao
@@ -182,12 +198,14 @@ public class DefaultClientService implements ClientService {
         return permission;
     }
 
+    @Override
     public List<Permission> getDefinedPermissionsByClientId(String clientId) {
         List<Permission> permissions = clientDao
             .getDefinedPermissionsByClientId(clientId);
         return permissions;
     }
 
+    @Override
     public ClientSecret resetClientSecret(Client client) {
 
         if (client == null) {
@@ -206,10 +224,12 @@ public class DefaultClientService implements ClientService {
         return clientSecret;
     }
 
+    @Override
     public void save(Client client) {
         clientDao.updateClient(client);
     }
 
+    @Override
     public void softDelete(String clientId) {
         logger.info("Soft Deleting client: {}", clientId);
         Client client = this.clientDao.getClientByClientId(clientId);
@@ -218,6 +238,7 @@ public class DefaultClientService implements ClientService {
         logger.info("Soft Deleted cilent: {}", clientId);
     }
 
+    @Override
     public void grantPermission(String clientId, Permission p) {
         Client targetClient = this.clientDao.getClientByClientId(clientId);
 
@@ -242,6 +263,7 @@ public class DefaultClientService implements ClientService {
         }
     }
 
+    @Override
     public void revokePermission(String clientId, Permission p) {
 
         Client targetClient = getClient(clientId);
@@ -277,14 +299,27 @@ public class DefaultClientService implements ClientService {
         return targetClient;
     }
 
+    @Override
     public void updateDefinedPermission(Permission permission) {
         clientDao.updateDefinedPermission(permission);
     }
 
+    @Override
     public void addClientGroup(ClientGroup clientGroup) {
-        clientDao.addClientGroup(clientGroup);
+        
+        Client client = clientDao.getClientByClientId(clientGroup.getClientId());
+
+        if (client == null) {
+            logger.warn(
+                "Couldn't add group {} because clientId doesn't exist",
+                clientGroup.getClientId());
+            throw new IllegalStateException("Client doesn't exist");
+        }
+        
+        clientDao.addClientGroup(clientGroup, client.getUniqueId());
     }
 
+    @Override
     public void addUserToClientGroup(String username, ClientGroup clientGroup) {
         if (StringUtils.isBlank(username)) {
             throw new IllegalArgumentException("username cannot be blank");
@@ -309,11 +344,13 @@ public class DefaultClientService implements ClientService {
         }
     }
 
+    @Override
     public void deleteClientGroup(String customerId, String clientId,
         String name) {
         clientDao.deleteClientGroup(customerId, clientId, name);
     }
 
+    @Override
     public ClientGroup getClientGroup(String customerId, String clientId,
         String groupName) {
         ClientGroup group = clientDao.getClientGroup(customerId, clientId,
@@ -321,12 +358,14 @@ public class DefaultClientService implements ClientService {
         return group;
     }
 
+    @Override
     public List<ClientGroup> getClientGroupsByClientId(String clientId) {
         List<ClientGroup> groups = clientDao
             .getClientGroupsByClientId(clientId);
         return groups;
     }
 
+    @Override
     public void removeUserFromClientGroup(String username,
         ClientGroup clientGroup) {
         if (StringUtils.isBlank(username)) {
@@ -346,6 +385,7 @@ public class DefaultClientService implements ClientService {
         }
     }
 
+    @Override
     public List<ClientGroup> getClientGroupsForUserByClientIdAndType(
         String username, String clientId, String type) {
 
@@ -382,6 +422,7 @@ public class DefaultClientService implements ClientService {
         return groups;
     }
 
+    @Override
     public List<ClientGroup> getClientGroupsForUser(String username) {
         logger.debug("Getting Groups for User: {}", username);
         String[] groupIds = userDao.getGroupIdsForUser(username);
@@ -403,11 +444,13 @@ public class DefaultClientService implements ClientService {
         return groups;
     }
 
+    @Override
     public void updateClientGroup(ClientGroup group) {
 
         clientDao.updateClientGroup(group);
     }
 
+    @Override
     public List<Client> getClientsThatHavePermission(Permission permission) {
         Permission p = this.clientDao
             .getDefinedPermissionByClientIdAndPermissionId(
