@@ -280,11 +280,12 @@ public class DefaultAccessTokenService implements AccessTokenService {
     }
 
     public AccessToken getTokenByUsernameAndPassword(BaseClient client, String username, String password,
-        int expirationSeconds, DateTime currentTime) {
+        DateTime currentTime) {
 
         UserAuthenticationResult authResult = userService.authenticate(username, password);
 
-        AccessToken accessToken = getTokenByApiCredentials(client, authResult, expirationSeconds, currentTime);
+        AccessToken accessToken = getTokenByApiCredentials(client, authResult,
+            getCloudAuthDefaultTokenExpirationSeconds(), currentTime);
         return accessToken;
     }
 
@@ -323,11 +324,12 @@ public class DefaultAccessTokenService implements AccessTokenService {
     }
 
     public AccessToken getTokenByNastIdAndApiCredentials(BaseClient client, String nastId, String apiKey,
-        int expirationSeconds, DateTime currentTime) {
+        DateTime currentTime) {
 
         UserAuthenticationResult authResult = userService.authenticateWithNastIdAndApiKey(nastId, apiKey);
 
-        return getTokenByApiCredentials(client, authResult, expirationSeconds, currentTime);
+        return getTokenByApiCredentials(client, authResult, getCloudAuthDefaultTokenExpirationSeconds(),
+            currentTime);
     }
 
     public AccessToken getTokenByMossoIdAndApiCredentials(BaseClient client, int mossoId, String apiKey,

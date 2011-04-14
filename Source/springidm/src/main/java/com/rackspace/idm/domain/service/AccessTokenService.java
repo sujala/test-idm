@@ -15,13 +15,13 @@ public interface AccessTokenService {
     boolean authenticateAccessToken(String accessTokenStr);
 
     AccessToken getTokenByUsernameAndPassword(BaseClient client, String username, String password,
-        int expirationSeconds, DateTime currentTime);
+        DateTime currentTime);
 
     AccessToken getTokenByUsernameAndApiCredentials(BaseClient client, String username, String apiKey,
         DateTime currentTime);
 
     AccessToken getTokenByNastIdAndApiCredentials(BaseClient client, String nastId, String apiKey,
-        int expirationSeconds, DateTime currentTime);
+        DateTime currentTime);
 
     AccessToken getTokenByMossoIdAndApiCredentials(BaseClient client, int mossoId, String apiKey,
         int expirationSeconds, DateTime currentTime);
@@ -44,8 +44,8 @@ public interface AccessTokenService {
     AccessToken createPasswordResetAccessTokenForUser(User user, String clientId);
 
     AccessToken createPasswordResetAccessTokenForUser(User user, String clientId, int expirationTimeInSeconds);
-    
-    AccessToken createPasswordResetAccessTokenForUser(String userName, String clientId);    
+
+    AccessToken createPasswordResetAccessTokenForUser(String userName, String clientId);
 
     AccessToken createAccessTokenForClient(BaseClient client);
 

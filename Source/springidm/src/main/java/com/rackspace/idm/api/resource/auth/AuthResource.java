@@ -210,10 +210,8 @@ public class AuthResource {
             throw new BadRequestException(errMsg);
         }
 
-        int expirationSeconds = accessTokenService.getCloudAuthDefaultTokenExpirationSeconds();
-
         AccessToken userToken = accessTokenService.getTokenByNastIdAndApiCredentials(token.getTokenClient(),
-            nastId, apiKey, expirationSeconds, new DateTime());
+            nastId, apiKey, new DateTime());
 
         List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userToken.getTokenUser()
             .getUsername());
@@ -256,12 +254,10 @@ public class AuthResource {
             throw new ForbiddenException(errMsg);
         }
 
-        int expirationSeconds = accessTokenService.getCloudAuthDefaultTokenExpirationSeconds();
-
         DateTime currentTime = this.getCurrentTime();
         AuthCredentials creds = holder.getEntity();
         AccessToken userToken = accessTokenService.getTokenByUsernameAndPassword(token.getTokenClient(),
-            creds.getUsername(), creds.getPassword(), expirationSeconds, currentTime);
+            creds.getUsername(), creds.getPassword(), currentTime);
 
         List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userToken.getTokenUser()
             .getUsername());
