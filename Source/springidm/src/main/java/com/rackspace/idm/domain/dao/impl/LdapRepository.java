@@ -151,7 +151,7 @@ public abstract class LdapRepository {
         
         try {
             
-            Filter filter = Filter.create("(objectClass=*)");
+            Filter filter = Filter.createEqualityFilter(ATTR_OBJECT_CLASS, "*");
             searchResult = conn.search(dn, SearchScope.ONE, filter, ATTR_NO_ATTRIBUTES);
             
             for (SearchResultEntry entry : searchResult.getSearchEntries()) {
