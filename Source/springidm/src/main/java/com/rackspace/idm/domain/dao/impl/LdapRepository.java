@@ -10,14 +10,19 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.audit.Audit;
 import com.unboundid.ldap.sdk.Attribute;
+import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.LDAPSearchException;
 import com.unboundid.ldap.sdk.Modification;
+import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
+import com.unboundid.ldap.sdk.controls.SortKey;
 
 public abstract class LdapRepository {
 
@@ -191,6 +196,41 @@ public abstract class LdapRepository {
         LDAPConnection conn = getAppPoolConnection(audit);
         this.deleteEntryAndSubtree(conn, dn, audit);
         getAppConnPool().releaseConnection(conn);
+    }
+    
+    protected List<SearchResultEntry> getMultipleEntries(String baseDN, SearchScope scope, Filter searchFilter, String sortAttribute, String... attributes) {
+        SearchResult searchResult = null;
+        
+        ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
+            new SortKey(sortAttribute));
+        
+        try {
+
+            SearchRequest request = new SearchRequest(baseDN, scope,
+                searchFilter, attributes);
+
+            request.setControls(new Control[]{sortRequest});
+            searchResult = getAppConnPool().search(request);
+
+        } catch (LDAPException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+        
+        return searchResult.getSearchEntries();
+    }
+    
+    protected SearchResultEntry getSingleEntry(String baseDN, SearchScope scope, Filter searchFilter, String... attributes) {
+        SearchResultEntry entry = null;
+        try {
+            entry = getAppConnPool().searchForEntry(BASE_DN, SearchScope.SUB,
+                searchFilter);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+
+        return entry;
     }
 
     protected void updateEntry(String entryDn, List<Modification> mods,

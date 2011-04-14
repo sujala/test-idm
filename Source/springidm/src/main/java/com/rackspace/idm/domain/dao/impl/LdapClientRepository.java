@@ -21,7 +21,6 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
-import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
@@ -34,8 +33,6 @@ import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
-import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
-import com.unboundid.ldap.sdk.controls.SortKey;
 
 public class LdapClientRepository extends LdapRepository implements ClientDao {
 
@@ -63,14 +60,14 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             .addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME).build();
 
         client.setUniqueId(clientDN);
-        
+
         LDAPConnection conn = getAppPoolConnection(audit);
         addEntry(conn, clientDN, attributes, audit);
 
         // Add ou=permissions under new client entry
         String clientPermissionsDN = new LdapDnBuilder(clientDN).addAttriubte(
             ATTR_OU, OU_PERMISSIONS_NAME).build();
-        
+
         Attribute[] permissionAttributes = {
             new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
             new Attribute(ATTR_OU, OU_PERMISSIONS_NAME)};
@@ -80,15 +77,15 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         // Add ou=groups under new client entry
         String clientGroupsDN = new LdapDnBuilder(clientDN).addAttriubte(
             ATTR_OU, OU_GROUPS_NAME).build();
-        
+
         Attribute[] groupAttributes = {
             new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
             new Attribute(ATTR_OU, OU_GROUPS_NAME)};
-        
+
         addEntry(conn, clientGroupsDN, groupAttributes, audit);
 
         audit.succeed();
-        
+
         getAppConnPool().releaseConnection(conn);
 
         getLogger().debug("Added client {}", client);
@@ -123,7 +120,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             .addAttriubte(ATTR_OU, OU_GROUPS_NAME).build();
 
         clientGroup.setUniqueId(groupDN);
-        
+
         addEntry(groupDN, atts, audit);
 
         audit.succeed();
@@ -132,7 +129,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     @Override
-    public void addDefinedPermission(Permission permission, String clientUniqueId) {
+    public void addDefinedPermission(Permission permission,
+        String clientUniqueId) {
         getLogger().info("Adding Permission {}", permission);
 
         if (permission == null) {
@@ -142,7 +140,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         Audit audit = Audit.log(permission).add();
-        
+
         Attribute[] atts = getAddAttributesForClientPermission(permission);
 
         String permissionDN = new LdapDnBuilder(clientUniqueId)
@@ -150,7 +148,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             .addAttriubte(ATTR_OU, OU_PERMISSIONS_NAME).build();
 
         permission.setUniqueId(permissionDN);
-        
+
         addEntry(permissionDN, atts, audit);
 
         audit.succeed();
@@ -241,14 +239,14 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         Client client = this.getClientByClientId(clientId);
-        
+
         if (client == null) {
             String errorMsg = String.format("CLient %s not found", client);
             throw new NotFoundException(errorMsg);
         }
 
         Audit audit = Audit.log(client).delete();
-        
+
         this.deleteEntryAndSubtree(client.getUniqueId(), audit);
 
         audit.succeed();
@@ -275,7 +273,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         Audit audit = Audit.log(group).delete();
-        
+
         this.deleteEntryAndSubtree(group.getUniqueId(), audit);
 
         audit.succeed();
@@ -292,7 +290,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         Audit audit = Audit.log(permission).delete();
-        
+
         this.deleteEntryAndSubtree(permission.getUniqueId(), audit);
 
         audit.succeed();
@@ -377,7 +375,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     @Override
-    public Client getClientByCustomerIdAndClientId(String customerId, String clientId) {
+    public Client getClientByCustomerIdAndClientId(String customerId,
+        String clientId) {
         getLogger().debug("Doing search for clientId {}", clientId);
 
         if (StringUtils.isBlank(clientId)) {
@@ -527,7 +526,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     @Override
-    public Clients getClientsByCustomerId(String customerId, int offset, int limit) {
+    public Clients getClientsByCustomerId(String customerId, int offset,
+        int limit) {
         getLogger().debug("Doing search for customerId {}", customerId);
 
         if (StringUtils.isBlank(customerId)) {
@@ -583,7 +583,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         for (SearchResultEntry entry : searchResult.getSearchEntries()) {
             clientList.add(getClient(entry));
         }
-        
+
         getLogger().debug("Found Clients - {}", clientList);
 
         return clientList;
@@ -721,26 +721,19 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger()
             .info("Added permission {} to client {}", permission, client);
     }
-    
+
     @Override
     public boolean isUserInClientGroup(String username, String groupDN) {
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_UID, username)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .addEqualAttribute(ATTR_MEMBER_OF, groupDN)
-            .build();
+            .addEqualAttribute(ATTR_MEMBER_OF, groupDN).build();
 
-        SearchResult searchResult = null;
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                searchFilter, ATTR_NO_ATTRIBUTES);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
-        }
-        
-        return searchResult.getEntryCount() == 1;
+        SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.SUB,
+            searchFilter, ATTR_NO_ATTRIBUTES);
+
+        return entry != null;
     }
 
     @Override
@@ -833,7 +826,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     @Override
-    public void setClientsLockedFlagByCustomerId(String customerId, boolean locked) {
+    public void setClientsLockedFlagByCustomerId(String customerId,
+        boolean locked) {
         Clients clients = this.findFirst100ByCustomerIdAndLock(customerId,
             !locked);
         if (clients.getClients() != null && clients.getClients().size() > 0) {
@@ -874,7 +868,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         Audit audit = Audit.log(client).modify(mods);
-        
+
         updateEntry(oldClient.getUniqueId(), mods, audit);
 
         audit.succeed();
@@ -909,7 +903,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         Audit audit = Audit.log(group).modify(mods);
-        
+
         updateEntry(oldGroup.getUniqueId(), mods, audit);
 
         audit.succeed();
@@ -940,9 +934,10 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             return;
         }
 
-        List<Modification> mods = getPermissionModifications(oldPermission, permission);
+        List<Modification> mods = getPermissionModifications(oldPermission,
+            permission);
         Audit audit = Audit.log(oldPermission).modify(mods);
-        
+
         updateEntry(oldPermission.getUniqueId(), mods, audit);
 
         audit.succeed();
@@ -970,7 +965,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         return clients;
     }
-    
+
     private Attribute[] getAddAttributesForClientGroup(ClientGroup group) {
         List<Attribute> atts = new ArrayList<Attribute>();
 
@@ -990,13 +985,14 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         if (!StringUtils.isBlank(group.getType())) {
             atts.add(new Attribute(ATTR_GROUP_TYPE, group.getType()));
         }
-        
+
         Attribute[] attributes = atts.toArray(new Attribute[0]);
-        
+
         return attributes;
     }
-    
-    private Attribute[] getAddAttributesForClientPermission(Permission permission) {
+
+    private Attribute[] getAddAttributesForClientPermission(
+        Permission permission) {
         List<Attribute> atts = new ArrayList<Attribute>();
 
         atts.add(new Attribute(ATTR_OBJECT_CLASS,
@@ -1018,12 +1014,12 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         if (!StringUtils.isBlank(permission.getType())) {
             atts.add(new Attribute(ATTR_PERMISSION_TYPE, permission.getType()));
         }
-        
+
         Attribute[] attributes = atts.toArray(new Attribute[0]);
-        
+
         return attributes;
     }
-    
+
     private Attribute[] getAddAttributesForClient(Client client) {
         List<Attribute> atts = new ArrayList<Attribute>();
 
@@ -1074,7 +1070,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
-        
+
         return attributes;
     }
 
@@ -1144,9 +1140,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     private Clients getMultipleClients(Filter searchFilter, int offset,
         int limit) {
 
-        ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
-            new SortKey(ATTR_NAME));
-
         offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
         limit = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
         limit = limit > this.getLdapPagingLimitMax() ? this
@@ -1155,21 +1148,11 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         int contentCount = 0;
 
         List<Client> clientList = new ArrayList<Client>();
-        SearchResult searchResult = null;
-        try {
 
-            SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
-                searchFilter);
+        List<SearchResultEntry> entries = this.getMultipleEntries(BASE_DN,
+            SearchScope.SUB, searchFilter, ATTR_NAME);
 
-            request.setControls(new Control[]{sortRequest});
-            searchResult = getAppConnPool().search(request);
-
-        } catch (LDAPException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
-        }
-
-        contentCount = searchResult.getEntryCount();
+        contentCount = entries.size();
 
         if (offset < contentCount) {
 
@@ -1177,8 +1160,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 + limit;
             int fromIndex = offset;
 
-            List<SearchResultEntry> subList = searchResult.getSearchEntries()
-                .subList(fromIndex, toIndex);
+            List<SearchResultEntry> subList = entries.subList(fromIndex,
+                toIndex);
 
             for (SearchResultEntry entry : subList) {
                 clientList.add(getClient(entry));
@@ -1211,24 +1194,11 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
     private Client getSingleClient(Filter searchFilter) {
         Client client = null;
-        SearchResult searchResult = null;
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                searchFilter);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
-        }
+        SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.SUB,
+            searchFilter);
 
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            client = getClient(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            String errMsg = String.format(
-                "More than one entry was found for client search - %s",
-                searchFilter);
-            getLogger().error(errMsg);
-            throw new IllegalStateException(errMsg);
+        if (entry != null) {
+            client = getClient(entry);
         }
 
         getLogger().debug("Found Client - {}", client);
