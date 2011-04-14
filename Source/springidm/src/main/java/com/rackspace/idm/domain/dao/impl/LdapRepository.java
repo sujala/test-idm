@@ -9,7 +9,13 @@ import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.LDAPSearchException;
+import com.unboundid.ldap.sdk.SearchResult;
+import com.unboundid.ldap.sdk.SearchResultEntry;
+import com.unboundid.ldap.sdk.SearchScope;
 
 public abstract class LdapRepository {
 
@@ -72,6 +78,7 @@ public abstract class LdapRepository {
     public static final String ATTR_MOSSO_ID = "rsMossoId";
     public static final String ATTR_NAME = "cn";
     public static final String ATTR_NAST_ID = "rsNastId";
+    public static final String ATTR_NO_ATTRIBUTES = "NO_ATTRIBUTES";
     public static final String ATTR_O = "o";
     public static final String ATTR_OBJECT_CLASS = "objectClass";
     public static final String ATTR_OU = "ou";
@@ -116,8 +123,8 @@ public abstract class LdapRepository {
     protected static final String OU_APPLICATIONS_NAME = "applications";
     protected static final String OU_PERMISSIONS_NAME = "permissions";
 
-    private LdapConnectionPools conn;
-    private Configuration config;
+    private final LdapConnectionPools conn;
+    private final Configuration config;
     
     final private Logger logger = LoggerFactory.getLogger(this.getClass());   
 
@@ -136,6 +143,30 @@ public abstract class LdapRepository {
 
     protected Logger getLogger() {
         return logger;
+    }
+    
+    protected void deleteEntryAndSubtree(LDAPConnection conn, String dn) {
+        
+        SearchResult searchResult = null;
+        
+        try {
+            
+            Filter filter = Filter.create("(objectClass=*)");
+            searchResult = conn.search(dn, SearchScope.ONE, filter, ATTR_NO_ATTRIBUTES);
+            
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                deleteEntryAndSubtree(conn, entry.getDN());
+            }
+            
+            conn.delete(dn);
+            
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        } catch (LDAPException e) {
+            getLogger().error("LDAP Search error - {}", e.getMessage());
+            throw new IllegalStateException(e);
+        }
     }
 
     protected int getLdapPagingOffsetDefault() {
@@ -159,9 +190,9 @@ public abstract class LdapRepository {
     }
 
     private static class QueryPair {
-        private String comparer;
-        private String attribute;
-        private String value;
+        private final String comparer;
+        private final String attribute;
+        private final String value;
 
         public QueryPair(String attribute, String comparer, String value) {
             if (StringUtils.isBlank(attribute)) {
@@ -184,8 +215,8 @@ public abstract class LdapRepository {
     }
 
     protected static class LdapDnBuilder {
-        private List<QueryPair> queryPairs;
-        private String baseDN;
+        private final List<QueryPair> queryPairs;
+        private final String baseDN;
 
         public LdapDnBuilder(String baseDN) {
             if (StringUtils.isBlank(baseDN)) {
