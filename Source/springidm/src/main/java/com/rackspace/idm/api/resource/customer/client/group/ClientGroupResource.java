@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.GroupConverter;
+import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.service.AccessTokenService;
@@ -27,7 +28,6 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -36,7 +36,7 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class ClientGroupResource {
+public class ClientGroupResource extends AbstractClientConsumer {
     private AccessTokenService accessTokenService;
     private ClientService clientService;
     private GroupConverter groupConverter;
@@ -48,6 +48,7 @@ public class ClientGroupResource {
     public ClientGroupResource(AccessTokenService accessTokenService, ClientService clientService,
         GroupConverter groupConverter, ClientGroupMembersResource clientGroupMembersResource,
         AuthorizationService authorizationService) {
+        super(clientService);
         this.accessTokenService = accessTokenService;
         this.clientService = clientService;
         this.authorizationService = authorizationService;
@@ -129,15 +130,7 @@ public class ClientGroupResource {
             throw new ForbiddenException(errMsg);
         }
 
-        ClientGroup group = this.clientService.getClientGroup(customerId, clientId, groupName);
-
-        if (group == null) {
-            String errMsg = String.format(
-                "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.", groupName, clientId,
-                customerId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
+        ClientGroup group = checkAndGetClientGroup(customerId, clientId, groupName);
 
         return Response.ok(groupConverter.toClientGroupJaxb(group)).build();
     }
@@ -182,15 +175,8 @@ public class ClientGroupResource {
         }
 
         com.rackspace.idm.jaxb.ClientGroup clientGroup = holder.getEntity();
-        ClientGroup group = this.clientService.getClientGroup(clientGroup.getCustomerId(),
-            clientGroup.getClientId(), clientGroup.getName());
-
-        if (group == null) {
-            String errMsg = String.format(
-                "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.", groupName, clientId,
-                customerId);
-            logger.warn(errMsg);
-        }
+        ClientGroup group = checkAndGetClientGroup(clientGroup.getCustomerId(), clientGroup.getClientId(),
+            clientGroup.getName());
 
         group.setType(clientGroup.getType());
 
@@ -202,5 +188,10 @@ public class ClientGroupResource {
     @Path("members")
     public ClientGroupMembersResource getClientGroupMembersResource() {
         return clientGroupMembersResource;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return logger;
     }
 }

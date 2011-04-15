@@ -18,13 +18,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 
 /**
  * a client group resource.
@@ -32,15 +32,16 @@ import com.rackspace.idm.exception.NotFoundException;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class ClientGroupMembersResource {
+public class ClientGroupMembersResource extends AbstractClientConsumer {
     private AccessTokenService accessTokenService;
     private ClientService clientService;
     private AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public ClientGroupMembersResource(AccessTokenService accessTokenService,
-        ClientService clientService, AuthorizationService authorizationService) {
+    public ClientGroupMembersResource(AccessTokenService accessTokenService, ClientService clientService,
+        AuthorizationService authorizationService) {
+        super(clientService);
         this.accessTokenService = accessTokenService;
         this.clientService = clientService;
         this.authorizationService = authorizationService;
@@ -64,32 +65,26 @@ public class ClientGroupMembersResource {
      */
     @PUT
     @Path("{username}")
-    public Response addUserToClientGroup(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId,
-        @PathParam("groupName") String groupName,
+    public Response addUserToClientGroup(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId, @PathParam("groupName") String groupName,
         @PathParam("username") String username) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token.isClientToken() && token.getTokenClient().getClientId()
-                .equals(clientId));
+            || (token.isClientToken() && token.getTokenClient().getClientId().equals(clientId));
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         this.clientService.addUserToClientGroup(username, customerId, clientId, groupName);
-        
+
         return Response.ok().build();
     }
 
@@ -111,44 +106,33 @@ public class ClientGroupMembersResource {
      */
     @DELETE
     @Path("{username}")
-    public Response removeUserFromClientGroup(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId,
-        @PathParam("groupName") String groupName,
+    public Response removeUserFromClientGroup(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId, @PathParam("groupName") String groupName,
         @PathParam("username") String username) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token.isClientToken() && token.getTokenClient().getClientId()
-                .equals(clientId));
+            || (token.isClientToken() && token.getTokenClient().getClientId().equals(clientId));
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
-        ClientGroup group = this.clientService
-            .getClientGroup(customerId, clientId, groupName);
-        
-        if (group == null) {
-            String errMsg = String
-                .format(
-                    "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.",
-                    groupName, clientId, customerId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
+        ClientGroup group = checkAndGetClientGroup(customerId, clientId, groupName);
 
         this.clientService.removeUserFromClientGroup(username, group);
 
         return Response.noContent().build();
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return logger;
     }
 }

@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.GroupConverter;
+import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.User;
@@ -43,7 +44,7 @@ import com.rackspace.idm.exception.NotFoundException;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class UserGroupsResource {
+public class UserGroupsResource extends AbstractClientConsumer {
 
     private AccessTokenService accessTokenService;
     private UserService userService;
@@ -54,10 +55,10 @@ public class UserGroupsResource {
     private Configuration config;
 
     @Autowired
-    public UserGroupsResource(AccessTokenService accessTokenService,
-        UserService userService, ClientService clientService,
-        GroupConverter groupConverter, Configuration config,
+    public UserGroupsResource(AccessTokenService accessTokenService, UserService userService,
+        ClientService clientService, GroupConverter groupConverter, Configuration config,
         AuthorizationService authorizationService) {
+        super(clientService);
         this.accessTokenService = accessTokenService;
         this.userService = userService;
         this.clientService = clientService;
@@ -82,43 +83,36 @@ public class UserGroupsResource {
      * @param username username
      */
     @GET
-    public Response getGroups(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("username") String username,
-        @QueryParam("clientId") String clientId,
+    public Response getGroups(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        @PathParam("username") String username, @QueryParam("clientId") String clientId,
         @QueryParam("type") String type) {
 
         logger.debug("Getting groups for User: {}", username);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients, Admins and User's are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId)
             || authorizationService.authorizeUser(token, customerId, username);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         User user = userService.checkAndGetUser(customerId, username);
 
-        List<ClientGroup> groups = this.clientService
-            .getClientGroupsForUserByClientIdAndType(username, clientId, type);
+        List<ClientGroup> groups = this.clientService.getClientGroupsForUserByClientIdAndType(username,
+            clientId, type);
         logger.debug("Got groups for User: {} - {}", user, groups);
 
-        com.rackspace.idm.jaxb.ClientGroups outputGroups = groupConverter
-            .toClientGroupsJaxb(groups);
+        com.rackspace.idm.jaxb.ClientGroups outputGroups = groupConverter.toClientGroupsJaxb(groups);
 
         return Response.ok(outputGroups).build();
     }
@@ -141,12 +135,9 @@ public class UserGroupsResource {
      */
     @PUT
     @Path("{groupName}")
-    public Response addUserToGroup(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("username") String username,
-        @PathParam("groupName") String groupName) {
+    public Response addUserToGroup(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        @PathParam("username") String username, @PathParam("groupName") String groupName) {
 
         if (StringUtils.isBlank(groupName)) {
             String errorMsg = "Group name cannot be blank";
@@ -156,18 +147,15 @@ public class UserGroupsResource {
 
         logger.debug("Adding user {} to group {}", username, groupName);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -177,14 +165,13 @@ public class UserGroupsResource {
 
         String customerName = getRackspaceCustomerId();
         String clientId = getIdmClientId();
-        
+
         this.clientService.addUserToClientGroup(username, customerName, clientId, groupName);
 
-        String message = String
-        .format(
-            "Added user with name %s to group %s, clientId %s, and customerId %s.",
-            username, groupName, clientId, customerId);
-        
+        String message = String.format(
+            "Added user with name %s to group %s, clientId %s, and customerId %s.", username, groupName,
+            clientId, customerId);
+
         logger.debug(message);
 
         return Response.noContent().build();
@@ -208,27 +195,21 @@ public class UserGroupsResource {
      */
     @DELETE
     @Path("{groupName}")
-    public Response removeUserFromGroup(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("username") String username,
-        @PathParam("groupName") String groupName) {
+    public Response removeUserFromGroup(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        @PathParam("username") String username, @PathParam("groupName") String groupName) {
 
         logger.info("Removing user {} from group {}", username, groupName);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -236,22 +217,18 @@ public class UserGroupsResource {
         // get user to update
         User user = this.userService.getUser(customerId, username);
 
-        ClientGroup group = this.clientService.getClientGroup(
-            getRackspaceCustomerId(), getIdmClientId(), groupName);
-
-        if (group == null) {
-            String errorMsg = String.format(
-                "Remove User From Group Failed - Group not found: %s",
-                groupName);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
+        ClientGroup group = checkAndGetClientGroup(getRackspaceCustomerId(), getIdmClientId(), groupName);
 
         this.clientService.removeUserFromClientGroup(username, group);
 
         logger.debug("User {} removed from group {}", user, group);
 
         return Response.noContent().build();
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return logger;
     }
 
     private String getIdmClientId() {
@@ -262,18 +239,4 @@ public class UserGroupsResource {
         return config.getString("rackspace.customerId");
     }
 
-    /*private User checkAndGetUser(String customerId, String username) {
-        User user = this.userService.getUser(customerId, username);
-        if (user == null) {
-            handleUserNotFoundError(customerId, username);
-        }
-        return user;
-    }
-    
-    private void handleUserNotFoundError(String customerId, String username) {
-        String errorMsg = String.format("User not found: %s - %s", customerId,
-            username);
-        logger.warn(errorMsg);
-        throw new NotFoundException(errorMsg);
-    }*/
 }
