@@ -16,6 +16,7 @@ import com.rackspace.idm.jaxb.Auth;
 import com.rackspace.idm.jaxb.AuthCredentials;
 import com.rackspace.idm.jaxb.AuthGrantType;
 import com.rackspace.idm.jaxb.IdmFault;
+import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 
@@ -48,13 +49,16 @@ public abstract class HttpRepository {
         }
 
         getLogger().debug("Requesting client access token for Customer IDM");
-        ClientResponse resp;
+        ClientResponse resp = null;
         try {
             resp = client.getResource().path(TOKEN_RESOURCE_PATH).accept(MediaType.APPLICATION_XML_TYPE)
                 .type(MediaType.APPLICATION_XML).entity(getIdmCreds()).post(ClientResponse.class);
         } catch (UniformInterfaceException e) {
             handleHttpCallException(e);
             return null;
+        } catch (ClientHandlerException e) {
+        	getLogger().warn("Client call to another DC was refused.");
+        	return null;
         }
 
         return extractMyAccessToken(resp, client);

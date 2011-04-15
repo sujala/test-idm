@@ -15,6 +15,7 @@ import com.rackspace.idm.domain.config.DataCenterClient;
 import com.rackspace.idm.domain.config.DataCenterEndpoints;
 import com.rackspace.idm.domain.dao.XdcAccessTokenDao;
 import com.rackspace.idm.domain.entity.AccessToken;
+import com.sun.jersey.api.client.ClientHandlerException;
 
 public class HttpAccessTokenRepository extends HttpRepository implements XdcAccessTokenDao {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -43,10 +44,16 @@ public class HttpAccessTokenRepository extends HttpRepository implements XdcAcce
         byte[] tokenBytes = makeHttpCall(new HttpCaller<byte[]>() {
             @Override
             public byte[] execute(String myTokenStr, DataCenterClient client) {
-                return client.getResource().path(TOKEN_RESOURCE_PATH + "/" + tokenString)
+            	byte[] tokenResponse = null;
+            	try {
+                    tokenResponse = client.getResource().path(TOKEN_RESOURCE_PATH + "/" + tokenString)
                     .accept(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_XML)
                     .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr))
                     .get(byte[].class);
+            	} catch (ClientHandlerException e) {
+                	getLogger().warn("Client call to another DC was refused.");
+                }
+            	return tokenResponse;
             }
         }, client);
 
@@ -82,9 +89,13 @@ public class HttpAccessTokenRepository extends HttpRepository implements XdcAcce
                 // Don't trigger another global delete. We are already in
                 // the middle
                 // of executing one.
-                client.getResource().path(TOKEN_RESOURCE_PATH + "/" + tokenString)
+            	try {
+                    client.getResource().path(TOKEN_RESOURCE_PATH + "/" + tokenString)
                     .queryParam("global", "false").accept(MediaType.APPLICATION_XML)
                     .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr)).delete();
+            	} catch (ClientHandlerException e) {
+                	getLogger().warn("Client call to another DC was refused.");
+                }
 
                 return null;
             }
@@ -130,9 +141,15 @@ public class HttpAccessTokenRepository extends HttpRepository implements XdcAcce
 
     private Object makeHttpDeleteCallById(String id, TokenDeleteByType idType, String myTokenStr,
         DataCenterClient client) {
-        client.getResource().path(TOKEN_RESOURCE_PATH).queryParam("querytype", idType.toString())
+    	
+    	try {
+            client.getResource().path(TOKEN_RESOURCE_PATH).queryParam("querytype", idType.toString())
             .queryParam("id", id.trim()).accept(MediaType.APPLICATION_XML)
             .header(HttpHeaders.AUTHORIZATION, getOauthAuthorizationHeader(myTokenStr)).delete();
+    	} catch (ClientHandlerException e) {
+        	getLogger().warn("Client call to another DC was refused.");
+        }
+    	
         return null;
     }
 
