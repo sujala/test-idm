@@ -677,44 +677,43 @@ public class ClientServiceTests {
         Assert.assertTrue(returnedGroups.size() == 2);
         EasyMock.verify(mockClientDao);
     }
-
+  
     @Test
-    public void shouldAddUserToClientGroup() {
+    public void shouldAddUserToCustomerClientGroup() {
         ClientGroup group = getFakeClientGroup();
         User user = getFakeUser();
-        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
+        String customerId = "RACK-123-456";
+        EasyMock.expect(mockUserDao.getUserByUsername(user.getUsername())).andReturn(user);
         EasyMock.replay(mockUserDao);
+        
+        EasyMock.expect(mockClientDao.getClientGroup(customerId, group.getClientId(), group.getName())).andReturn(group); 
         mockClientDao.addUserToClientGroup(user.getUniqueId(), group);
         EasyMock.replay(mockClientDao);
-        clientService.addUserToClientGroup(username, group);
+        
+        clientService.addUserToClientGroup(user.getUsername(), customerId, group.getClientId(), group.getName());
+        
         EasyMock.verify(mockUserDao);
         EasyMock.verify(mockClientDao);
     }
-
-    @Test(expected = IllegalArgumentException.class)
+    
+    @Test(expected = com.rackspace.idm.exception.NotFoundException.class)
     public void shouldNotAddUserToClientGroupForBlankUsername() {
         ClientGroup group = getFakeClientGroup();
-        clientService.addUserToClientGroup(null, group);
+        clientService.addUserToClientGroup(null, "RACKCUSTOMER", "RACKCLIENT", group.getName());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = com.rackspace.idm.exception.NotFoundException.class)
     public void shouldNotAddUserToClientGroupForBadClientGroup() {
         ClientGroup group = getFakeClientGroup();
         group.setName(null);
-        clientService.addUserToClientGroup(null, group);
+        clientService.addUserToClientGroup("bob", "RACKCUSTOMER", "RACKCLIENT", null);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldNotAddUserToClientGroupForBadClientGroup2() {
-        ClientGroup group = getFakeClientGroup();
-        clientService.addUserToClientGroup(null, null);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = com.rackspace.idm.exception.NotFoundException.class)
     public void shouldNotAddUserToClientGroupForBadClientGroup3() {
         ClientGroup group = getFakeClientGroup();
         group.setClientId(null);
-        clientService.addUserToClientGroup(null, group);
+        clientService.addUserToClientGroup("bob", "RACKCUSTOMER", null, group.getName());
     }
 
     @Test(expected = NotFoundException.class)
@@ -723,9 +722,9 @@ public class ClientServiceTests {
         User user = getFakeUser();
         EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(null);
         EasyMock.replay(mockUserDao);
-        mockClientDao.addUserToClientGroup(user.getUniqueId(), group);
+        EasyMock.expect(mockClientDao.getClientGroup("RACKCUSTOMER", "RACKCLIENT", group.getName())).andReturn(group);
         EasyMock.replay(mockClientDao);
-        clientService.addUserToClientGroup(username, group);
+        clientService.addUserToClientGroup(username, "RACKCUSTOMER", "RACKCLIENT", group.getName());
         EasyMock.verify(mockUserDao);
         EasyMock.verify(mockClientDao);
     }
@@ -734,12 +733,9 @@ public class ClientServiceTests {
     public void shouldNotAddUserToClientGroupForGroupNotFound() {
         ClientGroup group = getFakeClientGroup();
         User user = getFakeUser();
-        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
+        EasyMock.expect(mockUserDao.getUserByUsername(username)).andThrow(new NotFoundException());
         EasyMock.replay(mockUserDao);
-        mockClientDao.addUserToClientGroup(user.getUniqueId(), group);
-        EasyMock.expectLastCall().andThrow(new NotFoundException());
-        EasyMock.replay(mockClientDao);
-        clientService.addUserToClientGroup(username, group);
+        clientService.addUserToClientGroup(username, "RACKCUSTOMER", "RACKCLIENT", group.getName());
         EasyMock.verify(mockUserDao);
         EasyMock.verify(mockClientDao);
     }
@@ -750,10 +746,10 @@ public class ClientServiceTests {
         User user = getFakeUser();
         EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
         EasyMock.replay(mockUserDao);
+        EasyMock.expect(mockClientDao.getClientGroup("RACKCUSTOMER", "RACKCLIENT", group.getName())).andReturn(group);
         mockClientDao.addUserToClientGroup(user.getUniqueId(), group);
-        EasyMock.expectLastCall().andThrow(new DuplicateException());
         EasyMock.replay(mockClientDao);
-        clientService.addUserToClientGroup(username, group);
+        clientService.addUserToClientGroup(username, "RACKCUSTOMER", "RACKCLIENT", group.getName());
         EasyMock.verify(mockUserDao);
         EasyMock.verify(mockClientDao);
     }
