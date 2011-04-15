@@ -111,7 +111,7 @@ public class UserGroupsResource {
             throw new ForbiddenException(errMsg);
         }
 
-        User user = checkAndGetUser(customerId, username);
+        User user = userService.checkAndGetUser(customerId, username);
 
         List<ClientGroup> groups = this.clientService
             .getClientGroupsForUserByClientIdAndType(username, clientId, type);
@@ -175,23 +175,11 @@ public class UserGroupsResource {
         // get user to update
         User user = userService.checkAndGetUser(customerId, username);
 
-        if (user == null) {
-            String errorMsg = String.format(
-                "Add User to Group Failed - User not found: %s", username);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-
         String customerName = getRackspaceCustomerId();
         String clientId = getIdmClientId();
         
         this.clientService.addUserToClientGroup(username, customerName, clientId, groupName);
 
-        Object[] arg = new Object[3];
-        arg[0] = groupName;
-        arg[1] = customerName;
-        arg[2] = clientId;
-        
         String message = String
         .format(
             "Added user with name %s to group %s, clientId %s, and customerId %s.",
@@ -248,13 +236,6 @@ public class UserGroupsResource {
         // get user to update
         User user = this.userService.getUser(customerId, username);
 
-        if (user == null) {
-            String errorMsg = String.format(
-                "Remove User From Group Failed - User not found: %s", username);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-
         ClientGroup group = this.clientService.getClientGroup(
             getRackspaceCustomerId(), getIdmClientId(), groupName);
 
@@ -273,14 +254,6 @@ public class UserGroupsResource {
         return Response.noContent().build();
     }
 
-    private User checkAndGetUser(String customerId, String username) {
-        User user = this.userService.getUser(customerId, username);
-        if (user == null) {
-            handleUserNotFoundError(customerId, username);
-        }
-        return user;
-    }
-
     private String getIdmClientId() {
         return config.getString("idm.clientId");
     }
@@ -289,10 +262,18 @@ public class UserGroupsResource {
         return config.getString("rackspace.customerId");
     }
 
+    /*private User checkAndGetUser(String customerId, String username) {
+        User user = this.userService.getUser(customerId, username);
+        if (user == null) {
+            handleUserNotFoundError(customerId, username);
+        }
+        return user;
+    }
+    
     private void handleUserNotFoundError(String customerId, String username) {
         String errorMsg = String.format("User not found: %s - %s", customerId,
             username);
         logger.warn(errorMsg);
         throw new NotFoundException(errorMsg);
-    }
+    }*/
 }

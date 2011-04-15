@@ -25,7 +25,6 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.jaxb.UserSecret;
 import com.sun.jersey.core.provider.EntityHolder;
 
@@ -86,7 +85,7 @@ public class UserSecretResource {
         }
 
         // get user to update
-        User user = checkAndGetUser(customerId, username);
+        User user = this.userService.checkAndGetUser(customerId, username);
 
         com.rackspace.idm.jaxb.UserSecret secret = new com.rackspace.idm.jaxb.UserSecret();
         secret.setSecretAnswer(user.getSecretAnswer());
@@ -138,7 +137,7 @@ public class UserSecretResource {
         }
 
         // get user to update
-        User user = checkAndGetUser(customerId, username);
+        User user = this.userService.checkAndGetUser(customerId, username);
 
         user.setSecretQuestion(userSecret.getSecretQuestion());
         user.setSecretAnswer(userSecret.getSecretAnswer());
@@ -162,19 +161,5 @@ public class UserSecretResource {
             }
             throw new BadRequestException(errMsg);
         }
-    }
-
-    private User checkAndGetUser(String customerId, String username) {
-        User user = this.userService.getUser(customerId, username);
-        if (user == null) {
-            handleUserNotFoundError(customerId, username);
-        }
-        return user;
-    }
-
-    private void handleUserNotFoundError(String customerId, String username) {
-        String errorMsg = String.format("User not found: %s - %s", customerId, username);
-        logger.error(errorMsg);
-        throw new NotFoundException(errorMsg);
     }
 }

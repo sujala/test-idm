@@ -96,11 +96,7 @@ public class UserLockResource {
             throw new BadRequestException(errMsg);
         }
 
-        User user = checkAndGetUser(customerId, username);
-
-        if (user == null) {
-            handleUserNotFoundError(customerId, username);
-        }
+        User user = this.userService.checkAndGetUser(customerId, username);
 
         user.setLocked(inputUser.isLocked());
         this.userService.updateUser(user, false);
@@ -109,19 +105,5 @@ public class UserLockResource {
         }
 
         return Response.ok(userConverter.toUserWithOnlyLockJaxb(user)).build();
-    }
-
-    private User checkAndGetUser(String customerId, String username) {
-        User user = this.userService.getUser(customerId, username);
-        if (user == null) {
-            handleUserNotFoundError(customerId, username);
-        }
-        return user;
-    }
-
-    private void handleUserNotFoundError(String customerId, String username) throws NotFoundException {
-        String errorMsg = String.format("User not found: %s - %s", customerId, username);
-        logger.warn(errorMsg);
-        throw new NotFoundException(errorMsg);
     }
 }

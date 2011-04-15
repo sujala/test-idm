@@ -102,7 +102,7 @@ public class UserRoleResource {
         }
 
         // get user to update
-        User user = checkAndGetUser(customerId, username);
+        User user = this.userService.checkAndGetUser(customerId, username);
 
         // get role to add user to
         Role role = this.roleService.getRole(roleName, user.getCustomerId());
@@ -187,20 +187,5 @@ public class UserRoleResource {
         logger.debug("User {} deleted from role {}", user, role);
 
         return Response.noContent().build();
-    }
-
-    private User checkAndGetUser(String customerId, String username) {
-        User user = this.userService.getUser(customerId, username);
-        if (user == null) {
-            handleUserNotFoundError(customerId, username);
-        }
-        return user;
-    }
-
-    private void handleUserNotFoundError(String customerId, String username) {
-        String errorMsg = String.format("User not found: %s - %s", customerId,
-            username);
-        logger.warn(errorMsg);
-        throw new NotFoundException(errorMsg);
     }
 }

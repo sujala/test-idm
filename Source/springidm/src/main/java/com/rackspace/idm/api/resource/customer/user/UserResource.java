@@ -30,7 +30,6 @@ import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
 
@@ -114,7 +113,7 @@ public class UserResource {
         }
 
         logger.debug("Getting User: {}", username);
-        User user = checkAndGetUser(customerId, username);
+        User user = this.userService.checkAndGetUser(customerId, username);
 
         logger.debug("Got User :{}", user);
         return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
@@ -169,7 +168,7 @@ public class UserResource {
 
         logger.debug("Updating User: {}", username);
 
-        User user = checkAndGetUser(customerId, username);
+        User user = this.userService.checkAndGetUser(customerId, username);
 
         user.copyChanges(updatedUser);
         validateParam(user);
@@ -221,7 +220,7 @@ public class UserResource {
             throw new ForbiddenException(errMsg);
         }
 
-        User user = checkAndGetUser(customerId, username);
+        User user = this.userService.checkAndGetUser(customerId, username);
 
         this.userService.deleteUser(username);
 
@@ -264,21 +263,7 @@ public class UserResource {
     public UserStatusResource getUserStatusResource() {
         return userStatusResource;
     }
-
-    private User checkAndGetUser(String customerId, String username) {
-        User user = this.userService.getUser(customerId, username);
-        if (user == null) {
-            handleUserNotFoundError(customerId, username);
-        }
-        return user;
-    }
-
-    private void handleUserNotFoundError(String customerId, String username) {
-        String errorMsg = String.format("User not found: %s - %s", customerId, username);
-        logger.warn(errorMsg);
-        throw new NotFoundException(errorMsg);
-    }
-
+    
     private void validateParam(Object inputParam) {
         ApiError err = inputValidator.validate(inputParam);
         if (err != null) {

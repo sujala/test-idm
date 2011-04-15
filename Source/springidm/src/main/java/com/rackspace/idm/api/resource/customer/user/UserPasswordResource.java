@@ -101,7 +101,7 @@ public class UserPasswordResource {
             throw new ForbiddenException(errMsg);
         }
 
-        User user = checkAndGetUser(customerId, username);
+        User user = this.userService.checkAndGetUser(customerId, username);
 
         Password password = user.getPasswordObj();
 
@@ -142,7 +142,7 @@ public class UserPasswordResource {
             throw new ForbiddenException(errMsg);
         }
 
-        User user = checkAndGetUser(customerId, username);
+        User user = this.userService.checkAndGetUser(customerId, username);
         Password password = userService.resetUserPassword(user);
         if (password == null) {
             logger.warn("Could not get the updated password for user: {}", user);
@@ -227,7 +227,7 @@ public class UserPasswordResource {
             }
         }
 
-        User user = checkAndGetUser(customerId, username);
+        User user = this.userService.checkAndGetUser(customerId, username);
 
         user.setPasswordObj(Password.newInstance(userCred.getNewPassword().getPassword()));
         boolean isSelfUpdate = token.getOwner().equals(username);
@@ -268,7 +268,7 @@ public class UserPasswordResource {
             throw new ForbiddenException(errMsg);
         }
 
-        User user = checkAndGetUser(customerId, username);
+        User user = this.userService.checkAndGetUser(customerId, username);
 
         if (!user.getStatus().equals(UserStatus.ACTIVE)) {
             String errorMsg = "User is not active";
@@ -328,7 +328,7 @@ public class UserPasswordResource {
             throw new ForbiddenException(errMsg);
         }
 
-        User user = checkAndGetUser(customerId, username);
+        User user = this.userService.checkAndGetUser(customerId, username);
 
         if (!user.getStatus().equals(UserStatus.ACTIVE)) {
             String errorMsg = "User is not active";
@@ -374,19 +374,5 @@ public class UserPasswordResource {
         logger.debug("Sent password recovery email for User: {}", username);
 
         return Response.noContent().build();
-    }
-
-    private User checkAndGetUser(String customerId, String username) {
-        User user = this.userService.getUser(customerId, username);
-        if (user == null) {
-            handleUserNotFoundError(customerId, username);
-        }
-        return user;
-    }
-
-    private void handleUserNotFoundError(String customerId, String username) {
-        String errorMsg = String.format("User not found: %s - %s", customerId, username);
-        logger.warn(errorMsg);
-        throw new NotFoundException(errorMsg);
     }
 }

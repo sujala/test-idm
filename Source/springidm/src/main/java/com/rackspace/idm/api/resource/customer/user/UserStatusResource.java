@@ -24,7 +24,6 @@ import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.jaxb.UserStatus;
 import com.sun.jersey.core.provider.EntityHolder;
 
@@ -92,7 +91,7 @@ public class UserStatusResource {
         }
 
         // get user to update
-        User user = checkAndGetUser(customerId, username);
+        User user = this.userService.checkAndGetUser(customerId, username);
         com.rackspace.idm.jaxb.User inputUser = holder.getEntity();
         String statusStr;
         try {
@@ -119,19 +118,5 @@ public class UserStatusResource {
 
         User outputUser = this.userService.getUser(customerId, username);
         return Response.ok(userConverter.toUserWithOnlyStatusJaxb(outputUser)).build();
-    }
-
-    private User checkAndGetUser(String customerId, String username) {
-        User user = this.userService.getUser(customerId, username);
-        if (user == null) {
-            handleUserNotFoundError(customerId, username);
-        }
-        return user;
-    }
-
-    private void handleUserNotFoundError(String customerId, String username) {
-        String errorMsg = String.format("User not found: %s - %s", customerId, username);
-        logger.warn(errorMsg);
-        throw new NotFoundException(errorMsg);
     }
 }
