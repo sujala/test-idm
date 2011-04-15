@@ -101,32 +101,9 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         }
 
         com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
-        if (!permission.getPermissionId().equals(permissionId)) {
-            String errMsg = "PermissionId mismatch";
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
+        validateClientPermissionRequest(customerId, clientId, permissionId, permission);
 
-        if (!permission.getCustomerId().equals(customerId)) {
-            String errMsg = "CustomerId mismatch";
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
-
-        if (!permission.getClientId().equals(clientId)) {
-            String errMsg = "ClientId mismatch";
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
-
-        Permission permissionDO = this.clientService.getDefinedPermissionByClientIdAndPermissionId(clientId,
-            permissionId);
-
-        if (permissionDO == null || !customerId.equals(permissionDO.getCustomerId())) {
-            String errorMsg = String.format("Permission Not Found: %s", permissionId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
+        Permission permissionDO = checkAndGetPermission(customerId, clientId, permissionId);
 
         permissionDO.setType(permission.getType());
         permissionDO.setValue(permission.getValue());
@@ -176,16 +153,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
             throw new ForbiddenException(errMsg);
         }
 
-        Permission permission = this.clientService.getDefinedPermissionByClientIdAndPermissionId(clientId,
-            permissionId);
-
-        if (permission == null || !customerId.equals(permission.getCustomerId())
-            || !clientId.equals(permission.getClientId())) {
-            String errorMsg = String.format("Permission Not Found: %s", permissionId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-
+        Permission permission = checkAndGetPermission(customerId, clientId, permissionId);
         this.clientService.deleteDefinedPermission(permission);
 
         return Response.noContent().build();
@@ -229,15 +197,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         }
 
         checkAndGetClient(customerId, clientId);
-
-        Permission permission = this.clientService.getDefinedPermissionByClientIdAndPermissionId(clientId,
-            permissionId);
-
-        if (permission == null || !clientId.equals(permission.getClientId())) {
-            String errorMsg = String.format("Permission Not Found: %s", permissionId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
+        Permission permission = checkAndGetPermission(customerId, clientId, permissionId);
 
         return Response.ok(permissionConverter.toPermissionJaxb(permission)).build();
     }
@@ -333,7 +293,8 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         }
     }
 
-    private Permission checkAndGetPermission(String customerId, String clientId, String permissionId) {
+    private Permission checkAndGetPermission(String customerId, String clientId, String permissionId)
+        throws NotFoundException {
         Permission permission = this.clientService.getDefinedPermissionByClientIdAndPermissionId(clientId,
             permissionId);
 
@@ -344,5 +305,26 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
             throw new NotFoundException(errorMsg);
         }
         return permission;
+    }
+
+    private void validateClientPermissionRequest(String customerId, String clientId, String permissionId,
+        com.rackspace.idm.jaxb.Permission permission) throws BadRequestException {
+        if (!permission.getPermissionId().equals(permissionId)) {
+            String errMsg = "PermissionId mismatch";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+
+        if (!permission.getCustomerId().equals(customerId)) {
+            String errMsg = "CustomerId mismatch";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+
+        if (!permission.getClientId().equals(clientId)) {
+            String errMsg = "ClientId mismatch";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
     }
 }

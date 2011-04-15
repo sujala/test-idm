@@ -107,16 +107,8 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
 
         checkAndGetClient(customerId, clientId);
 
-        List<Permission> defineds = this.clientService.getDefinedPermissionsByClientId(clientId);
-
-        if (defineds == null) {
-            String errorMsg = String.format("Permissions Not Found for client: %s", clientId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-
+        List<Permission> defineds = checkAndGetDefinedPermissions(clientId);
         PermissionSet permset = new PermissionSet();
-
         permset.setDefineds(defineds);
 
         return Response.ok(permissionConverter.toPermissionsJaxb(permset)).build();
@@ -161,17 +153,7 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
         }
 
         com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
-        if (!permission.getCustomerId().equals(customerId)) {
-            String errMsg = "CustomerId mismatch";
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
-
-        if (!permission.getClientId().equals(clientId)) {
-            String errMsg = "ClientId mismatch";
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
+        validatePermissionRequest(customerId, clientId, permission);
 
         Permission permissionDO = permissionConverter.toPermissionDO(permission);
 
@@ -212,5 +194,31 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
     @Override
     protected Logger getLogger() {
         return logger;
+    }
+
+    private List<Permission> checkAndGetDefinedPermissions(String clientId) throws NotFoundException {
+        List<Permission> defineds = this.clientService.getDefinedPermissionsByClientId(clientId);
+
+        if (defineds == null) {
+            String errorMsg = String.format("Permissions Not Found for client: %s", clientId);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+        return defineds;
+    }
+
+    private void validatePermissionRequest(String customerId, String clientId,
+        com.rackspace.idm.jaxb.Permission permission) throws BadRequestException {
+        if (!permission.getCustomerId().equals(customerId)) {
+            String errMsg = "CustomerId mismatch";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+
+        if (!permission.getClientId().equals(clientId)) {
+            String errMsg = "ClientId mismatch";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
     }
 }
