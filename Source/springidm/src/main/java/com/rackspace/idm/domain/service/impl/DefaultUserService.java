@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Customer;
@@ -35,10 +36,13 @@ import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.EmailService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.jaxb.CustomParam;
 import com.rackspace.idm.jaxb.PasswordRecovery;
+import com.rackspace.idm.jaxb.UserCredentials;
 import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.util.TemplateProcessor;
 import com.rackspace.idm.validation.RegexPatterns;
@@ -214,10 +218,8 @@ public class DefaultUserService implements UserService {
     public User getUser(String username) {
         logger.debug("Getting User: {}", username);
         User user = userDao.getUserByUsername(username);
+        
         if (user == null) {
-            
-            
-            
             logger.warn("No user found for user name {}", username);
             return null;
         }
@@ -279,6 +281,39 @@ public class DefaultUserService implements UserService {
 
     public boolean isUsernameUnique(String username) {
         return userDao.isUsernameUnique(username);
+    }
+    
+    public void setUserPassword(String customerId, String username, UserCredentials userCred, AccessToken token, 
+        boolean isRecovery) {
+        
+        logger.debug("Updating Password for User: {}", username);
+
+        if (!isRecovery) {
+            if (userCred.getCurrentPassword() == null
+                || StringUtils.isBlank(userCred.getCurrentPassword().getPassword())) {
+                String errMsg = "Value for Current Password cannot be blank";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
+
+            // authenticate using old password
+            UserAuthenticationResult uaResult = this.authenticate(username, userCred
+                .getCurrentPassword().getPassword());
+            if (!uaResult.isAuthenticated()) {
+                String errorMsg = String.format("Current password does not match for user: %s", username);
+                logger.warn(errorMsg);
+                throw new NotAuthenticatedException(errorMsg);
+            }
+        }
+
+        User user = this.checkAndGetUser(customerId, username);
+
+        user.setPasswordObj(Password.newInstance(userCred.getNewPassword().getPassword()));
+        boolean isSelfUpdate = token.getOwner().equals(username);
+        
+        this.updateUser(user, isSelfUpdate);
+        logger.debug("Updated password for user: {}", user);
+        
     }
 
     public void sendRecoveryEmail(String username, String userEmail, PasswordRecovery recoveryParam,

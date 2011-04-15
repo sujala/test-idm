@@ -200,6 +200,7 @@ public class UserPasswordResource {
         }
 
         UserCredentials userCred = holder.getEntity();
+        
         if (!passwordComplexityService.checkPassword(userCred.getNewPassword().getPassword())
             .isValidPassword()) {
             String errorMsg = String.format("Invalid password %s", userCred.getNewPassword().getPassword());
@@ -207,32 +208,8 @@ public class UserPasswordResource {
             throw new BadRequestException(errorMsg);
         }
 
-        logger.debug("Updating Password for User: {}", username);
-
-        if (!isRecovery) {
-            if (userCred.getCurrentPassword() == null
-                || StringUtils.isBlank(userCred.getCurrentPassword().getPassword())) {
-                String errMsg = "Value for Current Password cannot be blank";
-                logger.warn(errMsg);
-                throw new BadRequestException(errMsg);
-            }
-
-            // authenticate using old password
-            UserAuthenticationResult uaResult = this.userService.authenticate(username, userCred
-                .getCurrentPassword().getPassword());
-            if (!uaResult.isAuthenticated()) {
-                String errorMsg = String.format("Current password does not match for user: %s", username);
-                logger.warn(errorMsg);
-                throw new NotAuthenticatedException(errorMsg);
-            }
-        }
-
-        User user = this.userService.checkAndGetUser(customerId, username);
-
-        user.setPasswordObj(Password.newInstance(userCred.getNewPassword().getPassword()));
-        boolean isSelfUpdate = token.getOwner().equals(username);
-        this.userService.updateUser(user, isSelfUpdate);
-        logger.debug("Updated password for user: {}", user);
+        this.userService.setUserPassword(customerId, username, userCred, token, isRecovery);
+        
         return Response.ok(userCred).build();
     }
 
