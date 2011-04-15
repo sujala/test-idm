@@ -19,7 +19,9 @@ import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AuthData;
+import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientGroup;
@@ -33,6 +35,7 @@ import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
+import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.EmailService;
@@ -41,6 +44,8 @@ import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.jaxb.CustomParamsList;
 import com.rackspace.idm.jaxb.PasswordRecovery;
+import com.rackspace.idm.jaxb.UserCredentials;
+import com.rackspace.idm.jaxb.UserPassword;
 
 public class UserServiceTests {
 
@@ -417,6 +422,55 @@ public class UserServiceTests {
         recoveryParam.setTemplateUrl("");
         userService.sendRecoveryEmail(subject, email, recoveryParam,
             tokenString);
+    }
+    
+    @Test
+    public void shouldSetUserPassword() {
+        
+        User user = getFakeUser();
+        String customerId = user.getCustomerId();
+        String username = user.getUsername();
+        String tokenString = "aaldjfdj2231221";
+        DateTime tokenExpiration = new DateTime();
+        
+        List<Client> clients = getFakeClients();
+        
+        AccessToken token = new AccessToken(tokenString, tokenExpiration,
+            user, clients.get(0), IDM_SCOPE.SET_PASSWORD);
+        
+        boolean isRecovery = true;
+        
+        UserCredentials userCred = new UserCredentials();
+        UserPassword currentPass = new UserPassword();
+        currentPass.setPassword("open-sesame");
+        userCred.setCurrentPassword(currentPass);
+        
+        UserPassword newPass = new UserPassword();
+        newPass.setPassword("close-sesame");
+        userCred.setNewPassword(newPass);
+        
+        EasyMock.expect(mockRackerDao.authenticate(username, tokenString)).andReturn(true);
+        
+        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
+        EasyMock.expect(mockUserDao.getUserByCustomerIdAndUsername(customerId, username)).andReturn(user);
+        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).atLeastOnce();
+        
+        boolean isSelfUpdate = token.getOwner().equals(username);
+        
+        mockUserDao.updateUser(user, isSelfUpdate);
+        
+        EasyMock.replay(mockRackerDao);
+        EasyMock.replay(mockUserDao);
+        EasyMock.replay(mockClientService);
+
+        userService.setUserPassword(customerId, username, userCred, token, isRecovery);
+        
+        User updatedUser = userService.getUser(username);
+        
+        Password updatedPassword = updatedUser.getPasswordObj();
+        String updatedPasswordString = updatedPassword.getValue();
+        
+        Assert.assertEquals(newPass.getPassword(), updatedPasswordString);
     }
 
 
