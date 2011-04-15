@@ -479,7 +479,7 @@ public class LdapUserRepositoryTest {
     public void shouldReturnTrueForMaxLoginFailures() {
         User newUser = addNewTestUser();
 
-        for (int x = 1; x <= 10; x++) {
+        for (int x = 1; x <= 14; x++) {
             Password password = Password.generateRandom(false);
             repo.authenticate(newUser.getUsername(), password.getValue());
         }

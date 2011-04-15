@@ -28,19 +28,13 @@ import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
-import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.LDAPSearchException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
 import com.unboundid.ldap.sdk.ResultCode;
-import com.unboundid.ldap.sdk.SearchRequest;
-import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
-import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
-import com.unboundid.ldap.sdk.controls.SortKey;
 import com.unboundid.util.StaticUtils;
 
 public class LdapUserRepository extends LdapRepository implements UserDao {
@@ -178,8 +172,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
             ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON).build();
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,
-            offset, limit);
+        Users users = getMultipleUsers(searchFilter,
+            ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
 
         getLogger().debug("Found Users - {}", users);
 
@@ -198,31 +192,17 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         String[] groupIds = null;
 
-        SearchResult searchResult = null;
-
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_UID, username)
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                searchFilter, new String[]{ATTR_MEMBER_OF});
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for username {} - {}", username,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.SUB,
+            searchFilter, ATTR_MEMBER_OF);
 
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            groupIds = e.getAttributeValues(ATTR_MEMBER_OF);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error("More than one entry was found for username {}",
-                username);
-            throw new IllegalStateException(
-                "More than one entry was found for this username");
+        if (entry != null) {
+            groupIds = entry.getAttributeValues(ATTR_MEMBER_OF);
         }
 
         getLogger().debug("Got GroupIds for User {} - {}", username, groupIds);
@@ -401,8 +381,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,
-            offset, limit);
+        Users users = getMultipleUsers(searchFilter,
+            ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
 
         getLogger().debug("Found Users - {}", users);
 
@@ -599,8 +579,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,
-            offset, limit);
+        Users users = getMultipleUsers(searchFilter,
+            ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
 
         getLogger().debug("Found Users - {}", users);
 
@@ -735,9 +715,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     private Users getMultipleUsers(Filter searchFilter,
         String[] searchAttributes, int offset, int limit) {
 
-        ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
-            new SortKey(ATTR_UID));
-
         offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
         limit = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
         limit = limit > this.getLdapPagingLimitMax() ? this
@@ -746,16 +723,13 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         int contentCount = 0;
 
         List<User> userList = new ArrayList<User>();
-        SearchResult searchResult = null;
+
         try {
 
-            SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
-                searchFilter, searchAttributes);
+            List<SearchResultEntry> entries = this.getMultipleEntries(BASE_DN,
+                SearchScope.SUB, searchFilter, ATTR_UID, searchAttributes);
 
-            request.setControls(new Control[]{sortRequest});
-            searchResult = getAppConnPool().search(request);
-
-            contentCount = searchResult.getEntryCount();
+            contentCount = entries.size();
 
             if (offset < contentCount) {
 
@@ -763,17 +737,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                     : offset + limit;
                 int fromIndex = offset;
 
-                List<SearchResultEntry> subList = searchResult
-                    .getSearchEntries().subList(fromIndex, toIndex);
+                List<SearchResultEntry> subList = entries.subList(fromIndex,
+                    toIndex);
 
                 for (SearchResultEntry entry : subList) {
                     userList.add(getUser(entry));
                 }
             }
 
-        } catch (LDAPException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
         } catch (GeneralSecurityException e) {
             getLogger().error(e.getMessage());
             throw new IllegalStateException(e);
@@ -796,24 +767,15 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     private User getSingleUser(Filter searchFilter, String[] searchAttributes) {
         User user = null;
-        SearchResult searchResult = null;
         try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.SUB,
-                searchFilter, searchAttributes);
 
-            if (searchResult.getEntryCount() == 1) {
-                SearchResultEntry e = searchResult.getSearchEntries().get(0);
-                user = getUser(e);
-            } else if (searchResult.getEntryCount() > 1) {
-                String errMsg = String.format(
-                    "More than one entry was found for user search - %s",
-                    searchFilter);
-                getLogger().error(errMsg);
-                throw new IllegalStateException(errMsg);
+            SearchResultEntry entry = this.getSingleEntry(BASE_DN,
+                SearchScope.SUB, searchFilter, searchAttributes);
+
+            if (entry != null) {
+                user = getUser(entry);
             }
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
+
         } catch (GeneralSecurityException e) {
             getLogger().error("Encryption error", e);
             throw new IllegalStateException(e);

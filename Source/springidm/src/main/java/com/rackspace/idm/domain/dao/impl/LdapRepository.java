@@ -224,7 +224,7 @@ public abstract class LdapRepository {
         SearchResultEntry entry = null;
         try {
             entry = getAppConnPool().searchForEntry(baseDN, scope,
-                searchFilter);
+                searchFilter, attributes);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);

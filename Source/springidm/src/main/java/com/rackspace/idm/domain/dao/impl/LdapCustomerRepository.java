@@ -14,10 +14,8 @@ import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
-import com.unboundid.ldap.sdk.LDAPSearchException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
-import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 
@@ -44,7 +42,7 @@ public class LdapCustomerRepository extends LdapRepository implements
             customer.getInum()).build();
 
         customer.setUniqueId(customerDN);
-        
+
         Audit audit = Audit.log(customer).add();
         LDAPConnection conn = getAppPoolConnection(audit);
         this.addEntry(conn, customerDN, attributes, audit);
@@ -69,15 +67,16 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         // Add ou=applications under new customer entry
         String customerApplicationsDN = new LdapDnBuilder(customerDN)
-        .addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME).build();
+            .addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME).build();
         Attribute[] applicationAttributes = {
             new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
             new Attribute(ATTR_OU, "applications")};
-        
-        this.addEntry(conn, customerApplicationsDN, applicationAttributes, audit);
+
+        this.addEntry(conn, customerApplicationsDN, applicationAttributes,
+            audit);
 
         audit.succeed();
-        
+
         getAppConnPool().releaseConnection(conn);
 
         getLogger().debug("Added customer {}", customer);
@@ -91,11 +90,11 @@ public class LdapCustomerRepository extends LdapRepository implements
             throw new IllegalArgumentException(
                 "Null or Empty customerId parameter.");
         }
-        
+
         Customer customer = getCustomerByCustomerId(customerId);
 
         String customerDN = customer.getUniqueId();
-        
+
         Audit audit = Audit.log(customer).delete();
 
         this.deleteEntryAndSubtree(customerDN, audit);
@@ -108,30 +107,22 @@ public class LdapCustomerRepository extends LdapRepository implements
     @Override
     public List<Customer> getAllCustomers() {
         getLogger().debug("Search all customers");
-        SearchResult searchResult = null;
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEORGANIZATION).build();
 
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.ONE,
-                searchFilter);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error(
-                "Error searching for all customers under DN {} - {}", BASE_DN,
-                ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        List<SearchResultEntry> entries = this.getMultipleEntries(BASE_DN,
+            SearchScope.ONE, searchFilter, ATTR_RACKSPACE_CUSTOMER_NUMBER);
 
         List<Customer> customers = new ArrayList<Customer>();
-        for (SearchResultEntry e : searchResult.getSearchEntries()) {
+        for (SearchResultEntry e : entries) {
             Customer customer = getCustomer(e);
             customers.add(customer);
         }
 
-        getLogger().debug("Found {} clients under DN {}", customers.size(),
+        getLogger().debug("Found {} customers under DN {}", customers.size(),
             BASE_DN);
         return customers;
     }
@@ -147,16 +138,18 @@ public class LdapCustomerRepository extends LdapRepository implements
         }
 
         Customer customer = null;
-        SearchResult searchResult = getCustomerSearchResult(customerId);
 
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            customer = getCustomer(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error(
-                "More than one entry was found for customerId {}", customerId);
-            throw new IllegalStateException(
-                "More than one entry was found for this customerId");
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEORGANIZATION).build();
+
+        SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.ONE,
+            searchFilter);
+
+        if (entry != null) {
+            customer = getCustomer(entry);
         }
 
         getLogger().debug("Found customer - {}", customer);
@@ -175,31 +168,17 @@ public class LdapCustomerRepository extends LdapRepository implements
         }
 
         Customer customer = null;
-        SearchResult searchResult = null;
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_INUM, customerInum)
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEORGANIZATION).build();
 
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.ONE,
-                searchFilter);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for customerInum {} - {}",
-                customerInum, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.ONE,
+            searchFilter, ATTR_RACKSPACE_CUSTOMER_NUMBER);
 
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            customer = getCustomer(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            getLogger().error(
-                "More than one entry was found for customerInum {}",
-                customerInum);
-            throw new IllegalStateException(
-                "More than one entry was found for this customerInum");
+        if (entry != null) {
+            customer = getCustomer(entry);
         }
 
         getLogger().debug("Found customer - {}", customer);
@@ -241,21 +220,20 @@ public class LdapCustomerRepository extends LdapRepository implements
         }
 
         List<Modification> mods = getModifications(oldCustomer, customer);
-        
+
         if (mods.size() == 0) {
-            //no changes
+            // no changes
             return;
         }
-        
+
         Audit audit = Audit.log(oldCustomer).modify(mods);
-        LDAPConnection conn = getAppPoolConnection(audit);
-        updateEntry(conn, oldCustomer.getUniqueId(), mods, audit);
+        updateEntry(oldCustomer.getUniqueId(), mods, audit);
 
         audit.succeed();
 
         getLogger().debug("Updated customer {}", customer.getCustomerId());
     }
-    
+
     private Attribute[] getAddAttributes(Customer customer) {
         List<Attribute> atts = new ArrayList<Attribute>();
 
@@ -291,7 +269,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
-        
+
         return attributes;
     }
 
@@ -303,10 +281,12 @@ public class LdapCustomerRepository extends LdapRepository implements
             .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
         customer.setInum(resultEntry.getAttributeValue(ATTR_INUM));
         customer.setIname(resultEntry.getAttributeValue(ATTR_INAME));
-        
-        customer.setPasswordRotationDuration(resultEntry.getAttributeValueAsInteger(ATTR_PASSWORD_ROTATION_DURATION));
-        customer.setPasswordRotationEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_PASSWORD_ROTATION_ENABLED));    
-        
+
+        customer.setPasswordRotationDuration(resultEntry
+            .getAttributeValueAsInteger(ATTR_PASSWORD_ROTATION_DURATION));
+        customer.setPasswordRotationEnabled(resultEntry
+            .getAttributeValueAsBoolean(ATTR_PASSWORD_ROTATION_ENABLED));
+
         String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
         if (statusStr != null) {
             customer.setStatus(Enum.valueOf(CustomerStatus.class,
@@ -324,28 +304,8 @@ public class LdapCustomerRepository extends LdapRepository implements
             customer.setLocked(resultEntry
                 .getAttributeValueAsBoolean(ATTR_LOCKED));
         }
- 
+
         return customer;
-    }
-
-    private SearchResult getCustomerSearchResult(String customerId) {
-        SearchResult searchResult = null;
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEORGANIZATION).build();
-
-        try {
-            searchResult = getAppConnPool().search(BASE_DN, SearchScope.ONE,
-                searchFilter);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for customerId {} - {}",
-                customerId, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-        return searchResult;
     }
 
     List<Modification> getModifications(Customer cOld, Customer cNew) {
@@ -361,13 +321,12 @@ public class LdapCustomerRepository extends LdapRepository implements
         }
 
         if (cNew.getStatus() != null
-            && !cOld.getStatus().equals(cNew.getStatus())) {
+            && !cNew.getStatus().equals(cOld.getStatus())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_STATUS,
                 cNew.getStatus().toString()));
         }
 
-        if (cNew.isLocked() != null
-            && cNew.isLocked() != cOld.isLocked()) {
+        if (cNew.isLocked() != null && cNew.isLocked() != cOld.isLocked()) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_LOCKED,
                 String.valueOf(cNew.isLocked())));
         }
@@ -377,18 +336,22 @@ public class LdapCustomerRepository extends LdapRepository implements
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_SOFT_DELETED, String.valueOf(cNew.getSoftDeleted())));
         }
-        
+
         if (cNew.getPasswordRotationEnabled() != null
-            && cNew.getPasswordRotationEnabled() != cOld.getPasswordRotationEnabled()) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_ROTATION_ENABLED, 
-                String.valueOf(cNew.getPasswordRotationEnabled())));
+            && cNew.getPasswordRotationEnabled() != cOld
+                .getPasswordRotationEnabled()) {
+            mods.add(new Modification(ModificationType.REPLACE,
+                ATTR_PASSWORD_ROTATION_ENABLED, String.valueOf(cNew
+                    .getPasswordRotationEnabled())));
         }
-        
-        if (cNew.getPasswordRotationDuration() != cOld.getPasswordRotationDuration()) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_ROTATION_DURATION, 
-                String.valueOf(cNew.getPasswordRotationDuration())));
+
+        if (cNew.getPasswordRotationDuration() != cOld
+            .getPasswordRotationDuration()) {
+            mods.add(new Modification(ModificationType.REPLACE,
+                ATTR_PASSWORD_ROTATION_DURATION, String.valueOf(cNew
+                    .getPasswordRotationDuration())));
         }
-        
+
         return mods;
     }
 }
