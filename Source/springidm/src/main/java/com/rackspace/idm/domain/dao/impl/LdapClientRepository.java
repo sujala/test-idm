@@ -28,8 +28,6 @@ import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
 import com.unboundid.ldap.sdk.ResultCode;
-import com.unboundid.ldap.sdk.SearchRequest;
-import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 
@@ -306,20 +304,12 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         List<Client> clients = new ArrayList<Client>();
-        SearchResult searchResult = null;
-        try {
-            SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
-                searchFilter);
-            searchResult = getAppConnPool().search(request);
-        } catch (LDAPException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
-        }
 
-        if (searchResult.getEntryCount() > 0) {
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
-                clients.add(getClient(entry));
-            }
+        List<SearchResultEntry> entries = this.getMultipleEntries(BASE_DN,
+            SearchScope.SUB, searchFilter, ATTR_NAME);
+
+        for (SearchResultEntry entry : entries) {
+            clients.add(getClient(entry));
         }
 
         getLogger().debug("Found clients {}", clients);
@@ -532,23 +522,13 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         List<Client> clientList = new ArrayList<Client>();
-        SearchResult searchResult = null;
-        try {
+        
+        List<SearchResultEntry> entries = this.getMultipleEntries(BASE_DN, SearchScope.SUB, searchFilter, ATTR_NAME);
 
-            SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
-                searchFilter);
-
-            searchResult = getAppConnPool().search(request);
-
-        } catch (LDAPException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
-        }
-
-        for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+        for (SearchResultEntry entry : entries) {
             clientList.add(getClient(entry));
         }
-
+        
         getLogger().debug("Found Clients - {}", clientList);
 
         return clientList;
