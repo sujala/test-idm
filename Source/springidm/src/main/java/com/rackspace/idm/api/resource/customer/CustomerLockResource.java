@@ -23,7 +23,6 @@ import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -33,7 +32,7 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class CustomerLockResource {
+public class CustomerLockResource extends AbstractCustomerConsumer {
     private CustomerService customerService;
     private AuthorizationService authorizationService;
     private OAuthService oauthService;
@@ -42,6 +41,7 @@ public class CustomerLockResource {
     @Autowired
     public CustomerLockResource(CustomerService customerService, AuthorizationService authorizationService,
         OAuthService oauthService) {
+        super(customerService);
         this.customerService = customerService;
         this.authorizationService = authorizationService;
         this.oauthService = oauthService;
@@ -89,12 +89,7 @@ public class CustomerLockResource {
             throw new BadRequestException(errMsg);
         }
 
-        Customer customer = this.customerService.getCustomer(customerId);
-        if (customer == null) {
-            String errorMsg = String.format("Customer not found: %s", customerId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
+        Customer customer = checkAndGetCustomer(customerId);
 
         boolean isLocked = inputCustomer.isLocked();
         this.customerService.setCustomerLocked(customer, isLocked);
@@ -107,5 +102,10 @@ public class CustomerLockResource {
         }
 
         return Response.ok(inputCustomer).build();
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return logger;
     }
 }

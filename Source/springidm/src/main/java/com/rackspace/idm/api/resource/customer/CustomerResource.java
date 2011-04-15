@@ -30,7 +30,6 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.jaxb.PasswordRotationPolicy;
 import com.sun.jersey.core.provider.EntityHolder;
 
@@ -41,7 +40,7 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class CustomerResource {
+public class CustomerResource extends AbstractCustomerConsumer {
 
     private AccessTokenService accessTokenService;
     private CustomerClientsResource customerClientsResource;
@@ -59,6 +58,7 @@ public class CustomerResource {
         RolesResource rolesResource, CustomerUsersResource customerUsersResource,
         CustomerService customerService, CustomerConverter customerConverter,
         AuthorizationService authorizationService) {
+        super(customerService);
         this.accessTokenService = accessTokenService;
         this.customerClientsResource = customerClientsResource;
         this.customerLockResource = customerLockResource;
@@ -102,12 +102,7 @@ public class CustomerResource {
             throw new ForbiddenException(errMsg);
         }
 
-        Customer customer = this.customerService.getCustomer(customerId);
-        if (customer == null) {
-            String errorMsg = String.format("Customer not found: %s", customerId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
+        Customer customer = checkAndGetCustomer(customerId);
 
         com.rackspace.idm.jaxb.Customer outputCustomer = customerConverter.toJaxbCustomer(customer);
 
@@ -147,16 +142,9 @@ public class CustomerResource {
             throw new ForbiddenException(errMsg);
         }
 
-        Customer customer = this.customerService.getCustomer(customerId);
-
-        if (customer == null) {
-            String errorMsg = String.format("Customer not found: %s", customerId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
+        checkAndGetCustomer(customerId);
 
         this.customerService.deleteCustomer(customerId);
-
         logger.debug("Deleted Customer: {}", customerId);
 
         return Response.noContent().build();
@@ -209,13 +197,7 @@ public class CustomerResource {
             }
         }
 
-        Customer customer = this.customerService.getCustomer(customerId);
-        if (customer == null) {
-            String errorMsg = String.format("Customer not found: %s", customerId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-
+        Customer customer = checkAndGetCustomer(customerId);
         customer.setPasswordRotationEnabled(enabled);
         customer.setPasswordRotationDuration(duration);
 
@@ -243,5 +225,10 @@ public class CustomerResource {
     @Path("users")
     public CustomerUsersResource getCustomerUsersResource() {
         return customerUsersResource;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return logger;
     }
 }
