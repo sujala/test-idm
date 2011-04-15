@@ -41,7 +41,9 @@ import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.EmailService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.jaxb.CustomParamsList;
 import com.rackspace.idm.jaxb.PasswordRecovery;
 import com.rackspace.idm.jaxb.UserCredentials;
@@ -472,7 +474,130 @@ public class UserServiceTests {
         
         Assert.assertEquals(newPass.getPassword(), updatedPasswordString);
     }
+    
+    @Test(expected = BadRequestException.class)
+    public void shouldNotSetUserPasswordBecauseOriginalPasswordIsNull() {
+        
+        User user = getFakeUser();
+        String customerId = user.getCustomerId();
+        String username = user.getUsername();
+        String tokenString = "aaldjfdj2231221";
+        DateTime tokenExpiration = new DateTime();
+        
+        List<Client> clients = getFakeClients();
+        
+        AccessToken token = new AccessToken(tokenString, tokenExpiration,
+            user, clients.get(0), IDM_SCOPE.SET_PASSWORD);
+        
+        boolean isRecovery = false;
+        
+        UserCredentials userCred = new UserCredentials();
+        UserPassword currentPass = new UserPassword();
+        currentPass.setPassword(null);
+        userCred.setCurrentPassword(currentPass);
+        
+        UserPassword newPass = new UserPassword();
+        newPass.setPassword("close-sesame");
+        userCred.setNewPassword(newPass);
+        
+        EasyMock.expect(mockRackerDao.authenticate(username, tokenString)).andReturn(true);
+        
+        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
+        EasyMock.expect(mockUserDao.getUserByCustomerIdAndUsername(customerId, username)).andReturn(user);
+        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).atLeastOnce();
+        
+        boolean isSelfUpdate = token.getOwner().equals(username);
+        
+        mockUserDao.updateUser(user, isSelfUpdate);
+        
+        EasyMock.replay(mockRackerDao);
+        EasyMock.replay(mockUserDao);
+        EasyMock.replay(mockClientService);
 
+        userService.setUserPassword(customerId, username, userCred, token, isRecovery);
+    }   
+    
+    @Test(expected = BadRequestException.class)
+    public void shouldNotSetUserPasswordBecauseOriginalPasswordIsBlank() {
+        
+        User user = getFakeUser();
+        String customerId = user.getCustomerId();
+        String username = user.getUsername();
+        String tokenString = "aaldjfdj2231221";
+        DateTime tokenExpiration = new DateTime();
+        
+        List<Client> clients = getFakeClients();
+        
+        AccessToken token = new AccessToken(tokenString, tokenExpiration,
+            user, clients.get(0), IDM_SCOPE.SET_PASSWORD);
+        
+        boolean isRecovery = false;
+        
+        UserCredentials userCred = new UserCredentials();
+        UserPassword currentPass = new UserPassword();
+        currentPass.setPassword(" ");
+        userCred.setCurrentPassword(currentPass);
+        
+        UserPassword newPass = new UserPassword();
+        newPass.setPassword("close-sesame");
+        userCred.setNewPassword(newPass);
+        
+        EasyMock.expect(mockRackerDao.authenticate(username, tokenString)).andReturn(true);
+        
+        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
+        EasyMock.expect(mockUserDao.getUserByCustomerIdAndUsername(customerId, username)).andReturn(user);
+        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).atLeastOnce();
+        
+        boolean isSelfUpdate = token.getOwner().equals(username);
+        
+        mockUserDao.updateUser(user, isSelfUpdate);
+        
+        EasyMock.replay(mockRackerDao);
+        EasyMock.replay(mockUserDao);
+        EasyMock.replay(mockClientService);
+
+        userService.setUserPassword(customerId, username, userCred, token, isRecovery);
+    }   
+   
+    @Test(expected = NotAuthenticatedException.class)
+    public void shouldNotSetUserPasswordBecauseUserIsNotAuthenticated() {
+        
+        User user = getFakeUser();
+        String customerId = user.getCustomerId();
+        String username = user.getUsername();
+        String tokenString = "aaldjfdj2231221";
+        DateTime tokenExpiration = new DateTime();
+        
+        List<Client> clients = getFakeClients();
+        
+        AccessToken token = new AccessToken(tokenString, tokenExpiration,
+            user, clients.get(0), IDM_SCOPE.SET_PASSWORD);
+        
+        boolean isRecovery = false;
+        
+        UserCredentials userCred = new UserCredentials();
+        UserPassword currentPass = new UserPassword();
+        currentPass.setPassword("open-sesame");
+        userCred.setCurrentPassword(currentPass);
+        
+        UserPassword newPass = new UserPassword();
+        newPass.setPassword("close-sesame");
+        userCred.setNewPassword(newPass);
+   
+        UserAuthenticationResult userAuthenticationResult = new UserAuthenticationResult(user, false);
+        
+        EasyMock.expect(mockUserDao.authenticate(username, userCred
+                .getCurrentPassword().getPassword())).andReturn(userAuthenticationResult);
+        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).atLeastOnce();
+        
+        EasyMock.replay(mockRackerDao);
+        EasyMock.replay(mockUserDao);
+        EasyMock.replay(mockClientService);
+
+        userService.setUserPassword(customerId, username, userCred, token, isRecovery);
+    }
+    
+   
 
     @Test(expected = IllegalStateException.class)
     public void shouldThrowErrorIfInumNullCreateAccessTokenForUser() {
