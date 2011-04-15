@@ -138,7 +138,6 @@ public class BaseUrlsResource {
         this.endpointService.addBaseUrl(url);
 
         String location = uriInfo.getPath() + String.valueOf(url.getBaseUrlId());
-
         URI uri = null;
         try {
             uri = new URI(location);
@@ -193,16 +192,13 @@ public class BaseUrlsResource {
         @HeaderParam("Authorization") String authHeader, @PathParam("baseUrlId") int baseUrlId) {
 
         AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
-
-        CloudBaseUrl url = checkAndGetUrl(request, uriInfo,baseUrlId,token);
-            
+        checkAndGetUrl(request, uriInfo, baseUrlId, token);
         this.endpointService.deleteBaseUrl(baseUrlId);
 
         return Response.noContent().build();
     }
 
-    private CloudBaseUrl checkAndGetUrl(Request request, UriInfo uriInfo,
-        int baseUrlId, AccessToken token) {
+    private CloudBaseUrl checkAndGetUrl(Request request, UriInfo uriInfo, int baseUrlId, AccessToken token) {
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
             uriInfo.getPath());
@@ -222,5 +218,5 @@ public class BaseUrlsResource {
         }
         return url;
     }
-    
+
 }
