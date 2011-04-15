@@ -39,7 +39,7 @@ public class HttpAccessTokenRepository extends HttpRepository implements XdcAcce
 
         logger.debug("Searching for token {}.", tokenString);
         String dc = DataCenterEndpoints.getTokenPrefix(tokenString);
-        DataCenterClient client = endpoints.get(dc);
+        DataCenterClient client = getEndpoints().get(dc);
 
         byte[] tokenBytes = makeHttpCall(new HttpCaller<byte[]>() {
             @Override
@@ -154,9 +154,9 @@ public class HttpAccessTokenRepository extends HttpRepository implements XdcAcce
     }
 
     private <T> void makeHttpCallToOtherDcs(HttpCaller<T> caller) {
-        for (DataCenterClient client : endpoints.getAll()) {
+        for (DataCenterClient client : getEndpoints().getAll()) {
             // Don't make a call against the local (own) IDM instance.
-            if (client.getDcPrefix().equals(config.getString("token.dataCenterPrefix"))) {
+            if (client.getDcPrefix().equals(getConfig().getString("token.dataCenterPrefix"))) {
                 continue;
             }
 

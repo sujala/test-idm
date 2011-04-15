@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import java.util.List;
 import java.util.Locale;
 
 import com.rackspace.idm.validation.MessageTexts;
@@ -10,6 +9,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import com.rackspace.idm.GlobalConstants;
+import java.util.List;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -22,7 +22,7 @@ public class User extends BaseUser implements Auditable {
     private String email = null;
 
 
-    protected UserCredential credential = new UserCredential();
+    private UserCredential credential = new UserCredential();
     private String personId = null;
 
     private String uniqueId = null;
@@ -75,8 +75,8 @@ public class User extends BaseUser implements Auditable {
         String country, String displayName, String inum, String iname,
         String orgInum, String apiKey, UserStatus status,
         String personId) {
-        this.username = username;
-        this.customerId = customerId;
+        super.setUsername(username);
+        super.setCustomerId(customerId);
         this.email = email;
         this.name = name;
         this.preference = preference;
@@ -198,12 +198,14 @@ public class User extends BaseUser implements Auditable {
         }
     }
 
+    @Override
     public String getUsername() {
-        return username;
+        return super.getUsername();
     }
 
+    @Override
     public void setUsername(String username) {
-        this.username = username;
+        super.setUsername(username);
     }
 
     public void setPasswordObj(Password password) {
@@ -404,14 +406,14 @@ public class User extends BaseUser implements Auditable {
 
     @Override
     public void setCustomerId(String customerId) {
-        this.customerId = customerId;
+        super.setCustomerId(customerId);
     }
 
     @Override
     public void setGroups(List<ClientGroup> groups) {
-        this.groups = groups;
+        super.setGroups(groups);
     }
-    
+
     public void setDefaults() {
         if (this.preference.getLocale() == null) {
             this.setPreferredLang(GlobalConstants.USER_PREFERRED_LANG_DEFAULT);
@@ -428,9 +430,9 @@ public class User extends BaseUser implements Auditable {
 
     public BaseUser getBaseUser() {
         BaseUser baseUser = new BaseUser();
-        baseUser.setCustomerId(this.customerId);
-        baseUser.setUsername(this.username);
-        baseUser.setGroups(this.groups);
+        baseUser.setCustomerId(getCustomerId());
+        baseUser.setUsername(getUsername());
+        baseUser.setGroups(getGroups());
         return baseUser;
     }
 
@@ -682,8 +684,8 @@ public class User extends BaseUser implements Auditable {
             + ", apiKey=" + apiKey + ", status=" + status + ", softDeleted=" + softDeleted + ", region=" + region
             + ", nastId=" + nastId + ", mossoId=" + mossoId + ", created="
             + created + ", updated=" + updated + ", passwordFailureLocked="
-            + maxLoginFailuresExceded + ", username=" + username
-            + ", customerId=" + customerId + ", groups=" + groups + "]";
+            + maxLoginFailuresExceded + ", username=" + getUsername()
+            + ", customerId=" + getCustomerId() + ", groups=" + getGroups() + "]";
     }
 
     public static class Builder {
@@ -694,13 +696,13 @@ public class User extends BaseUser implements Auditable {
         }
 
         public Builder setUsername(String username) {
-            user.username = username;
+            user.setUsername(username);
             return this;
         }
 
         public Builder setUniqueIds(String userName, String inum, String iname,
             String uniqueId) {
-            user.username = userName;
+            user.setUsername(userName);
             user.inum = inum;
             user.iname = iname;
             user.uniqueId = uniqueId;
@@ -709,7 +711,7 @@ public class User extends BaseUser implements Auditable {
         }
 
         public Builder setCisIds(String customerId, String personId) {
-            user.customerId = customerId;
+            user.setCustomerId(customerId);
             user.personId = personId;
 
             return this;
@@ -780,9 +782,10 @@ public class User extends BaseUser implements Auditable {
         }
     }
     
+    @Override
     public String getAuditContext() {
         String format = "username=%s, customer=%s";
-        return String.format(format, username, customerId);
+        return String.format(format, getUsername(), getCustomerId());
     }
     
 }

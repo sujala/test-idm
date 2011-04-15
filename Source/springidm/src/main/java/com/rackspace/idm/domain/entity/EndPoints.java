@@ -3,11 +3,11 @@ package com.rackspace.idm.domain.entity;
 import java.util.List;
 
 public class EndPoints {
-    String userDN = null;
-    String username = null;
-    String nastId = null;
-    Integer mossoId = null;
-    List<String> endpoints;
+    private String userDN = null;
+    private String username = null;
+    private String nastId = null;
+    private Integer mossoId = null;
+    private List<String> endpoints;
     
     public String getUserDN() {
         return userDN;

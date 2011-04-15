@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.entity;
 
 public abstract class AuthenticationResult {
 
-    protected boolean authenticated = false;
+    private boolean authenticated = false;
     
     public AuthenticationResult(boolean authenticated) {
         this.authenticated = authenticated;

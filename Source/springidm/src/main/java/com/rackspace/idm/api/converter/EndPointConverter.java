@@ -19,8 +19,8 @@ public class EndPointConverter {
 
     private Configuration config;
 
-    protected ObjectFactory of = new ObjectFactory();
-    protected ServiceCatalogFactory sf = new ServiceCatalogFactory();
+    private ObjectFactory of = new ObjectFactory();
+    private ServiceCatalogFactory sf = new ServiceCatalogFactory();
 
     public EndPointConverter(Configuration config) {
         this.config = config;

@@ -22,9 +22,9 @@ import com.sun.jersey.api.client.UniformInterfaceException;
 
 public abstract class HttpRepository {
     protected static final String TOKEN_RESOURCE_PATH = "token";
-    protected Configuration config;
-    protected TokenConverter converter = new TokenConverter();
-    protected DataCenterEndpoints endpoints;
+    private Configuration config;
+    private TokenConverter converter = new TokenConverter();
+    private DataCenterEndpoints endpoints;
 
     private AuthCredentials idmCreds;
 
@@ -40,7 +40,7 @@ public abstract class HttpRepository {
      * @return Access token that represents the local IDM instance.
      */
     protected AccessToken getMyAccessToken(String dc, boolean getFromCache) {
-        DataCenterClient client = endpoints.get(dc);
+        DataCenterClient client = getEndpoints().get(dc);
         if (getFromCache) {
             AccessToken myToken = client.getAccessToken();
             if (myToken != null && !myToken.isExpired(new DateTime())) {
@@ -66,7 +66,7 @@ public abstract class HttpRepository {
 
     protected AccessToken extractMyAccessToken(ClientResponse resp, DataCenterClient client) {
         if (Response.Status.OK.getStatusCode() == resp.getStatus()) {
-            AccessToken myToken = converter
+            AccessToken myToken = getConverter()
                 .toAccessTokenFromJaxb(resp.getEntity(Auth.class).getAccessToken());
             client.setAccessToken(myToken);
             return myToken;
@@ -154,8 +154,8 @@ public abstract class HttpRepository {
      * @return
      */
     private AuthCredentials getIdmCreds() {
-        String clientId = config.getString("idm.clientId");
-        String clientSecret = config.getString("idm.clientSecret");
+        String clientId = getConfig().getString("idm.clientId");
+        String clientSecret = getConfig().getString("idm.clientSecret");
 
         if (idmCreds != null && idmCreds.getClientId().equals(clientId)
             && idmCreds.getClientSecret().equals(clientSecret)) {
@@ -167,6 +167,27 @@ public abstract class HttpRepository {
         idmCreds.setClientSecret(clientSecret);
         idmCreds.setGrantType(AuthGrantType.NONE);
         return idmCreds;
+    }
+
+    /**
+     * @return the config
+     */
+    public Configuration getConfig() {
+        return config;
+    }
+
+    /**
+     * @return the converter
+     */
+    public TokenConverter getConverter() {
+        return converter;
+    }
+
+    /**
+     * @return the endpoints
+     */
+    public DataCenterEndpoints getEndpoints() {
+        return endpoints;
     }
 
     /**

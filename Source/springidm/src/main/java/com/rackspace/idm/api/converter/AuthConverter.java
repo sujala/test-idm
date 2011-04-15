@@ -22,7 +22,7 @@ public class AuthConverter {
     private TokenConverter tokenConverter;
     private EndPointConverter endpointConverter;
 
-    protected ObjectFactory of = new ObjectFactory();
+    private ObjectFactory of = new ObjectFactory();
 
     public AuthConverter(TokenConverter tokenConverter,
         PermissionConverter permissionConverter,

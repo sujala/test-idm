@@ -1130,14 +1130,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return client;
     }
 
-    List<Modification> getModifications(Client cOld, Client cNew) {
-        List<Modification> mods = new ArrayList<Modification>();
-
-        if (cNew.getClientSecretObj().isNew()) {
-            mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
-        }
-
+    private void getInameModifications(Client cNew, List<Modification> mods, Client cOld) {
         if (cNew.getIname() != null) {
             if (StringUtils.isBlank(cNew.getIname())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_INAME));
@@ -1146,6 +1139,17 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                     cNew.getIname()));
             }
         }
+    }
+
+    List<Modification> getModifications(Client cOld, Client cNew) {
+        List<Modification> mods = new ArrayList<Modification>();
+
+        if (cNew.getClientSecretObj().isNew()) {
+            mods.add(new Modification(ModificationType.REPLACE,
+                ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
+        }
+        
+        getInameModifications(cNew, mods, cOld);
 
         if (cNew.isLocked() != null && !cNew.isLocked().equals(cOld.isLocked())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_LOCKED,

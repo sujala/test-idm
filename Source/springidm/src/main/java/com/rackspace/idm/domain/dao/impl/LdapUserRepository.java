@@ -421,20 +421,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     @Override
     public void updateUser(User user, boolean hasSelfUpdatedPassword) {
         getLogger().info("Updating user {}", user);
-        if (user == null || StringUtils.isBlank(user.getUsername())) {
-            getLogger().error(
-                "User instance is null or its userName has no value");
-            throw new IllegalArgumentException(
-                "Bad parameter: The User instance either null or its userName has no value.");
-        }
+
+        throwIfEmptyUsername(user);
+
         User oldUser = getUserByUsername(user.getUsername());
 
-        if (oldUser == null) {
-            getLogger()
-                .error("No record found for user {}", user.getUsername());
-            throw new IllegalArgumentException(
-                "There is no exisiting record for the given User instance. Has the userName been changed?");
-        }
+        throwIfEmptyOldUser(oldUser, user);
 
         Audit audit = Audit.log(user);
 
@@ -449,13 +441,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             }
             getAppConnPool().modify(oldUser.getUniqueId(), mods);
         } catch (LDAPException ldapEx) {
-
-            if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
-                && STALE_PASSWORD_MESSAGE.equals(ldapEx.getMessage())) {
-                audit.fail(STALE_PASSWORD_MESSAGE);
-                throw new StalePasswordException(
-                    "Past 10 passwords for the user cannot be re-used.");
-            }
+            throwIfStalePassword(ldapEx, audit);
 
             getLogger().error("Error updating user {} - {}",
                 user.getUsername(), ldapEx);
@@ -476,6 +462,33 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         audit.succeed();
         getLogger().info("Updated user - {}", user);
+    }
+
+    private void throwIfEmptyOldUser(User oldUser, User user) throws IllegalArgumentException {
+        if (oldUser == null) {
+            getLogger()
+                .error("No record found for user {}", user.getUsername());
+            throw new IllegalArgumentException(
+                "There is no exisiting record for the given User instance. Has the userName been changed?");
+        }
+    }
+
+    private void throwIfEmptyUsername(User user) throws IllegalArgumentException {
+        if (user == null || StringUtils.isBlank(user.getUsername())) {
+            getLogger().error(
+                "User instance is null or its userName has no value");
+            throw new IllegalArgumentException(
+                "Bad parameter: The User instance either null or its userName has no value.");
+        }
+    }
+
+    private void throwIfStalePassword(LDAPException ldapEx, Audit audit) throws StalePasswordException {
+        if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
+            && STALE_PASSWORD_MESSAGE.equals(ldapEx.getMessage())) {
+            audit.fail(STALE_PASSWORD_MESSAGE);
+            throw new StalePasswordException(
+                "Past 10 passwords for the user cannot be re-used.");
+        }
     }
 
     private void addAuditLogForAuthentication(User user, boolean authenticated) {

@@ -5,7 +5,7 @@ import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class CustomerConverter {
 
-    protected ObjectFactory of = new ObjectFactory();
+    private ObjectFactory of = new ObjectFactory();
 
     public CustomerConverter() {
     }
@@ -30,7 +30,7 @@ public class CustomerConverter {
 
     public com.rackspace.idm.jaxb.Customer toJaxbCustomer(Customer customer) {
 
-        com.rackspace.idm.jaxb.Customer jaxbCustomer = new com.rackspace.idm.jaxb.Customer();
+        com.rackspace.idm.jaxb.Customer jaxbCustomer = of.createCustomer();
         jaxbCustomer.setCustomerId(customer.getCustomerId());
         jaxbCustomer.setIname(customer.getIname());
         jaxbCustomer.setInum(customer.getInum());

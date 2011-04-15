@@ -14,7 +14,7 @@ import com.rackspace.idm.jaxb.ObjectFactory;
 public class UserConverter {
 
     private GroupConverter groupConverter;
-    protected ObjectFactory of = new ObjectFactory();
+    private ObjectFactory of = new ObjectFactory();
 
     public UserConverter(GroupConverter groupConverter) {
         this.groupConverter = groupConverter;

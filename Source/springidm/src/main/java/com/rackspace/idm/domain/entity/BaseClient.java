@@ -16,11 +16,11 @@ import com.rackspace.idm.validation.RegexPatterns;
 public class BaseClient implements Serializable {
     private static final long serialVersionUID = -1260927822525896505L;
     
-    protected String clientId = null;
+    private String clientId = null;
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
-    protected String customerId = null;
-    protected List<Permission> permissions;
+    private String customerId = null;
+    private List<Permission> permissions;
 
     public BaseClient() {
     }

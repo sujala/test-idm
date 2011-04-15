@@ -140,18 +140,18 @@ public abstract class LdapRepository {
     
     
 
-    private final LdapConnectionPools conn;
+    private final LdapConnectionPools connPools;
     private final Configuration config;
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected LdapRepository(LdapConnectionPools conn, Configuration config) {
-        this.conn = conn;
+        this.connPools = conn;
         this.config = config;
     }
 
     protected LDAPConnectionPool getAppConnPool() {
-        return conn.getAppConnPool();
+        return connPools.getAppConnPool();
     }
 
     protected LDAPConnection getAppPoolConnection(Audit audit) {
@@ -168,7 +168,7 @@ public abstract class LdapRepository {
     }
 
     protected LDAPConnectionPool getBindConnPool() {
-        return conn.getBindConnPool();
+        return connPools.getBindConnPool();
     }
 
     protected Logger getLogger() {
@@ -378,7 +378,7 @@ public abstract class LdapRepository {
         }
 
         public Filter build() {
-            if (filters.size() == 0) {
+            if (filters.isEmpty()) {
                 return Filter.createEqualityFilter(ATTR_OBJECT_CLASS, "*");
             }
 

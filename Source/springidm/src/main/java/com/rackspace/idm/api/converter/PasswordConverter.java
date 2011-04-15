@@ -5,13 +5,13 @@ import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class PasswordConverter {
 
-    protected ObjectFactory of = new ObjectFactory();
+    private ObjectFactory of = new ObjectFactory();
 
     public PasswordConverter() {
     }
 
     public com.rackspace.idm.jaxb.UserPassword toJaxb(Password password) {
-        com.rackspace.idm.jaxb.UserPassword userPassword = new com.rackspace.idm.jaxb.UserPassword();
+        com.rackspace.idm.jaxb.UserPassword userPassword = of.createUserPassword();
 
         userPassword.setPassword(password.getValue());
 

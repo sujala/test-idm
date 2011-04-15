@@ -9,7 +9,7 @@ import com.rackspace.idm.jaxb.ObjectFactory;
 public class RoleConverter {
 
     private PermissionConverter permissionConverter;
-    protected ObjectFactory of = new ObjectFactory();
+    private ObjectFactory of = new ObjectFactory();
 
     public RoleConverter(PermissionConverter permissionConverter) {
         this.permissionConverter = permissionConverter;

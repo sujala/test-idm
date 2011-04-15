@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 import org.hibernate.validator.constraints.Length;
-import org.joda.time.DateTime;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -19,12 +18,12 @@ public class BaseUser implements Serializable {
     @NotNull
     @Length(min = 1, max = 32)
     @Pattern(regexp = RegexPatterns.USERNAME, message = MessageTexts.USERNAME)
-    protected String username = null;
+    private String username = null;
 
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
-    protected String customerId = null;
-    protected List<ClientGroup> groups;
+    private String customerId = null;
+    private List<ClientGroup> groups;
   
     public BaseUser() {
     }

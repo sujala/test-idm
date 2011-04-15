@@ -50,6 +50,6 @@ public class ClientAuthenticationResult extends AuthenticationResult {
     @Override
     public String toString() {
         return "ClientAuthenticationResult [client=" + client
-            + ", authenticated=" + authenticated + "]";
+            + ", authenticated=" + isAuthenticated() + "]";
     }
 }

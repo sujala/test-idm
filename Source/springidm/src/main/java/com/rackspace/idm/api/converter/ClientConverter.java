@@ -11,7 +11,7 @@ import com.rackspace.idm.jaxb.ObjectFactory;
 public class ClientConverter {
 
     private PermissionConverter permissionConverter;
-    protected ObjectFactory of = new ObjectFactory();
+    private ObjectFactory of = new ObjectFactory();
 
     public ClientConverter(PermissionConverter permissionConverter) {
         this.permissionConverter = permissionConverter;

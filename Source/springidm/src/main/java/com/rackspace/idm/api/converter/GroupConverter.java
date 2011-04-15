@@ -7,7 +7,7 @@ import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class GroupConverter {
-    protected ObjectFactory of = new ObjectFactory();
+    private ObjectFactory of = new ObjectFactory();
     
     public ClientGroup toClientGroupDO(com.rackspace.idm.jaxb.ClientGroup jaxbGroup) {
         ClientGroup group = new ClientGroup();

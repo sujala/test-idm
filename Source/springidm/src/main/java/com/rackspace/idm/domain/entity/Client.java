@@ -142,19 +142,19 @@ public class Client extends BaseClient implements Auditable {
 
     @Override
     public void setClientId(String clientId) {
-        this.clientId = clientId;
+        super.setClientId(clientId);
     }
 
     @Override
     public void setCustomerId(String customerId) {
-        this.customerId = customerId;
+        super.setCustomerId(customerId);
     }
 
     @Override
     public void setPermissions(List<Permission> permissions) {
         // Make the setter more permissive here, but keep it restrictive in
         // BaseClient
-        this.permissions = permissions;
+        super.setPermissions(permissions);
     }
     
     public void setDefaults() {
@@ -165,12 +165,12 @@ public class Client extends BaseClient implements Auditable {
 
     public BaseClient getBaseClient() {
         BaseClient baseClient = getBaseClientWithoutClientPerms();
-        baseClient.setPermissions(this.permissions);
+        baseClient.setPermissions(getPermissions());
         return baseClient;
     }
 
     public BaseClient getBaseClientWithoutClientPerms() {
-        return new BaseClient(clientId, customerId);
+        return new BaseClient(getClientId(),getCustomerId());
     }
 
     @Override
@@ -269,6 +269,6 @@ public class Client extends BaseClient implements Auditable {
     @Override
     public String getAuditContext() {
         String format = "clientId=%s,customerId=%s";
-        return String.format(format, clientId, customerId);
+        return String.format(format, getClientId(), getCustomerId());
     }
 }

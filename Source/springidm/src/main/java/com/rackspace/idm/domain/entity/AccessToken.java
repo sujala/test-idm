@@ -111,13 +111,13 @@ public final class AccessToken extends Token implements Serializable {
     }
 
     public boolean hasClientPermissions() {
-        return isClientToken() && client.permissions != null
-            && client.permissions.size() > 0;
+        return isClientToken() && client.getPermissions() != null
+            && client.getPermissions().size() > 0;
     }
 
     public boolean hasUserGroups() {
-        return !isClientToken() && user != null && user.groups != null
-            && user.groups.size() > 0;
+        return !isClientToken() && user != null && user.getGroups() != null
+            && user.getGroups().size() > 0;
     }
 
     public String getAuditString() {
