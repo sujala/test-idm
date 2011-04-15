@@ -19,15 +19,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.RoleConverter;
+import com.rackspace.idm.api.resource.customer.AbstractCustomerConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
-import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Role;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 
 /**
  * Customer roles
@@ -36,22 +35,19 @@ import com.rackspace.idm.exception.NotFoundException;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class RolesResource {
+public class RolesResource extends AbstractCustomerConsumer {
 
     private AccessTokenService accessTokenService;
-    private CustomerService customerService;
     private RoleService roleService;
     private RoleConverter roleConverter;
     private AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public RolesResource(AccessTokenService accessTokenService,
-        CustomerService customerService, RoleService roleService,
-        RoleConverter roleConverter, AuthorizationService authorizationService
-        ) {
+    public RolesResource(AccessTokenService accessTokenService, CustomerService customerService,
+        RoleService roleService, RoleConverter roleConverter, AuthorizationService authorizationService) {
+        super(customerService);
         this.accessTokenService = accessTokenService;
-        this.customerService = customerService;
         this.roleService = roleService;
         this.roleConverter = roleConverter;
         this.authorizationService = authorizationService;
@@ -72,45 +68,38 @@ public class RolesResource {
      * @param customerId RCN
      */
     @GET
-    public Response getRoles(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId) {
+    public Response getRoles(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId) {
 
         logger.debug("Getting Customer Roles: {}", customerId);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
-        Customer customer = this.customerService.getCustomer(customerId);
-        if (customer == null) {
-            String errorMsg = String.format("Customer not found: %s",
-                customerId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
+        checkAndGetCustomer(customerId);
 
         List<Role> roles = roleService.getByCustomerId(customerId);
 
-        com.rackspace.idm.jaxb.Roles outputRoles = roleConverter
-            .toRolesJaxb(roles);
+        com.rackspace.idm.jaxb.Roles outputRoles = roleConverter.toRolesJaxb(roles);
 
         logger.debug("Got Customer Roles:{}", roles);
         return Response.ok(outputRoles).build();
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return logger;
     }
 }

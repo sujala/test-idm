@@ -25,8 +25,8 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.error.ApiError;
+import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
-import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.PermissionSet;
 import com.rackspace.idm.domain.service.AccessTokenService;
@@ -47,7 +47,7 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class DefinedPermissionsResource {
+public class DefinedPermissionsResource extends AbstractClientConsumer {
 
     private DefinedPermissionResource definedPermissionResource;
     private ClientService clientService;
@@ -61,6 +61,7 @@ public class DefinedPermissionsResource {
     public DefinedPermissionsResource(DefinedPermissionResource definedPermissionResource,
         ClientService clientService, PermissionConverter permissionConverter, InputValidator inputValidator,
         AuthorizationService authorizationService, AccessTokenService accessTokenService) {
+        super(clientService);
         this.definedPermissionResource = definedPermissionResource;
         this.permissionConverter = permissionConverter;
         this.inputValidator = inputValidator;
@@ -104,12 +105,7 @@ public class DefinedPermissionsResource {
             throw new ForbiddenException(errMsg);
         }
 
-        Client client = this.clientService.getById(clientId);
-        if (client == null || !client.getCustomerId().equals(customerId)) {
-            String errMsg = String.format("Client with Id %s not found.", clientId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
+        checkAndGetClient(customerId, clientId);
 
         List<Permission> defineds = this.clientService.getDefinedPermissionsByClientId(clientId);
 
@@ -211,5 +207,10 @@ public class DefinedPermissionsResource {
     @Path("{permissionId}")
     public DefinedPermissionResource getDefinedPermissionResource() {
         return definedPermissionResource;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return logger;
     }
 }

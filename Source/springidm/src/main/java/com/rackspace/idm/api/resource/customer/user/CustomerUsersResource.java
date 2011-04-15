@@ -26,8 +26,8 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
+import com.rackspace.idm.api.resource.customer.AbstractCustomerConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
-import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.AccessTokenService;
@@ -51,12 +51,11 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class CustomerUsersResource {
+public class CustomerUsersResource extends AbstractCustomerConsumer {
 
     private AccessTokenService accessTokenService;
     private UserResource userResource;
     private UserService userService;
-    private CustomerService customerService;
     private UserConverter userConverter;
     private InputValidator inputValidator;
     private PasswordComplexityService passwordComplexityService;
@@ -68,11 +67,11 @@ public class CustomerUsersResource {
         UserService userService, CustomerService customerService, UserConverter userConverter,
         InputValidator inputValidator, PasswordComplexityService passwordComplexityService,
         AuthorizationService authorizationService) {
+        super(customerService);
         this.accessTokenService = accessTokenService;
         this.userResource = userResource;
         this.userService = userService;
         this.userConverter = userConverter;
-        this.customerService = customerService;
         this.inputValidator = inputValidator;
         this.passwordComplexityService = passwordComplexityService;
         this.authorizationService = authorizationService;
@@ -115,12 +114,7 @@ public class CustomerUsersResource {
             throw new ForbiddenException(errMsg);
         }
 
-        Customer customer = this.customerService.getCustomer(customerId);
-        if (customer == null) {
-            String errorMsg = String.format("Customer not found: %s", customerId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
+        checkAndGetCustomer(customerId);
 
         Users users = userService.getByCustomerId(customerId, offset, limit);
         logger.debug("Got Customer Users:{}", users);
@@ -148,7 +142,7 @@ public class CustomerUsersResource {
     public Response addUser(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         EntityHolder<com.rackspace.idm.jaxb.User> holder) {
-        
+
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
@@ -274,5 +268,10 @@ public class CustomerUsersResource {
 
         logger.debug("Got User :{}", user);
         return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return logger;
     }
 }

@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.PermissionConverter;
+import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.Permission;
@@ -28,7 +29,6 @@ import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 
 /**
  * Client permissions
@@ -37,7 +37,7 @@ import com.rackspace.idm.exception.NotFoundException;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class PermissionsResource {
+public class PermissionsResource extends AbstractClientConsumer {
 
     private AccessTokenService accessTokenService;
     private DefinedPermissionsResource definedPermissionsResource;
@@ -50,9 +50,9 @@ public class PermissionsResource {
     @Autowired
     public PermissionsResource(AccessTokenService accessTokenService,
         DefinedPermissionsResource definedPermissionsResource,
-        GrantedPermissionsResource grantedPermissionsResource,
-        ClientService clientService, PermissionConverter permissionConverter,
-        AuthorizationService authorizationService) {
+        GrantedPermissionsResource grantedPermissionsResource, ClientService clientService,
+        PermissionConverter permissionConverter, AuthorizationService authorizationService) {
+        super(clientService);
         this.accessTokenService = accessTokenService;
         this.definedPermissionsResource = definedPermissionsResource;
         this.grantedPermissionsResource = grantedPermissionsResource;
@@ -76,51 +76,37 @@ public class PermissionsResource {
      * @param clientId Client application ID
      */
     @GET
-    public Response getClientPermissions(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
+    public Response getClientPermissions(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
-        logger.debug(String.format("Getting Permissions for client %s",
-            clientId));
+        logger.debug(String.format("Getting Permissions for client %s", clientId));
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
-        Client client = this.clientService.getById(clientId);
-        if (client == null || !client.getCustomerId().equals(customerId)) {
-            String errMsg = String.format("Client with Id %s not found.",
-                clientId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
+        Client client = checkAndGetClient(customerId, clientId);
 
-        List<Permission> defineds = this.clientService
-            .getDefinedPermissionsByClientId(clientId);
+        List<Permission> defineds = this.clientService.getDefinedPermissionsByClientId(clientId);
 
         PermissionSet permset = new PermissionSet();
 
         permset.setDefineds(defineds);
         permset.setGranteds(client.getPermissions());
         logger.debug(String.format("Got Permissions for client %s", clientId));
-        return Response.ok(permissionConverter.toPermissionsJaxb(permset))
-            .build();
+        return Response.ok(permissionConverter.toPermissionsJaxb(permset)).build();
     }
 
     @Path("defined")
@@ -131,5 +117,10 @@ public class PermissionsResource {
     @Path("granted")
     public GrantedPermissionsResource getGrantedPermissionsResource() {
         return grantedPermissionsResource;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return logger;
     }
 }

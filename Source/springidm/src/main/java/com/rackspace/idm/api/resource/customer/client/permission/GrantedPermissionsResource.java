@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.PermissionConverter;
+import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.PermissionSet;
@@ -24,7 +25,6 @@ import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 
 /**
  * Client granted permissions
@@ -33,21 +33,19 @@ import com.rackspace.idm.exception.NotFoundException;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class GrantedPermissionsResource {
+public class GrantedPermissionsResource extends AbstractClientConsumer {
 
     private AccessTokenService accessTokenService;
-    private ClientService clientService;
     private PermissionConverter permissionConverter;
     private AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
-    
+
     @Autowired
-    public GrantedPermissionsResource(AccessTokenService accessTokenService,
-        ClientService clientService, PermissionConverter permissionConverter,
-        AuthorizationService authorizationService) {
+    public GrantedPermissionsResource(AccessTokenService accessTokenService, ClientService clientService,
+        PermissionConverter permissionConverter, AuthorizationService authorizationService) {
+        super(clientService);
         this.accessTokenService = accessTokenService;
         this.permissionConverter = permissionConverter;
-        this.clientService = clientService;
         this.authorizationService = authorizationService;
     }
 
@@ -67,48 +65,38 @@ public class GrantedPermissionsResource {
      * @param clientId Client application ID
      */
     @GET
-    public Response getClientGrantedPermissions(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
+    public Response getClientGrantedPermissions(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
-        Client client = this.clientService.getById(clientId);
-
-        if (client == null || !client.getCustomerId().equals(customerId)) {
-            String errMsg = String.format("Client With Client Id %SNot Found",
-                clientId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-
-        if (client.getPermissions() == null
-            || client.getPermissions().size() < 1) {
+        Client client = checkAndGetClient(customerId, clientId);
+        if (client.getPermissions() == null || client.getPermissions().size() < 1) {
             Response.noContent().build();
         }
 
         PermissionSet perms = new PermissionSet();
         perms.setGranteds(client.getPermissions());
 
-        return Response.ok(permissionConverter.toPermissionsJaxb(perms))
-            .build();
+        return Response.ok(permissionConverter.toPermissionsJaxb(perms)).build();
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return logger;
     }
 }

@@ -1,5 +1,24 @@
 package com.rackspace.idm.api.resource.customer.client;
 
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.api.converter.ClientConverter;
 import com.rackspace.idm.api.resource.customer.client.group.ClientGroupsResource;
 import com.rackspace.idm.api.resource.customer.client.permission.PermissionsResource;
@@ -13,13 +32,6 @@ import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.jaxb.ClientCredentials;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
 
 /**
  * Client application resource.
@@ -27,7 +39,7 @@ import javax.ws.rs.core.*;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class CustomerClientResource {
+public class CustomerClientResource extends AbstractClientConsumer {
 
     private AccessTokenService accessTokenService;
     private ClientConverter clientConverter;
@@ -38,17 +50,17 @@ public class CustomerClientResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomerClientResource(AccessTokenService accessTokenService,
-        ClientService clientService, ClientConverter clientConverter,
-        PermissionsResource permissionsResource,ClientGroupsResource clientGroupsResource,
-        AuthorizationService authorizationService) {
+    public CustomerClientResource(AccessTokenService accessTokenService, ClientService clientService,
+        ClientConverter clientConverter, PermissionsResource permissionsResource,
+        ClientGroupsResource clientGroupsResource, AuthorizationService authorizationService) {
+        super(clientService);
         this.accessTokenService = accessTokenService;
         this.clientService = clientService;
         this.clientConverter = clientConverter;
         this.permissionsResource = permissionsResource;
         this.authorizationService = authorizationService;
         this.clientGroupsResource = clientGroupsResource;
-     }
+    }
 
     /**
      * Gets the client data.
@@ -65,27 +77,22 @@ public class CustomerClientResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @GET
-    public Response getClient(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
+    public Response getClient(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
         logger.debug("Getting Client: {}", clientId);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients, Admins and Users are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -94,13 +101,11 @@ public class CustomerClientResource {
 
         logger.debug("Got Client: {}", client);
 
-        com.rackspace.idm.jaxb.Client returnedClient = clientConverter
-            .toClientJaxbWithPermissions(client);
+        com.rackspace.idm.jaxb.Client returnedClient = clientConverter.toClientJaxbWithPermissions(client);
 
         return Response.ok(returnedClient).build();
     }
 
-   
     /**
      * Delete a client.
      *
@@ -116,24 +121,20 @@ public class CustomerClientResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @DELETE
-    public Response deleteClient(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
+    public Response deleteClient(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
         logger.debug("Deleting Client: {}", clientId);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
+            uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -165,24 +166,19 @@ public class CustomerClientResource {
      */
     @Path("secret")
     @POST
-    public Response resetClientSecret(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
+    public Response resetClientSecret(@Context Request request, @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
 
         // Rackers, Admins and specific clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -199,8 +195,7 @@ public class CustomerClientResource {
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         } catch (IllegalStateException e) {
-            String errorMsg = String.format(
-                "Error generating secret for client: %s", clientId);
+            String errorMsg = String.format("Error generating secret for client: %s", clientId);
             logger.warn(errorMsg);
             throw new IdmException(e);
         }
@@ -211,7 +206,7 @@ public class CustomerClientResource {
         return Response.ok(clientCredentials).build();
 
     }
-    
+
     @Path("groups")
     public ClientGroupsResource getClientGroupsResource() {
         return clientGroupsResource;
@@ -221,17 +216,9 @@ public class CustomerClientResource {
     public PermissionsResource getPermissionsResource() {
         return permissionsResource;
     }
-    
-    private Client checkAndGetClient(String customerId, String clientId) {
-        Client client = this.clientService.getById(clientId);
 
-        if (client == null
-            || !client.getCustomerId().toLowerCase()
-                .equals(customerId.toLowerCase())) {
-            String errorMsg = String.format("Client Not Found: %s", clientId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-        return client;
-    }   
+    @Override
+    protected Logger getLogger() {
+        return logger;
+    }
 }

@@ -173,7 +173,7 @@ public class UserGroupsResource {
         }
 
         // get user to update
-        User user = userService.checkAndGetUser(customerId, username);
+        userService.checkAndGetUser(customerId, username);
 
         String customerName = getRackspaceCustomerId();
         String clientId = getIdmClientId();

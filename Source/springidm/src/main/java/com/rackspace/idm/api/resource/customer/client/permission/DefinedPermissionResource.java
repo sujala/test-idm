@@ -21,8 +21,8 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.error.ApiError;
+import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
-import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -40,7 +40,7 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class DefinedPermissionResource {
+public class DefinedPermissionResource extends AbstractClientConsumer {
 
     private ClientService clientService;
     private PermissionConverter permissionConverter;
@@ -53,6 +53,7 @@ public class DefinedPermissionResource {
     public DefinedPermissionResource(ClientService clientService, PermissionConverter permissionConverter,
         InputValidator inputValidator, AuthorizationService authorizationService,
         AccessTokenService accessTokenService) {
+        super(clientService);
         this.permissionConverter = permissionConverter;
         this.inputValidator = inputValidator;
         this.clientService = clientService;
@@ -178,11 +179,9 @@ public class DefinedPermissionResource {
         Permission permission = this.clientService.getDefinedPermissionByClientIdAndPermissionId(clientId,
             permissionId);
 
-        if (permission == null
-            || !customerId.equals(permission.getCustomerId()) || 
-               !clientId.equals(permission.getClientId())) {
-            String errorMsg = String.format("Permission Not Found: %s",
-                permissionId);
+        if (permission == null || !customerId.equals(permission.getCustomerId())
+            || !clientId.equals(permission.getClientId())) {
+            String errorMsg = String.format("Permission Not Found: %s", permissionId);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
@@ -229,12 +228,7 @@ public class DefinedPermissionResource {
             throw new ForbiddenException(errMsg);
         }
 
-        Client client = this.clientService.getById(clientId);
-        if (client == null || !client.getCustomerId().equals(customerId)) {
-            String errMsg = String.format("Client with Id %s not found.", clientId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
+        checkAndGetClient(customerId, clientId);
 
         Permission permission = this.clientService.getDefinedPermissionByClientIdAndPermissionId(clientId,
             permissionId);
@@ -315,8 +309,12 @@ public class DefinedPermissionResource {
         com.rackspace.idm.jaxb.Client targetClient = holder.getEntity();
         this.clientService.revokePermission(targetClient.getClientId(), permissionToRevoke);
 
-        return Response.ok(
-            permissionConverter.toPermissionJaxb(permissionToRevoke)).build();
+        return Response.ok(permissionConverter.toPermissionJaxb(permissionToRevoke)).build();
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return logger;
     }
 
     private void checkGrantRevokePermissionAuthorization(String authHeader, String clientId, String method,
@@ -339,11 +337,9 @@ public class DefinedPermissionResource {
         Permission permission = this.clientService.getDefinedPermissionByClientIdAndPermissionId(clientId,
             permissionId);
 
-        if (permission == null
-            || !customerId.equalsIgnoreCase(permission.getCustomerId())
+        if (permission == null || !customerId.equalsIgnoreCase(permission.getCustomerId())
             || !clientId.equalsIgnoreCase(permission.getClientId())) {
-            String errorMsg = String.format("Permission Not Found: %s",
-                permissionId);
+            String errorMsg = String.format("Permission Not Found: %s", permissionId);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }

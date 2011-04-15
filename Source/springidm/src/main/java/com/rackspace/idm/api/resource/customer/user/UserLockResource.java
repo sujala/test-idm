@@ -24,7 +24,6 @@ import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**

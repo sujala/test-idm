@@ -25,10 +25,10 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.ClientConverter;
 import com.rackspace.idm.api.error.ApiError;
+import com.rackspace.idm.api.resource.customer.AbstractCustomerConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.Clients;
-import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
@@ -37,7 +37,6 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
 
@@ -48,10 +47,9 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class CustomerClientsResource {
+public class CustomerClientsResource extends AbstractCustomerConsumer {
 
     private AccessTokenService accessTokenService;
-    private CustomerService customerService;
     private InputValidator inputValidator;
     private ClientConverter clientConverter;
     private ClientService clientService;
@@ -63,8 +61,8 @@ public class CustomerClientsResource {
     public CustomerClientsResource(AccessTokenService accessTokenService, CustomerService customerService,
         InputValidator inputValidator, ClientConverter clientConverter, ClientService clientService,
         CustomerClientResource customerClientResource, AuthorizationService authorizationService) {
+        super(customerService);
         this.accessTokenService = accessTokenService;
-        this.customerService = customerService;
         this.clientService = clientService;
         this.clientConverter = clientConverter;
         this.inputValidator = inputValidator;
@@ -108,12 +106,7 @@ public class CustomerClientsResource {
             throw new ForbiddenException(errMsg);
         }
 
-        Customer customer = this.customerService.getCustomer(customerId);
-        if (customer == null) {
-            String errorMsg = String.format("Customer not found: %s", customerId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
+        checkAndGetCustomer(customerId);
 
         Clients clients = clientService.getByCustomerId(customerId, offset, limit);
 
@@ -197,5 +190,10 @@ public class CustomerClientsResource {
     @Path("{clientId}")
     public CustomerClientResource getCustomerClientResource() {
         return customerClientResource;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return logger;
     }
 }

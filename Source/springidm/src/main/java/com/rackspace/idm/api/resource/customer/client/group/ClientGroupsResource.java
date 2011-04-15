@@ -25,15 +25,14 @@ import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.api.converter.GroupConverter;
+import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
-import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -42,7 +41,7 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class ClientGroupsResource {
+public class ClientGroupsResource extends AbstractClientConsumer {
     private AccessTokenService accessTokenService;
     private ClientService clientService;
     private ClientGroupResource clientGroupResource;
@@ -54,6 +53,7 @@ public class ClientGroupsResource {
     public ClientGroupsResource(AccessTokenService accessTokenService, ClientService clientService,
         GroupConverter groupConverter, ClientGroupResource clientGroupResource,
         AuthorizationService authorizationService) {
+        super(clientService);
         this.accessTokenService = accessTokenService;
         this.clientService = clientService;
         this.authorizationService = authorizationService;
@@ -95,12 +95,7 @@ public class ClientGroupsResource {
             throw new ForbiddenException(errMsg);
         }
 
-        Client client = this.clientService.getById(clientId);
-        if (client == null || !client.getCustomerId().equals(customerId)) {
-            String errMsg = String.format("Client with Id %s not found.", clientId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
+        checkAndGetClient(customerId, clientId);
 
         List<ClientGroup> groups = this.clientService.getClientGroupsByClientId(clientId);
 
@@ -177,5 +172,10 @@ public class ClientGroupsResource {
     @Path("{groupName}")
     public ClientGroupResource getClientGroupResource() {
         return clientGroupResource;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return logger;
     }
 }
