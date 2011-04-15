@@ -31,7 +31,6 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.CustomerConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
 
