@@ -377,6 +377,12 @@ public class DefaultClientService implements ClientService {
         if (user == null) {
             throw new NotFoundException();
         }
+        
+        Customer customer = customerDao.getCustomerByCustomerId(clientGroup.getCustomerId());
+        
+        if (customer == null) {
+            throw new NotFoundException();
+        }
 
         try {
             clientDao.removeUserFromGroup(user.getUniqueId(), clientGroup);

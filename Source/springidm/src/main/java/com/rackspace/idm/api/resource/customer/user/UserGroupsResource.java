@@ -216,6 +216,13 @@ public class UserGroupsResource extends AbstractClientConsumer {
 
         // get user to update
         User user = this.userService.getUser(customerId, username);
+        
+         if (user == null) {
+            String errorMsg = String.format(
+                "Remove User From Group Failed - User not found: %s", username);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
 
         ClientGroup group = checkAndGetClientGroup(getRackspaceCustomerId(), getIdmClientId(), groupName);
 
