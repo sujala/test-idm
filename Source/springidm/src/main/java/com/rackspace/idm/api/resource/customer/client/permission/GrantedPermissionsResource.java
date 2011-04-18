@@ -74,7 +74,7 @@ public class GrantedPermissionsResource extends AbstractClientConsumer {
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeRackspaceClient(token)
+            || (authorizationService.authorizeRackspaceClient(token) && clientId.equals(token.getTokenClient().getClientId()))
             || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
             || authorizationService.authorizeAdmin(token, customerId);
 
@@ -89,12 +89,6 @@ public class GrantedPermissionsResource extends AbstractClientConsumer {
             Response.noContent().build();
         }
         
-        if (!clientId.equals(client.getClientId())) {
-            String errMsg = String.format("Client %s for allowed to check granted permissions", clientId);
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);    
-        }
-
         PermissionSet perms = new PermissionSet();
         perms.setGranteds(client.getPermissions());
 
