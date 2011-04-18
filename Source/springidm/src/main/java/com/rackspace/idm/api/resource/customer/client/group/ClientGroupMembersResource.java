@@ -25,6 +25,7 @@ import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotFoundException;
 
 /**
  * a client group resource.
@@ -124,8 +125,18 @@ public class ClientGroupMembersResource extends AbstractClientConsumer {
             throw new ForbiddenException(errMsg);
         }
 
-        ClientGroup group = checkAndGetClientGroup(customerId, clientId, groupName);
-
+        ClientGroup group = this.clientService
+            .getClientGroup(customerId, clientId, groupName);
+        
+        if (group == null) {
+            String errMsg = String
+                .format(
+                    "ClientGroup with Name %s, ClientId %s, and CustomerId %s not found.",
+                    groupName, clientId, customerId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }    
+     
         this.clientService.removeUserFromClientGroup(username, group);
 
         return Response.noContent().build();

@@ -313,14 +313,20 @@ public class DefaultClientService implements ClientService {
             logger.warn(
                 "Couldn't add group {} because clientId doesn't exist",
                 clientGroup.getClientId());
-            throw new IllegalStateException("Client doesn't exist");
+            throw new NotFoundException("Client doesn't exist");
+        }
+        
+        Customer customer = customerDao.getCustomerByCustomerId(clientGroup.getCustomerId());
+        
+        if (customer == null) {
+            logger.warn("Could not add group {} because customer {} not found", clientGroup.getName(), 
+                clientGroup.getCustomerId());
+            throw new NotFoundException();
         }
         
         clientDao.addClientGroup(clientGroup, client.getUniqueId());
     }
 
-   
-    
     @Override
     public void addUserToClientGroup(String username, String customerId, String clientId, String groupName) {
         
@@ -349,6 +355,7 @@ public class DefaultClientService implements ClientService {
         String groupName) {
         ClientGroup group = clientDao.getClientGroup(customerId, clientId,
             groupName);
+        
         return group;
     }
 
