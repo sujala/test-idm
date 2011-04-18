@@ -88,6 +88,12 @@ public class GrantedPermissionsResource extends AbstractClientConsumer {
         if (client.getPermissions() == null || client.getPermissions().size() < 1) {
             Response.noContent().build();
         }
+        
+        if (!clientId.equals(client.getClientId())) {
+            String errMsg = String.format("Client %s for allowed to check granted permissions", clientId);
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);    
+        }
 
         PermissionSet perms = new PermissionSet();
         perms.setGranteds(client.getPermissions());
