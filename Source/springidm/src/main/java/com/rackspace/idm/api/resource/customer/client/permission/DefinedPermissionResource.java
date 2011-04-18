@@ -228,10 +228,22 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
+        
         checkGrantRevokePermissionAuthorization(authHeader, clientId, request.getMethod(), uriInfo.getPath());
 
         Permission permissionToGrant = checkAndGetPermission(customerId, clientId, permissionId);
+        
         com.rackspace.idm.jaxb.Client targetClient = holder.getEntity();
+        
+        if (targetClient.getClientId().equals(permissionToGrant.getClientId())) {
+            String errorMessage = String.format("Permission %s defined by client %s. " +
+            		"Cannot grant to itself", permissionId, clientId);
+            
+            logger.warn(errorMessage);
+            
+            throw new BadRequestException(errorMessage);
+        }
+        
         this.clientService.grantPermission(targetClient.getClientId(), permissionToGrant);
 
         return Response.ok(permissionConverter.toPermissionJaxb(permissionToGrant)).build();
