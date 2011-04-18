@@ -37,6 +37,7 @@ public abstract class LdapRepository {
     protected static final String OBJECTCLASS_RACKSPACEORGANIZATION = "rsOrganization";
     protected static final String OBJECTCLASS_RACKSPACEPERSON = "rsPerson";
     protected static final String OBJECTCLASS_RACKSPACETOKEN = "rsToken";
+    protected static final String OBJECTCLASS_SCOPEACCESS = "scopeAccess";
     protected static final String OBJECTCLASS_TOP = "top";
 
     protected static final String[] ATTR_BASEURL_OBJECT_CLASS_VALUES = {
@@ -53,13 +54,17 @@ public abstract class LdapRepository {
         OBJECTCLASS_TOP, OBJECTCLASS_CLIENTPERMISSION};
     protected static final String[] ATTR_ROLE_OBJECT_CLASS_VALUES = {
         OBJECTCLASS_TOP, OBJECTCLASS_GROUPOFNAMES, OBJECTCLASS_RACKSPACEGROUP};
+    protected static final String[] ATTR_SCOPE_ACCESS_OBJECT_CLASS_VALUES = {
+        OBJECTCLASS_TOP, OBJECTCLASS_SCOPEACCESS};
     protected static final String[] ATTR_TOKEN_OBJECT_CLASS_VALUES = {
         OBJECTCLASS_TOP, OBJECTCLASS_RACKSPACETOKEN};
     protected static final String[] ATTR_USER_OBJECT_CLASS_VALUES = {
         OBJECTCLASS_TOP, OBJECTCLASS_RACKSPACEPERSON};
 
     // Definitions for LDAP Attributes
-    public static final String ATTR_ADMIN_URL = "adminUrl";
+    public static final String ATTR_ACCESS_TOKEN = "accessToken";
+    public static final String ATTR_ACCESS_TOKEN_EXP = "accessTokenExp";
+    public static final String ATTR_ADMIN_URL = "rsAdminUrl";
     public static final String ATTR_BASEURL_ID = "baseUrlId";
     public static final String ATTR_BASEURL_TYPE = "baseUrlType";
     public static final String ATTR_BLOB = "blob";
@@ -69,9 +74,11 @@ public abstract class LdapRepository {
     public static final String ATTR_CREATED_DATE = "createTimestamp";
     public static final String ATTR_DEF = "def";
     public static final String ATTR_DISPLAY_NAME = "rsDisplayName";
+    public static final String ATTR_ENABLED = "enabled";
     public static final String ATTR_ENDPOINT = "endpoint";
     public static final String ATTR_EXPIRATION = "expiration";
     public static final String ATTR_GIVEN_NAME = "rsGivenName";
+    public static final String ATTR_GRANTED_BY_DEFAULT = "grantedByDefault";
     public static final String ATTR_GROUP_TYPE = "groupType";
     public static final String ATTR_INAME = "iname";
     public static final String ATTR_INTERNAL_URL = "internalUrl";
@@ -102,7 +109,10 @@ public abstract class LdapRepository {
     public static final String ATTR_RACKSPACE_CUSTOMER_NUMBER = "RCN";
     public static final String ATTR_RACKSPACE_PERSON_NUMBER = "RPN";
     public static final String ATTR_RACKSPACE_REGION = "rsRegion";
+    public static final String ATTR_REFRESH_TOKEN = "refreshToken";
+    public static final String ATTR_REFRESH_TOKEN_EXP = "refreshTokenExp";
     public static final String ATTR_REGION = "rsRegion";
+    public static final String ATTR_RESOURCE_GROUP = "resourceGroup";
     public static final String ATTR_SEE_ALSO = "seeAlso";
     public static final String ATTR_SERVICE = "service";
     public static final String ATTR_SN = "rsSn";
@@ -111,6 +121,8 @@ public abstract class LdapRepository {
     public static final String ATTR_PASSWORD_ROTATION_DURATION = "passwordRotationDuration";
     public static final String ATTR_STATUS = "status";
     public static final String ATTR_TIME_ZONE = "timeZone";
+    public static final String ATTR_TITLE = "title";
+    public static final String ATTR_TOKEN_SCOPE = "tokenScope";
     public static final String ATTR_TOKEN_OWNER = "tokenOwner";
     public static final String ATTR_TOKEN_REQUESTOR = "tokenRequestor";
     public static final String ATTR_UID = "uid";

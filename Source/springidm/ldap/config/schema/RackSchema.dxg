@@ -222,13 +222,13 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.29) = {
 	description = "internalUrl"
 };
 
-#schema set attribute (1.3.6.1.4.1.20988.2.1.30) = {
-#	name = adminUrl
-#	ldap-names = adminUrl
-#	equality = caseIgnoreMatch
-#	syntax = directoryString
-#	description = "adminUrl"
-#};
+schema set attribute (1.3.6.1.4.1.20988.2.1.30) = {
+	name = rsAdminUrl
+	ldap-names = rsAdminUrl
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "adminUrl"
+};
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.31) = {
 	name = def
@@ -258,7 +258,6 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.34) = {
 	ldap-names = rsMail
 	syntax = octetString
 	description = "encrypted email"
-
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.35) = {
@@ -266,7 +265,6 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.35) = {
         ldap-names = rsDisplayName
         syntax = octetString
         description = "encrypted display name"
-
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.36) = {
@@ -274,7 +272,6 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.36) = {
         ldap-names = rsGivenName
         syntax = octetString
         description = "encrypted given name"
-
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.37) = {
@@ -282,7 +279,6 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.37) = {
         ldap-names = rsSn
         syntax = octetString
         description = "encrypted dsurname"
-
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.38) = {
@@ -291,7 +287,6 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.38) = {
         equality = generalizedTimeMatch
 	    syntax = generalizedTime
         description = "The last time the password was changed"
-
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.39) = {
@@ -299,7 +294,6 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.39) = {
         ldap-names = passwordSelfUpdated
         syntax = boolean
         description = "Did the user change his/her own password last time?"
-
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.40) = {
@@ -307,7 +301,6 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.40) = {
         ldap-names = passwordRotationEnabled
         syntax = boolean
         description = "Is the password rotation policy enabled for this customer?"
-
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.41) = {
@@ -315,7 +308,91 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.41) = {
         ldap-names = passwordRotationDuration
         syntax = integer
         description = "Password rotation duration in days"
+};
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.42) = {
+    name = accessToken
+    ldap-names = accessToken
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "An Oauth Access Token"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.43) = {
+    name = refreshToken
+    ldap-names = refreshToken
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "An Oauth Refresh Token"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.44) = {
+        name = accessTokenExp
+        ldap-names = accessTokenExp
+        equality = generalizedTimeMatch
+        syntax = generalizedTime
+        description = "Expiration Time for an Access Token"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.45) = {
+        name = refreshTokenExp
+        ldap-names = refreshTokenExp
+        equality = generalizedTimeMatch
+        syntax = generalizedTime
+        description = "Expiration Time for a Refresh Token"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.46) = {
+    name = tokenScope
+    ldap-names = tokenScope
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "An Oauth Token Scope"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.47) = {
+    name = title
+    ldap-names = title
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "A Human Readable Permission Title"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.48) = {
+    name = resourceGroup
+    ldap-names = resourceGroup
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "A permission resource group"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.49) = {
+        name = grantedByDefault
+        ldap-names = grantedByDefault
+        syntax = boolean
+        description = "Is this permission granted to a user by default?"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.50) = {
+        name = enabled
+        ldap-names = enabled
+        syntax = boolean
+        description = "Is this object enabled?"
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.9) = {
+    name = scopeAccess
+    ldap-names = scopeAccess
+    subclass-of top
+    kind = structural
+    must-contain
+        clientId
+    may-contain
+        tokenScope,
+        accessToken,
+        accessTokenExp,
+        refreshToken,
+        refreshTokenEXP
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.8) = {
@@ -405,6 +482,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.3) = {
 		clientId,
 		userPassword
 	may-contain
+	    description,
 		iname,
 		locked,
 		owner,
@@ -413,7 +491,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.3) = {
 		RCN,
 		status,
 		seeAlso,
-		softDeleted
+		softDeleted,
+		tokenScope
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.4) = {
@@ -458,10 +537,15 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.6) = {
 	must-contain
 		cn,
 		clientId,
-		RCN,
-		blob
+		RCN
 	may-contain
-		permissionType
+	    blob,
+		permissionType,
+		title,
+		description,
+		grantedByDefault,
+		enabled,
+		resourceGroup
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.7) = {
