@@ -1,5 +1,4 @@
 """
-Foobar
 Usage: fab -u your_user_name <deploy_method_name>
 Dependency: Fabric (fabfile.org)
 """
