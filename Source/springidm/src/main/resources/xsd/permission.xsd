@@ -69,42 +69,56 @@
 
 
     <complexType name="Permission">
-        <simpleContent>
-            <extension base="xsd:string">
-                <attribute name="permissionId" type="xsd:string" use="required">
-                    <annotation>
-                        <xsd:documentation xml:lang="EN"
-                            xmlns="http://www.w3.org/1999/xhtml">
-                            <p>A id of a permission.</p>
-                        </xsd:documentation>
-                    </annotation>
-                </attribute>
-                <attribute name="customerId" type="xsd:string" use="required">
-                    <annotation>
-                        <xsd:documentation xml:lang="EN"
-                            xmlns="http://www.w3.org/1999/xhtml">
-                            <p>The customerId that owns the clientId.</p>
-                        </xsd:documentation>
-                    </annotation>
-                </attribute>
-                <attribute name="clientId" type="xsd:string" use="required">
-                    <annotation>
-                        <xsd:documentation xml:lang="EN"
-                            xmlns="http://www.w3.org/1999/xhtml">
-                            <p>The clientId that owns the permission.</p>
-                        </xsd:documentation>
-                    </annotation>
-                </attribute>
-                <attribute name="type" type="xsd:string" use="optional">
-                    <annotation>
-                        <xsd:documentation xml:lang="EN"
-                            xmlns="http://www.w3.org/1999/xhtml">
-                            <p>The mime type of the permission.</p>
-                        </xsd:documentation>
-                    </annotation>
-                </attribute>
-            </extension>
-        </simpleContent>
+    	<simpleContent>
+    		<extension base="xsd:string">
+    			<attribute name="permissionId" type="xsd:string"
+    				use="required">
+    				<annotation>
+    					<xsd:documentation xml:lang="EN"
+    						xmlns="http://www.w3.org/1999/xhtml">
+    						<p>A id of a permission.</p>
+    					</xsd:documentation>
+    				</annotation>
+    			</attribute>
+    			<attribute name="customerId" type="xsd:string"
+    				use="required">
+    				<annotation>
+    					<xsd:documentation xml:lang="EN"
+    						xmlns="http://www.w3.org/1999/xhtml">
+    						<p>
+    							The customerId that owns the clientId.
+    						</p>
+    					</xsd:documentation>
+    				</annotation>
+    			</attribute>
+    			<attribute name="clientId" type="xsd:string"
+    				use="required">
+    				<annotation>
+    					<xsd:documentation xml:lang="EN"
+    						xmlns="http://www.w3.org/1999/xhtml">
+    						<p>
+    							The clientId that owns the permission.
+    						</p>
+    					</xsd:documentation>
+    				</annotation>
+    			</attribute>
+    			<attribute name="type" type="xsd:string"
+    				use="optional">
+    				<annotation>
+    					<xsd:documentation xml:lang="EN"
+    						xmlns="http://www.w3.org/1999/xhtml">
+    						<p>The mime type of the permission.</p>
+    					</xsd:documentation>
+    				</annotation>
+    			</attribute>
+    			<attribute name="title" type="xsd:string"></attribute>
+    			<attribute name="description" type="xsd:string"
+    				use="optional">
+    			</attribute>
+    			<attribute name="grantedByDefault" type="xsd:boolean" use="required"></attribute>
+    			<attribute name="enabled" type="xsd:boolean" use="required"></attribute>
+    		</extension>
+    	</simpleContent>
     </complexType>
 
     <complexType name="PermissionList">
