@@ -21,6 +21,7 @@ import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.dao.RoleDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.dao.XdcAccessTokenDao;
 import com.rackspace.idm.domain.entity.EmailSettings;
@@ -83,6 +84,8 @@ public class ServiceConfiguration {
     @Autowired
     private XdcAccessTokenDao xdcTokenDao;
     @Autowired
+    private ScopeAccessDao scopeAccessDao;
+    @Autowired
     private ApiDocDao apiDocDao;
     @Autowired
     private InputValidator inputValidator;
@@ -104,7 +107,7 @@ public class ServiceConfiguration {
 
     @Bean
     public AccessTokenService tokenService() {
-        return new DefaultAccessTokenService(accessTokenDao, clientDao, userService(), xdcTokenDao,
+        return new DefaultAccessTokenService(accessTokenDao, clientDao, userService(), xdcTokenDao,scopeAccessDao,
             authHeaderHelper(), config);
     }
 

@@ -13,12 +13,14 @@ import org.slf4j.MDC;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.AccessTokenDao;
 import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.XdcAccessTokenDao;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.service.AccessTokenService;
@@ -30,18 +32,21 @@ public class DefaultAccessTokenService implements AccessTokenService {
     private AccessTokenDao tokenDao;
     private XdcAccessTokenDao xdcTokenDao;
     private ClientDao clientDao;
+    private ScopeAccessDao scopeAccessDao;
     private UserService userService;
+    
 
     private AuthHeaderHelper authHeaderHelper;
     private Configuration config;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultAccessTokenService(AccessTokenDao tokenDao, ClientDao clientDao, UserService userService,
-        XdcAccessTokenDao xdcTokenDao, AuthHeaderHelper authHeaderHelper, Configuration config) {
+        XdcAccessTokenDao xdcTokenDao, ScopeAccessDao scopeAccessDao, AuthHeaderHelper authHeaderHelper, Configuration config) {
         this.tokenDao = tokenDao;
         this.clientDao = clientDao;
         this.userService = userService;
         this.xdcTokenDao = xdcTokenDao;
+        this.scopeAccessDao = scopeAccessDao;
         this.authHeaderHelper = authHeaderHelper;
         this.config = config;
     }
@@ -79,8 +84,15 @@ public class DefaultAccessTokenService implements AccessTokenService {
     }
 
     public AccessToken getAccessTokenByAuthHeader(String authHeader) {
-        String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
-        return tokenDao.findByTokenString(tokenStr);
+        
+        String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);        
+        ScopeAccess scopeAccess = scopeAccessDao.getScopeAccessByAccessToken(tokenStr);
+        String accessTokenString = scopeAccess.getAccessToken();
+        BaseUser user = new BaseUser(scopeAccess.getUsername());
+        BaseClient client = new BaseClient(scopeAccess.getClientId(), scopeAccess.getClientRCN());
+        DateTime tokenExpiration = scopeAccess.getAccessTokenExpiration();
+        AccessToken accessToken = new AccessToken(accessTokenString, tokenExpiration, user, client, IDM_SCOPE.FULL);
+        return accessToken;
     }
 
     public AccessToken getAccessTokenByTokenString(String tokenString) {
