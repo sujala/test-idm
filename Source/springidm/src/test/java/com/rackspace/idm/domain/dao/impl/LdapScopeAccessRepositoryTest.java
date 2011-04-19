@@ -77,6 +77,15 @@ public class LdapScopeAccessRepositoryTest {
     }
     
     @Test
+    public void shouldGetScopeAccessByUsernameAndClientId() {
+        ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
+        sa.setUsername("username");
+        repo.addScopeAccess(client.getUniqueId(), sa);
+        ScopeAccess returned = repo.getScopeAccessByUsernameAndClientId("username", client.getClientId());
+        Assert.assertTrue(sa.equals(returned));
+    }
+    
+    @Test
     public void shouldAddScopeAccessToClient() {
         ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
         repo.addScopeAccess(client.getUniqueId(), sa);
