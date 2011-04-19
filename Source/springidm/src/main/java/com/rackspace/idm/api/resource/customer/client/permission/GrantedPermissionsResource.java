@@ -75,9 +75,10 @@ public class GrantedPermissionsResource extends AbstractClientConsumer {
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || (authorizationService.authorizeRackspaceClient(token) && clientId.equals(token.getTokenClient().getClientId()))
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
+            || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath()) 
+                && clientId.equals(token.getTokenClient().getClientId()))
             || authorizationService.authorizeAdmin(token, customerId);
-
+     
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
             logger.warn(errMsg);
