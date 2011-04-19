@@ -70,6 +70,7 @@ public abstract class LdapRepository {
     public static final String ATTR_BLOB = "blob";
     public static final String ATTR_C = "c";
     public static final String ATTR_CLIENT_ID = "clientId";
+    public static final String ATTR_CLIENT_RCN = "clientRCN";
     public static final String ATTR_CLIENT_SECRET = "userPassword";
     public static final String ATTR_CREATED_DATE = "createTimestamp";
     public static final String ATTR_DEF = "def";
@@ -126,6 +127,7 @@ public abstract class LdapRepository {
     public static final String ATTR_TOKEN_OWNER = "tokenOwner";
     public static final String ATTR_TOKEN_REQUESTOR = "tokenRequestor";
     public static final String ATTR_UID = "uid";
+    public static final String ATTR_USER_RCN = "userRCN";
     public static final String ATTR_UPDATED_DATE = "modifyTimestamp";
     public static final String ATTR_SOFT_DELETED_DATE = "softDeletedTimestamp";
     public static final String ATTR_PASSWORD_UPDATED_TIMESTAMP = "passwordUpdatedTimestamp";
