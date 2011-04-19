@@ -35,6 +35,8 @@ import com.rackspace.idm.api.resource.nast.NastUserResource;
 import com.rackspace.idm.api.resource.passwordrule.PasswordRulesResource;
 import com.rackspace.idm.api.resource.token.TokenResource;
 import com.rackspace.idm.api.resource.user.UsersResource;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository;
 
 public class SpringConfigurationTest {
 
@@ -136,5 +138,8 @@ public class SpringConfigurationTest {
         
         VersionResource versionResource = ctx.getBean(VersionResource.class);
         Assert.assertNotNull(versionResource);
+        
+        ScopeAccessDao scopeAccessDao = ctx.getBean(LdapScopeAccessRepository.class);
+        Assert.assertNotNull(scopeAccessDao);
     }
 }

@@ -15,6 +15,7 @@ import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.AccessTokenDao;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.RefreshTokenDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.XdcAccessTokenDao;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Client;
@@ -22,6 +23,7 @@ import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TokenDefaultAttributes;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserCredential;
@@ -40,6 +42,7 @@ public class AccessTokenServiceTests {
     AccessTokenDao mockTokenDao;
     RefreshTokenDao mockRefreshTokenDao;
     ClientDao mockClientDao;
+    ScopeAccessDao mockScopeAccessDao;
     UserService mockUserService;
     CustomerService mockCustomerService;
     AccessTokenService tokenService;
@@ -88,6 +91,7 @@ public class AccessTokenServiceTests {
         mockTokenDao = EasyMock.createMock(AccessTokenDao.class);
         mockRefreshTokenDao = EasyMock.createMock(RefreshTokenDao.class);
         mockClientDao = EasyMock.createMock(ClientDao.class);
+        mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
         mockUserService = EasyMock.createMock(UserService.class);
         mockCustomerService = EasyMock.createMock(CustomerService.class);
         mockWebClientAccessTokenDao = EasyMock.createMock(XdcAccessTokenDao.class);
@@ -95,7 +99,8 @@ public class AccessTokenServiceTests {
             cloudAuthExpirationSeconds, maxTokenExpirationSeconds, minTokenExpirationSeconds,
             dataCenterPrefix, isTrustedServer);
         Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
-        tokenService = new DefaultAccessTokenService(mockTokenDao, mockClientDao, mockUserService, mockWebClientAccessTokenDao, new AuthHeaderHelper(), appConfig);
+        tokenService = new DefaultAccessTokenService(mockTokenDao, mockClientDao, mockUserService, 
+            mockWebClientAccessTokenDao, mockScopeAccessDao, new AuthHeaderHelper(), appConfig);
     }
 
     @Test
@@ -396,13 +401,19 @@ public class AccessTokenServiceTests {
 
     @Test
     public void shouldAuthenticateHeaderWithFlowTypeToken() {
-        EasyMock.expect(mockTokenDao.findByTokenString(tokenString)).andReturn(getFakeUserToken());
-        EasyMock.replay(mockTokenDao);
-
+        ScopeAccess scopeAccess = new ScopeAccess();
+        scopeAccess.setAccessToken(tokenString);
+        scopeAccess.setUsername("dummyUser");
+        scopeAccess.setClientId("client");
+        scopeAccess.setClientRCN("clientRCN");
+        scopeAccess.setAccessTokenExpiration(new DateTime());
+        EasyMock.expect(mockScopeAccessDao.getScopeAccessByAccessToken(tokenString)).andReturn(scopeAccess);
+        EasyMock.replay(mockScopeAccessDao);
+        
         AccessToken token = tokenService.getAccessTokenByAuthHeader(authHeader);
         Assert.assertNotNull(token);
 
-        EasyMock.verify(mockTokenDao);
+        EasyMock.verify(mockScopeAccessDao);
     }
 
     @Test
