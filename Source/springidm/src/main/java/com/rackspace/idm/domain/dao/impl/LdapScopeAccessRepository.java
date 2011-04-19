@@ -250,6 +250,31 @@ public class LdapScopeAccessRepository extends LdapRepository implements
             parentUniqueId);
         return scopeAccess;
     }
+    
+    @Override
+    public ScopeAccess getScopeAccessByUsernameAndClientId(String username,
+        String clientId) {
+        getLogger().debug("Getting {} scope access for {}", clientId,
+            username);
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_UID, username)
+            .addEqualAttribute(ATTR_CLIENT_ID, clientId)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
+            .build();
+
+        SearchResultEntry entry = this.getSingleEntry(BASE_DN,
+            SearchScope.SUB, searchFilter);
+
+        ScopeAccess scopeAccess = null;
+        if (entry != null) {
+            scopeAccess = this.getScopeAccess(entry);
+        }
+
+        getLogger().debug("Got scope access {} for {}", scopeAccess,
+            username);
+        return scopeAccess;
+    }
 
     @Override
     public void removePermissionFromScopeAccess(Permission permission) {
