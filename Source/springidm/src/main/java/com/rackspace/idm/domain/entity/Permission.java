@@ -1,13 +1,14 @@
 package com.rackspace.idm.domain.entity;
 
-import com.rackspace.idm.validation.MessageTexts;
-import com.rackspace.idm.validation.RegexPatterns;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
 
 public class Permission implements Serializable, Auditable {
     private static final long serialVersionUID = -4289257131504718968L;
@@ -31,11 +32,15 @@ public class Permission implements Serializable, Auditable {
     private String type;
     private String uniqueId;
 
+    private String title;
+    private String description;
+    private boolean isGrantedByDefault;
+    private boolean isEnabled;
+
     public Permission() {
     }
 
-    public Permission(String customerId, String clientId, String permissionId,
-                      String value) {
+    public Permission(String customerId, String clientId, String permissionId, String value) {
         super();
         this.permissionId = permissionId;
         this.clientId = clientId;
@@ -91,30 +96,56 @@ public class Permission implements Serializable, Auditable {
         this.uniqueId = uniqueId;
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setGrantedByDefault(boolean isGrantedByDefault) {
+        this.isGrantedByDefault = isGrantedByDefault;
+    }
+
+    public boolean isGrantedByDefault() {
+        return isGrantedByDefault;
+    }
+
+    public void setEnabled(boolean isEnabled) {
+        this.isEnabled = isEnabled;
+    }
+
+    public boolean isEnabled() {
+        return isEnabled;
+    }
+
     public String getPermissionLDAPserialization() {
 
-        if (this.customerId == null || this.clientId == null
-                || this.permissionId == null) {
+        if (this.customerId == null || this.clientId == null || this.permissionId == null) {
             return null;
         }
 
-        return this.customerId + LDAP_SEPERATOR + this.clientId
-                + LDAP_SEPERATOR + this.permissionId;
+        return this.customerId + LDAP_SEPERATOR + this.clientId + LDAP_SEPERATOR + this.permissionId;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result
-                + ((clientId == null) ? 0 : clientId.hashCode());
-        result = prime * result
-                + ((customerId == null) ? 0 : customerId.hashCode());
-        result = prime * result
-                + ((permissionId == null) ? 0 : permissionId.hashCode());
+        result = prime * result + ((clientId == null) ? 0 : clientId.hashCode());
+        result = prime * result + ((customerId == null) ? 0 : customerId.hashCode());
+        result = prime * result + ((permissionId == null) ? 0 : permissionId.hashCode());
         result = prime * result + ((type == null) ? 0 : type.hashCode());
-        result = prime * result
-                + ((uniqueId == null) ? 0 : uniqueId.hashCode());
+        result = prime * result + ((uniqueId == null) ? 0 : uniqueId.hashCode());
         result = prime * result + ((value == null) ? 0 : value.hashCode());
         return result;
     }
@@ -178,11 +209,9 @@ public class Permission implements Serializable, Auditable {
 
     @Override
     public String toString() {
-        return "Permission [clientId=" + clientId + ", customerId="
-                + customerId + ", permissionId=" + permissionId + ", type=" + type
-                + ", uniqueId=" + uniqueId + ", value=" + value + "]";
+        return "Permission [clientId=" + clientId + ", customerId=" + customerId + ", permissionId="
+            + permissionId + ", type=" + type + ", uniqueId=" + uniqueId + ", value=" + value + "]";
     }
-
 
     /**
      * Used by Java serialization. Produces the serialized form of the Token
@@ -201,8 +230,7 @@ public class Permission implements Serializable, Auditable {
      * @param stream Used by Java serialization API
      * @throws java.io.InvalidObjectException By the Java serialization API
      */
-    private void readObject(ObjectInputStream stream)
-            throws InvalidObjectException {
+    private void readObject(ObjectInputStream stream) throws InvalidObjectException {
         throw new InvalidObjectException("Serialization proxy is required.");
     }
 
