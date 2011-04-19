@@ -111,12 +111,12 @@
     					</xsd:documentation>
     				</annotation>
     			</attribute>
-    			<attribute name="title" type="xsd:string"></attribute>
+    			<attribute name="title" type="xsd:string" use="optional"></attribute>
     			<attribute name="description" type="xsd:string"
     				use="optional">
     			</attribute>
-    			<attribute name="grantedByDefault" type="xsd:boolean" use="required"></attribute>
-    			<attribute name="enabled" type="xsd:boolean" use="required"></attribute>
+    			<attribute name="grantedByDefault" type="xsd:boolean" use="optional"></attribute>
+    			<attribute name="enabled" type="xsd:boolean" use="optional"></attribute>
     		</extension>
     	</simpleContent>
     </complexType>

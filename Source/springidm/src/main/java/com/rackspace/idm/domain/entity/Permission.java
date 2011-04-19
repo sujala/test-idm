@@ -34,8 +34,8 @@ public class Permission implements Serializable, Auditable {
 
     private String title;
     private String description;
-    private boolean isGrantedByDefault;
-    private boolean isEnabled;
+    private Boolean grantedByDefault;
+    private Boolean enabled;
 
     public Permission() {
     }
@@ -112,20 +112,20 @@ public class Permission implements Serializable, Auditable {
         return description;
     }
 
-    public void setGrantedByDefault(boolean isGrantedByDefault) {
-        this.isGrantedByDefault = isGrantedByDefault;
+    public void setGrantedByDefault(Boolean grantedByDefault) {
+        this.grantedByDefault = grantedByDefault;
     }
 
-    public boolean isGrantedByDefault() {
-        return isGrantedByDefault;
+    public Boolean getGrantedByDefault() {
+        return grantedByDefault;
     }
 
-    public void setEnabled(boolean isEnabled) {
-        this.isEnabled = isEnabled;
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
     }
 
-    public boolean isEnabled() {
-        return isEnabled;
+    public Boolean getEnabled() {
+        return enabled;
     }
 
     public String getPermissionLDAPserialization() {

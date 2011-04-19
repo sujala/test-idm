@@ -47,8 +47,8 @@ public class PermissionConverter {
         permJaxb.setValue(permDo.getValue());
         permJaxb.setTitle(permDo.getTitle());
         permJaxb.setDescription(permDo.getDescription());
-        permJaxb.setGrantedByDefault(permDo.isGrantedByDefault());
-        permJaxb.setEnabled(permDo.isEnabled());
+        permJaxb.setGrantedByDefault(permDo.getGrantedByDefault());
+        permJaxb.setEnabled(permDo.getEnabled());
         return permJaxb;
     }
 
