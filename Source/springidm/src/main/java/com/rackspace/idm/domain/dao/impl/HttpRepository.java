@@ -57,8 +57,8 @@ public abstract class HttpRepository {
             handleHttpCallException(e);
             return null;
         } catch (ClientHandlerException e) {
-        	getLogger().warn("Client call to another DC was refused.");
-        	return null;
+            getLogger().warn("Client call to another DC was refused.");
+            return null;
         }
 
         return extractMyAccessToken(resp, client);
