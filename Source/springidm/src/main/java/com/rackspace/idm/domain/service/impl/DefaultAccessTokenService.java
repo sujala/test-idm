@@ -435,9 +435,8 @@ public class DefaultAccessTokenService implements AccessTokenService {
     }
     
     @Override
-    public boolean checkAndReturnPermission(AccessToken accessToken, String permissionId) {
-        String clientId = accessToken.getTokenClient().getClientId();
-        
+    public boolean checkAndReturnPermission(String clientId, String permissionId, String tokenString) {
+     
         if (clientId == null) {
             throw new BadRequestException("Client id cannot be null.");
         }
@@ -452,7 +451,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
             throw new NotFoundException("Permission " + permissionId + " not found.");
         }
         
-         if (this.scopeAccessDao.doesAccessTokenHavePermission(accessToken.getTokenString(), permission)) {
+         if (this.scopeAccessDao.doesAccessTokenHavePermission(tokenString, permission)) {
              return true;
          }
          return false;

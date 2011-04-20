@@ -329,15 +329,18 @@ public class TokenResource {
          @HeaderParam("Authorization") String authHeader, @PathParam("tokenString") String tokenString,
          @PathParam("permissionId") String permissionId) {
          
-         logger.debug("Validating Access Token: {}", tokenString);
+         logger.debug("Checking whether token {} has permission {}", tokenString, permissionId);
       
-         AccessToken accessToken = this.tokenService.getAccessTokenByTokenString(tokenString);
+         AccessToken accessTokenForRequestedTokenString = this.tokenService.getAccessTokenByTokenString(tokenString);
          
-         if (accessToken == null || !accessToken.getTokenString().equals(tokenString)) {
+         if (accessTokenForRequestedTokenString == null) {
              throw new NotFoundException("Token " + tokenString + " not found");
          }
+         
+         AccessToken accessToken = this.tokenService.getAccessTokenByAuthHeader(authHeader);
+         String clientId = accessToken.getTokenClient().getClientId();
  
-         if (this.tokenService.checkAndReturnPermission(accessToken, permissionId)) {
+         if (this.tokenService.checkAndReturnPermission(clientId, permissionId, tokenString)) {
              return Response.ok("Token " + tokenString + " has the permission" + permissionId).build();
          }
          

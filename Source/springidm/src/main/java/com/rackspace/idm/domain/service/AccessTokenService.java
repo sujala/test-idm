@@ -71,5 +71,5 @@ public interface AccessTokenService {
 
     boolean passwordRotationDurationElapsed(String userName);
     
-    boolean checkAndReturnPermission(AccessToken authToken, String permissionId);
+    boolean checkAndReturnPermission(String clientId, String permissionId, String tokenString);
 }
