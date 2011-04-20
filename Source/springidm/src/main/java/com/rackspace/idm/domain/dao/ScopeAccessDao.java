@@ -32,4 +32,6 @@ public interface ScopeAccessDao {
     void removePermissionFromScopeAccess(Permission permission);
 
     void updateScopeAccess(ScopeAccess scopeAccess);
+
+    void updatePermissionForScopeAccess(String scopeAccessUniqueId, Permission permission);
 }

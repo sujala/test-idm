@@ -143,7 +143,11 @@ public class Permission implements Serializable, Auditable {
         int result = 1;
         result = prime * result + ((clientId == null) ? 0 : clientId.hashCode());
         result = prime * result + ((customerId == null) ? 0 : customerId.hashCode());
+        result = prime * result + ((description == null) ? 0 : description.hashCode());
+        result = prime * result + ((enabled == null) ? 0 : enabled.hashCode());
+        result = prime * result + ((grantedByDefault == null) ? 0 : grantedByDefault.hashCode());
         result = prime * result + ((permissionId == null) ? 0 : permissionId.hashCode());
+        result = prime * result + ((title == null) ? 0 : title.hashCode());
         result = prime * result + ((type == null) ? 0 : type.hashCode());
         result = prime * result + ((uniqueId == null) ? 0 : uniqueId.hashCode());
         result = prime * result + ((value == null) ? 0 : value.hashCode());
@@ -152,58 +156,63 @@ public class Permission implements Serializable, Auditable {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null) {
+        if (obj == null)
             return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         Permission other = (Permission) obj;
         if (clientId == null) {
-            if (other.clientId != null) {
+            if (other.clientId != null)
                 return false;
-            }
-        } else if (!clientId.equals(other.clientId)) {
+        } else if (!clientId.equals(other.clientId))
             return false;
-        }
         if (customerId == null) {
-            if (other.customerId != null) {
+            if (other.customerId != null)
                 return false;
-            }
-        } else if (!customerId.equals(other.customerId)) {
+        } else if (!customerId.equals(other.customerId))
             return false;
-        }
+        if (description == null) {
+            if (other.description != null)
+                return false;
+        } else if (!description.equals(other.description))
+            return false;
+        if (enabled == null) {
+            if (other.enabled != null)
+                return false;
+        } else if (!enabled.equals(other.enabled))
+            return false;
+        if (grantedByDefault == null) {
+            if (other.grantedByDefault != null)
+                return false;
+        } else if (!grantedByDefault.equals(other.grantedByDefault))
+            return false;
         if (permissionId == null) {
-            if (other.permissionId != null) {
+            if (other.permissionId != null)
                 return false;
-            }
-        } else if (!permissionId.equals(other.permissionId)) {
+        } else if (!permissionId.equals(other.permissionId))
             return false;
-        }
+        if (title == null) {
+            if (other.title != null)
+                return false;
+        } else if (!title.equals(other.title))
+            return false;
         if (type == null) {
-            if (other.type != null) {
+            if (other.type != null)
                 return false;
-            }
-        } else if (!type.equals(other.type)) {
+        } else if (!type.equals(other.type))
             return false;
-        }
         if (uniqueId == null) {
-            if (other.uniqueId != null) {
+            if (other.uniqueId != null)
                 return false;
-            }
-        } else if (!uniqueId.equals(other.uniqueId)) {
+        } else if (!uniqueId.equals(other.uniqueId))
             return false;
-        }
         if (value == null) {
-            if (other.value != null) {
+            if (other.value != null)
                 return false;
-            }
-        } else if (!value.equals(other.value)) {
+        } else if (!value.equals(other.value))
             return false;
-        }
         return true;
     }
 

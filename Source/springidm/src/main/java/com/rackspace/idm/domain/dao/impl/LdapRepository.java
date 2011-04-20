@@ -32,6 +32,7 @@ public abstract class LdapRepository {
     protected static final String OBJECTCLASS_CLIENTPERMISSION = "clientPermission";
     protected static final String OBJECTCLASS_GROUPOFNAMES = "groupOfNames";
     protected static final String OBJECTCLASS_ORGANIZATIONALUNIT = "organizationalUnit";
+    protected static final String OBJECTCLASS_PERMISSION = "clientPermission";
     protected static final String OBJECTCLASS_RACKSPACEAPPLICATION = "rsApplication";
     protected static final String OBJECTCLASS_RACKSPACEGROUP = "rsGroup";
     protected static final String OBJECTCLASS_RACKSPACEORGANIZATION = "rsOrganization";
@@ -74,6 +75,7 @@ public abstract class LdapRepository {
     public static final String ATTR_CLIENT_SECRET = "userPassword";
     public static final String ATTR_CREATED_DATE = "createTimestamp";
     public static final String ATTR_DEF = "def";
+    public static final String ATTR_DESCRIPTION = "description";
     public static final String ATTR_DISPLAY_NAME = "rsDisplayName";
     public static final String ATTR_ENABLED = "enabled";
     public static final String ATTR_ENDPOINT = "endpoint";

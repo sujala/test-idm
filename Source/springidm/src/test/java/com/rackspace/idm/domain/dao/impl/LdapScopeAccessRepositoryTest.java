@@ -25,7 +25,7 @@ public class LdapScopeAccessRepositoryTest {
     private LdapScopeAccessRepository repo;
     private LdapClientRepository clientRepo;
     private LdapConnectionPools connPools;
-    
+
     static String customerId = "DELETE_My_CustomerId";
     String customerName = "DELETE_My_Name";
     String inum = "@!FFFF.FFFF.FFFF.FFFF!CCCC.CCCC";
@@ -35,15 +35,15 @@ public class LdapScopeAccessRepositoryTest {
     String owner = "inum=@!FFFF.FFFF.FFFF.FFFF!CCCC.CCCC";
     String country = "USA";
     boolean softDeleted = false;
-    
+
     String clientId = "XXX";
     String RCN = "RACKSPACE";
-    
+
     String permissionId = "PermissionName";
-    
+
     String accessToken = "YYYYYYY";
     String refreshToken = "ZZZZZZZ";
-    
+
     Client client = null;
     Customer customer = null;
 
@@ -64,9 +64,8 @@ public class LdapScopeAccessRepositoryTest {
         repo = getSaRepo(connPools);
         customerRepo = getCustomerRepo(connPools);
         clientRepo = getClientRepo(connPools);
-        
-        customer = addNewTestCustomer(customerId, customerName, inum, iname, status,
-            seeAlso, owner, country);
+
+        customer = addNewTestCustomer(customerId, customerName, inum, iname, status, seeAlso, owner, country);
         client = addNewTestClient(customer);
     }
 
@@ -75,7 +74,7 @@ public class LdapScopeAccessRepositoryTest {
         customerRepo.deleteCustomer(customer.getCustomerId());
         connPools.close();
     }
-    
+
     @Test
     public void shouldGetScopeAccessByUsernameAndClientId() {
         ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
@@ -89,21 +88,22 @@ public class LdapScopeAccessRepositoryTest {
     public void shouldAddScopeAccessToClient() {
         ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
         repo.addScopeAccess(client.getUniqueId(), sa);
-        ScopeAccess returned = repo.getScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        ScopeAccess returned = repo.getScopeAccessForParentByClientId(client.getUniqueId(),
+            client.getClientId());
         Assert.assertTrue(sa.equals(returned));
     }
-    
-    @Test(expected=IllegalArgumentException.class)
+
+    @Test(expected = IllegalArgumentException.class)
     public void shouldFailToAddScopeAccessToClientForNullSA() {
         repo.addScopeAccess(null, null);
     }
-    
-    @Test(expected=IllegalArgumentException.class)
+
+    @Test(expected = IllegalArgumentException.class)
     public void shouldFailToAddScopeAccessToClientForBlankParentId() {
         ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
         repo.addScopeAccess(null, sa);
     }
-    
+
     @Test
     public void shouldAddPermissionToScopeAccess() {
         ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
@@ -112,35 +112,36 @@ public class LdapScopeAccessRepositoryTest {
         repo.addPermissionToScopeAccess(sa.getUniqueId(), p);
         Assert.assertNotNull(p.getUniqueId());
     }
-    
-    @Test(expected=IllegalArgumentException.class)
+
+    @Test(expected = IllegalArgumentException.class)
     public void shouldFailToAddPermissionToSAForNullPermission() {
         repo.addPermissionToScopeAccess(null, null);
     }
-    
-    @Test(expected=IllegalArgumentException.class)
+
+    @Test(expected = IllegalArgumentException.class)
     public void shouldFailToAddPermissionToSAForBlankParentId() {
-        Permission p = createPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        createPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         repo.addPermissionToScopeAccess(null, null);
     }
-    
+
     @Test
     public void shoudlDeleteScopeAccessObject() {
         ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
         repo.addScopeAccess(client.getUniqueId(), sa);
-        ScopeAccess returned = repo.getScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        ScopeAccess returned = repo.getScopeAccessForParentByClientId(client.getUniqueId(),
+            client.getClientId());
         repo.deleteScopeAccess(sa);
         sa = repo.getScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
         Assert.assertNotNull(returned);
         Assert.assertNull(sa);
     }
-    
-    @Test(expected=IllegalArgumentException.class)
+
+    @Test(expected = IllegalArgumentException.class)
     public void shoudlNotDeleteScopeAccessObjectForBlankUniqueId() {
         ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
         repo.deleteScopeAccess(sa);
     }
-    
+
     @Test
     public void shouldReturnTrueForDoesAccessTokenHavePermission() {
         ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
@@ -150,14 +151,14 @@ public class LdapScopeAccessRepositoryTest {
         boolean hasPermission = repo.doesAccessTokenHavePermission(accessToken, p);
         Assert.assertTrue(hasPermission);
     }
-    
-    @Test(expected=IllegalArgumentException.class)
+
+    @Test(expected = IllegalArgumentException.class)
     public void shouldThrowErrorForBlankAccessToken() {
         boolean hasPermission = repo.doesAccessTokenHavePermission(null, null);
         Assert.assertTrue(hasPermission);
     }
-    
-    @Test(expected=NotFoundException.class)
+
+    @Test(expected = NotFoundException.class)
     public void shouldThrowErrorForTokenNotFound() {
         ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
         repo.addScopeAccess(client.getUniqueId(), sa);
@@ -165,7 +166,7 @@ public class LdapScopeAccessRepositoryTest {
         repo.addPermissionToScopeAccess(sa.getUniqueId(), p);
         repo.doesAccessTokenHavePermission("Non_existant_token", p);
     }
-    
+
     @Test
     public void shouldGetScopeAccessByAccessToken() {
         ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
@@ -173,12 +174,12 @@ public class LdapScopeAccessRepositoryTest {
         ScopeAccess returned = repo.getScopeAccessByAccessToken(accessToken);
         Assert.assertTrue(sa.equals(returned));
     }
-    
-    @Test(expected=IllegalArgumentException.class)
+
+    @Test(expected = IllegalArgumentException.class)
     public void shouldThrowErrorForGetScopeAccessByAccessTokenForBlankAccessToken() {
         repo.getScopeAccessByAccessToken(null);
     }
-    
+
     @Test
     public void shouldGetScopeAccessByRefreshToken() {
         ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
@@ -186,12 +187,12 @@ public class LdapScopeAccessRepositoryTest {
         ScopeAccess returned = repo.getScopeAccessByRefreshToken(refreshToken);
         Assert.assertTrue(sa.equals(returned));
     }
-    
-    @Test(expected=IllegalArgumentException.class)
+
+    @Test(expected = IllegalArgumentException.class)
     public void shouldThrowErrorForGetScopeAccessByRefreshTokenForBlankRefreshToken() {
         repo.getScopeAccessByRefreshToken(null);
     }
-    
+
     @Test
     public void shouldRemovePermissionFromScopeAccess() {
         ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
@@ -201,13 +202,13 @@ public class LdapScopeAccessRepositoryTest {
         Assert.assertNotNull(p.getUniqueId());
         repo.removePermissionFromScopeAccess(p);
     }
-    
-    @Test(expected=IllegalArgumentException.class)
+
+    @Test(expected = IllegalArgumentException.class)
     public void shouldNotRemovePermissionFromScopeAccessForNullUniqueId() {
         Permission p = createPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         repo.removePermissionFromScopeAccess(p);
     }
-    
+
     @Test
     public void shouldUpdateScopeAccess() {
         ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
@@ -220,65 +221,83 @@ public class LdapScopeAccessRepositoryTest {
         Assert.assertNotNull(returnedByRefreshToken);
         Assert.assertNotNull(returnedByAccessToken);
     }
-    
-    @Test(expected=IllegalArgumentException.class)
+
+    @Test(expected = IllegalArgumentException.class)
     public void shouldFailUpdateForNullScopeAccess() {
         repo.updateScopeAccess(null);
     }
-    
-    @Test(expected=IllegalArgumentException.class)
+
+    @Test(expected = IllegalArgumentException.class)
     public void shouldFailUpdateForBlankUniqueIdScopeAccess() {
         ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
         repo.updateScopeAccess(sa);
     }
 
-    private static LdapClientRepository getClientRepo(
-        LdapConnectionPools connPools) {
-        Configuration appConfig = new PropertyFileConfiguration()
-            .getConfigFromClasspath();
+    @Test
+    public void shouldUpdatePermissionForScopeAccess() {
+        ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
+        repo.addScopeAccess(client.getUniqueId(), sa);
+        Permission p = createPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        repo.addPermissionToScopeAccess(sa.getUniqueId(), p);
+        p.setDescription("New description");
+        p.setEnabled(Boolean.FALSE);
+        p.setGrantedByDefault(Boolean.FALSE);
+        p.setTitle("New Title");
+        p.setType("New Type");
+        p.setValue("New Value");
+        repo.updatePermissionForScopeAccess(sa.getUniqueId(), p);
+        Permission p2 = repo.getPermissionForScopeAccess(sa.getUniqueId(), p.getPermissionId());
+        Assert.assertEquals(p, p2);
+    }
+
+    @Test
+    public void shouldRetrievePermission() {
+        ScopeAccess sa = createScopeAccessObject(client.getClientId(), client.getCustomerId());
+        repo.addScopeAccess(client.getUniqueId(), sa);
+        Permission p = createPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        repo.addPermissionToScopeAccess(sa.getUniqueId(), p);
+
+        Permission p1 = repo.getPermissionForScopeAccess(sa.getUniqueId(), p.getPermissionId());
+        Assert.assertEquals(p, p1);
+    }
+
+    private static LdapClientRepository getClientRepo(LdapConnectionPools connPools) {
+        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
         return new LdapClientRepository(connPools, appConfig);
     }
 
-    private static LdapScopeAccessRepository getSaRepo(
-        LdapConnectionPools connPools) {
-        Configuration appConfig = new PropertyFileConfiguration()
-            .getConfigFromClasspath();
+    private static LdapScopeAccessRepository getSaRepo(LdapConnectionPools connPools) {
+        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
         return new LdapScopeAccessRepository(connPools, appConfig);
     }
 
-    private static LdapCustomerRepository getCustomerRepo(
-        LdapConnectionPools connPools) {
-        Configuration appConfig = new PropertyFileConfiguration()
-            .getConfigFromClasspath();
+    private static LdapCustomerRepository getCustomerRepo(LdapConnectionPools connPools) {
+        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
         return new LdapCustomerRepository(connPools, appConfig);
     }
 
     private static LdapConnectionPools getConnPools() {
-        return new LdapConfiguration(
-            new PropertyFileConfiguration().getConfigFromClasspath())
+        return new LdapConfiguration(new PropertyFileConfiguration().getConfigFromClasspath())
             .connectionPools();
     }
-    
-    private Customer addNewTestCustomer(String customerId, String name,
-        String inum, String iname, CustomerStatus status, String seeAlso,
-        String owner, String country) {
 
-        Customer newCustomer = createTestCustomerInstance(customerId, inum,
-            iname, status, seeAlso, owner);
+    private Customer addNewTestCustomer(String customerId, String name, String inum, String iname,
+        CustomerStatus status, String seeAlso, String owner, String country) {
+
+        Customer newCustomer = createTestCustomerInstance(customerId, inum, iname, status, seeAlso, owner);
         newCustomer.setSoftDeleted(softDeleted);
         customerRepo.addCustomer(newCustomer);
         return newCustomer;
     }
 
-    private Customer createTestCustomerInstance(String customerId, String inum,
-        String iname, CustomerStatus status, String seeAlso, String owner) {
+    private Customer createTestCustomerInstance(String customerId, String inum, String iname,
+        CustomerStatus status, String seeAlso, String owner) {
 
-        Customer newCustomer = new Customer(customerId, inum, iname, status,
-            seeAlso, owner);
+        Customer newCustomer = new Customer(customerId, inum, iname, status, seeAlso, owner);
         newCustomer.setSoftDeleted(softDeleted);
         return newCustomer;
     }
-    
+
     private Client addNewTestClient(Customer customer) {
         Client newClient = createTestClientInstance();
         clientRepo.addClient(newClient, customer.getUniqueId());
@@ -286,9 +305,9 @@ public class LdapScopeAccessRepositoryTest {
     }
 
     private Client createTestClientInstance() {
-        Client newClient = new Client("DELETE_My_ClientId", ClientSecret
-            .newInstance("DELETE_My_Client_Secret"), "DELETE_My_Name", "inum",
-            "iname", "RCN-123-456-789", ClientStatus.ACTIVE);
+        Client newClient = new Client("DELETE_My_ClientId",
+            ClientSecret.newInstance("DELETE_My_Client_Secret"), "DELETE_My_Name", "inum", "iname",
+            "RCN-123-456-789", ClientStatus.ACTIVE);
         newClient.setLocked(false);
         newClient.setSoftDeleted(false);
         return newClient;
@@ -301,7 +320,7 @@ public class LdapScopeAccessRepositoryTest {
         res.setPermissionId(permissionId);
         return res;
     }
-    
+
     private ScopeAccess createScopeAccessObject(String clientId, String RCN) {
         ScopeAccess sa = new ScopeAccess();
         sa.setAccessToken(accessToken);
