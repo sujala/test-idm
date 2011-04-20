@@ -59,7 +59,7 @@
     </copyright>
     <releaseinfo>API v1.0.2011.14</releaseinfo>
     <productname>Identity Management (IdM)</productname>
-    <pubdate>3/31/11</pubdate>
+    <pubdate>4/20/11</pubdate>
     <abstract>
       <para> This document is intended for software developers interested in developing applications
         which utilizes Customer Identity Management System as the authentication engine. It includes
@@ -211,7 +211,7 @@
           <tbody>
             <tr>
               <td colspan="1"> &GET; </td>
-              <td colspan="4">https://idm.api.rackspace.com/</td>
+              <td colspan="4">https://{Hostname TBD}/</td>
               <td colspan="3">Retrieve a list of IdM API versions.</td>
             </tr>
           </tbody>
@@ -237,7 +237,7 @@
           <tbody>
             <tr>
               <td colspan="1"> &GET; </td>
-              <td colspan="4">https://idm.api.rackspace.com/v1.0/</td>
+              <td colspan="4">https://{Hostname TBD}/v1.0/</td>
               <td colspan="3">Retrieve API Version details</td>
             </tr>
           </tbody>
@@ -435,10 +435,8 @@
           <tbody>
             <tr>
               <td colspan="1"> &GET; </td>
-              <td colspan="4"
-                  >/token/<parameter>tokenId</parameter>?belongsTo=<returnvalue>Username</returnvalue>&amp;clientId=<returnvalue>ClientId</returnvalue></td>
-              <td colspan="3">Check that a token is valid and that it belongs to a particular user
-                and return the permissions relevant to a particular client.</td>
+              <td colspan="4">/token/<parameter>tokenId</parameter></td>
+              <td colspan="3">Check that a token is valid and return the token details.</td>
             </tr>
           </tbody>
         </informaltable>
@@ -487,6 +485,11 @@
       <title>Customer Operations </title>
       <section>
         <title>Get a Customer</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -518,6 +521,11 @@
       </section>
       <section>
         <title>Set Customer Lock Status </title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -585,7 +593,7 @@
             <tr>
               <td colspan="1"> &PUT; </td>
               <td colspan="4"
-                >/customers/<parameter>customerId</parameter>/passwordRotationPolicy</td>
+                >/customers/<parameter>customerId</parameter>/passwordrotationpolicy</td>
               <td colspan="3">Sets the password rotation policy for a customer.</td>
             </tr>
           </tbody>
@@ -627,6 +635,11 @@
       <title>User Operations</title>
       <section>
         <title>Create the First User</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -650,32 +663,32 @@
           idmFault (<errorcode>500</errorcode>),
           serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         <example>
-          <title>XML User Request</title>
+          <title>XML Add First User Request</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/adduser.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Request</title>
+          <title>JSON Add First User Request</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/adduser.json" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>XML User Response</title>
+          <title>XML Add First User Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/addfirstuserresponse.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Response</title>
+          <title>JSON Add First User Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/addfirstuserresponse.json" parse="text"/>
 </programlisting>
         </example>
       </section>
       <section>
-        <title>Create a User</title>
+        <title>Add a User</title>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -699,25 +712,25 @@
           idmFault (<errorcode>500</errorcode>),
           serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         <example>
-          <title>XML User Request</title>
+          <title>XML Add User Request</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/adduser.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Request</title>
+          <title>JSON Add User Request</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/adduser.json" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>XML User Response</title>
+          <title>XML Add User Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/adduserresponse.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Response</title>
+          <title>JSON Add User Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/addeduser.json" parse="text"/>
 </programlisting>
@@ -743,13 +756,13 @@
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
         <example>
-          <title>XML User Response</title>
+          <title>XML Get User Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/getuser.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Response</title>
+          <title>JSON Get User Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/getuser.json" parse="text"/>
 </programlisting>
@@ -757,6 +770,11 @@
       </section>
       <section>
         <title>Get a User by Mosso ID</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -775,13 +793,13 @@
           serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
         <example>
-          <title>XML User Response</title>
+          <title>XML Get User By MossoId Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/getuser-with-mosso-id.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Response</title>
+          <title>JSON Get User By MossoId Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/getuser-with-mosso-id.json" parse="text"/>
 </programlisting>
@@ -789,6 +807,11 @@
       </section>
       <section>
         <title>Get a User by NAST ID</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -807,20 +830,25 @@
           serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
         <example>
-          <title>XML User Response</title>
+          <title>XML Get User By NastId Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/getuser-with-nast-id.xml" parse="text"/>
           </programlisting>
         </example>
         <example>
-          <title>JSON User Response</title>
+          <title>JSON Get User By NastId Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/getuser-with-nast-id.json" parse="text"/>
 </programlisting>
         </example>       
       </section>
       <section>
-        <title>Get a User by UserName</title>
+        <title>Get a User by Username</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -839,13 +867,13 @@
           serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
         <example>
-          <title>XML User Response</title>
+          <title>XML Get User By Username Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/getuser-with-username.xml" parse="text"/>
           </programlisting>
         </example>
         <example>
-          <title>JSON User Response</title>
+          <title>JSON Get User By Username Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/getuser-with-username.json" parse="text"/>
 </programlisting>
@@ -870,25 +898,25 @@
             (<errorcode>404</errorcode>), emailConflict (409), idmFault
           (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         <example>
-          <title>XML User Request</title>
+          <title>XML Update User Request</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/updateuser.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Request</title>
+          <title>JSON Update User Request</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/updateuser.json" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>XML User Response</title>
+          <title>XML Update User Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/updateduser.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Response</title>
+          <title>JSON Update User Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/updateduser.json" parse="text"/>
 </programlisting>
@@ -925,13 +953,13 @@
 </programlisting>
         </example>
         <example>
-          <title>XML User SoftDeleted Response</title>
+          <title>XML User Soft Delete Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/userWithOnlySoftDeleted.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User SoftDeleted Response</title>
+          <title>JSON User Soft Delete Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/userWithOnlySoftDeleted.json" parse="text"/>
 </programlisting>
@@ -939,6 +967,11 @@
       </section>
       <section>
         <title>Delete User</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -978,13 +1011,13 @@
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
         <example>
-          <title>XML User List Response</title>
+          <title>XML Get User List Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/users.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User List Response</title>
+          <title>JSON Get User List Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/users.json" parse="text"/>
 </programlisting>
@@ -1094,6 +1127,11 @@
       </section>
       <section>
         <title>Set Auth Service Key</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1137,6 +1175,11 @@
       </section>
       <section>
         <title>Set User Lock</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1154,25 +1197,25 @@
             (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         <example>
-          <title>XML User Lock Request</title>
+          <title>XML Set User Lock Request</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/userWithOnlyLock.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Lock Request</title>
+          <title>JSON Set User Lock Request</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/userWithOnlyLock.json" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>XML User Lock Response</title>
+          <title>XML Set User Lock Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/userWithOnlyLock.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Lock Response</title>
+          <title>JSON Set User Lock Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/userWithOnlyLock.json" parse="text"/>
 </programlisting>
@@ -1203,13 +1246,13 @@
           serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
         <example>
-          <title>XML User Password Request</title>
+          <title>XML Set User Password Request</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/user_credentials.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Password Request</title>
+          <title>JSON Set User Password Request</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/user_credentials.json" parse="text"/>
 </programlisting>
@@ -1261,6 +1304,11 @@
       </section>
       <section>
         <title>Get a User Password</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1279,13 +1327,13 @@
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
         <example>
-          <title>XML User Password Response</title>
+          <title>XML Get User Password Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/user_password.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Passwrord Response</title>
+          <title>JSON Get User Passwrord Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/user_password.json" parse="text"/>
 </programlisting>
@@ -1293,6 +1341,11 @@
       </section>
       <section>
         <title>Initiate Forget Password</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1324,6 +1377,11 @@
       </section>
       <section>
         <title>Get Password Recovery Token</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1373,25 +1431,25 @@
             (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         <example>
-          <title>XML User Status Request</title>
+          <title>XML Set User Status Request</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/userWithOnlyStatus.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Status Request</title>
+          <title>JSON Set User Status Request</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/userWithOnlyStatus.json" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>XML User Status Response</title>
+          <title>XML Set User Status Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/userWithOnlyStatus.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Status Response</title>
+          <title>JSON Set User Status Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/userWithOnlyStatus.json" parse="text"/>
 </programlisting>
@@ -1416,25 +1474,25 @@
             (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         <example>
-          <title>XML User Secret Request</title>
+          <title>XML Set User Secret Request</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/user_secret.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Secret Request</title>
+          <title>JSON Set User Secret Request</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/user_secret.json" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>XML User Secret Response</title>
+          <title>XML Set User Secret Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/user_secret.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON User Secret Response</title>
+          <title>JSON Set User Secret Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/user_secret.json" parse="text"/>
 </programlisting>
@@ -1443,7 +1501,6 @@
     </section>
     <section>
       <title> Authentication Operations </title>
-      
       <section>
         <title>Authenticate a user by Mosso ID</title>
         <informaltable rules="all">
@@ -1464,19 +1521,25 @@
           serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         
         <example>
-          <title>Mosso Credentials</title>
+          <title>XML Auth By Mosso Credentials Request</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/mossoCredentials.xml" parse="text"/>
 </programlisting>
         </example>
+        <example>
+          <title>JSON Auth By Mosso Credentials Request</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/mossoCredentials.json" parse="text"/>
+</programlisting>
+        </example>
         <example>     
-          <title>XML Response</title>
+          <title>XML Auth By Mosso Credentials Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/mosso-id-authentication-response.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Response</title>
+          <title>JSON Auth By Mosso Credentials Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/mosso-id-authentication-response.json" parse="text"/>
 </programlisting>
@@ -1503,19 +1566,25 @@
           serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         
         <example>
-          <title>NAST Credentials</title>
+          <title>XML Auth By Nast Credentials Request</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/nastCredentials.xml" parse="text"/>
 </programlisting>
         </example>
+        <example>
+          <title>JSON Auth By Nast Credentials Request</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/nastCredentials.json" parse="text"/>
+</programlisting>
+        </example>
         <example>     
-          <title>XML Response</title>
+          <title>XML Auth By Nast Credentials Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/mosso-id-authentication-response.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Response</title>
+          <title>JSON Auth By Nast Credentials Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/mosso-id-authentication-response.json" parse="text"/>
 </programlisting>
@@ -1542,28 +1611,25 @@
           serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         
         <example>
-          <title>User Data</title>
+          <title>XML Auth By Username Request</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/usernameCredentials.xml" parse="text"/>
 </programlisting>
         </example>
         <example>     
-          <title>XML Response</title>
+          <title>XML Auth By Username Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/mosso-id-authentication-response.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Response</title>
+          <title>JSON Auth By Username Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/mosso-id-authentication-response.json" parse="text"/>
 </programlisting>
         </example>       
       </section>    
     </section>
-    
-    
-    
     <section>
       <title>Customer Application Operations </title>
       <section>
@@ -1753,13 +1819,13 @@
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
         <example>
-          <title>XML Permissions Response</title>
+          <title>XML Get Permissions Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/permissions.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Permissions Response</title>
+          <title>JSON Get Permissions Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/permissions.json" parse="text"/>
 </programlisting>
@@ -1786,13 +1852,13 @@
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
         <example>
-          <title>XML Granted Permissions Response</title>
+          <title>XML Get Granted Permissions Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/grantedpermissions.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Granted Permissions Response</title>
+          <title>JSON Get Granted Permissions Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/grantedpermissions.json" parse="text"/>
 </programlisting>
@@ -1800,6 +1866,11 @@
       </section>
       <section>
         <title>Get Defined Permissions for a Customer Application</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1819,13 +1890,13 @@
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
         <example>
-          <title>XML Defined Permissions Response</title>
+          <title>XML Get Defined Permissions Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/definedpermissions.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Defined Permissions Response</title>
+          <title>JSON Get Defined Permissions Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/definedpermissions.json" parse="text"/>
 </programlisting>
@@ -1833,6 +1904,11 @@
       </section>
       <section>
         <title>Add a Defined Permission for a Customer Application</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1877,6 +1953,11 @@
       </section>
       <section>
         <title>Get a Defined Permission for a Customer Application</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1910,6 +1991,11 @@
       </section>
       <section>
         <title>Update a Defined Permission for a Customer Application</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1954,6 +2040,11 @@
       </section>
       <section>
         <title>Delete a Defined Permission for a Customer Application</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1993,13 +2084,13 @@
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
         <example>
-          <title>XML Response</title>
+          <title>XML Reset Client Secret Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/client-credentials-response.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Response</title>
+          <title>JSON Reset Client Secret Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/client-credentials-response.json" parse="text"/>
 </programlisting>
@@ -2007,6 +2098,11 @@
       </section>
       <section>
         <title>Add a Group for a Customer Application</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2037,13 +2133,13 @@
 </programlisting>
         </example>
         <example>
-          <title>XML Add a Defined Permission Response</title>
+          <title>XML Add a Group Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/clientGroup.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Add a Defined Permission Response</title>
+          <title>JSON Add a Group Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/clientGroup.json" parse="text"/>
 </programlisting>
@@ -2051,6 +2147,11 @@
       </section>
       <section>
         <title>Get all Groups for a Customer Application</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2070,13 +2171,13 @@
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
         <example>
-          <title>XML Defined Permissions Response</title>
+          <title>XML Get Groups Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/clientGroups.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Defined Permissions Response</title>
+          <title>JSON Get Groups Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/clientGroups.json" parse="text"/>
 </programlisting>
@@ -2084,6 +2185,11 @@
       </section>
       <section>
         <title>Update a Group for a Customer Application</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2102,25 +2208,25 @@
             (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         <example>
-          <title>XML Update a Defined Permission Request</title>
+          <title>XML Update a Group Request</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/clientGroup.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Update a Defined Permission Request</title>
+          <title>JSON Update a Group Request</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/clientGroup.json" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>XML Update a Defined Permission Response</title>
+          <title>XML Update a Group Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/clientGroup.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Update a Defined Permission Response</title>
+          <title>JSON Update a Group Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/clientGroup.json" parse="text"/>
 </programlisting>
@@ -2128,6 +2234,11 @@
       </section>
       <section>
         <title>Delete a Group for a Customer Application</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2149,6 +2260,11 @@
       </section>
       <section>
         <title>Add a User to a Group for a Customer Application</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2170,6 +2286,11 @@
       </section>
       <section>
         <title>Remove a User from a Group for a Customer Application</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2269,6 +2390,11 @@
         <title>Admin Operations </title>
         <section>
           <title>Get Base URLs</title>
+          <note>
+            <para>
+              This is a management API function.
+            </para>
+          </note>
           <informaltable rules="all">
             &LONG_URI_REFHEAD;
             <tbody>
@@ -2291,7 +2417,7 @@
 </programlisting>
           </example>
           <example>
-            <title>JSON Get Password Rules Response</title>
+            <title>JSON Get BaseURLs Response</title>
             <programlisting language="javascript">
 <xi:include href="../../formattedsamples/base_urls_response.json" parse="text"/>
 </programlisting>
@@ -2300,6 +2426,11 @@
       
         <section>
           <title>Add Base URL</title>
+          <note>
+            <para>
+              This is a management API function.
+            </para>
+          </note>
           <informaltable rules="all">
             &LONG_URI_REFHEAD;
             <tbody>
@@ -2316,15 +2447,19 @@
             (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
             (<errorcode>404</errorcode>)</simpara>
           <example>
-            <title>Data to be passed in</title>
+            <title>XML Add BaseUrl Request</title>
             <programlisting language="xml">
 <xi:include href="../../formattedsamples/add-baseurl-input.xml" parse="text"/>
 </programlisting>
           </example>
         </section>
-        
         <section>
           <title>Get a Base URL</title>
+          <note>
+            <para>
+              This is a management API function.
+            </para>
+          </note>
           <informaltable rules="all">
             &LONG_URI_REFHEAD;
             <tbody>
@@ -2341,21 +2476,25 @@
             (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
             (<errorcode>404</errorcode>)</simpara>
           <example>
-            <title>XML Response</title>
+            <title>XML Get BaseUrl Response</title>
             <programlisting language="xml">
-                  <xi:include href="../../formattedsamples/base_url_response.xml" parse="text"/>
-            </programlisting>
+<xi:include href="../../formattedsamples/base_url_response.xml" parse="text"/>
+</programlisting>
           </example>
           <example>
-            <title>JSON Response</title>
-            <programlisting language="xml">
-                  <xi:include href="../../formattedsamples/base_url_response.json" parse="text"/>
-            </programlisting>
+            <title>JSON Get BaseUrl Response</title>
+            <programlisting language="javascript">
+<xi:include href="../../formattedsamples/base_url_response.json" parse="text"/>
+</programlisting>
           </example>
         </section>
-        
         <section>
           <title>Delete a Base URL</title>
+          <note>
+            <para>
+              This is a management API function.
+            </para>
+          </note>
           <informaltable rules="all">
             &LONG_URI_REFHEAD;
             <tbody>
@@ -2372,10 +2511,13 @@
             (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
             (<errorcode>404</errorcode>)</simpara>
         </section>
-        
-        
         <section>
           <title>Get Base Url Refs</title>
+          <note>
+            <para>
+              This is a management API function.
+            </para>
+          </note>
           <informaltable rules="all">
             &LONG_URI_REFHEAD;
             <tbody>
@@ -2392,14 +2534,14 @@
             (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
             (<errorcode>404</errorcode>)</simpara>
           <example>
-            <title>XML response</title>
+            <title>XML Get Base Url Ref Response</title>
             <programlisting language="xml">
 <xi:include href="../../formattedsamples/baseURLRefs.xml" parse="text"/>
 </programlisting>
           </example>
           <example>
-            <title>JSON response</title>
-            <programlisting language="xml">
+            <title>JSON Get Base Url Ref Response</title>
+            <programlisting language="javascript">
 <xi:include href="../../formattedsamples/baseURLRefs.json" parse="text"/>
 </programlisting>
           </example>
@@ -2407,6 +2549,11 @@
         
         <section>
           <title>Add Base URL Ref</title>
+          <note>
+            <para>
+              This is a management API function.
+            </para>
+          </note>
           <informaltable rules="all">
             &LONG_URI_REFHEAD;
             <tbody>
@@ -2423,15 +2570,19 @@
             (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
             (<errorcode>404</errorcode>)</simpara>
           <example>
-            <title>Data to be passed in</title>
+            <title>XML Add Base Url Ref Request</title>
             <programlisting language="xml">
 <xi:include href="../../formattedsamples/add-baseurlRef-input.xml" parse="text"/>
 </programlisting>
           </example>
         </section>
-        
         <section>
           <title>Get Base URL Ref</title>
+          <note>
+            <para>
+              This is a management API function.
+            </para>
+          </note>
           <informaltable rules="all">
             &LONG_URI_REFHEAD;
             <tbody>
@@ -2448,15 +2599,15 @@
             (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
             (<errorcode>404</errorcode>)</simpara>
           <example>
-            <title>XML Response</title>
+            <title>XML Get Base Url Ref Response</title>
             <programlisting language="xml">
 <xi:include href="../../formattedsamples/base_url_ref_response.xml" parse="text"/>
 </programlisting>
           </example>
           
           <example>
-            <title>JSON Response</title>
-            <programlisting language="xml">
+            <title>JSON Get Base Url Ref Response</title>
+            <programlisting language="javascript">
 <xi:include href="../../formattedsamples/base_url_ref_response.json" parse="text"/>
 </programlisting>
           </example>
@@ -2465,6 +2616,11 @@
         
         <section>
           <title>Delete a Base URL Ref</title>
+          <note>
+            <para>
+              This is a management API function.
+            </para>
+          </note>
           <informaltable rules="all">
             &LONG_URI_REFHEAD;
             <tbody>
@@ -2484,6 +2640,11 @@
       
         <section>
           <title>Get Service catalog for user</title>
+          <note>
+            <para>
+              This is a management API function.
+            </para>
+          </note>
           <informaltable rules="all">
             &LONG_URI_REFHEAD;
             <tbody>
@@ -2500,19 +2661,17 @@
             (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>), itemNotFound
             (<errorcode>404</errorcode>)</simpara>
           <example>
-            <title>XML Response</title>
+            <title>XML Get Service Catalog Response</title>
             <programlisting language="xml">
 <xi:include href="../../formattedsamples/service-catalog-response.xml" parse="text"/>
 </programlisting>
-          </example>
-          
+          </example>  
           <example>
-            <title>JSON Response</title>
-            <programlisting language="xml">
+            <title>JSON Get Service Catalog Response</title>
+            <programlisting language="javascript">
 <xi:include href="../../formattedsamples/service-catalog-response.json" parse="text"/>
 </programlisting>
           </example>
-          
         </section>
     </section>
   </chapter>
