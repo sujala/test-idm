@@ -251,7 +251,7 @@ public class OAuthServiceTests {
     @Test
     public void shouldGetTokenWithGrantTypeNone() {
 
-        OAuthGrantType grantType = OAuthGrantType.NONE;
+        OAuthGrantType grantType = OAuthGrantType.CLIENT_CREDENTIALS;
         AuthCredentials authCredentials = getTestAuthCredentials();
         authCredentials.setGrantType("none");
 
