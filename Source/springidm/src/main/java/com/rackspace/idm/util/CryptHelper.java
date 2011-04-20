@@ -5,7 +5,6 @@ import java.security.GeneralSecurityException;
 import java.security.InvalidParameterException;
 import java.security.Security;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
