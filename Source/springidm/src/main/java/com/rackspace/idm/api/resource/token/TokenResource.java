@@ -333,7 +333,7 @@ public class TokenResource {
       
          AccessToken accessToken = this.tokenService.getAccessTokenByTokenString(tokenString);
          
-         if (accessToken == null) {
+         if (accessToken == null || !accessToken.getTokenString().equals(tokenString)) {
              throw new NotFoundException("Token " + tokenString + " not found");
          }
  
