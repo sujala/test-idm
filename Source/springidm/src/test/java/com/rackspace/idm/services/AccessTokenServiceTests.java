@@ -777,12 +777,12 @@ public class AccessTokenServiceTests {
         EasyMock.expect(mockClientService.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId)).andReturn(permission);
         EasyMock.replay(mockClientService);
         
-        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(accessToken.toString(), permission)).andReturn(true);
+        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(accessToken.getTokenString(), permission)).andReturn(true);
         EasyMock.replay(mockScopeAccessDao);
         
-        Permission returnedPerm = tokenService.checkAndReturnPermission(accessToken, permissionId);
+        boolean result = tokenService.checkAndReturnPermission(accessToken, permissionId);
        
-        Assert.assertEquals(permissionId, returnedPerm.getPermissionId());
+        Assert.assertTrue(result);
         
     }
     
@@ -805,7 +805,7 @@ public class AccessTokenServiceTests {
         EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(accessToken.toString(), permission)).andReturn(true);
         EasyMock.replay(mockScopeAccessDao);
         
-        Permission returnedPerm = tokenService.checkAndReturnPermission(accessToken, permissionId);
+        boolean result = tokenService.checkAndReturnPermission(accessToken, permissionId);
     }
     
     @Test(expected = BadRequestException.class)
@@ -824,7 +824,7 @@ public class AccessTokenServiceTests {
         EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(accessToken.toString(), permission)).andReturn(true);
         EasyMock.replay(mockScopeAccessDao);
         
-        Permission returnedPerm = tokenService.checkAndReturnPermission(accessToken, permissionId);
+        boolean result = tokenService.checkAndReturnPermission(accessToken, permissionId);
     }
     
     @Test
@@ -840,11 +840,12 @@ public class AccessTokenServiceTests {
         EasyMock.expect(mockClientService.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId)).andReturn(permission);
         EasyMock.replay(mockClientService);
         
-        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(accessToken.toString(), permission)).andReturn(false);
+        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(accessToken.getTokenString(), permission)).andReturn(false);
         EasyMock.replay(mockScopeAccessDao);
         
-        Permission returnedPerm = tokenService.checkAndReturnPermission(accessToken, permissionId);
-        Assert.assertNull(returnedPerm);
+        boolean result = tokenService.checkAndReturnPermission(accessToken, permissionId);
+        
+        Assert.assertFalse(result);
     }          
     
     private AccessToken getFakeUserToken() {
