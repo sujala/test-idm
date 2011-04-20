@@ -91,7 +91,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     @Override
     public UserAuthenticationResult authenticate(String username,
         String password) {
-        getLogger().debug("Authenticating User {} by API Key ", username);
+        getLogger().debug("Authenticating User {}", username);
         if (StringUtils.isBlank(username)) {
             getLogger().error("Null or Empty username parameter");
             throw new IllegalArgumentException(
