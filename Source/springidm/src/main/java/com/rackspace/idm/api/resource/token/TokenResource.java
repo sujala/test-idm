@@ -20,7 +20,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -56,11 +55,11 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class TokenResource {
-    private AccessTokenService tokenService;
-    private OAuthService oauthService;
-    private AuthHeaderHelper authHeaderHelper;
-    private AuthConverter authConverter;
-    private AuthorizationService authorizationService;
+    private final AccessTokenService tokenService;
+    private final OAuthService oauthService;
+    private final AuthHeaderHelper authHeaderHelper;
+    private final AuthConverter authConverter;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(TokenResource.class);
 
     @Autowired(required = true)
