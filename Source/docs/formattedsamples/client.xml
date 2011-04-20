@@ -8,10 +8,5 @@
     inum="@FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!0001"
     name="Test Application2" 
     customerId="RCN-000-000-000" 
-    clientId="ab4820dhcb39347">
-    <permissions>
-        <permission clientId="IDM" 
-            customerId="RCN-000-000-000" 
-            resourceId="addCustomer" />
-    </permissions>
-</client>
+    clientId="ab4820dhcb39347" />
+    

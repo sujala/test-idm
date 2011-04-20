@@ -1,11 +1,4 @@
-{ "permissions": {
-    "permission": [
-      {
-        "resourceId": "addCustomer",
-        "customerId": "RCN-000-000-000",
-        "clientId": "IDM"
-      }
-    ]},
+{ 
   "clientId": "ab4820dhcb39347",
   "customerId": "RCN-000-000-000",
   "name": "Test Application2",

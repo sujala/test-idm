@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <idmFault xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
-	code="500">
-	<message>Fault</message>
-	<details>Error Details...</details>
+    code="500">
+    <message>Fault</message>
+    <details>Error Details...</details>
 </idmFault>

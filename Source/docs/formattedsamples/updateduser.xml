@@ -6,5 +6,5 @@
     middleName="Quincy" firstName="John" 
     region="SAT" personId="RPN-111-111-111" 
     email="john.smith@somenewemail.org"
-    customerId="RCN-000-000-000" username="jqsmith">
-</user>
+    customerId="RCN-000-000-000" username="jqsmith" />
+    

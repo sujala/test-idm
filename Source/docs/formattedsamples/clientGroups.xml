@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 <clientGroups xmlns="http://docs.rackspacecloud.com/idm/api/v1.0">
-    <clientGroup xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
-        customerId="RCN-000-000-000"
+    <clientGroup customerId="RCN-000-000-000"
         clientId="IDM"
         name="Idm Admin"
         type="Role"  />

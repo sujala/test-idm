@@ -2,21 +2,21 @@
 
 <user 
     xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
-	softDeleted="false" locked="false" 
-    tatus="ACTIVE" region="America/Chicago"
-	inum="@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111"
-	prefLanguage="US_en" displayName="John Smith" 
-	lastName="Smith" middleName="Quincy" 
-	firstName="John" personId="RPN-111-111-111" 
-	email="john.smith@example.org"
-	customerInum="@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE" 
-	customerId="RCN-000-000-000"
-	username="jqsmith">
-	<groups>
-		<clientGroup 
+    softDeleted="false" locked="false" 
+    status="ACTIVE" region="America/Chicago"
+    inum="@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111"
+    prefLanguage="US_en" displayName="John Smith" 
+    lastName="Smith" middleName="Quincy" 
+    firstName="John" personId="RPN-111-111-111" 
+    email="john.smith@example.org"
+    customerInum="@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE" 
+    customerId="RCN-000-000-000"
+    username="jqsmith">
+    <groups>
+        <clientGroup 
             customerId="RCN-000-000-000",
             clientId="ab4820dhcb39347",
             type="Role" 
             name="Admin" />
-	</groups>
+    </groups>
 </user>
