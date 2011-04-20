@@ -300,18 +300,6 @@ public class UserTest {
     }
 
     @Test
-    public void shouldGetPasswordNoPrefix() {
-
-        String pwdStr = "secret";
-
-        User user = getTestUser();
-        user.setPassword("{CLEAR}" + pwdStr);
-
-        String pwdNoPrefix = user.getPasswordNoPrefix();
-        Assert.assertEquals(pwdStr, pwdNoPrefix);
-    }
-
-    @Test
     public void shouldAllowValidEmail() {
         User user = getTestUser();
         user.setEmail("valid-email-format@example.com");

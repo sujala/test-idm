@@ -1,10 +1,8 @@
 package com.rackspace.idm.domain.entity;
 
-import org.joda.time.DateTime;
-
 public class UserAuthenticationResult extends AuthenticationResult {
 
-    private BaseUser user;
+    private final BaseUser user;
     
     public UserAuthenticationResult(BaseUser user, boolean authenticated) {
         super(authenticated);

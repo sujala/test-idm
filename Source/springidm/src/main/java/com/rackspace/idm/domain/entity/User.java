@@ -229,10 +229,6 @@ public class User extends BaseUser implements Auditable {
         return credential.getPassword().getValue();
     }
 
-    public String getPasswordNoPrefix() {
-        return credential.getPassword().getValueNoPrefix();
-    }
-
     public void setFirstname(String firstname) {
         if (firstname != null) {
             this.name.setFirstname(firstname);

@@ -13,8 +13,8 @@ import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class UserConverter {
 
-    private GroupConverter groupConverter;
-    private ObjectFactory of = new ObjectFactory();
+    private final GroupConverter groupConverter;
+    private final ObjectFactory of = new ObjectFactory();
 
     public UserConverter(GroupConverter groupConverter) {
         this.groupConverter = groupConverter;
@@ -197,7 +197,7 @@ public class UserConverter {
             com.rackspace.idm.jaxb.UserPassword password = of
                 .createUserPassword();
 
-            password.setPassword(user.getPasswordObj().getValueNoPrefix());
+            password.setPassword(user.getPasswordObj().getValue());
             returnedUser.setPassword(password);
         }
 

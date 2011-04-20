@@ -52,24 +52,6 @@ public final class Password {
         return value;
     }
 
-    @Deprecated
-    public String getValueNoPrefix() {
-        String val = value;
-
-        PasswordEncryptType[] encryptTypes = PasswordEncryptType.values();
-        for (PasswordEncryptType curEncryptType : encryptTypes) {
-
-            String curPrefix = String.format("{%s}", curEncryptType.toString());
-
-            int curPrefixLength = curPrefix.length();
-            if (val.length() >= curPrefixLength && val.substring(0, curPrefixLength).equals(curPrefix)) {
-                val = val.substring(curPrefixLength);
-                break;
-            }
-        }
-        return val;
-    }
-
     /**
      * Don't use this method.
      */
