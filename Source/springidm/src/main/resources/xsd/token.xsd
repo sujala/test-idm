@@ -251,11 +251,11 @@
 					</xsd:documentation>
 				</annotation>
 			</enumeration>
-			<enumeration value="NONE">
+			<enumeration value="CLIENT_CREDENTIALS">
 				<annotation>
 					<xsd:documentation xml:lang="EN"
 						xmlns="http://www.w3.org/1999/xhtml">
-						<p>The OAuth grant type none.</p>
+						<p>The OAuth grant type client_credentials.</p>
 					</xsd:documentation>
 				</annotation>
 			</enumeration>

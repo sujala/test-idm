@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
-import static com.rackspace.idm.domain.entity.OAuthGrantType.NONE;
+import static com.rackspace.idm.domain.entity.OAuthGrantType.CLIENT_CREDENTIALS;
 import static com.rackspace.idm.domain.entity.OAuthGrantType.PASSWORD;
 import static com.rackspace.idm.domain.entity.OAuthGrantType.REFRESH_TOKEN;
 
@@ -128,7 +128,7 @@ public class DefaultOAuthService implements OAuthService {
             return getTokenByRefreshToken(trParam.getRefreshToken(), expirationSeconds, currentTime);
         }
 
-        if (NONE == grantType) {
+        if (CLIENT_CREDENTIALS == grantType) {
             accessToken = getTokenByNoCredentials(caResult.getClient(), expirationSeconds, currentTime);
             return new AuthData(accessToken, refreshToken);
         }

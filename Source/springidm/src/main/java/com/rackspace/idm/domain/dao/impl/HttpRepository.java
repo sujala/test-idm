@@ -22,9 +22,9 @@ import com.sun.jersey.api.client.UniformInterfaceException;
 
 public abstract class HttpRepository {
     protected static final String TOKEN_RESOURCE_PATH = "token";
-    private Configuration config;
-    private TokenConverter converter = new TokenConverter();
-    private DataCenterEndpoints endpoints;
+    private final Configuration config;
+    private final TokenConverter converter = new TokenConverter();
+    private final DataCenterEndpoints endpoints;
 
     private AuthCredentials idmCreds;
 
@@ -165,7 +165,7 @@ public abstract class HttpRepository {
         idmCreds = new AuthCredentials();
         idmCreds.setClientId(clientId);
         idmCreds.setClientSecret(clientSecret);
-        idmCreds.setGrantType(AuthGrantType.NONE);
+        idmCreds.setGrantType(AuthGrantType.CLIENT_CREDENTIALS);
         return idmCreds;
     }
 
