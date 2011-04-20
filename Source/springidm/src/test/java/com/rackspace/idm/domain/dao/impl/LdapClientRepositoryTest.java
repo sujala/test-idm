@@ -1,9 +1,11 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 
 import org.apache.commons.configuration.Configuration;
+import org.joda.time.DateTimeZone;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -17,8 +19,13 @@ import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
+import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserCredential;
+import com.rackspace.idm.domain.entity.UserHumanName;
+import com.rackspace.idm.domain.entity.UserLocale;
+import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.exception.DuplicateClientGroupException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -405,20 +412,21 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldAddUserToClientGroup() {
-        User user = userRepo.getUserByUsername("mkovacs");
+        User user = addNewTestUser();
         Client testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group,testClient.getUniqueId());
         repo.addUserToClientGroup(user.getUniqueId(), group);
-        boolean inGroup = repo.isUserInClientGroup("mkovacs", group.getUniqueId());
+        boolean inGroup = repo.isUserInClientGroup(user.getUsername(), group.getUniqueId());
         repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         repo.deleteClient(testClient.getClientId());
+        userRepo.deleteUser(user.getUsername());
         Assert.assertTrue(inGroup);
     }
     
     @Test
     public void shouldNotAddUserToClientGroupIfAlreadyInGroup() {
-        User user = userRepo.getUserByUsername("mkovacs");
+        User user = addNewTestUser();
         Client testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group,testClient.getUniqueId());
@@ -432,6 +440,7 @@ public class LdapClientRepositoryTest {
         }
         repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         repo.deleteClient(testClient.getClientId());
+        userRepo.deleteUser(user.getUsername());
     }
     
     @Test
@@ -496,7 +505,7 @@ public class LdapClientRepositoryTest {
     @Test
     public void shouldRemoveUserFromClientGroup() {
 
-        User user = userRepo.getUserByUsername("mkovacs");
+        User user = addNewTestUser();
         Client testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group,testClient.getUniqueId());
@@ -504,12 +513,13 @@ public class LdapClientRepositoryTest {
         repo.removeUserFromGroup(user.getUniqueId(), group);
         repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         repo.deleteClient(testClient.getClientId());
+        userRepo.deleteUser(user.getUsername());
     }
     
     @Test
     public void shouldNotRemoveUserFromClientGroupIfUserNotInGroup() {
 
-        User user = userRepo.getUserByUsername("mkovacs");
+        User user = addNewTestUser();
         Client testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group,testClient.getUniqueId());
@@ -521,6 +531,7 @@ public class LdapClientRepositoryTest {
         }
         repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         repo.deleteClient(testClient.getClientId());
+        userRepo.deleteUser(user.getUsername());
     }
     
     @Test
@@ -650,5 +661,35 @@ public class LdapClientRepositoryTest {
         User user = new User();
         user.setUniqueId(userDN);
         return user;
+    }
+    
+    private User addNewTestUser() {
+        User newUser = createTestUserInstance();
+        userRepo.addUser(newUser, testCustomerDN);
+        return newUser;
+    }
+
+    private User createTestUserInstance() {
+        // Password pwd = Password.newInstance("password_to_delete");
+        Password pwd = Password.generateRandom(false);
+        User newUser = new User("deleteme", "RCN-DELETE-ME_NOW", "bademail@example.com", new UserHumanName(
+            "delete_my_firstname", "delete_my_middlename", "delete_my_lastname"), new UserLocale(
+            Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd, "What is your favourite colur?",
+            "Yellow. No, Blue! Arrrrgh!"));
+        newUser.setApiKey("XXX");
+        newUser.setCustomerId("RACKSPACE");
+        newUser.setCountry("USA");
+        newUser.setPersonId("RPN-111-222-333");
+        newUser.setDisplayName("MY DISPLAY NAME");
+        newUser.setIname("@Rackspace.TestCustomer*deleteme");
+        newUser.setInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE.5555");
+        newUser.setOrgInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE");
+        newUser.setStatus(UserStatus.ACTIVE);
+        newUser.setRegion("ORD");
+        newUser.setSoftDeleted(false);
+        newUser.setDefaults();
+        newUser.setNastId("TESTNASTID");
+        newUser.setMossoId(88888);
+        return newUser;
     }
 }

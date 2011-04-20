@@ -56,7 +56,8 @@ public class LdapUserRepositoryTest {
     }
 
     private static LdapUserRepository getRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        Configuration appConfig = new PropertyFileConfiguration()
+            .getConfigFromClasspath();
         return new LdapUserRepository(connPools, appConfig);
     }
 
@@ -263,7 +264,8 @@ public class LdapUserRepositoryTest {
         repo.updateUser(newUser, false);
 
         User deletedUser = repo.getUserByUsername(newUser.getUsername());
-        User notFound = repo.getUserByCustomerIdAndUsername(newUser.getCustomerId(), newUser.getUsername());
+        User notFound = repo.getUserByCustomerIdAndUsername(
+            newUser.getCustomerId(), newUser.getUsername());
 
         Assert.assertNotNull(deletedUser);
         Assert.assertNull(notFound);
@@ -272,7 +274,8 @@ public class LdapUserRepositoryTest {
 
         repo.updateUser(deletedUser, false);
 
-        User restoredUser = repo.getUserByCustomerIdAndUsername(deletedUser.getCustomerId(), deletedUser.getUsername());
+        User restoredUser = repo.getUserByCustomerIdAndUsername(
+            deletedUser.getCustomerId(), deletedUser.getUsername());
         Assert.assertNotNull(restoredUser);
 
         repo.deleteUser(newUser.getUsername());
@@ -294,7 +297,8 @@ public class LdapUserRepositoryTest {
 
         repo.updateUser(softDeletedUser, false);
 
-        User unSoftDeletedUser = repo.getUserByCustomerIdAndUsername(newUser.getCustomerId(), newUser.getUsername());
+        User unSoftDeletedUser = repo.getUserByCustomerIdAndUsername(
+            newUser.getCustomerId(), newUser.getUsername());
 
         Assert.assertNull(unSoftDeletedUser.getSoftDeleteTimestamp());
 
@@ -325,7 +329,8 @@ public class LdapUserRepositoryTest {
         newUser.setFirstname("new_first_name");
         newUser.setLastname("new_last_name");
 
-        newUser.setPasswordObj(Password.existingInstance("password", new DateTime(), false));
+        newUser.setPasswordObj(Password.existingInstance("password",
+            new DateTime(), false));
 
         try {
             repo.updateUser(newUser, false);
@@ -373,7 +378,8 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
-    public void shouldGenerateModifications() throws GeneralSecurityException, InvalidCipherTextException {
+    public void shouldGenerateModifications() throws GeneralSecurityException,
+        InvalidCipherTextException {
         User user = createTestUserInstance();
         User cUser = createTestUserInstance();
         cUser.setEmail("changed@deleteme.com");
@@ -386,9 +392,11 @@ public class LdapUserRepositoryTest {
 
         Assert.assertEquals(7, mods.size()); // 5 if the password hadn't been
                                              // changed
-        String expectedPasswordValue = new Modification(ModificationType.REPLACE,
-            LdapRepository.ATTR_PASSWORD, "newpassword!", newPassword.getValue()).getAttribute().getValue();
-        Assert.assertEquals(expectedPasswordValue, mods.get(2).getAttribute().getValue());
+        String expectedPasswordValue = new Modification(
+            ModificationType.REPLACE, LdapRepository.ATTR_PASSWORD,
+            "newpassword!", newPassword.getValue()).getAttribute().getValue();
+        Assert.assertEquals(expectedPasswordValue, mods.get(2).getAttribute()
+            .getValue());
     }
 
     @Test
@@ -403,7 +411,8 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldAuthenticateForCorrectCredentials() {
         User user = addNewTestUser();
-        UserAuthenticationResult result = repo.authenticate(user.getUsername(), user.getPassword());
+        UserAuthenticationResult result = repo.authenticate(user.getUsername(),
+            user.getPassword());
         repo.deleteUser(user.getUsername());
         Assert.assertTrue(result.isAuthenticated());
     }
@@ -411,7 +420,8 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldAuthenticateByAPIKey() {
         User user = addNewTestUser();
-        UserAuthenticationResult authenticated = repo.authenticateByAPIKey(user.getUsername(), user.getApiKey());
+        UserAuthenticationResult authenticated = repo.authenticateByAPIKey(
+            user.getUsername(), user.getApiKey());
         repo.deleteUser(user.getUsername());
         Assert.assertTrue(authenticated.isAuthenticated());
     }
@@ -419,7 +429,8 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldAuthenticateByNastIdAndAPIKey() {
         User newUser = addNewTestUser();
-        UserAuthenticationResult authenticated = repo.authenticateByNastIdAndAPIKey("TESTNASTID", "XXX");
+        UserAuthenticationResult authenticated = repo
+            .authenticateByNastIdAndAPIKey("TESTNASTID", "XXX");
         Assert.assertTrue(authenticated.isAuthenticated());
         repo.deleteUser(newUser.getUsername());
     }
@@ -427,7 +438,8 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldAuthenticateByMossoIdAndAPIKey() {
         User newUser = addNewTestUser();
-        UserAuthenticationResult authenticated = repo.authenticateByMossoIdAndAPIKey(88888, "XXX");
+        UserAuthenticationResult authenticated = repo
+            .authenticateByMossoIdAndAPIKey(88888, "XXX");
         Assert.assertTrue(authenticated.isAuthenticated());
         repo.deleteUser(newUser.getUsername());
     }
@@ -435,7 +447,8 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldNotAuthenticateForBadCredentials() {
         User newUser = addNewTestUser();
-        UserAuthenticationResult result = repo.authenticate(newUser.getUsername(), "bad password");
+        UserAuthenticationResult result = repo.authenticate(
+            newUser.getUsername(), "bad password");
         repo.deleteUser(newUser.getUsername());
         Assert.assertFalse(result.isAuthenticated());
     }
@@ -443,7 +456,8 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldNotAuthenticateWithBadApiKey() {
         User newUser = addNewTestUser();
-        UserAuthenticationResult authenticated = repo.authenticateByAPIKey(newUser.getUsername(), "BadApiKey");
+        UserAuthenticationResult authenticated = repo.authenticateByAPIKey(
+            newUser.getUsername(), "BadApiKey");
         repo.deleteUser(newUser.getUsername());
         Assert.assertFalse(authenticated.isAuthenticated());
     }
@@ -503,7 +517,7 @@ public class LdapUserRepositoryTest {
         Assert.assertTrue(newUser.isMaxLoginFailuresExceded());
     }
 
-    @Test(expected = PasswordSelfUpdateTooSoonException.class)
+    @Test
     public void shouldNotAllowPasswordSelfUpdateWithin24Hours() {
         User newUser = addNewTestUser();
         Password pwd0 = Password.newInstance("newPassword0");
@@ -511,7 +525,11 @@ public class LdapUserRepositoryTest {
         repo.updateUser(newUser, true);
         Password pwd1 = Password.newInstance("newPassword1");
         newUser.setPasswordObj(pwd1);
-        repo.updateUser(newUser, true);
+        try {
+            repo.updateUser(newUser, true);
+        } catch (PasswordSelfUpdateTooSoonException ex) {
+            repo.deleteUser(newUser.getUsername());
+        }
     }
 
     private User addNewTestUser() {
@@ -523,10 +541,11 @@ public class LdapUserRepositoryTest {
     private User createTestUserInstance() {
         // Password pwd = Password.newInstance("password_to_delete");
         Password pwd = Password.generateRandom(false);
-        User newUser = new User("deleteme", "RCN-DELETE-ME_NOW", "bademail@example.com", new UserHumanName(
-            "delete_my_firstname", "delete_my_middlename", "delete_my_lastname"), new UserLocale(
-            Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd, "What is your favourite colur?",
-            "Yellow. No, Blue! Arrrrgh!"));
+        User newUser = new User("deleteme", "RCN-DELETE-ME_NOW",
+            "bademail@example.com", new UserHumanName("delete_my_firstname",
+                "delete_my_middlename", "delete_my_lastname"), new UserLocale(
+                Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd,
+                "What is your favourite colur?", "Yellow. No, Blue! Arrrrgh!"));
         newUser.setApiKey("XXX");
         newUser.setCustomerId("RACKSPACE");
         newUser.setCountry("USA");
@@ -546,11 +565,14 @@ public class LdapUserRepositoryTest {
 
     private User createTestUserInstanceWithPeriod() {
         Password pwd = Password.newInstance("delete_my_password");
-        User newUser = new User("delete.me", "RCN-DELETE-ME_NOW", "bademail@example.com", new UserHumanName(
-            "delete_my_firstname", "delete_my_middlename", "delete_my_lastname"), new UserLocale(
-            Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd, "What is your favourite colur?",
-            "Yellow. No, Blue! Arrrrgh!"), "USA", "MY DISPLAY NAME", "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE.5556",
-            "@Rackspace.TestCustomer*delete.me", "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE", "XXX", UserStatus.ACTIVE,
+        User newUser = new User("delete.me", "RCN-DELETE-ME_NOW",
+            "bademail@example.com", new UserHumanName("delete_my_firstname",
+                "delete_my_middlename", "delete_my_lastname"), new UserLocale(
+                Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd,
+                "What is your favourite colur?", "Yellow. No, Blue! Arrrrgh!"),
+            "USA", "MY DISPLAY NAME", "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE.5556",
+            "@Rackspace.TestCustomer*delete.me",
+            "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE", "XXX", UserStatus.ACTIVE,
             "RPN-111-222-333");
         newUser.setDefaults();
         return newUser;
@@ -558,10 +580,11 @@ public class LdapUserRepositoryTest {
 
     private User createTestUserInstanceWithComma() {
         Password pwd = Password.newInstance("delete_my_password");
-        User newUser = new User("delete,me", "RCN-DELETE-ME_NOW", "bademail@example.com", new UserHumanName(
-            "delete_my_firstname", "delete_my_middlename", "delete_my_lastname"), new UserLocale(
-            Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd, "What is your favourite colur?",
-            "Yellow. No, Blue! Arrrrgh!"));
+        User newUser = new User("delete,me", "RCN-DELETE-ME_NOW",
+            "bademail@example.com", new UserHumanName("delete_my_firstname",
+                "delete_my_middlename", "delete_my_lastname"), new UserLocale(
+                Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd,
+                "What is your favourite colur?", "Yellow. No, Blue! Arrrrgh!"));
         newUser.setApiKey("XXX");
         newUser.setCountry("USA");
         newUser.setPersonId("RPN-111-222-333");
