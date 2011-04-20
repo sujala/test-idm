@@ -42,8 +42,8 @@ public class DefaultClientService implements ClientService {
     @Override
     public void add(Client client) {
         logger.debug("Adding Client: {}", client);
-        Customer customer = customerDao
-            .getCustomerByCustomerId(client.getCustomerId());
+        Customer customer = customerDao.getCustomerByCustomerId(client
+            .getCustomerId());
 
         if (customer == null) {
             logger.warn(
@@ -153,18 +153,21 @@ public class DefaultClientService implements ClientService {
 
     @Override
     public void deleteDefinedPermission(Permission permission) {
-        Permission p = this.clientDao.getDefinedPermissionByClientIdAndPermissionId(permission.getClientId(), permission.getPermissionId());
-        
+        Permission p = this.clientDao
+            .getDefinedPermissionByClientIdAndPermissionId(
+                permission.getClientId(), permission.getPermissionId());
+
         if (p == null) {
             throw new NotFoundException("Defined Permission not found.");
         }
-        
-        List<Client> clientsWithPermission = this.clientDao.getClientsThatHavePermission(p);
-        
+
+        List<Client> clientsWithPermission = this.clientDao
+            .getClientsThatHavePermission(p);
+
         for (Client client : clientsWithPermission) {
             this.clientDao.revokePermissionFromClient(p, client);
         }
-        
+
         clientDao.deleteDefinedPermission(permission);
     }
 
@@ -306,32 +309,35 @@ public class DefaultClientService implements ClientService {
 
     @Override
     public void addClientGroup(ClientGroup clientGroup) {
-        
-        Client client = clientDao.getClientByClientId(clientGroup.getClientId());
+
+        Client client = clientDao
+            .getClientByClientId(clientGroup.getClientId());
 
         if (client == null) {
-            logger.warn(
-                "Couldn't add group {} because clientId doesn't exist",
+            logger.warn("Couldn't add group {} because clientId doesn't exist",
                 clientGroup.getClientId());
             throw new NotFoundException("Client doesn't exist");
         }
-        
-        Customer customer = customerDao.getCustomerByCustomerId(clientGroup.getCustomerId());
-        
+
+        Customer customer = customerDao.getCustomerByCustomerId(clientGroup
+            .getCustomerId());
+
         if (customer == null) {
-            logger.warn("Could not add group {} because customer {} not found", clientGroup.getName(), 
-                clientGroup.getCustomerId());
+            logger.warn("Could not add group {} because customer {} not found",
+                clientGroup.getName(), clientGroup.getCustomerId());
             throw new NotFoundException();
         }
-        
+
         clientDao.addClientGroup(clientGroup, client.getUniqueId());
     }
 
     @Override
-    public void addUserToClientGroup(String username, String customerId, String clientId, String groupName) {
-        
-        ClientGroup group = this.getClientGroup(customerId, clientId, groupName);
-        
+    public void addUserToClientGroup(String username, String customerId,
+        String clientId, String groupName) {
+
+        ClientGroup group = this
+            .getClientGroup(customerId, clientId, groupName);
+
         if (group == null) {
             String errMsg = String
                 .format(
@@ -355,7 +361,7 @@ public class DefaultClientService implements ClientService {
         String groupName) {
         ClientGroup group = clientDao.getClientGroup(customerId, clientId,
             groupName);
-        
+
         return group;
     }
 
@@ -377,9 +383,10 @@ public class DefaultClientService implements ClientService {
         if (user == null) {
             throw new NotFoundException();
         }
-        
-        Customer customer = customerDao.getCustomerByCustomerId(clientGroup.getCustomerId());
-        
+
+        Customer customer = customerDao.getCustomerByCustomerId(clientGroup
+            .getCustomerId());
+
         if (customer == null) {
             throw new NotFoundException();
         }
@@ -396,7 +403,7 @@ public class DefaultClientService implements ClientService {
     public List<ClientGroup> getClientGroupsForUserByClientIdAndType(
         String username, String clientId, String type) {
 
-        logger.info("Getting Groups for User: {}", username);
+        logger.debug("Getting Groups for User: {}", username);
         String[] groupIds = userDao.getGroupIdsForUser(username);
 
         List<ClientGroup> groups = new ArrayList<ClientGroup>();
@@ -452,6 +459,26 @@ public class DefaultClientService implements ClientService {
     }
 
     @Override
+    public boolean isUserMemberOfClientGroup(String username, ClientGroup group) {
+        logger.debug("Is user {} member of {}", username, group);
+
+        ClientGroup foundGroup = this.clientDao.getClientGroup(
+            group.getCustomerId(), group.getClientId(), group.getName());
+        if (foundGroup == null) {
+            String errMsg = String.format("ClientGroup %s not found", group);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        boolean isMember = this.clientDao.isUserInClientGroup(username,
+            foundGroup.getUniqueId());
+
+        logger.debug(String.format("Is user %s member of %s - %s", username,
+            group, isMember));
+
+        return isMember;
+    }
+
+    @Override
     public void updateClientGroup(ClientGroup group) {
 
         clientDao.updateClientGroup(group);
@@ -462,14 +489,14 @@ public class DefaultClientService implements ClientService {
         Permission p = this.clientDao
             .getDefinedPermissionByClientIdAndPermissionId(
                 permission.getClientId(), permission.getPermissionId());
-        
+
         if (p == null) {
             throw new NotFoundException("Permission Not Found");
         }
-        
+
         return this.clientDao.getClientsThatHavePermission(permission);
     }
-    
+
     private void addUserToClientGroup(String username, ClientGroup clientGroup) {
         if (StringUtils.isBlank(username)) {
             throw new IllegalArgumentException("username cannot be blank");
@@ -493,6 +520,5 @@ public class DefaultClientService implements ClientService {
             return;
         }
     }
-    
-    
+
 }

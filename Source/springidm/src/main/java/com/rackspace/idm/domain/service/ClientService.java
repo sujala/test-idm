@@ -50,6 +50,8 @@ public interface ClientService {
     List<Permission> getDefinedPermissionsByClientId(String clientId);
 
     void grantPermission(String clientId, Permission p);
+    
+    boolean isUserMemberOfClientGroup(String username, ClientGroup group);
 
     void revokePermission(String clientId, Permission p);
 

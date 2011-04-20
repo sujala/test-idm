@@ -893,6 +893,27 @@ public class ClientServiceTests {
         
         Assert.assertTrue(groups.size() == 2);
     }
+    
+    @Test
+    public void shouldReturnTrueForIsUserInClientGroup() {
+        ClientGroup group = getFakeClientGroup();
+        EasyMock.expect(mockClientDao.getClientGroup(customerId, clientId, groupName)).andReturn(group);
+        EasyMock.expect(mockClientDao.isUserInClientGroup(username, groupDN)).andReturn(true);
+        EasyMock.replay(mockClientDao);
+        
+        boolean inGroup = clientService.isUserMemberOfClientGroup(username, group);
+        Assert.assertTrue(inGroup);
+        EasyMock.verify(mockClientDao);
+    }
+    
+    @Test(expected=NotFoundException.class)
+    public void shouldThrowNotFoundForIsUserInNonExisitentClientGroup() {
+        ClientGroup group = getFakeClientGroup();
+        EasyMock.expect(mockClientDao.getClientGroup(customerId, clientId, groupName)).andReturn(null);
+        EasyMock.replay(mockClientDao);
+        
+        clientService.isUserMemberOfClientGroup(username, group);
+    }
 
     private Client getFakeClient() {
         return new Client(clientId, clientSecret, name, inum, iname,
