@@ -41,8 +41,8 @@
 <book xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink"
   xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:svg="http://www.w3.org/2000/svg"
   xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:html="http://www.w3.org/1999/xhtml"
-  xmlns:db="http://docbook.org/ns/docbook" version="5.0">
-  <title>IdM Developer Guide</title>
+  xmlns:db="http://docbook.org/ns/docbook" version="5.0" status="draft">
+  <title>Global Auth API Developer Guide</title>
   <info>
     <author>
       <personname>
@@ -54,28 +54,33 @@
       </affiliation>
     </author>
     <copyright>
+      <year>2010</year>
       <year>2011</year>
       <holder>Rackspace Hosting, Inc.</holder>
     </copyright>
     <releaseinfo>API v1.0.2011.14</releaseinfo>
-    <productname>Identity Management (IdM)</productname>
+    <productname>Global Auth API</productname>
     <pubdate>4/20/11</pubdate>
+    <legalnotice role="apache2">
+      <annotation>
+        <remark>Copyright details are filled in by the template.</remark>
+      </annotation>
+    </legalnotice>
     <abstract>
       <para> This document is intended for software developers interested in developing applications
-        which utilizes Customer Identity Management System as the authentication engine. It includes
-        details on how to integrate with IdM. </para>
+        which utilizes Global Auth API System as the authentication engine. It includes details on
+        how to integrate with Global Auth API. </para>
     </abstract>
   </info>
   <chapter>
     <title>Overview</title>
-    <para>The IdM Service allows Rackspace Applications to obtain tokens that can be used to access
-      resources in the Rackspace Cloud. This document is intended for: </para>
+    <para>The Global Auth API Service allows Rackspace Applications to obtain tokens that can be
+      used to access resources in Rackspace. This document is intended for: </para>
     <variablelist>
       <varlistentry>
         <term>Service Developers</term>
         <listitem>
-          <para> Service developers are interested in writing client for Rackspace IdM service.
-          </para>
+          <para> Service developers are interested in writing client for Global Auth API service. </para>
         </listitem>
       </varlistentry>
     </variablelist>
@@ -107,13 +112,13 @@
   </chapter>
   <chapter>
     <title>General API Information</title>
-    <para>The IdM API is implemented using a RESTful web service interface. All requests to
-      authenticate and operate against the IdM API are performed using SSL over HTTP (HTTPS) on TCP
-      port 443.</para>
+    <para>The Global Auth API is implemented using a RESTful web service interface. All requests to
+      authenticate and operate against the Global Auth API are performed using SSL over HTTP (HTTPS)
+      on TCP port 443.</para>
     <section>
       <title>Request/Response Types</title>
-      <para> The IdM API supports both the JSON and XML data serialization formats. The request
-        format is specified using the <code>Content-Type</code> header and is required for
+      <para>The Global Auth API supports both the JSON and XML data serialization formats. The
+        request format is specified using the <code>Content-Type</code> header and is required for
         operations that have a request body. The response format can be specified in requests using
         either the <code>Accept</code> header or adding an <code>.xml</code> or <code>.json</code>
         extension to the request URI. Note that it is possible for a response to be serialized using
@@ -376,6 +381,60 @@
         as JAXB), one should be capable of using <type>idmFault</type> as a “catch-all” if
         there&apos;s no interest in distinguishing between individual fault types. </para>
     </section>
+    <section>
+      <title>Getting Started</title>
+      <para> The first step to using the Global Auth API is registering your application with Global
+        Auth. The Global Auth Team will need the following information in order to register your
+        application.</para>
+      <table rules="all">
+        <caption>Application Information needed to register with Global Auth API</caption>
+        <thead>
+          <tr>
+            <td>Item</td>
+            <td>Description</td>
+            <td>Example</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Name</td>
+            <td>The name of the application</td>
+            <td>Cloud Servers API</td>
+          </tr>
+          <tr>
+            <td>Simple Name</td>
+            <td>A continuous lower case name</td>
+            <td>cloud_servers_api</td>
+          </tr>
+          <tr>
+            <td>Description</td>
+            <td>A human readable description of what the application does, which should be presentable to end users.</td>
+            <td>Cloud Servers API is ...</td>
+          </tr>
+        </tbody>
+      </table>
+      <para>Once the Global Auth Team has this information we will add your application to the Global 
+        Auth System and send you the clientId and clientSecret that you will need in order to 
+        authenticate with the Global Auth API (see section below for Authentication).</para>
+      <example>
+        <title>JSON Request with Headers</title>
+        <programlisting language="xml">
+<xi:include href="../../formattedsamples/samplerequestheader.json" parse="text"/>
+</programlisting>
+        <programlisting language="xml">
+<xi:include href="../../formattedsamples/auth_credentials.xml" parse="text"/>
+</programlisting>
+      </example>
+      <example>
+        <title>XML Response with Headers</title>
+        <programlisting language="xml">
+<xi:include href="../../formattedsamples/sampleresponseheader.json" parse="text"/>
+</programlisting>
+        <programlisting language="xml">
+<xi:include href="../../formattedsamples/auth.xml" parse="text"/>
+</programlisting>
+      </example>
+    </section>
   </chapter>
   <chapter>
     <title>Service Developer Operations</title>
@@ -395,7 +454,7 @@
             <tr>
               <td colspan="1"> &POST; </td>
               <td colspan="1">/token</td>
-              <td colspan="4">Authenticate to generate a token and a service catalog.</td>
+              <td colspan="4">Authenticate a user or application and generate an access token.</td>
             </tr>
           </tbody>
         </informaltable>
@@ -404,27 +463,51 @@
             (<errorcode>403</errorcode>), badRequest (<errorcode>400</errorcode>), idmFault
             (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         <example>
-          <title>XML Auth Request</title>
+          <title>XML User Auth Request</title>
           <programlisting language="xml">
  <xi:include href="../../formattedsamples/auth_credentials.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Auth Request</title>
+          <title>JSON User Auth Request</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/auth_credentials.json" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>XML Auth Response</title>
+          <title>XML User Auth Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/auth.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Auth Response</title>
+          <title>JSON User Auth Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/auth.json" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+        <title>XML Application Auth Request</title>
+        <programlisting language="xml">
+ <xi:include href="../../formattedsamples/cauth_credentials.xml" parse="text"/>
+</programlisting>
+</example>
+        <example>
+          <title>JSON Application Auth Request</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/cauth_credentials.json" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>XML Application Auth Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/cauth.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Application Auth Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/cauth.json" parse="text"/>
 </programlisting>
         </example>
       </section>
