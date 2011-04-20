@@ -1,18 +1,18 @@
 package com.rackspace.idm.domain.entity;
 
+import java.util.List;
 import java.util.Locale;
 
-import com.rackspace.idm.validation.MessageTexts;
-import com.rackspace.idm.validation.RegexPatterns;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import com.rackspace.idm.GlobalConstants;
-import java.util.List;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
 
 public class User extends BaseUser implements Auditable {
     private static final long serialVersionUID = 1347677880811855274L;
@@ -25,7 +25,6 @@ public class User extends BaseUser implements Auditable {
     private UserCredential credential = new UserCredential();
     private String personId = null;
 
-    private String uniqueId = null;
     private UserHumanName name = new UserHumanName();
     private UserLocale preference = new UserLocale();
     private String country = null;
@@ -91,13 +90,15 @@ public class User extends BaseUser implements Auditable {
         this.personId = personId;
     }
 
+    @Override
     public String getUniqueId() {
-        return uniqueId;
+        return super.getUniqueId();
     }
 
+    @Override
     public void setUniqueId(String uniqueId) {
         if (uniqueId != null) {
-            this.uniqueId = uniqueId;
+            super.setUniqueId(uniqueId);
         }
     }
 
@@ -494,14 +495,14 @@ public class User extends BaseUser implements Auditable {
         result = prime * result + ((iname == null) ? 0 : iname.hashCode());
         result = prime * result + ((inum == null) ? 0 : inum.hashCode());
         result = prime * result + ((locked == null) ? 0 : locked.hashCode());
-        result = prime * result + ((mossoId == null) ? 0 : mossoId.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result + ((nastId == null) ? 0 : nastId.hashCode());
-        result = prime * result + ((orgInum == null) ? 0 : orgInum.hashCode());
         result = prime
             * result
             + ((maxLoginFailuresExceded == null) ? 0 : maxLoginFailuresExceded
                 .hashCode());
+        result = prime * result + ((mossoId == null) ? 0 : mossoId.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((nastId == null) ? 0 : nastId.hashCode());
+        result = prime * result + ((orgInum == null) ? 0 : orgInum.hashCode());
         result = prime * result
             + ((personId == null) ? 0 : personId.hashCode());
         result = prime * result
@@ -509,9 +510,11 @@ public class User extends BaseUser implements Auditable {
         result = prime * result + ((region == null) ? 0 : region.hashCode());
         result = prime * result
             + ((softDeleted == null) ? 0 : softDeleted.hashCode());
-        result = prime * result + ((status == null) ? 0 : status.toString().hashCode());
-        result = prime * result
-            + ((uniqueId == null) ? 0 : uniqueId.hashCode());
+        result = prime
+            * result
+            + ((softDeletedTimestamp == null) ? 0 : softDeletedTimestamp
+                .hashCode());
+        result = prime * result + ((status == null) ? 0 : status.hashCode());
         result = prime * result + ((updated == null) ? 0 : updated.hashCode());
         return result;
     }
@@ -591,6 +594,14 @@ public class User extends BaseUser implements Auditable {
         } else if (!locked.equals(other.locked)) {
             return false;
         }
+        if (maxLoginFailuresExceded == null) {
+            if (other.maxLoginFailuresExceded != null) {
+                return false;
+            }
+        } else if (!maxLoginFailuresExceded
+            .equals(other.maxLoginFailuresExceded)) {
+            return false;
+        }
         if (mossoId == null) {
             if (other.mossoId != null) {
                 return false;
@@ -617,13 +628,6 @@ public class User extends BaseUser implements Auditable {
                 return false;
             }
         } else if (!orgInum.equals(other.orgInum)) {
-            return false;
-        }
-        if (maxLoginFailuresExceded == null) {
-            if (other.maxLoginFailuresExceded != null) {
-                return false;
-            }
-        } else if (!maxLoginFailuresExceded.equals(other.maxLoginFailuresExceded)) {
             return false;
         }
         if (personId == null) {
@@ -654,14 +658,14 @@ public class User extends BaseUser implements Auditable {
         } else if (!softDeleted.equals(other.softDeleted)) {
             return false;
         }
-        if (status != other.status) {
-            return false;
-        }
-        if (uniqueId == null) {
-            if (other.uniqueId != null) {
+        if (softDeletedTimestamp == null) {
+            if (other.softDeletedTimestamp != null) {
                 return false;
             }
-        } else if (!uniqueId.equals(other.uniqueId)) {
+        } else if (!softDeletedTimestamp.equals(other.softDeletedTimestamp)) {
+            return false;
+        }
+        if (status != other.status) {
             return false;
         }
         if (updated == null) {
@@ -677,15 +681,15 @@ public class User extends BaseUser implements Auditable {
     @Override
     public String toString() {
         return "User [email=" + email + ", credential=" + credential
-            + ", personId=" + personId + ", uniqueId=" + uniqueId + ", name="
-            + name + ", preference=" + preference + ", country=" + country
-            + ", displayName=" + displayName + ", inum=" + inum + ", iname="
-            + iname + ", locked=" + locked + ", orgInum=" + orgInum
-            + ", apiKey=" + apiKey + ", status=" + status + ", softDeleted=" + softDeleted + ", region=" + region
-            + ", nastId=" + nastId + ", mossoId=" + mossoId + ", created="
-            + created + ", updated=" + updated + ", passwordFailureLocked="
-            + maxLoginFailuresExceded + ", username=" + getUsername()
-            + ", customerId=" + getCustomerId() + ", groups=" + getGroups() + "]";
+            + ", personId=" + personId + ", name=" + name + ", preference="
+            + preference + ", country=" + country + ", displayName="
+            + displayName + ", inum=" + inum + ", iname=" + iname + ", locked="
+            + locked + ", orgInum=" + orgInum + ", apiKey=" + apiKey
+            + ", status=" + status + ", softDeleted=" + softDeleted
+            + ", region=" + region + ", nastId=" + nastId + ", mossoId="
+            + mossoId + ", created=" + created + ", updated=" + updated
+            + ", softDeletedTimestamp=" + softDeletedTimestamp
+            + ", maxLoginFailuresExceded=" + maxLoginFailuresExceded + "]";
     }
 
     public static class Builder {
@@ -705,7 +709,7 @@ public class User extends BaseUser implements Auditable {
             user.setUsername(userName);
             user.inum = inum;
             user.iname = iname;
-            user.uniqueId = uniqueId;
+            user.setUniqueId(uniqueId);
 
             return this;
         }

@@ -7,7 +7,6 @@ import static com.rackspace.idm.domain.entity.OAuthGrantType.REFRESH_TOKEN;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.groups.Default;
 
 import org.apache.commons.configuration.Configuration;
@@ -17,13 +16,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.idm.ErrorMsg;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.GlobalConstants.TokenDeleteByType;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.AuthData;
+import com.rackspace.idm.domain.entity.BaseClient;
+import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.Clients;
@@ -38,12 +38,10 @@ import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.RefreshTokenService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.ApiException;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.TokenExpiredException;
 import com.rackspace.idm.validation.BasicCredentialsCheck;
 import com.rackspace.idm.validation.InputValidator;
 import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
@@ -122,8 +120,7 @@ public class DefaultOAuthService implements OAuthService {
 
             accessToken = accessTokenService.getTokenByBasicCredentials(caResult.getClient(),
                     uaResult.getUser(), expirationSeconds, currentTime);
-            refreshToken = getRefreshTokenForUser(uaResult.getUser().getUsername(), caResult.getClient()
-                    .getClientId(), currentTime);
+            refreshToken = getRefreshTokenForUser(uaResult.getUser(), caResult.getClient(), currentTime);
             return new AuthData(accessToken, refreshToken);
         }
 
@@ -377,7 +374,7 @@ public class DefaultOAuthService implements OAuthService {
         refreshTokenService.deleteTokenForUserByClientId(accessToken.getOwner(), accessToken.getRequestor());
     }
 
-    private AccessToken getTokenByNoCredentials(final Client client, final int expirationSeconds, final DateTime currentTime) {
+    private AccessToken getTokenByNoCredentials(final BaseClient client, final int expirationSeconds, final DateTime currentTime) {
         AccessToken token = accessTokenService.getAccessTokenForClient(client, currentTime);
         if (token == null || token.isExpired(currentTime)) {
             token = accessTokenService.createAccessTokenForClient(client, expirationSeconds);
@@ -405,11 +402,11 @@ public class DefaultOAuthService implements OAuthService {
         return new AuthData(token, refreshToken);
     }
 
-    private RefreshToken getRefreshTokenForUser(final String username, final String clientId, final DateTime currentTime) {
-        RefreshToken refreshToken = refreshTokenService.getRefreshTokenByUserAndClient(username, clientId,
+    private RefreshToken getRefreshTokenForUser(BaseUser user, BaseClient client, final DateTime currentTime) {
+        RefreshToken refreshToken = refreshTokenService.getRefreshTokenByUserAndClient(user.getUsername(), client.getClientId(),
                 currentTime);
         if (refreshToken == null) {
-            refreshToken = refreshTokenService.createRefreshTokenForUser(username, clientId);
+            refreshToken = refreshTokenService.createRefreshTokenForUser(user, client);
         } else {
             refreshTokenService.resetTokenExpiration(refreshToken);
         }

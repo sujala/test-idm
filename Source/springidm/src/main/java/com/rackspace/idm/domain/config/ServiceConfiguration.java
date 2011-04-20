@@ -25,7 +25,6 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.dao.XdcAccessTokenDao;
 import com.rackspace.idm.domain.entity.EmailSettings;
-import com.rackspace.idm.domain.entity.RefreshTokenDefaultAttributes;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.ApiDocService;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -186,13 +185,7 @@ public class ServiceConfiguration {
 
     @Bean
     public RefreshTokenService refreshTokenService() {
-        int defaultTokenExpirationSeconds = config.getInt("token.refreshTokenExpirationSeconds");
-        String dataCenterPrefix = config.getString("token.dataCenterPrefix");
-
-        RefreshTokenDefaultAttributes defaultAttributes = new RefreshTokenDefaultAttributes(
-            defaultTokenExpirationSeconds, dataCenterPrefix);
-
-        return new DefaultRefreshTokenService(defaultAttributes, refreshTokenDao);
+        return new DefaultRefreshTokenService(scopeAccessDao, userRepo, config);
     }
 
     @Bean

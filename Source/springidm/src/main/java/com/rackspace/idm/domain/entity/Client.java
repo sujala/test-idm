@@ -1,11 +1,12 @@
 package com.rackspace.idm.domain.entity;
 
-import com.rackspace.idm.validation.MessageTexts;
-import com.rackspace.idm.validation.RegexPatterns;
+import java.util.List;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-import java.util.List;
+
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
 
 public class Client extends BaseClient implements Auditable {
     private static final long serialVersionUID = -3160754818606772239L;
@@ -19,7 +20,6 @@ public class Client extends BaseClient implements Auditable {
     @NotNull
     private ClientStatus status = null;
 
-    private String uniqueId = null;
     private String inum = null;
     private String iname = null;
     private String orgInum = null;
@@ -39,14 +39,16 @@ public class Client extends BaseClient implements Auditable {
         this.status = status;
     }
 
+    @Override
     public void setUniqueId(String uniqueId) {
         if (uniqueId != null) {
-            this.uniqueId = uniqueId;
+            super.setUniqueId(uniqueId);
         }
     }
 
+    @Override
     public String getUniqueId() {
-        return uniqueId;
+        return super.getUniqueId();
     }
 
     public void setClientSecretObj(ClientSecret clientSecret) {
@@ -183,11 +185,10 @@ public class Client extends BaseClient implements Auditable {
         result = prime * result + ((inum == null) ? 0 : inum.hashCode());
         result = prime * result + ((locked == null) ? 0 : locked.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((orgInum == null) ? 0 : orgInum.hashCode());
         result = prime * result
             + ((softDeleted == null) ? 0 : softDeleted.hashCode());
         result = prime * result + ((status == null) ? 0 : status.hashCode());
-        result = prime * result
-            + ((uniqueId == null) ? 0 : uniqueId.hashCode());
         return result;
     }
 
@@ -238,6 +239,13 @@ public class Client extends BaseClient implements Auditable {
         } else if (!name.equals(other.name)) {
             return false;
         }
+        if (orgInum == null) {
+            if (other.orgInum != null) {
+                return false;
+            }
+        } else if (!orgInum.equals(other.orgInum)) {
+            return false;
+        }
         if (softDeleted == null) {
             if (other.softDeleted != null) {
                 return false;
@@ -248,22 +256,15 @@ public class Client extends BaseClient implements Auditable {
         if (status != other.status) {
             return false;
         }
-        if (uniqueId == null) {
-            if (other.uniqueId != null) {
-                return false;
-            }
-        } else if (!uniqueId.equals(other.uniqueId)) {
-            return false;
-        }
         return true;
     }
 
     @Override
     public String toString() {
         return "Client [clientSecret=" + clientSecret + ", name=" + name
-            + ", status=" + status + ", uniqueId=" + uniqueId + ", inum="
-            + inum + ", iname=" + iname + ", isLocked=" + locked
-            + ", softDeleted=" + softDeleted + "]";
+            + ", status=" + status + ", inum=" + inum + ", iname=" + iname
+            + ", orgInum=" + orgInum + ", locked=" + locked + ", softDeleted="
+            + softDeleted + "]";
     }
 
     @Override

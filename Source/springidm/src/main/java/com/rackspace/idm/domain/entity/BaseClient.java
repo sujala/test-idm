@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.entity;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -15,6 +14,8 @@ import com.rackspace.idm.validation.RegexPatterns;
 
 public class BaseClient implements Serializable {
     private static final long serialVersionUID = -1260927822525896505L;
+    
+    private String uniqueId = null;
     
     private String clientId = null;
     @NotNull
@@ -34,6 +35,23 @@ public class BaseClient implements Serializable {
         this.clientId = clientId;
         this.customerId = customerId;
         this.permissions = permissions;
+    }
+    
+    public BaseClient(String uniqueId, String clientId, String customerId, List<Permission> permissions) {
+        this.uniqueId = uniqueId;
+        this.clientId = clientId;
+        this.customerId = customerId;
+        this.permissions = permissions;
+    }
+    
+    protected void setUniqueId(String uniqueId) {
+        if (uniqueId != null) {
+            this.uniqueId = uniqueId;
+        }
+    }
+
+    public String getUniqueId() {
+        return uniqueId;
     }
 
     public String getClientId() {
@@ -146,18 +164,20 @@ public class BaseClient implements Serializable {
      */
     private static class SerializationProxy implements Serializable {
         private static final long serialVersionUID = -5052183110369433550L;
-        private String clientId;
-        private String customerId;
-        private List<Permission> permissions;
+        private final String uniqueId;
+        private final String clientId;
+        private final String customerId;
+        private final List<Permission> permissions;
 
         SerializationProxy(BaseClient baseClient) {
+            this.uniqueId = baseClient.uniqueId;
             this.clientId = baseClient.clientId;
             this.customerId = baseClient.customerId;
             this.permissions = baseClient.permissions;
         }
 
         private Object readResolve() {
-            return new BaseClient(clientId, customerId, permissions);
+            return new BaseClient(uniqueId, clientId, customerId, permissions);
         }
 
     }

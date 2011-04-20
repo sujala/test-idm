@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.GlobalConstants;
+import org.joda.time.DateTime;
+
 import com.rackspace.idm.GlobalConstants.TokenDeleteByType;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.AccessToken;
@@ -9,8 +10,6 @@ import com.rackspace.idm.domain.entity.AuthData;
 import com.rackspace.idm.domain.entity.OAuthGrantType;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
-
-import org.joda.time.DateTime;
 
 /**
  * User: john.eo

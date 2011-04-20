@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao;
 
+import java.util.List;
+
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 
@@ -14,6 +16,8 @@ public interface ScopeAccessDao {
 
     boolean doesAccessTokenHavePermission(String accessToken,
         Permission permission);
+    
+    List<ScopeAccess> getScopeAccessesByParent(String parentUniqueId);
 
     ScopeAccess getScopeAccessByAccessToken(String accessToken);
 

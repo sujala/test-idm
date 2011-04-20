@@ -1,115 +1,167 @@
 package com.rackspace.idm.services;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import junit.framework.Assert;
 
+import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.dao.RefreshTokenDao;
+import com.rackspace.idm.domain.config.PropertyFileConfiguration;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.RefreshToken;
-import com.rackspace.idm.domain.entity.RefreshTokenDefaultAttributes;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.RefreshTokenService;
 import com.rackspace.idm.domain.service.impl.DefaultRefreshTokenService;
-import com.rackspace.idm.test.stub.StubLogger;
 
 public class RefreshTokenServiceTests {
 
-    RefreshTokenDao mockRefreshTokenDao;
     RefreshTokenService refreshTokenService;
-    RefreshTokenDefaultAttributes defaultAttributes;
+
+    ScopeAccessDao mockScopeAccessDao;
+    UserDao mockUserDao;
 
     String refreshTokenString = "somerefreshtokenstring";
     String username = "someuser";
     String clientId = "someClientId";
     int defaultTokenExpirationSeconds = 86400;
     String dataCenterPrefix = "DFW";
+    
+    String accessToken = "XXXX";
+    DateTime accessTokenExpiration = new DateTime();
+    String clientRCN = "ClientRCN";
+    String refreshToken = "YYYY";
+    DateTime refreshTokenExpiration = new DateTime();
+    String userRCN = "UserRCN";
+    
+    String uniqueId = "uniqueId";
 
     @Before
     public void setUp() {
         
-        mockRefreshTokenDao = EasyMock.createMock(RefreshTokenDao.class);
+        mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
+        mockUserDao = EasyMock.createMock(UserDao.class);
+        
+        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
 
-        defaultAttributes = new RefreshTokenDefaultAttributes(
-            defaultTokenExpirationSeconds, dataCenterPrefix);
-
-        refreshTokenService = new DefaultRefreshTokenService(defaultAttributes,
-            mockRefreshTokenDao);
+        refreshTokenService = new DefaultRefreshTokenService(mockScopeAccessDao,
+            mockUserDao,appConfig);
     }
 
     @Test
-    public void shouldCreateRefreshToken() {
-        
-        RefreshToken refreshToken = getFakeRefreshToken();
-        
-        mockRefreshTokenDao.save(refreshToken);        
+    public void shouldUpdateRefreshToken() {
+        ScopeAccess scopeAccess = getFakeScopeAccess();
+        EasyMock.expect(mockScopeAccessDao.getScopeAccessByUsernameAndClientId(username, clientId)).andReturn(scopeAccess);
+        mockScopeAccessDao.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
+        EasyMock.replay(mockScopeAccessDao);
+             
         RefreshToken returnToken = refreshTokenService.createRefreshTokenForUser(
-            refreshToken.getOwner(), refreshToken.getRequestor());
+            getFakeUser(), getFakeClient());
         
         Assert.assertNotNull(returnToken);
+        EasyMock.verify(mockScopeAccessDao);
+    }
+    
+    @Test(expected=IllegalStateException.class)
+    public void shouldThrowErrorForScopeAccessNotPresent() {
+        EasyMock.expect(mockScopeAccessDao.getScopeAccessByUsernameAndClientId(username, clientId)).andReturn(null);
+        EasyMock.replay(mockScopeAccessDao);
+        RefreshToken returnToken = refreshTokenService.createRefreshTokenForUser(
+            getFakeUser(), getFakeClient());
     }
     
     @Test
     public void shouldGetRefreshTokenByTokenId() {
 
-        RefreshToken refreshToken = getFakeRefreshToken();
+        ScopeAccess scopeAccess = getFakeScopeAccess();
 
-        EasyMock.expect(
-            mockRefreshTokenDao.findByTokenString(refreshTokenString))
-            .andReturn(refreshToken);
-        EasyMock.replay(mockRefreshTokenDao);
+        EasyMock.expect(mockScopeAccessDao.getScopeAccessByRefreshToken(refreshToken))
+            .andReturn(scopeAccess);
+        EasyMock.replay(mockScopeAccessDao);
 
         RefreshToken token = refreshTokenService
-            .getRefreshTokenByTokenString(refreshTokenString);
+            .getRefreshTokenByTokenString(refreshToken);
 
         Assert.assertNotNull(token);
-        EasyMock.verify(mockRefreshTokenDao);
+        EasyMock.verify(mockScopeAccessDao);
     }
 
     @Test
     public void shouldReturnNullForInvalidRefreshToken() {
 
-        EasyMock.expect(
-            mockRefreshTokenDao.findByTokenString(refreshTokenString))
-            .andReturn(null);
-        EasyMock.replay(mockRefreshTokenDao);
+        EasyMock.expect(mockScopeAccessDao.getScopeAccessByRefreshToken(refreshToken))
+        .andReturn(null);
+    EasyMock.replay(mockScopeAccessDao);
 
         RefreshToken token = refreshTokenService
-            .getRefreshTokenByTokenString(refreshTokenString);
+            .getRefreshTokenByTokenString(refreshToken);
 
         Assert.assertNull(token);
-        EasyMock.verify(mockRefreshTokenDao);
+        EasyMock.verify(mockScopeAccessDao);
     }
     
     @Test
     public void shouldGetRefreshTokenByUserAndClient() {
-
-        RefreshToken refreshToken = getFakeRefreshToken();
-        DateTime currentTime = new DateTime();
-        
-        EasyMock.expect(
-            mockRefreshTokenDao.findTokenForOwner(username, clientId, currentTime))
-            .andReturn(refreshToken);
-        EasyMock.replay(mockRefreshTokenDao);
+        DateTime currentTime = new DateTime().minusSeconds(100);
+        ScopeAccess scopeAccess = getFakeScopeAccess();
+        EasyMock.expect(mockScopeAccessDao.getScopeAccessByUsernameAndClientId(username, clientId))
+            .andReturn(scopeAccess);
+        EasyMock.replay(mockScopeAccessDao);
 
         RefreshToken token = refreshTokenService
             .getRefreshTokenByUserAndClient(username, clientId, currentTime);
 
         Assert.assertNotNull(token);
-        EasyMock.verify(mockRefreshTokenDao);
+        EasyMock.verify(mockScopeAccessDao);
+    }
+    
+    @Test
+    public void shouldReturnNullGetRefreshTokenByUserAndClient() {
+        DateTime currentTime = new DateTime().minusSeconds(100);
+        EasyMock.expect(mockScopeAccessDao.getScopeAccessByUsernameAndClientId(username, clientId))
+            .andReturn(null);
+        EasyMock.replay(mockScopeAccessDao);
+
+        RefreshToken token = refreshTokenService
+            .getRefreshTokenByUserAndClient(username, clientId, currentTime);
+
+        Assert.assertNull(token);
+        EasyMock.verify(mockScopeAccessDao);
+    }
+    
+    @Test
+    public void shouldReturnNullForExpiredTokenGetRefreshTokenByUserAndClient() {
+        DateTime currentTime = new DateTime().plusSeconds(100);
+        ScopeAccess scopeAccess = getFakeScopeAccess();
+        EasyMock.expect(mockScopeAccessDao.getScopeAccessByUsernameAndClientId(username, clientId))
+            .andReturn(scopeAccess);
+        EasyMock.replay(mockScopeAccessDao);
+
+        RefreshToken token = refreshTokenService
+            .getRefreshTokenByUserAndClient(username, clientId, currentTime);
+
+        Assert.assertNull(token);
+        EasyMock.verify(mockScopeAccessDao);
     }
     
     @Test
     public void shouldResetRefreshTokenExpiration() {
         
-        RefreshToken refreshToken = getFakeRefreshToken();
+        ScopeAccess scopeAccess = getFakeScopeAccess();
+        EasyMock.expect(mockScopeAccessDao.getScopeAccessByRefreshToken(refreshToken)).andReturn(scopeAccess);
+        mockScopeAccessDao.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
+        EasyMock.replay(mockScopeAccessDao);
         
-        mockRefreshTokenDao.updateToken(refreshToken);
-        EasyMock.replay(mockRefreshTokenDao);
-        
-        refreshTokenService.resetTokenExpiration(refreshToken);
-        EasyMock.verify(mockRefreshTokenDao);
+        RefreshToken token = getFakeRefreshToken();
+        refreshTokenService.resetTokenExpiration(token);
+        EasyMock.verify(mockScopeAccessDao);
     }
     
     @Test(expected = IllegalArgumentException.class)
@@ -121,27 +173,62 @@ public class RefreshTokenServiceTests {
     
     @Test
     public void shouldDeleteAllTokensForUser() {
-        mockRefreshTokenDao.deleteAllTokensForUser(username);
-        EasyMock.replay(mockRefreshTokenDao);
+        List<ScopeAccess> scopes = new ArrayList<ScopeAccess>();
+        scopes.add(getFakeScopeAccess());
+        
+        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(getFakeUser());
+        EasyMock.replay(mockUserDao);
+        
+        EasyMock.expect(mockScopeAccessDao.getScopeAccessesByParent(getFakeUser().getUniqueId())).andReturn(scopes);
+        mockScopeAccessDao.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
+        EasyMock.replay(mockScopeAccessDao);
         
         refreshTokenService.deleteAllTokensForUser(username);
-        EasyMock.verify(mockRefreshTokenDao);
+        EasyMock.verify(mockUserDao);
+        EasyMock.verify(mockScopeAccessDao);
     }
     
     @Test
     public void shouldDeleteTokenForUserByClientId() {
-        mockRefreshTokenDao.deleteTokenForUserByClientId(username, clientId);
-        EasyMock.replay(mockRefreshTokenDao);
+        ScopeAccess scopeAccess = getFakeScopeAccess();
+        EasyMock.expect(mockScopeAccessDao.getScopeAccessByUsernameAndClientId(username, clientId)).andReturn(scopeAccess);
+        mockScopeAccessDao.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
+        EasyMock.replay(mockScopeAccessDao);
         
         refreshTokenService.deleteTokenForUserByClientId(username, clientId);
-        EasyMock.verify(mockRefreshTokenDao);
+        EasyMock.verify(mockScopeAccessDao);
     }
 
     // helper functions
     private RefreshToken getFakeRefreshToken() {
-        RefreshToken token = new RefreshToken(refreshTokenString,
+        RefreshToken token = new RefreshToken(refreshToken,
             new DateTime().plusSeconds(defaultTokenExpirationSeconds),
             username, clientId);
         return token;
+    }
+    
+    private ScopeAccess getFakeScopeAccess() {
+        ScopeAccess sa = new ScopeAccess();
+        sa.setClientId(clientId);
+        sa.setAccessToken(accessToken);
+        sa.setAccessTokenExpiration(accessTokenExpiration);
+        sa.setClientRCN(clientRCN);
+        sa.setRefreshToken(refreshToken);
+        sa.setRefreshTokenExpiration(refreshTokenExpiration);
+        sa.setUsername(username);
+        sa.setUserRCN(userRCN);
+        return sa;
+    }
+    
+    private User getFakeUser() {
+        User user = new User();
+        user.setUniqueId(uniqueId);
+        user.setUsername(username);
+        user.setCustomerId(userRCN);
+        return user;
+    }
+    
+    private BaseClient getFakeClient() {
+        return new BaseClient(clientId, clientRCN);
     }
 }

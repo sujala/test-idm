@@ -1,19 +1,23 @@
 package com.rackspace.idm.domain.entity;
 
-import com.rackspace.idm.validation.MessageTexts;
-import com.rackspace.idm.validation.RegexPatterns;
-import org.hibernate.validator.constraints.Length;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
+import org.hibernate.validator.constraints.Length;
+
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
+
 public class BaseUser implements Serializable {
     private static final long serialVersionUID = 5720550447838228533L;
+    
+    private String uniqueId = null;
 
     @NotNull
     @Length(min = 1, max = 32)
@@ -37,10 +41,27 @@ public class BaseUser implements Serializable {
         this.customerId = customerId;
         this.groups = groups;
     }
+    
+    public BaseUser(String uniqueId, String username, String customerId, List<ClientGroup> groups) {
+        this.uniqueId = uniqueId;
+        this.username = username;
+        this.customerId = customerId;
+        this.groups = groups;
+    }
 
     public BaseUser(String username, String customerId) {
         this.username = username;
         this.customerId = customerId;
+    }
+    
+    public String getUniqueId() {
+        return uniqueId;
+    }
+
+    protected void setUniqueId(String uniqueId) {
+        if (uniqueId != null) {
+            this.uniqueId = uniqueId;
+        }
     }
     
     public String getUsername() {
@@ -72,10 +93,12 @@ public class BaseUser implements Serializable {
         final int prime = 31;
         int result = 1;
         result = prime * result
-                + ((customerId == null) ? 0 : customerId.hashCode());
+            + ((customerId == null) ? 0 : customerId.hashCode());
         result = prime * result + ((groups == null) ? 0 : groups.hashCode());
         result = prime * result
-                + ((username == null) ? 0 : username.hashCode());
+            + ((uniqueId == null) ? 0 : uniqueId.hashCode());
+        result = prime * result
+            + ((username == null) ? 0 : username.hashCode());
         return result;
     }
 
@@ -105,6 +128,13 @@ public class BaseUser implements Serializable {
         } else if (!groups.equals(other.groups)) {
             return false;
         }
+        if (uniqueId == null) {
+            if (other.uniqueId != null) {
+                return false;
+            }
+        } else if (!uniqueId.equals(other.uniqueId)) {
+            return false;
+        }
         if (username == null) {
             if (other.username != null) {
                 return false;
@@ -117,8 +147,8 @@ public class BaseUser implements Serializable {
 
     @Override
     public String toString() {
-        return "TokenUser [username=" + username + ", customerId=" + customerId
-                + ", roles=" + groups + "]";
+        return "BaseUser [uniqueId=" + uniqueId + ", username=" + username
+            + ", customerId=" + customerId + ", groups=" + groups + "]";
     }
 
     /**
@@ -151,18 +181,20 @@ public class BaseUser implements Serializable {
      */
     private static class SerializationProxy implements Serializable {
         private static final long serialVersionUID = -42555229195315854L;
-        private String username;
-        private String customerId;
-        private List<ClientGroup> groups;
+        private final String uniqueId;
+        private final String username;
+        private final String customerId;
+        private final List<ClientGroup> groups;
 
         SerializationProxy(BaseUser baseUser) {
+            this.uniqueId = baseUser.uniqueId;
             this.username = baseUser.username;
             this.customerId = baseUser.customerId;
             this.groups = baseUser.groups;
         }
 
         private Object readResolve() {
-            return new BaseUser(username, customerId, groups);
+            return new BaseUser(uniqueId, username, customerId, groups);
         }
 
     }

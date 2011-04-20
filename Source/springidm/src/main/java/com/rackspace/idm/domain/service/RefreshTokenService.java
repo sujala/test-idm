@@ -2,11 +2,13 @@ package com.rackspace.idm.domain.service;
 
 import org.joda.time.DateTime;
 
+import com.rackspace.idm.domain.entity.BaseClient;
+import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.RefreshToken;
 
 public interface RefreshTokenService {
 
-    RefreshToken createRefreshTokenForUser(String username, String clientId);
+    RefreshToken createRefreshTokenForUser(BaseUser user, BaseClient client);
 
     RefreshToken getRefreshTokenByTokenString(String tokenString);
 

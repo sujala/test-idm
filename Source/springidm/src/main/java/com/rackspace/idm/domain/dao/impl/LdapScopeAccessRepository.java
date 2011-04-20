@@ -63,6 +63,32 @@ public class LdapScopeAccessRepository extends LdapRepository implements
         getLogger().info("Added ScopeAcces {} to {}", scopeAccess,
             parentUniqueId);
     }
+    
+    @Override
+    public List<ScopeAccess> getScopeAccessesByParent(String parentUniqueId) {
+        getLogger().debug("Getting {} scope accesses",
+            parentUniqueId);
+        if (StringUtils.isBlank(parentUniqueId)) {
+            getLogger().error("Null or Empty uniqueId paramter");
+            throw new IllegalArgumentException(
+                "Null or Empty uniqueId parameter.");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
+            .build();
+
+        List<SearchResultEntry> entries = this.getMultipleEntries(parentUniqueId, SearchScope.ONE, searchFilter, ATTR_CLIENT_ID);
+
+        List<ScopeAccess> scopes = new ArrayList<ScopeAccess>();
+        
+        for (SearchResultEntry entry : entries){
+            scopes.add(this.getScopeAccess(entry));
+        }
+
+        getLogger().debug("Got scope accesses for {}", parentUniqueId);
+        return scopes;
+    }
 
     @Override
     public void addPermissionToScopeAccess(String scopeAccessUniqueId,
