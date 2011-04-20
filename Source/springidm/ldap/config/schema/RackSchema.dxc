@@ -396,6 +396,23 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.52) = {
     description = "A user RCN"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.53) = {
+    name = rackerId
+    ldap-names = rackerId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "A rackers username"
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.10) = {
+    name = rsRacker
+    ldap-names = rsRacker
+    subclass-of top
+    kind = structural
+    must-contain
+        rackerId
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.9) = {
     name = scopeAccess
     ldap-names = scopeAccess
@@ -405,6 +422,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.9) = {
         clientId,
         clientRCN
     may-contain
+        rackerId,
         tokenScope,
         accessToken,
         accessTokenExp,
