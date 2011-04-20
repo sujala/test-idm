@@ -31,12 +31,14 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.ErrorMsg;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.AuthConverter;
+import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.config.LoggerFactoryWrapper;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.AuthData;
 import com.rackspace.idm.domain.entity.OAuthGrantType;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.OAuthService;
@@ -59,17 +61,19 @@ public class TokenResource {
     private final OAuthService oauthService;
     private final AuthHeaderHelper authHeaderHelper;
     private final AuthConverter authConverter;
+    private final PermissionConverter permissionConverter;
     private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(TokenResource.class);
 
     @Autowired(required = true)
     public TokenResource(AccessTokenService tokenService, OAuthService oauthService,
-        AuthHeaderHelper authHeaderHelper, AuthConverter authConverter,
+        AuthHeaderHelper authHeaderHelper, AuthConverter authConverter, PermissionConverter permissionConverter,
         AuthorizationService authorizationService, LoggerFactoryWrapper logger) {
         this.tokenService = tokenService;
         this.oauthService = oauthService;
         this.authHeaderHelper = authHeaderHelper;
         this.authConverter = authConverter;
+        this.permissionConverter = permissionConverter;
         this.authorizationService = authorizationService;
     }
 
@@ -305,6 +309,35 @@ public class TokenResource {
         }
         return Response.noContent().build();
     }
+    
+    /**
+     * Check if the given access token as the specified permission.
+     *
+     * @param authHeader HTTP Authorization header for authenticating the calling client.
+     * @param creds      AuthCredentials for authenticating the token request.
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}authCredentials
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}auth
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     */
+     @GET
+     @Path("{tokenString}/permissions/{permissionId}")
+     public Response validateTokenPermission(@Context Request request, @Context UriInfo uriInfo,
+         @HeaderParam("Authorization") String authHeader, @PathParam("tokenString") String tokenString,
+         @PathParam("permissionId") String permissionId) {
+         
+         logger.debug("Validating Access Token: {}", tokenString);
+
+         AccessToken accessToken = this.tokenService.getAccessTokenByAuthHeader(authHeader);
+ 
+         Permission permission = this.tokenService.checkAndReturnPermission(accessToken, permissionId);
+     
+         return Response.ok(permissionConverter.toPermissionJaxb(permission)).build();
+     }
+     
 
     // private funcs
     protected DateTime getCurrentTime() {

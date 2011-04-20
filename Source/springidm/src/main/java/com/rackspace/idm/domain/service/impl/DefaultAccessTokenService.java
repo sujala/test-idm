@@ -20,12 +20,16 @@ import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 
 public class DefaultAccessTokenService implements AccessTokenService {
@@ -34,17 +38,18 @@ public class DefaultAccessTokenService implements AccessTokenService {
     private ClientDao clientDao;
     private ScopeAccessDao scopeAccessDao;
     private UserService userService;
-    
-
+    private ClientService clientService;
+   
     private AuthHeaderHelper authHeaderHelper;
     private Configuration config;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultAccessTokenService(AccessTokenDao tokenDao, ClientDao clientDao, UserService userService,
+    public DefaultAccessTokenService(AccessTokenDao tokenDao, ClientDao clientDao, UserService userService, ClientService clientService,
         XdcAccessTokenDao xdcTokenDao, ScopeAccessDao scopeAccessDao, AuthHeaderHelper authHeaderHelper, Configuration config) {
         this.tokenDao = tokenDao;
         this.clientDao = clientDao;
         this.userService = userService;
+        this.clientService = clientService;
         this.xdcTokenDao = xdcTokenDao;
         this.scopeAccessDao = scopeAccessDao;
         this.authHeaderHelper = authHeaderHelper;
@@ -427,6 +432,30 @@ public class DefaultAccessTokenService implements AccessTokenService {
         }
 
         return rotationNeeded;
+    }
+    
+    @Override
+    public Permission checkAndReturnPermission(AccessToken accessToken, String permissionId) {
+        String clientId = accessToken.getTokenClient().getClientId();
+        
+        if (clientId == null) {
+            throw new BadRequestException("Client id cannot be null.");
+        }
+        
+        if (permissionId == null) {
+            throw new BadRequestException("Permission id cannot be null.");
+        }
+        
+        Permission permission = this.clientService.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId);
+        
+        if (permission == null) {
+            throw new NotFoundException("Permission " + permissionId + " not found.");
+        }
+        
+         if (this.scopeAccessDao.doesAccessTokenHavePermission(accessToken.toString(), permission)) {
+             return permission;
+         }
+         return null;
     }
 
     private String generateTokenWithDcPrefix() {

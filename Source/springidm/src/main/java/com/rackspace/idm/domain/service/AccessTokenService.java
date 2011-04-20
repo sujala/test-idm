@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.User;
 
 public interface AccessTokenService {
@@ -70,4 +71,6 @@ public interface AccessTokenService {
     void deleteAllGloballyForCustomer(String customerId, List<User> users, List<Client> clients);
 
     boolean passwordRotationDurationElapsed(String userName);
+    
+    Permission checkAndReturnPermission(AccessToken authToken, String permissionId);
 }
