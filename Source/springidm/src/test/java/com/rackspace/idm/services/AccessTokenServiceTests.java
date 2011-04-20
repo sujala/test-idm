@@ -23,6 +23,7 @@ import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TokenDefaultAttributes;
 import com.rackspace.idm.domain.entity.User;
@@ -32,9 +33,12 @@ import com.rackspace.idm.domain.entity.UserLocale;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultAccessTokenService;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 
 public class AccessTokenServiceTests {
@@ -44,6 +48,7 @@ public class AccessTokenServiceTests {
     ClientDao mockClientDao;
     ScopeAccessDao mockScopeAccessDao;
     UserService mockUserService;
+    ClientService mockClientService;
     CustomerService mockCustomerService;
     AccessTokenService tokenService;
     XdcAccessTokenDao mockWebClientAccessTokenDao;
@@ -94,12 +99,13 @@ public class AccessTokenServiceTests {
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
         mockUserService = EasyMock.createMock(UserService.class);
         mockCustomerService = EasyMock.createMock(CustomerService.class);
+        mockClientService = EasyMock.createMock(ClientService.class);
         mockWebClientAccessTokenDao = EasyMock.createMock(XdcAccessTokenDao.class);
         defaultAttributes = new TokenDefaultAttributes(defaultTokenExpirationSeconds,
             cloudAuthExpirationSeconds, maxTokenExpirationSeconds, minTokenExpirationSeconds,
             dataCenterPrefix, isTrustedServer);
         Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
-        tokenService = new DefaultAccessTokenService(mockTokenDao, mockClientDao, mockUserService, 
+        tokenService = new DefaultAccessTokenService(mockTokenDao, mockClientDao, mockUserService, mockClientService,
             mockWebClientAccessTokenDao, mockScopeAccessDao, new AuthHeaderHelper(), appConfig);
     }
 
@@ -757,7 +763,90 @@ public class AccessTokenServiceTests {
 
         EasyMock.verify(mockTokenDao);
     }
-
+    
+    @Test
+    public void shouldReturnPermission() throws Exception {
+        
+        AccessToken accessToken = getFakeClientToken();
+        String permissionId = "addFirstUser";      
+        String clientId = accessToken.getTokenClient().getClientId();
+        String customerId = accessToken.getTokenClient().getCustomerId();
+        
+        Permission permission = new Permission(customerId, clientId, permissionId, permissionId);
+        
+        EasyMock.expect(mockClientService.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId)).andReturn(permission);
+        EasyMock.replay(mockClientService);
+        
+        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(accessToken.toString(), permission)).andReturn(true);
+        EasyMock.replay(mockScopeAccessDao);
+        
+        Permission returnedPerm = tokenService.checkAndReturnPermission(accessToken, permissionId);
+       
+        Assert.assertEquals(permissionId, returnedPerm.getPermissionId());
+        
+    }
+    
+    @Test(expected = BadRequestException.class)
+    public void shouldNotReturnPermissionIfClientIdIsNull() throws Exception {
+        
+        AccessToken accessToken = getFakeClientToken();
+        String permissionId = "addFirstUser";
+        Client client = getFakeClient();
+        client.setClientId(null);
+        accessToken.setTokenClient(client);
+        String clientId = null;
+        String customerId = accessToken.getTokenClient().getCustomerId();
+        
+        Permission permission = new Permission(customerId, clientId, permissionId, permissionId);
+        
+        EasyMock.expect(mockClientService.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId)).andReturn(permission);
+        EasyMock.replay(mockClientService);
+        
+        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(accessToken.toString(), permission)).andReturn(true);
+        EasyMock.replay(mockScopeAccessDao);
+        
+        Permission returnedPerm = tokenService.checkAndReturnPermission(accessToken, permissionId);
+    }
+    
+    @Test(expected = BadRequestException.class)
+    public void shouldNotReturnPermissionIfPermisisonIdIsNull() throws Exception {
+        
+        AccessToken accessToken = getFakeClientToken();
+        String permissionId = null;
+        String clientId = accessToken.getTokenClient().getClientId();
+        String customerId = accessToken.getTokenClient().getCustomerId();
+        
+        Permission permission = new Permission(customerId, clientId, permissionId, permissionId);
+        
+        EasyMock.expect(mockClientService.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId)).andReturn(permission);
+        EasyMock.replay(mockClientService);
+        
+        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(accessToken.toString(), permission)).andReturn(true);
+        EasyMock.replay(mockScopeAccessDao);
+        
+        Permission returnedPerm = tokenService.checkAndReturnPermission(accessToken, permissionId);
+    }
+    
+    @Test
+    public void shouldReturnNullIfTokenDoesNotHavePermission() throws Exception {
+        
+        AccessToken accessToken = getFakeClientToken();
+        String permissionId = "addFirstUser";
+        String clientId = accessToken.getTokenClient().getClientId();
+        String customerId = accessToken.getTokenClient().getCustomerId();
+        
+        Permission permission = new Permission(customerId, clientId, permissionId, permissionId);
+        
+        EasyMock.expect(mockClientService.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId)).andReturn(permission);
+        EasyMock.replay(mockClientService);
+        
+        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(accessToken.toString(), permission)).andReturn(false);
+        EasyMock.replay(mockScopeAccessDao);
+        
+        Permission returnedPerm = tokenService.checkAndReturnPermission(accessToken, permissionId);
+        Assert.assertNull(returnedPerm);
+    }          
+    
     private AccessToken getFakeUserToken() {
         return new AccessToken(tokenString, tokenExpiration, getFakeUser(), getFakeClient(), IDM_SCOPE.FULL);
     }
