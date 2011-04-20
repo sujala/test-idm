@@ -161,9 +161,11 @@ public class LdapUserRepositoryTest {
 
     @Test
     public void shouldFindOneUserThatExistsByUsername() {
-        User user = repo.getUserByUsername("mkovacs");
+        User user = addNewTestUser();
+        User returned = repo.getUserByUsername(user.getUsername());
+        repo.deleteUser(user.getUsername());
         Assert.assertNotNull(user);
-        Assert.assertEquals("Kovacs", user.getLastname());
+        Assert.assertEquals(returned.getLastname(), user.getLastname());
     }
 
     @Test
@@ -216,10 +218,11 @@ public class LdapUserRepositoryTest {
 
     @Test
     public void shouldFindOneUserThatExistsByInum() {
-        User mkovacs = repo.getUserByUsername("mkovacs");
-        User user = repo.getUserByInum(mkovacs.getInum());
-        Assert.assertNotNull(user);
-        Assert.assertEquals("Kovacs", user.getLastname());
+        User user = addNewTestUser();
+        User returned = repo.getUserByInum(user.getInum());
+        repo.deleteUser(user.getUsername());
+        Assert.assertNotNull(returned);
+        Assert.assertEquals(returned.getLastname(), user.getLastname());
     }
 
     @Test
@@ -306,7 +309,9 @@ public class LdapUserRepositoryTest {
 
     @Test
     public void shouldReturnFalseForIsUsernameUnique() {
-        boolean isUnique = repo.isUsernameUnique("mkovacs");
+        User user = addNewTestUser();
+        boolean isUnique = repo.isUsernameUnique(user.getUsername());
+        repo.deleteUser(user.getUsername());
         Assert.assertFalse(isUnique);
     }
 
@@ -397,13 +402,17 @@ public class LdapUserRepositoryTest {
 
     @Test
     public void shouldAuthenticateForCorrectCredentials() {
-        UserAuthenticationResult result = repo.authenticate("mkovacs", "P@$$w0rd");
+        User user = addNewTestUser();
+        UserAuthenticationResult result = repo.authenticate(user.getUsername(), user.getPassword());
+        repo.deleteUser(user.getUsername());
         Assert.assertTrue(result.isAuthenticated());
     }
 
     @Test
     public void shouldAuthenticateByAPIKey() {
-        UserAuthenticationResult authenticated = repo.authenticateByAPIKey("mkovacs", "1234567890");
+        User user = addNewTestUser();
+        UserAuthenticationResult authenticated = repo.authenticateByAPIKey(user.getUsername(), user.getApiKey());
+        repo.deleteUser(user.getUsername());
         Assert.assertTrue(authenticated.isAuthenticated());
     }
 
@@ -425,13 +434,17 @@ public class LdapUserRepositoryTest {
 
     @Test
     public void shouldNotAuthenticateForBadCredentials() {
-        UserAuthenticationResult result = repo.authenticate("mkovacs", "bad password");
+        User newUser = addNewTestUser();
+        UserAuthenticationResult result = repo.authenticate(newUser.getUsername(), "bad password");
+        repo.deleteUser(newUser.getUsername());
         Assert.assertFalse(result.isAuthenticated());
     }
 
     @Test
     public void shouldNotAuthenticateWithBadApiKey() {
-        UserAuthenticationResult authenticated = repo.authenticateByAPIKey("mkovacs", "BadApiKey");
+        User newUser = addNewTestUser();
+        UserAuthenticationResult authenticated = repo.authenticateByAPIKey(newUser.getUsername(), "BadApiKey");
+        repo.deleteUser(newUser.getUsername());
         Assert.assertFalse(authenticated.isAuthenticated());
     }
 
@@ -466,8 +479,9 @@ public class LdapUserRepositoryTest {
 
     @Test
     public void shouldFindByCustomerID() {
+        User user = addNewTestUser();
         Users users = repo.getUsersByCustomerId("RACKSPACE", 0, 200);
-
+        repo.deleteUser(user.getUsername());
         Assert.assertTrue(users.getLimit() == 200);
         Assert.assertTrue(users.getOffset() == 0);
 
@@ -514,6 +528,7 @@ public class LdapUserRepositoryTest {
             Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd, "What is your favourite colur?",
             "Yellow. No, Blue! Arrrrgh!"));
         newUser.setApiKey("XXX");
+        newUser.setCustomerId("RACKSPACE");
         newUser.setCountry("USA");
         newUser.setPersonId("RPN-111-222-333");
         newUser.setDisplayName("MY DISPLAY NAME");
