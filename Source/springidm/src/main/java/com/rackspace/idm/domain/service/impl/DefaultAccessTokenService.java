@@ -435,7 +435,7 @@ public class DefaultAccessTokenService implements AccessTokenService {
     }
     
     @Override
-    public Permission checkAndReturnPermission(AccessToken accessToken, String permissionId) {
+    public boolean checkAndReturnPermission(AccessToken accessToken, String permissionId) {
         String clientId = accessToken.getTokenClient().getClientId();
         
         if (clientId == null) {
@@ -452,10 +452,10 @@ public class DefaultAccessTokenService implements AccessTokenService {
             throw new NotFoundException("Permission " + permissionId + " not found.");
         }
         
-         if (this.scopeAccessDao.doesAccessTokenHavePermission(accessToken.toString(), permission)) {
-             return permission;
+         if (this.scopeAccessDao.doesAccessTokenHavePermission(accessToken.getTokenString(), permission)) {
+             return true;
          }
-         return null;
+         return false;
     }
 
     private String generateTokenWithDcPrefix() {

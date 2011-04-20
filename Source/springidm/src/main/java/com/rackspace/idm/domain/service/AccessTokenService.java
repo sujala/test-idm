@@ -8,7 +8,6 @@ import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.User;
 
 public interface AccessTokenService {
@@ -72,5 +71,5 @@ public interface AccessTokenService {
 
     boolean passwordRotationDurationElapsed(String userName);
     
-    Permission checkAndReturnPermission(AccessToken authToken, String permissionId);
+    boolean checkAndReturnPermission(AccessToken authToken, String permissionId);
 }

@@ -330,14 +330,19 @@ public class TokenResource {
          @PathParam("permissionId") String permissionId) {
          
          logger.debug("Validating Access Token: {}", tokenString);
-
-         AccessToken accessToken = this.tokenService.getAccessTokenByAuthHeader(authHeader);
+      
+         AccessToken accessToken = this.tokenService.getAccessTokenByTokenString(tokenString);
+         
+         if (accessToken == null) {
+             throw new NotFoundException("Token " + tokenString + " not found");
+         }
  
-         Permission permission = this.tokenService.checkAndReturnPermission(accessToken, permissionId);
-     
-         return Response.ok(permissionConverter.toPermissionJaxb(permission)).build();
-     }
-     
+         if (this.tokenService.checkAndReturnPermission(accessToken, permissionId)) {
+             return Response.ok("Token " + tokenString + " has the permission" + permissionId).build();
+         }
+         
+         return Response.status(404).build();
+    } 
 
     // private funcs
     protected DateTime getCurrentTime() {
