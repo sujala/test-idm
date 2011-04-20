@@ -19,7 +19,6 @@ import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.EndpointDao;
-import com.rackspace.idm.domain.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.dao.RoleDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
@@ -72,8 +71,6 @@ public class ServiceConfiguration {
     private AccessTokenDao accessTokenDao;
     @Autowired
     private CustomerDao customerDao;
-    @Autowired
-    private RefreshTokenDao refreshTokenDao;
     @Autowired
     private RoleDao roleDao;
     @Autowired
