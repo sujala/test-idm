@@ -9,9 +9,7 @@ import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class PasswordRulesConverter {
 
-    private List<PasswordRule> rules;
-
-    private ObjectFactory of = new ObjectFactory();
+    private final ObjectFactory of = new ObjectFactory();
 
     public PasswordRulesConverter() {
     }
