@@ -341,7 +341,7 @@ public class TokenResource {
          String clientId = accessToken.getTokenClient().getClientId();
  
          if (this.tokenService.checkAndReturnPermission(clientId, permissionId, tokenString)) {
-             return Response.ok("Token " + tokenString + " has the permission" + permissionId).build();
+             return Response.ok().build();
          }
          
          return Response.status(404).build();
