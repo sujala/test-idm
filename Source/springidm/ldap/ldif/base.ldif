@@ -264,14 +264,14 @@ permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getApiKey
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::resetApiKey
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::setApiKey
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::setUserLock
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetCustomerUserPassword
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::ResetCustomerUserPassword
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::SetCustomerUserPassword
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetCustomerUserPasswordRecoveryToken
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getUserPassword
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::resetUserPassword
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::setUserPassword
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getPasswordResetToken
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetCustomerUserPasswordRecoveryEmail
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetCustomerUserRoles
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::SetCustomerUserRole
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteCustomerUserRole
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::setRole
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::deleteRole
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetCustomerUserSecret
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::SetCustomerUserSecret
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::SetCustomerUserSoftDelete
@@ -929,10 +929,10 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT customers/[^/]+/users/[^/]+/lock
 
-dn: cn=GetCustomerUserPassword,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=getUserPassword,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: GetCustomerUserPassword
+cn: getUserPassword
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET customers/[^/]+/users/[^/]+/password
@@ -945,10 +945,10 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET customers/{customerId}/users/[^/]+/password
 
-dn: cn=ResetCustomerUserPassword,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=resetUserPassword,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: ResetCustomerUserPassword
+cn: resetUserPassword
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST customers/[^/]+/users/[^/]+/password
@@ -961,10 +961,10 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST customers/{customerId}/users/[^/]+/password
 
-dn: cn=SetCustomerUserPassword,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=setUserPassword,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: SetCustomerUserPassword
+cn: setUserPassword
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT customers/[^/]+/users/[^/]+/password
@@ -985,18 +985,18 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT customers/{customerId}/users/{username}/password
 
-dn: cn=GetCustomerUserPasswordRecoveryToken,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=getPasswordResetToken,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: GetCustomerUserPasswordRecoveryToken
+cn: getPasswordResetToken
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST customers/[^/]+/users/[^/]+/password/recoverytoken
 
-dn: cn=GetCustomerUserPasswordRecoveryEmail,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=sendRecoveryEmail,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: GetCustomerUserPasswordRecoveryEmail
+cn: sendRecoveryEmail
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST customers/[^/]+/users/[^/]+/password/recoveryemail
@@ -1025,10 +1025,10 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET customers/{customerId}/users/{username}/roles
 
-dn: cn=SetCustomerUserRole,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=setRole,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: SetCustomerUserRole
+cn: setRole
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT customers/[^/]+/users/[^/]+/roles/[^/]+
@@ -1041,10 +1041,10 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT customers/{customerId}/users/[^/]+/roles/[^/]+
 
-dn: cn=DeleteCustomerUserRole,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=deleteRole,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: DeleteCustomerUserRole
+cn: deleteRole
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: DELETE customers/[^/]+/users/[^/]+/roles/[^/]+
