@@ -20,14 +20,13 @@ import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.AccessToken;
-import com.rackspace.idm.domain.entity.AuthData;
-import com.rackspace.idm.domain.entity.BaseClient;
-import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserCredential;
@@ -35,7 +34,6 @@ import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.EmailService;
@@ -94,6 +92,8 @@ public class UserServiceTests {
     
     Customer testCustomer;
     User testUser;
+    
+    String rackerId = "rackerId";
 
     @Before
     public void setUp() throws Exception {
@@ -111,6 +111,44 @@ public class UserServiceTests {
         trustedUserService = new DefaultUserService(mockUserDao, mockRackerDao,
             mockCustomerDao, 
             mockEmailService, mockClientService, true);
+    }
+    
+    @Test
+    public void shouldAddRacker() {
+        Racker racker = new Racker();
+        racker.setRackerId(rackerId);
+        EasyMock.expect(mockUserDao.getRackerByRackerId(rackerId)).andReturn(null);
+        mockUserDao.addRacker(racker);
+        EasyMock.replay(mockUserDao);
+        userService.addRacker(racker);
+        EasyMock.verify(mockUserDao);
+    }
+    
+    @Test(expected=DuplicateException.class)
+    public void shouldNotAddRackerForDuplicate() {
+        Racker racker = new Racker();
+        racker.setRackerId(rackerId);
+        EasyMock.expect(mockUserDao.getRackerByRackerId(rackerId)).andReturn(racker);
+        EasyMock.replay(mockUserDao);
+        userService.addRacker(racker);
+    }
+    
+    @Test
+    public void shouldGetRacker() {
+        Racker racker = new Racker();
+        racker.setRackerId(rackerId);
+        EasyMock.expect(mockUserDao.getRackerByRackerId(rackerId)).andReturn(racker);
+        EasyMock.replay(mockUserDao);
+        userService.getRackerByRackerId(rackerId);
+        EasyMock.verify(mockUserDao);
+    }
+    
+    @Test
+    public void shouldDeleteRacker() {
+        mockUserDao.deleteRacker(rackerId);
+        EasyMock.replay(mockUserDao);
+        userService.deleteRacker(rackerId);
+        EasyMock.verify(mockUserDao);
     }
 
     @Test

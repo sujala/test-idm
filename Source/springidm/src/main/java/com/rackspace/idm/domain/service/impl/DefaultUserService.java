@@ -28,6 +28,7 @@ import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserStatus;
@@ -73,6 +74,17 @@ public class DefaultUserService implements UserService {
         this.emailService = emailService;
         this.clientService = clientService;
         this.isTrustedServer = isTrusted;
+    }
+    
+    @Override
+    public void addRacker(Racker racker) {
+        logger.info("Adding Racker {}", racker);
+        Racker exists = this.userDao.getRackerByRackerId(racker.getRackerId());
+        if (exists != null) {
+            throw new DuplicateException("Racker Already Exsits");
+        }
+        this.userDao.addRacker(racker);
+        logger.info("Added Racker {}", racker);
     }
 
     @Override
@@ -215,6 +227,15 @@ public class DefaultUserService implements UserService {
             nastId, authenticated);
         return authenticated;
     }
+    
+    @Override
+    public void deleteRacker(String rackerId) {
+        logger.info("Deleting Racker: {}", rackerId);
+
+        this.userDao.deleteRacker(rackerId);
+
+        logger.info("Deleted Racker: {}", rackerId);
+    }
 
     @Override
     public void deleteUser(String username) {
@@ -252,6 +273,14 @@ public class DefaultUserService implements UserService {
         logger.debug("Got Users for Customer: {}", customerId);
 
         return users;
+    }
+    
+    @Override
+    public Racker getRackerByRackerId(String rackerId) {
+        logger.debug("Getting Racker: {}", rackerId);
+        Racker racker = userDao.getRackerByRackerId(rackerId);
+        logger.debug("Got Racker: {}", racker);
+        return racker;
     }
 
     @Override

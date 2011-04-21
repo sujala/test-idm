@@ -4,6 +4,7 @@ import org.joda.time.DateTime;
 
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.Users;
@@ -14,6 +15,8 @@ import com.rackspace.idm.jaxb.UserCredentials;
 public interface UserService {
 
     void addUser(User user) throws DuplicateException;
+    
+    void addRacker(Racker racker);
 
     UserAuthenticationResult authenticate(String userId, String password);
 
@@ -23,11 +26,15 @@ public interface UserService {
 
     UserAuthenticationResult authenticateWithMossoIdAndApiKey(int mossoId, String apiKey);
 
+    void deleteRacker(String rackerId);
+    
     void deleteUser(String username);
 
     Users getByCustomerId(String customerId, int offset, int limit);
 
     String generateApiKey();
+    
+    Racker getRackerByRackerId(String rackerId);
 
     User getUser(String username);
     
