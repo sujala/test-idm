@@ -57,6 +57,11 @@ public class AuthConverter {
                 .getUser()));
         }
         
+        if (auth.getRacker() != null) {
+            authJaxb.setRacker(userConverter.toRackerJaxb(auth
+                .getRacker()));
+        }
+        
         if (auth.getPasswordResetOnlyToken() != null && auth.getPasswordResetOnlyToken()) {
             authJaxb.setIsPasswordResetOnlyToken(auth.getPasswordResetOnlyToken());
         }
