@@ -381,7 +381,7 @@ public class UsersResource {
      */
     @GET
     @Path("{username}")
-    public Response getUser(@Context Request request, @Context UriInfo uriInfo,
+    public Response getUserByUsername(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("username") String username) {
 
         AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
