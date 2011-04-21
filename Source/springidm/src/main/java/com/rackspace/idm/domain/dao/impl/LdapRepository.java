@@ -32,6 +32,7 @@ public abstract class LdapRepository {
     protected static final String OBJECTCLASS_CLIENTPERMISSION = "clientPermission";
     protected static final String OBJECTCLASS_GROUPOFNAMES = "groupOfNames";
     protected static final String OBJECTCLASS_ORGANIZATIONALUNIT = "organizationalUnit";
+    protected static final String OBJECTCLASS_RACKER = "rsRacker";
     protected static final String OBJECTCLASS_RACKSPACEAPPLICATION = "rsApplication";
     protected static final String OBJECTCLASS_RACKSPACEGROUP = "rsGroup";
     protected static final String OBJECTCLASS_RACKSPACEORGANIZATION = "rsOrganization";
@@ -52,6 +53,8 @@ public abstract class LdapRepository {
         OBJECTCLASS_TOP, OBJECTCLASS_ORGANIZATIONALUNIT};
     protected static final String[] ATTR_PERMISSION_OBJECT_CLASS_VALUES = {
         OBJECTCLASS_TOP, OBJECTCLASS_CLIENTPERMISSION};
+    protected static final String[] ATTR_RACKER_OBJECT_CLASS_VALUES = {
+        OBJECTCLASS_TOP, OBJECTCLASS_RACKER};
     protected static final String[] ATTR_ROLE_OBJECT_CLASS_VALUES = {
         OBJECTCLASS_TOP, OBJECTCLASS_GROUPOFNAMES, OBJECTCLASS_RACKSPACEGROUP};
     protected static final String[] ATTR_SCOPE_ACCESS_OBJECT_CLASS_VALUES = {
@@ -107,6 +110,7 @@ public abstract class LdapRepository {
     public static final String ATTR_PERMISSION_TYPE = "permissionType";
     public static final String ATTR_PUBLIC_URL = "publicUrl";
     public static final String ATTR_PWD_ACCOUNT_LOCKOUT_TIME = "dxPwdFailedTime";
+    public static final String ATTR_RACKER_ID = "rackerId";
     public static final String ATTR_RACKSPACE_API_KEY = "rsApiKey";
     public static final String ATTR_RACKSPACE_CUSTOMER_NUMBER = "RCN";
     public static final String ATTR_RACKSPACE_PERSON_NUMBER = "RPN";
@@ -284,6 +288,10 @@ public abstract class LdapRepository {
 
     protected String getRackspaceInumPrefix() {
         return config.getString("rackspace.inum.prefix");
+    }
+    
+    protected String getRackspaceCustomerId() {
+        return config.getString("rackspace.customerId");
     }
 
     private void deleteEntryAndSubtree(LDAPConnection conn, String dn,

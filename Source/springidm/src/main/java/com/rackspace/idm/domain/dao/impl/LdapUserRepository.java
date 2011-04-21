@@ -16,6 +16,7 @@ import org.joda.time.Seconds;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserStatus;
@@ -46,6 +47,42 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public LdapUserRepository(LdapConnectionPools connPools,
         Configuration config) {
         super(connPools, config);
+    }
+
+    @Override
+    public void addRacker(Racker racker) {
+        getLogger().debug("Adding racker - {}", racker);
+        if (racker == null) {
+            getLogger().error("Null instance of Racer was passed");
+            throw new IllegalArgumentException(
+                "Null instance of Racker was passed");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER,
+                getRackspaceCustomerId())
+            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEORGANIZATION).build();
+
+        SearchResultEntry rackspace = this.getSingleEntry(BASE_DN,
+            SearchScope.ONE, searchFilter, ATTR_NO_ATTRIBUTES);
+
+        String userDN = new LdapDnBuilder(rackspace.getDN())
+            .addAttriubte(ATTR_OU, OU_PEOPLE_NAME)
+            .addAttriubte(ATTR_RACKER_ID, racker.getRackerId()).build();
+
+        racker.setUniqueId(userDN);
+
+        Audit audit = Audit.log(racker).add();
+
+        Attribute[] attributes = getRackerAddAtrributes(racker);
+
+        addEntry(userDN, attributes, audit);
+
+        audit.succeed();
+
+        getLogger().debug("Added racker {}", racker);
     }
 
     @Override
@@ -143,6 +180,30 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
+    public void deleteRacker(String rackerId) {
+        getLogger().info("Deleting racker - {}", rackerId);
+        if (StringUtils.isBlank(rackerId)) {
+            getLogger().error("Null or Empty rackerId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty rackerId parameter.");
+        }
+
+        Audit audit = Audit.log(rackerId).delete();
+
+        Racker racker = this.getRackerByRackerId(rackerId);
+        if (racker == null) {
+            String errorMsg = String.format("Racker %s not found", rackerId);
+            audit.fail(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+
+        this.deleteEntryAndSubtree(racker.getUniqueId(), audit);
+
+        audit.succeed();
+        getLogger().info("Deleted racker - {}", rackerId);
+    }
+
+    @Override
     public void deleteUser(String username) {
         getLogger().info("Deleting username - {}", username);
         if (StringUtils.isBlank(username)) {
@@ -208,6 +269,33 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Got GroupIds for User {} - {}", username, groupIds);
 
         return groupIds;
+    }
+
+    @Override
+    public Racker getRackerByRackerId(String rackerId) {
+        getLogger().debug("Getting Racker {}", rackerId);
+        if (StringUtils.isBlank(rackerId)) {
+            getLogger().error("Null or Empty rackerId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty rackerId parameter.");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_RACKER_ID, rackerId)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKER).build();
+
+        Racker racker = null;
+
+        SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.SUB,
+            searchFilter);
+        if (entry != null) {
+            racker = new Racker();
+            racker.setUniqueId(entry.getDN());
+            racker.setRackerId(entry.getAttributeValue(ATTR_RACKER_ID));
+        }
+
+        getLogger().debug("Got Racker {}", racker);
+        return racker;
     }
 
     @Override
@@ -464,7 +552,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Updated user - {}", user);
     }
 
-    private void throwIfEmptyOldUser(User oldUser, User user) throws IllegalArgumentException {
+    private void throwIfEmptyOldUser(User oldUser, User user)
+        throws IllegalArgumentException {
         if (oldUser == null) {
             getLogger()
                 .error("No record found for user {}", user.getUsername());
@@ -473,7 +562,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void throwIfEmptyUsername(User user) throws IllegalArgumentException {
+    private void throwIfEmptyUsername(User user)
+        throws IllegalArgumentException {
         if (user == null || StringUtils.isBlank(user.getUsername())) {
             getLogger().error(
                 "User instance is null or its userName has no value");
@@ -482,7 +572,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void throwIfStalePassword(LDAPException ldapEx, Audit audit) throws StalePasswordException {
+    private void throwIfStalePassword(LDAPException ldapEx, Audit audit)
+        throws StalePasswordException {
         if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
             && STALE_PASSWORD_MESSAGE.equals(ldapEx.getMessage())) {
             audit.fail(STALE_PASSWORD_MESSAGE);
@@ -776,6 +867,16 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         users.setUsers(userList);
 
         return users;
+    }
+
+    private Attribute[] getRackerAddAtrributes(Racker racker) {
+
+        List<Attribute> atts = new ArrayList<Attribute>();
+        atts.add(new Attribute(ATTR_OBJECT_CLASS,
+            ATTR_RACKER_OBJECT_CLASS_VALUES));
+        atts.add(new Attribute(ATTR_RACKER_ID, racker.getRackerId()));
+        Attribute[] attributes = atts.toArray(new Attribute[0]);
+        return attributes;
     }
 
     private User getSingleUser(Filter searchFilter, String[] searchAttributes) {

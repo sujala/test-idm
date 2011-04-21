@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao;
 
+import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.Users;
@@ -7,6 +8,8 @@ import com.rackspace.idm.domain.entity.Users;
 public interface UserDao {
 
     void addUser(User user, String customerUniqueId);
+    
+    void addRacker(Racker racker);
 
     UserAuthenticationResult authenticate(String userName, String password);
 
@@ -16,11 +19,15 @@ public interface UserDao {
 
     UserAuthenticationResult authenticateByNastIdAndAPIKey(String nastId, String apiKey);
 
+    void deleteRacker(String rackerId);
+    
     void deleteUser(String username);
 
     Users getAllUsers(int offset, int limit);
 
     String[] getGroupIdsForUser(String username);
+    
+    Racker getRackerByRackerId(String rackerId);
 
     String getUnusedUserInum(String customerInum);
 
