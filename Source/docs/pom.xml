@@ -8,7 +8,7 @@
 	<packaging>jar</packaging>
 
 	<name>docs</name>
-	<url>http://maven.apache.org</url>
+	<url>http://maven.apache.org</url> 
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -50,7 +50,7 @@
             <plugin>
                 <groupId>com.rackspace.cloud.api</groupId>
                 <artifactId>clouddocs-maven-plugin</artifactId>
-                <version>1.0.1-SNAPSHOT</version>
+                <version>1.0.4-SNAPSHOT</version>
                 <executions>
                     <execution>
                         <goals>
