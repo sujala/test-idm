@@ -61,7 +61,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER,
                 getRackspaceCustomerId())
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEORGANIZATION).build();
 
@@ -69,8 +68,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             SearchScope.ONE, searchFilter, ATTR_NO_ATTRIBUTES);
 
         String userDN = new LdapDnBuilder(rackspace.getDN())
-            .addAttriubte(ATTR_OU, OU_PEOPLE_NAME)
-            .addAttriubte(ATTR_RACKER_ID, racker.getRackerId()).build();
+        .addAttriubte(ATTR_RACKER_ID, racker.getRackerId())
+            .addAttriubte(ATTR_OU, OU_PEOPLE_NAME).build();
 
         racker.setUniqueId(userDN);
 
