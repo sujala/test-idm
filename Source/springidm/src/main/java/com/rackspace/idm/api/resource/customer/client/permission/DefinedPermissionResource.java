@@ -79,7 +79,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
      * @param permissionId Permission ID
      */
     @PUT
-    public Response updateClientPermission(@Context Request request, @Context UriInfo uriInfo,
+    public Response updateClientDefinedPermission(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId, @PathParam("permissionId") String permissionId,
         EntityHolder<com.rackspace.idm.jaxb.Permission> holder) {
@@ -135,7 +135,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
      * @param permissionId Permission ID
      */
     @DELETE
-    public Response deleteClientPermission(@Context Request request, @Context UriInfo uriInfo,
+    public Response deleteClientDefinedPermission(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId, @PathParam("permissionId") String permissionId) {
 
@@ -176,7 +176,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
      * @param permissionId Permission ID
      */
     @GET
-    public Response getClientPermission(@Context Request request, @Context UriInfo uriInfo,
+    public Response getClientDefinedPermission(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId, @PathParam("permissionId") String permissionId) {
 

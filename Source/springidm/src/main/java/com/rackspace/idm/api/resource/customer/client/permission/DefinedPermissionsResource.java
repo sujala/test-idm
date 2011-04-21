@@ -132,7 +132,7 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
      * @param permission New permission
      */
     @POST
-    public Response addClientPermission(@Context Request request, @Context UriInfo uriInfo,
+    public Response addClientDefinedPermission(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId, EntityHolder<com.rackspace.idm.jaxb.Permission> holder) {
         if (!holder.hasEntity()) {
