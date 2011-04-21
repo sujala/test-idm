@@ -283,9 +283,9 @@ permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::authWithUsernam
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::authWithUsernameAndPassword
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::authWithMossoIdAndApiKey
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::authWithNastIdAndApiKey
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByUsername
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByMossoId
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByNastId
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getUserByUsername
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getUserByMossoId
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getUserByNastId
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getBaseUrls
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getBaseUrl
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::addBaseUrl
@@ -561,26 +561,26 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST auth/nast
 
-dn: cn=GetUserByUsername,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=getUserByUsername,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: GetUserByUsername
+cn: getUserByUsername
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET users/[^/]+
 
-dn: cn=GetUserByMossoId,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=getUserByMossoId,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: GetUserByMossoId
+cn: getUserByMossoId
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET mosso/[^/]+
 
-dn: cn=GetUserByNastId,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=getUserByNastId,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: GetUserByNastId
+cn: getUserByNastId
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET nast/[^/]+
