@@ -20,7 +20,7 @@ import com.rackspace.idm.api.converter.UserConverter;
 public class ConverterConfiguration {
     @Autowired
     private Configuration config;
-    
+
     @Bean
     public PermissionConverter permissionConverter() {
         return new PermissionConverter();
@@ -45,7 +45,7 @@ public class ConverterConfiguration {
     ClientConverter clientConverter() {
         return new ClientConverter(permissionConverter());
     }
-    
+
     @Bean
     GroupConverter groupConverter() {
         return new GroupConverter();
@@ -73,7 +73,7 @@ public class ConverterConfiguration {
 
     @Bean
     AuthConverter authConverter() {
-        return new AuthConverter(tokenConverter(), permissionConverter(),
-            clientConverter(), userConverter(), endpointConverter());
+        return new AuthConverter(tokenConverter(), clientConverter(),
+            userConverter(), endpointConverter());
     }
 }

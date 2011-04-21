@@ -6,6 +6,7 @@ import javax.xml.datatype.DatatypeFactory;
 import org.apache.commons.lang.StringUtils;
 
 import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
@@ -100,6 +101,11 @@ public class UserConverter {
         return userlist;
     }
 
+    public com.rackspace.idm.jaxb.Racker toRackerJaxb(Racker racker) {
+        com.rackspace.idm.jaxb.Racker returnedRacker = of.createRacker();
+        returnedRacker.setRackerId(racker.getRackerId());
+        return returnedRacker;
+    }
     public com.rackspace.idm.jaxb.User toUserJaxb(User user) {
         return toUserJaxb(user, true, true, true);
     }

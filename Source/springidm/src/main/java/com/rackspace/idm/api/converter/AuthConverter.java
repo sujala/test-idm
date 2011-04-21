@@ -3,7 +3,9 @@ package com.rackspace.idm.api.converter;
 import java.util.GregorianCalendar;
 import java.util.List;
 
-import javax.xml.datatype.*;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.joda.time.DateTime;
 
@@ -16,20 +18,17 @@ import com.rackspace.idm.jaxb.ServiceCatalog;
 
 public class AuthConverter {
 
-    private UserConverter userConverter;
-    private ClientConverter clientConverter;
-    private PermissionConverter permissionConverter;
-    private TokenConverter tokenConverter;
-    private EndPointConverter endpointConverter;
+    private final UserConverter userConverter;
+    private final ClientConverter clientConverter;
+    private final TokenConverter tokenConverter;
+    private final EndPointConverter endpointConverter;
 
-    private ObjectFactory of = new ObjectFactory();
+    private final ObjectFactory of = new ObjectFactory();
 
     public AuthConverter(TokenConverter tokenConverter,
-        PermissionConverter permissionConverter,
         ClientConverter clientConverter, UserConverter userConverter,
         EndPointConverter endpointConverter) {
         this.tokenConverter = tokenConverter;
-        this.permissionConverter = permissionConverter;
         this.clientConverter = clientConverter;
         this.userConverter = userConverter;
         this.endpointConverter = endpointConverter;
@@ -56,11 +55,6 @@ public class AuthConverter {
         if (auth.getUser() != null) {
             authJaxb.setUser(userConverter.toUserJaxbFromBaseUser(auth
                 .getUser()));
-        }
-
-        if (auth.getPermissions() != null) {
-            authJaxb.setPermissions(permissionConverter
-                .toPermissionListJaxb(auth.getPermissions()));
         }
         
         if (auth.getPasswordResetOnlyToken() != null && auth.getPasswordResetOnlyToken()) {

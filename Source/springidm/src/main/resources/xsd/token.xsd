@@ -166,7 +166,15 @@
 					</xsd:documentation>
 				</annotation>
 			</element>
-			<element name="permissions" type="idm:PermissionList" minOccurs="0" maxOccurs="1"></element>
+            <element name="racker" type="idm:Racker" minOccurs="0"
+                maxOccurs="1">
+                <annotation>
+                    <xsd:documentation xml:lang="EN"
+                        xmlns="http://www.w3.org/1999/xhtml">
+                        <p>A racker associated with the token.</p>
+                    </xsd:documentation>
+                </annotation>
+            </element>
 			</sequence>
 			<attribute name="isPasswordResetOnlyToken" type="xsd:boolean" use="required"></attribute>
 			<attribute name="passwordExpirationDate" type="xsd:date" use="required"></attribute>

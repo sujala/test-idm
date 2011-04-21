@@ -469,4 +469,10 @@
 			</enumeration>
 		</restriction>
 	</simpleType>
+
+	<complexType name="Racker">
+		<attribute name="rackerId" type="xsd:string"></attribute>
+	</complexType>
+
+	<element name="racker" type="idm:Racker"></element>
 </schema>
