@@ -60,26 +60,24 @@ public class LdapScopeAccessRepository extends LdapRepository implements ScopeAc
 
         getLogger().info("Added ScopeAcces {} to {}", scopeAccess, parentUniqueId);
     }
-    
+
     @Override
     public List<ScopeAccess> getScopeAccessesByParent(String parentUniqueId) {
-        getLogger().debug("Getting {} scope accesses",
-            parentUniqueId);
+        getLogger().debug("Getting {} scope accesses", parentUniqueId);
         if (StringUtils.isBlank(parentUniqueId)) {
             getLogger().error("Null or Empty uniqueId paramter");
-            throw new IllegalArgumentException(
-                "Null or Empty uniqueId parameter.");
+            throw new IllegalArgumentException("Null or Empty uniqueId parameter.");
         }
 
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
-            .build();
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS,
+            OBJECTCLASS_SCOPEACCESS).build();
 
-        List<SearchResultEntry> entries = this.getMultipleEntries(parentUniqueId, SearchScope.ONE, searchFilter, ATTR_CLIENT_ID);
+        List<SearchResultEntry> entries = this.getMultipleEntries(parentUniqueId, SearchScope.ONE,
+            searchFilter, ATTR_CLIENT_ID);
 
         List<ScopeAccess> scopes = new ArrayList<ScopeAccess>();
-        
-        for (SearchResultEntry entry : entries){
+
+        for (SearchResultEntry entry : entries) {
             scopes.add(this.getScopeAccess(entry));
         }
 
@@ -244,29 +242,23 @@ public class LdapScopeAccessRepository extends LdapRepository implements ScopeAc
         getLogger().debug("Got scope access {} for {}", scopeAccess, parentUniqueId);
         return scopeAccess;
     }
-    
+
     @Override
-    public ScopeAccess getScopeAccessByUsernameAndClientId(String username,
-        String clientId) {
-        getLogger().debug("Getting {} scope access for {}", clientId,
-            username);
+    public ScopeAccess getScopeAccessByUsernameAndClientId(String username, String clientId) {
+        getLogger().debug("Getting {} scope access for {}", clientId, username);
 
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_UID, username)
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_UID, username)
             .addEqualAttribute(ATTR_CLIENT_ID, clientId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
-            .build();
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS).build();
 
-        SearchResultEntry entry = this.getSingleEntry(BASE_DN,
-            SearchScope.SUB, searchFilter);
+        SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.SUB, searchFilter);
 
         ScopeAccess scopeAccess = null;
         if (entry != null) {
             scopeAccess = this.getScopeAccess(entry);
         }
 
-        getLogger().debug("Got scope access {} for {}", scopeAccess,
-            username);
+        getLogger().debug("Got scope access {} for {}", scopeAccess, username);
         return scopeAccess;
     }
 
@@ -399,11 +391,8 @@ public class LdapScopeAccessRepository extends LdapRepository implements ScopeAc
         permission.setValue(resultEntry.getAttributeValue(ATTR_BLOB));
         permission.setTitle(resultEntry.getAttributeValue(ATTR_TITLE));
         permission.setDescription(resultEntry.getAttributeValue(ATTR_DESCRIPTION));
-        String grantedByDefault = resultEntry.getAttributeValue(ATTR_GRANTED_BY_DEFAULT);
-        permission.setGrantedByDefault(StringUtils.isBlank(grantedByDefault) ? null : Boolean
-            .parseBoolean(grantedByDefault.trim()));
-        String enabled = resultEntry.getAttributeValue(ATTR_ENABLED);
-        permission.setEnabled(StringUtils.isBlank(enabled) ? null : Boolean.parseBoolean(enabled));
+        permission.setGrantedByDefault(resultEntry.getAttributeValueAsBoolean(ATTR_GRANTED_BY_DEFAULT));
+        permission.setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
         return permission;
     }
 

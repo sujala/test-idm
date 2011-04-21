@@ -32,7 +32,6 @@ public abstract class LdapRepository {
     protected static final String OBJECTCLASS_CLIENTPERMISSION = "clientPermission";
     protected static final String OBJECTCLASS_GROUPOFNAMES = "groupOfNames";
     protected static final String OBJECTCLASS_ORGANIZATIONALUNIT = "organizationalUnit";
-    protected static final String OBJECTCLASS_PERMISSION = "clientPermission";
     protected static final String OBJECTCLASS_RACKSPACEAPPLICATION = "rsApplication";
     protected static final String OBJECTCLASS_RACKSPACEGROUP = "rsGroup";
     protected static final String OBJECTCLASS_RACKSPACEORGANIZATION = "rsOrganization";
