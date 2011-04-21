@@ -128,7 +128,7 @@ public class AuthResource {
      */
     @POST
     @Path("mosso")
-    public Response getMossoAuth(@Context Request request, @Context UriInfo uriInfo,
+    public Response authWithMossoIdAndApiKey(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, EntityHolder<MossoCredentials> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
@@ -183,7 +183,7 @@ public class AuthResource {
      */
     @Path("nast")
     @POST
-    public Response getNastAuth(@Context Request request, @Context UriInfo uriInfo,
+    public Response authWithNastIdAndApiKey(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, EntityHolder<NastCredentials> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
