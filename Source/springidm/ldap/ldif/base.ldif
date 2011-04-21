@@ -211,23 +211,23 @@ locked: FALSE
 o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
 RCN: RACKSPACE
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithUsernameAndApiKey
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithUsernameAndPassword
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithMossoIdAndApiKey
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithNastIdAndApiKey
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetBaseUrls
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetBaseUrl
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddBaseUrl
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteBaseUrl
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserServiceCatalog
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::authWithUsernameAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::authWithUsernameAndPassword
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::authWithMossoIdAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::authWithNastIdAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getBaseUrls
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getBaseUrl
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::addBaseUrl
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::deleteBaseUrl
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getServiceCatalog
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlRefs
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddUserBaseUrlRef
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteUserBaseUrlRef
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlRef
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::SetCustomerUserApiKey
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::UpdateUserMossoId
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::UpdateUserNastId
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::UpdateUserRPN
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::updateUserMossoId
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::updateUserNastId
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::updateUserRPN
 status: ACTIVE
 softDeleted: FALSE
 userPassword: password
@@ -279,18 +279,18 @@ permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::SetCustomerUser
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddFirstUser
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::ValidateToken
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::RevokeToken
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithUsernameAndApiKey
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithUsernameAndPassword
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithMossoIdAndApiKey
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AuthWithNastIdAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::authWithUsernameAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::authWithUsernameAndPassword
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::authWithMossoIdAndApiKey
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::authWithNastIdAndApiKey
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByUsername
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByMossoId
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserByNastId
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetBaseUrls
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetBaseUrl
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddBaseUrl
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteBaseUrl
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserServiceCatalog
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getBaseUrls
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getBaseUrl
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::addBaseUrl
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::deleteBaseUrl
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getServiceCatalog
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlRefs
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddUserBaseUrlRef
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteUserBaseUrlRef
@@ -433,130 +433,130 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: .+
 
-dn: cn=GetUserServiceCatalog,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=getServiceCatalog,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: GetUserServiceCatalog
+cn: getServiceCatalog
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET users/[^/]+/servicecatalog
 
-dn: cn=UpdateUserMossoId,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=updateUserMossoId,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: UpdateUserMossoId
+cn: updateUserMossoId
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT users/[^/]+/mossoId
 
-dn: cn=UpdateUserNastId,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=updateUserNastId,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: UpdateUserNastId
+cn: updateUserNastId
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT users/[^/]+/nastId
 
-dn: cn=UpdateUserRPN,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=updateUserRPN,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: UpdateUserRPN
+cn: updateUserRPN
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT users/[^/]+/rpn
 
-dn: cn=GetUserBaseUrlRefs,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=getBaseUrlRefs,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: GetUserBaseUrlRefs
+cn: getBaseUrlRefs
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET users/[^/]+/baseurlrefs
 
-dn: cn=AddUserBaseUrlRef,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=addBaseUrlRef,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: AddUserBaseUrlRef
+cn: addBaseUrlRef
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT users/[^/]+/baseurlrefs
 
-dn: cn=DeleteUserBaseUrlRef,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=deleteBaseUrlRef,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: DeleteUserBaseUrlRef
+cn: deleteBaseUrlRef
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: DELETE users/[^/]+/baseurlrefs/[^/]+
 
-dn: cn=GetUserBaseUrlRef,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=getBaseUrlRef,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: GetUserBaseUrlRef
+cn: getBaseUrlRef
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET users/[^/]+/baseurlrefs/[^/]+
 
-dn: cn=GetBaseUrls,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=getBaseUrls,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: GetBaseUrls
+cn: getBaseUrls
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET baseurls
 
-dn: cn=AddBaseUrl,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=addBaseUrl,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: AddBaseUrl
+cn: addBaseUrl
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST baseurls
 
-dn: cn=GetBaseUrl,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=getBaseUrl,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: GetBaseUrl
+cn: getBaseUrl
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET baseurls/[^/]+
 
-dn: cn=DeleteBaseUrl,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=deleteBaseUrl,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: DeleteBaseUrl
+cn: deleteBaseUrl
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: DELETE baseurls/[^/]+
 
-dn: cn=AuthWithUsernameAndApiKey,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=authWithUsernameAndApiKey,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: AuthWithUsernameAndApiKey
+cn: authWithUsernameAndApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST auth
 
-dn: cn=AuthWithUsernameAndPassword,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=authByUsernameAndPassword,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: AuthWithUsernameAndPassword
+cn: authByUsernameAndPassword
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST auth/username
 
-dn: cn=AuthWithMossoIdAndApiKey,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=authWithMossoIdAndApiKey,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: AuthWithMossoIdAndApiKey
+cn: authWithMossoIdAndApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST auth/mosso
 
-dn: cn=AuthWithNastIdAndApiKey,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=authWithNastIdAndApiKey,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: AuthWithNastIdAndApiKey
+cn: authWithNastIdAndApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST auth/nast
