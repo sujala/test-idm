@@ -49,7 +49,7 @@ import com.rackspace.idm.domain.service.impl.DefaultRefreshTokenService;
 import com.rackspace.idm.domain.service.impl.DefaultRoleService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
-import com.rackspace.idm.util.LdapMBean;
+import com.rackspace.idm.util.LdapRouterMBean;
 import com.rackspace.idm.util.LoggerMBean;
 import com.rackspace.idm.util.MemcacheMBean;
 import com.rackspace.idm.validation.InputValidator;
@@ -118,8 +118,8 @@ public class ServiceConfiguration {
     }
 
     @Bean
-    public LdapMBean ldapMonitoringBean() {
-        return new LdapMBean();
+    public LdapRouterMBean ldapRouterMonitoringBean() {
+        return new LdapRouterMBean();
     }
 
     @Bean
@@ -218,7 +218,7 @@ public class ServiceConfiguration {
         MBeanExporter exp = new MBeanExporter();
         Map<String, Object> beans = new HashMap<String, Object>();
         beans.put("com.rackspace.idm:name=loggerMonitoringBean", loggerMonitoringBean());
-        beans.put("com.rackspace.idm:name=ldapMonitoringBean", ldapMonitoringBean());
+        beans.put("com.rackspace.idm:name=ldapRouterMonitoringBean", ldapRouterMonitoringBean());
         beans.put("com.rackspace.idm:name=memcacheMonitoringBean", memcacheMonitoringBean());
         exp.setBeans(beans);
         return exp;

@@ -15,47 +15,30 @@ import org.springframework.jmx.export.annotation.ManagedResource;
 
 @ManagedResource
 public class MemcacheMBean {
-	 @Autowired
-	 private MemcachedClient memcached;
+     @Autowired
+     private MemcachedClient memcached;
 
-	 @ManagedAttribute
-	 public Map<String,String> getServerConnectionStatus() {
-	      
-	        Map<String,String> result = new HashMap<String, String>();
-	        
-	        List<String> availableServerList = getAvailableServers();
-	        List<String> unavailableServerList = getUnavailableServers();
-	        
-	        for(String server : availableServerList) {
-	            server = server.replaceAll("/", "");
-	            result.put(server, "up");
-	        }
-	        
-	        for(String server : unavailableServerList) {
-	            server = server.replaceAll("/", "");
-	            result.put(server, "down");
-	        }
-	        
-	        return result;
-	    }	
-	 
-	private List<String> getAvailableServers() {
-		List<String> list = new ArrayList<String>();
-		Collection<SocketAddress> servers = memcached.getAvailableServers();
-		for (SocketAddress socketAddress : servers) {
-			list.add(socketAddress.toString());
-		}
-		return list;
-	}
-	
-	private List<String> getUnavailableServers() {
-		List<String> list = new ArrayList<String>();
-		Collection<SocketAddress> servers = memcached.getUnavailableServers();
-		for (SocketAddress socketAddress : servers) {
-			list.add(socketAddress.toString());
-		}
-		return list;
-	}
-	
-	
+     @ManagedAttribute
+     public Map<String,String> getServerConnectionStatus() {
+          
+            Map<String,String> result = new HashMap<String, String>();
+            
+            Collection<SocketAddress> servers = memcached.getAvailableServers();
+            servers.addAll(memcached.getUnavailableServers());
+            
+            Map<SocketAddress,Map<String,String>> stats = memcached.getStats();
+            for(SocketAddress server : servers) {
+
+                String serverStr = server.toString();
+                serverStr = serverStr.replaceAll("/", "");
+
+                if(stats.get(server).isEmpty()) {
+                    result.put(serverStr, "down");
+                } else {
+                    result.put(serverStr, "up");
+                }
+            }
+            
+            return result;
+        }    
 }
