@@ -145,6 +145,8 @@ public class WadlTrie {
         } catch (final Exception e) {
             logger.error("Error parsing Wadl");
         }
+        // release reference - no longer needed after parse
+        stack = null;
     }
 
     public Object getPermissionFor(final Object[] paths) {
