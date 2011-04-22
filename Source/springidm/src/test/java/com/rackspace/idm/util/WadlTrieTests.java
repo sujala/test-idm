@@ -28,19 +28,19 @@ public class WadlTrieTests {
 
     @Test
     public void shouldFindPermission() {
-        final Object permissionFor = trie.getPermissionFor(new String[] {"root" , "/", "users", "mkovacs", "GET"});
+        final Object permissionFor = trie.getPermissionFor("root" , "/", "users", "mkovacs", "GET");
         Assert.assertEquals(permissionFor, "getUserByUsername");
     }
 
     @Test
     public void shouldNotFindPermission() {
-        final Object permissionFor = trie.getPermissionFor(new String[] {"root" , "/", "DELETE"});
+        final Object permissionFor = trie.getPermissionFor("root" , "/", "DELETE");
         Assert.assertNull(permissionFor);
     }
 
     @Test
     public void shouldFindPermissionForMultipleWildcards() {
-        final Object permissionFor = trie.getPermissionFor(new String[] { "root" , "/", "users", "mkovacs", "baseurlrefs", "wildcard", "GET"});
+        final Object permissionFor = trie.getPermissionFor("root" , "/", "users", "mkovacs", "baseurlrefs", "wildcard", "GET");
         Assert.assertEquals(permissionFor, "getBaseUrlRef");
     }
 }
