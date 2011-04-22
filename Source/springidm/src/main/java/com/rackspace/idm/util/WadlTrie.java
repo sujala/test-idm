@@ -25,10 +25,13 @@ public class WadlTrie {
         private final HashMap<Object, Tree> children = new HashMap<Object, Tree>();
         private final Object                element;
         private final Tree                  p;
+        private boolean                     wildcard = false;
 
         public Tree(final Object o, final Tree parent) {
             p = parent;
             element = o;
+            final String s = element.toString();
+            wildcard = s.startsWith("{") && s.endsWith("}");
         }
 
         public Tree add(final Object o) {
@@ -42,18 +45,16 @@ public class WadlTrie {
 
         Object find(final int index, final Object... o) {
             final int next = index + 1;
-            // if this node is a path parameter place holder, iterate children
-            if (next <= o.length && element.equals(o[index]) || isWildcard()) {
-                if (index == o.length - 1) {
-                    // match so found it
-                    if (children.size() == 1) {
-                        final Object key = children.keySet().toArray()[0];
-                        // end of the branch
-                        if (children.get(key).children.size() == 0) {
-                            return key;
-                        }
-                    }
+
+            // if we have reached the array size and at a node then this is the permission ID
+            if( index == o.length) {
+                if(children.isEmpty()) {
+                    return element;
                 }
+            }
+
+            // if this node is a path parameter place holder or exact match, iterate children
+            if (isWildcard() || element.equals(o[index]) ) {
                 for (final Object c : children.keySet()) {
                     final Object r = children.get(c).find(next, o);
                     if (r != null) {
@@ -66,8 +67,7 @@ public class WadlTrie {
         }
 
         private boolean isWildcard() {
-            final String s = element.toString();
-            return s.startsWith("{") && s.endsWith("}");
+            return wildcard;
         }
 
         public Tree pop() {
