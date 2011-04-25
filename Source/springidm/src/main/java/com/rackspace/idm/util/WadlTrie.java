@@ -149,7 +149,7 @@ public class WadlTrie {
         stack = null;
     }
 
-    public Object getPermissionFor(final Object[] paths) {
+    public Object getPermissionFor(final Object... paths) {
         return trie.find(0, paths);
     }
 
