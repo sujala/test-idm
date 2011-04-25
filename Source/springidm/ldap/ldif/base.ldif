@@ -155,7 +155,7 @@ cn: Rackspace Billing Application
 inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!3333
 locked: FALSE
 o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::SetCustomerLock
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::setCustomerLockStatus
 RCN: RACKSPACE
 clientId: GHIJKL
 softDeleted: FALSE
@@ -220,10 +220,6 @@ permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getBaseUrl
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::addBaseUrl
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::deleteBaseUrl
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getServiceCatalog
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlRefs
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddUserBaseUrlRef
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteUserBaseUrlRef
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlRef
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::setApiKey
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::updateUserMossoId
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::updateUserNastId
@@ -243,10 +239,10 @@ permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::All
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::addCustomer
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getCustomer
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::deleteCustomer
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::SetCustomerLock
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetCustomerClients
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::addClient
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::setCustomerLockStatus
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getClients
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::addClient
+permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getClient
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getClientPermissions
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getClientGrantedPermissions
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getClientDefinedPermissions
@@ -291,10 +287,6 @@ permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getBaseUrl
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::addBaseUrl
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::deleteBaseUrl
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::getServiceCatalog
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlRefs
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::AddUserBaseUrlRef
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::DeleteUserBaseUrlRef
-permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::GetUserBaseUrlRef
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::grantPermissionToClient
 permission: RACKSPACE::18e7a7032733486cd32f472d7bd58f709ac0d221::revokePermissionToClient
 RCN: RACKSPACE
@@ -617,21 +609,13 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT customers/[^/]+/actions/lock
 
-dn: cn=GetCustomerClients,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=getClients,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: GetCustomerClients
+cn: getClients
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET customers/[^/]+/clients
-
-dn: cn=GetMyCustomerClients,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: GetMyCustomerClients
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: GET customers/{customerId}/clients
 
 dn: cn=addClient,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -641,29 +625,13 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST customers/[^/]+/clients
 
-dn: cn=addClient,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=getClient,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: AddMyCustomerClient
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: POST customers/{customerId}/clients
-
-dn: cn=getClients,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: getClients
+cn: getClient
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET customers/[^/]+/clients/[^/]+
-
-dn: cn=getClients,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: getClients
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: GET customers/{customerId}/clients/[^/]+
 
 dn: cn=getClientPermissions,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -673,14 +641,6 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET customers/[^/]+/clients/[^/]+/permissions
 
-dn: cn=getClientPermissions,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: getClientPermissions
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: GET customers/{customerId}/clients/[^/]+/permissions
-
 dn: cn=getClientGrantedPermissions,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
@@ -689,14 +649,6 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET customers/[^/]+/clients/[^/]+/permissions/granted
 
-dn: cn=getClientGrantedPermissions,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: getClientGrantedPermissions
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: GET customers/{customerId}/clients/[^/]+/permissions/granted
-
 dn: cn=getClientDefinedPermissions,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
@@ -704,14 +656,6 @@ cn: getClientDefinedPermissions
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET customers/[^/]+/clients/[^/]+/permissions/defined
-
-dn: cn=getClientDefinedPermissions,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: getClientDefinedPermissions
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: GET customers/{customerId}/clients/[^/]+/permissions/defined
 
 dn: cn=getClientDefinedPermission,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -729,14 +673,6 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST customers/[^/]+/clients/[^/]+/permissions/defined
 
-dn: cn=addClientDefinedPermission,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: addClientDefinedPermission
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: POST customers/{customerId}/clients/[^/]+/permissions/defined
-
 dn: cn=updateClientDefinedPermission,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
@@ -744,14 +680,6 @@ cn: updateClientDefinedPermission
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+
-
-dn: cn=updateClientDefinedPermission,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: updateClientDefinedPermission
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: PUT customers/{customerId}/clients/[^/]+/permissions/defined/[^/]+
 
 dn: cn=deleteClientDefinedPermission,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -761,21 +689,13 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: DELETE customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+
 
-dn: cn=deleteClientDefinedPermission,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: deleteClientDefinedPermission
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: DELETE customers/{customerId}/clients/[^/]+/permissions/defined/[^/]+
-
 dn: cn=grantPermissionToClient,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
 cn: grantPermissionToClient
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT customers/{customerId}/clients/[^/]+/permissions/defined/[^/]+/grant
+blob: PUT customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+/grant
 
 dn: cn=revokePermissionToClient,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -783,7 +703,7 @@ objectClass: clientPermission
 cn: revokePermissionToClient
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT customers/{customerId}/clients/[^/]+/permissions/defined/[^/]+/revoke
+blob: PUT customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+/revoke
 
 dn: cn=getRoles,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -793,14 +713,6 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET customers/[^/]+/roles
 
-dn: cn=getRoles,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: getRoles
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: GET customers/{customerId}/roles
-
 dn: cn=getUsers,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
@@ -808,14 +720,6 @@ cn: getUsers
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET customers/[^/]+/users
-
-dn: cn=getUsers,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: getUsers
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: GET customers/{customerId}/users
 
 dn: cn=addUser,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -825,14 +729,6 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST customers/[^/]+/users
 
-dn: cn=addUser,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: addUser
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: POST customers/{customerId}/users
-
 dn: cn=getUser,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
@@ -841,14 +737,6 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET customers/[^/]+/users/[^/]+
 
-dn: cn=getUser,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: getUser
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: GET customers/{customerId}/users/[^/]+
-
 dn: cn=updateUser,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
@@ -856,22 +744,6 @@ cn: UpdateCustomerUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT customers/[^/]+/users/[^/]+
-
-dn: cn=updateUser,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: updateUser
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: PUT customers/{customerId}/users/[^/]+
-
-dn: cn=updateUser,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: updateUser
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: PUT customers/{customerId}/users/{username}
 
 dn: cn=deleteUser,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -889,14 +761,6 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET customers/[^/]+/users/[^/]+/key
 
-dn: cn=getApiKey,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: getApiKey
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: GET customers/{customerId}/users/{username}/key
-
 dn: cn=resetApiKey,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
@@ -912,14 +776,6 @@ cn: setApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT customers/[^/]+/users/[^/]+/key
-
-dn: cn=resetApiKey,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: resetApiKey
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: POST customers/{customerId}/users/{username}/key
 
 dn: cn=setUserLock,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -937,14 +793,6 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: GET customers/[^/]+/users/[^/]+/password
 
-dn: cn=getUserPassword,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: getUserPassword
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: GET customers/{customerId}/users/[^/]+/password
-
 dn: cn=resetUserPassword,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
@@ -953,14 +801,6 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST customers/[^/]+/users/[^/]+/password
 
-dn: cn=resetUserPassword,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: resetUserPassword
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: POST customers/{customerId}/users/[^/]+/password
-
 dn: cn=setUserPassword,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
@@ -968,22 +808,6 @@ cn: setUserPassword
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT customers/[^/]+/users/[^/]+/password
-
-dn: cn=setUserPassword,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: setUserPassword
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: PUT customers/{customerId}/users/[^/]+/password
-
-dn: cn=setUserPassword,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: SetMyCustomerMyUserPassword
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: PUT customers/{customerId}/users/{username}/password
 
 dn: cn=getPasswordResetToken,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -1001,30 +825,6 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST customers/[^/]+/users/[^/]+/password/recoveryemail
 
-dn: cn=GetCustomerUserRoles,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: GetCustomerUserRoles
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: GET customers/[^/]+/users/[^/]+/roles
-
-dn: cn=GetMyCustomerUserRoles,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: GetMyCustomerUserRoles
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: GET customers/{customerId}/users/[^/]+/roles
-
-dn: cn=GetMyCustomerMyUserRoles,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: GetMyCustomerMyUserRoles
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: GET customers/{customerId}/users/{username}/roles
-
 dn: cn=setRole,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
@@ -1033,14 +833,6 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT customers/[^/]+/users/[^/]+/roles/[^/]+
 
-dn: cn=setRole,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: setRole
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: PUT customers/{customerId}/users/[^/]+/roles/[^/]+
-
 dn: cn=deleteRole,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
@@ -1048,14 +840,6 @@ cn: deleteRole
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: DELETE customers/[^/]+/users/[^/]+/roles/[^/]+
-
-dn: cn=deleteRole,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: deleteRole
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: DELETE customers/{customerId}/users/[^/]+/roles/[^/]+
 
 dn: cn=getUserSecret,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -1073,14 +857,6 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT customers/[^/]+/users/[^/]+/secret
 
-dn: cn=setUserSecret,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: setUserSecret
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: PUT customers/{customerId}/users/{username}/secret
-
 dn: cn=setUserSoftDelete,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
@@ -1089,14 +865,6 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT customers/[^/]+/users/[^/]+/softdelete
 
-dn: cn=setUserSoftDelete,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: setUserSoftDelete
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: PUT customers/{customerId}/users/[^/]+/softdelete
-
 dn: cn=setUserStatus,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
@@ -1104,14 +872,6 @@ cn: setUserStatus
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: PUT customers/[^/]+/users/[^/]+/status
-
-dn: cn=setUserStatus,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: setUserStatus
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: PUT customers/{customerId}/users/[^/]+/status
 
 dn: cn=addFirstUser,ou=permissions,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -1136,4 +896,3 @@ cn: revokeAccessToken
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: DELETE token/[^/]+
-
