@@ -18,6 +18,7 @@ import org.junit.Test;
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserCredential;
@@ -33,6 +34,8 @@ public class LdapUserRepositoryTest {
 
     private LdapUserRepository repo;
     private LdapConnectionPools connPools;
+    
+    String rackerId = "racker";
 
     private final String testCustomerDN = "o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com";
 
@@ -75,6 +78,27 @@ public class LdapUserRepositoryTest {
 
     @Test
     public void shouldNotAcceptNullOrBlankUsernameOrInum() {
+        try {
+            repo.addRacker(null);
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+        
+        try {
+            repo.deleteRacker(null);
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+        
+        try {
+            repo.getRackerByRackerId(null);
+            Assert.fail("Should have thrown an exception!");
+        } catch (IllegalArgumentException e) {
+            Assert.assertTrue(true);
+        }
+        
         try {
             repo.getUserByUsername(null);
             Assert.fail("Should have thrown an exception!");
@@ -158,6 +182,21 @@ public class LdapUserRepositoryTest {
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
+    }
+    
+    @Ignore
+    @Test
+    public void shouldAddFindDeleteRacker() {
+        Racker racker = new Racker();
+        racker.setRackerId(rackerId);
+        
+        repo.addRacker(racker);
+        
+        Racker gotRacker = repo.getRackerByRackerId(rackerId);
+        
+        repo.deleteRacker(rackerId);
+        
+        Assert.assertNotNull(gotRacker);
     }
 
     @Test
