@@ -2,6 +2,9 @@ package com.rackspace.idm.domain.entity;
 
 import java.util.Date;
 
+import org.joda.time.DateTime;
+
+import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
@@ -10,13 +13,13 @@ import com.unboundid.ldap.sdk.persist.LDAPObject;
 public class RackerScopeAccessObject extends ScopeAccessObject {
 
     @LDAPField(attribute="accessToken", objectClass="rackerScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String accessToken;
+    private String accessTokenString;
     
     @LDAPField(attribute="accesTokenExp", objectClass="rackerScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date accessTokenExp;
     
     @LDAPField(attribute="refreshToken", objectClass="rackerScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String refreshToken;
+    private String refreshTokenString;
     
     @LDAPField(attribute="refreshTokenExp", objectClass="rackerScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date refreshTokenExp;
@@ -24,12 +27,12 @@ public class RackerScopeAccessObject extends ScopeAccessObject {
     @LDAPField(attribute="rackerId", objectClass="rackerScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
     private String rackerId;
     
-    public String getRefreshToken() {
-        return refreshToken;
+    public String getRefreshTokenString() {
+        return refreshTokenString;
     }
     
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
+    public void setRefreshToken(String refreshTokenString) {
+        this.refreshTokenString = refreshTokenString;
     }
     
     public Date getRefreshTokenExp() {
@@ -48,12 +51,12 @@ public class RackerScopeAccessObject extends ScopeAccessObject {
         this.rackerId = rackerId;
     }
     
-    public String getAccessToken() {
-        return accessToken;
+    public String getAccessTokenString() {
+        return accessTokenString;
     }
     
-    public void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
+    public void setAccessTokenString(String accessTokenString) {
+        this.accessTokenString = accessTokenString;
     }
     
     public Date getAccessTokenExp() {
@@ -62,5 +65,19 @@ public class RackerScopeAccessObject extends ScopeAccessObject {
     
     public void setAccessTokenExp(Date accessTokenExp) {
         this.accessTokenExp = accessTokenExp;
+    }
+    
+    @Override
+    public AccessToken getAccessToken() {
+        BaseClient client = new BaseClient(getClientId(), getClientRCN());
+        AccessToken token = new AccessToken(getAccessTokenString(), new DateTime(
+            getAccessTokenExp()), null, client, IDM_SCOPE.FULL);
+        return token;
+    }
+    
+    @Override
+    public RefreshToken getRefreshToken() {
+        return new RefreshToken(getRefreshTokenString(), new DateTime(
+            getRefreshTokenExp()), getRackerId(), getClientId());
     }
 }

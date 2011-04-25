@@ -2,6 +2,9 @@ package com.rackspace.idm.domain.entity;
 
 import java.util.Date;
 
+import org.joda.time.DateTime;
+
+import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
@@ -10,7 +13,7 @@ import com.unboundid.ldap.sdk.persist.LDAPObject;
 public class PasswordResetScopeAccessObject extends ScopeAccessObject{
 
     @LDAPField(attribute="accessToken", objectClass="passwordResetScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String accessToken;
+    private String accessTokenString;
     
     @LDAPField(attribute="accesTokenExp", objectClass="passwordResetScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date accessTokenExp;
@@ -37,12 +40,12 @@ public class PasswordResetScopeAccessObject extends ScopeAccessObject{
         this.userRCN = userRCN;
     }
     
-    public String getAccessToken() {
-        return accessToken;
+    public String getAccessTokenString() {
+        return accessTokenString;
     }
     
-    public void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
+    public void setAccessTokenString(String accessTokenString) {
+        this.accessTokenString = accessTokenString;
     }
     
     public Date getAccessTokenExp() {
@@ -51,5 +54,14 @@ public class PasswordResetScopeAccessObject extends ScopeAccessObject{
     
     public void setAccessTokenExp(Date accessTokenExp) {
         this.accessTokenExp = accessTokenExp;
+    }
+    
+    @Override
+    public AccessToken getAccessToken() {
+        BaseUser user = new BaseUser(getUsername(), getUserRCN());
+        BaseClient client = new BaseClient(getClientId(), getClientRCN());
+        AccessToken token = new AccessToken(getAccessTokenString(), new DateTime(
+            getAccessTokenExp()), user, client, IDM_SCOPE.SET_PASSWORD);
+        return token;
     }
 }

@@ -48,4 +48,12 @@ public class ScopeAccessObject {
     public void setClientRCN(String clientRCN) {
         this.clientRCN = clientRCN;
     }
+    
+    public AccessToken getAccessToken() {
+        return null;
+    }
+    
+    public RefreshToken getRefreshToken() {
+        return null;
+    }
 }
