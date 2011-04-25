@@ -421,15 +421,57 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.9) = {
     must-contain
         clientId,
         clientRCN
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.11) = {
+    name = clientScopeAccess
+    ldap-names = clientScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    must-contain
+        tokenScope
     may-contain
+        accessToken,
+        accessTokenExp
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.12) = {
+    name = passwordResetScopeAccess
+    ldap-names = passwordResetScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    must-contain
+        accessToken,
+        accessTokenExp,
+        uid,
+        userRCN
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.13) = {
+    name = rackerScopeAccess
+    ldap-names = rackerScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    must-contain
         rackerId,
-        tokenScope,
         accessToken,
         accessTokenExp,
         refreshToken,
-        refreshTokenEXP,
+        refreshTokenExp
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.14) = {
+    name = userScopeAccess
+    ldap-names = userScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    must-contain
         uid,
-        userRCN
+        userRCN,
+        accessToken,
+        accessTokenExp,
+        refreshToken,
+        refreshTokenExp
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.8) = {
