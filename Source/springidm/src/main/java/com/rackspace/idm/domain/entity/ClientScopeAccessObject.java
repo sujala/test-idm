@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.entity;
 import java.util.Date;
 
 import org.joda.time.DateTime;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPField;
@@ -36,5 +37,18 @@ public class ClientScopeAccessObject extends ScopeAccessObject implements hasAcc
     @Override
     public void setAccessTokenExpired() {
         this.accessTokenExp = new DateTime().minusDays(1).toDate();
+    }
+    
+    @Override
+    public boolean isAccessTokenExpired(DateTime time) {
+        return StringUtils.isBlank(this.accessTokenString)
+            || this.accessTokenExp == null
+            || new DateTime(this.accessTokenExp).isBefore(time);
+    }
+    
+    @Override
+    public String getAuditContext() {
+        String format = "Client(clientId=%s,customerId=%s)";
+        return String.format(format, getClientId(), getClientRCN());
     }
 }
