@@ -4,12 +4,6 @@ import org.apache.commons.lang.SerializationUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.ClientGroup;
-
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * User: john.eo
  * Date: 1/11/11
@@ -19,10 +13,7 @@ public class BaseUserTest {
     @Test
     public void shouldSerializeAndDeserialzie() {
 
-        ClientGroup group = new ClientGroup("clientId", "customerId", "groupName", "type");
-        List<ClientGroup> groups = new ArrayList<ClientGroup>();
-        groups.add(group);
-        BaseUser bu = new BaseUser("username", "customerId", groups);
+        BaseUser bu = new BaseUser("username", "customerId");
         byte[] serialized = SerializationUtils.serialize(bu);
         BaseUser dsbu = (BaseUser) SerializationUtils.deserialize(serialized);
         Assert.assertEquals(bu, dsbu);
