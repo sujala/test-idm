@@ -145,24 +145,15 @@ public class DefaultUserService implements UserService {
             boolean authenticated = authDao.authenticate(username, password);
             logger.debug("Authenticated Racker {} : {}", username,
                 authenticated);
+            Racker racker = this.getRackerByRackerId(username);
             BaseUser user = new BaseUser(username);
+            user.setUniqueId(racker.getUniqueId());
             return new UserAuthenticationResult(user, authenticated);
         }
 
         UserAuthenticationResult result = userDao.authenticate(username,
             password);
 
-        if (result.isAuthenticated()) {
-            List<ClientGroup> groups = this.clientService
-                .getClientGroupsForUser(result.getUser().getUsername());
-
-            BaseUser baseUser = new BaseUser(result.getUser().getUniqueId(),
-                result.getUser().getUsername(), result.getUser()
-                    .getCustomerId(), groups);
-
-            result = new UserAuthenticationResult(baseUser,
-                result.isAuthenticated());
-        }
         logger.debug("Authenticated User: {} : {}", username, result);
         return result;
     }
@@ -173,15 +164,6 @@ public class DefaultUserService implements UserService {
         logger.debug("Authenticating User: {} by API Key", username);
         UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(
             username, apiKey);
-        if (authenticated.isAuthenticated()) {
-            List<ClientGroup> groups = this.clientService
-                .getClientGroupsForUser(authenticated.getUser().getUsername());
-            BaseUser baseUser = new BaseUser(authenticated.getUser()
-                .getUsername(), authenticated.getUser().getCustomerId(), groups);
-
-            authenticated = new UserAuthenticationResult(baseUser,
-                authenticated.isAuthenticated());
-        }
         logger.debug("Authenticated User: {} by API Key - {}", username,
             authenticated);
         return authenticated;
@@ -194,15 +176,6 @@ public class DefaultUserService implements UserService {
             .debug("Authenticating User with MossoId {} and Api Key", mossoId);
         UserAuthenticationResult authenticated = userDao
             .authenticateByMossoIdAndAPIKey(mossoId, apiKey);
-        if (authenticated.isAuthenticated()) {
-            List<ClientGroup> groups = this.clientService
-                .getClientGroupsForUser(authenticated.getUser().getUsername());
-            BaseUser baseUser = new BaseUser(authenticated.getUser()
-                .getUsername(), authenticated.getUser().getCustomerId(), groups);
-
-            authenticated = new UserAuthenticationResult(baseUser,
-                authenticated.isAuthenticated());
-        }
         logger.debug("Authenticated User with MossoId {} and API Key - {}",
             mossoId, authenticated);
         return authenticated;
@@ -214,15 +187,6 @@ public class DefaultUserService implements UserService {
         logger.debug("Authenticating User with NastId {} and API Key", nastId);
         UserAuthenticationResult authenticated = userDao
             .authenticateByNastIdAndAPIKey(nastId, apiKey);
-        if (authenticated.isAuthenticated()) {
-            List<ClientGroup> groups = this.clientService
-                .getClientGroupsForUser(authenticated.getUser().getUsername());
-            BaseUser baseUser = new BaseUser(authenticated.getUser()
-                .getUsername(), authenticated.getUser().getCustomerId(), groups);
-
-            authenticated = new UserAuthenticationResult(baseUser,
-                authenticated.isAuthenticated());
-        }
         logger.debug("Authenticated User with NastId {} and API Key - {}",
             nastId, authenticated);
         return authenticated;
@@ -287,19 +251,6 @@ public class DefaultUserService implements UserService {
     public User getUser(String username) {
         logger.debug("Getting User: {}", username);
         User user = userDao.getUserByUsername(username);
-
-        if (user == null) {
-            logger.warn("No user found for user name {}", username);
-            return null;
-        }
-
-        if (StringUtils.isBlank(user.getInum())) {
-            String msg = String.format("User %s is missing iNum.", username);
-            logger.warn(msg);
-            throw new IllegalStateException(msg);
-        }
-
-        user.setGroups(clientService.getClientGroupsForUser(user.getUsername()));
         logger.debug("Got User: {}", user);
         return user;
     }
@@ -309,10 +260,6 @@ public class DefaultUserService implements UserService {
         logger.debug("Getting User: {} - {}", customerId, username);
         User user = userDao
             .getUserByCustomerIdAndUsername(customerId, username);
-        if (user == null) {
-            return null;
-        }
-        user.setGroups(clientService.getClientGroupsForUser(user.getUsername()));
         logger.debug("Got User: {}", user);
         return user;
     }
@@ -321,10 +268,6 @@ public class DefaultUserService implements UserService {
     public User getUserByMossoId(int mossoId) {
         logger.debug("Getting User: {}", mossoId);
         User user = userDao.getUserByMossoId(mossoId);
-        if (user != null) {
-            user.setGroups(clientService.getClientGroupsForUser(user
-                .getUsername()));
-        }
         logger.debug("Got User: {}", user);
         return user;
     }
@@ -333,10 +276,6 @@ public class DefaultUserService implements UserService {
     public User getUserByNastId(String nastId) {
         logger.debug("Getting User: {}", nastId);
         User user = userDao.getUserByNastId(nastId);
-        if (user != null) {
-            user.setGroups(clientService.getClientGroupsForUser(user
-                .getUsername()));
-        }
         logger.debug("Got User: {}", user);
         return user;
     }
@@ -345,11 +284,6 @@ public class DefaultUserService implements UserService {
     public User getUserByRPN(String rpn) {
         logger.debug("Getting User: {}", rpn);
         User user = userDao.getUserByRPN(rpn);
-
-        if (user != null) {
-            user.setGroups(clientService.getClientGroupsForUser(user
-                .getUsername()));
-        }
         logger.debug("Got User: {}", user);
         return user;
     }
