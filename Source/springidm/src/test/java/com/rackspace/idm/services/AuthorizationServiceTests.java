@@ -1,17 +1,9 @@
 package com.rackspace.idm.services;
 
-import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.domain.config.MemcachedConfiguration;
-import com.rackspace.idm.domain.config.PropertyFileConfiguration;
-import com.rackspace.idm.domain.dao.AccessTokenDao;
-import com.rackspace.idm.domain.dao.ClientDao;
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
-import com.rackspace.idm.test.stub.StubLogger;
-import com.rackspace.idm.util.AuthHeaderHelper;
+import java.util.ArrayList;
+import java.util.List;
+
 import junit.framework.Assert;
-import net.spy.memcached.MemcachedClient;
 
 import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
@@ -19,15 +11,29 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.rackspace.idm.domain.config.PropertyFileConfiguration;
+import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
+import com.rackspace.idm.domain.entity.BaseClient;
+import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
+import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 
 public class AuthorizationServiceTests {
-    ClientDao mockClientDao;
+    ClientService mockClientService;
+    ScopeAccessObjectDao mockScopeAccessDao;
     AuthorizationService service;
 
     String authHeader = "OAuth XXXX";
+    
+    String methodName = "methodName";
 
+    String rackerId = "rackerId";
     String tokenString = "XXXX";
     DateTime tokenExpiration;
 
@@ -62,24 +68,24 @@ public class AuthorizationServiceTests {
 
     String adminRoleName = "Idm Admin";
 
-    AccessToken trustedToken;
-    AccessToken authorizedClientToken;
-    AccessToken notAuthorizedClientToken;
-    AccessToken nonRackspaceClientToken;
-    AccessToken authorizedUserToken;
-    AccessToken otherCompanyUserToken;
-    AccessToken authorizedAdminToken;
-    AccessToken otherCompanyAdminToken;
-    AccessToken customerIdmToken;
+    RackerScopeAccessObject trustedToken;
+    ClientScopeAccessObject authorizedClientToken;
+    ClientScopeAccessObject notAuthorizedClientToken;
+    ClientScopeAccessObject nonRackspaceClientToken;
+    UserScopeAccessObject authorizedUserToken;
+    UserScopeAccessObject otherCompanyUserToken;
+    UserScopeAccessObject authorizedAdminToken;
+    UserScopeAccessObject otherCompanyAdminToken;
+    ClientScopeAccessObject customerIdmToken;
 
     @Before
     public void setUp() throws Exception {
-        mockClientDao = EasyMock.createMock(ClientDao.class);
-
+        mockClientService = EasyMock.createMock(ClientService.class);
+        mockScopeAccessDao = EasyMock.createMock(ScopeAccessObjectDao.class);
         Configuration appConfig = new PropertyFileConfiguration()
             .getConfigFromClasspath();
-        service = new DefaultAuthorizationService(mockClientDao,
-            appConfig);
+        service = new DefaultAuthorizationService(mockScopeAccessDao,
+            mockClientService, appConfig);
         setUpObjects();
     }
 
@@ -118,13 +124,11 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnTrueForClient() {
 
-        EasyMock.expect(
-            mockClientDao.getDefinedPermissionByClientIdAndPermissionId(
-                idmClientId, permissionId)).andReturn(perm);
-        EasyMock.replay(mockClientDao);
+        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(tokenString, perm)).andReturn(true);
+        EasyMock.replay(mockScopeAccessDao);
 
         boolean authorized = service.authorizeClient(authorizedClientToken,
-            verb, uri);
+            permissionId);
 
         Assert.assertTrue(authorized);
     }
@@ -132,8 +136,11 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnFalseForClient() {
 
+        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(tokenString, perm)).andReturn(false);
+        EasyMock.replay(mockScopeAccessDao);
+        
         boolean authorized = service.authorizeClient(notAuthorizedClientToken,
-            verb, uri);
+            permissionId);
 
         Assert.assertTrue(!authorized);
     }
@@ -141,6 +148,8 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnTrueForAdmin() {
 
+        EasyMock.expect(mockClientService.isUserMemberOfClientGroup(username, admin)).andReturn(true);
+        EasyMock.replay(mockClientService);
         boolean authorized = service.authorizeAdmin(authorizedAdminToken,
             customerId);
 
@@ -150,6 +159,8 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnFalseForAdmin() {
 
+        EasyMock.expect(mockClientService.isUserMemberOfClientGroup(username, admin)).andReturn(false);
+        EasyMock.replay(mockClientService);
         boolean authorized = service.authorizeAdmin(otherCompanyAdminToken,
             customerId);
 
@@ -195,14 +206,15 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnTrueForCustomerIdm() {
         boolean authorized = service.authorizeCustomerIdm(customerIdmToken);
-        
+
         Assert.assertTrue(authorized);
     }
 
     @Test
     public void ShouldReturnFalseForCustomerIdm() {
-        boolean authorized = service.authorizeCustomerIdm(notAuthorizedClientToken);
-        
+        boolean authorized = service
+            .authorizeCustomerIdm(notAuthorizedClientToken);
+
         Assert.assertTrue(!authorized);
     }
 
@@ -211,7 +223,6 @@ public class AuthorizationServiceTests {
         perm.setClientId(idmClientId);
         perm.setCustomerId(customerId);
         perm.setPermissionId(permissionId);
-        perm.setValue(permissionValue);
 
         permissions = new ArrayList<Permission>();
         permissions.add(perm);
@@ -221,51 +232,47 @@ public class AuthorizationServiceTests {
         admin.setClientId(idmClientId);
         admin.setCustomerId(customerId);
 
-        groups = new ArrayList<ClientGroup>();
-        groups.add(admin);
+        trustedToken = new RackerScopeAccessObject();
+        trustedToken.setRackerId(rackerId);
 
-        idmClient = new BaseClient(idmClientId, customerId, permissions);
+        authorizedClientToken = new ClientScopeAccessObject();
+        authorizedClientToken.setAccessTokenString(tokenString);
+        authorizedClientToken.setClientId(clientId);
+        authorizedClientToken.setClientRCN(customerId);
 
-        authorizedClient = new BaseClient(clientId, customerId, permissions);
-        notAuthorizedClient = new BaseClient(clientId, customerId);
-        nonRackspaceClient = new BaseClient(clientId, otherCustomerId);
+        notAuthorizedClientToken = new ClientScopeAccessObject();
+        notAuthorizedClientToken.setAccessTokenString(tokenString);
+        notAuthorizedClientToken.setClientId(clientId);
+        notAuthorizedClientToken.setClientRCN(customerId);
 
-        authorizedUser = new BaseUser(username, customerId);
-        otherCompanyUser = new BaseUser(username, otherCustomerId);
-        authorizedAdmin = new BaseUser(username, customerId, groups);
-        otherCompanyAdmin = new BaseUser(username, otherCustomerId, groups);
+        nonRackspaceClientToken = new ClientScopeAccessObject();
+        nonRackspaceClientToken.setAccessTokenString(tokenString);
+        nonRackspaceClientToken.setClientId(clientId);
+        nonRackspaceClientToken.setClientRCN(otherCustomerId);
 
-        tokenExpiration = new DateTime();
+        authorizedUserToken = new UserScopeAccessObject();
+        authorizedUserToken.setAccessTokenString(tokenString);
+        authorizedUserToken.setUsername(username);
+        authorizedUserToken.setUserRCN(customerId);
 
-        trustedToken = new AccessToken(tokenString, tokenExpiration,
-            authorizedUser, authorizedClient, AccessToken.IDM_SCOPE.FULL, true);
+        otherCompanyUserToken = new UserScopeAccessObject();
+        otherCompanyUserToken.setAccessTokenString(tokenString);
+        otherCompanyUserToken.setUsername(username);
+        otherCompanyUserToken.setUserRCN(otherCustomerId);
 
-        authorizedClientToken = new AccessToken(tokenString, tokenExpiration,
-            null, authorizedClient, AccessToken.IDM_SCOPE.FULL, false);
+        authorizedAdminToken = new UserScopeAccessObject();
+        authorizedAdminToken.setAccessTokenString(tokenString);
+        authorizedAdminToken.setUsername(username);
+        authorizedAdminToken.setUserRCN(customerId);
 
-        notAuthorizedClientToken = new AccessToken(tokenString,
-            tokenExpiration, null, notAuthorizedClient,
-            AccessToken.IDM_SCOPE.FULL, false);
+        otherCompanyAdminToken = new UserScopeAccessObject();
+        otherCompanyAdminToken.setAccessTokenString(tokenString);
+        otherCompanyAdminToken.setUsername(username);
+        otherCompanyAdminToken.setUserRCN(otherCustomerId);
 
-        nonRackspaceClientToken = new AccessToken(tokenString, tokenExpiration,
-            null, nonRackspaceClient, AccessToken.IDM_SCOPE.FULL, false);
-
-        authorizedUserToken = new AccessToken(tokenString, tokenExpiration,
-            authorizedUser, authorizedClient, AccessToken.IDM_SCOPE.FULL, false);
-
-        otherCompanyUserToken = new AccessToken(tokenString, tokenExpiration,
-            otherCompanyUser, authorizedClient, AccessToken.IDM_SCOPE.FULL,
-            false);
-
-        authorizedAdminToken = new AccessToken(tokenString, tokenExpiration,
-            authorizedAdmin, authorizedClient, AccessToken.IDM_SCOPE.FULL,
-            false);
-
-        otherCompanyAdminToken = new AccessToken(tokenString, tokenExpiration,
-            otherCompanyAdmin, authorizedClient, AccessToken.IDM_SCOPE.FULL,
-            false);
-
-        customerIdmToken = new AccessToken(tokenString, tokenExpiration, null,
-            idmClient, AccessToken.IDM_SCOPE.FULL, false);
+        customerIdmToken = new ClientScopeAccessObject();
+        customerIdmToken.setAccessTokenString(tokenString);
+        customerIdmToken.setClientId(idmClientId);
+        customerIdmToken.setClientRCN(customerId);
     }
 }
