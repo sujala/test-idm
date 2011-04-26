@@ -115,11 +115,6 @@ public final class AccessToken extends Token implements Serializable {
             && client.getPermissions().size() > 0;
     }
 
-    public boolean hasUserGroups() {
-        return !isClientToken() && user != null && user.getGroups() != null
-            && user.getGroups().size() > 0;
-    }
-
     public String getAuditString() {
         String auditString = null;
         if (isClientToken()) {
@@ -227,13 +222,13 @@ public final class AccessToken extends Token implements Serializable {
     private static class SerializationProxy implements Serializable {
         private static final long serialVersionUID = 1797445240684729565L;
 
-        private String tokenString;
-        private DateTime expirationTime;
-        private String uniqueId;
-        private BaseUser user;
-        private BaseClient client;
-        private IDM_SCOPE idmScope;
-        private boolean isTrusted;
+        private final String tokenString;
+        private final DateTime expirationTime;
+        private final String uniqueId;
+        private final BaseUser user;
+        private final BaseClient client;
+        private final IDM_SCOPE idmScope;
+        private final boolean isTrusted;
 
         SerializationProxy(AccessToken token) {
             this.tokenString = token.getTokenString();
