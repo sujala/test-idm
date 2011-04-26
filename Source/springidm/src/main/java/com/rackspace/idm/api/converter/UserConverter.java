@@ -5,8 +5,6 @@ import javax.xml.datatype.DatatypeFactory;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
@@ -14,12 +12,7 @@ import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class UserConverter {
 
-    private final GroupConverter groupConverter;
     private final ObjectFactory of = new ObjectFactory();
-
-    public UserConverter(GroupConverter groupConverter) {
-        this.groupConverter = groupConverter;
-    }
 
     public User toUserDO(com.rackspace.idm.jaxb.User jaxbUser) {
         User user = new User();
@@ -71,12 +64,6 @@ public class UserConverter {
             user.setApiKey(jaxbUser.getApiKey().getApiKey());
         }
 
-        if (jaxbUser.getGroups() != null
-            && jaxbUser.getGroups().getClientGroups().size() > 0) {
-            user.setGroups(groupConverter.toClientGroupListDO((jaxbUser
-                .getGroups())));
-        }
-
         return user;
     }
 
@@ -108,11 +95,11 @@ public class UserConverter {
     }
     
     public com.rackspace.idm.jaxb.User toUserJaxb(User user) {
-        return toUserJaxb(user, true, true, true);
+        return toUserJaxb(user, true, true);
     }
 
     public com.rackspace.idm.jaxb.User toUserWithOnlyRolesJaxb(User user) {
-        return toUserJaxb(user, false, false, true);
+        return toUserJaxb(user, false, false);
     }
 
     public com.rackspace.idm.jaxb.User toUserWithOnlyStatusJaxb(User user) {
@@ -149,11 +136,11 @@ public class UserConverter {
 
     public com.rackspace.idm.jaxb.User toUserJaxbWithoutAnyAdditionalElements(
         User user) {
-        return toUserJaxb(user, false, false, false);
+        return toUserJaxb(user, false, false);
     }
 
     private com.rackspace.idm.jaxb.User toUserJaxb(User user,
-        boolean includePassword, boolean includeSecret, boolean includeGroups) {
+        boolean includePassword, boolean includeSecret) {
         com.rackspace.idm.jaxb.User returnedUser = of.createUser();
         returnedUser.setCountry(user.getCountry());
         returnedUser.setTimeZone(user.getTimeZone());
@@ -216,15 +203,6 @@ public class UserConverter {
             secret.setSecretAnswer(user.getSecretAnswer());
             secret.setSecretQuestion(user.getSecretQuestion());
             returnedUser.setSecret(secret);
-        }
-
-        if (includeGroups && user.getGroups() != null
-            && user.getGroups().size() > 0) {
-
-            com.rackspace.idm.jaxb.ClientGroups groups = groupConverter
-                .toClientGroupsJaxb(user.getGroups());
-
-            returnedUser.setGroups(groups);
         }
 
         return returnedUser;

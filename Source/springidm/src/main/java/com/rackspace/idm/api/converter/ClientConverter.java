@@ -2,7 +2,6 @@ package com.rackspace.idm.api.converter;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.jaxb.Clients;
@@ -10,8 +9,8 @@ import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class ClientConverter {
 
-    private PermissionConverter permissionConverter;
-    private ObjectFactory of = new ObjectFactory();
+    private final PermissionConverter permissionConverter;
+    private final ObjectFactory of = new ObjectFactory();
 
     public ClientConverter(PermissionConverter permissionConverter) {
         this.permissionConverter = permissionConverter;

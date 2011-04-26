@@ -53,7 +53,7 @@ public class ConverterConfiguration {
 
     @Bean
     UserConverter userConverter() {
-        return new UserConverter(groupConverter());
+        return new UserConverter();
     }
 
     @Bean
