@@ -22,7 +22,6 @@ import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.Modification;
@@ -58,32 +57,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         client.setUniqueId(clientDN);
 
-        LDAPConnection conn = getAppPoolConnection(audit);
-        addEntry(conn, clientDN, attributes, audit);
-
-        // Add ou=permissions under new client entry
-        String clientPermissionsDN = new LdapDnBuilder(clientDN).addAttriubte(
-            ATTR_OU, OU_PERMISSIONS_NAME).build();
-
-        Attribute[] permissionAttributes = {
-            new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
-            new Attribute(ATTR_OU, OU_PERMISSIONS_NAME)};
-
-        addEntry(conn, clientPermissionsDN, permissionAttributes, audit);
-
-        // Add ou=groups under new client entry
-        String clientGroupsDN = new LdapDnBuilder(clientDN).addAttriubte(
-            ATTR_OU, OU_GROUPS_NAME).build();
-
-        Attribute[] groupAttributes = {
-            new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
-            new Attribute(ATTR_OU, OU_GROUPS_NAME)};
-
-        addEntry(conn, clientGroupsDN, groupAttributes, audit);
+        addEntry(clientDN, attributes, audit);
 
         audit.succeed();
-
-        getAppConnPool().releaseConnection(conn);
 
         getLogger().debug("Added client {}", client);
     }
@@ -112,9 +88,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         Attribute[] atts = getAddAttributesForClientGroup(clientGroup);
 
-        String groupDN = new LdapDnBuilder(clientUniqueId)
-            .addAttriubte(ATTR_NAME, clientGroup.getName())
-            .addAttriubte(ATTR_OU, OU_GROUPS_NAME).build();
+        String groupDN = new LdapDnBuilder(clientUniqueId).addAttriubte(
+            ATTR_NAME, clientGroup.getName()).build();
 
         clientGroup.setUniqueId(groupDN);
 
@@ -140,9 +115,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         Attribute[] atts = getAddAttributesForClientPermission(permission);
 
-        String permissionDN = new LdapDnBuilder(clientUniqueId)
-            .addAttriubte(ATTR_NAME, permission.getPermissionId())
-            .addAttriubte(ATTR_OU, OU_PERMISSIONS_NAME).build();
+        String permissionDN = new LdapDnBuilder(clientUniqueId).addAttriubte(
+            ATTR_NAME, permission.getPermissionId()).build();
 
         permission.setUniqueId(permissionDN);
 
@@ -522,13 +496,14 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         List<Client> clientList = new ArrayList<Client>();
-        
-        List<SearchResultEntry> entries = this.getMultipleEntries(BASE_DN, SearchScope.SUB, searchFilter, ATTR_NAME);
+
+        List<SearchResultEntry> entries = this.getMultipleEntries(BASE_DN,
+            SearchScope.SUB, searchFilter, ATTR_NAME);
 
         for (SearchResultEntry entry : entries) {
             clientList.add(getClient(entry));
         }
-        
+
         getLogger().debug("Found Clients - {}", clientList);
 
         return clientList;
@@ -1130,7 +1105,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return client;
     }
 
-    private void getInameModifications(Client cNew, List<Modification> mods, Client cOld) {
+    private void getInameModifications(Client cNew, List<Modification> mods,
+        Client cOld) {
         if (cNew.getIname() != null) {
             if (StringUtils.isBlank(cNew.getIname())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_INAME));
@@ -1148,7 +1124,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
         }
-        
+
         getInameModifications(cNew, mods, cOld);
 
         if (cNew.isLocked() != null && !cNew.isLocked().equals(cOld.isLocked())) {
