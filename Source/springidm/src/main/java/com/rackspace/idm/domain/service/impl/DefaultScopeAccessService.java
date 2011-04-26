@@ -13,6 +13,8 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
@@ -25,16 +27,25 @@ import com.rackspace.idm.util.AuthHeaderHelper;
 
 public class DefaultScopeAccessService implements ScopeAccessService {
 
-    private UserService userService;
-    private ClientService clientService;
-    private ScopeAccessObjectDao scopeAccessDao;
+    private static final String PASSWORD_RESET_CLIENT_ID = "PASSWORDRESET";
+
+    private final UserService userService;
+    private final ClientService clientService;
+    private final ScopeAccessObjectDao scopeAccessDao;
 
     private AuthHeaderHelper authHeaderHelper;
     private Configuration config;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public ScopeAccessObject getAccessTokenByAuthHeader(String authHeader) {
+    public DefaultScopeAccessService(UserService userService,
+        ClientService clientService, ScopeAccessObjectDao scopeAccessDao) {
+        this.userService = userService;
+        this.clientService = clientService;
+        this.scopeAccessDao = scopeAccessDao;
+    }
 
+    @Override
+    public ScopeAccessObject getAccessTokenByAuthHeader(String authHeader) {
         String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
         ScopeAccessObject scopeAccess = scopeAccessDao
             .getScopeAccessByAccessToken(tokenStr);
@@ -128,10 +139,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         if (user == null) {
             return;
         }
-        
+
         List<ScopeAccessObject> saList = this.scopeAccessDao
             .getScopeAccessesByParent(user.getUniqueId());
-        
+
         for (ScopeAccessObject sa : saList) {
             UserScopeAccessObject usa = (UserScopeAccessObject) sa;
             usa.setAccessTokenExpired();
@@ -179,10 +190,40 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         if (scopeAccess == null) {
             return;
         }
-        
+
         if (scopeAccess instanceof hasAccessToken) {
-            ((hasAccessToken)scopeAccess).setAccessTokenExpired();
+            ((hasAccessToken) scopeAccess).setAccessTokenExpired();
             this.scopeAccessDao.updateScopeAccess(scopeAccess);
         }
+    }
+
+    @Override
+    public PasswordResetScopeAccessObject getOrCreatePasswordResetScopeAccessForUser(
+        String userUniqueId) {
+        PasswordResetScopeAccessObject prsa = (PasswordResetScopeAccessObject) this.scopeAccessDao
+            .getScopeAccessForParentByClientId(userUniqueId,
+                PASSWORD_RESET_CLIENT_ID);
+        if (prsa == null) {
+            prsa = new PasswordResetScopeAccessObject();
+            prsa.setAccessTokenExp(new DateTime().plusSeconds(
+                this.getDefaultTokenExpirationSeconds()).toDate());
+            prsa.setAccessTokenString(this.generateToken());
+            prsa.setClientId(PASSWORD_RESET_CLIENT_ID);
+            this.scopeAccessDao.addScopeAccess(userUniqueId, prsa);
+        } else {
+            if (prsa.isAccessTokenExpired(new DateTime())) {
+                prsa.setAccessTokenExp(new DateTime().plusSeconds(
+                    this.getDefaultTokenExpirationSeconds()).toDate());
+                prsa.setAccessTokenString(this.generateToken());
+                this.scopeAccessDao.updateScopeAccess(prsa);
+            }
+        }
+        return prsa;
+    }
+
+    @Override
+    public boolean doesAccessTokenHavePermission(String accessTokenString,
+        Permission permission) {
+        return this.scopeAccessDao.doesAccessTokenHavePermission(accessTokenString, permission);
     }
 }
