@@ -49,6 +49,7 @@ public class UserResource {
     private UserSecretResource userSecretResource;
     private UserSoftDeleteResource userSoftDeleteResource;
     private UserStatusResource userStatusResource;
+    private UserPermissionsResource userPermissionsResource;
     private UserService userService;
     private UserConverter userConverter;
     private InputValidator inputValidator;
@@ -59,7 +60,8 @@ public class UserResource {
     public UserResource(AccessTokenService accessTokenService, ApiKeyResource apiKeyResource,
         UserLockResource userLockResource, UserPasswordResource userPasswordResource,
         UserGroupsResource userGroupsResource, UserSecretResource userSecretResource,
-        UserSoftDeleteResource userSoftDeleteResource, UserStatusResource userStatusResource,
+        UserSoftDeleteResource userSoftDeleteResource, UserStatusResource userStatusResource, 
+        UserPermissionsResource userPermissionsResource, 
         UserService userService, UserConverter userConverter, InputValidator inputValidator,
         AuthorizationService authorizationService) {
         this.accessTokenService = accessTokenService;
@@ -70,6 +72,7 @@ public class UserResource {
         this.userSecretResource = userSecretResource;
         this.userSoftDeleteResource = userSoftDeleteResource;
         this.userStatusResource = userStatusResource;
+        this.userPermissionsResource = userPermissionsResource;
         this.userService = userService;
         this.userConverter = userConverter;
         this.inputValidator = inputValidator;
@@ -262,6 +265,11 @@ public class UserResource {
     @Path("status")
     public UserStatusResource getUserStatusResource() {
         return userStatusResource;
+    }
+    
+    @Path("permissions")
+    public UserPermissionsResource getUserPermissionResource() {
+        return userPermissionsResource;
     }
     
     private void validateParam(Object inputParam) {
