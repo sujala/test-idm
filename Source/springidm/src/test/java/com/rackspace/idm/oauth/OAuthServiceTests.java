@@ -16,7 +16,6 @@ import com.rackspace.idm.GlobalConstants.TokenDeleteByType;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.entity.AuthCredentials;
-import com.rackspace.idm.domain.entity.AuthData;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientSecret;
