@@ -10,8 +10,11 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.joda.time.DateTime;
 
 import com.rackspace.idm.domain.entity.AccessToken;
-import com.rackspace.idm.domain.entity.AuthData;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
+import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 import com.rackspace.idm.jaxb.CloudAuth;
 import com.rackspace.idm.jaxb.ObjectFactory;
 import com.rackspace.idm.jaxb.ServiceCatalog;
@@ -34,39 +37,48 @@ public class AuthConverter {
         this.endpointConverter = endpointConverter;
     }
 
-    public com.rackspace.idm.jaxb.Auth toAuthDataJaxb(AuthData auth) {
+    public com.rackspace.idm.jaxb.Auth toAuthDataJaxb(ScopeAccessObject scopeAccess) {
         com.rackspace.idm.jaxb.Auth authJaxb = of.createAuth();
 
-        if (auth.getAccessToken() != null) {
-            authJaxb.setAccessToken(tokenConverter.toAccessTokenJaxb(auth
+        DateTime passwordExpirationDate = null;
+
+        if (scopeAccess.getAccessToken() != null) {
+            authJaxb.setAccessToken(tokenConverter.toAccessTokenJaxb(scopeAccess
                 .getAccessToken()));
         }
 
-        if (auth.getRefreshToken() != null) {
-            authJaxb.setRefreshToken(tokenConverter.toRefreshTokenJaxb(auth
+        if (scopeAccess.getRefreshToken() != null) {
+            authJaxb.setRefreshToken(tokenConverter.toRefreshTokenJaxb(scopeAccess
                 .getRefreshToken()));
         }
 
-        if (auth.getClient() != null) {
-            authJaxb.setClient(clientConverter.toClientJaxbFromBaseClient(auth
-                .getClient()));
+        if (scopeAccess.getClientId() != null) {
+            authJaxb.setClient(clientConverter.toClientJaxbFromClient(scopeAccess
+                .getClientId(), scopeAccess.getClientRCN()));
         }
 
-        if (auth.getUser() != null) {
-            authJaxb.setUser(userConverter.toUserJaxbFromBaseUser(auth
-                .getUser()));
+        if (scopeAccess instanceof UserScopeAccessObject) {
+        	UserScopeAccessObject userScopeAccess = (UserScopeAccessObject) scopeAccess;
+        	passwordExpirationDate = userScopeAccess.getUserPasswordExpirationDate();
+        	
+        	if(userScopeAccess.getUsername() != null) {
+                authJaxb.setUser(userConverter.toUserJaxbFromUser(userScopeAccess.getUsername(), 
+                		userScopeAccess.getUserRCN()));
+        	}
         }
         
-        if (auth.getRacker() != null) {
-            authJaxb.setRacker(userConverter.toRackerJaxb(auth
-                .getRacker()));
+        if (scopeAccess instanceof RackerScopeAccessObject) {
+        	RackerScopeAccessObject rackerScopeAccess = (RackerScopeAccessObject) scopeAccess;
+        	
+        	if(rackerScopeAccess.getRackerId() != null) {
+                authJaxb.setRacker(userConverter.toRackerJaxb(rackerScopeAccess.getRackerId()));
+        	}
         }
         
-        if (auth.getPasswordResetOnlyToken() != null && auth.getPasswordResetOnlyToken()) {
-            authJaxb.setIsPasswordResetOnlyToken(auth.getPasswordResetOnlyToken());
+        if (scopeAccess instanceof PasswordResetScopeAccessObject) {
+            authJaxb.setIsPasswordResetOnlyToken(true);
+        	passwordExpirationDate = ((PasswordResetScopeAccessObject)scopeAccess).getUserPasswordExpirationDate();
         }
-        
-        DateTime passwordExpirationDate = auth.getUserPasswordExpirationDate();
         
         if (passwordExpirationDate != null) {    
             GregorianCalendar gc = new GregorianCalendar();

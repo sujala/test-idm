@@ -130,21 +130,12 @@ public class ClientConverter {
         return returnedClient;
     }
 
-    public com.rackspace.idm.jaxb.Client toClientJaxbFromBaseClient(
-        BaseClient client) {
+    public com.rackspace.idm.jaxb.Client toClientJaxbFromClient(
+        String clientId, String customerId) {
         com.rackspace.idm.jaxb.Client returnedClient = of.createClient();
 
-        returnedClient.setClientId(client.getClientId());
-        returnedClient.setCustomerId(client.getCustomerId());
-
-        if (client.getPermissions() != null
-            && client.getPermissions().size() > 0) {
-
-            com.rackspace.idm.jaxb.PermissionList perms = permissionConverter
-                .toPermissionListJaxb(client.getPermissions());
-
-            returnedClient.setPermissions(perms);
-        }
+        returnedClient.setClientId(clientId);
+        returnedClient.setCustomerId(customerId);
 
         return returnedClient;
     }

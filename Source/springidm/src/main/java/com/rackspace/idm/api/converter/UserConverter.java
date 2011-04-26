@@ -101,11 +101,12 @@ public class UserConverter {
         return userlist;
     }
 
-    public com.rackspace.idm.jaxb.Racker toRackerJaxb(Racker racker) {
+    public com.rackspace.idm.jaxb.Racker toRackerJaxb(String rackerId) {
         com.rackspace.idm.jaxb.Racker returnedRacker = of.createRacker();
-        returnedRacker.setRackerId(racker.getRackerId());
+        returnedRacker.setRackerId(rackerId);
         return returnedRacker;
     }
+    
     public com.rackspace.idm.jaxb.User toUserJaxb(User user) {
         return toUserJaxb(user, true, true, true);
     }
@@ -229,18 +230,10 @@ public class UserConverter {
         return returnedUser;
     }
 
-    public com.rackspace.idm.jaxb.User toUserJaxbFromBaseUser(BaseUser user) {
+    public com.rackspace.idm.jaxb.User toUserJaxbFromUser(String username, String customerId) {
         com.rackspace.idm.jaxb.User returnedUser = of.createUser();
-        returnedUser.setUsername(user.getUsername());
-        returnedUser.setCustomerId(user.getCustomerId());
-
-        if (user.getGroups() != null && user.getGroups().size() > 0) {
-
-            com.rackspace.idm.jaxb.ClientGroups groups = groupConverter
-                .toClientGroupsJaxb(user.getGroups());
-
-            returnedUser.setGroups(groups);
-        }
+        returnedUser.setUsername(username);
+        returnedUser.setCustomerId(customerId);
 
         return returnedUser;
     }

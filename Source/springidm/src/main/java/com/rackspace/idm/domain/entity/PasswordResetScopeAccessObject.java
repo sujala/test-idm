@@ -25,6 +25,8 @@ public class PasswordResetScopeAccessObject extends ScopeAccessObject implements
     @LDAPField(attribute = "userRCN", objectClass = "passwordResetScopeAccess", inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String userRCN;
 
+    private DateTime userPasswordExpirationDate;
+    
     public String getUsername() {
         return username;
     }
@@ -60,6 +62,14 @@ public class PasswordResetScopeAccessObject extends ScopeAccessObject implements
     @Override
     public void setAccessTokenExpired() {
         this.accessTokenExp = new DateTime().minusDays(1).toDate();
+    }
+
+    public DateTime getUserPasswordExpirationDate() {
+    	return userPasswordExpirationDate;
+    }
+    
+    public void setUserPasswordExpirationDate(DateTime userPasswordExpirationDate) {
+    	this.userPasswordExpirationDate = userPasswordExpirationDate;
     }
 
     @Override

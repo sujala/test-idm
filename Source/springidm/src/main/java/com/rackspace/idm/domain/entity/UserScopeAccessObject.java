@@ -29,6 +29,8 @@ public class UserScopeAccessObject extends ScopeAccessObject implements hasAcces
 
     @LDAPField(attribute = "userRCN", objectClass = "userScopeAccess", inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String userRCN;
+    
+    private DateTime userPasswordExpirationDate;
 
     public String getRefreshTokenString() {
         return refreshTokenString;
@@ -87,7 +89,15 @@ public class UserScopeAccessObject extends ScopeAccessObject implements hasAcces
     public void setAccessTokenExpired() {
         this.accessTokenExp = new DateTime().minusDays(1).toDate();
     }
+
+    public DateTime getUserPasswordExpirationDate() {
+    	return userPasswordExpirationDate;
+    }
     
+    public void setUserPasswordExpirationDate(DateTime userPasswordExpirationDate) {
+    	this.userPasswordExpirationDate = userPasswordExpirationDate;
+    }
+
     @Override
     public boolean isAccessTokenExpired(DateTime time) {
         return StringUtils.isBlank(this.accessTokenString)
@@ -107,4 +117,5 @@ public class UserScopeAccessObject extends ScopeAccessObject implements hasAcces
         String format = "User(username=%s,customerId=%s)";
         return String.format(format, this.getUsername(), this.getUserRCN());
     }
+
 }

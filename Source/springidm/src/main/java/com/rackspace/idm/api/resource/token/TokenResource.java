@@ -36,9 +36,9 @@ import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.config.LoggerFactoryWrapper;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AuthCredentials;
-import com.rackspace.idm.domain.entity.AuthData;
 import com.rackspace.idm.domain.entity.OAuthGrantType;
 import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.OAuthService;
@@ -128,8 +128,8 @@ public class TokenResource {
         }
 
         DateTime currentTime = this.getCurrentTime();
-        AuthData authData = oauthService.getTokens(grantType, trParam, currentTime);
-        return Response.ok(authConverter.toAuthDataJaxb(authData)).build();
+        ScopeAccessObject scopeAccess = oauthService.getTokens(grantType, trParam, currentTime);
+        return Response.ok(authConverter.toAuthDataJaxb(scopeAccess)).build();
     }
 
     /**
@@ -168,23 +168,17 @@ public class TokenResource {
             throw new ForbiddenException(errMsg);
         }
 
-        AuthData auth = new AuthData();
-
         // Validate Token exists and is valid
-        AccessToken token = tokenService.validateToken(tokenString);
-        if (token == null) {
+        ScopeAccessObject scopeAccess = tokenService.validateToken(tokenString);
+        if (scopeAccess == null) {
             String errorMsg = String.format("Token not found : %s", tokenString);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
-        auth.setAccessToken(token);
-        auth.setUser(token.getTokenUser());
-        auth.setClient(token.getTokenClient());
-
         logger.debug("Validated Access Token: {}", tokenString);
 
-        return Response.ok(authConverter.toAuthDataJaxb(auth)).build();
+        return Response.ok(authConverter.toAuthDataJaxb(scopeAccess)).build();
     }
 
     /**
