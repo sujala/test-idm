@@ -7,7 +7,7 @@ import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 
 @LDAPObject(structuralClass="scopeAccess")
-public class ScopeAccessObject {
+public class ScopeAccessObject implements Auditable {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
@@ -55,5 +55,11 @@ public class ScopeAccessObject {
     
     public RefreshToken getRefreshToken() {
         return null;
+    }
+
+    @Override
+    public String getAuditContext() {
+        String format = "ScopeAccess(clientId=%s)";
+        return String.format(format, getClientId());
     }
 }
