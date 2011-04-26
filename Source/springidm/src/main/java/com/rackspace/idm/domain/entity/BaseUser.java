@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.entity;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -36,20 +35,13 @@ public class BaseUser implements Serializable {
         this.username = username;
     }
 
-    public BaseUser(String username, String customerId, List<ClientGroup> groups) {
+    public BaseUser(String username, String customerId) {
         this.username = username;
         this.customerId = customerId;
-        this.groups = groups;
     }
     
-    public BaseUser(String uniqueId, String username, String customerId, List<ClientGroup> groups) {
+    public BaseUser(String uniqueId, String username, String customerId) {
         this.uniqueId = uniqueId;
-        this.username = username;
-        this.customerId = customerId;
-        this.groups = groups;
-    }
-
-    public BaseUser(String username, String customerId) {
         this.username = username;
         this.customerId = customerId;
     }
@@ -58,7 +50,7 @@ public class BaseUser implements Serializable {
         return uniqueId;
     }
 
-    protected void setUniqueId(String uniqueId) {
+    public void setUniqueId(String uniqueId) {
         if (uniqueId != null) {
             this.uniqueId = uniqueId;
         }
@@ -68,7 +60,7 @@ public class BaseUser implements Serializable {
         return username;
     }
 
-    protected void setUsername(String username) {
+    public void setUsername(String username) {
         this.username = username;
     }
 
@@ -76,16 +68,8 @@ public class BaseUser implements Serializable {
         return customerId;
     }
 
-    protected void setCustomerId(String customerId) {
+    public void setCustomerId(String customerId) {
         this.customerId = customerId;
-    }
-
-    public List<ClientGroup> getGroups() {
-        return groups != null ? Collections.unmodifiableList(groups) : null;
-    }
-
-    protected void setGroups(List<ClientGroup> groups) {
-        this.groups = groups;
     }
 
     @Override
@@ -94,7 +78,6 @@ public class BaseUser implements Serializable {
         int result = 1;
         result = prime * result
             + ((customerId == null) ? 0 : customerId.hashCode());
-        result = prime * result + ((groups == null) ? 0 : groups.hashCode());
         result = prime * result
             + ((uniqueId == null) ? 0 : uniqueId.hashCode());
         result = prime * result
@@ -184,17 +167,15 @@ public class BaseUser implements Serializable {
         private final String uniqueId;
         private final String username;
         private final String customerId;
-        private final List<ClientGroup> groups;
 
         SerializationProxy(BaseUser baseUser) {
             this.uniqueId = baseUser.uniqueId;
             this.username = baseUser.username;
             this.customerId = baseUser.customerId;
-            this.groups = baseUser.groups;
         }
 
         private Object readResolve() {
-            return new BaseUser(uniqueId, username, customerId, groups);
+            return new BaseUser(uniqueId, username, customerId);
         }
 
     }

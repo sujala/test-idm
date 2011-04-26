@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import java.util.List;
 import java.util.Locale;
 
 import javax.validation.constraints.NotNull;
@@ -406,11 +405,6 @@ public class User extends BaseUser implements Auditable {
         super.setCustomerId(customerId);
     }
 
-    @Override
-    public void setGroups(List<ClientGroup> groups) {
-        super.setGroups(groups);
-    }
-
     public void setDefaults() {
         if (this.preference.getLocale() == null) {
             this.setPreferredLang(GlobalConstants.USER_PREFERRED_LANG_DEFAULT);
@@ -429,7 +423,6 @@ public class User extends BaseUser implements Auditable {
         BaseUser baseUser = new BaseUser();
         baseUser.setCustomerId(getCustomerId());
         baseUser.setUsername(getUsername());
-        baseUser.setGroups(getGroups());
         return baseUser;
     }
 
