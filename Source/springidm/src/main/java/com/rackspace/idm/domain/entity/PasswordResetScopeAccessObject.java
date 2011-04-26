@@ -4,13 +4,12 @@ import java.util.Date;
 
 import org.joda.time.DateTime;
 
-import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 
 @LDAPObject(structuralClass="passwordResetScopeAccess")
-public class PasswordResetScopeAccessObject extends ScopeAccessObject{
+public class PasswordResetScopeAccessObject extends ScopeAccessObject implements hasAccessToken{
 
     @LDAPField(attribute="accessToken", objectClass="passwordResetScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String accessTokenString;
@@ -57,11 +56,7 @@ public class PasswordResetScopeAccessObject extends ScopeAccessObject{
     }
     
     @Override
-    public AccessToken getAccessToken() {
-        BaseUser user = new BaseUser(getUsername(), getUserRCN());
-        BaseClient client = new BaseClient(getClientId(), getClientRCN());
-        AccessToken token = new AccessToken(getAccessTokenString(), new DateTime(
-            getAccessTokenExp()), user, client, IDM_SCOPE.SET_PASSWORD);
-        return token;
+    public void setAccessTokenExpired() {
+        this.accessTokenExp = new DateTime().minusDays(1).toDate();
     }
 }

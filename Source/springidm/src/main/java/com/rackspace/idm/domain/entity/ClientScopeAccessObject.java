@@ -4,13 +4,12 @@ import java.util.Date;
 
 import org.joda.time.DateTime;
 
-import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 
 @LDAPObject(structuralClass = "clientScopeAccess")
-public class ClientScopeAccessObject extends ScopeAccessObject {
+public class ClientScopeAccessObject extends ScopeAccessObject implements hasAccessToken {
 
     @LDAPField(attribute = "accessToken", objectClass = "clientScopeAccess", inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String accessTokenString;
@@ -35,10 +34,7 @@ public class ClientScopeAccessObject extends ScopeAccessObject {
     }
 
     @Override
-    public AccessToken getAccessToken() {
-        BaseClient client = new BaseClient(getClientId(), getClientRCN());
-        AccessToken token = new AccessToken(getAccessTokenString(), new DateTime(
-            getAccessTokenExp()), null, client, IDM_SCOPE.FULL);
-        return token;
+    public void setAccessTokenExpired() {
+        this.accessTokenExp = new DateTime().minusDays(1).toDate();
     }
 }
