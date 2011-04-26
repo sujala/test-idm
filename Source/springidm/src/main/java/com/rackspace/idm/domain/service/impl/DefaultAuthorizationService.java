@@ -1,195 +1,161 @@
 package com.rackspace.idm.domain.service.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rackspace.idm.domain.dao.ClientDao;
-import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ClientService;
 
 public class DefaultAuthorizationService implements AuthorizationService {
 
-    private ClientDao clientDao;
-    private Configuration config;
+    private final ClientService clientService;
+    private final Configuration config;
+    private final ScopeAccessObjectDao scopeAccessDao;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultAuthorizationService(ClientDao clientDao, Configuration config) {
-        this.clientDao = clientDao;
+    public DefaultAuthorizationService(ScopeAccessObjectDao scopeAccessDao,
+        ClientService clientService, Configuration config) {
+        this.scopeAccessDao = scopeAccessDao;
+        this.clientService = clientService;
         this.config = config;
     }
 
-    public boolean authorizeRacker(AccessToken token) {
-        return token.isTrusted();
+    @Override
+    public boolean authorizeRacker(ScopeAccessObject scopeAccess) {
+        return scopeAccess instanceof RackerScopeAccessObject;
     }
 
-    public boolean authorizeRackspaceClient(AccessToken token) {
-        return token.isClientToken()
-            && token.getTokenClient().getCustomerId()
-                .equals(getRackspaceCustomerId());
+    @Override
+    public boolean authorizeRackspaceClient(ScopeAccessObject scopeAccess) {
+        if (!(scopeAccess instanceof ClientScopeAccessObject)) {
+            return false;
+        }
+        return scopeAccess.getClientRCN().equalsIgnoreCase(
+            this.getRackspaceCustomerId());
     }
 
-    public boolean authorizeClient(AccessToken token, String verb, String uri) {
+    @Override
+    public boolean authorizeClient(ScopeAccessObject scopeAccess,
+        String methodName) {
 
-        if (!token.hasClientPermissions()) {
+        if (!(scopeAccess instanceof ClientScopeAccessObject)) {
             return false;
         }
 
-        List<String> allowedActions = getAllowedMethodsFromPermissions(token
-            .getTokenClient().getPermissions());
+        Permission permission = new Permission();
+        permission.setClientId(getIdmClientId());
+        permission.setCustomerId(getRackspaceCustomerId());
+        permission.setPermissionId(methodName);
 
-        return checkPermissions(allowedActions, verb, uri);
+        return this.scopeAccessDao.doesAccessTokenHavePermission(
+            ((ClientScopeAccessObject) scopeAccess).getAccessTokenString(),
+            permission);
     }
 
-    public boolean authorizeUser(AccessToken token, String customerId,
-        String username) {
+    @Override
+    public boolean authorizeUser(ScopeAccessObject scopeAccess,
+        String customerId, String username) {
 
-        if (token.isClientToken() || token.isRestrictedToSetPassword()) {
+        if (!(scopeAccess instanceof UserScopeAccessObject)) {
             return false;
         }
 
-        boolean authorized = token.getTokenUser().getUsername()
-            .equals(username)
-            && token.getTokenUser().getCustomerId().equals(customerId);
+        UserScopeAccessObject usa = (UserScopeAccessObject) scopeAccess;
 
-        return authorized;
-    }
-
-    public boolean authorizeCustomerUser(AccessToken token, String customerId) {
-
-        if (token.isClientToken() || token.isRestrictedToSetPassword()) {
-            return false;
-        }
-
-        boolean authorized = token.getTokenUser().getCustomerId()
-            .equals(customerId);
-
-        return authorized;
-    }
-
-    public boolean authorizeAdmin(AccessToken token, String customerId) {
-
-        if (token.isRestrictedToSetPassword() || !token.hasUserGroups()
-            || !token.getTokenUser().getCustomerId().equals(customerId)) {
-
-            return false;
-        }
-
-        boolean authorized = false;
-
-        for (ClientGroup r : token.getTokenUser().getGroups()) {
-            if (r.getClientId().equals(getIdmClientId())
-                && r.getName().toLowerCase()
-                    .equals(getIdmAdminGroupName().toLowerCase())) {
-                authorized = true;
-            }
-        }
-
-        return authorized;
-    }
-
-    public boolean authorizeCustomerIdm(AccessToken authToken) {
-        if (!authToken.isClientToken()) {
-            return false;
-        }
-
-        boolean authorized = getIdmClientId().equalsIgnoreCase(
-            authToken.getTokenClient().getClientId())
-            && getRackspaceCustomerId().equalsIgnoreCase(
-                authToken.getTokenClient().getCustomerId());
+        boolean authorized = usa.getUsername().equals(username)
+            && usa.getUserRCN().equalsIgnoreCase(customerId);
 
         return authorized;
     }
 
     @Override
-    public boolean authorizeAsRequestorOrOwner(AccessToken targetToken,
-        AccessToken requestingToken) {
-        boolean isRequestor = requestingToken.isClientToken()
-            && requestingToken.getTokenClient().getClientId()
-                .equals(targetToken.getTokenClient().getClientId());
+    public boolean authorizeCustomerUser(ScopeAccessObject scopeAccess,
+        String customerId) {
 
-        boolean isOwner = requestingToken.getTokenUser() != null
-            && targetToken.getTokenUser() != null
-            && requestingToken.getTokenUser().getUsername()
-                .equals(targetToken.getTokenUser().getUsername());
+        if (!(scopeAccess instanceof UserScopeAccessObject)) {
+            return false;
+        }
 
-        boolean authorized = isRequestor || isOwner;
+        UserScopeAccessObject usa = (UserScopeAccessObject) scopeAccess;
+
+        boolean authorized = usa.getUserRCN().equalsIgnoreCase(customerId);
+
         return authorized;
     }
 
-    private List<String> getAllowedMethodsFromPermissions(
-        List<Permission> permissions) {
+    @Override
+    public boolean authorizeAdmin(ScopeAccessObject scopeAccess,
+        String customerId) {
 
-        if (permissions == null || permissions.size() < 1) {
-            return null;
-        }
-
-        List<String> uris = new ArrayList<String>();
-
-        for (Permission perm : permissions) {
-            if (perm.getClientId().equals(getIdmClientId())) {
-
-                if (!IdmPermissions.contains(perm.getPermissionId())) {
-                    perm = clientDao
-                        .getDefinedPermissionByClientIdAndPermissionId(
-                            perm.getClientId(), perm.getPermissionId());
-                    if (perm == null || perm.getValue() == null) {
-                        continue;
-                    }
-                    IdmPermissions.put(perm.getPermissionId(), perm.getValue());
-
-                }
-                uris.add(IdmPermissions.get(perm.getPermissionId()));
-            }
-        }
-
-        return uris;
-    }
-
-    static ConcurrentHashMap<String, String> IdmPermissions = new ConcurrentHashMap<String, String>();
-
-    private boolean checkPermissions(List<String> allowedActions, String verb,
-        String uri) {
-
-        String requestedActionURI = verb + " " + uri;
-        requestedActionURI = requestedActionURI.toLowerCase();
-
-        boolean result = false;
-
-        if (allowedActions == null || allowedActions.size() == 0) {
-            logger.debug("Empty Permission List.");
+        if (!(scopeAccess instanceof UserScopeAccessObject)) {
             return false;
         }
 
-        for (String action : allowedActions) {
+        UserScopeAccessObject usa = (UserScopeAccessObject) scopeAccess;
 
-            if (checkPermission(action, requestedActionURI)) {
-                result = true;
-                break;
-            }
+        ClientGroup group = new ClientGroup();
+        group.setClientId(getIdmClientId());
+        group.setCustomerId(getRackspaceCustomerId());
+        group.setName(getIdmAdminGroupName());
 
-        }
-        return result;
+        boolean authorized = false;
+
+        authorized = this.clientService.isUserMemberOfClientGroup(
+            usa.getUsername(), group);
+
+        return authorized;
     }
 
-    private boolean checkPermission(String actionURIRegex,
-        String actionURIRequest) {
-
-        if (actionURIRegex == null)
+    @Override
+    public boolean authorizeCustomerIdm(ScopeAccessObject scopeAccess) {
+        if (!(scopeAccess instanceof ClientScopeAccessObject)) {
             return false;
+        }
 
-        actionURIRegex = actionURIRegex.toLowerCase().trim();
+        boolean authorized = getIdmClientId().equalsIgnoreCase(
+            scopeAccess.getClientId())
+            && getRackspaceCustomerId().equalsIgnoreCase(
+                scopeAccess.getClientRCN());
 
-        // We want to match the regex till the end of string.
-        actionURIRegex += "$";
+        return authorized;
+    }
 
-        return actionURIRequest.matches(actionURIRegex);
+    @Override
+    public boolean authorizeAsRequestorOrOwner(
+        ScopeAccessObject targetScopeAccess,
+        ScopeAccessObject requestingScopeAccess) {
+
+        if (!(requestingScopeAccess instanceof ClientScopeAccessObject)
+            || !(targetScopeAccess instanceof UserScopeAccessObject)) {
+            return false;
+        }
+
+        boolean isRequestor = requestingScopeAccess.getClientId()
+            .equalsIgnoreCase(targetScopeAccess.getClientId());
+
+        boolean isOwner = false;
+
+        if (targetScopeAccess instanceof UserScopeAccessObject) {
+            isOwner = ((UserScopeAccessObject) requestingScopeAccess)
+                .getUsername().equals(
+                    ((UserScopeAccessObject) targetScopeAccess).getUsername());
+        } else if (targetScopeAccess instanceof RackerScopeAccessObject) {
+            isOwner = ((RackerScopeAccessObject) requestingScopeAccess)
+                .getRackerId()
+                .equals(
+                    ((RackerScopeAccessObject) targetScopeAccess).getRackerId());
+        }
+
+        boolean authorized = isRequestor || isOwner;
+        return authorized;
     }
 
     private String getIdmAdminGroupName() {

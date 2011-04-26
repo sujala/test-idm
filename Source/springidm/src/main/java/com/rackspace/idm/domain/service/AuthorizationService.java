@@ -1,30 +1,31 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 
 public interface AuthorizationService {
     
-    boolean authorizeRacker(AccessToken token);
+    boolean authorizeRacker(ScopeAccessObject scopeAccess);
 
-    boolean authorizeRackspaceClient(AccessToken token);
+    boolean authorizeRackspaceClient(ScopeAccessObject scopeAccess);
 
-    boolean authorizeClient(AccessToken token, String verb, String uri);
+    boolean authorizeClient(ScopeAccessObject scopeAccess, String methodName);
 
-    boolean authorizeCustomerUser(AccessToken token, String customerId);
+    boolean authorizeCustomerUser(ScopeAccessObject scopeAccess, String customerId);
 
-    boolean authorizeUser(AccessToken token, String customerId, String username);
+    boolean authorizeUser(ScopeAccessObject scopeAccess, String customerId, String username);
 
-    boolean authorizeAdmin(AccessToken token, String customerId);
+    boolean authorizeAdmin(ScopeAccessObject scopeAccess, String customerId);
 
     /**
      * Appropriate for authorizing internal calls.
      */
-    boolean authorizeCustomerIdm(AccessToken authToken);
+    boolean authorizeCustomerIdm(ScopeAccessObject scopeAccess);
 
     /**
-     * @param targetToken Token against which the action being performed is being evaluated.
-     * @param requestingToken Representing the caller's credentials
+     * @param targetScopeAccess ScopeAccess against which the action being performed is being evaluated.
+     * @param requestingScopeAccess Representing the caller's credentials
      * @return
      */
-    abstract boolean authorizeAsRequestorOrOwner(AccessToken targetToken, AccessToken requestingToken);
+    abstract boolean authorizeAsRequestorOrOwner(ScopeAccessObject targetScopeAccess,
+        ScopeAccessObject requestingScopeAccess);
 }

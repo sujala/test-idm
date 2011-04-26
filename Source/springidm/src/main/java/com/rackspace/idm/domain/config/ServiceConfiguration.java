@@ -13,18 +13,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jmx.export.MBeanExporter;
 
-import com.rackspace.idm.domain.dao.AccessTokenDao;
 import com.rackspace.idm.domain.dao.ApiDocDao;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.RoleDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.dao.XdcAccessTokenDao;
 import com.rackspace.idm.domain.entity.EmailSettings;
-import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.ApiDocService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
@@ -33,10 +30,9 @@ import com.rackspace.idm.domain.service.EmailService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
-import com.rackspace.idm.domain.service.RefreshTokenService;
 import com.rackspace.idm.domain.service.RoleService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.domain.service.impl.DefaultAccessTokenService;
 import com.rackspace.idm.domain.service.impl.DefaultApiDocService;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.domain.service.impl.DefaultClientService;
@@ -45,8 +41,8 @@ import com.rackspace.idm.domain.service.impl.DefaultEmailService;
 import com.rackspace.idm.domain.service.impl.DefaultEndpointService;
 import com.rackspace.idm.domain.service.impl.DefaultOAuthService;
 import com.rackspace.idm.domain.service.impl.DefaultPasswordComplexityService;
-import com.rackspace.idm.domain.service.impl.DefaultRefreshTokenService;
 import com.rackspace.idm.domain.service.impl.DefaultRoleService;
+import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.util.LdapRouterMBean;
@@ -68,8 +64,6 @@ public class ServiceConfiguration {
     @Autowired
     private ClientDao clientDao;
     @Autowired
-    private AccessTokenDao accessTokenDao;
-    @Autowired
     private CustomerDao customerDao;
     @Autowired
     private RoleDao roleDao;
@@ -78,9 +72,7 @@ public class ServiceConfiguration {
     @Autowired
     private EndpointDao endpointDao;
     @Autowired
-    private XdcAccessTokenDao xdcTokenDao;
-    @Autowired
-    private ScopeAccessDao scopeAccessDao;
+    private ScopeAccessObjectDao scopeAccessDao;
     @Autowired
     private ApiDocDao apiDocDao;
     @Autowired
@@ -99,12 +91,6 @@ public class ServiceConfiguration {
      */
     public ServiceConfiguration(Configuration config) {
         this.config = config;
-    }
-
-    @Bean
-    public AccessTokenService tokenService() {
-        return new DefaultAccessTokenService(accessTokenDao, clientDao, userService(), clientService(), xdcTokenDao,scopeAccessDao,
-            authHeaderHelper(), config);
     }
 
     @Bean
@@ -181,13 +167,14 @@ public class ServiceConfiguration {
     }
 
     @Bean
-    public RefreshTokenService refreshTokenService() {
-        return new DefaultRefreshTokenService(scopeAccessDao, userRepo, config);
-    }
-
-    @Bean
     public RoleService roleService() {
         return new DefaultRoleService(roleDao, userRepo);
+    }
+    
+    @Bean
+    public ScopeAccessService scopeAccessService() {
+        return new DefaultScopeAccessService(userService(),
+            clientService(), scopeAccessDao);
     }
 
     @Bean
@@ -199,13 +186,13 @@ public class ServiceConfiguration {
 
     @Bean
     public OAuthService oauthService() {
-        return new DefaultOAuthService(userService(), clientService(), tokenService(), refreshTokenService(),
-            authorizationService(), config, inputValidator);
+        return new DefaultOAuthService(userService(), clientService(),
+            authorizationService(), config, inputValidator, scopeAccessService());
     }
 
     @Bean
     public AuthorizationService authorizationService() {
-        return new DefaultAuthorizationService(clientDao, config);
+        return new DefaultAuthorizationService(scopeAccessDao, clientService(), config);
     }
     
     @Bean
