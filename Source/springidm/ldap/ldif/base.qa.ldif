@@ -318,13 +318,13 @@ dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!
 objectClass: top
 objectClass: rsPerson
 c: USA
-displayName: Matt Kovacs
+rsDisplayName: Matt Kovacs
 endpoint: +111111
 endpoint: -222222
-givenName: Matt
+rsGivenName: Matt
 inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111
 locked: FALSE
-mail: matt.kovacs@rackspace.com
+rsMail: matt.kovacs@rackspace.com
 rsGroupDN: cn=Idm Admin,ou=groups,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 middleName: Sandor
 o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
@@ -337,7 +337,7 @@ secretAnswer: Rackspace
 clearPassword: P@$$w0rd
 softDeleted: FALSE
 status: ACTIVE
-sn: Kovacs
+rsSn: Kovacs
 timeZone: America/Chicago
 uid: mkovacs
 userPassword: P@$$w0rd
@@ -348,11 +348,11 @@ dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!7777,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!
 objectClass: top
 objectClass: rsPerson
 c: USA
-displayName: Huey Ly
-givenName: Huey
+rsDisplayName: Huey Ly
+rsGivenName: Huey
 inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!7777
 locked: FALSE
-mail: huey.ly@rackspace.com
+rsMail: huey.ly@rackspace.com
 middleName: Quang
 o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
 preferredLanguage: en-US
@@ -364,7 +364,7 @@ secretAnswer: Rackspace
 clearPassword: P@ssw0rd
 softDeleted: FALSE
 status: ACTIVE
-sn: Ly
+rsSn: Ly
 timeZone: America/Chicago
 uid: huey
 userPassword: P@ssw0rd
@@ -373,11 +373,11 @@ dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000!1111,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!
 objectClass: top
 objectClass: rsPerson
 c: USA
-displayName: Test User
-givenName: Test
+rsDisplayName: Test User
+rsGivenName: Test
 inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000!1111
 locked: FALSE
-mail: test.user@rackspace.com
+rsMail: test.user@rackspace.com
 rsGroupDN: cn=Idm Admin,ou=groups,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 o: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000
 preferredLanguage: en-US
@@ -389,7 +389,7 @@ secretAnswer: Test Customer
 clearPassword: P@$$w0rd
 softDeleted: FALSE
 status: ACTIVE
-sn: User
+rsSn: User
 timeZone: America/Chicago
 uid: testuser
 userPassword: P@$$w0rd
@@ -398,11 +398,11 @@ dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!10001,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!
 objectClass: top
 objectClass: rsPerson
 c: USA
-displayName: qauser
-givenName: qauser
+rsDisplayName: qauser
+rsGivenName: qauser
 inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.999!10001
 locked: FALSE
-mail: quauser@example.com
+rsMail: quauser@example.com
 middleName: none
 o: @!FFFF.FFFF.FFFF.FFFF!EEEE.999
 preferredLanguage: en-US
@@ -414,7 +414,7 @@ secretAnswer: Rackspace
 clearPassword: P@$$w0rd
 softDeleted: FALSE
 status: ACTIVE
-sn: Tester
+rsSn: Tester
 timeZone: America/Chicago
 uid: qauser
 userPassword: P@$$w0rd
@@ -425,11 +425,11 @@ dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!10002,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!
 objectClass: top
 objectClass: rsPerson
 c: USA
-displayName: qaadmin
-givenName: qaadmin
+rsDisplayName: qaadmin
+rsGivenName: qaadmin
 inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.999!10002
 locked: FALSE
-mail: qaadmin@example.com
+rsMail: qaadmin@example.com
 rsGroupDN: cn=Idm Admin,ou=groups,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 middleName: none
 o: @!FFFF.FFFF.FFFF.FFFF!EEEE.999
@@ -442,7 +442,7 @@ secretAnswer: Rackspace
 clearPassword: P@$$w0rd
 softDeleted: FALSE
 status: ACTIVE
-sn: Tester
+rsSn: Tester
 timeZone: America/Chicago
 uid: qaadmin
 userPassword: P@$$w0rd
