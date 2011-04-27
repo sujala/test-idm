@@ -14,7 +14,7 @@ import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
-import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
@@ -77,7 +77,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public boolean doesAccessTokenHavePermission(String accessTokenString,
-        Permission permission) {
+        PermissionObject permission) {
         return this.scopeAccessDao.doesAccessTokenHavePermission(
             accessTokenString, permission);
     }

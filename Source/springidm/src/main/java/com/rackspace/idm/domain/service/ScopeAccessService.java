@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
-import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.UserScopeAccessObject;
@@ -13,7 +13,7 @@ public interface ScopeAccessService {
     
     boolean authenticateAccessToken(String accessTokenStr);
     
-    boolean doesAccessTokenHavePermission(String accessTokenString, Permission permission);
+    boolean doesAccessTokenHavePermission(String accessTokenString, PermissionObject permission);
     
     void expireAccessToken(String tokenString);
     
