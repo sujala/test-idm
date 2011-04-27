@@ -23,6 +23,7 @@ import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AccessTokenService;
@@ -97,7 +98,9 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
             || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo) 
-                && token.getAccessToken().getTokenClient().getClientId().equals(clientId));
+                && (token instanceof ClientScopeAccessObject && token
+                    .getClientId().equalsIgnoreCase(
+                        clientId)));
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
@@ -146,8 +149,10 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         // Racker's or the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo) && token.getAccessToken()
-                .getTokenClient().getClientId().equals(clientId));
+            || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo) && 
+                (token instanceof ClientScopeAccessObject && token
+                .getClientId().equalsIgnoreCase(
+                    clientId)));
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
@@ -185,8 +190,9 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo) && token.getAccessToken()
-                .getTokenClient().getClientId().equals(clientId))
+            || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo) && 
+                (token instanceof ClientScopeAccessObject && token
+                .getClientId().equalsIgnoreCase(clientId)))
             || authorizationService.authorizeAdmin(token, customerId);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
@@ -291,7 +297,9 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
 
         // Only the client who "owns" the permission and IDM is allowed to grant
         // or revoke it.
-        boolean authorized = (token.getAccessToken().isClientToken() && token.getAccessToken().getTokenClient().getClientId().equals(clientId))
+        boolean authorized = ((token instanceof ClientScopeAccessObject && token
+            .getClientId().equalsIgnoreCase(
+                clientId)))
             || authorizationService.authorizeClient(token, method, uri);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);

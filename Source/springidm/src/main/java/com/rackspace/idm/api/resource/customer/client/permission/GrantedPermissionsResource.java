@@ -78,9 +78,9 @@ public class GrantedPermissionsResource extends AbstractClientConsumer {
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || (authorizationService.authorizeRackspaceClient(token) && clientId.equals(token.getAccessToken().getTokenClient().getClientId()))
+            || (authorizationService.authorizeRackspaceClient(token) && clientId.equalsIgnoreCase(token.getClientId()))
             || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo) 
-                && clientId.equals(token.getAccessToken().getTokenClient().getClientId()))
+                && clientId.equalsIgnoreCase(token.getClientId()))
             || authorizationService.authorizeAdmin(token, customerId);
      
         authorizationService.checkAuthAndHandleFailure(authorized, token);
