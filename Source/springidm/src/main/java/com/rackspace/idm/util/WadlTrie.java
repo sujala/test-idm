@@ -11,6 +11,7 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
@@ -140,14 +141,14 @@ public class WadlTrie {
     }
 
     public WadlTrie() {
-        this(Object.class.getResourceAsStream("/application.wadl"));
+        this(StringUtils.class.getResourceAsStream("/application.wadl"));
     }
 
     public WadlTrie(final InputStream is) {
         try {
             SAXParserFactory.newInstance().newSAXParser().parse(is, new SaxHandler());
         } catch (final Exception e) {
-            logger.error("Error parsing Wadl");
+            logger.error("Error parsing Wadl",e);
         }
         // release reference - no longer needed after parse
         stack = null;

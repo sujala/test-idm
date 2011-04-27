@@ -15,8 +15,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.service.AccessTokenService;
-import com.rackspace.idm.domain.service.OAuthService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.spi.container.ContainerRequest;
@@ -28,7 +27,6 @@ import com.sun.jersey.spi.container.ContainerRequestFilter;
  */
 @Component
 public class AuthenticationFilter implements ContainerRequestFilter, ApplicationContextAware {
-    private AccessTokenService accessTokenService;
     private AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private Logger logger;
 
@@ -36,25 +34,21 @@ public class AuthenticationFilter implements ContainerRequestFilter, Application
     HttpServletRequest req;
 
     private ApplicationContext springCtx;
+    private ScopeAccessService scopeAccessService;
 
     public AuthenticationFilter() {
         logger = LoggerFactory.getLogger(AuthenticationFilter.class);
     }
 
-    AuthenticationFilter(AccessTokenService accessTokenService, Logger logger) {
-        this.accessTokenService = accessTokenService;
-        this.logger = logger;
-    }
-
-    @Deprecated
-    AuthenticationFilter(OAuthService accessTokenService, Logger logger) {
+    AuthenticationFilter(ScopeAccessService scopeAccessService, Logger logger) {
+        this.scopeAccessService = scopeAccessService;
         this.logger = logger;
     }
 
     @Override
     public ContainerRequest filter(ContainerRequest request) {
-        String path = request.getPath();
-        String method = request.getMethod();
+        final String path = request.getPath();
+        final String method = request.getMethod();
 
         if (req != null) {
             MDC.put(Audit.REMOTE_IP, req.getRemoteAddr());
@@ -87,13 +81,13 @@ public class AuthenticationFilter implements ContainerRequestFilter, Application
         if ("POST".equals(method) && "token".equals(path)) {
             return request;
         }
-        String authHeader = request.getHeaderValue(HttpHeaders.AUTHORIZATION);
+        final String authHeader = request.getHeaderValue(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || authHeader.isEmpty()) {
             throw new NotAuthenticatedException(
-                "The request for the resource must include the Authorization header.");
+            "The request for the resource must include the Authorization header.");
         }
-        String tokenString = authHeaderHelper.getTokenFromAuthHeader(authHeader);
-        boolean authResult = getAccessTokenService().authenticateAccessToken(tokenString);
+        final String tokenString = authHeaderHelper.getTokenFromAuthHeader(authHeader);
+        final boolean authResult = getScopeAccessService().authenticateAccessToken(tokenString );
 
         if (authResult) {
             // Authenticated
@@ -110,11 +104,11 @@ public class AuthenticationFilter implements ContainerRequestFilter, Application
         springCtx = applicationContext;
     }
 
-    private AccessTokenService getAccessTokenService() {
-        if (accessTokenService == null) {
-            accessTokenService = springCtx.getBean(AccessTokenService.class);
+    private ScopeAccessService getScopeAccessService() {
+        if (scopeAccessService == null) {
+            scopeAccessService = springCtx.getBean(ScopeAccessService.class);
         }
 
-        return accessTokenService;
+        return scopeAccessService;
     }
 }

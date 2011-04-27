@@ -1,29 +1,28 @@
 package com.rackspace.idm.api.filter;
 
-import com.rackspace.idm.api.filter.AuthenticationFilter;
-import com.rackspace.idm.domain.service.AccessTokenService;
-import com.rackspace.idm.domain.service.OAuthService;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.test.stub.StubLogger;
-import com.sun.jersey.spi.container.ContainerRequest;
+import javax.ws.rs.core.HttpHeaders;
+
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
-import javax.ws.rs.core.HttpHeaders;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.test.stub.StubLogger;
+import com.sun.jersey.spi.container.ContainerRequest;
 
 public class AuthenticationFilterTests {
 
-    private AccessTokenService oauthService;
+    private ScopeAccessService oauthService;
     private AuthenticationFilter authFilter;
     private ContainerRequest request;
 
     @Before
     public void setUp() {
         oauthService = EasyMock
-                .createNiceMock(AccessTokenService.class);
-        Logger logger = new StubLogger();
+        .createNiceMock(ScopeAccessService.class);
+        final Logger logger = new StubLogger();
         authFilter = new AuthenticationFilter(oauthService, logger);
         request = EasyMock.createNiceMock(ContainerRequest.class);
     }
@@ -52,12 +51,12 @@ public class AuthenticationFilterTests {
     @Test()
     public void shouldAcceptAnyOtherRequest() {
         EasyMock.expect(request.getPath()).andReturn(
-                "customers/RCN-000-000-000/users/foobar/password");
+        "customers/RCN-000-000-000/users/foobar/password");
         EasyMock.expect(request.getMethod()).andReturn("GET");
-        String tokenString = "hiiamatoken";
-        String header = "OAuth " + tokenString;
+        final String tokenString = "hiiamatoken";
+        final String header = "OAuth " + tokenString;
         EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
-                .andReturn(header);
+        .andReturn(header);
         EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
                 true);
         replayAndRunFilter();
@@ -67,10 +66,10 @@ public class AuthenticationFilterTests {
     public void shouldPassAuthenticationWhenTokenIsValid() {
         EasyMock.expect(request.getPath()).andReturn("foo");
         EasyMock.expect(request.getMethod()).andReturn("GET");
-        String tokenString = "hiiamatoken";
-        String header = "OAuth " + tokenString;
+        final String tokenString = "hiiamatoken";
+        final String header = "OAuth " + tokenString;
         EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
-                .andReturn(header);
+        .andReturn(header);
         EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
                 true);
         replayAndRunFilter();
@@ -80,10 +79,10 @@ public class AuthenticationFilterTests {
     public void shouldFailAuthenticationWhenTokenIsInvalid() {
         EasyMock.expect(request.getPath()).andReturn("foo");
         EasyMock.expect(request.getMethod()).andReturn("GET");
-        String tokenString = "hiiamatoken";
-        String header = "OAuth " + tokenString;
+        final String tokenString = "hiiamatoken";
+        final String header = "OAuth " + tokenString;
         EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
-                .andReturn(header);
+        .andReturn(header);
         EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
                 false);
         replayAndRunFilter();
@@ -94,7 +93,7 @@ public class AuthenticationFilterTests {
         EasyMock.expect(request.getPath()).andReturn("foo");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
-                .andReturn(null);
+        .andReturn(null);
         replayAndRunFilter();
     }
 

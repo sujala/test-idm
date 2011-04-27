@@ -33,9 +33,9 @@ import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.EmailService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.exception.BadRequestException;
@@ -58,7 +58,7 @@ public class UserServiceTests {
     EmailService mockEmailService;
     AuthDao mockRackerDao;
     ClientService mockClientService;
-    AccessTokenService mockAccessTokenService;
+    ScopeAccessService mockScopeAccessService;
 
     String customerId = "123456";
     String username = "testuser";
@@ -77,7 +77,7 @@ public class UserServiceTests {
     String timeZone = "America/Chicago";
 
     String customerDN = "o=@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA,o=rackspace,dc=rackspace,dc=com";
-    
+
     String userUniqueId = "uniqueId";
 
     String tokenString = "XXXX";
@@ -89,10 +89,10 @@ public class UserServiceTests {
     int limit = 100;
     int offset = 1;
     int totalRecords = 0;
-    
+
     Customer testCustomer;
     User testUser;
-    
+
     String rackerId = "rackerId";
 
     @Before
@@ -105,17 +105,17 @@ public class UserServiceTests {
         mockClientService = EasyMock.createMock(ClientService.class);
 
         userService = new DefaultUserService(mockUserDao, mockRackerDao,
-            mockCustomerDao, 
-            mockEmailService, mockClientService, false);
+                mockCustomerDao,
+                mockEmailService, mockClientService, false);
 
         trustedUserService = new DefaultUserService(mockUserDao, mockRackerDao,
-            mockCustomerDao, 
-            mockEmailService, mockClientService, true);
+                mockCustomerDao,
+                mockEmailService, mockClientService, true);
     }
-    
+
     @Test
     public void shouldAddRacker() {
-        Racker racker = new Racker();
+        final Racker racker = new Racker();
         racker.setRackerId(rackerId);
         EasyMock.expect(mockUserDao.getRackerByRackerId(rackerId)).andReturn(null);
         mockUserDao.addRacker(racker);
@@ -123,26 +123,26 @@ public class UserServiceTests {
         userService.addRacker(racker);
         EasyMock.verify(mockUserDao);
     }
-    
+
     @Test(expected=DuplicateException.class)
     public void shouldNotAddRackerForDuplicate() {
-        Racker racker = new Racker();
+        final Racker racker = new Racker();
         racker.setRackerId(rackerId);
         EasyMock.expect(mockUserDao.getRackerByRackerId(rackerId)).andReturn(racker);
         EasyMock.replay(mockUserDao);
         userService.addRacker(racker);
     }
-    
+
     @Test
     public void shouldGetRacker() {
-        Racker racker = new Racker();
+        final Racker racker = new Racker();
         racker.setRackerId(rackerId);
         EasyMock.expect(mockUserDao.getRackerByRackerId(rackerId)).andReturn(racker);
         EasyMock.replay(mockUserDao);
         userService.getRackerByRackerId(rackerId);
         EasyMock.verify(mockUserDao);
     }
-    
+
     @Test
     public void shouldDeleteRacker() {
         mockUserDao.deleteRacker(rackerId);
@@ -153,17 +153,17 @@ public class UserServiceTests {
 
     @Test
     public void shouldAddUserToExistingCustomer() throws DuplicateException {
-        User user = getFakeUser();
-        Customer customer = getFakeCustomer();
+        final User user = getFakeUser();
+        final Customer customer = getFakeCustomer();
         customer.setUniqueId(customerDN);
         EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
-            .andReturn(customer);
+        .andReturn(customer);
         EasyMock.replay(mockCustomerDao);
         EasyMock.expect(
-            mockUserDao.getUnusedUserInum((String) EasyMock.anyObject()))
-            .andReturn("@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA!3333.3333");
+                mockUserDao.getUnusedUserInum((String) EasyMock.anyObject()))
+                .andReturn("@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA!3333.3333");
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername()))
-            .andReturn(true);
+        .andReturn(true);
         mockUserDao.addUser((User) EasyMock.anyObject(), EasyMock.eq(customerDN));
         EasyMock.replay(mockUserDao);
         userService.addUser(user);
@@ -171,23 +171,23 @@ public class UserServiceTests {
 
     @Test(expected = IllegalStateException.class)
     public void shouldNotAddUserToNonExistentCustomer()
-        throws DuplicateException {
-        User user = getFakeUser();
+    throws DuplicateException {
+        final User user = getFakeUser();
         EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
-            .andReturn(null);
+        .andReturn(null);
         EasyMock.replay(mockCustomerDao);
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername()))
-            .andReturn(true);
+        .andReturn(true);
         EasyMock.replay(mockUserDao);
         userService.addUser(user);
     }
 
     @Test(expected = DuplicateException.class)
     public void shouldNotAddDuplicateUser() throws DuplicateException {
-        User user = getFakeUser();
+        final User user = getFakeUser();
 
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername()))
-            .andReturn(false);
+        .andReturn(false);
         EasyMock.replay(mockUserDao);
 
         userService.addUser(user);
@@ -195,12 +195,12 @@ public class UserServiceTests {
 
     @Test
     public void shouldGetUser() {
-        User user = getFakeUser();
+        final User user = getFakeUser();
 
         EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
         EasyMock.replay(mockUserDao);
 
-        User retrievedUser = userService.getUser(username);
+        final User retrievedUser = userService.getUser(username);
 
         Assert.assertTrue(retrievedUser.getUsername().equals(username));
         EasyMock.verify(mockUserDao);
@@ -208,12 +208,12 @@ public class UserServiceTests {
 
     @Test
     public void shouldGetUserByNastId() {
-        User user = getFakeUser();
+        final User user = getFakeUser();
 
         EasyMock.expect(mockUserDao.getUserByNastId(nastId)).andReturn(user);
         EasyMock.replay(mockUserDao);
 
-        User retrievedUser = userService.getUserByNastId(nastId);
+        final User retrievedUser = userService.getUserByNastId(nastId);
 
         Assert.assertTrue(retrievedUser.getUsername().equals(username));
         EasyMock.verify(mockUserDao);
@@ -221,114 +221,114 @@ public class UserServiceTests {
 
     @Test
     public void shouldGetUserByMossoId() {
-        User user = getFakeUser();
+        final User user = getFakeUser();
 
         EasyMock.expect(mockUserDao.getUserByMossoId(mossoId)).andReturn(user);
         EasyMock.replay(mockUserDao);
 
-        User retrievedUser = userService.getUserByMossoId(mossoId);
+        final User retrievedUser = userService.getUserByMossoId(mossoId);
 
         Assert.assertTrue(retrievedUser.getUsername().equals(username));
         EasyMock.verify(mockUserDao);
     }
-    
+
     @Test
     public void shouldGetUserByRPN() {
-        User user = getFakeUser();
+        final User user = getFakeUser();
 
         EasyMock.expect(mockUserDao.getUserByRPN(user.getPersonId())).andReturn(user);
         EasyMock.replay(mockUserDao);
 
-        User retrievedUser = userService.getUserByRPN(user.getPersonId());
+        final User retrievedUser = userService.getUserByRPN(user.getPersonId());
 
         Assert.assertTrue(retrievedUser.getUsername().equals(username));
         EasyMock.verify(mockUserDao);
-    }   
-    
+    }
+
     @Test
     public void shouldDeleteUser() {
         mockUserDao.deleteUser(username);
         EasyMock.replay(mockUserDao);
 
-        
-        List<ClientGroup> groups = new ArrayList<ClientGroup>();
-        ClientGroup group = new ClientGroup("tempClient", customerId, "tempClient", "tempClient");
+
+        final List<ClientGroup> groups = new ArrayList<ClientGroup>();
+        final ClientGroup group = new ClientGroup("tempClient", customerId, "tempClient", "tempClient");
         groups.add(group);
 
-        
+
         EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(groups);
         mockClientService.removeUserFromClientGroup(username, group);
         EasyMock.replay(mockClientService);
         userService.deleteUser(username);
         EasyMock.verify(mockUserDao);
         EasyMock.verify(mockClientService);
-    }  
+    }
 
     @Test
     public void shouldUpdateUser() {
-        User user = getFakeUser();
+        final User user = getFakeUser();
         mockUserDao.updateUser(user, false);
         EasyMock.replay(mockUserDao);
 
         userService.updateUser(user, false);
     }
-    
+
     @Test
     public void testingDateTime() {
-     
-        DateTime d = new DateTime();
-        DateTime newD = d.plusDays(1000);
-        
-        String ds = d.toString();
-        String newDs = newD.toString();
-        
-        
+
+        final DateTime d = new DateTime();
+        final DateTime newD = d.plusDays(1000);
+
+        d.toString();
+        newD.toString();
+
+
         //Assert.assertEquals(year, passwordExpirationDate.getYear());
         //Assert.assertEquals(monthOfYear, passwordExpirationDate.getMonthOfYear());
         //Assert.assertEquals(dayOfMonth + 10, passwordExpirationDate.getDayOfMonth());
     }
-    
-    
+
+
 
     @Test
     public void shouldAuthenticateUser() {
         EasyMock.expect(mockUserDao.authenticate(username, password)).andReturn(
-            this.getTrueAuthenticationResult());
-        
+                this.getTrueAuthenticationResult());
+
         EasyMock.replay(mockUserDao);
-        UserAuthenticationResult uaResult = userService.authenticate(username, password);
+        final UserAuthenticationResult uaResult = userService.authenticate(username, password);
         Assert.assertTrue(uaResult.isAuthenticated());
         EasyMock.verify(mockUserDao);
     }
 
     @Test
     public void shouldNotAuthenticateUserThatDoestNotExist() {
-        String badUsername = "badusername";
-        
+        final String badUsername = "badusername";
+
         EasyMock.expect(mockUserDao.authenticate(badUsername, password)).andReturn(
-            this.getFalseAuthenticationResult());
+                this.getFalseAuthenticationResult());
         EasyMock.replay(mockUserDao);
 
-        UserAuthenticationResult uaResult = userService.authenticate(badUsername, password);
+        final UserAuthenticationResult uaResult = userService.authenticate(badUsername, password);
         Assert.assertFalse(uaResult.isAuthenticated());
         EasyMock.verify(mockUserDao);
     }
 
     @Test
     public void shouldAuthenticateRacker() {
-        
-        Racker racker = new Racker();
+
+        final Racker racker = new Racker();
         racker.setRackerId(rackerId);
         racker.setUniqueId(uniqueId);
         EasyMock.expect(mockRackerDao.authenticate(rackerId, password))
-            .andReturn(true);
+        .andReturn(true);
         EasyMock.replay(mockRackerDao);
-        
+
         EasyMock.expect(mockUserDao.getRackerByRackerId(rackerId)).andReturn(racker);
         EasyMock.replay(mockUserDao);
-      
-        
-        UserAuthenticationResult uaResult = trustedUserService.authenticate(rackerId, password);
+
+
+        final UserAuthenticationResult uaResult = trustedUserService.authenticate(rackerId, password);
         Assert.assertTrue(uaResult.isAuthenticated());
         EasyMock.verify(mockRackerDao, mockUserDao);
     }
@@ -336,16 +336,16 @@ public class UserServiceTests {
     @Test
     public void shouldAuthenticateUserByApiKey() {
         EasyMock.expect(mockUserDao.authenticateByAPIKey(username, apiKey))
-            .andReturn(getTrueAuthenticationResult());
-        
-   
+        .andReturn(getTrueAuthenticationResult());
+
+
 
         EasyMock.replay(mockUserDao);
         EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>());
         EasyMock.replay(mockClientService);
-        
-        UserAuthenticationResult authenticated = userService
-            .authenticateWithApiKey(username, apiKey);
+
+        final UserAuthenticationResult authenticated = userService
+        .authenticateWithApiKey(username, apiKey);
 
         Assert.assertTrue(authenticated.isAuthenticated());
         EasyMock.verify(mockUserDao);
@@ -354,18 +354,18 @@ public class UserServiceTests {
     @Test
     public void shouldAuthenticateUserByNastIdApiKey() {
         EasyMock.expect(
-            mockUserDao.authenticateByNastIdAndAPIKey(nastId, apiKey))
-            .andReturn(getTrueAuthenticationResult());
-        
-    
-        
+                mockUserDao.authenticateByNastIdAndAPIKey(nastId, apiKey))
+                .andReturn(getTrueAuthenticationResult());
+
+
+
         EasyMock.replay(mockUserDao);
 
         EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>());
         EasyMock.replay(mockClientService);
-        
-        UserAuthenticationResult authenticated = userService
-            .authenticateWithNastIdAndApiKey(nastId, apiKey);
+
+        final UserAuthenticationResult authenticated = userService
+        .authenticateWithNastIdAndApiKey(nastId, apiKey);
 
         Assert.assertTrue(authenticated.isAuthenticated());
         EasyMock.verify(mockUserDao);
@@ -374,17 +374,17 @@ public class UserServiceTests {
     @Test
     public void shouldAuthenticateUserByMossoIdApiKey() {
         EasyMock.expect(
-            mockUserDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey))
-            .andReturn(getTrueAuthenticationResult());
-     
-        
+                mockUserDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey))
+                .andReturn(getTrueAuthenticationResult());
+
+
         EasyMock.replay(mockUserDao);
-        
+
         EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>());
-        EasyMock.replay(mockClientService);  
-        
-        UserAuthenticationResult authenticated = userService
-            .authenticateWithMossoIdAndApiKey(mossoId, apiKey);
+        EasyMock.replay(mockClientService);
+
+        final UserAuthenticationResult authenticated = userService
+        .authenticateWithMossoIdAndApiKey(mossoId, apiKey);
 
         Assert.assertTrue(authenticated.isAuthenticated());
         EasyMock.verify(mockUserDao);
@@ -393,8 +393,8 @@ public class UserServiceTests {
     @Test
     public void shouldUpdateUserStatusActive() {
 
-        String statusStr = "active";
-        User user = getFakeUser();
+        final String statusStr = "active";
+        final User user = getFakeUser();
 
         mockUserDao.updateUser(user,false);
         EasyMock.replay(mockUserDao);
@@ -406,8 +406,8 @@ public class UserServiceTests {
     @Test
     public void shouldUpdateUserStatusInActive() {
 
-        String statusStr = "inactive";
-        User user = getFakeUser();
+        final String statusStr = "inactive";
+        final User user = getFakeUser();
 
         mockUserDao.updateUser(user, false);
         EasyMock.replay(mockUserDao);
@@ -418,22 +418,22 @@ public class UserServiceTests {
 
     @Test
     public void shouldGetUsersByCustomerId() {
-        List<User> users = new ArrayList<User>();
+        final List<User> users = new ArrayList<User>();
         users.add(getFakeUser());
         users.add(getFakeUser());
 
-        Users returnedUsers = new Users();
+        final Users returnedUsers = new Users();
         returnedUsers.setLimit(limit);
         returnedUsers.setOffset(offset);
         returnedUsers.setTotalRecords(totalRecords);
         returnedUsers.setUsers(users);
 
         EasyMock
-            .expect(mockUserDao.getUsersByCustomerId(customerId, offset, limit))
-            .andReturn(returnedUsers);
+        .expect(mockUserDao.getUsersByCustomerId(customerId, offset, limit))
+        .andReturn(returnedUsers);
         EasyMock.replay(mockUserDao);
 
-        Users returned = userService.getByCustomerId(customerId, offset, limit);
+        final Users returned = userService.getByCustomerId(customerId, offset, limit);
 
         Assert.assertTrue(returned.getUsers().size() == 2);
         EasyMock.verify(mockUserDao);
@@ -441,21 +441,21 @@ public class UserServiceTests {
 
     @Test
     public void shouldSendRecoveryEmail() {
-        List<String> recipients = new ArrayList<String>();
+        final List<String> recipients = new ArrayList<String>();
         recipients.add(email);
-        String from = "NoReply@rackspace.com";
-        String link = String.format("%s?username=%s&token=%s", callbackUrl,
-            username, tokenString);
-        String message = String.format("Here's your recovery link: %s", link);
-        String subject = "Password Recovery";
+        final String from = "NoReply@rackspace.com";
+        final String link = String.format("%s?username=%s&token=%s", callbackUrl,
+                username, tokenString);
+        final String message = String.format("Here's your recovery link: %s", link);
+        final String subject = "Password Recovery";
         try {
             mockEmailService.sendEmail(recipients, from, subject, message);
-        } catch (EmailException e) {
+        } catch (final EmailException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
-        PasswordRecovery recoveryParam = new PasswordRecovery();
+        final PasswordRecovery recoveryParam = new PasswordRecovery();
         recoveryParam.setCallbackUrl(callbackUrl);
         recoveryParam.setCustomParams(new CustomParamsList());
         recoveryParam.setFrom(from);
@@ -463,201 +463,201 @@ public class UserServiceTests {
         recoveryParam.setSubject(subject);
         recoveryParam.setTemplateUrl("");
         userService.sendRecoveryEmail(subject, email, recoveryParam,
-            tokenString);
+                tokenString);
     }
-    
+
     @Test
     public void shouldSetUserPassword() {
-        
-        User user = getFakeUser();
-        String customerId = user.getCustomerId();
-        String username = user.getUsername();
-        String tokenString = "aaldjfdj2231221";
-        DateTime tokenExpiration = new DateTime();
-        
-        List<Client> clients = getFakeClients();
-        
-        PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
+
+        final User user = getFakeUser();
+        final String customerId = user.getCustomerId();
+        final String username = user.getUsername();
+        final String tokenString = "aaldjfdj2231221";
+        final DateTime tokenExpiration = new DateTime();
+
+        getFakeClients();
+
+        final PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
         token.setAccessTokenString(tokenString);
         token.setAccessTokenExp(tokenExpiration.toDate());
         token.setUsername(username);
         token.setUserRCN(customerId);
         token.setClientId("CLIENTID");
-        
-        boolean isRecovery = true;
-        
-        UserCredentials userCred = new UserCredentials();
-        UserPassword currentPass = new UserPassword();
+
+        final boolean isRecovery = true;
+
+        final UserCredentials userCred = new UserCredentials();
+        final UserPassword currentPass = new UserPassword();
         currentPass.setPassword("open-sesame");
         userCred.setCurrentPassword(currentPass);
-        
-        UserPassword newPass = new UserPassword();
+
+        final UserPassword newPass = new UserPassword();
         newPass.setPassword("close-sesame");
         userCred.setNewPassword(newPass);
-        
+
         EasyMock.expect(mockRackerDao.authenticate(username, tokenString)).andReturn(true);
-        
+
         EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
         EasyMock.expect(mockUserDao.getUserByCustomerIdAndUsername(customerId, username)).andReturn(user);
         EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).atLeastOnce();
-        
-        boolean isSelfUpdate = token.getUsername().equals(username);
-        
+
+        final boolean isSelfUpdate = token.getUsername().equals(username);
+
         mockUserDao.updateUser(user, isSelfUpdate);
-        
+
         EasyMock.replay(mockRackerDao);
         EasyMock.replay(mockUserDao);
         EasyMock.replay(mockClientService);
 
         userService.setUserPassword(customerId, username, userCred, token, isRecovery);
-        
-        User updatedUser = userService.getUser(username);
-        
-        Password updatedPassword = updatedUser.getPasswordObj();
-        String updatedPasswordString = updatedPassword.getValue();
-        
+
+        final User updatedUser = userService.getUser(username);
+
+        final Password updatedPassword = updatedUser.getPasswordObj();
+        final String updatedPasswordString = updatedPassword.getValue();
+
         Assert.assertEquals(newPass.getPassword(), updatedPasswordString);
     }
-    
+
     @Test(expected = BadRequestException.class)
     public void shouldNotSetUserPasswordBecauseOriginalPasswordIsNull() {
-        
-        User user = getFakeUser();
-        String customerId = user.getCustomerId();
-        String username = user.getUsername();
-        String tokenString = "aaldjfdj2231221";
-        DateTime tokenExpiration = new DateTime();
-        
-        List<Client> clients = getFakeClients();
-        
-        PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
+
+        final User user = getFakeUser();
+        final String customerId = user.getCustomerId();
+        final String username = user.getUsername();
+        final String tokenString = "aaldjfdj2231221";
+        final DateTime tokenExpiration = new DateTime();
+
+        getFakeClients();
+
+        final PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
         token.setAccessTokenString(tokenString);
         token.setAccessTokenExp(tokenExpiration.toDate());
         token.setUsername(username);
         token.setUserRCN(customerId);
         token.setClientId("CLIENTID");
-        
-        boolean isRecovery = false;
-        
-        UserCredentials userCred = new UserCredentials();
-        UserPassword currentPass = new UserPassword();
+
+        final boolean isRecovery = false;
+
+        final UserCredentials userCred = new UserCredentials();
+        final UserPassword currentPass = new UserPassword();
         currentPass.setPassword(null);
         userCred.setCurrentPassword(currentPass);
-        
-        UserPassword newPass = new UserPassword();
+
+        final UserPassword newPass = new UserPassword();
         newPass.setPassword("close-sesame");
         userCred.setNewPassword(newPass);
-        
+
         EasyMock.expect(mockRackerDao.authenticate(username, tokenString)).andReturn(true);
-        
+
         EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
         EasyMock.expect(mockUserDao.getUserByCustomerIdAndUsername(customerId, username)).andReturn(user);
         EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).atLeastOnce();
-        
-        boolean isSelfUpdate = token.getUsername().equals(username);
-        
+
+        final boolean isSelfUpdate = token.getUsername().equals(username);
+
         mockUserDao.updateUser(user, isSelfUpdate);
-        
+
         EasyMock.replay(mockRackerDao);
         EasyMock.replay(mockUserDao);
         EasyMock.replay(mockClientService);
 
         userService.setUserPassword(customerId, username, userCred, token, isRecovery);
-    }   
-    
+    }
+
     @Test(expected = BadRequestException.class)
     public void shouldNotSetUserPasswordBecauseOriginalPasswordIsBlank() {
-        
-        User user = getFakeUser();
-        String customerId = user.getCustomerId();
-        String username = user.getUsername();
-        String tokenString = "aaldjfdj2231221";
-        DateTime tokenExpiration = new DateTime();
-        
-        List<Client> clients = getFakeClients();
-        
-        PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
+
+        final User user = getFakeUser();
+        final String customerId = user.getCustomerId();
+        final String username = user.getUsername();
+        final String tokenString = "aaldjfdj2231221";
+        final DateTime tokenExpiration = new DateTime();
+
+        getFakeClients();
+
+        final PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
         token.setAccessTokenString(tokenString);
         token.setAccessTokenExp(tokenExpiration.toDate());
         token.setUsername(username);
         token.setUserRCN(customerId);
         token.setClientId("CLIENTID");
-        
-        boolean isRecovery = false;
-        
-        UserCredentials userCred = new UserCredentials();
-        UserPassword currentPass = new UserPassword();
+
+        final boolean isRecovery = false;
+
+        final UserCredentials userCred = new UserCredentials();
+        final UserPassword currentPass = new UserPassword();
         currentPass.setPassword(" ");
         userCred.setCurrentPassword(currentPass);
-        
-        UserPassword newPass = new UserPassword();
+
+        final UserPassword newPass = new UserPassword();
         newPass.setPassword("close-sesame");
         userCred.setNewPassword(newPass);
-        
+
         EasyMock.expect(mockRackerDao.authenticate(username, tokenString)).andReturn(true);
-        
+
         EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
         EasyMock.expect(mockUserDao.getUserByCustomerIdAndUsername(customerId, username)).andReturn(user);
         EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).atLeastOnce();
-        
-        boolean isSelfUpdate = token.getUsername().equals(username);
-        
+
+        final boolean isSelfUpdate = token.getUsername().equals(username);
+
         mockUserDao.updateUser(user, isSelfUpdate);
-        
+
         EasyMock.replay(mockRackerDao);
         EasyMock.replay(mockUserDao);
         EasyMock.replay(mockClientService);
 
         userService.setUserPassword(customerId, username, userCred, token, isRecovery);
-    }   
-   
+    }
+
     @Test(expected = NotAuthenticatedException.class)
     public void shouldNotSetUserPasswordBecauseUserIsNotAuthenticated() {
-        
-        User user = getFakeUser();
-        String customerId = user.getCustomerId();
-        String username = user.getUsername();
-        String tokenString = "aaldjfdj2231221";
-        DateTime tokenExpiration = new DateTime();
-        
-        List<Client> clients = getFakeClients();
-        
-        PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
+
+        final User user = getFakeUser();
+        final String customerId = user.getCustomerId();
+        final String username = user.getUsername();
+        final String tokenString = "aaldjfdj2231221";
+        final DateTime tokenExpiration = new DateTime();
+
+        getFakeClients();
+
+        final PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
         token.setAccessTokenString(tokenString);
         token.setAccessTokenExp(tokenExpiration.toDate());
         token.setUsername(username);
         token.setUserRCN(customerId);
         token.setClientId("CLIENTID");
-        
-        boolean isRecovery = false;
-        
-        UserCredentials userCred = new UserCredentials();
-        UserPassword currentPass = new UserPassword();
+
+        final boolean isRecovery = false;
+
+        final UserCredentials userCred = new UserCredentials();
+        final UserPassword currentPass = new UserPassword();
         currentPass.setPassword("open-sesame");
         userCred.setCurrentPassword(currentPass);
-        
-        UserPassword newPass = new UserPassword();
+
+        final UserPassword newPass = new UserPassword();
         newPass.setPassword("close-sesame");
         userCred.setNewPassword(newPass);
-   
-        UserAuthenticationResult userAuthenticationResult = new UserAuthenticationResult(user, false);
-        
+
+        final UserAuthenticationResult userAuthenticationResult = new UserAuthenticationResult(user, false);
+
         EasyMock.expect(mockUserDao.authenticate(username, userCred
                 .getCurrentPassword().getPassword())).andReturn(userAuthenticationResult);
         EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).atLeastOnce();
-        
+
         EasyMock.replay(mockRackerDao);
         EasyMock.replay(mockUserDao);
         EasyMock.replay(mockClientService);
 
         userService.setUserPassword(customerId, username, userCred, token, isRecovery);
     }
-    
-   
+
+
 
     @Test(expected = IllegalStateException.class)
     public void shouldThrowErrorIfInumNullCreateAccessTokenForUser() {
-        User user = getFakeUser();
+        final User user = getFakeUser();
         user.setInum("");
 
         EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
@@ -667,12 +667,12 @@ public class UserServiceTests {
 
     private User getFakeUser() {
 
-        UserHumanName name = new UserHumanName(firstname, middlename, lastname);
-        UserLocale pref = new UserLocale(new Locale(preferredLang),
-            DateTimeZone.forID(timeZone));
-        UserCredential cred = new UserCredential(userpass, secretQuestion,
-            secretAnswer);
-        User user = new User(username, customerId, email, name, pref, cred);
+        final UserHumanName name = new UserHumanName(firstname, middlename, lastname);
+        final UserLocale pref = new UserLocale(new Locale(preferredLang),
+                DateTimeZone.forID(timeZone));
+        final UserCredential cred = new UserCredential(userpass, secretQuestion,
+                secretAnswer);
+        final User user = new User(username, customerId, email, name, pref, cred);
         user.setInum("inum=@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA.1234");
         user.setStatus(UserStatus.ACTIVE);
         return user;
@@ -680,19 +680,19 @@ public class UserServiceTests {
 
     private Customer getFakeCustomer() {
         return new Customer(customerId, "@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA",
-            "@Rackspace.Testing", CustomerStatus.ACTIVE,
-            "inum=@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA",
-            "inum=@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA");
+                "@Rackspace.Testing", CustomerStatus.ACTIVE,
+                "inum=@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA",
+        "inum=@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA");
     }
 
     private List<Client> getFakeClients() {
 
-        Client client1 = new Client();
+        final Client client1 = new Client();
         client1.setInum("client1inum");
-        Client client2 = new Client();
+        final Client client2 = new Client();
         client2.setInum("client2inum");
 
-        List<Client> clients = new ArrayList<Client>();
+        final List<Client> clients = new ArrayList<Client>();
         clients.add(client1);
         clients.add(client2);
 

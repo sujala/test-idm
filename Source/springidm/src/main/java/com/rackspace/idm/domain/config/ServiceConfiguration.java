@@ -123,7 +123,7 @@ public class ServiceConfiguration {
     public CustomerService customerService() {
         return new DefaultCustomerService(clientDao, customerDao, userRepo);
     }
-    
+
     @Bean
     public WadlTrie wadlTrie() {
         return new WadlTrie();
@@ -133,32 +133,32 @@ public class ServiceConfiguration {
     public EmailService emailService() {
 
         org.apache.commons.configuration.Configuration config;
-        String propsFileLoc = "emailservice.properties";
+        final String propsFileLoc = "emailservice.properties";
 
         try {
             config = new PropertiesConfiguration(propsFileLoc);
-        } catch (ConfigurationException e) {
+        } catch (final ConfigurationException e) {
             e.printStackTrace();
             throw new RuntimeException("Error encountered when loading the token config file.");
         }
 
-        int smtpPort = config.getInt("smtpPort");
-        String smtpHost = config.getString("hostName");
-        String smtpUsername = config.getString("smtpUsername");
-        String smtpPassword = config.getString("smtpPassword");
-        boolean debug = config.getBoolean("debug");
-        boolean useSSL = config.getBoolean("SSL");
-        boolean useTSL = config.getBoolean("TLS");
+        final int smtpPort = config.getInt("smtpPort");
+        final String smtpHost = config.getString("hostName");
+        final String smtpUsername = config.getString("smtpUsername");
+        final String smtpPassword = config.getString("smtpPassword");
+        final boolean debug = config.getBoolean("debug");
+        final boolean useSSL = config.getBoolean("SSL");
+        final boolean useTSL = config.getBoolean("TLS");
 
-        EmailSettings emailSettings = new EmailSettings(smtpPort, smtpHost, smtpUsername, smtpPassword,
-            debug, useSSL, useTSL);
+        final EmailSettings emailSettings = new EmailSettings(smtpPort, smtpHost, smtpUsername, smtpPassword,
+                debug, useSSL, useTSL);
 
         return new DefaultEmailService(emailSettings);
     }
 
     @Bean
     public InputValidator inputValidator() {
-        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+        final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         return new InputValidator(validator);
     }
 
@@ -170,27 +170,27 @@ public class ServiceConfiguration {
     @Bean
     public ScopeAccessService scopeAccessService() {
         return new DefaultScopeAccessService(userService(),
-            clientService(), scopeAccessDao);
+                clientService(), scopeAccessDao, authHeaderHelper());
     }
 
     @Bean
     public UserService userService() {
-        boolean isTrustedServer = config.getBoolean("ldap.server.trusted", false);
+        final boolean isTrustedServer = config.getBoolean("ldap.server.trusted", false);
         return new DefaultUserService(userRepo, authDao, customerDao, emailService(), clientService(),
-            isTrustedServer);
+                isTrustedServer);
     }
 
     @Bean
     public OAuthService oauthService() {
         return new DefaultOAuthService(userService(), clientService(),
-            authorizationService(), config, inputValidator, scopeAccessService());
+                authorizationService(), config, inputValidator, scopeAccessService());
     }
 
     @Bean
     public AuthorizationService authorizationService() {
         return new DefaultAuthorizationService(scopeAccessDao, clientDao, wadlTrie(), config);
     }
-    
+
     @Bean
     public ApiDocService apiDocService() {
         return new DefaultApiDocService(apiDocDao);
@@ -198,8 +198,8 @@ public class ServiceConfiguration {
 
     @Bean
     public MBeanExporter exporter() {
-        MBeanExporter exp = new MBeanExporter();
-        Map<String, Object> beans = new HashMap<String, Object>();
+        final MBeanExporter exp = new MBeanExporter();
+        final Map<String, Object> beans = new HashMap<String, Object>();
         beans.put("com.rackspace.idm:name=loggerMonitoringBean", loggerMonitoringBean());
         beans.put("com.rackspace.idm:name=ldapRouterMonitoringBean", ldapRouterMonitoringBean());
         beans.put("com.rackspace.idm:name=memcacheMonitoringBean", memcacheMonitoringBean());
