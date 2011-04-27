@@ -26,15 +26,14 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.api.converter.GroupConverter;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -44,12 +43,12 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class ClientGroupsResource extends AbstractClientConsumer {
-    private AccessTokenService accessTokenService;
-    private ClientService clientService;
-    private ScopeAccessService scopeAccessService;
-    private ClientGroupResource clientGroupResource;
-    private GroupConverter groupConverter;
-    private AuthorizationService authorizationService;
+    private final AccessTokenService accessTokenService;
+    private final ClientService clientService;
+    private final ScopeAccessService scopeAccessService;
+    private final ClientGroupResource clientGroupResource;
+    private final GroupConverter groupConverter;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -133,7 +132,8 @@ public class ClientGroupsResource extends AbstractClientConsumer {
         // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token.getAccessToken().isClientToken() && token.getAccessToken().getTokenClient().getClientId().equals(clientId));
+            || (token instanceof ClientScopeAccessObject && 
+                token.getClientId().equalsIgnoreCase(clientId));
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 

@@ -21,15 +21,14 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.GroupConverter;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -39,17 +38,19 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class ClientGroupResource extends AbstractClientConsumer {
-    private AccessTokenService accessTokenService;
-    private ClientService clientService;
-    private ScopeAccessService scopeAccessService;
-    private GroupConverter groupConverter;
-    private AuthorizationService authorizationService;
-    private ClientGroupMembersResource clientGroupMembersResource;
+    private final AccessTokenService accessTokenService;
+    private final ClientService clientService;
+    private final ScopeAccessService scopeAccessService;
+    private final GroupConverter groupConverter;
+    private final AuthorizationService authorizationService;
+    private final ClientGroupMembersResource clientGroupMembersResource;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public ClientGroupResource(AccessTokenService accessTokenService, ClientService clientService,ScopeAccessService scopeAccessService,
-        GroupConverter groupConverter, ClientGroupMembersResource clientGroupMembersResource,
+    public ClientGroupResource(AccessTokenService accessTokenService,
+        ClientService clientService, ScopeAccessService scopeAccessService,
+        GroupConverter groupConverter,
+        ClientGroupMembersResource clientGroupMembersResource,
         AuthorizationService authorizationService) {
         super(clientService);
         this.accessTokenService = accessTokenService;
@@ -77,18 +78,21 @@ public class ClientGroupResource extends AbstractClientConsumer {
      * @param groupName Group name
      */
     @DELETE
-    public Response deleteClientGroup(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId, @PathParam("groupName") String groupName) {
+    public Response deleteClientGroup(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId,
+        @PathParam("groupName") String groupName) {
 
         ScopeAccessObject token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token.getAccessToken().isClientToken() && 
-                token.getAccessToken().getTokenClient().getClientId().equals(clientId));
+            || (token instanceof ClientScopeAccessObject && token.getClientId()
+                .equalsIgnoreCase(clientId));
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
@@ -114,21 +118,26 @@ public class ClientGroupResource extends AbstractClientConsumer {
      * @param groupName Group name
      */
     @GET
-    public Response getClientGroup(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId, @PathParam("groupName") String groupName) {
+    public Response getClientGroup(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId,
+        @PathParam("groupName") String groupName) {
 
         ScopeAccessObject token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients and Specific Clients are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo);
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
-        ClientGroup group = checkAndGetClientGroup(customerId, clientId, groupName);
+        ClientGroup group = checkAndGetClientGroup(customerId, clientId,
+            groupName);
 
         return Response.ok(groupConverter.toClientGroupJaxb(group)).build();
     }
@@ -152,26 +161,30 @@ public class ClientGroupResource extends AbstractClientConsumer {
      * @param clientGroup New client group
      */
     @PUT
-    public Response updateClientGroup(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId, @PathParam("groupName") String groupName,
+    public Response updateClientGroup(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId,
+        @PathParam("groupName") String groupName,
         EntityHolder<com.rackspace.idm.jaxb.ClientGroup> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
         ScopeAccessObject token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token.getAccessToken().isClientToken() && token.getAccessToken().getTokenClient().getClientId().equals(clientId));
+            || (token instanceof ClientScopeAccessObject && token.getClientId()
+                .equalsIgnoreCase(clientId));
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         com.rackspace.idm.jaxb.ClientGroup clientGroup = holder.getEntity();
-        ClientGroup group = checkAndGetClientGroup(clientGroup.getCustomerId(), clientGroup.getClientId(),
-            clientGroup.getName());
+        ClientGroup group = checkAndGetClientGroup(clientGroup.getCustomerId(),
+            clientGroup.getClientId(), clientGroup.getName());
 
         group.setType(clientGroup.getType());
 
