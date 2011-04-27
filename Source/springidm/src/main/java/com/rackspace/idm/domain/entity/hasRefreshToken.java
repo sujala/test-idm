@@ -14,5 +14,7 @@ public interface hasRefreshToken {
     
     void setRefreshTokenString(String refreshTokenString);
     
+    Date getRefreshTokenExp();
+    
     void setRefreshTokenExp(Date refreshTokenExp);
 }

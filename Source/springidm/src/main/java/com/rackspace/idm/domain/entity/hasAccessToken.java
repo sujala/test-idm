@@ -14,5 +14,8 @@ public interface hasAccessToken {
     
     void setAccessTokenString(String accessTokenString);
     
+    Date getAccessTokenExp();
+
     void setAccessTokenExp(Date accessTokenExp);
+    
 }

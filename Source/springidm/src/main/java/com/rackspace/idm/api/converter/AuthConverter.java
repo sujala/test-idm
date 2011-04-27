@@ -14,6 +14,8 @@ import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
 import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.hasAccessToken;
+import com.rackspace.idm.domain.entity.hasRefreshToken;
 import com.rackspace.idm.jaxb.CloudAuth;
 import com.rackspace.idm.jaxb.ObjectFactory;
 import com.rackspace.idm.jaxb.ServiceCatalog;
@@ -41,14 +43,18 @@ public class AuthConverter {
 
         DateTime passwordExpirationDate = null;
 
-        if (scopeAccess.getAccessToken() != null) {
-            authJaxb.setAccessToken(tokenConverter.toAccessTokenJaxb(scopeAccess
-                .getAccessToken()));
+        if (scopeAccess instanceof hasAccessToken) {
+        	hasAccessToken tokenScopeAccessObject = ((hasAccessToken)scopeAccess);
+            authJaxb.setAccessToken(tokenConverter.toTokenJaxb(
+            		tokenScopeAccessObject.getAccessTokenString(), 
+            		tokenScopeAccessObject.getAccessTokenExp()));
         }
 
-        if (scopeAccess.getRefreshToken() != null) {
-            authJaxb.setRefreshToken(tokenConverter.toRefreshTokenJaxb(scopeAccess
-                .getRefreshToken()));
+        if (scopeAccess instanceof hasRefreshToken) {
+        	hasRefreshToken tokenScopeAccessObject = ((hasRefreshToken)scopeAccess);
+            authJaxb.setRefreshToken(tokenConverter.toTokenJaxb(
+            		tokenScopeAccessObject.getRefreshTokenString(),
+            		tokenScopeAccessObject.getRefreshTokenExp()));
         }
 
         if (scopeAccess.getClientId() != null) {
@@ -107,10 +113,9 @@ public class AuthConverter {
     public CloudAuth toCloudAuthJaxb(UserScopeAccessObject usa, List<CloudEndpoint> endpoints) {
         CloudAuth auth = of.createCloudAuth();
         
-        if (usa.getAccessToken() != null) {
-            com.rackspace.idm.jaxb.Token token = of.createToken();
-            token.setExpiresIn(usa.getAccessToken().getExpiration());
-            token.setId(usa.getAccessTokenString());
+        if (usa.getAccessTokenString() != null) {
+            com.rackspace.idm.jaxb.Token token = this.tokenConverter.toTokenJaxb(
+            		usa.getAccessTokenString(), usa.getAccessTokenExp());
             auth.setToken(token);
         }
         

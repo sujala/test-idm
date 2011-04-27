@@ -49,14 +49,6 @@ public class ScopeAccessObject implements Auditable {
         this.clientRCN = clientRCN;
     }
     
-    public AccessToken getAccessToken() {
-        return null;
-    }
-    
-    public RefreshToken getRefreshToken() {
-        return null;
-    }
-
     @Override
     public String getAuditContext() {
         String format = "ScopeAccess(clientId=%s)";
