@@ -21,11 +21,13 @@ import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.api.converter.AuthConverter;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
-import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.jaxb.AuthCredentials;
@@ -43,20 +45,22 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class AuthResource {
 
-    private AccessTokenService accessTokenService;
-    private AuthorizationService authorizationService;
-    private EndpointService endpointService;
+    private final AuthorizationService authorizationService;
+    private final EndpointService endpointService;
+    private final ScopeAccessService scopeAccessService;
 
-    private AuthConverter authConverter;
+    private final AuthConverter authConverter;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public AuthResource(AuthConverter authConverter, EndpointService endpointService,
-        AuthorizationService authorizationService, AccessTokenService accessTokenService) {
+    public AuthResource(AuthConverter authConverter,
+        EndpointService endpointService,
+        AuthorizationService authorizationService,
+        ScopeAccessService scopeAccessService) {
         this.authConverter = authConverter;
         this.authorizationService = authorizationService;
-        this.accessTokenService = accessTokenService;
         this.endpointService = endpointService;
+        this.scopeAccessService = scopeAccessService;
     }
 
     /**
@@ -75,19 +79,23 @@ public class AuthResource {
      * @param creds User Credentials
      */
     @POST
-    public Response getUsernameAuth(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, EntityHolder<UsernameCredentials> holder) {
+    public Response getUsernameAuth(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        EntityHolder<UsernameCredentials> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call",
+                ((hasAccessToken) token).getAccessTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -102,13 +110,15 @@ public class AuthResource {
             throw new BadRequestException(errMsg);
         }
 
-        AccessToken userToken = accessTokenService.getTokenByUsernameAndApiCredentials(
-            token.getTokenClient(), username, apiKey, new DateTime());
+        UserScopeAccessObject usa = this.scopeAccessService
+            .getUserScopeAccessForClientIdByUsernameAndApiCredentials(username,
+                apiKey, token.getClientId());
 
-        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userToken.getTokenUser()
-            .getUsername());
+        List<CloudEndpoint> endpoints = this.endpointService
+            .getEndpointsForUser(username);
 
-        return Response.ok(this.authConverter.toCloudAuthJaxb(userToken, endpoints)).build();
+        return Response.ok(this.authConverter.toCloudAuthJaxb(usa, endpoints))
+            .build();
     }
 
     /**
@@ -128,19 +138,23 @@ public class AuthResource {
      */
     @POST
     @Path("mosso")
-    public Response authWithMossoIdAndApiKey(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, EntityHolder<MossoCredentials> holder) {
+    public Response authWithMossoIdAndApiKey(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        EntityHolder<MossoCredentials> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call",
+                ((hasAccessToken) token).getAccessTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -155,15 +169,15 @@ public class AuthResource {
             throw new BadRequestException(errMsg);
         }
 
-        int expirationSeconds = accessTokenService.getCloudAuthDefaultTokenExpirationSeconds();
+        UserScopeAccessObject usa = this.scopeAccessService
+            .getUserScopeAccessForClientIdByMossoIdAndApiCredentials(mossoId,
+                apiKey, token.getClientId());
 
-        AccessToken userToken = accessTokenService.getTokenByMossoIdAndApiCredentials(token.getTokenClient(),
-            mossoId, apiKey, expirationSeconds, new DateTime());
+        List<CloudEndpoint> endpoints = this.endpointService
+            .getEndpointsForUser(usa.getUsername());
 
-        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userToken.getTokenUser()
-            .getUsername());
-
-        return Response.ok(this.authConverter.toCloudAuthJaxb(userToken, endpoints)).build();
+        return Response.ok(this.authConverter.toCloudAuthJaxb(usa, endpoints))
+            .build();
     }
 
     /**
@@ -183,19 +197,23 @@ public class AuthResource {
      */
     @Path("nast")
     @POST
-    public Response authWithNastIdAndApiKey(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, EntityHolder<NastCredentials> holder) {
+    public Response authWithNastIdAndApiKey(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        EntityHolder<NastCredentials> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call",
+                ((hasAccessToken) token).getAccessTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -210,13 +228,15 @@ public class AuthResource {
             throw new BadRequestException(errMsg);
         }
 
-        AccessToken userToken = accessTokenService.getTokenByNastIdAndApiCredentials(token.getTokenClient(),
-            nastId, apiKey, new DateTime());
+        UserScopeAccessObject usa = this.scopeAccessService
+            .getUserScopeAccessForClientIdByNastIdAndApiCredentials(nastId,
+                apiKey, token.getClientId());
 
-        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userToken.getTokenUser()
-            .getUsername());
+        List<CloudEndpoint> endpoints = this.endpointService
+            .getEndpointsForUser(usa.getUsername());
 
-        return Response.ok(this.authConverter.toCloudAuthJaxb(userToken, endpoints)).build();
+        return Response.ok(this.authConverter.toCloudAuthJaxb(usa, endpoints))
+            .build();
     }
 
     /**
@@ -236,33 +256,39 @@ public class AuthResource {
      */
     @POST
     @Path("username")
-    public Response authByUsernameAndPassword(@Context Request request, @Context UriInfo uriInfo,
+    public Response authByUsernameAndPassword(@Context Request request,
+        @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         EntityHolder<com.rackspace.idm.jaxb.AuthCredentials> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo.getPath());
 
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
+            String errMsg = String.format("Token %s Forbidden from this call",
+                ((hasAccessToken) token).getAccessTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
 
         DateTime currentTime = this.getCurrentTime();
         AuthCredentials creds = holder.getEntity();
-        AccessToken userToken = accessTokenService.getTokenByUsernameAndPassword(token.getTokenClient(),
-            creds.getUsername(), creds.getPassword(), currentTime);
 
-        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userToken.getTokenUser()
-            .getUsername());
+        UserScopeAccessObject usa = this.scopeAccessService
+            .getUserScopeAccessForClientIdByUsernameAndPassword(
+                creds.getUsername(), creds.getPassword(), token.getClientId());
 
-        return Response.ok(this.authConverter.toCloudAuthJaxb(userToken, endpoints)).build();
+        List<CloudEndpoint> endpoints = this.endpointService
+            .getEndpointsForUser(usa.getUsername());
+
+        return Response.ok(this.authConverter.toCloudAuthJaxb(usa, endpoints))
+            .build();
     }
 
     protected DateTime getCurrentTime() {
