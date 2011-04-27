@@ -35,10 +35,10 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class UserLockResource {
 
-    private OAuthService oauthService;
-    private UserService userService;
-    private UserConverter userConverter;
-    private AuthorizationService authorizationService;
+    private final OAuthService oauthService;
+    private final UserService userService;
+    private final UserConverter userConverter;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -100,7 +100,7 @@ public class UserLockResource {
         user.setLocked(inputUser.isLocked());
         this.userService.updateUser(user, false);
         if (inputUser.isLocked()) {
-            oauthService.revokeTokensGloballyForOwner(username);
+            oauthService.revokeAllTokensForUser(username);
         }
 
         return Response.ok(userConverter.toUserWithOnlyLockJaxb(user)).build();

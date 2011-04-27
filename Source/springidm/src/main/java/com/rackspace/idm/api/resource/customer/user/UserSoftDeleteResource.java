@@ -33,10 +33,10 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class UserSoftDeleteResource {
 
-    private OAuthService oauthService;
-    private UserService userService;
-    private UserConverter userConverter;
-    private AuthorizationService authorizationService;
+    private final OAuthService oauthService;
+    private final UserService userService;
+    private final UserConverter userConverter;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -107,7 +107,7 @@ public class UserSoftDeleteResource {
         this.userService.updateUser(user, false);
 
         if (softDelete) {
-            oauthService.revokeTokensGloballyForOwner(username);
+            oauthService.revokeAllTokensForUser(username);
         }
 
         logger.info("Updated SoftDelete for user: {} - []", user);

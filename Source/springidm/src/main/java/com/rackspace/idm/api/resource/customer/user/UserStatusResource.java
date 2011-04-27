@@ -36,10 +36,10 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class UserStatusResource {
 
-    private OAuthService oauthService;
-    private UserService userService;
-    private UserConverter userConverter;
-    private AuthorizationService authorizationService;
+    private final OAuthService oauthService;
+    private final UserService userService;
+    private final UserConverter userConverter;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -111,7 +111,7 @@ public class UserStatusResource {
         }
 
         if (UserStatus.INACTIVE == inputUser.getStatus()) {
-            oauthService.revokeTokensGloballyForOwner(username);
+            oauthService.revokeAllTokensForUser(username);
         }
 
         logger.debug("Updated status for user: {}", user);

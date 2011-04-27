@@ -98,7 +98,7 @@ public class CustomerLockResource extends AbstractCustomerConsumer {
         logger.debug("Revoking all user tokens for customer {}", customer.getCustomerId());
 
         if (isLocked) {
-            oauthService.revokeTokensGloballyForCustomer(customerId);
+            oauthService.revokeAllTokensForCustomer(customerId);
         }
 
         return Response.ok(inputCustomer).build();
