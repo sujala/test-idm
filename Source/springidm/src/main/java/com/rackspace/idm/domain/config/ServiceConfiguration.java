@@ -48,6 +48,7 @@ import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.util.LdapRouterMBean;
 import com.rackspace.idm.util.LoggerMBean;
 import com.rackspace.idm.util.MemcacheMBean;
+import com.rackspace.idm.util.WadlTrie;
 import com.rackspace.idm.validation.InputValidator;
 
 /**
@@ -127,6 +128,11 @@ public class ServiceConfiguration {
     public CustomerService customerService() {
         return new DefaultCustomerService(clientDao, customerDao, userRepo);
     }
+    
+    @Bean
+    public WadlTrie wadlTrie() {
+        return new WadlTrie(getClass().getResourceAsStream("/application.wadl"));
+    }
 
     @Bean
     public EmailService emailService() {
@@ -192,7 +198,7 @@ public class ServiceConfiguration {
 
     @Bean
     public AuthorizationService authorizationService() {
-        return new DefaultAuthorizationService(scopeAccessDao, clientService(), config);
+        return new DefaultAuthorizationService(scopeAccessDao, clientService(), wadlTrie(), config);
     }
     
     @Bean

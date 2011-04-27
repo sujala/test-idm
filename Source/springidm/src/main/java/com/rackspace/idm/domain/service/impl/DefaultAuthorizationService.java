@@ -19,6 +19,7 @@ import com.rackspace.idm.util.WadlTrie;
 
 public class DefaultAuthorizationService implements AuthorizationService {
 
+    
     private final ClientService clientService;
     private final Configuration config;
     private final ScopeAccessObjectDao scopeAccessDao;

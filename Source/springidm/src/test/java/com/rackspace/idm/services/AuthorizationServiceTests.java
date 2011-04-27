@@ -3,8 +3,8 @@ package com.rackspace.idm.services;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.UriInfo;
 
 import junit.framework.Assert;
 
@@ -26,12 +26,16 @@ import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
+import com.rackspace.idm.util.WadlTrie;
 
 public class AuthorizationServiceTests {
     ClientService mockClientService;
     ScopeAccessObjectDao mockScopeAccessDao;
     AuthorizationService service;
+    WadlTrie mockWadlTrie;
+    UriInfo mockUriInfo;
     
+    UriInfo uriInfo = null;
 
     String authHeader = "OAuth XXXX";
     
@@ -88,10 +92,12 @@ public class AuthorizationServiceTests {
     public void setUp() throws Exception {
         mockClientService = EasyMock.createMock(ClientService.class);
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessObjectDao.class);
+        mockWadlTrie = EasyMock.createMock(WadlTrie.class);
+        mockUriInfo = EasyMock.createMock(UriInfo.class);
         Configuration appConfig = new PropertyFileConfiguration()
             .getConfigFromClasspath();
         service = new DefaultAuthorizationService(mockScopeAccessDao,
-            mockClientService, appConfig);
+            mockClientService, mockWadlTrie, appConfig);
         setUpObjects();
     }
 
@@ -132,8 +138,11 @@ public class AuthorizationServiceTests {
 
         EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(tokenString, perm)).andReturn(true);
         EasyMock.replay(mockScopeAccessDao);
+        
+        EasyMock.expect(mockWadlTrie.getPermissionFor(verb, mockUriInfo)).andReturn(permissionId);
+        EasyMock.replay(mockWadlTrie);
 
-        boolean authorized = service.authorizeClient(authorizedClientToken, verb, segments);
+        boolean authorized = service.authorizeClient(authorizedClientToken, verb, mockUriInfo);
 
         Assert.assertTrue(authorized);
     }
@@ -144,7 +153,10 @@ public class AuthorizationServiceTests {
         EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(tokenString, perm)).andReturn(false);
         EasyMock.replay(mockScopeAccessDao);
         
-        boolean authorized = service.authorizeClient(notAuthorizedClientToken, verb, segments);
+        EasyMock.expect(mockWadlTrie.getPermissionFor(verb, mockUriInfo)).andReturn(permissionId);
+        EasyMock.replay(mockWadlTrie);
+        
+        boolean authorized = service.authorizeClient(notAuthorizedClientToken, verb, mockUriInfo);
 
         Assert.assertTrue(!authorized);
     }
@@ -223,30 +235,6 @@ public class AuthorizationServiceTests {
     }
 
     private void setUpObjects() {
-        
-        segments = new ArrayList<PathSegment>();
-        segments.add(new PathSegment() {
-
-            @Override
-            public MultivaluedMap<String, String> getMatrixParameters() {
-                return null;
-            }
-
-            @Override
-            public String getPath() {
-                return "/";
-            }});
-        segments.add(new PathSegment() {
-
-            @Override
-            public MultivaluedMap<String, String> getMatrixParameters() {
-                return null;
-            }
-
-            @Override
-            public String getPath() {
-                return "resource";
-            }});
         
         perm = new Permission();
         perm.setClientId(idmClientId);
