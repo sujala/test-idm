@@ -17,7 +17,7 @@ root = Resource(url)
 userDict = {}
 
 client_cred = {'client_secret':'password',
-    'client_id':'18e7a7032733486cd32f472d7bd58f709ac0d221', 'grant_type':'NONE'}
+    'client_id':'18e7a7032733486cd32f472d7bd58f709ac0d221', 'grant_type':'CLIENT_CREDENTIALS'}
 
 
 def show_response(resp):
