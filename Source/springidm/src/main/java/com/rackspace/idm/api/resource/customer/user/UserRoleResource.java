@@ -20,10 +20,12 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Role;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.RoleService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -38,17 +40,18 @@ import com.rackspace.idm.exception.NotFoundException;
 @Component
 public class UserRoleResource {
 
-    private AccessTokenService accessTokenService;
+    private ScopeAccessService scopeAccessService;
     private UserService userService;
     private RoleService roleService;
     private AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public UserRoleResource(AccessTokenService accessTokenService,
+    public UserRoleResource(ScopeAccessService scopeAccessService,
         UserService userService, AuthorizationService authorizationService,
         RoleService roleService) {
-        this.accessTokenService = accessTokenService;
+ 
+        this.scopeAccessService = scopeAccessService;
         this.userService = userService;
         this.roleService = roleService;
         this.authorizationService = authorizationService;
@@ -85,21 +88,16 @@ public class UserRoleResource {
 
         logger.debug("Setting role {} for User {}", roleName, username);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
-
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
+        
         // Racker's, Specific Clients and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+                uriInfo)
             || authorizationService.authorizeAdmin(token, customerId);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         // get user to update
         User user = this.userService.checkAndGetUser(customerId, username);
@@ -146,21 +144,16 @@ public class UserRoleResource {
 
         logger.debug("Deleting role for User: {}", username);
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath())
+                uriInfo)
             || authorizationService.authorizeAdmin(token, customerId);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         // get user to update
         User user = this.userService.getUser(customerId, username);

@@ -25,9 +25,11 @@ import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.PermissionSet;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.ForbiddenException;
 
 /**
@@ -39,21 +41,22 @@ import com.rackspace.idm.exception.ForbiddenException;
 @Component
 public class PermissionsResource extends AbstractClientConsumer {
 
-    private AccessTokenService accessTokenService;
     private DefinedPermissionsResource definedPermissionsResource;
     private GrantedPermissionsResource grantedPermissionsResource;
     private ClientService clientService;
+    private ScopeAccessService scopeAccessService;
     private PermissionConverter permissionConverter;
     private AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public PermissionsResource(AccessTokenService accessTokenService,
+    public PermissionsResource(ScopeAccessService scopeAccessService,
         DefinedPermissionsResource definedPermissionsResource,
         GrantedPermissionsResource grantedPermissionsResource, ClientService clientService,
         PermissionConverter permissionConverter, AuthorizationService authorizationService) {
         super(clientService);
-        this.accessTokenService = accessTokenService;
+      
+        this.scopeAccessService = scopeAccessService;
         this.definedPermissionsResource = definedPermissionsResource;
         this.grantedPermissionsResource = grantedPermissionsResource;
         this.permissionConverter = permissionConverter;
@@ -82,21 +85,18 @@ public class PermissionsResource extends AbstractClientConsumer {
 
         logger.debug(String.format("Getting Permissions for client %s", clientId));
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
             || authorizationService.authorizeAdmin(token, customerId);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
+        
         Client client = checkAndGetClient(customerId, clientId);
 
         List<Permission> defineds = this.clientService.getDefinedPermissionsByClientId(clientId);

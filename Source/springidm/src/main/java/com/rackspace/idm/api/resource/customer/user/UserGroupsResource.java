@@ -28,10 +28,12 @@ import com.rackspace.idm.api.converter.GroupConverter;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -46,7 +48,7 @@ import com.rackspace.idm.exception.NotFoundException;
 @Component
 public class UserGroupsResource extends AbstractClientConsumer {
 
-    private AccessTokenService accessTokenService;
+    private ScopeAccessService scopeAccessService;
     private UserService userService;
     private ClientService clientService;
     private GroupConverter groupConverter;
@@ -55,11 +57,11 @@ public class UserGroupsResource extends AbstractClientConsumer {
     private Configuration config;
 
     @Autowired
-    public UserGroupsResource(AccessTokenService accessTokenService, UserService userService,
+    public UserGroupsResource(ScopeAccessService scopeAccessService, UserService userService,
         ClientService clientService, GroupConverter groupConverter, Configuration config,
         AuthorizationService authorizationService) {
         super(clientService);
-        this.accessTokenService = accessTokenService;
+        this.scopeAccessService = scopeAccessService;
         this.userService = userService;
         this.clientService = clientService;
         this.groupConverter = groupConverter;
@@ -90,21 +92,18 @@ public class UserGroupsResource extends AbstractClientConsumer {
 
         logger.debug("Getting groups for User: {}", username);
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients, Admins and User's are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
             || authorizationService.authorizeAdmin(token, customerId)
             || authorizationService.authorizeUser(token, customerId, username);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         User user = userService.checkAndGetUser(customerId, username);
 
@@ -147,18 +146,15 @@ public class UserGroupsResource extends AbstractClientConsumer {
 
         logger.debug("Adding user {} to group {}", username, groupName);
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
             || authorizationService.authorizeAdmin(token, customerId);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         // get user to update
         userService.checkAndGetUser(customerId, username);
@@ -201,18 +197,15 @@ public class UserGroupsResource extends AbstractClientConsumer {
 
         logger.info("Removing user {} from group {}", username, groupName);
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
             || authorizationService.authorizeAdmin(token, customerId);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         // get user to update
         User user = this.userService.getUser(customerId, username);

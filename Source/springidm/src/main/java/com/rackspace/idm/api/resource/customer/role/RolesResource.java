@@ -22,10 +22,12 @@ import com.rackspace.idm.api.converter.RoleConverter;
 import com.rackspace.idm.api.resource.customer.AbstractCustomerConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Role;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.RoleService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.ForbiddenException;
 
 /**
@@ -37,17 +39,18 @@ import com.rackspace.idm.exception.ForbiddenException;
 @Component
 public class RolesResource extends AbstractCustomerConsumer {
 
-    private AccessTokenService accessTokenService;
+    private ScopeAccessService scopeAccessService;
     private RoleService roleService;
     private RoleConverter roleConverter;
     private AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public RolesResource(AccessTokenService accessTokenService, CustomerService customerService,
+    public RolesResource(ScopeAccessService scopeAccessService, CustomerService customerService,
         RoleService roleService, RoleConverter roleConverter, AuthorizationService authorizationService) {
         super(customerService);
-        this.accessTokenService = accessTokenService;
+        
+        this.scopeAccessService = scopeAccessService;
         this.roleService = roleService;
         this.roleConverter = roleConverter;
         this.authorizationService = authorizationService;
@@ -73,20 +76,17 @@ public class RolesResource extends AbstractCustomerConsumer {
 
         logger.debug("Getting Customer Roles: {}", customerId);
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
             || authorizationService.authorizeAdmin(token, customerId);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         checkAndGetCustomer(customerId);
 

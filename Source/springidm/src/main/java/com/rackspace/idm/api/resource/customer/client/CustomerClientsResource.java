@@ -29,10 +29,12 @@ import com.rackspace.idm.api.resource.customer.AbstractCustomerConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.Clients;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.CustomerService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
@@ -48,8 +50,8 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class CustomerClientsResource extends AbstractCustomerConsumer {
-
-    private AccessTokenService accessTokenService;
+    
+    private ScopeAccessService scopeAccessService;
     private InputValidator inputValidator;
     private ClientConverter clientConverter;
     private ClientService clientService;
@@ -58,12 +60,13 @@ public class CustomerClientsResource extends AbstractCustomerConsumer {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomerClientsResource(AccessTokenService accessTokenService, CustomerService customerService,
+    public CustomerClientsResource(CustomerService customerService, ScopeAccessService scopeAccessService,
         InputValidator inputValidator, ClientConverter clientConverter, ClientService clientService,
         CustomerClientResource customerClientResource, AuthorizationService authorizationService) {
         super(customerService);
-        this.accessTokenService = accessTokenService;
+   
         this.clientService = clientService;
+        this.scopeAccessService = scopeAccessService;
         this.clientConverter = clientConverter;
         this.inputValidator = inputValidator;
         this.customerClientResource = customerClientResource;
@@ -91,20 +94,17 @@ public class CustomerClientsResource extends AbstractCustomerConsumer {
 
         logger.debug("Getting Customer Clients: {}", customerId);
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
             || authorizationService.authorizeAdmin(token, customerId);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         checkAndGetCustomer(customerId);
 
@@ -139,18 +139,15 @@ public class CustomerClientsResource extends AbstractCustomerConsumer {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
             || authorizationService.authorizeAdmin(token, customerId);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         com.rackspace.idm.jaxb.Client client = holder.getEntity();
         client.setCustomerId(customerId);

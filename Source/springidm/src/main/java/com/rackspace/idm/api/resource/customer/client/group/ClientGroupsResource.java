@@ -28,9 +28,11 @@ import com.rackspace.idm.api.converter.GroupConverter;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.sun.jersey.core.provider.EntityHolder;
@@ -44,17 +46,19 @@ import com.sun.jersey.core.provider.EntityHolder;
 public class ClientGroupsResource extends AbstractClientConsumer {
     private AccessTokenService accessTokenService;
     private ClientService clientService;
+    private ScopeAccessService scopeAccessService;
     private ClientGroupResource clientGroupResource;
     private GroupConverter groupConverter;
     private AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public ClientGroupsResource(AccessTokenService accessTokenService, ClientService clientService,
+    public ClientGroupsResource(AccessTokenService accessTokenService, ClientService clientService, ScopeAccessService scopeAccessService,
         GroupConverter groupConverter, ClientGroupResource clientGroupResource,
         AuthorizationService authorizationService) {
         super(clientService);
         this.accessTokenService = accessTokenService;
+        this.scopeAccessService = scopeAccessService;
         this.clientService = clientService;
         this.authorizationService = authorizationService;
         this.clientGroupResource = clientGroupResource;
@@ -81,19 +85,16 @@ public class ClientGroupsResource extends AbstractClientConsumer {
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients andSpecific Clients are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         checkAndGetClient(customerId, clientId);
 
@@ -126,18 +127,15 @@ public class ClientGroupsResource extends AbstractClientConsumer {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token.isClientToken() && token.getTokenClient().getClientId().equals(clientId));
+            || (token.getAccessToken().isClientToken() && token.getAccessToken().getTokenClient().getClientId().equals(clientId));
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         com.rackspace.idm.jaxb.ClientGroup clientGroup = holder.getEntity();
         if (!clientGroup.getCustomerId().toLowerCase().equals(customerId.toLowerCase())) {

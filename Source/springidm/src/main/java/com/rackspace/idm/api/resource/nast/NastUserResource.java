@@ -19,9 +19,11 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -35,17 +37,17 @@ import com.rackspace.idm.exception.NotFoundException;
 @Component
 public class NastUserResource {
 
-    private AccessTokenService accessTokenService;
+    private ScopeAccessService scopeAccessService;
     private UserService userService;
     private UserConverter userConverter;
     private AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public NastUserResource(AccessTokenService accessTokenService,
-        UserService userService, UserConverter userConverter,
+    public NastUserResource(UserService userService, ScopeAccessService scopeAccessService, UserConverter userConverter,
         AuthorizationService authorizationService) {
-        this.accessTokenService = accessTokenService;
+     
+        this.scopeAccessService = scopeAccessService;
         this.userConverter = userConverter;
         this.userService = userService;
         this.authorizationService = authorizationService;
@@ -71,21 +73,16 @@ public class NastUserResource {
         @HeaderParam("Authorization") String authHeader,
         @PathParam("nastId") String nastId) {
 
-        AccessToken token = this.accessTokenService
-            .getAccessTokenByAuthHeader(authHeader);
-
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
+        
         // Racker's, Rackspace Clients, Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
             || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo.getPath());
+                uriInfo);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         logger.debug("Getting User: {}", nastId);
         User user = this.userService.getUserByNastId(nastId);

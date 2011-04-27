@@ -18,9 +18,11 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Customer;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.OAuthService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.sun.jersey.core.provider.EntityHolder;
@@ -35,14 +37,17 @@ import com.sun.jersey.core.provider.EntityHolder;
 public class CustomerLockResource extends AbstractCustomerConsumer {
     private CustomerService customerService;
     private AuthorizationService authorizationService;
+    private ScopeAccessService scopeAccessService;
     private OAuthService oauthService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomerLockResource(CustomerService customerService, AuthorizationService authorizationService,
+    public CustomerLockResource(CustomerService customerService, ScopeAccessService scopeAccessService, 
+        AuthorizationService authorizationService,
         OAuthService oauthService) {
         super(customerService);
         this.customerService = customerService;
+        this.scopeAccessService = scopeAccessService;
         this.authorizationService = authorizationService;
         this.oauthService = oauthService;
     }
@@ -71,17 +76,14 @@ public class CustomerLockResource extends AbstractCustomerConsumer {
         com.rackspace.idm.jaxb.Customer inputCustomer = holder.getEntity();
         logger.debug("Getting Customer: {}", customerId);
 
-        AccessToken token = oauthService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         if (inputCustomer.isLocked() == null) {
             String errMsg = "Blank value for locked passed in.";

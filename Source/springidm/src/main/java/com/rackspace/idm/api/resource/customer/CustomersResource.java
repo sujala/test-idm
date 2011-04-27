@@ -24,9 +24,11 @@ import com.rackspace.idm.api.converter.CustomerConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Customer;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.CustomerConflictException;
 import com.rackspace.idm.exception.DuplicateException;
@@ -42,22 +44,23 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class CustomersResource {
-
-    private AccessTokenService accessTokenService;
+    
     private CustomerResource customerResource;
     private CustomerService customerService;
+    private ScopeAccessService scopeAccessService;
     private InputValidator inputValidator;
     private CustomerConverter customerConverter;
     private AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomersResource(AccessTokenService accessTokenService, CustomerResource customerResource,
-        CustomerService customerService, InputValidator inputValidator, CustomerConverter customerConverter,
+    public CustomersResource(CustomerResource customerResource, CustomerService customerService, 
+        ScopeAccessService scopeAccessService, InputValidator inputValidator, CustomerConverter customerConverter,
         AuthorizationService authorizationService) {
-        this.accessTokenService = accessTokenService;
+       
         this.customerResource = customerResource;
         this.customerService = customerService;
+        this.scopeAccessService = scopeAccessService;
         this.inputValidator = inputValidator;
         this.customerConverter = customerConverter;
         this.authorizationService = authorizationService;
@@ -84,17 +87,14 @@ public class CustomersResource {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
+            uriInfo);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         com.rackspace.idm.jaxb.Customer inputCustomer = holder.getEntity();
         Customer customer = customerConverter.toCustomerDO(inputCustomer);

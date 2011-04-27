@@ -27,9 +27,11 @@ import com.rackspace.idm.api.converter.EndPointConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -45,21 +47,22 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class BaseUrlsResource {
-
-    private AccessTokenService accessTokenService;
+   
     private AuthorizationService authorizationService;
     private EndpointService endpointService;
+    private final ScopeAccessService scopeAccessService;
     private EndPointConverter endpointConverter;
     private InputValidator inputValidator;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public BaseUrlsResource(AccessTokenService accessTokenService, AuthorizationService authorizationService,
-        EndpointService endpointService, EndPointConverter endpointConverter, InputValidator inputValidator) {
-        this.accessTokenService = accessTokenService;
+    public BaseUrlsResource(AuthorizationService authorizationService,
+        EndpointService endpointService, ScopeAccessService scopeAccessService, EndPointConverter endpointConverter, InputValidator inputValidator) {
+       
         this.authorizationService = authorizationService;
         this.endpointConverter = endpointConverter;
         this.endpointService = endpointService;
+        this.scopeAccessService = scopeAccessService;
         this.inputValidator = inputValidator;
     }
 
@@ -79,17 +82,14 @@ public class BaseUrlsResource {
     public Response getBaseUrls(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader) {
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
+            uriInfo);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         List<CloudBaseUrl> urls = this.endpointService.getBaseUrls();
 
@@ -115,17 +115,14 @@ public class BaseUrlsResource {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
+            uriInfo);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         BaseURL baseUrl = holder.getEntity();
         CloudBaseUrl url = this.endpointConverter.toBaseUrlDO(baseUrl);
@@ -166,7 +163,8 @@ public class BaseUrlsResource {
     public Response getBaseUrl(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("baseUrlId") int baseUrlId) {
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         CloudBaseUrl url = checkAndGetUrl(request, uriInfo, baseUrlId, token);
 
@@ -191,23 +189,22 @@ public class BaseUrlsResource {
     public Response deleteBaseUrl(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("baseUrlId") int baseUrlId) {
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
+        
         checkAndGetUrl(request, uriInfo, baseUrlId, token);
         this.endpointService.deleteBaseUrl(baseUrlId);
 
         return Response.noContent().build();
     }
 
-    private CloudBaseUrl checkAndGetUrl(Request request, UriInfo uriInfo, int baseUrlId, AccessToken token) {
+    
+    private CloudBaseUrl checkAndGetUrl(Request request, UriInfo uriInfo, int baseUrlId, ScopeAccessObject token) {
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
+            uriInfo);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         CloudBaseUrl url = this.endpointService.getBaseUrlById(baseUrlId);
 

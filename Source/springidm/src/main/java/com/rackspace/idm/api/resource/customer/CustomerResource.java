@@ -25,9 +25,11 @@ import com.rackspace.idm.api.resource.customer.role.RolesResource;
 import com.rackspace.idm.api.resource.customer.user.CustomerUsersResource;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Customer;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.jaxb.PasswordRotationPolicy;
@@ -42,29 +44,29 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class CustomerResource extends AbstractCustomerConsumer {
 
-    private AccessTokenService accessTokenService;
     private CustomerClientsResource customerClientsResource;
     private CustomerLockResource customerLockResource;
     private RolesResource rolesResource;
     private CustomerUsersResource customerUsersResource;
     private CustomerService customerService;
+    private ScopeAccessService scopeAccessService;
     private CustomerConverter customerConverter;
     private AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomerResource(AccessTokenService accessTokenService,
-        CustomerClientsResource customerClientsResource, CustomerLockResource customerLockResource,
+    public CustomerResource(CustomerClientsResource customerClientsResource, CustomerLockResource customerLockResource,
         RolesResource rolesResource, CustomerUsersResource customerUsersResource,
-        CustomerService customerService, CustomerConverter customerConverter,
+        CustomerService customerService, ScopeAccessService scopeAccessService, CustomerConverter customerConverter,
         AuthorizationService authorizationService) {
         super(customerService);
-        this.accessTokenService = accessTokenService;
+        
         this.customerClientsResource = customerClientsResource;
         this.customerLockResource = customerLockResource;
         this.rolesResource = rolesResource;
         this.customerUsersResource = customerUsersResource;
         this.customerService = customerService;
+        this.scopeAccessService = scopeAccessService;
         this.customerConverter = customerConverter;
         this.authorizationService = authorizationService;
     }
@@ -89,18 +91,15 @@ public class CustomerResource extends AbstractCustomerConsumer {
 
         logger.debug("Getting Customer: {}", customerId);
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         Customer customer = checkAndGetCustomer(customerId);
 
@@ -130,17 +129,14 @@ public class CustomerResource extends AbstractCustomerConsumer {
 
         logger.info("Deleting Customer :{}", customerId);
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
+            uriInfo);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         checkAndGetCustomer(customerId);
 
@@ -173,17 +169,15 @@ public class CustomerResource extends AbstractCustomerConsumer {
             throw new BadRequestException("Request body missing.");
         }
         logger.debug("Updating Customer's Password Rotation Policy: {}", customerId);
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's and Rackspace Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         PasswordRotationPolicy passwordRotationPolicy = holder.getEntity();
         int duration = passwordRotationPolicy.getDuration();

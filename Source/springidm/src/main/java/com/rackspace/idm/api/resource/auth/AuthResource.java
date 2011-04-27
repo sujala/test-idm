@@ -91,14 +91,9 @@ public class AuthResource {
 
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+            request.getMethod(), uriInfo);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                ((hasAccessToken) token).getAccessTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         UsernameCredentials creds = holder.getEntity();
         String username = creds.getUsername();
@@ -150,7 +145,7 @@ public class AuthResource {
 
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+            request.getMethod(), uriInfo);
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
@@ -209,7 +204,7 @@ public class AuthResource {
 
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+            request.getMethod(), uriInfo);
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
@@ -268,7 +263,7 @@ public class AuthResource {
 
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token,
-            request.getMethod(), uriInfo.getPath());
+            request.getMethod(), uriInfo);
 
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",

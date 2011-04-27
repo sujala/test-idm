@@ -164,15 +164,10 @@ public class TokenResource {
         boolean authorized = authorizationService.authorizeRacker(authToken)
             || authorizationService.authorizeRackspaceClient(authToken)
             || authorizationService.authorizeClient(authToken,
-                request.getMethod(), uriInfo.getPath());
+                request.getMethod(), uriInfo);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call",
-                ((hasAccessToken)authToken).getAccessTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-
+        authorizationService.checkAuthAndHandleFailure(authorized, authToken);
+        
         // Validate Token exists and is valid
         ScopeAccessObject scopeAccess = this.scopeAccessService
             .getScopeAccessByAccessToken(tokenString);

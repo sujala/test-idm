@@ -25,11 +25,13 @@ import com.rackspace.idm.api.converter.PasswordConverter;
 import com.rackspace.idm.api.converter.TokenConverter;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -46,6 +48,7 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class UserPasswordResource {
+    private ScopeAccessService scopeAccessService;
     private AccessTokenService accessTokenService;
     private UserService userService;
     private PasswordComplexityService passwordComplexityService;
@@ -56,9 +59,10 @@ public class UserPasswordResource {
     String errorMsg = String.format("Authorization Failed");
 
     @Autowired
-    public UserPasswordResource(AccessTokenService accessTokenService, UserService userService,
+    public UserPasswordResource(AccessTokenService accessTokenService, ScopeAccessService scopeAccessService, UserService userService,
         PasswordComplexityService passwordComplexityService, PasswordConverter passwordConverter,
         TokenConverter tokenConverter, AuthorizationService authorizationService) {
+        this.scopeAccessService = scopeAccessService;
         this.accessTokenService = accessTokenService;
         this.userService = userService;
         this.passwordComplexityService = passwordComplexityService;
@@ -86,17 +90,14 @@ public class UserPasswordResource {
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo.getPath());
+            uriInfo);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         User user = this.userService.checkAndGetUser(customerId, username);
 
@@ -125,19 +126,16 @@ public class UserPasswordResource {
         @PathParam("username") String username) {
         logger.debug("Reseting Password for User: {}", username);
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
-        boolean isSelfUpdate = username.equals(token.getOwner());
+        boolean isSelfUpdate = username.equals(token.getAccessToken().getOwner());
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
             || (authorizationService.authorizeAdmin(token, customerId) && !isSelfUpdate);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         User user = this.userService.checkAndGetUser(customerId, username);
         Password password = userService.resetUserPassword(user);
@@ -175,26 +173,23 @@ public class UserPasswordResource {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         boolean authorized = false;
 
         if (isRecovery) {
-            authorized = token.isRestrictedToSetPassword()
-                && token.getTokenUser().getCustomerId().equalsIgnoreCase(customerId)
-                && token.getTokenUser().getUsername().equals(username);
+            authorized = token.getAccessToken().isRestrictedToSetPassword()
+                && token.getAccessToken().getTokenUser().getCustomerId().equalsIgnoreCase(customerId)
+                && token.getAccessToken().getTokenUser().getUsername().equals(username);
         } else {
             authorized = authorizationService.authorizeRacker(token)
-                || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
+                || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
                 || authorizationService.authorizeAdmin(token, customerId)
                 || authorizationService.authorizeUser(token, customerId, username);
         }
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         UserCredentials userCred = holder.getEntity();
         
@@ -205,7 +200,7 @@ public class UserPasswordResource {
             throw new BadRequestException(errorMsg);
         }
 
-        this.userService.setUserPassword(customerId, username, userCred, token, isRecovery);
+        this.userService.setUserPassword(customerId, username, userCred, token.getAccessToken(), isRecovery);
         
         return Response.ok(userCred).build();
     }
@@ -230,18 +225,14 @@ public class UserPasswordResource {
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Only Rackspace Clients and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
         User user = this.userService.checkAndGetUser(customerId, username);
 
         if (!user.getStatus().equals(UserStatus.ACTIVE)) {
@@ -257,7 +248,7 @@ public class UserPasswordResource {
             throw new UserDisabledException(errorMsg);
         }
 
-        AccessToken resetToken = accessTokenService.createPasswordResetAccessTokenForUser(user, token
+        AccessToken resetToken = accessTokenService.createPasswordResetAccessTokenForUser(user, token.getAccessToken()
             .getTokenClient().getClientId());
 
         logger.debug("Got Password Reset Token for User :{}", user);
@@ -291,16 +282,13 @@ public class UserPasswordResource {
         }
         logger.debug("Sending password recovery email for User: {}", username);
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         boolean authorized = authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         User user = this.userService.checkAndGetUser(customerId, username);
 
@@ -329,7 +317,7 @@ public class UserPasswordResource {
             throw new BadRequestException(errorMsg);
         }
 
-        AccessToken resetToken = accessTokenService.createPasswordResetAccessTokenForUser(user, token
+        AccessToken resetToken = accessTokenService.createPasswordResetAccessTokenForUser(user, token.getAccessToken()
             .getTokenClient().getClientId());
 
         try {

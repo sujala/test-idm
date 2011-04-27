@@ -15,9 +15,11 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.OAuthService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -33,6 +35,7 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class UserSoftDeleteResource {
 
+    private ScopeAccessService scopeAccessService;
     private final OAuthService oauthService;
     private final UserService userService;
     private final UserConverter userConverter;
@@ -40,10 +43,11 @@ public class UserSoftDeleteResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public UserSoftDeleteResource(OAuthService oauthService, UserService userService,
+    public UserSoftDeleteResource(OAuthService oauthService, UserService userService, ScopeAccessService scopeAccessService,
         UserConverter userConverter, AuthorizationService authorizationService) {
         this.oauthService = oauthService;
         this.userService = userService;
+        this.scopeAccessService = scopeAccessService;
         this.userConverter = userConverter;
         this.authorizationService = authorizationService;
     }
@@ -74,18 +78,15 @@ public class UserSoftDeleteResource {
         com.rackspace.idm.jaxb.User inputUser = holder.getEntity();
         logger.debug("Updating SoftDelete for User: {} - {}", username, inputUser.isSoftDeleted());
 
-        AccessToken token = this.oauthService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeAdmin(token, customerId)
             || authorizationService.authorizeCustomerIdm(token);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         if (inputUser.isSoftDeleted() == null) {
             String errMsg = "Blank value for softDelted passed in.";

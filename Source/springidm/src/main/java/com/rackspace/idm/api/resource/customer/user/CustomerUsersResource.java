@@ -28,12 +28,14 @@ import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.AbstractCustomerConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
@@ -53,7 +55,7 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class CustomerUsersResource extends AbstractCustomerConsumer {
 
-    private AccessTokenService accessTokenService;
+    private ScopeAccessService scopeAccessService;
     private UserResource userResource;
     private UserService userService;
     private UserConverter userConverter;
@@ -63,12 +65,13 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomerUsersResource(AccessTokenService accessTokenService, UserResource userResource,
+    public CustomerUsersResource(ScopeAccessService scopeAccessService, UserResource userResource,
         UserService userService, CustomerService customerService, UserConverter userConverter,
         InputValidator inputValidator, PasswordComplexityService passwordComplexityService,
         AuthorizationService authorizationService) {
         super(customerService);
-        this.accessTokenService = accessTokenService;
+        
+        this.scopeAccessService = scopeAccessService;
         this.userResource = userResource;
         this.userService = userService;
         this.userConverter = userConverter;
@@ -99,20 +102,17 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
 
         logger.debug("Getting Customer Users: {}", customerId);
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
             || authorizationService.authorizeAdmin(token, customerId);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         checkAndGetCustomer(customerId);
 
@@ -146,18 +146,15 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
             || authorizationService.authorizeAdmin(token, customerId);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         com.rackspace.idm.jaxb.User user = holder.getEntity();
         if (user.getApiKey() != null && !StringUtils.isEmpty(user.getApiKey().getApiKey())) {
@@ -241,21 +238,18 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("rpn") String rpn) {
 
-        AccessToken token = accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients, Admins and User's are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
             || authorizationService.authorizeAdmin(token, customerId)
             || authorizationService.authorizeUser(token, customerId, rpn);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.error(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         logger.debug("Getting User with RPN: {}", rpn);
 

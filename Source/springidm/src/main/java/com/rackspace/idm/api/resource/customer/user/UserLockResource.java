@@ -18,9 +18,11 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.OAuthService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -37,15 +39,17 @@ public class UserLockResource {
 
     private final OAuthService oauthService;
     private final UserService userService;
+    private ScopeAccessService scopeAccessService;
     private final UserConverter userConverter;
     private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public UserLockResource(OAuthService oauthService, UserService userService, UserConverter userConverter,
+    public UserLockResource(OAuthService oauthService, ScopeAccessService scopeAccessService, UserService userService, UserConverter userConverter,
         AuthorizationService authorizationService) {
         this.oauthService = oauthService;
         this.userService = userService;
+        this.scopeAccessService = scopeAccessService;
         this.userConverter = userConverter;
         this.authorizationService = authorizationService;
     }
@@ -76,17 +80,14 @@ public class UserLockResource {
         }
         logger.info("Locking User: {} - {}", username);
 
-        AccessToken token = this.oauthService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Only Rcker's and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath());
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         com.rackspace.idm.jaxb.User inputUser = holder.getEntity();
         if (inputUser.isLocked() == null) {

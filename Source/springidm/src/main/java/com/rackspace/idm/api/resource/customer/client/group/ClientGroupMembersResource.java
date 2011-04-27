@@ -21,9 +21,13 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 
@@ -35,16 +39,19 @@ import com.rackspace.idm.exception.NotFoundException;
 @Component
 public class ClientGroupMembersResource extends AbstractClientConsumer {
     private AccessTokenService accessTokenService;
+    private ScopeAccessService scopeAccessService;
     private ClientService clientService;
     private AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public ClientGroupMembersResource(AccessTokenService accessTokenService, ClientService clientService,
+    public ClientGroupMembersResource(AccessTokenService accessTokenService,
+        ClientService clientService, ScopeAccessService scopeAccessService,
         AuthorizationService authorizationService) {
         super(clientService);
         this.accessTokenService = accessTokenService;
         this.clientService = clientService;
+        this.scopeAccessService = scopeAccessService;
         this.authorizationService = authorizationService;
     }
 
@@ -66,25 +73,28 @@ public class ClientGroupMembersResource extends AbstractClientConsumer {
      */
     @PUT
     @Path("{username}")
-    public Response addUserToClientGroup(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId, @PathParam("groupName") String groupName,
+    public Response addUserToClientGroup(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId,
+        @PathParam("groupName") String groupName,
         @PathParam("username") String username) {
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token.isClientToken() && token.getTokenClient().getClientId().equals(clientId));
+            || (token instanceof ClientScopeAccessObject && token.getClientId()
+                .equalsIgnoreCase(clientId));
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(
+            authorized, token);
 
-        this.clientService.addUserToClientGroup(username, customerId, clientId, groupName);
+        this.clientService.addUserToClientGroup(username, customerId, clientId,
+            groupName);
 
         return Response.ok().build();
     }
@@ -107,27 +117,29 @@ public class ClientGroupMembersResource extends AbstractClientConsumer {
      */
     @DELETE
     @Path("{username}")
-    public Response removeUserFromClientGroup(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId, @PathParam("groupName") String groupName,
+    public Response removeUserFromClientGroup(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId,
+        @PathParam("groupName") String groupName,
         @PathParam("username") String username) {
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token.isClientToken() && token.getTokenClient().getClientId().equals(clientId));
+            || (token instanceof ClientScopeAccessObject && token
+                .getClientId().equalsIgnoreCase(
+                    clientId));
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-
-        ClientGroup group = this.clientService
-            .getClientGroup(customerId, clientId, groupName);
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
         
+        ClientGroup group = this.clientService.getClientGroup(customerId,
+            clientId, groupName);
+
         if (group == null) {
             String errMsg = String
                 .format(
@@ -135,8 +147,8 @@ public class ClientGroupMembersResource extends AbstractClientConsumer {
                     groupName, clientId, customerId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
-        }    
-     
+        }
+
         this.clientService.removeUserFromClientGroup(username, group);
 
         return Response.noContent().build();

@@ -24,9 +24,11 @@ import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -46,19 +48,21 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
     private PermissionConverter permissionConverter;
     private InputValidator inputValidator;
     private AuthorizationService authorizationService;
-    private AccessTokenService accessTokenService;
+    private ScopeAccessService scopeAccessService;
+    
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public DefinedPermissionResource(ClientService clientService, PermissionConverter permissionConverter,
-        InputValidator inputValidator, AuthorizationService authorizationService,
-        AccessTokenService accessTokenService) {
+        InputValidator inputValidator, AuthorizationService authorizationService,ScopeAccessService scopeAccessService
+        ) {
         super(clientService);
         this.permissionConverter = permissionConverter;
         this.inputValidator = inputValidator;
         this.clientService = clientService;
         this.authorizationService = authorizationService;
-        this.accessTokenService = accessTokenService;
+        this.scopeAccessService = scopeAccessService;
+        
     }
 
     /**
@@ -86,24 +90,21 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's or the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath()) && token
-                .getTokenClient().getClientId().equals(clientId));
+            || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo) 
+                && token.getAccessToken().getTokenClient().getClientId().equals(clientId));
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
         validateClientPermissionRequest(customerId, clientId, permissionId, permission);
 
-        Permission permissionDO = checkAndGetPermission(customerId, clientId, permissionId);
+        Permission permissionDO = this.clientService.checkAndGetPermission(customerId, clientId, permissionId);
 
         permissionDO.setType(permission.getType());
         permissionDO.setValue(permission.getValue());
@@ -139,21 +140,18 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId, @PathParam("permissionId") String permissionId) {
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's or the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath()) && token
+            || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo) && token.getAccessToken()
                 .getTokenClient().getClientId().equals(clientId));
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        Permission permission = checkAndGetPermission(customerId, clientId, permissionId);
+        Permission permission = this.clientService.checkAndGetPermission(customerId, clientId, permissionId);
         this.clientService.deleteDefinedPermission(permission);
 
         return Response.noContent().build();
@@ -180,24 +178,21 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId, @PathParam("permissionId") String permissionId) {
 
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath()) && token
+            || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo) && token.getAccessToken()
                 .getTokenClient().getClientId().equals(clientId))
             || authorizationService.authorizeAdmin(token, customerId);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
+        
         checkAndGetClient(customerId, clientId);
-        Permission permission = checkAndGetPermission(customerId, clientId, permissionId);
+        Permission permission = this.clientService.checkAndGetPermission(customerId, clientId, permissionId);
 
         return Response.ok(permissionConverter.toPermissionJaxb(permission)).build();
     }
@@ -229,9 +224,9 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
             throw new BadRequestException("Request body missing.");
         }
         
-        checkGrantRevokePermissionAuthorization(authHeader, clientId, request.getMethod(), uriInfo.getPath());
+        checkGrantRevokePermissionAuthorization(authHeader, clientId, request.getMethod(), uriInfo);
 
-        Permission permissionToGrant = checkAndGetPermission(customerId, clientId, permissionId);
+        Permission permissionToGrant = this.clientService.checkAndGetPermission(customerId, clientId, permissionId);
         
         com.rackspace.idm.jaxb.Client targetClient = holder.getEntity();
         
@@ -275,9 +270,9 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing");
         }
-        checkGrantRevokePermissionAuthorization(authHeader, clientId, request.getMethod(), uriInfo.getPath());
+        checkGrantRevokePermissionAuthorization(authHeader, clientId, request.getMethod(), uriInfo);
 
-        Permission permissionToRevoke = checkAndGetPermission(customerId, clientId, permissionId);
+        Permission permissionToRevoke = this.clientService.checkAndGetPermission(customerId, clientId, permissionId);
         com.rackspace.idm.jaxb.Client targetClient = holder.getEntity();
         this.clientService.revokePermission(targetClient.getClientId(), permissionToRevoke);
 
@@ -290,34 +285,19 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
     }
 
     private void checkGrantRevokePermissionAuthorization(String authHeader, String clientId, String method,
-        String uri) {
-        AccessToken token = this.accessTokenService.getAccessTokenByAuthHeader(authHeader);
+        UriInfo uri) {
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Only the client who "owns" the permission and IDM is allowed to grant
         // or revoke it.
-        boolean authorized = (token.isClientToken() && token.getTokenClient().getClientId().equals(clientId))
+        boolean authorized = (token.getAccessToken().isClientToken() && token.getAccessToken().getTokenClient().getClientId().equals(clientId))
             || authorizationService.authorizeClient(token, method, uri);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
     }
 
-    private Permission checkAndGetPermission(String customerId, String clientId, String permissionId)
-        throws NotFoundException {
-        Permission permission = this.clientService.getDefinedPermissionByClientIdAndPermissionId(clientId,
-            permissionId);
-
-        if (permission == null || !customerId.equalsIgnoreCase(permission.getCustomerId())
-            || !clientId.equalsIgnoreCase(permission.getClientId())) {
-            String errorMsg = String.format("Permission Not Found: %s", permissionId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-        return permission;
-    }
+    
 
     private void validateClientPermissionRequest(String customerId, String clientId, String permissionId,
         com.rackspace.idm.jaxb.Permission permission) throws BadRequestException {

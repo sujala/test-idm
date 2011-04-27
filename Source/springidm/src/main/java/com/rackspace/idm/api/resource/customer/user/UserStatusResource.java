@@ -18,9 +18,11 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.domain.entity.AccessToken;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.OAuthService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -34,8 +36,10 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
+
 public class UserStatusResource {
 
+    private ScopeAccessService scopeAccessService;
     private final OAuthService oauthService;
     private final UserService userService;
     private final UserConverter userConverter;
@@ -43,7 +47,7 @@ public class UserStatusResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public UserStatusResource(OAuthService accessTokenService, UserService userService,
+    public UserStatusResource(OAuthService accessTokenService, UserService userService, ScopeAccessService scopeAccessService,
         UserConverter userConverter, AuthorizationService authorizationService) {
         this.oauthService = accessTokenService;
         this.userService = userService;
@@ -77,18 +81,15 @@ public class UserStatusResource {
         }
         logger.debug("Updating Status for User: {}", username);
 
-        AccessToken token = this.oauthService.getAccessTokenByAuthHeader(authHeader);
+        ScopeAccessObject token = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo.getPath())
+            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
             || authorizationService.authorizeAdmin(token, customerId);
 
-        if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from this call", token.getTokenString());
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         // get user to update
         User user = this.userService.checkAndGetUser(customerId, username);
