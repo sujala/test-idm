@@ -14,7 +14,9 @@ import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.util.WadlTrie;
 
 public class DefaultAuthorizationService implements AuthorizationService {
@@ -171,6 +173,16 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
         boolean authorized = isRequestor || isOwner;
         return authorized;
+    }
+    
+    @Override
+    public void checkAuthAndHandleFailure(boolean authorized, ScopeAccessObject token) {
+        if (!authorized) {
+            String errMsg = String.format("Token %s Forbidden from this call",
+                ((hasAccessToken) token).getAccessTokenString());
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
     }
 
     private String getIdmAdminGroupName() {
