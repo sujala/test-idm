@@ -18,15 +18,12 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.PermissionSet;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
-import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.exception.ForbiddenException;
 
 /**
  * Client granted permissions
@@ -37,9 +34,9 @@ import com.rackspace.idm.exception.ForbiddenException;
 @Component
 public class GrantedPermissionsResource extends AbstractClientConsumer {
 
-    private PermissionConverter permissionConverter;
-    private AuthorizationService authorizationService;
-    private ScopeAccessService scopeAccessService;
+    private final PermissionConverter permissionConverter;
+    private final AuthorizationService authorizationService;
+    private final ScopeAccessService scopeAccessService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired

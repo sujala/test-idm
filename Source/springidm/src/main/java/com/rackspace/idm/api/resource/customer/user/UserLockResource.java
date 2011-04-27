@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.UserConverter;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -25,7 +24,6 @@ import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -39,7 +37,7 @@ public class UserLockResource {
 
     private final OAuthService oauthService;
     private final UserService userService;
-    private ScopeAccessService scopeAccessService;
+    private final ScopeAccessService scopeAccessService;
     private final UserConverter userConverter;
     private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());

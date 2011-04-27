@@ -26,17 +26,14 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.GroupConverter;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 
 /**
@@ -48,13 +45,13 @@ import com.rackspace.idm.exception.NotFoundException;
 @Component
 public class UserGroupsResource extends AbstractClientConsumer {
 
-    private ScopeAccessService scopeAccessService;
-    private UserService userService;
-    private ClientService clientService;
-    private GroupConverter groupConverter;
-    private AuthorizationService authorizationService;
+    private final ScopeAccessService scopeAccessService;
+    private final UserService userService;
+    private final ClientService clientService;
+    private final GroupConverter groupConverter;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
-    private Configuration config;
+    private final Configuration config;
 
     @Autowired
     public UserGroupsResource(ScopeAccessService scopeAccessService, UserService userService,

@@ -26,18 +26,15 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.PermissionSet;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
-import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.PermissionConflictException;
 import com.rackspace.idm.validation.InputValidator;
@@ -52,12 +49,12 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class DefinedPermissionsResource extends AbstractClientConsumer {
 
-    private DefinedPermissionResource definedPermissionResource;
-    private ClientService clientService;
-    private PermissionConverter permissionConverter;
-    private InputValidator inputValidator;
-    private AuthorizationService authorizationService;
-    private ScopeAccessService scopeAccessService;
+    private final DefinedPermissionResource definedPermissionResource;
+    private final ClientService clientService;
+    private final PermissionConverter permissionConverter;
+    private final InputValidator inputValidator;
+    private final AuthorizationService authorizationService;
+    private final ScopeAccessService scopeAccessService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired

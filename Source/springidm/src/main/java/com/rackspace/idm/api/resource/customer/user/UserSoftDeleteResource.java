@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.UserConverter;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -22,7 +21,6 @@ import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.core.provider.EntityHolder;
 
@@ -35,7 +33,7 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class UserSoftDeleteResource {
 
-    private ScopeAccessService scopeAccessService;
+    private final ScopeAccessService scopeAccessService;
     private final OAuthService oauthService;
     private final UserService userService;
     private final UserConverter userConverter;

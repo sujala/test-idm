@@ -18,14 +18,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.UserConverter;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 
 /**
@@ -37,10 +34,10 @@ import com.rackspace.idm.exception.NotFoundException;
 @Component
 public class NastUserResource {
 
-    private ScopeAccessService scopeAccessService;
-    private UserService userService;
-    private UserConverter userConverter;
-    private AuthorizationService authorizationService;
+    private final ScopeAccessService scopeAccessService;
+    private final UserService userService;
+    private final UserConverter userConverter;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired

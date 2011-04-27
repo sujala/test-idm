@@ -24,19 +24,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.AuthConverter;
-import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.OAuthGrantType;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
-import com.rackspace.idm.domain.entity.hasAccessToken;
-import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.core.provider.EntityHolder;
@@ -48,26 +43,21 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class TokenResource {
-    private final AccessTokenService tokenService;
     private final OAuthService oauthService;
     private final AuthHeaderHelper authHeaderHelper;
     private final AuthConverter authConverter;
-    private final PermissionConverter permissionConverter;
     private final AuthorizationService authorizationService;
     private final ScopeAccessService scopeAccessService;
     final private Logger logger = LoggerFactory.getLogger(TokenResource.class);
 
     @Autowired(required = true)
-    public TokenResource(AccessTokenService tokenService,
-        OAuthService oauthService, AuthHeaderHelper authHeaderHelper,
-        AuthConverter authConverter, PermissionConverter permissionConverter,
+    public TokenResource(OAuthService oauthService,
+        AuthHeaderHelper authHeaderHelper, AuthConverter authConverter,
         AuthorizationService authorizationService,
         ScopeAccessService scopeAccessService) {
-        this.tokenService = tokenService;
         this.oauthService = oauthService;
         this.authHeaderHelper = authHeaderHelper;
         this.authConverter = authConverter;
-        this.permissionConverter = permissionConverter;
         this.authorizationService = authorizationService;
         this.scopeAccessService = scopeAccessService;
     }
@@ -167,7 +157,7 @@ public class TokenResource {
                 request.getMethod(), uriInfo);
 
         authorizationService.checkAuthAndHandleFailure(authorized, authToken);
-        
+
         // Validate Token exists and is valid
         ScopeAccessObject scopeAccess = this.scopeAccessService
             .getScopeAccessByAccessToken(tokenString);
@@ -256,49 +246,6 @@ public class TokenResource {
         return Response.noContent().build();
     }
 
-    // /**
-    // * To be used only by a remote instance of IDM.
-    // *
-    // * @param request
-    // * @param uriInfo
-    // * @param authHeader
-    // * @param id
-    // * @return
-    // */
-    // @DELETE
-    // public Response revokeAccessTokensForOwnerOrCustomer(
-    // @Context Request request, @Context UriInfo uriInfo,
-    // @HeaderParam("Authorization") String authHeader,
-    // @QueryParam("querytype") GlobalConstants.TokenDeleteByType queryType,
-    // @QueryParam("id") String id) {
-    // logger.debug("Revoking Token for query type {} and id {}", queryType,
-    // id);
-    //
-    // logger.debug("Parsing Auth Header");
-    // String idmAuthTokenStr = authHeaderHelper
-    // .getTokenFromAuthHeader(authHeader);
-    // logger.debug("Parsed Auth Header - Token: {}", idmAuthTokenStr);
-    //
-    // if (queryType == null || StringUtils.isBlank(id)) {
-    // String msg =
-    // "Both the querytype (either owner or customer) and the id values are required.";
-    // logger.warn(msg);
-    // throw new IllegalArgumentException(msg);
-    // }
-    //
-    // try {
-    // oauthService.revokeTokensLocallyForOwnerOrCustomer(idmAuthTokenStr,
-    // queryType, id);
-    // } catch (TokenExpiredException ex) {
-    // String errorMsg = String.format(
-    // "Authorization failed, token is expired: %s", authHeader);
-    // logger.warn(errorMsg);
-    // throw new ApiException(HttpServletResponse.SC_UNAUTHORIZED,
-    // ErrorMsg.UNAUTHORIZED, errorMsg);
-    // }
-    // return Response.noContent().build();
-    // }
-
     /**
      * Check if the given access token as the specified permission.
      *
@@ -320,24 +267,24 @@ public class TokenResource {
         @PathParam("tokenString") String tokenString,
         @PathParam("permissionId") String permissionId) {
 
-        logger.debug("Checking whether token {} has permission {}",
-            tokenString, permissionId);
-
-        AccessToken accessTokenForRequestedTokenString = this.tokenService
-            .getAccessTokenByTokenString(tokenString);
-
-        if (accessTokenForRequestedTokenString == null) {
-            throw new NotFoundException("Token " + tokenString + " not found");
-        }
-
-        AccessToken accessToken = this.tokenService
-            .getAccessTokenByAuthHeader(authHeader);
-        String clientId = accessToken.getTokenClient().getClientId();
-
-        if (this.tokenService.checkAndReturnPermission(clientId, permissionId,
-            tokenString)) {
-            return Response.ok().build();
-        }
+//        logger.debug("Checking whether token {} has permission {}",
+//            tokenString, permissionId);
+//
+//        AccessToken accessTokenForRequestedTokenString = this.tokenService
+//            .getAccessTokenByTokenString(tokenString);
+//
+//        if (accessTokenForRequestedTokenString == null) {
+//            throw new NotFoundException("Token " + tokenString + " not found");
+//        }
+//
+//        ScopeAccessObject token = this.scopeAccessService
+//        .getAccessTokenByAuthHeader(authHeader);
+//        String clientId = accessToken.getTokenClient().getClientId();
+//
+//        if (this.tokenService.checkAndReturnPermission(clientId, permissionId,
+//            tokenString)) {
+//            return Response.ok().build();
+//        }
 
         return Response.status(404).build();
     }

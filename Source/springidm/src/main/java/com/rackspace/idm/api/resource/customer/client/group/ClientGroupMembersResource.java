@@ -19,16 +19,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
-import com.rackspace.idm.domain.entity.hasAccessToken;
-import com.rackspace.idm.domain.service.AccessTokenService;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 
 /**
@@ -38,18 +34,16 @@ import com.rackspace.idm.exception.NotFoundException;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class ClientGroupMembersResource extends AbstractClientConsumer {
-    private AccessTokenService accessTokenService;
-    private ScopeAccessService scopeAccessService;
-    private ClientService clientService;
-    private AuthorizationService authorizationService;
+    private final ScopeAccessService scopeAccessService;
+    private final ClientService clientService;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public ClientGroupMembersResource(AccessTokenService accessTokenService,
+    public ClientGroupMembersResource(
         ClientService clientService, ScopeAccessService scopeAccessService,
         AuthorizationService authorizationService) {
         super(clientService);
-        this.accessTokenService = accessTokenService;
         this.clientService = clientService;
         this.scopeAccessService = scopeAccessService;
         this.authorizationService = authorizationService;

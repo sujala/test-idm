@@ -29,7 +29,6 @@ import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
-import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -43,7 +42,6 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class ClientGroupsResource extends AbstractClientConsumer {
-    private final AccessTokenService accessTokenService;
     private final ClientService clientService;
     private final ScopeAccessService scopeAccessService;
     private final ClientGroupResource clientGroupResource;
@@ -52,11 +50,10 @@ public class ClientGroupsResource extends AbstractClientConsumer {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public ClientGroupsResource(AccessTokenService accessTokenService, ClientService clientService, ScopeAccessService scopeAccessService,
+    public ClientGroupsResource(ClientService clientService, ScopeAccessService scopeAccessService,
         GroupConverter groupConverter, ClientGroupResource clientGroupResource,
         AuthorizationService authorizationService) {
         super(clientService);
-        this.accessTokenService = accessTokenService;
         this.scopeAccessService = scopeAccessService;
         this.clientService = clientService;
         this.authorizationService = authorizationService;

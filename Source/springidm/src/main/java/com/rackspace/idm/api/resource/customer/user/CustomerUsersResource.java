@@ -27,11 +27,9 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.AbstractCustomerConsumer;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
@@ -55,13 +53,13 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class CustomerUsersResource extends AbstractCustomerConsumer {
 
-    private ScopeAccessService scopeAccessService;
-    private UserResource userResource;
-    private UserService userService;
-    private UserConverter userConverter;
-    private InputValidator inputValidator;
-    private PasswordComplexityService passwordComplexityService;
-    private AuthorizationService authorizationService;
+    private final ScopeAccessService scopeAccessService;
+    private final UserResource userResource;
+    private final UserService userService;
+    private final UserConverter userConverter;
+    private final InputValidator inputValidator;
+    private final PasswordComplexityService passwordComplexityService;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
