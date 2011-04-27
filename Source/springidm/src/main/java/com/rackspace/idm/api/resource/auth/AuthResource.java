@@ -277,7 +277,6 @@ public class AuthResource {
             throw new ForbiddenException(errMsg);
         }
 
-        DateTime currentTime = this.getCurrentTime();
         AuthCredentials creds = holder.getEntity();
 
         UserScopeAccessObject usa = this.scopeAccessService
