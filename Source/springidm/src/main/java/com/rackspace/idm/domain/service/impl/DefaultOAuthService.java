@@ -118,9 +118,14 @@ public class DefaultOAuthService implements OAuthService {
             }
 
             if (isTrustedServer()) {
-                Racker racker = new Racker();
-                racker.setUniqueId(uaResult.getUser().getUniqueId());
-                racker.setRackerId(uaResult.getUser().getUsername());
+                Racker racker = this.userService.getRackerByRackerId(uaResult
+                    .getUser().getUsername());
+                if (racker == null) {
+                    // Auto-Provision Racker Objects for Rackers
+                    racker = new Racker();
+                    racker.setRackerId(uaResult.getUser().getUsername());
+                    this.userService.addRacker(racker);
+                }
                 RackerScopeAccessObject scopeAccess = this
                     .getAndUpdateRackerScopeAccessForClientId(racker,
                         caResult.getClient());
@@ -170,7 +175,7 @@ public class DefaultOAuthService implements OAuthService {
                     throw new UserDisabledException(errMsg);
                 }
             }
-            
+
             ((hasAccessToken) scopeAccess).setAccessTokenString(this
                 .generateToken());
             ((hasAccessToken) scopeAccess).setAccessTokenExp(new DateTime()
@@ -324,7 +329,10 @@ public class DefaultOAuthService implements OAuthService {
                 client.getClientId());
 
         if (scopeAccess == null) {
-            // TODO: Auto Provision?
+            scopeAccess = new ClientScopeAccessObject();
+            scopeAccess.setClientId(client.getClientId());
+            scopeAccess.setClientRCN(client.getCustomerId());
+            this.scopeAccessService.addScopeAccess(client.getUniqueId(), scopeAccess);
         }
 
         DateTime current = new DateTime();
@@ -350,7 +358,13 @@ public class DefaultOAuthService implements OAuthService {
                 client.getClientId());
 
         if (scopeAccess == null) {
-            // TODO: Auto Provision?
+            // Auto-Provision Scope Access Objects for Rackers
+            scopeAccess = new RackerScopeAccessObject();
+            scopeAccess.setRackerId(racker.getRackerId());
+            scopeAccess.setClientId(client.getClientId());
+            scopeAccess.setClientRCN(client.getCustomerId());
+            this.scopeAccessService.addScopeAccess(racker.getUniqueId(),
+                scopeAccess);
         }
 
         DateTime current = new DateTime();
