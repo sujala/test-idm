@@ -2,9 +2,9 @@ package com.rackspace.idm.domain.service;
 
 import org.joda.time.DateTime;
 
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.Racker;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.Users;
@@ -53,7 +53,7 @@ public interface UserService {
     void sendRecoveryEmail(String username, String userEmail, PasswordRecovery recoveryParam,
         String tokenString);
     
-    void setUserPassword(String customerId, String username, UserCredentials userCred, AccessToken token, 
+    void setUserPassword(String customerId, String username, UserCredentials userCred, ScopeAccessObject token, 
         boolean isRecovery);
 
     void updateUser(User user, boolean hasSelfUpdatedPassword);

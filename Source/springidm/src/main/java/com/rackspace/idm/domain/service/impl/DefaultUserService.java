@@ -23,14 +23,15 @@ import org.slf4j.LoggerFactory;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.Racker;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
+import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.ClientService;
@@ -75,7 +76,7 @@ public class DefaultUserService implements UserService {
         this.clientService = clientService;
         this.isTrustedServer = isTrusted;
     }
-    
+
     @Override
     public void addRacker(Racker racker) {
         logger.info("Adding Racker {}", racker);
@@ -191,7 +192,7 @@ public class DefaultUserService implements UserService {
             nastId, authenticated);
         return authenticated;
     }
-    
+
     @Override
     public void deleteRacker(String rackerId) {
         logger.info("Deleting Racker: {}", rackerId);
@@ -238,7 +239,7 @@ public class DefaultUserService implements UserService {
 
         return users;
     }
-    
+
     @Override
     public Racker getRackerByRackerId(String rackerId) {
         logger.debug("Getting Racker: {}", rackerId);
@@ -295,7 +296,7 @@ public class DefaultUserService implements UserService {
 
     @Override
     public void setUserPassword(String customerId, String username,
-        UserCredentials userCred, AccessToken token, boolean isRecovery) {
+        UserCredentials userCred, ScopeAccessObject token, boolean isRecovery) {
 
         logger.debug("Updating Password for User: {}", username);
 
@@ -323,7 +324,8 @@ public class DefaultUserService implements UserService {
 
         user.setPasswordObj(Password.newInstance(userCred.getNewPassword()
             .getPassword()));
-        boolean isSelfUpdate = token.getOwner().equals(username);
+        boolean isSelfUpdate = token instanceof UserScopeAccessObject
+            && ((UserScopeAccessObject) token).getUsername().equals(username);
 
         this.updateUser(user, isSelfUpdate);
         logger.debug("Updated password for user: {}", user);
