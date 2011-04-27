@@ -3,6 +3,9 @@ package com.rackspace.idm.services;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.PathSegment;
+
 import junit.framework.Assert;
 
 import org.apache.commons.configuration.Configuration;
@@ -28,6 +31,7 @@ public class AuthorizationServiceTests {
     ClientService mockClientService;
     ScopeAccessObjectDao mockScopeAccessDao;
     AuthorizationService service;
+    
 
     String authHeader = "OAuth XXXX";
     
@@ -46,6 +50,8 @@ public class AuthorizationServiceTests {
 
     String verb = "GET";
     String uri = "/resource";
+    
+    List<PathSegment> segments = null;
 
     String permissionId = "Permission";
     String permissionValue = verb + " " + uri;
@@ -127,8 +133,7 @@ public class AuthorizationServiceTests {
         EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(tokenString, perm)).andReturn(true);
         EasyMock.replay(mockScopeAccessDao);
 
-        boolean authorized = service.authorizeClient(authorizedClientToken,
-            permissionId);
+        boolean authorized = service.authorizeClient(authorizedClientToken, verb, segments);
 
         Assert.assertTrue(authorized);
     }
@@ -139,8 +144,7 @@ public class AuthorizationServiceTests {
         EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(tokenString, perm)).andReturn(false);
         EasyMock.replay(mockScopeAccessDao);
         
-        boolean authorized = service.authorizeClient(notAuthorizedClientToken,
-            permissionId);
+        boolean authorized = service.authorizeClient(notAuthorizedClientToken, verb, segments);
 
         Assert.assertTrue(!authorized);
     }
@@ -219,6 +223,31 @@ public class AuthorizationServiceTests {
     }
 
     private void setUpObjects() {
+        
+        segments = new ArrayList<PathSegment>();
+        segments.add(new PathSegment() {
+
+            @Override
+            public MultivaluedMap<String, String> getMatrixParameters() {
+                return null;
+            }
+
+            @Override
+            public String getPath() {
+                return "/";
+            }});
+        segments.add(new PathSegment() {
+
+            @Override
+            public MultivaluedMap<String, String> getMatrixParameters() {
+                return null;
+            }
+
+            @Override
+            public String getPath() {
+                return "resource";
+            }});
+        
         perm = new Permission();
         perm.setClientId(idmClientId);
         perm.setCustomerId(customerId);
