@@ -121,7 +121,7 @@ public class UserResource {
         User user = this.userService.checkAndGetUser(customerId, username);
 
         logger.debug("Got User :{}", user);
-        return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
+        return Response.ok(userConverter.toUserJaxbWithoutAnyAdditionalElements(user)).build();
     }
 
     /**
@@ -185,7 +185,7 @@ public class UserResource {
         }
 
         logger.debug("Updated User: {}", user);
-        return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
+        return Response.ok(userConverter.toUserJaxbWithoutAnyAdditionalElements(user)).build();
     }
 
     /**
@@ -244,7 +244,7 @@ public class UserResource {
     }
 
     @Path("groups")
-    public UserGroupsResource getUserRolesResource() {
+    public UserGroupsResource getUserGroupsResource() {
         return userGroupsResource;
     }
 

@@ -433,16 +433,6 @@ blob: PUT customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+/revoke
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getRoles,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: getRoles
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: GET customers/[^/]+/roles
-grantedByDefault: FALSE
-enabled: TRUE
-
 dn: cn=getUsers,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
@@ -580,26 +570,6 @@ cn: sendRecoveryEmail
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 blob: POST customers/[^/]+/users/[^/]+/password/recoveryemail
-grantedByDefault: FALSE
-enabled: TRUE
-
-dn: cn=setRole,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: setRole
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: PUT customers/[^/]+/users/[^/]+/roles/[^/]+
-grantedByDefault: FALSE
-enabled: TRUE
-
-dn: cn=deleteRole,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: deleteRole
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-blob: DELETE customers/[^/]+/users/[^/]+/roles/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 

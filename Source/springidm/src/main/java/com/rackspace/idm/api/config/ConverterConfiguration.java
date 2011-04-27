@@ -12,7 +12,6 @@ import com.rackspace.idm.api.converter.GroupConverter;
 import com.rackspace.idm.api.converter.PasswordConverter;
 import com.rackspace.idm.api.converter.PasswordRulesConverter;
 import com.rackspace.idm.api.converter.PermissionConverter;
-import com.rackspace.idm.api.converter.RoleConverter;
 import com.rackspace.idm.api.converter.TokenConverter;
 import com.rackspace.idm.api.converter.UserConverter;
 
@@ -34,11 +33,6 @@ public class ConverterConfiguration {
     @Bean
     public PasswordRulesConverter passwordRulesConverter() {
         return new PasswordRulesConverter();
-    }
-
-    @Bean
-    public RoleConverter roleConverter() {
-        return new RoleConverter(permissionConverter());
     }
 
     @Bean

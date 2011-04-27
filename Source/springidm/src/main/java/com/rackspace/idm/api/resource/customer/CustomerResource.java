@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.CustomerConverter;
 import com.rackspace.idm.api.resource.customer.client.CustomerClientsResource;
-import com.rackspace.idm.api.resource.customer.role.RolesResource;
 import com.rackspace.idm.api.resource.customer.user.CustomerUsersResource;
 import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Customer;
@@ -46,7 +45,6 @@ public class CustomerResource extends AbstractCustomerConsumer {
 
     private CustomerClientsResource customerClientsResource;
     private CustomerLockResource customerLockResource;
-    private RolesResource rolesResource;
     private CustomerUsersResource customerUsersResource;
     private CustomerService customerService;
     private ScopeAccessService scopeAccessService;
@@ -56,14 +54,13 @@ public class CustomerResource extends AbstractCustomerConsumer {
 
     @Autowired
     public CustomerResource(CustomerClientsResource customerClientsResource, CustomerLockResource customerLockResource,
-        RolesResource rolesResource, CustomerUsersResource customerUsersResource,
+        CustomerUsersResource customerUsersResource,
         CustomerService customerService, ScopeAccessService scopeAccessService, CustomerConverter customerConverter,
         AuthorizationService authorizationService) {
         super(customerService);
         
         this.customerClientsResource = customerClientsResource;
         this.customerLockResource = customerLockResource;
-        this.rolesResource = rolesResource;
         this.customerUsersResource = customerUsersResource;
         this.customerService = customerService;
         this.scopeAccessService = scopeAccessService;
@@ -209,11 +206,6 @@ public class CustomerResource extends AbstractCustomerConsumer {
     @Path("clients")
     public CustomerClientsResource getCustomerClientsResource() {
         return customerClientsResource;
-    }
-
-    @Path("roles")
-    public RolesResource getRolesResource() {
-        return rolesResource;
     }
 
     @Path("users")

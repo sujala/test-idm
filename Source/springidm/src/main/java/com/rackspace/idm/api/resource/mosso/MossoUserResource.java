@@ -94,7 +94,7 @@ public class MossoUserResource {
         }
 
         logger.debug("Got User :{}", user);
-        return Response.ok(userConverter.toUserWithOnlyRolesJaxb(user)).build();
+        return Response.ok(userConverter.toUserJaxbWithoutAnyAdditionalElements(user)).build();
 
     }
 }

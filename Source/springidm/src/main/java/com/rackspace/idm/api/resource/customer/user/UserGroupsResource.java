@@ -72,7 +72,7 @@ public class UserGroupsResource extends AbstractClientConsumer {
     /**
      * Gets a list of the groups a user is a member of.
      * 
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}roles
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}groups
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
      * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden

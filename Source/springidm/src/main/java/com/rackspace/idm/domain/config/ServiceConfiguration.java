@@ -18,7 +18,6 @@ import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.EndpointDao;
-import com.rackspace.idm.domain.dao.RoleDao;
 import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.EmailSettings;
@@ -30,7 +29,6 @@ import com.rackspace.idm.domain.service.EmailService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
-import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultApiDocService;
@@ -41,7 +39,6 @@ import com.rackspace.idm.domain.service.impl.DefaultEmailService;
 import com.rackspace.idm.domain.service.impl.DefaultEndpointService;
 import com.rackspace.idm.domain.service.impl.DefaultOAuthService;
 import com.rackspace.idm.domain.service.impl.DefaultPasswordComplexityService;
-import com.rackspace.idm.domain.service.impl.DefaultRoleService;
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
@@ -66,8 +63,6 @@ public class ServiceConfiguration {
     private ClientDao clientDao;
     @Autowired
     private CustomerDao customerDao;
-    @Autowired
-    private RoleDao roleDao;
     @Autowired
     private AuthDao authDao;
     @Autowired
@@ -172,11 +167,6 @@ public class ServiceConfiguration {
         return new DefaultPasswordComplexityService();
     }
 
-    @Bean
-    public RoleService roleService() {
-        return new DefaultRoleService(roleDao, userRepo);
-    }
-    
     @Bean
     public ScopeAccessService scopeAccessService() {
         return new DefaultScopeAccessService(userService(),

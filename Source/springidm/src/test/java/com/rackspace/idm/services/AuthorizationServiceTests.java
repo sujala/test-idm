@@ -78,7 +78,7 @@ public class AuthorizationServiceTests {
     ClientGroup admin;
     List<ClientGroup> groups;
 
-    String adminRoleName = "Idm Admin";
+    String adminGroupName = "Idm Admin";
 
     RackerScopeAccessObject trustedToken;
     ClientScopeAccessObject authorizedClientToken;
@@ -166,7 +166,7 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnTrueForAdmin() {
 
-        EasyMock.expect(mockClientDao.getClientGroup(customerId, idmClientId, adminRoleName)).andReturn(admin);
+        EasyMock.expect(mockClientDao.getClientGroup(customerId, idmClientId, adminGroupName)).andReturn(admin);
         EasyMock.expect(mockClientDao.isUserInClientGroup(username, admin.getUniqueId())).andReturn(true);
         EasyMock.replay(mockClientDao);
         boolean authorized = service.authorizeAdmin(authorizedAdminToken,
@@ -178,7 +178,7 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnFalseForAdmin() {
 
-        EasyMock.expect(mockClientDao.getClientGroup(customerId, idmClientId, adminRoleName)).andReturn(admin);
+        EasyMock.expect(mockClientDao.getClientGroup(customerId, idmClientId, adminGroupName)).andReturn(admin);
         EasyMock.expect(mockClientDao.isUserInClientGroup(username, admin.getUniqueId())).andReturn(false);
         EasyMock.replay(mockClientDao);
         boolean authorized = service.authorizeAdmin(otherCompanyAdminToken,
@@ -250,7 +250,7 @@ public class AuthorizationServiceTests {
 
         admin = new ClientGroup();
         admin.setUniqueId(uniqueId);
-        admin.setName(adminRoleName);
+        admin.setName(adminGroupName);
         admin.setClientId(idmClientId);
         admin.setCustomerId(customerId);
 

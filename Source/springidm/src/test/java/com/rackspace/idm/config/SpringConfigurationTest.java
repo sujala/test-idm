@@ -19,14 +19,12 @@ import com.rackspace.idm.api.resource.customer.client.permission.DefinedPermissi
 import com.rackspace.idm.api.resource.customer.client.permission.DefinedPermissionsResource;
 import com.rackspace.idm.api.resource.customer.client.permission.GrantedPermissionsResource;
 import com.rackspace.idm.api.resource.customer.client.permission.PermissionsResource;
-import com.rackspace.idm.api.resource.customer.role.RolesResource;
 import com.rackspace.idm.api.resource.customer.user.ApiKeyResource;
 import com.rackspace.idm.api.resource.customer.user.CustomerUsersResource;
 import com.rackspace.idm.api.resource.customer.user.UserGroupsResource;
 import com.rackspace.idm.api.resource.customer.user.UserLockResource;
 import com.rackspace.idm.api.resource.customer.user.UserPasswordResource;
 import com.rackspace.idm.api.resource.customer.user.UserResource;
-import com.rackspace.idm.api.resource.customer.user.UserRoleResource;
 import com.rackspace.idm.api.resource.customer.user.UserSecretResource;
 import com.rackspace.idm.api.resource.customer.user.UserSoftDeleteResource;
 import com.rackspace.idm.api.resource.customer.user.UserStatusResource;
@@ -103,9 +101,6 @@ public class SpringConfigurationTest {
         PermissionsResource permissionsResource = ctx.getBean(PermissionsResource.class);
         Assert.assertNotNull(permissionsResource);
         
-        RolesResource rolesResource = ctx.getBean(RolesResource.class);
-        Assert.assertNotNull(rolesResource);
-        
         TokenResource tokenResource = ctx.getBean(TokenResource.class);
         Assert.assertNotNull(tokenResource);
         
@@ -117,9 +112,6 @@ public class SpringConfigurationTest {
         
         UserResource userResource = ctx.getBean(UserResource.class);
         Assert.assertNotNull(userResource);
-        
-        UserRoleResource userRoleResource = ctx.getBean(UserRoleResource.class);
-        Assert.assertNotNull(userRoleResource);
         
         UserGroupsResource userGroupsResource = ctx.getBean(UserGroupsResource.class);
         Assert.assertNotNull(userGroupsResource);

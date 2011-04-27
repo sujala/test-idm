@@ -22,7 +22,6 @@
 			<xsdxt:link rev="index" href="token.xsd" />
 			<xsdxt:link rev="index" href="user.xsd" />
 			<xsdxt:link rev="index" href="version.xsd" />
-			<xsdxt:link rev="index" href="role.xsd" />
 			<xsdxt:link rev="index" href="permission.xsd" />
 			<xsdxt:link rev="index" href="password_recovery.xsd" />
 			<xsdxt:link rev="index" href="passwordRotationPolicy.xsd" />
@@ -65,14 +64,6 @@
 			<xsd:documentation xml:lang="EN"
 				xmlns="http://www.w3.org/1999/xhtml">
 				<p>Entities related to IdM permissions.</p>
-			</xsd:documentation>
-		</annotation>
-	</include>
-	<include schemaLocation="role.xsd">
-		<annotation>
-			<xsd:documentation xml:lang="EN"
-				xmlns="http://www.w3.org/1999/xhtml">
-				<p>Entities related to IdM roles.</p>
 			</xsd:documentation>
 		</annotation>
 	</include>

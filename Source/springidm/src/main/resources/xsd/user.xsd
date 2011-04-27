@@ -232,7 +232,7 @@
 				<annotation>
 					<xsd:documentation xml:lang="EN"
 						xmlns="http://www.w3.org/1999/xhtml">
-						<p>A list of roles the user belongs to.</p>
+						<p>A list of groups the user belongs to.</p>
 					</xsd:documentation>
 				</annotation>
 			</element>

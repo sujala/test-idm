@@ -55,8 +55,6 @@ public abstract class LdapRepository {
         OBJECTCLASS_TOP, OBJECTCLASS_CLIENTPERMISSION};
     protected static final String[] ATTR_RACKER_OBJECT_CLASS_VALUES = {
         OBJECTCLASS_TOP, OBJECTCLASS_RACKER};
-    protected static final String[] ATTR_ROLE_OBJECT_CLASS_VALUES = {
-        OBJECTCLASS_TOP, OBJECTCLASS_GROUPOFNAMES, OBJECTCLASS_RACKSPACEGROUP};
     protected static final String[] ATTR_SCOPE_ACCESS_OBJECT_CLASS_VALUES = {
         OBJECTCLASS_TOP, OBJECTCLASS_SCOPEACCESS};
     protected static final String[] ATTR_TOKEN_OBJECT_CLASS_VALUES = {

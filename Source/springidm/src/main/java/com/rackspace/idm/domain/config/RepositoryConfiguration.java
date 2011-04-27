@@ -13,7 +13,6 @@ import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.RefreshTokenDao;
-import com.rackspace.idm.domain.dao.RoleDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.dao.XdcAccessTokenDao;
@@ -25,7 +24,6 @@ import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
 import com.rackspace.idm.domain.dao.impl.LdapCustomerRepository;
 import com.rackspace.idm.domain.dao.impl.LdapEndpointRepository;
 import com.rackspace.idm.domain.dao.impl.LdapRefreshTokenRepository;
-import com.rackspace.idm.domain.dao.impl.LdapRoleRepository;
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository;
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
 import com.rackspace.idm.domain.dao.impl.MemcachedAccessTokenRepository;
@@ -68,11 +66,6 @@ public class RepositoryConfiguration {
     @Bean
     public CustomerDao ldapCustomerRepository() {
         return new LdapCustomerRepository(connPools, appConfig);
-    }
-
-    @Bean
-    public RoleDao roleDao() {
-        return new LdapRoleRepository(connPools, appConfig);
     }
 
     @Bean

@@ -10,13 +10,11 @@ import org.junit.Test;
 
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.RoleDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
-import com.rackspace.idm.domain.entity.Role;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.CustomerService;

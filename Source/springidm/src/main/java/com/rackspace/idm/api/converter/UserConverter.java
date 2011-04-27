@@ -98,10 +98,6 @@ public class UserConverter {
         return toUserJaxb(user, true, true);
     }
 
-    public com.rackspace.idm.jaxb.User toUserWithOnlyRolesJaxb(User user) {
-        return toUserJaxb(user, false, false);
-    }
-
     public com.rackspace.idm.jaxb.User toUserWithOnlyStatusJaxb(User user) {
         com.rackspace.idm.jaxb.User returnedUser = of.createUser();
         String status = user.getStatus().toString().toUpperCase();
