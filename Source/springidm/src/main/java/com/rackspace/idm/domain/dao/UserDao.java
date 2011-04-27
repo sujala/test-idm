@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao;
 
+import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
@@ -23,6 +24,8 @@ public interface UserDao {
     
     void deleteUser(String username);
 
+    void removeUsersFromClientGroup(ClientGroup group);
+    
     Users getAllUsers(int offset, int limit);
 
     String[] getGroupIdsForUser(String username);

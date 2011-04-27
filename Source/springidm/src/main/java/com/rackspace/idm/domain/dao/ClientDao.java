@@ -22,7 +22,7 @@ public interface ClientDao {
 
     void deleteClient(String clientId);
 
-    void deleteClientGroup(String customerId, String clientId, String name);
+    ClientGroup deleteClientGroup(String customerId, String clientId, String name);
 
     void deleteDefinedPermission(Permission permission);
 

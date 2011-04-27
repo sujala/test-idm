@@ -419,6 +419,7 @@ public class LdapClientRepositoryTest {
         repo.addUserToClientGroup(user.getUniqueId(), group);
         boolean inGroup = repo.isUserInClientGroup(user.getUsername(), group.getUniqueId());
         repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
+        userRepo.removeUsersFromClientGroup(group);
         repo.deleteClient(testClient.getClientId());
         userRepo.deleteUser(user.getUsername());
         Assert.assertTrue(inGroup);
@@ -439,6 +440,7 @@ public class LdapClientRepositoryTest {
             Assert.assertTrue(ex instanceof DuplicateException);
         }
         repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
+        userRepo.removeUsersFromClientGroup(group);
         repo.deleteClient(testClient.getClientId());
         userRepo.deleteUser(user.getUsername());
     }

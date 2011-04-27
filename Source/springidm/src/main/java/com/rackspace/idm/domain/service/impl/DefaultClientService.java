@@ -353,7 +353,8 @@ public class DefaultClientService implements ClientService {
     @Override
     public void deleteClientGroup(String customerId, String clientId,
         String name) {
-        clientDao.deleteClientGroup(customerId, clientId, name);
+        ClientGroup deletedGroup = clientDao.deleteClientGroup(customerId, clientId, name);
+        userDao.removeUsersFromClientGroup(deletedGroup);
     }
 
     @Override

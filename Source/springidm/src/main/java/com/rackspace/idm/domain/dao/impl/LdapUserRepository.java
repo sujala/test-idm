@@ -15,6 +15,7 @@ import org.joda.time.Seconds;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
@@ -34,6 +35,8 @@ import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
 import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.ldap.sdk.SearchRequest;
+import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.util.StaticUtils;
@@ -551,6 +554,65 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Updated user - {}", user);
     }
 
+    @Override
+    public void removeUsersFromClientGroup(ClientGroup group) {
+
+        getLogger().debug("Doing search for users that belong to group {}",
+                group);
+
+        if (group == null) {
+            String errMsg = "Null group passed in";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_MEMBER_OF, group.getUniqueId())
+                .addEqualAttribute(ATTR_OBJECT_CLASS,
+                        OBJECTCLASS_RACKSPACEPERSON).build();
+
+        List<User> userList = new ArrayList<User>();
+        SearchResult searchResult = null;
+        try {
+            SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
+                    searchFilter);
+            searchResult = getAppConnPool().search(request);
+
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                userList.add(getUser(entry));
+            }
+        } catch (LDAPException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        } catch (GeneralSecurityException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        } catch (InvalidCipherTextException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        }
+        
+        getLogger().debug("Found Users - {}", userList);
+
+        List<Modification> mods = new ArrayList<Modification>();
+        mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER_OF,
+                group.getUniqueId()));
+        
+        Audit audit = null;
+        for (User user : userList) {
+            audit = Audit.log(user).modify(mods);
+            try {
+                getAppConnPool().modify(user.getUniqueId(), mods);
+            } catch (LDAPException ldapEx) {
+                audit.fail(ldapEx.getMessage());
+                throw new IllegalStateException(ldapEx);
+            }
+            audit.succeed();
+        }
+
+        getLogger().info("Removed users from clientGroup {}", group);
+    }
+    
     private void throwIfEmptyOldUser(User oldUser, User user)
         throws IllegalArgumentException {
         if (oldUser == null) {

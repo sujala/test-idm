@@ -26,19 +26,9 @@ set password-enforce-quality-on-reset = true;
 # multiwrite timer
 # set multi-write-retry-time = 60;      # this is the default value
 
-#dynamic groups
-clear dynamic-group;
-set dynamic-group GROUP = {
-objectclass = dxDynamicGroupOfNames
-url-attr = dxMemberURL
-member-attr = member
-};
-
 # general controls
 set op-attrs = true;
 set ignore-name-bindings = true;
 set force-encrypt-auth = true;
-set memberof-user-containers = <dc com><dc rackspace>;
-set memberof-group-containers = <dc com><dc rackspace>;
 set mimic-netscape-for-siteminder = true;
 set concurrent-bind-user = <dc com><dc rackspace><ou internal><cn admin>;

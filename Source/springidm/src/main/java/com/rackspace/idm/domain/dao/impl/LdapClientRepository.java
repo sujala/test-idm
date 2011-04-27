@@ -145,13 +145,13 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.ADD, ATTR_MEMBER,
-            userUniqueId));
+        mods.add(new Modification(ModificationType.ADD, ATTR_MEMBER_OF,
+            group.getUniqueId()));
 
         Audit audit = Audit.log(group).modify(mods);
 
         try {
-            getAppConnPool().modify(group.getUniqueId(), mods);
+            getAppConnPool().modify(userUniqueId, mods);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error adding user to group {} - {}", group,
                 ldapEx);
@@ -225,7 +225,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     @Override
-    public void deleteClientGroup(String customerId, String clientId,
+    public ClientGroup deleteClientGroup(String customerId, String clientId,
         String name) {
         getLogger().info("Deleting clientGroup {}", name);
 
@@ -249,6 +249,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         audit.succeed();
         getLogger().info("Deleted clientGroup {}", group);
+        return group;
     }
 
     @Override
@@ -653,12 +654,12 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER,
-            userUniqueId));
+        mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER_OF,
+            group.getUniqueId()));
 
         Audit audit = Audit.log(group).modify(mods);
         try {
-            getAppConnPool().modify(group.getUniqueId(), mods);
+            getAppConnPool().modify(userUniqueId, mods);
         } catch (LDAPException ldapEx) {
             audit.fail(ldapEx.getMessage());
             getLogger().error("Error deleting user from group {} - {}", group,
