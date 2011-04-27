@@ -25,7 +25,7 @@ import com.unboundid.ldap.sdk.persist.LDAPPersister;
 
 public class LdapScopeAccessPeristenceRepository extends LdapRepository implements ScopeAccessObjectDao {
 
-    protected LdapScopeAccessPeristenceRepository(LdapConnectionPools connPools, Configuration config) {
+    public LdapScopeAccessPeristenceRepository(LdapConnectionPools connPools, Configuration config) {
         super(connPools, config);
     }
 
