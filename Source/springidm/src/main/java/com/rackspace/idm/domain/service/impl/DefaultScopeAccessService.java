@@ -18,11 +18,13 @@ import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 
 public class DefaultScopeAccessService implements ScopeAccessService {
@@ -45,12 +47,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void addScopeAccess(String parentUniqueId, ScopeAccessObject scopeAccess) {
+    public void addScopeAccess(String parentUniqueId,
+        ScopeAccessObject scopeAccess) {
         logger.info("Adding scopeAccess {}", scopeAccess);
         this.scopeAccessDao.addScopeAccess(parentUniqueId, scopeAccess);
         logger.info("Added scopeAccess {}", scopeAccess);
     }
-    
+
     @Override
     public boolean authenticateAccessToken(String accessTokenStr) {
         logger.debug("Authorizing Token: {}", accessTokenStr);
@@ -75,7 +78,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public boolean doesAccessTokenHavePermission(String accessTokenString,
         Permission permission) {
-        return this.scopeAccessDao.doesAccessTokenHavePermission(accessTokenString, permission);
+        return this.scopeAccessDao.doesAccessTokenHavePermission(
+            accessTokenString, permission);
     }
 
     @Override
@@ -203,9 +207,101 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public UserScopeAccessObject getUserScopeAccessForClientId(
         String userUniqueId, String clientId) {
-        logger.debug("Getting User ScopeAccess by clientId", clientId);
+        logger.debug("Getting User ScopeAccess by clientId {}", clientId);
         UserScopeAccessObject scopeAccess = (UserScopeAccessObject) this.scopeAccessDao
             .getScopeAccessForParentByClientId(userUniqueId, clientId);
+        logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess,
+            clientId);
+        return scopeAccess;
+    }
+
+    @Override
+    public UserScopeAccessObject getUserScopeAccessForClientIdByUsernameAndApiCredentials(
+        String username, String apiKey, String clientId) {
+        logger.debug("Getting User {} ScopeAccess by clientId {}", username,
+            clientId);
+        UserAuthenticationResult result = this.userService
+            .authenticateWithApiKey(username, apiKey);
+        if (!result.isAuthenticated()) {
+            throw new NotAuthenticatedException();
+        }
+        UserScopeAccessObject scopeAccess = this.getUserScopeAccessForClientId(
+            result.getUser().getUsername(), clientId);
+        if (scopeAccess.isAccessTokenExpired(new DateTime())) {
+            scopeAccess.setAccessTokenString(this.generateToken());
+            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(
+                getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            this.scopeAccessDao.updateScopeAccess(scopeAccess);
+        }
+        logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess,
+            clientId);
+        return scopeAccess;
+    }
+
+    @Override
+    public UserScopeAccessObject getUserScopeAccessForClientIdByMossoIdAndApiCredentials(
+        int mossoId, String apiKey, String clientId) {
+        logger.debug("Getting mossoId {} ScopeAccess by clientId {}", mossoId,
+            clientId);
+        UserAuthenticationResult result = this.userService
+            .authenticateWithMossoIdAndApiKey(mossoId, apiKey);
+        if (!result.isAuthenticated()) {
+            throw new NotAuthenticatedException();
+        }
+        UserScopeAccessObject scopeAccess = this.getUserScopeAccessForClientId(
+            result.getUser().getUsername(), clientId);
+        if (scopeAccess.isAccessTokenExpired(new DateTime())) {
+            scopeAccess.setAccessTokenString(this.generateToken());
+            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(
+                getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            this.scopeAccessDao.updateScopeAccess(scopeAccess);
+        }
+        logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess,
+            clientId);
+        return scopeAccess;
+    }
+
+    @Override
+    public UserScopeAccessObject getUserScopeAccessForClientIdByNastIdAndApiCredentials(
+        String nastId, String apiKey, String clientId) {
+        logger.debug("Getting nastId {} ScopeAccess by clientId {}", nastId,
+            clientId);
+        UserAuthenticationResult result = this.userService
+            .authenticateWithNastIdAndApiKey(nastId, apiKey);
+        if (!result.isAuthenticated()) {
+            throw new NotAuthenticatedException();
+        }
+        UserScopeAccessObject scopeAccess = this.getUserScopeAccessForClientId(
+            result.getUser().getUsername(), clientId);
+        if (scopeAccess.isAccessTokenExpired(new DateTime())) {
+            scopeAccess.setAccessTokenString(this.generateToken());
+            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(
+                getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            this.scopeAccessDao.updateScopeAccess(scopeAccess);
+        }
+        logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess,
+            clientId);
+        return scopeAccess;
+    }
+
+    @Override
+    public UserScopeAccessObject getUserScopeAccessForClientIdByUsernameAndPassword(
+        String username, String password, String clientId) {
+        logger.debug("Getting User {} ScopeAccess by clientId {}", username,
+            clientId);
+        UserAuthenticationResult result = this.userService.authenticate(
+            username, password);
+        if (!result.isAuthenticated()) {
+            throw new NotAuthenticatedException();
+        }
+        UserScopeAccessObject scopeAccess = this.getUserScopeAccessForClientId(
+            result.getUser().getUsername(), clientId);
+        if (scopeAccess.isAccessTokenExpired(new DateTime())) {
+            scopeAccess.setAccessTokenString(this.generateToken());
+            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(
+                getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            this.scopeAccessDao.updateScopeAccess(scopeAccess);
+        }
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess,
             clientId);
         return scopeAccess;
@@ -224,5 +320,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     private int getDefaultTokenExpirationSeconds() {
         return config.getInt("token.expirationSeconds");
+    }
+
+    private int getDefaultCloudAuthTokenExpirationSeconds() {
+        return config.getInt("token.cloudAuthExpirationSeconds");
     }
 }

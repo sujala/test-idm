@@ -36,6 +36,14 @@ public interface ScopeAccessService {
     ScopeAccessObject getScopeAccessByRefreshToken(String refreshToken);
     
     UserScopeAccessObject getUserScopeAccessForClientId(String userUniqueId, String clientId);
+    
+    UserScopeAccessObject getUserScopeAccessForClientIdByUsernameAndApiCredentials(String username, String apiKey, String clientId);
 
+    UserScopeAccessObject getUserScopeAccessForClientIdByMossoIdAndApiCredentials(int mossoId, String apiKey, String clientId);
+    
+    UserScopeAccessObject getUserScopeAccessForClientIdByNastIdAndApiCredentials(String nastId, String apiKey, String clientId);
+    
+    UserScopeAccessObject getUserScopeAccessForClientIdByUsernameAndPassword(String username, String password, String clientId);
+    
     void updateScopeAccess(ScopeAccessObject scopeAccess);
 }
