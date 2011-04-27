@@ -141,9 +141,9 @@ public class DefaultOAuthService implements OAuthService {
             if (scopeAccess == null
                 || ((hasRefreshToken) scopeAccess)
                     .isRefreshTokenExpired(currentTime)) {
-                final String msg = String.format(
-                    "Unauthorized Refresh Token: %s",
-                    ((hasRefreshToken) scopeAccess).getRefreshTokenString());
+                final String msg = String
+                    .format("Unauthorized Refresh Token: %s",
+                        trParam.getRefreshToken());
                 logger.warn(msg);
                 throw new NotAuthenticatedException(msg);
             }
@@ -165,217 +165,219 @@ public class DefaultOAuthService implements OAuthService {
         logger.warn(message);
         throw new NotAuthenticatedException(message);
     }
-//
-//    @Override
-//    public void revokeTokensLocally(final String tokenStringRequestingDelete,
-//        final String tokenToDelete) {
-//        logger.info("Deleting Token {}", tokenToDelete);
-//
-//        final AccessToken deletedToken = accessTokenService
-//            .getAccessTokenByTokenString(tokenToDelete);
-//        if (deletedToken == null) {
-//            final String error = "No entry found for token " + tokenToDelete;
-//            logger.debug(error);
-//            throw new NotFoundException(error);
-//        }
-//
-//        final AccessToken requestingToken = accessTokenService
-//            .getAccessTokenByTokenString(tokenStringRequestingDelete);
-//        if (requestingToken == null) {
-//            final String error = "No entry found for token "
-//                + tokenStringRequestingDelete;
-//            logger.warn(error);
-//            throw new IllegalStateException(error);
-//        }
-//
-//        final boolean isAuthorized = authorizationService
-//            .authorizeCustomerIdm(requestingToken);
-//        if (!isAuthorized) {
-//            String errMsg;
-//            errMsg = String
-//                .format(
-//                    "Requesting token %s not authorized to revoke token %s locally.",
-//                    tokenStringRequestingDelete, tokenToDelete);
-//            logger.warn(errMsg);
-//            throw new ForbiddenException(errMsg);
-//        }
-//
-//        if (deletedToken.getRequestor() == null) {
-//            final String error = String.format(
-//                "Token %s does not have a requestor",
-//                deletedToken.getTokenString());
-//            logger.warn(error);
-//            throw new IllegalStateException(error);
-//        }
-//        accessTokenService.delete(deletedToken.getTokenString());
-//        logger.info("Deleted Token {}", deletedToken);
-//    }
-//
-//    @Override
-//    public void revokeTokensGlobally(final String tokenStringRequestingDelete,
-//        final String tokenToDelete) {
-//        logger.debug("Deleting Token {}", tokenToDelete);
-//        final AccessToken deletedToken = accessTokenService
-//            .getAccessTokenByTokenStringGlobally(tokenToDelete);
-//        if (deletedToken == null) {
-//            final String error = "No entry found for token " + tokenToDelete;
-//            logger.warn(error);
-//            throw new NotFoundException(error);
-//        }
-//
-//        final AccessToken requestingToken = accessTokenService
-//            .getAccessTokenByTokenStringGlobally(tokenStringRequestingDelete);
-//        if (requestingToken == null) {
-//            final String error = "No entry found for token "
-//                + tokenStringRequestingDelete;
-//            logger.warn(error);
-//            throw new IllegalStateException(error);
-//        }
-//
-//        final boolean isGoodAsIdm = authorizationService
-//            .authorizeCustomerIdm(requestingToken);
-//        // Only CustomerIdm Client and Client that got token or the user of
-//        // the token are authorized to revoke token
-//        final boolean isAuthorized = isGoodAsIdm
-//            || authorizationService.authorizeAsRequestorOrOwner(deletedToken,
-//                requestingToken);
-//
-//        if (!isAuthorized) {
-//            String errMsg;
-//            errMsg = String.format(
-//                "Requesting token %s not authorized to revoke token %s.",
-//                tokenStringRequestingDelete, tokenToDelete);
-//            logger.warn(errMsg);
-//            throw new ForbiddenException(errMsg);
-//        }
-//
-//        if (deletedToken.getRequestor() == null) {
-//            final String error = String.format(
-//                "Token %s does not have a requestor",
-//                deletedToken.getTokenString());
-//            logger.warn(error);
-//            throw new IllegalStateException(error);
-//        }
-//        // This user is to be completely logged out of the system.
-//        deleteRefreshTokenByAccessToken(deletedToken);
-//        accessTokenService.deleteAllGloballyForOwner(deletedToken.getOwner());
-//        logger.debug("Deleted Token {}", deletedToken);
-//    }
-//
-//    @Override
-//    public void revokeTokensLocallyForOwner(final String authTokenString,
-//        final String ownerId) {
-//        final AccessToken requestingToken = accessTokenService
-//            .getAccessTokenByTokenString(authTokenString);
-//        if (requestingToken == null) {
-//            final String error = "No entry found for token " + authTokenString;
-//            logger.warn(error);
-//            throw new IllegalArgumentException(error);
-//        }
-//
-//        final boolean isAuthorized = authorizationService
-//            .authorizeCustomerIdm(requestingToken);
-//
-//        if (!isAuthorized) {
-//            final String errMsg = String
-//                .format(
-//                    "Requesting token %s not authorized to revoke token for owner %s.",
-//                    authTokenString, ownerId);
-//            logger.warn(errMsg);
-//            throw new ForbiddenException(errMsg);
-//        }
-//
-//        if (requestingToken.getRequestor() == null) {
-//            final String error = String.format(
-//                "Token %s does not have a requestor",
-//                requestingToken.getTokenString());
-//            logger.warn(error);
-//            throw new IllegalStateException(error);
-//        }
-//
-//        accessTokenService.deleteAllForOwner(ownerId);
-//        logger.debug("Deleted all access tokens for owner {}.", ownerId);
-//    }
-//
-//    @Override
-//    public void revokeTokensGloballyForOwner(final String ownerId) {
-//        refreshTokenService.deleteAllTokensForUser(ownerId);
-//        accessTokenService.deleteAllGloballyForOwner(ownerId);
-//        logger.debug("Deleted all access tokens for owner {}.", ownerId);
-//    }
-//
-//    @Override
-//    public void revokeTokensLocallyForCustomer(final String authTokenString,
-//        final String customerId) {
-//        final AccessToken requestingToken = accessTokenService
-//            .getAccessTokenByTokenString(authTokenString);
-//        if (requestingToken == null) {
-//            final String error = "No entry found for token " + authTokenString;
-//            logger.warn(error);
-//            throw new IllegalArgumentException(error);
-//        }
-//
-//        final boolean isAuthorized = authorizationService
-//            .authorizeCustomerIdm(requestingToken);
-//
-//        if (!isAuthorized) {
-//            final String errMsg = String
-//                .format(
-//                    "Requesting token %s not authorized to revoke token for customer %s.",
-//                    authTokenString, customerId);
-//            logger.warn(errMsg);
-//            throw new ForbiddenException(errMsg);
-//        }
-//
-//        if (requestingToken.getRequestor() == null) {
-//            final String error = String.format(
-//                "Token %s does not have a requestor",
-//                requestingToken.getTokenString());
-//            logger.warn(error);
-//            throw new IllegalStateException(error);
-//        }
-//
-//        for (final User user : getAllUsersForCustomerId(customerId)) {
-//            accessTokenService.deleteAllForOwner(user.getUsername());
-//        }
-//
-//        for (final Client client : getAllClientsForCustomerId(customerId)) {
-//            accessTokenService.deleteAllForOwner(client.getClientId());
-//        }
-//
-//        logger.debug("Deleted all access tokens for customer {}.", customerId);
-//
-//    }
-//
-//    @Override
-//    public void revokeTokensGloballyForCustomer(final String customerId) {
-//        final List<User> usersList = getAllUsersForCustomerId(customerId);
-//        for (final User user : usersList) {
-//            refreshTokenService.deleteAllTokensForUser(user.getUsername());
-//        }
-//
-//        final List<Client> clientsList = getAllClientsForCustomerId(customerId);
-//
-//        accessTokenService.deleteAllGloballyForCustomer(customerId, usersList,
-//            clientsList);
-//        logger.debug("Deleted all access tokens for customer {}.", customerId);
-//    }
-//
-//    @Override
-//    public void revokeTokensLocallyForOwnerOrCustomer(String idmAuthTokenStr,
-//        TokenDeleteByType queryType, String ownerId) {
-//        if (GlobalConstants.TokenDeleteByType.owner == queryType) {
-//            revokeTokensLocallyForOwner(idmAuthTokenStr, ownerId);
-//            logger.warn("Revoked Token for owner {}", ownerId);
-//        } else if (GlobalConstants.TokenDeleteByType.customer == queryType) {
-//            revokeTokensLocallyForCustomer(idmAuthTokenStr, ownerId);
-//            logger.warn("Revoked Token for customer {}", ownerId);
-//        } else {
-//            // If this happens, the developer forgot to implement this.
-//            throw new NotImplementedException("querytype " + queryType
-//                + " is not supported.");
-//        }
-//    }
+
+    //
+    // @Override
+    // public void revokeTokensLocally(final String tokenStringRequestingDelete,
+    // final String tokenToDelete) {
+    // logger.info("Deleting Token {}", tokenToDelete);
+    //
+    // final AccessToken deletedToken = accessTokenService
+    // .getAccessTokenByTokenString(tokenToDelete);
+    // if (deletedToken == null) {
+    // final String error = "No entry found for token " + tokenToDelete;
+    // logger.debug(error);
+    // throw new NotFoundException(error);
+    // }
+    //
+    // final AccessToken requestingToken = accessTokenService
+    // .getAccessTokenByTokenString(tokenStringRequestingDelete);
+    // if (requestingToken == null) {
+    // final String error = "No entry found for token "
+    // + tokenStringRequestingDelete;
+    // logger.warn(error);
+    // throw new IllegalStateException(error);
+    // }
+    //
+    // final boolean isAuthorized = authorizationService
+    // .authorizeCustomerIdm(requestingToken);
+    // if (!isAuthorized) {
+    // String errMsg;
+    // errMsg = String
+    // .format(
+    // "Requesting token %s not authorized to revoke token %s locally.",
+    // tokenStringRequestingDelete, tokenToDelete);
+    // logger.warn(errMsg);
+    // throw new ForbiddenException(errMsg);
+    // }
+    //
+    // if (deletedToken.getRequestor() == null) {
+    // final String error = String.format(
+    // "Token %s does not have a requestor",
+    // deletedToken.getTokenString());
+    // logger.warn(error);
+    // throw new IllegalStateException(error);
+    // }
+    // accessTokenService.delete(deletedToken.getTokenString());
+    // logger.info("Deleted Token {}", deletedToken);
+    // }
+    //
+    // @Override
+    // public void revokeTokensGlobally(final String
+    // tokenStringRequestingDelete,
+    // final String tokenToDelete) {
+    // logger.debug("Deleting Token {}", tokenToDelete);
+    // final AccessToken deletedToken = accessTokenService
+    // .getAccessTokenByTokenStringGlobally(tokenToDelete);
+    // if (deletedToken == null) {
+    // final String error = "No entry found for token " + tokenToDelete;
+    // logger.warn(error);
+    // throw new NotFoundException(error);
+    // }
+    //
+    // final AccessToken requestingToken = accessTokenService
+    // .getAccessTokenByTokenStringGlobally(tokenStringRequestingDelete);
+    // if (requestingToken == null) {
+    // final String error = "No entry found for token "
+    // + tokenStringRequestingDelete;
+    // logger.warn(error);
+    // throw new IllegalStateException(error);
+    // }
+    //
+    // final boolean isGoodAsIdm = authorizationService
+    // .authorizeCustomerIdm(requestingToken);
+    // // Only CustomerIdm Client and Client that got token or the user of
+    // // the token are authorized to revoke token
+    // final boolean isAuthorized = isGoodAsIdm
+    // || authorizationService.authorizeAsRequestorOrOwner(deletedToken,
+    // requestingToken);
+    //
+    // if (!isAuthorized) {
+    // String errMsg;
+    // errMsg = String.format(
+    // "Requesting token %s not authorized to revoke token %s.",
+    // tokenStringRequestingDelete, tokenToDelete);
+    // logger.warn(errMsg);
+    // throw new ForbiddenException(errMsg);
+    // }
+    //
+    // if (deletedToken.getRequestor() == null) {
+    // final String error = String.format(
+    // "Token %s does not have a requestor",
+    // deletedToken.getTokenString());
+    // logger.warn(error);
+    // throw new IllegalStateException(error);
+    // }
+    // // This user is to be completely logged out of the system.
+    // deleteRefreshTokenByAccessToken(deletedToken);
+    // accessTokenService.deleteAllGloballyForOwner(deletedToken.getOwner());
+    // logger.debug("Deleted Token {}", deletedToken);
+    // }
+    //
+    // @Override
+    // public void revokeTokensLocallyForOwner(final String authTokenString,
+    // final String ownerId) {
+    // final AccessToken requestingToken = accessTokenService
+    // .getAccessTokenByTokenString(authTokenString);
+    // if (requestingToken == null) {
+    // final String error = "No entry found for token " + authTokenString;
+    // logger.warn(error);
+    // throw new IllegalArgumentException(error);
+    // }
+    //
+    // final boolean isAuthorized = authorizationService
+    // .authorizeCustomerIdm(requestingToken);
+    //
+    // if (!isAuthorized) {
+    // final String errMsg = String
+    // .format(
+    // "Requesting token %s not authorized to revoke token for owner %s.",
+    // authTokenString, ownerId);
+    // logger.warn(errMsg);
+    // throw new ForbiddenException(errMsg);
+    // }
+    //
+    // if (requestingToken.getRequestor() == null) {
+    // final String error = String.format(
+    // "Token %s does not have a requestor",
+    // requestingToken.getTokenString());
+    // logger.warn(error);
+    // throw new IllegalStateException(error);
+    // }
+    //
+    // accessTokenService.deleteAllForOwner(ownerId);
+    // logger.debug("Deleted all access tokens for owner {}.", ownerId);
+    // }
+    //
+    // @Override
+    // public void revokeTokensGloballyForOwner(final String ownerId) {
+    // refreshTokenService.deleteAllTokensForUser(ownerId);
+    // accessTokenService.deleteAllGloballyForOwner(ownerId);
+    // logger.debug("Deleted all access tokens for owner {}.", ownerId);
+    // }
+    //
+    // @Override
+    // public void revokeTokensLocallyForCustomer(final String authTokenString,
+    // final String customerId) {
+    // final AccessToken requestingToken = accessTokenService
+    // .getAccessTokenByTokenString(authTokenString);
+    // if (requestingToken == null) {
+    // final String error = "No entry found for token " + authTokenString;
+    // logger.warn(error);
+    // throw new IllegalArgumentException(error);
+    // }
+    //
+    // final boolean isAuthorized = authorizationService
+    // .authorizeCustomerIdm(requestingToken);
+    //
+    // if (!isAuthorized) {
+    // final String errMsg = String
+    // .format(
+    // "Requesting token %s not authorized to revoke token for customer %s.",
+    // authTokenString, customerId);
+    // logger.warn(errMsg);
+    // throw new ForbiddenException(errMsg);
+    // }
+    //
+    // if (requestingToken.getRequestor() == null) {
+    // final String error = String.format(
+    // "Token %s does not have a requestor",
+    // requestingToken.getTokenString());
+    // logger.warn(error);
+    // throw new IllegalStateException(error);
+    // }
+    //
+    // for (final User user : getAllUsersForCustomerId(customerId)) {
+    // accessTokenService.deleteAllForOwner(user.getUsername());
+    // }
+    //
+    // for (final Client client : getAllClientsForCustomerId(customerId)) {
+    // accessTokenService.deleteAllForOwner(client.getClientId());
+    // }
+    //
+    // logger.debug("Deleted all access tokens for customer {}.", customerId);
+    //
+    // }
+    //
+    // @Override
+    // public void revokeTokensGloballyForCustomer(final String customerId) {
+    // final List<User> usersList = getAllUsersForCustomerId(customerId);
+    // for (final User user : usersList) {
+    // refreshTokenService.deleteAllTokensForUser(user.getUsername());
+    // }
+    //
+    // final List<Client> clientsList = getAllClientsForCustomerId(customerId);
+    //
+    // accessTokenService.deleteAllGloballyForCustomer(customerId, usersList,
+    // clientsList);
+    // logger.debug("Deleted all access tokens for customer {}.", customerId);
+    // }
+    //
+    // @Override
+    // public void revokeTokensLocallyForOwnerOrCustomer(String idmAuthTokenStr,
+    // TokenDeleteByType queryType, String ownerId) {
+    // if (GlobalConstants.TokenDeleteByType.owner == queryType) {
+    // revokeTokensLocallyForOwner(idmAuthTokenStr, ownerId);
+    // logger.warn("Revoked Token for owner {}", ownerId);
+    // } else if (GlobalConstants.TokenDeleteByType.customer == queryType) {
+    // revokeTokensLocallyForCustomer(idmAuthTokenStr, ownerId);
+    // logger.warn("Revoked Token for customer {}", ownerId);
+    // } else {
+    // // If this happens, the developer forgot to implement this.
+    // throw new NotImplementedException("querytype " + queryType
+    // + " is not supported.");
+    // }
+    // }
 
     @Override
     public OAuthGrantType getGrantType(final String grantTypeStrVal) {
@@ -481,7 +483,7 @@ public class DefaultOAuthService implements OAuthService {
         if (accessExpiration.isBefore(current)) {
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(current.plusSeconds(
-                this.getCloudAuthDefaultTokenExpirationSeconds()).toDate());
+                this.getDefaultTokenExpirationSeconds()).toDate());
         }
 
         DateTime refreshExpiration = scopeAccess.getRefreshTokenExp() == null ? new DateTime()
