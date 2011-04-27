@@ -131,7 +131,7 @@ public class ServiceConfiguration {
     
     @Bean
     public WadlTrie wadlTrie() {
-        return new WadlTrie(getClass().getResourceAsStream("/application.wadl"));
+        return new WadlTrie();
     }
 
     @Bean
