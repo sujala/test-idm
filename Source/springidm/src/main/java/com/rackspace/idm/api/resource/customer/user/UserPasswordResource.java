@@ -23,12 +23,12 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.PasswordConverter;
 import com.rackspace.idm.api.converter.TokenConverter;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 import com.rackspace.idm.domain.entity.UserStatus;
-import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -48,22 +48,22 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class UserPasswordResource {
-    private ScopeAccessService scopeAccessService;
-    private AccessTokenService accessTokenService;
-    private UserService userService;
-    private PasswordComplexityService passwordComplexityService;
-    private PasswordConverter passwordConverter;
-    private TokenConverter tokenConverter;
-    private AuthorizationService authorizationService;
+    private final ScopeAccessService scopeAccessService;
+    private final UserService userService;
+    private final PasswordComplexityService passwordComplexityService;
+    private final PasswordConverter passwordConverter;
+    private final TokenConverter tokenConverter;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
     String errorMsg = String.format("Authorization Failed");
 
     @Autowired
-    public UserPasswordResource(AccessTokenService accessTokenService, ScopeAccessService scopeAccessService, UserService userService,
-        PasswordComplexityService passwordComplexityService, PasswordConverter passwordConverter,
-        TokenConverter tokenConverter, AuthorizationService authorizationService) {
+    public UserPasswordResource(ScopeAccessService scopeAccessService,
+        UserService userService,
+        PasswordComplexityService passwordComplexityService,
+        PasswordConverter passwordConverter, TokenConverter tokenConverter,
+        AuthorizationService authorizationService) {
         this.scopeAccessService = scopeAccessService;
-        this.accessTokenService = accessTokenService;
         this.userService = userService;
         this.passwordComplexityService = passwordComplexityService;
         this.passwordConverter = passwordConverter;
@@ -86,16 +86,18 @@ public class UserPasswordResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @GET
-    public Response getUserPassword(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+    public Response getUserPassword(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
         ScopeAccessObject token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo);
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
@@ -121,18 +123,22 @@ public class UserPasswordResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @POST
-    public Response resetUserPassword(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+    public Response resetUserPassword(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
         logger.debug("Reseting Password for User: {}", username);
 
         ScopeAccessObject token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
-        boolean isSelfUpdate = username.equals(token.getAccessToken().getOwner());
+        boolean isSelfUpdate = (token instanceof UserScopeAccessObject && username
+            .equals(((UserScopeAccessObject) token).getUsername()));
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo)
             || (authorizationService.authorizeAdmin(token, customerId) && !isSelfUpdate);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
@@ -140,7 +146,8 @@ public class UserPasswordResource {
         User user = this.userService.checkAndGetUser(customerId, username);
         Password password = userService.resetUserPassword(user);
         if (password == null) {
-            logger.warn("Could not get the updated password for user: {}", user);
+            logger
+                .warn("Could not get the updated password for user: {}", user);
             throw new IdmException("Could not reset password.");
         }
 
@@ -166,42 +173,51 @@ public class UserPasswordResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @PUT
-    public Response setUserPassword(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("username") String username, EntityHolder<com.rackspace.idm.jaxb.UserCredentials> holder,
+    public Response setUserPassword(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("username") String username,
+        EntityHolder<com.rackspace.idm.jaxb.UserCredentials> holder,
         @QueryParam("recovery") boolean isRecovery) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
         ScopeAccessObject token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         boolean authorized = false;
 
         if (isRecovery) {
-            authorized = token.getAccessToken().isRestrictedToSetPassword()
-                && token.getAccessToken().getTokenUser().getCustomerId().equalsIgnoreCase(customerId)
-                && token.getAccessToken().getTokenUser().getUsername().equals(username);
+            authorized = token instanceof PasswordResetScopeAccessObject
+                && ((PasswordResetScopeAccessObject) token).getUserRCN()
+                    .equalsIgnoreCase(customerId)
+                && ((PasswordResetScopeAccessObject) token).getUsername()
+                    .equals(username);
         } else {
             authorized = authorizationService.authorizeRacker(token)
-                || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
+                || authorizationService.authorizeClient(token,
+                    request.getMethod(), uriInfo)
                 || authorizationService.authorizeAdmin(token, customerId)
-                || authorizationService.authorizeUser(token, customerId, username);
+                || authorizationService.authorizeUser(token, customerId,
+                    username);
         }
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         UserCredentials userCred = holder.getEntity();
-        
-        if (!passwordComplexityService.checkPassword(userCred.getNewPassword().getPassword())
-            .isValidPassword()) {
-            String errorMsg = String.format("Invalid password %s", userCred.getNewPassword().getPassword());
+
+        if (!passwordComplexityService.checkPassword(
+            userCred.getNewPassword().getPassword()).isValidPassword()) {
+            String errorMsg = String.format("Invalid password %s", userCred
+                .getNewPassword().getPassword());
             logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
         }
 
-        this.userService.setUserPassword(customerId, username, userCred, token.getAccessToken(), isRecovery);
-        
+        this.userService.setUserPassword(customerId, username, userCred, token,
+            isRecovery);
+
         return Response.ok(userCred).build();
     }
 
@@ -221,16 +237,20 @@ public class UserPasswordResource {
      */
     @POST
     @Path("recoverytoken")
-    public Response getPasswordResetToken(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+    public Response getPasswordResetToken(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
         ScopeAccessObject token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Only Rackspace Clients and Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo);
+        boolean authorized = authorizationService
+            .authorizeRackspaceClient(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
         User user = this.userService.checkAndGetUser(customerId, username);
@@ -248,12 +268,14 @@ public class UserPasswordResource {
             throw new UserDisabledException(errorMsg);
         }
 
-        AccessToken resetToken = accessTokenService.createPasswordResetAccessTokenForUser(user, token.getAccessToken()
-            .getTokenClient().getClientId());
+        PasswordResetScopeAccessObject prsa = this.scopeAccessService
+            .getOrCreatePasswordResetScopeAccessForUser(user.getUniqueId());
 
         logger.debug("Got Password Reset Token for User :{}", user);
 
-        return Response.ok(tokenConverter.toAccessTokenJaxb(resetToken)).build();
+        return Response.ok(
+            tokenConverter.toTokenJaxb(prsa.getAccessTokenString(),
+                prsa.getAccessTokenExp())).build();
     }
 
     /**
@@ -274,19 +296,24 @@ public class UserPasswordResource {
      */
     @POST
     @Path("recoveryemail")
-    public Response sendRecoveryEmail(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("username") String username, EntityHolder<PasswordRecovery> holder) {
+    public Response sendRecoveryEmail(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("username") String username,
+        EntityHolder<PasswordRecovery> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
         logger.debug("Sending password recovery email for User: {}", username);
 
         ScopeAccessObject token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
-        boolean authorized = authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo);
+        boolean authorized = authorizationService
+            .authorizeRackspaceClient(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
@@ -317,12 +344,12 @@ public class UserPasswordResource {
             throw new BadRequestException(errorMsg);
         }
 
-        AccessToken resetToken = accessTokenService.createPasswordResetAccessTokenForUser(user, token.getAccessToken()
-            .getTokenClient().getClientId());
+        PasswordResetScopeAccessObject prsa = this.scopeAccessService
+            .getOrCreatePasswordResetScopeAccessForUser(user.getUniqueId());
 
         try {
-            userService.sendRecoveryEmail(username, user.getEmail(), recoveryParam,
-                resetToken.getTokenString());
+            userService.sendRecoveryEmail(username, user.getEmail(),
+                recoveryParam, prsa.getAccessTokenString());
         } catch (IllegalArgumentException e) {
             String errorMsg = e.getMessage();
             logger.warn(errorMsg);
