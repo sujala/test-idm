@@ -435,11 +435,10 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.11) = {
     ldap-names = clientScopeAccess
     subclass-of scopeAccess
     kind = structural
-    must-contain
-        tokenScope
     may-contain
         accessToken,
-        accessTokenExp
+        accessTokenExp,
+        tokenScope
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.12) = {
