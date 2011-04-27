@@ -198,7 +198,7 @@ public class ServiceConfiguration {
 
     @Bean
     public AuthorizationService authorizationService() {
-        return new DefaultAuthorizationService(scopeAccessDao, clientService(), wadlTrie(), config);
+        return new DefaultAuthorizationService(scopeAccessDao, clientDao, wadlTrie(), config);
     }
     
     @Bean

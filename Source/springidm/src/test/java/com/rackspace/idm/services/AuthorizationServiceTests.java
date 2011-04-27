@@ -15,21 +15,21 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
+import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
-import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
 import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.util.WadlTrie;
 
 public class AuthorizationServiceTests {
-    ClientService mockClientService;
+    ClientDao mockClientDao;
     ScopeAccessObjectDao mockScopeAccessDao;
     AuthorizationService service;
     WadlTrie mockWadlTrie;
@@ -38,6 +38,8 @@ public class AuthorizationServiceTests {
     UriInfo uriInfo = null;
 
     String authHeader = "OAuth XXXX";
+    
+    String uniqueId = "uniqueId";
     
     String methodName = "methodName";
 
@@ -71,8 +73,8 @@ public class AuthorizationServiceTests {
     BaseUser authorizedAdmin;
     BaseUser otherCompanyAdmin;
 
-    Permission perm;
-    List<Permission> permissions;
+    PermissionObject perm;
+    List<PermissionObject> permissions;
     ClientGroup admin;
     List<ClientGroup> groups;
 
@@ -90,14 +92,14 @@ public class AuthorizationServiceTests {
 
     @Before
     public void setUp() throws Exception {
-        mockClientService = EasyMock.createMock(ClientService.class);
+        mockClientDao = EasyMock.createMock(ClientDao.class);
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessObjectDao.class);
         mockWadlTrie = EasyMock.createMock(WadlTrie.class);
         mockUriInfo = EasyMock.createMock(UriInfo.class);
         Configuration appConfig = new PropertyFileConfiguration()
             .getConfigFromClasspath();
         service = new DefaultAuthorizationService(mockScopeAccessDao,
-            mockClientService, mockWadlTrie, appConfig);
+            mockClientDao, mockWadlTrie, appConfig);
         setUpObjects();
     }
 
@@ -164,8 +166,9 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnTrueForAdmin() {
 
-        EasyMock.expect(mockClientService.isUserMemberOfClientGroup(username, admin)).andReturn(true);
-        EasyMock.replay(mockClientService);
+        EasyMock.expect(mockClientDao.getClientGroup(customerId, idmClientId, adminRoleName)).andReturn(admin);
+        EasyMock.expect(mockClientDao.isUserInClientGroup(username, admin.getUniqueId())).andReturn(true);
+        EasyMock.replay(mockClientDao);
         boolean authorized = service.authorizeAdmin(authorizedAdminToken,
             customerId);
 
@@ -175,8 +178,9 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnFalseForAdmin() {
 
-        EasyMock.expect(mockClientService.isUserMemberOfClientGroup(username, admin)).andReturn(false);
-        EasyMock.replay(mockClientService);
+        EasyMock.expect(mockClientDao.getClientGroup(customerId, idmClientId, adminRoleName)).andReturn(admin);
+        EasyMock.expect(mockClientDao.isUserInClientGroup(username, admin.getUniqueId())).andReturn(false);
+        EasyMock.replay(mockClientDao);
         boolean authorized = service.authorizeAdmin(otherCompanyAdminToken,
             customerId);
 
@@ -236,15 +240,16 @@ public class AuthorizationServiceTests {
 
     private void setUpObjects() {
         
-        perm = new Permission();
+        perm = new PermissionObject();
         perm.setClientId(idmClientId);
         perm.setCustomerId(customerId);
         perm.setPermissionId(permissionId);
 
-        permissions = new ArrayList<Permission>();
+        permissions = new ArrayList<PermissionObject>();
         permissions.add(perm);
 
         admin = new ClientGroup();
+        admin.setUniqueId(uniqueId);
         admin.setName(adminRoleName);
         admin.setClientId(idmClientId);
         admin.setCustomerId(customerId);

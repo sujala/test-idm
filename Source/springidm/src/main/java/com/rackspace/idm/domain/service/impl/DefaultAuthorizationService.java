@@ -6,30 +6,31 @@ import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
-import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.util.WadlTrie;
 
 public class DefaultAuthorizationService implements AuthorizationService {
 
-    
-    private final ClientService clientService;
+    private final ClientDao clientDao;
     private final Configuration config;
     private final ScopeAccessObjectDao scopeAccessDao;
     private final WadlTrie wadlTrie;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    
+    private static String IDM_ADMIN_GROUP_DN = null;
 
     public DefaultAuthorizationService(ScopeAccessObjectDao scopeAccessDao,
-        ClientService clientService, WadlTrie wadlTrie, Configuration config) {
+        ClientDao clientDao, WadlTrie wadlTrie, Configuration config) {
         this.scopeAccessDao = scopeAccessDao;
-        this.clientService = clientService;
+        this.clientDao = clientDao;
         this.wadlTrie = wadlTrie;
         this.config = config;
     }
@@ -52,16 +53,17 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeClient(ScopeAccessObject scopeAccess,
-        String verb, UriInfo uriInfo) {
+    public boolean authorizeClient(ScopeAccessObject scopeAccess, String verb,
+        UriInfo uriInfo) {
 
         if (!(scopeAccess instanceof ClientScopeAccessObject)) {
             return false;
         }
-        
-        String permissionId = wadlTrie.getPermissionFor(verb, uriInfo).toString();
 
-        Permission permission = new Permission();
+        String permissionId = wadlTrie.getPermissionFor(verb, uriInfo)
+            .toString();
+
+        PermissionObject permission = new PermissionObject();
         permission.setClientId(getIdmClientId());
         permission.setCustomerId(getRackspaceCustomerId());
         permission.setPermissionId(permissionId);
@@ -112,15 +114,17 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
         UserScopeAccessObject usa = (UserScopeAccessObject) scopeAccess;
 
-        ClientGroup group = new ClientGroup();
-        group.setClientId(getIdmClientId());
-        group.setCustomerId(getRackspaceCustomerId());
-        group.setName(getIdmAdminGroupName());
+        if (IDM_ADMIN_GROUP_DN == null) {
+            ClientGroup group = this.clientDao.getClientGroup(
+                getRackspaceCustomerId(), getIdmClientId(),
+                getIdmAdminGroupName());
+            IDM_ADMIN_GROUP_DN = group.getUniqueId();
+        }
 
         boolean authorized = false;
 
-        authorized = this.clientService.isUserMemberOfClientGroup(
-            usa.getUsername(), group);
+        authorized = this.clientDao.isUserInClientGroup(usa.getUsername(),
+            IDM_ADMIN_GROUP_DN);
 
         return authorized;
     }
