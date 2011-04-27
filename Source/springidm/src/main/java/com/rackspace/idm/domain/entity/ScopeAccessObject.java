@@ -11,19 +11,22 @@ public class ScopeAccessObject implements Auditable {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
-    
+
     @LDAPField(attribute="clientId", objectClass="scopeAccess", inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
     private String clientId;
-    
+
     @LDAPField(attribute="clientRCN", objectClass="scopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
     private String clientRCN;
-    
+
+    @LDAPField(attribute="objectClass", objectClass="scopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    private String[] objectClass;
+
     public ScopeAccessObject() {}
-    
+
     public ReadOnlyEntry getLDAPEntry() {
         return ldapEntry;
     }
-    
+
     public String getUniqueId() {
         if (ldapEntry == null) {
             return null;
@@ -48,10 +51,10 @@ public class ScopeAccessObject implements Auditable {
     public void setClientRCN(String clientRCN) {
         this.clientRCN = clientRCN;
     }
-    
+
     @Override
     public String getAuditContext() {
-        String format = "ScopeAccess(clientId=%s)";
+        final String format = "ScopeAccess(clientId=%s)";
         return String.format(format, getClientId());
     }
 }

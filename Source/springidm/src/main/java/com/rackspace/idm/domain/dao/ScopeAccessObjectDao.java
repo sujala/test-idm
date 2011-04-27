@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.dao;
 
 import java.util.List;
 
-import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 
 public interface ScopeAccessObjectDao {
@@ -10,12 +10,12 @@ public interface ScopeAccessObjectDao {
     ScopeAccessObject addScopeAccess(String parentUniqueId, ScopeAccessObject scopeAccess);
 
     Boolean addPermissionToScopeAccess(String scopeAccessUniqueId,
-            Permission permission);
+            PermissionObject permission);
 
     Boolean deleteScopeAccess(ScopeAccessObject scopeAccess);
 
     Boolean doesAccessTokenHavePermission(String accessToken,
-            Permission permission);
+            PermissionObject permission);
 
     List<ScopeAccessObject> getScopeAccessesByParent(String parentUniqueId);
 
@@ -29,10 +29,12 @@ public interface ScopeAccessObjectDao {
     ScopeAccessObject getScopeAccessByUsernameAndClientId(String username,
             String clientId);
 
-    Boolean removePermissionFromScopeAccess(Permission permission);
+    Boolean removePermissionFromScopeAccess(PermissionObject permission);
 
     Boolean updateScopeAccess(ScopeAccessObject scopeAccess);
 
-    Boolean updatePermissionForScopeAccess(String scopeAccessUniqueId, Permission permission);
+    Boolean updatePermissionForScopeAccess(PermissionObject permission);
+
+    PermissionObject getPermissionByParentAndPermissionId(String parentUniqueId, String permissionId);
 
 }
