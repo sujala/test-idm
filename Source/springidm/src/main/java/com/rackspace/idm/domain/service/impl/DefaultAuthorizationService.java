@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import javax.ws.rs.core.UriInfo;
+
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,18 +15,21 @@ import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.util.WadlTrie;
 
 public class DefaultAuthorizationService implements AuthorizationService {
 
     private final ClientService clientService;
     private final Configuration config;
     private final ScopeAccessObjectDao scopeAccessDao;
+    private final WadlTrie wadlTrie;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultAuthorizationService(ScopeAccessObjectDao scopeAccessDao,
-        ClientService clientService, Configuration config) {
+        ClientService clientService, WadlTrie wadlTrie, Configuration config) {
         this.scopeAccessDao = scopeAccessDao;
         this.clientService = clientService;
+        this.wadlTrie = wadlTrie;
         this.config = config;
     }
 
@@ -47,14 +52,13 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public boolean authorizeClient(ScopeAccessObject scopeAccess,
-        String verb, String uri) {
+        String verb, UriInfo uriInfo) {
 
         if (!(scopeAccess instanceof ClientScopeAccessObject)) {
             return false;
         }
         
-        String permissionId = "";
-        //TODO: Put in Brad's wadl to permissionId code here.
+        String permissionId = wadlTrie.getPermissionFor(verb, uriInfo).toString();
 
         Permission permission = new Permission();
         permission.setClientId(getIdmClientId());

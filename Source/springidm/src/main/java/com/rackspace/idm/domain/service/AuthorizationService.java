@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service;
 
+import javax.ws.rs.core.UriInfo;
+
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 
 public interface AuthorizationService {
@@ -8,7 +10,7 @@ public interface AuthorizationService {
 
     boolean authorizeRackspaceClient(ScopeAccessObject scopeAccess);
 
-    boolean authorizeClient(ScopeAccessObject scopeAccess, String verb, String uri);
+    boolean authorizeClient(ScopeAccessObject scopeAccess, String verb, UriInfo uriInfo);
 
     boolean authorizeCustomerUser(ScopeAccessObject scopeAccess, String customerId);
 
