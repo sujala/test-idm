@@ -45,6 +45,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
+    public void addScopeAccess(String parentUniqueId, ScopeAccessObject scopeAccess) {
+        logger.info("Adding scopeAccess {}", scopeAccess);
+        this.scopeAccessDao.addScopeAccess(parentUniqueId, scopeAccess);
+        logger.info("Added scopeAccess {}", scopeAccess);
+    }
+    
+    @Override
     public boolean authenticateAccessToken(String accessTokenStr) {
         logger.debug("Authorizing Token: {}", accessTokenStr);
         Boolean authenticated = false;
