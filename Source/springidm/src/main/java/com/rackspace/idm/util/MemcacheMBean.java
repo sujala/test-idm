@@ -1,10 +1,8 @@
 package com.rackspace.idm.util;
 
 import java.net.SocketAddress;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import net.spy.memcached.MemcachedClient;
