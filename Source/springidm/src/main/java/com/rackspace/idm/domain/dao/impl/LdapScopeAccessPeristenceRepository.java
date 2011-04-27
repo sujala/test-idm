@@ -22,6 +22,7 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import com.unboundid.ldap.sdk.persist.LDAPPersister;
+import com.unboundid.util.LDAPSDKRuntimeException;
 
 public class LdapScopeAccessPeristenceRepository extends LdapRepository implements ScopeAccessObjectDao {
 
@@ -258,6 +259,8 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             return result.getResultCode().intValue() == ResultCode.SUCCESS_INT_VALUE;
         } catch (final LDAPException e) {
             getLogger().error("Error updating scope access", e);
+        } catch (final LDAPSDKRuntimeException e) {
+            //noop
         } finally {
             getAppConnPool().releaseConnection(conn);
         }
@@ -275,6 +278,8 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             return result.getResultCode().intValue() == ResultCode.SUCCESS_INT_VALUE;
         } catch (final LDAPException e) {
             getLogger().error("Error updating permission", e);
+        } catch (final LDAPSDKRuntimeException e) {
+            //noop
         } finally {
             getAppConnPool().releaseConnection(conn);
         }
