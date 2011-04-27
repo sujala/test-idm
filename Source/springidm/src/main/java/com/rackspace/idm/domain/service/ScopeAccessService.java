@@ -13,27 +13,27 @@ public interface ScopeAccessService {
     
     boolean doesAccessTokenHavePermission(String accessTokenString, Permission permission);
     
-    ClientScopeAccessObject getClientScopeAccessForClientId(String clientUniqueId, String clientId);
-    
-    RackerScopeAccessObject getRackerScopeAccessForClientId(String rackerUniqueId, String clientId);
-
-    UserScopeAccessObject getUserScopeAccessForClientId(String userUniqueId, String clientId);
-    
-    ScopeAccessObject getScopeAccessByRefreshToken(String refreshToken);
-    
-    ScopeAccessObject getScopeAccessByAccessToken(String accessToken);
-    
-    PasswordResetScopeAccessObject getOrCreatePasswordResetScopeAccessForUser(String userUniqueId);
-    
-    void updateScopeAccess(ScopeAccessObject scopeAccess);
-    
     void expireAccessToken(String tokenString);
+    
+    void expireAllTokensForClient(String clientId);
+
+    void expireAllTokensForCustomer(String customerId);
     
     void expireAllTokensForUser(String username);
     
-    void expireAllTokensForClient(String clientId);
-    
-    void expireAllTokensForCustomer(String customerId);
-
     ScopeAccessObject getAccessTokenByAuthHeader(String authHeader);
+    
+    ClientScopeAccessObject getClientScopeAccessForClientId(String clientUniqueId, String clientId);
+    
+    PasswordResetScopeAccessObject getOrCreatePasswordResetScopeAccessForUser(String userUniqueId);
+    
+    RackerScopeAccessObject getRackerScopeAccessForClientId(String rackerUniqueId, String clientId);
+    
+    ScopeAccessObject getScopeAccessByAccessToken(String accessToken);
+    
+    ScopeAccessObject getScopeAccessByRefreshToken(String refreshToken);
+    
+    UserScopeAccessObject getUserScopeAccessForClientId(String userUniqueId, String clientId);
+
+    void updateScopeAccess(ScopeAccessObject scopeAccess);
 }
