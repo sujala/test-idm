@@ -30,4 +30,6 @@ public interface AuthorizationService {
      */
     abstract boolean authorizeAsRequestorOrOwner(ScopeAccessObject targetScopeAccess,
         ScopeAccessObject requestingScopeAccess);
+
+    void checkAuthAndHandleFailure(boolean authorized, ScopeAccessObject token);
 }
