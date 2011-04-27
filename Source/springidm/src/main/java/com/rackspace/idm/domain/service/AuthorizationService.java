@@ -8,7 +8,7 @@ public interface AuthorizationService {
 
     boolean authorizeRackspaceClient(ScopeAccessObject scopeAccess);
 
-    boolean authorizeClient(ScopeAccessObject scopeAccess, String methodName);
+    boolean authorizeClient(ScopeAccessObject scopeAccess, String verb, String uri);
 
     boolean authorizeCustomerUser(ScopeAccessObject scopeAccess, String customerId);
 

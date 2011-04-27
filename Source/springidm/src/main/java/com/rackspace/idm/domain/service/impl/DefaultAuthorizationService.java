@@ -47,16 +47,19 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public boolean authorizeClient(ScopeAccessObject scopeAccess,
-        String methodName) {
+        String verb, String uri) {
 
         if (!(scopeAccess instanceof ClientScopeAccessObject)) {
             return false;
         }
+        
+        String permissionId = "";
+        //TODO: Put in Brad's wadl to permissionId code here.
 
         Permission permission = new Permission();
         permission.setClientId(getIdmClientId());
         permission.setCustomerId(getRackspaceCustomerId());
-        permission.setPermissionId(methodName);
+        permission.setPermissionId(permissionId);
 
         return this.scopeAccessDao.doesAccessTokenHavePermission(
             ((ClientScopeAccessObject) scopeAccess).getAccessTokenString(),
