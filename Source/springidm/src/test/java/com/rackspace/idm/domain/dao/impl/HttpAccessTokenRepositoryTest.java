@@ -19,7 +19,6 @@ import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.test.stub.StubLogger;
 
@@ -28,10 +27,10 @@ public class HttpAccessTokenRepositoryTest {
     private static final String TOKEN_REQUESTOR = "controlpanel";
     private static final String IDM_CLIENT_ID = "18e7a7032733486cd32f472d7bd58f709ac0d221";
     private static final String QA_TOKEN_STRING = "QA-xdctesttokenstring";
-    private MemcachedAccessTokenRepository tokenRepo;
+    private final MemcachedAccessTokenRepository tokenRepo;
     private HttpAccessTokenRepository repo;
-    private DataCenterEndpoints endpoints;
-    private Configuration config;
+    private final DataCenterEndpoints endpoints;
+    private final Configuration config;
 
     public HttpAccessTokenRepositoryTest() {
         // Config for memcached client
@@ -98,11 +97,7 @@ public class HttpAccessTokenRepositoryTest {
 
     private BaseUser getTestUser() {
 
-        ClientGroup group = new ClientGroup("customerId", "clientId", "name", "type");
-        List<ClientGroup> groups = new ArrayList<ClientGroup>();
-        groups.add(group);
-
-        return new BaseUser(TOKEN_OWNER, "customerId", groups);
+        return new BaseUser(TOKEN_OWNER, "customerId");
     }
 
     private BaseClient getTestClient() {
