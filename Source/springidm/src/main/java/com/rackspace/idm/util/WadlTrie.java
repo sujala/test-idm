@@ -139,6 +139,10 @@ public class WadlTrie {
         stack.addFirst(trie);
     }
 
+    public WadlTrie() {
+        this(Object.class.getResourceAsStream("/application.wadl"));
+    }
+
     public WadlTrie(final InputStream is) {
         try {
             SAXParserFactory.newInstance().newSAXParser().parse(is, new SaxHandler());
@@ -155,6 +159,7 @@ public class WadlTrie {
 
     public Object getPermissionFor(final String method, final UriInfo uriInfo) {
         final List<String> paths = new ArrayList<String>();
+        paths.add("root");
         for(final PathSegment segment : uriInfo.getPathSegments()) {
             paths.add(segment.getPath());
         }
