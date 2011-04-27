@@ -30,7 +30,10 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public boolean authorizeRacker(ScopeAccessObject scopeAccess) {
-        return scopeAccess instanceof RackerScopeAccessObject;
+        logger.debug("Authorizing {} as racker", scopeAccess);
+        boolean authorized = scopeAccess instanceof RackerScopeAccessObject;
+        logger.debug("Authorized {} as racker - {}", authorized);
+        return authorized;
     }
 
     @Override
