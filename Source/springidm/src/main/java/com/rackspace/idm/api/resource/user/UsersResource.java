@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.user;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
@@ -32,7 +31,6 @@ import com.rackspace.idm.api.converter.EndPointConverter;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.AccessToken;
-import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.User;
@@ -63,18 +61,18 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class UsersResource {
 
-    private AccessTokenService accessTokenService;
-    private CustomerService customerService;
-    private UserService userService;
-    private InputValidator inputValidator;
-    private UserConverter userConverter;
-    private PasswordComplexityService passwordComplexityService;
-    private AuthorizationService authorizationService;
-    private EndpointService endpointService;
-    private EndPointConverter endpointConverter;
-    private ClientService clientService;
+    private final AccessTokenService accessTokenService;
+    private final CustomerService customerService;
+    private final UserService userService;
+    private final InputValidator inputValidator;
+    private final UserConverter userConverter;
+    private final PasswordComplexityService passwordComplexityService;
+    private final AuthorizationService authorizationService;
+    private final EndpointService endpointService;
+    private final EndPointConverter endpointConverter;
+    private final ClientService clientService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
-    private Configuration config;
+    private final Configuration config;
 
     @Autowired
     public UsersResource(AccessTokenService accessTokenService, CustomerService customerService,
@@ -170,14 +168,6 @@ public class UsersResource {
 
         this.clientService.addUserToClientGroup(userDO.getUsername(), 
             getRackspaceCustomerId(), getIdmClientId(), getIdmAdminGroupName());
-        
-        ClientGroup idmAdmin = this.clientService.getClientGroup(getRackspaceCustomerId(), getIdmClientId(),
-            getIdmAdminGroupName());
-
-        // Add the new Admin role to the User Object
-        List<ClientGroup> groups = new ArrayList<ClientGroup>();
-        groups.add(idmAdmin);
-        userDO.setGroups(groups);
 
         logger.debug("Added User: {}", userDO);
 
