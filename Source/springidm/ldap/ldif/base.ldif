@@ -81,6 +81,16 @@ objectClass: clientScopeAccess
 clientRCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 
+######################################## Client Groups #######################################
+
+dn: cn=Idm Admin,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: groupOfNames
+objectClass: clientGroup
+cn: Idm Admin
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
 ######################################## Permissions #######################################
 
 dn: cn=getServiceCatalog,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
