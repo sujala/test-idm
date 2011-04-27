@@ -22,11 +22,8 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.api.resource.customer.user.permission.UserPermissionsResource;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
@@ -45,19 +42,19 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class UserResource {
     
-    private ScopeAccessService scopeAccessService;
-    private ApiKeyResource apiKeyResource;
-    private UserLockResource userLockResource;
-    private UserPasswordResource userPasswordResource;
-    private UserGroupsResource userGroupsResource;
-    private UserSecretResource userSecretResource;
-    private UserSoftDeleteResource userSoftDeleteResource;
-    private UserStatusResource userStatusResource;
-    private UserPermissionsResource userPermissionsResource;
-    private UserService userService;
-    private UserConverter userConverter;
-    private InputValidator inputValidator;
-    private AuthorizationService authorizationService;
+    private final ScopeAccessService scopeAccessService;
+    private final ApiKeyResource apiKeyResource;
+    private final UserLockResource userLockResource;
+    private final UserPasswordResource userPasswordResource;
+    private final UserGroupsResource userGroupsResource;
+    private final UserSecretResource userSecretResource;
+    private final UserSoftDeleteResource userSoftDeleteResource;
+    private final UserStatusResource userStatusResource;
+    private final UserPermissionsResource userPermissionsResource;
+    private final UserService userService;
+    private final UserConverter userConverter;
+    private final InputValidator inputValidator;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
