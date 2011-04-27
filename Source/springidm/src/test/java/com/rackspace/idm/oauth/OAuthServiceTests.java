@@ -37,7 +37,10 @@ import com.rackspace.idm.domain.service.RefreshTokenService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultOAuthService;
+import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.InputValidator;
 
@@ -89,6 +92,108 @@ public class OAuthServiceTests {
         oauthService = new DefaultOAuthService(mockUserService,
             mockClientService, mockAuthorizationService, appConfig,
             inputValidator, mockScopeAccessService);
+    }
+    
+    @Test
+    public void shouldRevokeAllTokensForClient() {
+        mockScopeAccessService.expireAllTokensForClient(clientId);
+        EasyMock.replay(mockScopeAccessService);
+        oauthService.revokeAllTokensForClient(clientId);
+        EasyMock.verify(mockScopeAccessService);
+    }
+    
+    @Test
+    public void shouldRevokeAllTokensForUser() {
+        mockScopeAccessService.expireAllTokensForUser(username);
+        EasyMock.replay(mockScopeAccessService);
+        oauthService.revokeAllTokensForUser(username);
+        EasyMock.verify(mockScopeAccessService);
+    }
+
+    @Test
+    public void shouldRevokeAccessToken() {
+
+        UserScopeAccessObject usa = getFakeUserScopeAccess();
+        ClientScopeAccessObject csa = getFakeClientScopeAccess();
+        EasyMock.expect(
+            mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
+            .andReturn(usa);
+        EasyMock.expect(
+            mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
+            .andReturn(csa);
+        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(csa))
+            .andReturn(true);
+        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccessObject.class));
+        
+        EasyMock.replay(mockScopeAccessService, mockAuthorizationService);
+        oauthService.revokeAccessToken(tokenVal, tokenVal);
+        
+        EasyMock.verify(mockScopeAccessService, mockAuthorizationService);
+    }
+    
+    @Test(expected = NotFoundException.class)
+    public void shouldNotRevokeAccessTokenForDeletingTokenNotFound() {
+
+        UserScopeAccessObject usa = getFakeUserScopeAccess();
+        ClientScopeAccessObject csa = getFakeClientScopeAccess();
+        EasyMock.expect(
+            mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
+            .andReturn(null);
+        EasyMock.expect(
+            mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
+            .andReturn(csa);
+        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(csa))
+            .andReturn(true);
+        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccessObject.class));
+        
+        EasyMock.replay(mockScopeAccessService, mockAuthorizationService);
+        oauthService.revokeAccessToken(tokenVal, tokenVal);
+        
+        EasyMock.verify(mockScopeAccessService, mockAuthorizationService);
+    }
+    
+    @Test(expected = IllegalStateException.class)
+    public void shouldNotRevokeAccessTokenForRequestingTokenNotFound() {
+
+        UserScopeAccessObject usa = getFakeUserScopeAccess();
+        ClientScopeAccessObject csa = getFakeClientScopeAccess();
+        EasyMock.expect(
+            mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
+            .andReturn(usa);
+        EasyMock.expect(
+            mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
+            .andReturn(null);
+        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(csa))
+            .andReturn(true);
+        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccessObject.class));
+        
+        EasyMock.replay(mockScopeAccessService, mockAuthorizationService);
+        oauthService.revokeAccessToken(tokenVal, tokenVal);
+        
+        EasyMock.verify(mockScopeAccessService, mockAuthorizationService);
+    }
+    
+    @Test(expected = ForbiddenException.class)
+    public void shouldNotRevokeAccessTokenForForbidden() {
+
+        UserScopeAccessObject usa = getFakeUserScopeAccess();
+        ClientScopeAccessObject csa = getFakeClientScopeAccess();
+        EasyMock.expect(
+            mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
+            .andReturn(usa);
+        EasyMock.expect(
+            mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
+            .andReturn(csa);
+        EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(csa))
+            .andReturn(false);
+        EasyMock.expect(mockAuthorizationService.authorizeAsRequestorOrOwner(usa, csa))
+        .andReturn(false);
+        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccessObject.class));
+        
+        EasyMock.replay(mockScopeAccessService, mockAuthorizationService);
+        oauthService.revokeAccessToken(tokenVal, tokenVal);
+        
+        EasyMock.verify(mockScopeAccessService, mockAuthorizationService);
     }
 
     @Test
@@ -248,7 +353,11 @@ public class OAuthServiceTests {
             getFakeUserScopeAccess());
         mockScopeAccessService.updateScopeAccess(EasyMock
             .anyObject(ScopeAccessObject.class));
-        EasyMock.replay(mockScopeAccessService, mockClientService);
+
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(
+            getFakeUser());
+        EasyMock.replay(mockScopeAccessService, mockClientService,
+            mockUserService);
 
         ScopeAccessObject authData = oauthService.getTokens(grantType,
             authCredentials, currentTime);
@@ -368,7 +477,10 @@ public class OAuthServiceTests {
                 .getScopeAccessByRefreshToken(refreshTokenVal)).andReturn(null);
         mockScopeAccessService.updateScopeAccess(EasyMock
             .anyObject(ScopeAccessObject.class));
-        EasyMock.replay(mockScopeAccessService, mockClientService);
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(
+            getFakeUser());
+        EasyMock.replay(mockScopeAccessService, mockClientService,
+            mockUserService);
 
         ScopeAccessObject authData = oauthService.getTokens(grantType,
             authCredentials, currentTime);
@@ -408,6 +520,43 @@ public class OAuthServiceTests {
         Assert.assertTrue(authData instanceof UserScopeAccessObject);
 
         EasyMock.verify(mockScopeAccessService, mockClientService);
+    }
+
+    @Test(expected = UserDisabledException.class)
+    public void shouldNotGetAccessTokenIfUserDisabled() {
+
+        User user = getFakeUser();
+        user.setLocked(true);
+
+        UserScopeAccessObject usa = getFakeUserScopeAccess();
+
+        OAuthGrantType grantType = OAuthGrantType.REFRESH_TOKEN;
+        AuthCredentials authCredentials = getTestAuthCredentials();
+        authCredentials.setGrantType("refresh-token");
+
+        DateTime currentTime = new DateTime();
+
+        EasyMock.expect(mockClientService.authenticate(clientId, clientSecret))
+            .andReturn(new ClientAuthenticationResult(getTestClient(), true));
+
+        EasyMock.expect(
+            mockScopeAccessService
+                .getScopeAccessByRefreshToken(refreshTokenVal)).andReturn(usa);
+        mockScopeAccessService.updateScopeAccess(EasyMock
+            .anyObject(ScopeAccessObject.class));
+
+        EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
+        EasyMock.replay(mockScopeAccessService, mockClientService,
+            mockUserService);
+
+        ScopeAccessObject authData = oauthService.getTokens(grantType,
+            authCredentials, currentTime);
+
+        Assert.assertNotNull(authData);
+        Assert.assertTrue(authData instanceof UserScopeAccessObject);
+
+        EasyMock.verify(mockScopeAccessService, mockClientService,
+            mockUserService);
     }
 
     // @Test
