@@ -30,6 +30,27 @@ sn: admin
 uid: admin
 userPassword: qwerty
 
+######################################## BaseUrls #######################################
+dn: baseUrlId=111111,ou=BaseUrls,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+baseUrlId: 111111
+baseUrlType: NAST
+service: cloudFiles
+def: TRUE
+rsRegion: DFW
+publicUrl: https://storage.clouddrive.com/v1
+internalUrl: https://storage-snet.clouddrive.com/v1
+
+dn:baseUrlId=222222,ou=BaseUrls,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+baseUrlId: 222222
+baseUrlType: MOSSO
+service: cloudServers
+def: TRUE
+publicUrl: https://servers.api.rackspacecloud.com/v1.0
+
 ######################################## Customers #######################################
 
 dn: o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
@@ -57,7 +78,135 @@ objectClass: top
 objectClass: organizationalUnit
 ou: applications
 
+dn: o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsOrganization
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000
+locked: FALSE
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000
+RCN: RCN-111-111-111
+softDeleted: FALSE
+status: ACTIVE
+
+dn: ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: people
+
+dn: ou=groups,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: groups
+
+dn: ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: applications
+
+dn: o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsOrganization
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.999
+locked: FALSE
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.999
+RCN: RCN-QATestingCustomer
+softDeleted: FALSE
+status: ACTIVE
+
+dn: ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: people
+
+dn: ou=groups,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: groups
+
+dn: ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: applications
+
 ######################################## Applications #######################################
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!2222,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+cn: Cloud Control Panel
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!2222
+locked: FALSE
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
+RCN: RACKSPACE
+clientId: ABCDEF
+status: ACTIVE
+softDeleted: FALSE
+userPassword: password
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!3333,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+cn: Rackspace Billing Application
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!3333
+locked: FALSE
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
+RCN: RACKSPACE
+clientId: GHIJKL
+softDeleted: FALSE
+status: ACTIVE
+userPassword: password
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!4444,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+cn: Rackspace Signup Service
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!4444
+locked: FALSE
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
+RCN: RACKSPACE
+clientId: MNOPQR
+status: ACTIVE
+softDeleted: FALSE
+userPassword: password
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!5555,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+cn: Cloud Control
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!5555
+locked: FALSE
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
+RCN: RACKSPACE
+clientId: STUVWX
+status: ACTIVE
+softDeleted: FALSE
+userPassword: password
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!6666,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+cn: IDM
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!6666
+locked: FALSE
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
+RCN: RACKSPACE
+clientId: IDM
+status: ACTIVE
+softDeleted: FALSE
+userPassword: password
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+cn: Cloud Auth Service
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9
+locked: FALSE
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
+RCN: RACKSPACE
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+status: ACTIVE
+softDeleted: FALSE
+userPassword: password
 
 dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -72,7 +221,82 @@ status: ACTIVE
 softDeleted: FALSE
 userPassword: password
 
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000!6666,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+cn: Customer Client
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000!6666
+locked: FALSE
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000
+RCN: RCN-111-111-111
+clientId: CUSTOMERCLIENT
+status: ACTIVE
+softDeleted: FALSE
+userPassword: password
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!APP.001,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+cn: QA Client
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.999!APP.001
+locked: FALSE
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.999
+RCN: RCN-QATestingCustomer
+clientId: QATESTCLIENT
+status: ACTIVE
+softDeleted: FALSE
+userPassword: password
+
 ######################################## ScopeAccesses #####################################
+
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!2222,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: clientScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!3333,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: clientScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!4444,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: clientScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!5555,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: clientScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!6666,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: clientScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: clientScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!APP.001,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: clientScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 
 dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -80,6 +304,160 @@ objectClass: scopeAccess
 objectClass: clientScopeAccess
 clientRCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000!6666,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: clientScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+
+######################################## Users #######################################
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+c: USA
+displayName: Matt Kovacs
+endpoint: +111111
+endpoint: -222222
+givenName: Matt
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111
+locked: FALSE
+mail: matt.kovacs@rackspace.com
+rsGroupDN: cn=Idm Admin,ou=groups,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+middleName: Sandor
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
+preferredLanguage: en-US
+RCN: RACKSPACE
+RPN: RPN-111-111-111
+rsApiKey: 1234567890
+secretQuestion: What is the name of your employer?
+secretAnswer: Rackspace
+clearPassword: P@$$w0rd
+softDeleted: FALSE
+status: ACTIVE
+sn: Kovacs
+timeZone: America/Chicago
+uid: mkovacs
+userPassword: P@$$w0rd
+rsMossoId: 90000
+rsNastId: KovacsNastId
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!7777,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+c: USA
+displayName: Huey Ly
+givenName: Huey
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!7777
+locked: FALSE
+mail: huey.ly@rackspace.com
+middleName: Quang
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
+preferredLanguage: en-US
+RCN: RACKSPACE
+RPN: RPN-777-777-777
+rsApiKey: 777777777
+secretQuestion: What is the name of your employer?
+secretAnswer: Rackspace
+clearPassword: P@ssw0rd
+softDeleted: FALSE
+status: ACTIVE
+sn: Ly
+timeZone: America/Chicago
+uid: huey
+userPassword: P@ssw0rd
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000!1111,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.0000,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+c: USA
+displayName: Test User
+givenName: Test
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000!1111
+locked: FALSE
+mail: test.user@rackspace.com
+rsGroupDN: cn=Idm Admin,ou=groups,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.0000
+preferredLanguage: en-US
+RCN: RCN-111-111-111
+RPN: RPN-999-999-999
+rsApiKey: 0987654321
+secretQuestion: What is the name of your employer?
+secretAnswer: Test Customer
+clearPassword: P@$$w0rd
+softDeleted: FALSE
+status: ACTIVE
+sn: User
+timeZone: America/Chicago
+uid: testuser
+userPassword: P@$$w0rd
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!10001,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+c: USA
+displayName: qauser
+givenName: qauser
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.999!10001
+locked: FALSE
+mail: quauser@example.com
+middleName: none
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.999
+preferredLanguage: en-US
+RCN: RCN-QATestingCustomer
+RPN: RPN-qauser-000-10001
+rsApiKey: qauser-000-001
+secretQuestion: What is the name of your employer?
+secretAnswer: Rackspace
+clearPassword: P@$$w0rd
+softDeleted: FALSE
+status: ACTIVE
+sn: Tester
+timeZone: America/Chicago
+uid: qauser
+userPassword: P@$$w0rd
+rsMossoId: 999112358
+rsNastId: nastid-qauser
+
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!10002,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+c: USA
+displayName: qaadmin
+givenName: qaadmin
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.999!10002
+locked: FALSE
+mail: qaadmin@example.com
+rsGroupDN: cn=Idm Admin,ou=groups,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+middleName: none
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.999
+preferredLanguage: en-US
+RCN: RCN-QATestingCustomer
+RPN: RPN-qauser-000-10002
+rsApiKey: qaadmin-000-10002
+secretQuestion: What is the name of your employer?
+secretAnswer: Rackspace
+clearPassword: P@$$w0rd
+softDeleted: FALSE
+status: ACTIVE
+sn: Tester
+timeZone: America/Chicago
+uid: qaadmin
+userPassword: P@$$w0rd
+rsMossoId: 99935813
+rsNastId: nastid-qaadmin
+
+######################################## Client Groups #######################################
+
+dn: cn=Idm Admin,ou=groups,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: groupOfNames
+objectClass: clientGroup
+cn: Idm Admin
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
 
 ######################################## Permissions #######################################
 
@@ -672,3 +1050,103 @@ RCN: RACKSPACE
 blob: DELETE token/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
+
+################################################### IDM Permissions Granted to Clients #####################################
+
+dn: cn=setCustomerLockStatus,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!3333,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: setCustomerLockStatus
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=authWithUsernameAndApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: authWithUsernameAndApiKey
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=authWithUsernameAndPassword,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: authWithUsernameAndPassword
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=authWithMossoIdAndApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: authWithMossoIdAndApiKey
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=authWithNastIdAndApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: authWithNastIdAndApiKey
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=getBaseUrls,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getBaseUrls
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=getBaseUrl,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getBaseUrl
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=addBaseUrl,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: addBaseUrl
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=deleteBaseUrl,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: deleteBaseUrl
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=getServiceCatalog,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getServiceCatalog
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=setApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: setApiKey
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=updateUserMossoId,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: updateUserMossoId
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=updateUserNastId,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: updateUserNastId
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=updateUserRPN,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: updateUserRPN
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
