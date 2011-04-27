@@ -44,17 +44,17 @@ public class AuthConverter {
         DateTime passwordExpirationDate = null;
 
         if (scopeAccess instanceof hasAccessToken) {
-        	hasAccessToken tokenScopeAccessObject = ((hasAccessToken)scopeAccess);
+            hasAccessToken tokenScopeAccessObject = ((hasAccessToken)scopeAccess);
             authJaxb.setAccessToken(tokenConverter.toTokenJaxb(
-            		tokenScopeAccessObject.getAccessTokenString(), 
-            		tokenScopeAccessObject.getAccessTokenExp()));
+                    tokenScopeAccessObject.getAccessTokenString(), 
+                    tokenScopeAccessObject.getAccessTokenExp()));
         }
 
         if (scopeAccess instanceof hasRefreshToken) {
-        	hasRefreshToken tokenScopeAccessObject = ((hasRefreshToken)scopeAccess);
+            hasRefreshToken tokenScopeAccessObject = ((hasRefreshToken)scopeAccess);
             authJaxb.setRefreshToken(tokenConverter.toTokenJaxb(
-            		tokenScopeAccessObject.getRefreshTokenString(),
-            		tokenScopeAccessObject.getRefreshTokenExp()));
+                    tokenScopeAccessObject.getRefreshTokenString(),
+                    tokenScopeAccessObject.getRefreshTokenExp()));
         }
 
         if (scopeAccess.getClientId() != null) {
@@ -63,26 +63,26 @@ public class AuthConverter {
         }
 
         if (scopeAccess instanceof UserScopeAccessObject) {
-        	UserScopeAccessObject userScopeAccess = (UserScopeAccessObject) scopeAccess;
-        	passwordExpirationDate = userScopeAccess.getUserPasswordExpirationDate();
-        	
-        	if(userScopeAccess.getUsername() != null) {
+            UserScopeAccessObject userScopeAccess = (UserScopeAccessObject) scopeAccess;
+            passwordExpirationDate = userScopeAccess.getUserPasswordExpirationDate();
+            
+            if(userScopeAccess.getUsername() != null) {
                 authJaxb.setUser(userConverter.toUserJaxbFromUser(userScopeAccess.getUsername(), 
-                		userScopeAccess.getUserRCN()));
-        	}
+                        userScopeAccess.getUserRCN()));
+            }
         }
         
         if (scopeAccess instanceof RackerScopeAccessObject) {
-        	RackerScopeAccessObject rackerScopeAccess = (RackerScopeAccessObject) scopeAccess;
-        	
-        	if(rackerScopeAccess.getRackerId() != null) {
+            RackerScopeAccessObject rackerScopeAccess = (RackerScopeAccessObject) scopeAccess;
+            
+            if(rackerScopeAccess.getRackerId() != null) {
                 authJaxb.setRacker(userConverter.toRackerJaxb(rackerScopeAccess.getRackerId()));
-        	}
+            }
         }
         
         if (scopeAccess instanceof PasswordResetScopeAccessObject) {
             authJaxb.setIsPasswordResetOnlyToken(true);
-        	passwordExpirationDate = ((PasswordResetScopeAccessObject)scopeAccess).getUserPasswordExpirationDate();
+            passwordExpirationDate = ((PasswordResetScopeAccessObject)scopeAccess).getUserPasswordExpirationDate();
         }
         
         if (passwordExpirationDate != null) {    
@@ -115,7 +115,7 @@ public class AuthConverter {
         
         if (usa.getAccessTokenString() != null) {
             com.rackspace.idm.jaxb.Token token = this.tokenConverter.toTokenJaxb(
-            		usa.getAccessTokenString(), usa.getAccessTokenExp());
+                    usa.getAccessTokenString(), usa.getAccessTokenExp());
             auth.setToken(token);
         }
         
