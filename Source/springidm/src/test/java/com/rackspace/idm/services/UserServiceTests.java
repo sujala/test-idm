@@ -19,13 +19,12 @@ import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.AccessToken;
-import com.rackspace.idm.domain.entity.AccessToken.IDM_SCOPE;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
@@ -70,6 +69,7 @@ public class UserServiceTests {
     String email = "test@example.com";
     String apiKey = "1234567890";
 
+    String uniqueId = "uniqueId";
     String middlename = "middle";
     String secretQuestion = "question";
     String secretAnswer = "answer";
@@ -294,15 +294,11 @@ public class UserServiceTests {
     public void shouldAuthenticateUser() {
         EasyMock.expect(mockUserDao.authenticate(username, password)).andReturn(
             this.getTrueAuthenticationResult());
-            
-        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(null);
-        EasyMock.replay(mockClientService);
         
         EasyMock.replay(mockUserDao);
         UserAuthenticationResult uaResult = userService.authenticate(username, password);
         Assert.assertTrue(uaResult.isAuthenticated());
         EasyMock.verify(mockUserDao);
-        EasyMock.verify(mockClientService);
     }
 
     @Test
@@ -320,15 +316,21 @@ public class UserServiceTests {
 
     @Test
     public void shouldAuthenticateRacker() {
-        EasyMock.expect(mockRackerDao.authenticate("racker", password))
+        
+        Racker racker = new Racker();
+        racker.setRackerId(rackerId);
+        racker.setUniqueId(uniqueId);
+        EasyMock.expect(mockRackerDao.authenticate(rackerId, password))
             .andReturn(true);
         EasyMock.replay(mockRackerDao);
         
+        EasyMock.expect(mockUserDao.getRackerByRackerId(rackerId)).andReturn(racker);
+        EasyMock.replay(mockUserDao);
       
         
-        UserAuthenticationResult uaResult = trustedUserService.authenticate("racker", password);
+        UserAuthenticationResult uaResult = trustedUserService.authenticate(rackerId, password);
         Assert.assertTrue(uaResult.isAuthenticated());
-        EasyMock.verify(mockRackerDao);
+        EasyMock.verify(mockRackerDao, mockUserDao);
     }
 
     @Test
@@ -475,8 +477,12 @@ public class UserServiceTests {
         
         List<Client> clients = getFakeClients();
         
-        AccessToken token = new AccessToken(tokenString, tokenExpiration,
-            user, clients.get(0), IDM_SCOPE.SET_PASSWORD);
+        PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
+        token.setAccessTokenString(tokenString);
+        token.setAccessTokenExp(tokenExpiration.toDate());
+        token.setUsername(username);
+        token.setUserRCN(customerId);
+        token.setClientId("CLIENTID");
         
         boolean isRecovery = true;
         
@@ -495,7 +501,7 @@ public class UserServiceTests {
         EasyMock.expect(mockUserDao.getUserByCustomerIdAndUsername(customerId, username)).andReturn(user);
         EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).atLeastOnce();
         
-        boolean isSelfUpdate = token.getOwner().equals(username);
+        boolean isSelfUpdate = token.getUsername().equals(username);
         
         mockUserDao.updateUser(user, isSelfUpdate);
         
@@ -524,8 +530,12 @@ public class UserServiceTests {
         
         List<Client> clients = getFakeClients();
         
-        AccessToken token = new AccessToken(tokenString, tokenExpiration,
-            user, clients.get(0), IDM_SCOPE.SET_PASSWORD);
+        PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
+        token.setAccessTokenString(tokenString);
+        token.setAccessTokenExp(tokenExpiration.toDate());
+        token.setUsername(username);
+        token.setUserRCN(customerId);
+        token.setClientId("CLIENTID");
         
         boolean isRecovery = false;
         
@@ -544,7 +554,7 @@ public class UserServiceTests {
         EasyMock.expect(mockUserDao.getUserByCustomerIdAndUsername(customerId, username)).andReturn(user);
         EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).atLeastOnce();
         
-        boolean isSelfUpdate = token.getOwner().equals(username);
+        boolean isSelfUpdate = token.getUsername().equals(username);
         
         mockUserDao.updateUser(user, isSelfUpdate);
         
@@ -566,8 +576,12 @@ public class UserServiceTests {
         
         List<Client> clients = getFakeClients();
         
-        AccessToken token = new AccessToken(tokenString, tokenExpiration,
-            user, clients.get(0), IDM_SCOPE.SET_PASSWORD);
+        PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
+        token.setAccessTokenString(tokenString);
+        token.setAccessTokenExp(tokenExpiration.toDate());
+        token.setUsername(username);
+        token.setUserRCN(customerId);
+        token.setClientId("CLIENTID");
         
         boolean isRecovery = false;
         
@@ -586,7 +600,7 @@ public class UserServiceTests {
         EasyMock.expect(mockUserDao.getUserByCustomerIdAndUsername(customerId, username)).andReturn(user);
         EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).atLeastOnce();
         
-        boolean isSelfUpdate = token.getOwner().equals(username);
+        boolean isSelfUpdate = token.getUsername().equals(username);
         
         mockUserDao.updateUser(user, isSelfUpdate);
         
@@ -608,8 +622,12 @@ public class UserServiceTests {
         
         List<Client> clients = getFakeClients();
         
-        AccessToken token = new AccessToken(tokenString, tokenExpiration,
-            user, clients.get(0), IDM_SCOPE.SET_PASSWORD);
+        PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
+        token.setAccessTokenString(tokenString);
+        token.setAccessTokenExp(tokenExpiration.toDate());
+        token.setUsername(username);
+        token.setUserRCN(customerId);
+        token.setClientId("CLIENTID");
         
         boolean isRecovery = false;
         
