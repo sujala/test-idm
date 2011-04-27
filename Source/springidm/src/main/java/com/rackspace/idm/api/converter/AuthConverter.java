@@ -9,7 +9,6 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.joda.time.DateTime;
 
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
 import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
@@ -105,13 +104,13 @@ public class AuthConverter {
         return authJaxb;
     }
 
-    public CloudAuth toCloudAuthJaxb(AccessToken accessToken, List<CloudEndpoint> endpoints) {
+    public CloudAuth toCloudAuthJaxb(UserScopeAccessObject usa, List<CloudEndpoint> endpoints) {
         CloudAuth auth = of.createCloudAuth();
         
-        if (accessToken != null) {
+        if (usa.getAccessToken() != null) {
             com.rackspace.idm.jaxb.Token token = of.createToken();
-            token.setExpiresIn(accessToken.getExpiration());
-            token.setId(accessToken.getTokenString());
+            token.setExpiresIn(usa.getAccessToken().getExpiration());
+            token.setId(usa.getAccessTokenString());
             auth.setToken(token);
         }
         
