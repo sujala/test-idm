@@ -26,11 +26,9 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.ClientConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.AbstractCustomerConsumer;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
-import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.CustomerService;
@@ -38,7 +36,6 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
 
@@ -51,12 +48,12 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class CustomerClientsResource extends AbstractCustomerConsumer {
     
-    private ScopeAccessService scopeAccessService;
-    private InputValidator inputValidator;
-    private ClientConverter clientConverter;
-    private ClientService clientService;
-    private CustomerClientResource customerClientResource;
-    private AuthorizationService authorizationService;
+    private final ScopeAccessService scopeAccessService;
+    private final InputValidator inputValidator;
+    private final ClientConverter clientConverter;
+    private final ClientService clientService;
+    private final CustomerClientResource customerClientResource;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired

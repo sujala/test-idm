@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -24,7 +23,6 @@ import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -35,10 +33,10 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class CustomerLockResource extends AbstractCustomerConsumer {
-    private CustomerService customerService;
-    private AuthorizationService authorizationService;
-    private ScopeAccessService scopeAccessService;
-    private OAuthService oauthService;
+    private final CustomerService customerService;
+    private final AuthorizationService authorizationService;
+    private final ScopeAccessService scopeAccessService;
+    private final OAuthService oauthService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired

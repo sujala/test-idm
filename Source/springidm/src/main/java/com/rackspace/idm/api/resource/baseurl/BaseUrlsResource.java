@@ -25,15 +25,12 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.EndPointConverter;
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
-import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.jaxb.BaseURL;
 import com.rackspace.idm.validation.InputValidator;
@@ -48,11 +45,11 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class BaseUrlsResource {
    
-    private AuthorizationService authorizationService;
-    private EndpointService endpointService;
+    private final AuthorizationService authorizationService;
+    private final EndpointService endpointService;
     private final ScopeAccessService scopeAccessService;
-    private EndPointConverter endpointConverter;
-    private InputValidator inputValidator;
+    private final EndPointConverter endpointConverter;
+    private final InputValidator inputValidator;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired

@@ -22,15 +22,12 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.CustomerConverter;
 import com.rackspace.idm.api.resource.customer.client.CustomerClientsResource;
 import com.rackspace.idm.api.resource.customer.user.CustomerUsersResource;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
-import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.jaxb.PasswordRotationPolicy;
 import com.sun.jersey.core.provider.EntityHolder;
 
@@ -43,13 +40,13 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class CustomerResource extends AbstractCustomerConsumer {
 
-    private CustomerClientsResource customerClientsResource;
-    private CustomerLockResource customerLockResource;
-    private CustomerUsersResource customerUsersResource;
-    private CustomerService customerService;
-    private ScopeAccessService scopeAccessService;
-    private CustomerConverter customerConverter;
-    private AuthorizationService authorizationService;
+    private final CustomerClientsResource customerClientsResource;
+    private final CustomerLockResource customerLockResource;
+    private final CustomerUsersResource customerUsersResource;
+    private final CustomerService customerService;
+    private final ScopeAccessService scopeAccessService;
+    private final CustomerConverter customerConverter;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired

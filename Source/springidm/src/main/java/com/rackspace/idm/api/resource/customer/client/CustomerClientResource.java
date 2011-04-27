@@ -22,16 +22,12 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.ClientConverter;
 import com.rackspace.idm.api.resource.customer.client.group.ClientGroupsResource;
 import com.rackspace.idm.api.resource.customer.client.permission.PermissionsResource;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
-import com.rackspace.idm.domain.service.AccessTokenService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.jaxb.ClientCredentials;
@@ -45,12 +41,12 @@ import com.rackspace.idm.jaxb.ClientCredentials;
 public class CustomerClientResource extends AbstractClientConsumer {
 
    
-    private ScopeAccessService scopeAccessService;
-    private ClientConverter clientConverter;
-    private ClientService clientService;
-    private PermissionsResource permissionsResource;
-    private ClientGroupsResource clientGroupsResource;
-    private AuthorizationService authorizationService;
+    private final ScopeAccessService scopeAccessService;
+    private final ClientConverter clientConverter;
+    private final ClientService clientService;
+    private final PermissionsResource permissionsResource;
+    private final ClientGroupsResource clientGroupsResource;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
