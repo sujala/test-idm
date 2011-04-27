@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.ErrorMsg;
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.config.LoggerFactoryWrapper;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.ClientConflictException;
@@ -63,8 +62,8 @@ import com.unboundid.ldap.sdk.LDAPException;
 @Component
 @Provider
 public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
-    private ResourceBundle faultMessageConfig;
-    private Logger logger = LoggerFactory.getLogger(ApiExceptionMapper.class);
+    private final ResourceBundle faultMessageConfig;
+    private final Logger logger = LoggerFactory.getLogger(ApiExceptionMapper.class);
 
     @Context
     private HttpHeaders headers;
@@ -74,6 +73,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         this.faultMessageConfig = faultMessageConfig;
     }
     
+    @Override
     public Response toResponse(Throwable thrown) {
         Throwable e = thrown;
 
