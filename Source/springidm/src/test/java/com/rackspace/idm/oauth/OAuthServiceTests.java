@@ -317,8 +317,7 @@ public class OAuthServiceTests {
         mockScopeAccessService.updateScopeAccess(EasyMock
                 .anyObject(ScopeAccessObject.class));
 
-        EasyMock.replay(mockClientService, mockScopeAccessService,
-                mockScopeAccessService);
+        EasyMock.replay(mockClientService, mockScopeAccessService);
         final ScopeAccessObject authData = oauthService.getTokens(grantType,
                 authCredentials, currentTime);
 

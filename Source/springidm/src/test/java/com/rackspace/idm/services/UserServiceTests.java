@@ -656,18 +656,6 @@ public class UserServiceTests {
         userService.setUserPassword(customerId, username, userCred, token, isRecovery);
     }
 
-
-
-    @Test(expected = IllegalStateException.class)
-    public void shouldThrowErrorIfInumNullCreateAccessTokenForUser() {
-        final User user = getFakeUser();
-        user.setInum("");
-
-        EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
-        EasyMock.replay(mockUserDao);
-        userService.getUser(username);
-    }
-
     private User getFakeUser() {
 
         final UserHumanName name = new UserHumanName(firstname, middlename, lastname);

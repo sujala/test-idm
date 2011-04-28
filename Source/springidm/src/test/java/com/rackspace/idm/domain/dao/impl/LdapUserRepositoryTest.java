@@ -184,7 +184,6 @@ public class LdapUserRepositoryTest {
         }
     }
     
-    @Ignore
     @Test
     public void shouldAddFindDeleteRacker() {
         Racker racker = new Racker();

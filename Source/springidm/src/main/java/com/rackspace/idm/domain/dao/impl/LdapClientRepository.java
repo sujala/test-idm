@@ -437,7 +437,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             throw new NotFoundException();
         }
 
-        String searchDN = "ou=groups," + client.getUniqueId();
+        String searchDN = client.getUniqueId();
 
         Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
             ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();

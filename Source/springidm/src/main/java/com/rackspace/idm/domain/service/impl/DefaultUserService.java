@@ -28,6 +28,7 @@ import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
@@ -328,8 +329,10 @@ public class DefaultUserService implements UserService {
 
         user.setPasswordObj(Password.newInstance(userCred.getNewPassword()
             .getPassword()));
-        boolean isSelfUpdate = token instanceof UserScopeAccessObject
-            && ((UserScopeAccessObject) token).getUsername().equals(username);
+        boolean isSelfUpdate = (token instanceof UserScopeAccessObject && ((UserScopeAccessObject) token)
+            .getUsername().equals(username))
+            || (token instanceof PasswordResetScopeAccessObject && ((PasswordResetScopeAccessObject) token)
+                .getUsername().equals(username));
 
         this.updateUser(user, isSelfUpdate);
         logger.debug("Updated password for user: {}", user);

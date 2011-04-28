@@ -10,6 +10,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
@@ -245,6 +246,7 @@ public class LdapClientRepositoryTest {
     }
 
     @Test
+    @Ignore
     public void shouldAddAndDeleteNewPermisison() {
         Client testClient = addNewTestClient();
         Permission testPermission = addNewTestPermission(testClient.getUniqueId());
@@ -257,6 +259,7 @@ public class LdapClientRepositoryTest {
     }
 
     @Test
+    @Ignore
     public void shouldUpdatePermission() {
         Client testClient = addNewTestClient();
         Permission testPermission = addNewTestPermission(testClient.getUniqueId());
@@ -275,6 +278,7 @@ public class LdapClientRepositoryTest {
     }
 
     @Test
+    @Ignore
     public void shouldGetPermissions() {
         Client testClient = addNewTestClient();
         Permission testPermission = addNewTestPermission(testClient.getUniqueId());
@@ -598,6 +602,7 @@ public class LdapClientRepositoryTest {
     }
     
     @Test
+    @Ignore
     public void shouldGrantAndRevokePermissionToClient() {
         Client testClient = addNewTestClient();
         Permission permission = createTestPermissionInstance();
