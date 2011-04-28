@@ -383,7 +383,7 @@ public class DefaultOAuthService implements OAuthService {
 
         if (refreshExpiration.isBefore(current)) {
             scopeAccess.setRefreshTokenString(this.generateToken());
-            scopeAccess.setAccessTokenExp(current.plusYears(100).toDate());
+            scopeAccess.setRefreshTokenExp(current.plusYears(100).toDate());
         }
 
         this.scopeAccessService.updateScopeAccess(scopeAccess);
