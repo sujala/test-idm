@@ -47,7 +47,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     }
 
     @Override
-    public Boolean addPermissionToScopeAccess(String scopeAccessUniqueId, PermissionObject permission) {
+    public PermissionObject addPermissionToScopeAccess(String scopeAccessUniqueId, PermissionObject permission) {
         if (permission instanceof PermissionObject) {
 
             LDAPConnection conn = null;
@@ -56,15 +56,14 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
                 final LDAPPersister<PermissionObject> persister = LDAPPersister.getInstance(PermissionObject.class);
                 conn = getAppConnPool().getConnection();
                 persister.add(po, conn, scopeAccessUniqueId);
-                final PermissionObject permissionObject = persister.get(po, conn, scopeAccessUniqueId);
-                return permissionObject != null;
+                return persister.get(po, conn, scopeAccessUniqueId);
             } catch (final LDAPException e) {
                 getLogger().error("Error adding permission", e);
             } finally {
                 getAppConnPool().releaseConnection(conn);
             }
         }
-        return Boolean.FALSE;
+        return null;
     }
 
     @Override
