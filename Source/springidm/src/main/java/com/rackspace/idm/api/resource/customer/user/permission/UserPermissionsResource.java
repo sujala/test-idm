@@ -20,15 +20,12 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.converter.UserConverter;
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
-import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -40,11 +37,11 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class UserPermissionsResource {
 
-    private ScopeAccessService scopeAccessService;
-    private UserService userService;
+    private final ScopeAccessService scopeAccessService;
+    private final UserService userService;
     private ClientService clientService;
     private PermissionConverter permissionConverter;
-    private AuthorizationService authorizationService;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
