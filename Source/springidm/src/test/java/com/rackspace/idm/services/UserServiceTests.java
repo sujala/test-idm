@@ -18,6 +18,7 @@ import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.RefreshTokenDao;
+import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientGroup;
@@ -59,6 +60,7 @@ public class UserServiceTests {
     AuthDao mockRackerDao;
     ClientService mockClientService;
     ScopeAccessService mockScopeAccessService;
+    ScopeAccessObjectDao mockScopeAccessObjectDao;
 
     String customerId = "123456";
     String username = "testuser";
@@ -103,13 +105,14 @@ public class UserServiceTests {
         mockEmailService = EasyMock.createMock(EmailService.class);
         mockRackerDao = EasyMock.createMock(AuthDao.class);
         mockClientService = EasyMock.createMock(ClientService.class);
+        mockScopeAccessObjectDao = EasyMock.createMock(ScopeAccessObjectDao.class);
 
         userService = new DefaultUserService(mockUserDao, mockRackerDao,
-                mockCustomerDao,
+                mockCustomerDao,mockScopeAccessObjectDao,
                 mockEmailService, mockClientService, false);
 
         trustedUserService = new DefaultUserService(mockUserDao, mockRackerDao,
-                mockCustomerDao,
+                mockCustomerDao,mockScopeAccessObjectDao,
                 mockEmailService, mockClientService, true);
     }
 
@@ -502,7 +505,7 @@ public class UserServiceTests {
         EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>()).atLeastOnce();
 
         final boolean isSelfUpdate = token.getUsername().equals(username);
-
+        
         mockUserDao.updateUser(user, isSelfUpdate);
 
         EasyMock.replay(mockRackerDao);

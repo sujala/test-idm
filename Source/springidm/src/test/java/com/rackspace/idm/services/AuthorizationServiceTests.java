@@ -23,6 +23,8 @@ import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
@@ -140,9 +142,11 @@ public class AuthorizationServiceTests {
 
         EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(tokenString, perm)).andReturn(true);
         EasyMock.replay(mockScopeAccessDao);
+
         
         EasyMock.expect(mockWadlTrie.getPermissionFor(verb, mockUriInfo)).andReturn(permissionId);
         EasyMock.replay(mockWadlTrie);
+
 
         boolean authorized = service.authorizeClient(authorizedClientToken, verb, mockUriInfo);
 
@@ -155,6 +159,7 @@ public class AuthorizationServiceTests {
         EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(tokenString, perm)).andReturn(false);
         EasyMock.replay(mockScopeAccessDao);
         
+
         EasyMock.expect(mockWadlTrie.getPermissionFor(verb, mockUriInfo)).andReturn(permissionId);
         EasyMock.replay(mockWadlTrie);
         
