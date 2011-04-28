@@ -49,6 +49,7 @@ public class UserStatusResource {
         UserConverter userConverter, AuthorizationService authorizationService) {
         this.oauthService = accessTokenService;
         this.userService = userService;
+        this.scopeAccessService = scopeAccessService;
         this.userConverter = userConverter;
         this.authorizationService = authorizationService;
     }
