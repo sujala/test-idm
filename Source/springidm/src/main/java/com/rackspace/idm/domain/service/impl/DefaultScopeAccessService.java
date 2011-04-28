@@ -48,11 +48,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void addScopeAccess(String parentUniqueId,
+    public ScopeAccessObject addScopeAccess(String parentUniqueId,
             ScopeAccessObject scopeAccess) {
         logger.info("Adding scopeAccess {}", scopeAccess);
-        this.scopeAccessDao.addScopeAccess(parentUniqueId, scopeAccess);
+        ScopeAccessObject newScopeAccess = this.scopeAccessDao.addScopeAccess(parentUniqueId, scopeAccess);
         logger.info("Added scopeAccess {}", scopeAccess);
+        return newScopeAccess;
     }
 
     @Override

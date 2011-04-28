@@ -335,7 +335,7 @@ public class DefaultOAuthService implements OAuthService {
             scopeAccess = new ClientScopeAccessObject();
             scopeAccess.setClientId(client.getClientId());
             scopeAccess.setClientRCN(client.getCustomerId());
-            this.scopeAccessService.addScopeAccess(client.getUniqueId(),
+            scopeAccess = (ClientScopeAccessObject)this.scopeAccessService.addScopeAccess(client.getUniqueId(),
                 scopeAccess);
         }
 
@@ -347,7 +347,7 @@ public class DefaultOAuthService implements OAuthService {
         if (accessExpiration.isBefore(current)) {
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(current.plusSeconds(
-                this.getCloudAuthDefaultTokenExpirationSeconds()).toDate());
+                this.getDefaultTokenExpirationSeconds()).toDate());
         }
 
         this.scopeAccessService.updateScopeAccess(scopeAccess);
@@ -367,7 +367,7 @@ public class DefaultOAuthService implements OAuthService {
             scopeAccess.setRackerId(racker.getRackerId());
             scopeAccess.setClientId(client.getClientId());
             scopeAccess.setClientRCN(client.getCustomerId());
-            this.scopeAccessService.addScopeAccess(racker.getUniqueId(),
+            scopeAccess = (RackerScopeAccessObject)this.scopeAccessService.addScopeAccess(racker.getUniqueId(),
                 scopeAccess);
         }
 

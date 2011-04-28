@@ -9,7 +9,7 @@ import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 
 public interface ScopeAccessService {
     
-    void addScopeAccess(String parentUniqueId, ScopeAccessObject scopeAccess);
+    ScopeAccessObject addScopeAccess(String parentUniqueId, ScopeAccessObject scopeAccess);
     
     boolean authenticateAccessToken(String accessTokenStr);
     
