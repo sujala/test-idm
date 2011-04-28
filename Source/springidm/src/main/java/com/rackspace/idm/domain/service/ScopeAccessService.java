@@ -51,7 +51,7 @@ public interface ScopeAccessService {
     
     UserScopeAccessObject getUserScopeAccessForClientIdByUsernameAndPassword(String username, String password, String clientId);
     
-    void removePermissionFromScopeAccess(String scopeAccessUniqueId, String permissionId);
+    void removePermission(PermissionObject permission);
     
     void updatePermission(PermissionObject permission);
     

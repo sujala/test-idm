@@ -33,25 +33,28 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     private final AuthHeaderHelper authHeaderHelper;
     private final ClientService clientService;
-    private Configuration config;
+    private final Configuration config;
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ScopeAccessObjectDao scopeAccessDao;
     private final UserService userService;
 
     public DefaultScopeAccessService(UserService userService,
-            ClientService clientService, ScopeAccessObjectDao scopeAccessDao,AuthHeaderHelper authHeaderHelper) {
+        ClientService clientService, ScopeAccessObjectDao scopeAccessDao,
+        AuthHeaderHelper authHeaderHelper, Configuration config) {
         this.userService = userService;
         this.clientService = clientService;
         this.scopeAccessDao = scopeAccessDao;
         this.authHeaderHelper = authHeaderHelper;
+        this.config = config;
     }
 
     @Override
     public ScopeAccessObject addScopeAccess(String parentUniqueId,
-            ScopeAccessObject scopeAccess) {
+        ScopeAccessObject scopeAccess) {
         logger.info("Adding scopeAccess {}", scopeAccess);
-        ScopeAccessObject newScopeAccess = this.scopeAccessDao.addScopeAccess(parentUniqueId, scopeAccess);
+        ScopeAccessObject newScopeAccess = this.scopeAccessDao.addScopeAccess(
+            parentUniqueId, scopeAccess);
         logger.info("Added scopeAccess {}", scopeAccess);
         return newScopeAccess;
     }
@@ -63,31 +66,31 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         // check token is valid and not expired
         final ScopeAccessObject scopeAccess = this.scopeAccessDao
-        .getScopeAccessByAccessToken(accessTokenStr);
+            .getScopeAccessByAccessToken(accessTokenStr);
         if (scopeAccess instanceof hasAccessToken) {
             if (!((hasAccessToken) scopeAccess)
-                    .isAccessTokenExpired(new DateTime())) {
+                .isAccessTokenExpired(new DateTime())) {
                 authenticated = true;
                 MDC.put(Audit.WHO, scopeAccess.getAuditContext());
             }
         }
 
         logger
-        .debug("Authorized Token: {} : {}", accessTokenStr, authenticated);
+            .debug("Authorized Token: {} : {}", accessTokenStr, authenticated);
         return authenticated;
     }
 
     @Override
     public boolean doesAccessTokenHavePermission(String accessTokenString,
-            PermissionObject permission) {
+        PermissionObject permission) {
         return this.scopeAccessDao.doesAccessTokenHavePermission(
-                accessTokenString, permission);
+            accessTokenString, permission);
     }
 
     @Override
     public void expireAccessToken(String tokenString) {
         final ScopeAccessObject scopeAccess = this.scopeAccessDao
-        .getScopeAccessByAccessToken(tokenString);
+            .getScopeAccessByAccessToken(tokenString);
         if (scopeAccess == null) {
             return;
         }
@@ -122,7 +125,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         final List<ScopeAccessObject> saList = this.scopeAccessDao
-        .getScopeAccessesByParent(user.getUniqueId());
+            .getScopeAccessesByParent(user.getUniqueId());
 
         for (final ScopeAccessObject sa : saList) {
             final UserScopeAccessObject usa = (UserScopeAccessObject) sa;
@@ -134,40 +137,41 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public ScopeAccessObject getAccessTokenByAuthHeader(String authHeader) {
-        final String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
+        final String tokenStr = authHeaderHelper
+            .getTokenFromAuthHeader(authHeader);
         final ScopeAccessObject scopeAccess = scopeAccessDao
-        .getScopeAccessByAccessToken(tokenStr);
+            .getScopeAccessByAccessToken(tokenStr);
         return scopeAccess;
     }
 
     @Override
     public ClientScopeAccessObject getClientScopeAccessForClientId(
-            String clientUniqueId, String clientId) {
+        String clientUniqueId, String clientId) {
         logger.debug("Getting Client ScopeAccess by clientId", clientId);
         final ClientScopeAccessObject scopeAccess = (ClientScopeAccessObject) this.scopeAccessDao
-        .getScopeAccessForParentByClientId(clientUniqueId, clientId);
+            .getScopeAccessForParentByClientId(clientUniqueId, clientId);
         logger.debug("Got Client ScopeAccess {} by clientId {}", scopeAccess,
-                clientId);
+            clientId);
         return scopeAccess;
     }
 
     @Override
     public PasswordResetScopeAccessObject getOrCreatePasswordResetScopeAccessForUser(
-            String userUniqueId) {
+        String userUniqueId) {
         PasswordResetScopeAccessObject prsa = (PasswordResetScopeAccessObject) this.scopeAccessDao
-        .getScopeAccessForParentByClientId(userUniqueId,
+            .getScopeAccessForParentByClientId(userUniqueId,
                 PASSWORD_RESET_CLIENT_ID);
         if (prsa == null) {
             prsa = new PasswordResetScopeAccessObject();
             prsa.setAccessTokenExp(new DateTime().plusSeconds(
-                    this.getDefaultTokenExpirationSeconds()).toDate());
+                this.getDefaultTokenExpirationSeconds()).toDate());
             prsa.setAccessTokenString(this.generateToken());
             prsa.setClientId(PASSWORD_RESET_CLIENT_ID);
             this.scopeAccessDao.addScopeAccess(userUniqueId, prsa);
         } else {
             if (prsa.isAccessTokenExpired(new DateTime())) {
                 prsa.setAccessTokenExp(new DateTime().plusSeconds(
-                        this.getDefaultTokenExpirationSeconds()).toDate());
+                    this.getDefaultTokenExpirationSeconds()).toDate());
                 prsa.setAccessTokenString(this.generateToken());
                 this.scopeAccessDao.updateScopeAccess(prsa);
             }
@@ -177,12 +181,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public RackerScopeAccessObject getRackerScopeAccessForClientId(
-            String rackerUniqueId, String clientId) {
+        String rackerUniqueId, String clientId) {
         logger.debug("Getting Racker ScopeAccess by clientId", clientId);
         final RackerScopeAccessObject scopeAccess = (RackerScopeAccessObject) this.scopeAccessDao
-        .getScopeAccessForParentByClientId(rackerUniqueId, clientId);
+            .getScopeAccessForParentByClientId(rackerUniqueId, clientId);
         logger.debug("Got Racker ScopeAccess {} by clientId {}", scopeAccess,
-                clientId);
+            clientId);
         return scopeAccess;
     }
 
@@ -190,9 +194,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public ScopeAccessObject getScopeAccessByAccessToken(String accessToken) {
         logger.debug("Getting ScopeAccess by Access Token {}", accessToken);
         final ScopeAccessObject scopeAccess = this.scopeAccessDao
-        .getScopeAccessByAccessToken(accessToken);
+            .getScopeAccessByAccessToken(accessToken);
         logger.debug("Got ScopeAccess {} by Access Token {}", scopeAccess,
-                accessToken);
+            accessToken);
         return scopeAccess;
     }
 
@@ -200,112 +204,116 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public ScopeAccessObject getScopeAccessByRefreshToken(String refreshToken) {
         logger.debug("Getting ScopeAccess by Refresh Token {}", refreshToken);
         final ScopeAccessObject scopeAccess = this.scopeAccessDao
-        .getScopeAccessByRefreshToken(refreshToken);
+            .getScopeAccessByRefreshToken(refreshToken);
         logger.debug("Got ScopeAccess {} by Refresh Token {}", scopeAccess,
-                refreshToken);
+            refreshToken);
         return scopeAccess;
     }
 
     @Override
     public UserScopeAccessObject getUserScopeAccessForClientId(
-            String userUniqueId, String clientId) {
+        String userUniqueId, String clientId) {
         logger.debug("Getting User ScopeAccess by clientId {}", clientId);
         final UserScopeAccessObject scopeAccess = (UserScopeAccessObject) this.scopeAccessDao
-        .getScopeAccessForParentByClientId(userUniqueId, clientId);
+            .getScopeAccessForParentByClientId(userUniqueId, clientId);
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess,
-                clientId);
+            clientId);
         return scopeAccess;
     }
 
     @Override
     public UserScopeAccessObject getUserScopeAccessForClientIdByUsernameAndApiCredentials(
-            String username, String apiKey, String clientId) {
+        String username, String apiKey, String clientId) {
         logger.debug("Getting User {} ScopeAccess by clientId {}", username,
-                clientId);
+            clientId);
         final UserAuthenticationResult result = this.userService
-        .authenticateWithApiKey(username, apiKey);
+            .authenticateWithApiKey(username, apiKey);
         if (!result.isAuthenticated()) {
             throw new NotAuthenticatedException();
         }
-        final UserScopeAccessObject scopeAccess = this.getUserScopeAccessForClientId(
-                result.getUser().getUsername(), clientId);
+        final UserScopeAccessObject scopeAccess = this
+            .getUserScopeAccessForClientId(result.getUser().getUsername(),
+                clientId);
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(
-                    getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+                getDefaultCloudAuthTokenExpirationSeconds()).toDate());
             this.scopeAccessDao.updateScopeAccess(scopeAccess);
         }
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess,
-                clientId);
+            clientId);
         return scopeAccess;
     }
 
     @Override
     public UserScopeAccessObject getUserScopeAccessForClientIdByMossoIdAndApiCredentials(
-            int mossoId, String apiKey, String clientId) {
+        int mossoId, String apiKey, String clientId) {
         logger.debug("Getting mossoId {} ScopeAccess by clientId {}", mossoId,
-                clientId);
+            clientId);
         final UserAuthenticationResult result = this.userService
-        .authenticateWithMossoIdAndApiKey(mossoId, apiKey);
+            .authenticateWithMossoIdAndApiKey(mossoId, apiKey);
         if (!result.isAuthenticated()) {
             throw new NotAuthenticatedException();
         }
-        final UserScopeAccessObject scopeAccess = this.getUserScopeAccessForClientId(
-                result.getUser().getUsername(), clientId);
+        final UserScopeAccessObject scopeAccess = this
+            .getUserScopeAccessForClientId(result.getUser().getUsername(),
+                clientId);
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(
-                    getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+                getDefaultCloudAuthTokenExpirationSeconds()).toDate());
             this.scopeAccessDao.updateScopeAccess(scopeAccess);
         }
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess,
-                clientId);
+            clientId);
         return scopeAccess;
     }
 
     @Override
     public UserScopeAccessObject getUserScopeAccessForClientIdByNastIdAndApiCredentials(
-            String nastId, String apiKey, String clientId) {
+        String nastId, String apiKey, String clientId) {
         logger.debug("Getting nastId {} ScopeAccess by clientId {}", nastId,
-                clientId);
+            clientId);
         final UserAuthenticationResult result = this.userService
-        .authenticateWithNastIdAndApiKey(nastId, apiKey);
+            .authenticateWithNastIdAndApiKey(nastId, apiKey);
         if (!result.isAuthenticated()) {
             throw new NotAuthenticatedException();
         }
-        final UserScopeAccessObject scopeAccess = this.getUserScopeAccessForClientId(
-                result.getUser().getUsername(), clientId);
+        final UserScopeAccessObject scopeAccess = this
+            .getUserScopeAccessForClientId(result.getUser().getUsername(),
+                clientId);
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(
-                    getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+                getDefaultCloudAuthTokenExpirationSeconds()).toDate());
             this.scopeAccessDao.updateScopeAccess(scopeAccess);
         }
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess,
-                clientId);
+            clientId);
         return scopeAccess;
     }
 
     @Override
     public UserScopeAccessObject getUserScopeAccessForClientIdByUsernameAndPassword(
-            String username, String password, String clientId) {
+        String username, String password, String clientId) {
         logger.debug("Getting User {} ScopeAccess by clientId {}", username,
-                clientId);
+            clientId);
         final UserAuthenticationResult result = this.userService.authenticate(
-                username, password);
+            username, password);
         if (!result.isAuthenticated()) {
             throw new NotAuthenticatedException();
         }
-        final UserScopeAccessObject scopeAccess = this.getUserScopeAccessForClientId(
-                result.getUser().getUsername(), clientId);
+        final UserScopeAccessObject scopeAccess = this
+            .getUserScopeAccessForClientId(result.getUser().getUsername(),
+                clientId);
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(
-                    getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+                getDefaultCloudAuthTokenExpirationSeconds()).toDate());
             this.scopeAccessDao.updateScopeAccess(scopeAccess);
         }
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess,
-                clientId);
+            clientId);
         return scopeAccess;
     }
 
@@ -331,34 +339,49 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public PermissionObject addPermissionToScopeAccess(
         String scopeAccessUniqueId, PermissionObject permission) {
-        // TODO Auto-generated method stub
-        return null;
+        logger.info("Adding Permission {} to ScopeAccess {}", permission,
+            scopeAccessUniqueId);
+        PermissionObject perm = this.scopeAccessDao.addPermissionToScopeAccess(
+            scopeAccessUniqueId, permission);
+        logger.info("Adding Permission {} to ScopeAccess {}", permission,
+            scopeAccessUniqueId);
+        return perm;
     }
 
     @Override
     public PermissionObject getPermissionOnScopeAccess(
         String scopeAccessUniqueId, String permissionId) {
-        // TODO Auto-generated method stub
-        return null;
+        logger.debug("Getting Permission {} on ScopeAccess {}", permissionId,
+            scopeAccessUniqueId);
+        PermissionObject perm = this.scopeAccessDao
+            .getPermissionByParentAndPermissionId(scopeAccessUniqueId,
+                permissionId);
+        logger.debug("Getting Permission {} on ScopeAccess {}", permissionId,
+            scopeAccessUniqueId);
+        return perm;
     }
 
     @Override
     public ScopeAccessObject getScopeAccessForParentByClientId(
         String parentUniqueID, String clientId) {
-        // TODO Auto-generated method stub
-        return null;
+        logger.debug("Getting by clientId {}", clientId);
+        ScopeAccessObject sa = this.getScopeAccessForParentByClientId(
+            parentUniqueID, clientId);
+        logger.debug("Got by clientId {}", clientId);
+        return sa;
     }
 
     @Override
-    public void removePermissionFromScopeAccess(String scopeAccessUniqueId,
-        String permissionId) {
-        // TODO Auto-generated method stub
-        
+    public void removePermission(PermissionObject permission) {
+        logger.info("Removing Permission {}", permission);
+        this.scopeAccessDao.removePermissionFromScopeAccess(permission);
+        logger.info("Removing Permission {}", permission);
     }
 
     @Override
     public void updatePermission(PermissionObject permission) {
-        // TODO Auto-generated method stub
-        
+        logger.info("Updating Permission {}", permission);
+        this.scopeAccessDao.updatePermissionForScopeAccess(permission);
+        logger.info("Updated Permission {}", permission);
     }
 }
