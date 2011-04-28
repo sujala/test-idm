@@ -31,7 +31,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     private static final String PASSWORD_RESET_CLIENT_ID = "PASSWORDRESET";
 
-    private AuthHeaderHelper authHeaderHelper;
+    private final AuthHeaderHelper authHeaderHelper;
     private final ClientService clientService;
     private Configuration config;
 
@@ -326,5 +326,39 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     private int getDefaultCloudAuthTokenExpirationSeconds() {
         return config.getInt("token.cloudAuthExpirationSeconds");
+    }
+
+    @Override
+    public PermissionObject addPermissionToScopeAccess(
+        String scopeAccessUniqueId, PermissionObject permission) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public PermissionObject getPermissionOnScopeAccess(
+        String scopeAccessUniqueId, String permissionId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ScopeAccessObject getScopeAccessForParentByClientId(
+        String parentUniqueID, String clientId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void removePermissionFromScopeAccess(String scopeAccessUniqueId,
+        String permissionId) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void updatePermissionOnScopeAccess(PermissionObject permission) {
+        // TODO Auto-generated method stub
+        
     }
 }

@@ -9,6 +9,8 @@ import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 
 public interface ScopeAccessService {
     
+    PermissionObject addPermissionToScopeAccess(String scopeAccessUniqueId, PermissionObject permission);
+    
     ScopeAccessObject addScopeAccess(String parentUniqueId, ScopeAccessObject scopeAccess);
     
     boolean authenticateAccessToken(String accessTokenStr);
@@ -16,9 +18,9 @@ public interface ScopeAccessService {
     boolean doesAccessTokenHavePermission(String accessTokenString, PermissionObject permission);
     
     void expireAccessToken(String tokenString);
-    
-    void expireAllTokensForClient(String clientId);
 
+    void expireAllTokensForClient(String clientId);
+    
     void expireAllTokensForCustomer(String customerId);
     
     void expireAllTokensForUser(String username);
@@ -29,21 +31,29 @@ public interface ScopeAccessService {
     
     PasswordResetScopeAccessObject getOrCreatePasswordResetScopeAccessForUser(String userUniqueId);
     
+    PermissionObject getPermissionOnScopeAccess(String scopeAccessUniqueId, String permissionId);
+    
     RackerScopeAccessObject getRackerScopeAccessForClientId(String rackerUniqueId, String clientId);
     
     ScopeAccessObject getScopeAccessByAccessToken(String accessToken);
     
     ScopeAccessObject getScopeAccessByRefreshToken(String refreshToken);
+
+    ScopeAccessObject getScopeAccessForParentByClientId(String parentUniqueID, String clientId);
     
     UserScopeAccessObject getUserScopeAccessForClientId(String userUniqueId, String clientId);
     
-    UserScopeAccessObject getUserScopeAccessForClientIdByUsernameAndApiCredentials(String username, String apiKey, String clientId);
-
     UserScopeAccessObject getUserScopeAccessForClientIdByMossoIdAndApiCredentials(int mossoId, String apiKey, String clientId);
     
     UserScopeAccessObject getUserScopeAccessForClientIdByNastIdAndApiCredentials(String nastId, String apiKey, String clientId);
     
+    UserScopeAccessObject getUserScopeAccessForClientIdByUsernameAndApiCredentials(String username, String apiKey, String clientId);
+    
     UserScopeAccessObject getUserScopeAccessForClientIdByUsernameAndPassword(String username, String password, String clientId);
+    
+    void removePermissionFromScopeAccess(String scopeAccessUniqueId, String permissionId);
+    
+    void updatePermissionOnScopeAccess(PermissionObject permission);
     
     void updateScopeAccess(ScopeAccessObject scopeAccess);
 }

@@ -242,6 +242,19 @@ public class DefaultClientService implements ClientService {
 
     @Override
     public void grantPermission(String clientId, Permission p) {
+        
+        // p has resourceGroup info coming in
+        //
+        // exists = findPermision(p) --> has no resourceGroup information
+        // if not exists error
+        //
+        // getOrCreateScopeAccess(targetClientId, permisison.getclientId)
+        //
+        // p = scopeAccess.addPermission(p)
+        
+        
+        
+        
         Client targetClient = this.clientDao.getClientByClientId(clientId);
 
         if (targetClient == null) {
@@ -512,6 +525,7 @@ public class DefaultClientService implements ClientService {
         return this.clientDao.getClientsThatHavePermission(permission);
     }
     
+    @Override
     public Permission checkAndGetPermission(String customerId, String clientId, String permissionId) 
     throws NotFoundException {
     
