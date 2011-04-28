@@ -52,7 +52,7 @@ public class WadlTrieTests {
         public List<PathSegment> getPathSegments() {
             final List<PathSegment> psegs = new ArrayList<PathSegment>();
 
-            final String[] paths = new String[] { "/", "users", "mkovacs", "baseurlrefs", "wildcard" };
+            final String[] paths = new String[] { "users", "mkovacs", "baseurlrefs", "wildcard" };
 
             for (final String string : paths) {
                 psegs.add(

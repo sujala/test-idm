@@ -160,7 +160,7 @@ public class WadlTrie {
 
     public Object getPermissionFor(final String method, final UriInfo uriInfo) {
         final List<String> paths = new ArrayList<String>();
-        paths.add("root");
+        paths.add("root"); paths.add("/");
         for(final PathSegment segment : uriInfo.getPathSegments()) {
             paths.add(segment.getPath());
         }
