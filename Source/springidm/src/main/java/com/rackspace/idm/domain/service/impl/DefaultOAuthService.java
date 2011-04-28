@@ -379,7 +379,7 @@ public class DefaultOAuthService implements OAuthService {
         if (accessExpiration.isBefore(current)) {
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(current.plusSeconds(
-                this.getCloudAuthDefaultTokenExpirationSeconds()).toDate());
+                this.getDefaultTokenExpirationSeconds()).toDate());
         }
 
         DateTime refreshExpiration = scopeAccess.getRefreshTokenExp() == null ? new DateTime()
