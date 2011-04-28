@@ -72,7 +72,7 @@ public class DefaultCustomerService implements CustomerService {
         
         List<Client> clients = this.getClientListForCustomerId(customerId);
         for (Client client : clients) {
-            clientDao.deleteClient(client.getClientId());
+            clientDao.deleteClient(client);
         }
         
         this.customerDao.deleteCustomer(customerId);

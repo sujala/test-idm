@@ -106,11 +106,10 @@ public class DefaultClientService implements ClientService {
             .getClientGroupsByClientId(clientId);
 
         for (ClientGroup group : groups) {
-            clientDao.deleteClientGroup(group.getCustomerId(),
-                group.getClientId(), group.getName());
+            clientDao.deleteClientGroup(group);
         }
 
-        clientDao.deleteClient(clientId);
+        clientDao.deleteClient(client);
     }
 
     @Override
@@ -352,9 +351,24 @@ public class DefaultClientService implements ClientService {
 
     @Override
     public void deleteClientGroup(String customerId, String clientId,
-        String name) {
-        ClientGroup deletedGroup = clientDao.deleteClientGroup(customerId, clientId, name);
-        userDao.removeUsersFromClientGroup(deletedGroup);
+        String groupName) {
+
+        if (StringUtils.isBlank(clientId) || StringUtils.isBlank(groupName)) {
+            throw new IllegalArgumentException();
+        }
+
+        ClientGroup groupToDelete = clientDao.getClientGroup(customerId, clientId, groupName);
+
+        if (groupToDelete == null) {
+            throw new NotFoundException(
+                String
+                    .format(
+                        "Client Group with Name %s, ClientId %s, and CustomerId %s not found",
+                        customerId, clientId, groupName));
+        }
+
+    	clientDao.deleteClientGroup(groupToDelete);
+        userDao.removeUsersFromClientGroup(groupToDelete);
     }
 
     @Override

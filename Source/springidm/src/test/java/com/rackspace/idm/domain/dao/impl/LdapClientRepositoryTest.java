@@ -47,7 +47,7 @@ public class LdapClientRepositoryTest {
         LdapClientRepository cleanUpRepo = getRepo(pools);
         Client deleteme = cleanUpRepo.getClientByClientId("DELETE_My_ClientId");
         if (deleteme != null) {
-            cleanUpRepo.deleteClient("DELETE_My_ClientId");
+            cleanUpRepo.deleteClient(deleteme);
         }
         pools.close();
     }
@@ -92,13 +92,6 @@ public class LdapClientRepositoryTest {
 
         try {
             repo.addClient(null, testCustomerDN);
-            Assert.fail("Should have thrown an exception!");
-        } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
-        }
-
-        try {
-            repo.deleteClient("     ");
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
@@ -172,13 +165,13 @@ public class LdapClientRepositoryTest {
         Client checkClient = repo.getClientByClientId(newClient.getClientId());
         Assert.assertNotNull(checkClient);
         Assert.assertEquals("DELETE_My_Name", checkClient.getName());
-        repo.deleteClient(newClient.getClientId());
+        repo.deleteClient(newClient);
     }
 
     @Test
     public void shouldDeleteClient() {
         Client newClient = addNewTestClient();
-        repo.deleteClient(newClient.getClientId());
+        repo.deleteClient(newClient);
         Client idontexist = repo.getClientByClientname(newClient.getName());
         Assert.assertNull(idontexist);
     }
@@ -195,14 +188,14 @@ public class LdapClientRepositoryTest {
         try {
             repo.updateClient(newClient);
         } catch (IllegalStateException e) {
-            repo.deleteClient(newClient.getClientId());
+            repo.deleteClient(newClient);
             Assert.fail("Could not save the record: " + e.getMessage());
         }
 
         Client changedClient = repo.getClientByClientId(clientId);
         Assert.assertTrue(changedClient.equals(newClient));
 
-        repo.deleteClient(newClient.getClientId());
+        repo.deleteClient(newClient);
     }
      
     @Test
@@ -242,7 +235,7 @@ public class LdapClientRepositoryTest {
         repo.setClientsLockedFlagByCustomerId(newClient.getCustomerId(), true);
         Client changedClient = repo.getClientByClientId(newClient.getClientId());
         Assert.assertEquals(changedClient.isLocked(), true);
-        repo.deleteClient(newClient.getClientId());
+        repo.deleteClient(newClient);
     }
 
     @Test
@@ -255,7 +248,7 @@ public class LdapClientRepositoryTest {
                 "DELETE_My_ClientId", "DELETE_My_Permission");
         Assert.assertTrue(checkPermission.getValue().equals("Some Value"));
         repo.deleteDefinedPermission(checkPermission);
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClient(testClient);
     }
 
     @Test
@@ -274,7 +267,7 @@ public class LdapClientRepositoryTest {
         Assert
             .assertTrue(checkPermission.getValue().equals("Some Other Value"));
         repo.deleteDefinedPermission(checkPermission);
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClient(testClient);
     }
 
     @Test
@@ -286,7 +279,7 @@ public class LdapClientRepositoryTest {
             .getDefinedPermissionsByClientId("DELETE_My_ClientId");
         Assert.assertTrue(resources.size() >= 1);
         repo.deleteDefinedPermission(testPermission);
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClient(testClient);
     }
     
     @Test
@@ -296,8 +289,8 @@ public class LdapClientRepositoryTest {
         repo.addClientGroup(group, testClient.getUniqueId());
         ClientGroup returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         Assert.assertNotNull(returnedGroup);
-        repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClientGroup(group);
+        repo.deleteClient(testClient);
     }
     
     @Test
@@ -309,8 +302,8 @@ public class LdapClientRepositoryTest {
         group.setType("My New Type");
         repo.updateClientGroup(group);
         ClientGroup returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
-        repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClientGroup(group);
+        repo.deleteClient(testClient);
         
         Assert.assertNotNull(returnedGroup);
         Assert.assertTrue(returnedGroup.getType().equalsIgnoreCase("My New Type"));
@@ -335,8 +328,8 @@ public class LdapClientRepositoryTest {
         catch (Exception ex) {
             Assert.assertTrue(ex instanceof DuplicateClientGroupException);
         }
-        repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClientGroup(group);
+        repo.deleteClient(testClient);
     }
     
     @Test
@@ -346,22 +339,10 @@ public class LdapClientRepositoryTest {
         repo.addClientGroup(group,testClient.getUniqueId());
         ClientGroup returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         Assert.assertNotNull(returnedGroup);
-        repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
+        repo.deleteClientGroup(group);
         returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         Assert.assertNull(returnedGroup);
-        repo.deleteClient(testClient.getClientId());
-    }
-    
-    @Test
-    public void shouldThrowErrorForDeleteClientGroupForNonExistentClient() {
-        
-        try {
-            repo.deleteClientGroup("CUSTOMERID", "BADCLIENTNAME", "GROUPNAME");
-            Assert.fail("Shouldn't have Deleted Group");
-        }
-        catch (Exception ex) {
-            Assert.assertTrue(ex instanceof NotFoundException);
-        }
+        repo.deleteClient(testClient);
     }
     
     @Test
@@ -371,8 +352,8 @@ public class LdapClientRepositoryTest {
         repo.addClientGroup(group,testClient.getUniqueId());
         ClientGroup returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
         Assert.assertNotNull(returnedGroup);
-        repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClientGroup(group);
+        repo.deleteClient(testClient);
     }
     
     @Test
@@ -384,9 +365,8 @@ public class LdapClientRepositoryTest {
         repo.addClientGroup(group,testClient.getUniqueId());
         List<ClientGroup> groups = repo.getClientGroupsByClientId(testClient.getClientId());
         Assert.assertTrue(groups.size() == 2);
-        repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
-        repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), "New Group");
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClientGroup(group);
+        repo.deleteClient(testClient);
     }
     
     @Test 
@@ -411,7 +391,7 @@ public class LdapClientRepositoryTest {
         Client testClient = addNewTestClient();
         ClientGroup returnedGroup = repo.getClientGroup(testClient.getCustomerId(), testClient.getClientId(), "SOMEBADNAME");
         Assert.assertNull(returnedGroup);
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClient(testClient);
     }
     
     @Test
@@ -422,9 +402,9 @@ public class LdapClientRepositoryTest {
         repo.addClientGroup(group,testClient.getUniqueId());
         repo.addUserToClientGroup(user.getUniqueId(), group);
         boolean inGroup = repo.isUserInClientGroup(user.getUsername(), group.getUniqueId());
-        repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
+        repo.deleteClientGroup(group);
         userRepo.removeUsersFromClientGroup(group);
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClient(testClient);
         userRepo.deleteUser(user.getUsername());
         Assert.assertTrue(inGroup);
     }
@@ -443,9 +423,9 @@ public class LdapClientRepositoryTest {
         catch (Exception ex) {
             Assert.assertTrue(ex instanceof DuplicateException);
         }
-        repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
+        repo.deleteClientGroup(group);
         userRepo.removeUsersFromClientGroup(group);
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClient(testClient);
         userRepo.deleteUser(user.getUsername());
     }
     
@@ -460,7 +440,7 @@ public class LdapClientRepositoryTest {
         catch (Exception ex) {
             Assert.assertTrue(ex instanceof IllegalArgumentException);
         }
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClient(testClient);
     }
     
     @Test
@@ -474,7 +454,7 @@ public class LdapClientRepositoryTest {
         catch (Exception ex) {
             Assert.assertTrue(ex instanceof IllegalArgumentException);
         }
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClient(testClient);
     }
     
     @Test
@@ -489,7 +469,7 @@ public class LdapClientRepositoryTest {
             Assert.assertTrue(ex instanceof IllegalArgumentException);
         }
         
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClient(testClient);
     }
     
     @Test
@@ -505,7 +485,7 @@ public class LdapClientRepositoryTest {
             Assert.assertTrue(ex instanceof IllegalArgumentException);
         }
         
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClient(testClient);
     }
     
     @Test
@@ -517,8 +497,8 @@ public class LdapClientRepositoryTest {
         repo.addClientGroup(group,testClient.getUniqueId());
         repo.addUserToClientGroup(user.getUniqueId(), group);
         repo.removeUserFromGroup(user.getUniqueId(), group);
-        repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClientGroup(group);
+        repo.deleteClient(testClient);
         userRepo.deleteUser(user.getUsername());
     }
     
@@ -535,8 +515,8 @@ public class LdapClientRepositoryTest {
         catch (Exception ex) {
             Assert.assertTrue(ex instanceof NotFoundException);
         }
-        repo.deleteClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClientGroup(group);
+        repo.deleteClient(testClient);
         userRepo.deleteUser(user.getUsername());
     }
     
@@ -552,7 +532,7 @@ public class LdapClientRepositoryTest {
             Assert.assertTrue(ex instanceof IllegalArgumentException);
         }
         
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClient(testClient);
     }
     
     @Test
@@ -567,7 +547,7 @@ public class LdapClientRepositoryTest {
             Assert.assertTrue(ex instanceof IllegalArgumentException);
         }
         
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClient(testClient);
     }
     
     @Test
@@ -582,7 +562,7 @@ public class LdapClientRepositoryTest {
             Assert.assertTrue(ex instanceof IllegalArgumentException);
         }
         
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClient(testClient);
     }
     
     @Test
@@ -598,7 +578,7 @@ public class LdapClientRepositoryTest {
             Assert.assertTrue(ex instanceof IllegalArgumentException);
         }
         
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClient(testClient);
     }
     
     @Test
@@ -617,7 +597,7 @@ public class LdapClientRepositoryTest {
         
         repo.revokePermissionFromClient(permission, testClient);
         returned = repo.getClientByCustomerIdAndClientId(testClient.getCustomerId(), testClient.getClientId());
-        repo.deleteClient(testClient.getClientId());
+        repo.deleteClient(testClient);
         
         Assert.assertNotNull(returned);
         Assert.assertNull(returned.getPermissions());

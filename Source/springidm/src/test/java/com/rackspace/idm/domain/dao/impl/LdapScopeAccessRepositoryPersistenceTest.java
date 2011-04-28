@@ -61,7 +61,7 @@ public class LdapScopeAccessRepositoryPersistenceTest {
         final LdapClientRepository cleanUpRepo = getClientRepo(pools);
         final Client deleteme = cleanUpRepo.getClientByClientId("XXX");
         if (deleteme != null) {
-            cleanUpRepo.deleteClient("XXX");
+            cleanUpRepo.deleteClient(deleteme);
         }
         pools.close();
     }

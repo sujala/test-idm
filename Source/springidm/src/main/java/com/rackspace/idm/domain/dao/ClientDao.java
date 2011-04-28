@@ -20,9 +20,9 @@ public interface ClientDao {
 
     ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 
-    void deleteClient(String clientId);
+    void deleteClient(Client client);
 
-    ClientGroup deleteClientGroup(String customerId, String clientId, String name);
+    void deleteClientGroup(ClientGroup group);
 
     void deleteDefinedPermission(Permission permission);
 

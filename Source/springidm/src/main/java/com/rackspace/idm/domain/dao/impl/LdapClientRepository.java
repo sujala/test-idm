@@ -201,55 +201,26 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     @Override
-    public void deleteClient(String clientId) {
-        getLogger().info("Deleting client {}", clientId);
-        if (StringUtils.isBlank(clientId)) {
-            getLogger().error("Null or Empty clientId paramter");
-            throw new IllegalArgumentException(
-                "Null or Empty clientId parameter.");
-        }
-
-        Client client = this.getClientByClientId(clientId);
-
-        if (client == null) {
-            String errorMsg = String.format("CLient %s not found", client);
-            throw new NotFoundException(errorMsg);
-        }
+    public void deleteClient(Client client) {
+        getLogger().info("Deleting client {}", client.getClientId());
 
         Audit audit = Audit.log(client).delete();
 
         this.deleteEntryAndSubtree(client.getUniqueId(), audit);
 
         audit.succeed();
-        getLogger().info("Deleted client {}", clientId);
+        getLogger().info("Deleted client {}", client.getClientId());
     }
 
     @Override
-    public ClientGroup deleteClientGroup(String customerId, String clientId,
-        String name) {
-        getLogger().info("Deleting clientGroup {}", name);
-
-        if (StringUtils.isBlank(clientId) || StringUtils.isBlank(name)) {
-            throw new IllegalArgumentException();
-        }
-
-        ClientGroup group = this.getClientGroup(customerId, clientId, name);
-
-        if (group == null) {
-            throw new NotFoundException(
-                String
-                    .format(
-                        "Client Group with Name %s, ClientId %s, and CustomerId %s not found",
-                        customerId, clientId, name));
-        }
-
+    public void deleteClientGroup(ClientGroup group) {
+        getLogger().info("Deleting clientGroup {}", group.getName());
         Audit audit = Audit.log(group).delete();
 
         this.deleteEntryAndSubtree(group.getUniqueId(), audit);
 
         audit.succeed();
         getLogger().info("Deleted clientGroup {}", group);
-        return group;
     }
 
     @Override
