@@ -465,6 +465,27 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+	
+	   <element name="notProvisioned" type="idm:NotProvisionedFault">
+        <annotation>
+            <xsd:documentation xml:lang="EN"
+                xmlns="http://www.w3.org/1999/xhtml">
+                <p>
+                    The user has not been provisioned for this service.
+                </p>
+            </xsd:documentation>
+            <xsd:appinfo>
+                <xsdxt:samples>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/xml" href="../samples/not_provisioned.xml" />
+                    </xsdxt:sample>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/json" href="../samples/not_provisioned.json" />
+                    </xsdxt:sample>
+                </xsdxt:samples>
+            </xsd:appinfo>
+        </annotation>
+    </element>
 
 	<!-- Complex Types -->
 	<complexType name="IdmFault">
@@ -636,5 +657,11 @@
 			<extension base="idm:IdmFault"></extension>
 		</complexContent>
 	</complexType>
+	
+	<complexType name="NotProvisionedFault">
+        <complexContent>
+            <extension base="idm:IdmFault"></extension>
+        </complexContent>
+    </complexType>
 
 </schema>

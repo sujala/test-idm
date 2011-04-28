@@ -44,6 +44,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.NotProvisionedException;
 import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.validation.BasicCredentialsCheck;
 import com.rackspace.idm.validation.InputValidator;
@@ -398,7 +399,9 @@ public class DefaultOAuthService implements OAuthService {
                 client.getClientId());
 
         if (scopeAccess == null) {
-            // TODO: Throw new not provisioned error
+            String errMsg = String.format("User %s not provisioned for client %s", user.getUsername(), client.getClientId());
+            logger.warn(errMsg);
+            throw new NotProvisionedException(errMsg);
         }
 
         DateTime current = new DateTime();

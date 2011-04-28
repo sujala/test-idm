@@ -34,6 +34,7 @@ import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.NotProvisionedException;
 import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
 import com.rackspace.idm.exception.PasswordValidationException;
 import com.rackspace.idm.exception.PermissionConflictException;
@@ -48,6 +49,7 @@ import com.rackspace.idm.jaxb.Forbidden;
 import com.rackspace.idm.jaxb.IdmFault;
 import com.rackspace.idm.jaxb.ItemNotFound;
 import com.rackspace.idm.jaxb.MethodNotAllowed;
+import com.rackspace.idm.jaxb.NotProvisioned;
 import com.rackspace.idm.jaxb.PasswordSelfUpdateTooSoonFault;
 import com.rackspace.idm.jaxb.PasswordValidationFault;
 import com.rackspace.idm.jaxb.PermissionIdConflict;
@@ -80,7 +82,10 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         if (thrown instanceof ApplicationException) {
             e = thrown.getCause();
         }
-
+        
+        if (e instanceof NotProvisionedException) {
+            return toResponse(new NotProvisioned(), e, 403);
+        }
         if (e instanceof NumberFormatException) {
             return toResponse(new BadRequest(), e, 400);
         }
