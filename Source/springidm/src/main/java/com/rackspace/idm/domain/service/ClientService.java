@@ -46,6 +46,8 @@ public interface ClientService {
 
     Permission getDefinedPermissionByClientIdAndPermissionId(String clientId,
         String permissionId);
+    
+    Permission checkAndGetPermission(String customerId, String clientId, String permissionId);
 
     List<Permission> getDefinedPermissionsByClientId(String clientId);
 

@@ -22,11 +22,13 @@ import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
+import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
@@ -58,6 +60,7 @@ public class DefaultUserService implements UserService {
     private final UserDao userDao;
     private final AuthDao authDao;
     private final CustomerDao customerDao;
+    private final ScopeAccessObjectDao scopeAccessDao;
     private final EmailService emailService;
     private final ClientService clientService;
 
@@ -66,12 +69,13 @@ public class DefaultUserService implements UserService {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
-        CustomerDao customerDao, EmailService emailService,
+        CustomerDao customerDao, ScopeAccessObjectDao scopeAccessDao, EmailService emailService,
         ClientService clientService, boolean isTrusted) {
 
         this.userDao = userDao;
         this.authDao = rackerDao;
         this.customerDao = customerDao;
+        this.scopeAccessDao = scopeAccessDao;
         this.emailService = emailService;
         this.clientService = clientService;
         this.isTrustedServer = isTrusted;
@@ -445,6 +449,37 @@ public class DefaultUserService implements UserService {
 
         return passwordExpirationDate;
     }
+    
+    @Override
+    public void grantPermission(String username, Permission permission) {
+        
+        User user = checkAndGetUser(permission.getCustomerId(), username);
+        
+        ScopeAccessObject scopeAccess = getOrCreateScopeAccess(user, permission.getClientId());
+        
+        try {
+            //scopeAccessDao.addPermissionToScopeAccess(scopeAccess.getUniqueId(), permission);
+        } catch(IllegalStateException illegalStateExp) {
+            String errorMessage = String.format("Could not add permission %s for user %s", permission.getPermissionId(), username);
+            logger.warn(errorMessage);
+        }
+    }
+    
+    @Override
+    public void revokePermission(Permission permission) {
+      
+        try {
+            //scopeAccessDao.removePermissionFromScopeAccess(permission);
+        } catch(IllegalStateException illegalStateExp) {
+            String errorMessage = String.format("Could not revoke permission %s", permission.getPermissionId());
+            logger.warn(errorMessage);
+        }
+    }
+    
+    @Override
+    public Permission getGrantedPermission(String userName, String permissionId) {
+        return null;
+    }
 
     @Override
     public User checkAndGetUser(String customerId, String username) {
@@ -516,5 +551,18 @@ public class DefaultUserService implements UserService {
             // Just use the default message body
             return message;
         }
+    }
+    
+    private ScopeAccessObject getOrCreateScopeAccess(User targetUser,
+        String scopeAccessClientId) {
+        ScopeAccessObject sa = scopeAccessDao.getScopeAccessForParentByClientId(
+            targetUser.getUniqueId(), scopeAccessClientId);
+        if (sa == null) {
+            sa = new ScopeAccessObject();
+            //sa.setUsername(targetUser.getUsername());
+            //sa.setUserRCN(targetUser.getCustomerId());
+            scopeAccessDao.addScopeAccess(targetUser.getUniqueId(), sa);
+        }
+        return sa;
     }
 }

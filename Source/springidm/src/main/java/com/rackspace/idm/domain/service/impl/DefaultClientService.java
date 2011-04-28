@@ -497,6 +497,22 @@ public class DefaultClientService implements ClientService {
 
         return this.clientDao.getClientsThatHavePermission(permission);
     }
+    
+    public Permission checkAndGetPermission(String customerId, String clientId, String permissionId) 
+    throws NotFoundException {
+    
+        Permission permission = this.getDefinedPermissionByClientIdAndPermissionId(clientId,
+        permissionId);
+
+        if (permission == null || !customerId.equalsIgnoreCase(permission.getCustomerId())
+            || !clientId.equalsIgnoreCase(permission.getClientId()) || !permission.getEnabled()) {
+            String errorMsg = String.format("Permission Not Found: %s", permissionId);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+    
+        return permission;
+    }  
 
     private void addUserToClientGroup(String username, ClientGroup clientGroup) {
         if (StringUtils.isBlank(username)) {

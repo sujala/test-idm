@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service;
 import org.joda.time.DateTime;
 
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
@@ -63,4 +64,10 @@ public interface UserService {
     void updateUserStatus(User user, String statusStr);
 
     DateTime getUserPasswordExpirationDate(String userName);
+    
+    void grantPermission(String userName, Permission p);
+    
+    void revokePermission(Permission p);
+    
+    Permission getGrantedPermission(String userName, String permissionId);
 }
