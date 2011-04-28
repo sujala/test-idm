@@ -53,7 +53,7 @@ public interface ScopeAccessService {
     
     void removePermissionFromScopeAccess(String scopeAccessUniqueId, String permissionId);
     
-    void updatePermissionOnScopeAccess(PermissionObject permission);
+    void updatePermission(PermissionObject permission);
     
     void updateScopeAccess(ScopeAccessObject scopeAccess);
 }

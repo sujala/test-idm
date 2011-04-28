@@ -357,7 +357,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void updatePermissionOnScopeAccess(PermissionObject permission) {
+    public void updatePermission(PermissionObject permission) {
         // TODO Auto-generated method stub
         
     }
