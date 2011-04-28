@@ -18,7 +18,10 @@ public class TokenConverter {
         int secs = diff.getSeconds();
         
         jaxbToken.setId(tokenString);
-        jaxbToken.setExpiresIn(secs);
+        
+        if(expiration != null) {
+            jaxbToken.setExpiresIn(secs);
+        }
 
         return jaxbToken;
     }

@@ -53,8 +53,7 @@ public class AuthConverter {
         if (scopeAccess instanceof hasRefreshToken) {
             hasRefreshToken tokenScopeAccessObject = ((hasRefreshToken)scopeAccess);
             authJaxb.setRefreshToken(tokenConverter.toTokenJaxb(
-                    tokenScopeAccessObject.getRefreshTokenString(),
-                    tokenScopeAccessObject.getRefreshTokenExp()));
+                    tokenScopeAccessObject.getRefreshTokenString(), null));
         }
 
         if (scopeAccess.getClientId() != null) {

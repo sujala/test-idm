@@ -447,10 +447,11 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.12) = {
     subclass-of scopeAccess
     kind = structural
     must-contain
-        accessToken,
-        accessTokenExp,
         uid,
         userRCN
+    may-contain
+        accessToken,
+        accessTokenExp
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.13) = {
@@ -460,6 +461,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.13) = {
     kind = structural
     must-contain
         rackerId,
+    may-contain
         accessToken,
         accessTokenExp,
         refreshToken,
@@ -473,7 +475,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.14) = {
     kind = structural
     must-contain
         uid,
-        userRCN,
+        userRCN
+    may-contain
         accessToken,
         accessTokenExp,
         refreshToken,
