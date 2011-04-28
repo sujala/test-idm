@@ -34,7 +34,7 @@ import com.rackspace.idm.exception.NotFoundException;
 @Component
 public class MossoUserResource {
 
-    private ScopeAccessService scopeAccessService;
+    private final ScopeAccessService scopeAccessService;
     private final UserService userService;
     private final UserConverter userConverter;
     private final AuthorizationService authorizationService;
@@ -47,6 +47,7 @@ public class MossoUserResource {
         this.userConverter = userConverter;
         this.userService = userService;
         this.authorizationService = authorizationService;
+        this.scopeAccessService = scopeAccessService;
     }
 
     /**
