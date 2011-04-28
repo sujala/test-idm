@@ -157,7 +157,9 @@ public class DefaultOAuthService implements OAuthService {
                 .getScopeAccessByRefreshToken(trParam.getRefreshToken());
             if (scopeAccess == null
                 || ((hasRefreshToken) scopeAccess)
-                    .isRefreshTokenExpired(currentTime)) {
+                    .isRefreshTokenExpired(currentTime)
+                || scopeAccess.getClientId().equalsIgnoreCase(
+                    caResult.getClient().getClientId())) {
                 final String msg = String
                     .format("Unauthorized Refresh Token: %s",
                         trParam.getRefreshToken());
@@ -333,7 +335,8 @@ public class DefaultOAuthService implements OAuthService {
             scopeAccess = new ClientScopeAccessObject();
             scopeAccess.setClientId(client.getClientId());
             scopeAccess.setClientRCN(client.getCustomerId());
-            this.scopeAccessService.addScopeAccess(client.getUniqueId(), scopeAccess);
+            this.scopeAccessService.addScopeAccess(client.getUniqueId(),
+                scopeAccess);
         }
 
         DateTime current = new DateTime();
@@ -399,7 +402,9 @@ public class DefaultOAuthService implements OAuthService {
                 client.getClientId());
 
         if (scopeAccess == null) {
-            String errMsg = String.format("User %s not provisioned for client %s", user.getUsername(), client.getClientId());
+            String errMsg = String.format(
+                "User %s not provisioned for client %s", user.getUsername(),
+                client.getClientId());
             logger.warn(errMsg);
             throw new NotProvisionedException(errMsg);
         }
