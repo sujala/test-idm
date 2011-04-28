@@ -23,7 +23,7 @@ public interface ClientService {
 
     void delete(String clientId);
 
-    void deleteClientGroup(String customerId, String clientId, String name);
+    void deleteClientGroup(String customerId, String clientId, String groupName);
 
     void deleteDefinedPermission(Permission permission);
 
