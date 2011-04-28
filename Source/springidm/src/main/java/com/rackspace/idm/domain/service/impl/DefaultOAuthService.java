@@ -158,7 +158,7 @@ public class DefaultOAuthService implements OAuthService {
             if (scopeAccess == null
                 || ((hasRefreshToken) scopeAccess)
                     .isRefreshTokenExpired(currentTime)
-                || scopeAccess.getClientId().equalsIgnoreCase(
+                || !scopeAccess.getClientId().equalsIgnoreCase(
                     caResult.getClient().getClientId())) {
                 final String msg = String
                     .format("Unauthorized Refresh Token: %s",
