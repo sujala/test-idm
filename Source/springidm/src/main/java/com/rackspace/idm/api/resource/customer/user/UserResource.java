@@ -22,8 +22,8 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.api.resource.customer.user.permission.UserPermissionsResource;
 import com.rackspace.idm.api.resource.customer.user.service.CustomerUserServicesResource;
+import com.rackspace.idm.api.resource.customer.user.service.permission.UserPermissionsResource;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;

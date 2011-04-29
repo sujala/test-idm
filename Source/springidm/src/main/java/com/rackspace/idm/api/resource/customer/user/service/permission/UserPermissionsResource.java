@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource.customer.user.permission;
+package com.rackspace.idm.api.resource.customer.user.service.permission;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
