@@ -34,7 +34,7 @@ public class PermissionConverter {
         permDo.setClientId(permJaxb.getClientId());
         permDo.setCustomerId(permJaxb.getCustomerId());
         permDo.setPermissionId(permJaxb.getPermissionId());
-        permDo.setType(permJaxb.getType());
+        permDo.setPermissionType(permJaxb.getType());
         permDo.setValue(permJaxb.getValue());
         permDo.setTitle(permJaxb.getTitle());
         permDo.setDescription(permJaxb.getDescription());
