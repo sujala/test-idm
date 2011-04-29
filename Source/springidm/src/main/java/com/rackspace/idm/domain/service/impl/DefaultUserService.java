@@ -40,7 +40,6 @@ import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.EmailService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
@@ -66,15 +65,14 @@ public class DefaultUserService implements UserService {
     private final ScopeAccessObjectDao scopeAccessDao;
     private final EmailService emailService;
     private final ClientService clientService;
-    private final ScopeAccessService scopeAccessService;
-
+  
     private final TemplateProcessor tproc = new TemplateProcessor();
     private final boolean isTrustedServer;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
         CustomerDao customerDao, ScopeAccessObjectDao scopeAccessDao, EmailService emailService,
-        ClientService clientService, ScopeAccessService scopeAccessService, boolean isTrusted) {
+        ClientService clientService, boolean isTrusted) {
 
         this.userDao = userDao;
         this.authDao = rackerDao;
@@ -82,7 +80,6 @@ public class DefaultUserService implements UserService {
         this.scopeAccessDao = scopeAccessDao;
         this.emailService = emailService;
         this.clientService = clientService;
-        this.scopeAccessService = scopeAccessService;
         this.isTrustedServer = isTrusted;
     }
 
@@ -527,19 +524,6 @@ public class DefaultUserService implements UserService {
             // Just use the default message body
             return message;
         }
-    }
-    
-    private UserScopeAccessObject getOrCreateScopeAccess(User targetUser,
-        String scopeAccessClientId) {
-        UserScopeAccessObject sa = (UserScopeAccessObject) scopeAccessDao.getScopeAccessByUsernameAndClientId(targetUser.getUsername(), scopeAccessClientId);
-        if (sa == null) {
-            sa = new UserScopeAccessObject();
-            sa.setUsername(targetUser.getUsername());
-            sa.setUserRCN(targetUser.getCustomerId());
-            sa.setClientId(scopeAccessClientId);
-            scopeAccessDao.addScopeAccess(targetUser.getUniqueId(), sa);
-        }
-        return sa;
     }
     
     @Override

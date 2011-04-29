@@ -181,8 +181,7 @@ public class ServiceConfiguration {
         final boolean isTrustedServer = config.getBoolean(
             "ldap.server.trusted", false);
         return new DefaultUserService(userRepo, authDao, customerDao,
-            scopeAccessDao, emailService(), clientService(),
-            scopeAccessService(), isTrustedServer);
+            scopeAccessDao, emailService(), clientService(), isTrustedServer);
     }
 
     @Bean
