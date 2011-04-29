@@ -380,19 +380,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-
-        ScopeAccessObject dsa = this.getScopeAccessForParentByClientId(
-            dClient.getUniqueId(), dClient.getClientId());
-        if (dsa == null) {
-            String errMsg = String
-                .format("ScopeAccess for Client %s not found",
-                    permission.getClientId());
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-
-        PermissionObject perm = this.getPermissionOnScopeAccess(
-            dsa.getUniqueId(), permission.getPermissionId());
+        
+        PermissionObject perm = this.scopeAccessDao.getPermissionByParentAndPermissionId(dClient.getUniqueId(), permission);
         if (perm == null) {
             String errMsg = String.format(
                 "Permission %s not found for client %s",
@@ -452,7 +441,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             client.getUniqueId(), client.getClientId());
         PermissionObject exists = this.scopeAccessDao
             .getPermissionByParentAndPermissionId(sa.getUniqueId(),
-                permission.getPermissionId());
+                permission);
         if (exists == null) {
             String errMsg = String
                 .format("Permission %s not found", permission);
@@ -467,14 +456,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public PermissionObject getPermissionOnScopeAccess(
-        String scopeAccessUniqueId, String permissionId) {
-        logger.debug("Getting Permission {} on ScopeAccess {}", permissionId,
+    public PermissionObject getPermissionForParent(
+        String scopeAccessUniqueId, PermissionObject permission) {
+        logger.debug("Getting Permission {} on ScopeAccess {}", permission,
             scopeAccessUniqueId);
         PermissionObject perm = this.scopeAccessDao
             .getPermissionByParentAndPermissionId(scopeAccessUniqueId,
-                permissionId);
-        logger.debug("Getting Permission {} on ScopeAccess {}", permissionId,
+                permission);
+        logger.debug("Getting Permission {} on ScopeAccess {}", permission,
             scopeAccessUniqueId);
         return perm;
     }

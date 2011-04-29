@@ -38,6 +38,7 @@ public interface ScopeAccessObjectDao {
 
     Boolean updatePermissionForScopeAccess(PermissionObject permission);
 
-    PermissionObject getPermissionByParentAndPermissionId(String parentUniqueId, String permissionId);
+    PermissionObject getPermissionByParentAndPermissionId(String parentUniqueId, PermissionObject permission);
 
+    List<PermissionObject> getPermissionsByParentAndPermissionId(String parentUniqueId, PermissionObject permission);
 }

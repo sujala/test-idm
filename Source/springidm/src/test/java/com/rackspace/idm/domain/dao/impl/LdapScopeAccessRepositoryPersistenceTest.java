@@ -333,13 +333,13 @@ public class LdapScopeAccessRepositoryPersistenceTest {
         final Boolean doesAccessTokenHavePermission = repo.doesAccessTokenHavePermission(accessToken, p);
         Assert.assertTrue(doesAccessTokenHavePermission);
 
-        PermissionObject po = repo.getPermissionByParentAndPermissionId(sa.getUniqueId(), permissionId);
+        PermissionObject po = repo.getPermissionByParentAndPermissionId(sa.getUniqueId(), p);
         Assert.assertNotNull(po);
 
         final Boolean result = repo.removePermissionFromScopeAccess(po);
         Assert.assertNotNull(result);
 
-        po = repo.getPermissionByParentAndPermissionId(sa.getUniqueId(), permissionId);
+        po = repo.getPermissionByParentAndPermissionId(sa.getUniqueId(), p);
         Assert.assertNull(po);
     }
 
@@ -389,14 +389,14 @@ public class LdapScopeAccessRepositoryPersistenceTest {
         final Boolean doesAccessTokenHavePermission = repo.doesAccessTokenHavePermission(accessToken, p);
         Assert.assertTrue(doesAccessTokenHavePermission);
 
-        PermissionObject po = repo.getPermissionByParentAndPermissionId(sa.getUniqueId(), permissionId);
+        PermissionObject po = repo.getPermissionByParentAndPermissionId(sa.getUniqueId(), p);
         Assert.assertNotNull(po);
 
         po.setEnabled(false);
         final Boolean result = repo.updatePermissionForScopeAccess(po);
         Assert.assertTrue(result);
 
-        po = repo.getPermissionByParentAndPermissionId(sa.getUniqueId(), permissionId);
+        po = repo.getPermissionByParentAndPermissionId(sa.getUniqueId(), p);
         Assert.assertNotNull(po);
         Assert.assertFalse(po.getEnabled());
     }
