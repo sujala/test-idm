@@ -110,11 +110,11 @@ public class UserServiceTests {
 
         userService = new DefaultUserService(mockUserDao, mockRackerDao,
                 mockCustomerDao,mockScopeAccessObjectDao,
-                mockEmailService, mockClientService, mockScopeAccessService, false);
+                mockEmailService, mockClientService, false);
 
         trustedUserService = new DefaultUserService(mockUserDao, mockRackerDao,
                 mockCustomerDao,mockScopeAccessObjectDao,
-                mockEmailService, mockClientService, mockScopeAccessService, true);
+                mockEmailService, mockClientService, true);
     }
 
     @Test
