@@ -4,7 +4,7 @@ import org.joda.time.DateTime;
 
 import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Password;
-import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
@@ -68,9 +68,9 @@ public interface UserService {
 
     DateTime getUserPasswordExpirationDate(String userName);
     
-    void grantPermission(String userName, Permission p);
+    void grantPermission(String username, PermissionObject p);
     
-    void revokePermission(Permission p);
-    
-    Permission getGrantedPermission(String userName, String permissionId);
+    void revokePermission(String username, PermissionObject permission);
+       
+    public PermissionObject getGrantedPermission(String username, String clientId, String permissionId);
 }

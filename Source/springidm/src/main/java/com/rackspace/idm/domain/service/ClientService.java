@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.PermissionObject;
 
 public interface ClientService {
 
@@ -47,7 +48,7 @@ public interface ClientService {
     Permission getDefinedPermissionByClientIdAndPermissionId(String clientId,
         String permissionId);
     
-    Permission checkAndGetPermission(String customerId, String clientId, String permissionId);
+    PermissionObject checkAndGetPermission(String customerId, String clientId, String permissionId);
 
     List<Permission> getDefinedPermissionsByClientId(String clientId);
 
