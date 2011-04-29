@@ -108,13 +108,13 @@ public class CustomerClientServiceResource {
             throw new NotFoundException(errMsg);
         }
         
-        ScopeAccessObject sa = this.scopeAccessService.getScopeAccessForParentByClientId(client.getUniqueId(), serviceId);
+        PermissionObject po = new PermissionObject();
+        po.setClientId(serviceId);
+        po.setPermissionId(permissionId);
         
-        if (sa != null) {
-            PermissionObject perm = this.scopeAccessService.getPermissionOnScopeAccess(sa.getUniqueId(), permissionId);
-            if (perm != null) {
-                return Response.ok().build();
-            }
+        PermissionObject perm = this.scopeAccessService.getPermissionForParent(client.getUniqueId(), po);
+        if (perm != null) {
+            return Response.ok().build();
         }
         
         return Response.noContent().build();
@@ -259,13 +259,13 @@ public class CustomerClientServiceResource {
             throw new NotFoundException(errMsg);
         }
         
-        ScopeAccessObject sa = this.scopeAccessService.getScopeAccessForParentByClientId(client.getUniqueId(), serviceId);
+        PermissionObject po = new PermissionObject();
+        po.setClientId(serviceId);
+        po.setPermissionId(permissionId);
         
-        if (sa != null) {
-            PermissionObject perm = this.scopeAccessService.getPermissionOnScopeAccess(sa.getUniqueId(), permissionId);
-            if (perm != null) {
-                this.scopeAccessService.removePermission(perm);
-            }
+        PermissionObject perm = this.scopeAccessService.getPermissionForParent(client.getUniqueId(), po);
+        if (perm != null) {
+            this.scopeAccessService.removePermission(perm);
         }
 
 

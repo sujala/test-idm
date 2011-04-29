@@ -102,16 +102,15 @@ public class UserPermissionsResource {
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         User user = this.userService.checkAndGetUser(customerId, username);
-
-        ScopeAccessObject sa = this.scopeAccessService
-            .getScopeAccessForParentByClientId(user.getUniqueId(), serviceId);
-
-        if (sa != null) {
-            PermissionObject perm = this.scopeAccessService
-                .getPermissionOnScopeAccess(sa.getUniqueId(), permissionId);
-            if (perm != null) {
-                return Response.ok().build();
-            }
+        
+        PermissionObject po = new PermissionObject();
+        po.setClientId(serviceId);
+        po.setPermissionId(permissionId);
+        
+        PermissionObject perm = this.scopeAccessService
+            .getPermissionForParent(user.getUniqueId(), po);
+        if (perm != null) {
+            return Response.ok().build();
         }
 
         return Response.noContent().build();
@@ -213,16 +212,14 @@ public class UserPermissionsResource {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-
-        ScopeAccessObject sa = this.scopeAccessService
-            .getScopeAccessForParentByClientId(user.getUniqueId(), serviceId);
-
-        if (sa != null) {
-            PermissionObject perm = this.scopeAccessService
-                .getPermissionOnScopeAccess(sa.getUniqueId(), permissionId);
-            if (perm != null) {
-                this.scopeAccessService.removePermission(perm);
-            }
+        PermissionObject po = new PermissionObject();
+        po.setClientId(serviceId);
+        po.setPermissionId(permissionId);
+        
+        PermissionObject perm = this.scopeAccessService.
+            getPermissionForParent(user.getUniqueId(), po);
+        if (perm != null) {
+            this.scopeAccessService.removePermission(perm);
         }
 
         return Response.noContent().build();
