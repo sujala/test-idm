@@ -4,7 +4,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -24,10 +24,13 @@ import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -39,27 +42,29 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class UserPermissionsResource {
 
+    private final PermissionConverter permissionConverter;
     private final ScopeAccessService scopeAccessService;
     private final UserService userService;
     private ClientService clientService;
-    private PermissionConverter permissionConverter;
     private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public UserPermissionsResource(UserService userService,
-        AuthorizationService authorizationService, ClientService clientService, ScopeAccessService scopeAccessService,
-        UserConverter userConverter, PermissionConverter permissionConverter) {
-
+    public UserPermissionsResource(PermissionConverter permissionConverter,
+        UserService userService, AuthorizationService authorizationService,
+        ClientService clientService, ScopeAccessService scopeAccessService,
+        UserConverter userConverter) {
+        this.permissionConverter = permissionConverter;
         this.userService = userService;
         this.scopeAccessService = scopeAccessService;
         this.authorizationService = authorizationService;
     }
 
     /**
-     * Get a permission.
+     * Check to see if a user has a permission.
      * 
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}user
+     * @response.representation.200.doc
+     * @response.representation.204.doc
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
      * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
@@ -70,11 +75,12 @@ public class UserPermissionsResource {
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
      * @param username username
+     * @param serviceId serviceId
      * @param permissionId permissionId
      */
     @GET
     @Path("{permissionId}")
-    public Response getPermissionForUser(@Context Request request,
+    public Response checkIfUserHasPermission(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
@@ -83,7 +89,7 @@ public class UserPermissionsResource {
         @PathParam("permissionId") String permissionId) {
 
         ScopeAccessObject token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients and Specific Clients are
         // authorized
@@ -92,16 +98,23 @@ public class UserPermissionsResource {
             || authorizationService.authorizeRackspaceClient(token)
             || authorizationService.authorizeClient(token, request.getMethod(),
                 uriInfo);
-        
-        authorizationService.checkAuthAndHandleFailure(authorized, token);
-             
-        PermissionObject perm = this.userService.getGrantedPermission(username,serviceId,permissionId);
-        
-        Permission permToReturn = createPermission(perm);
-            
-        logger.debug("Got Permission :{}", permissionId);
 
-        return Response.ok(permissionConverter.toPermissionJaxb(permToReturn)).build();
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
+
+        User user = this.userService.checkAndGetUser(customerId, username);
+
+        ScopeAccessObject sa = this.scopeAccessService
+            .getScopeAccessForParentByClientId(user.getUniqueId(), serviceId);
+
+        if (sa != null) {
+            PermissionObject perm = this.scopeAccessService
+                .getPermissionOnScopeAccess(sa.getUniqueId(), permissionId);
+            if (perm != null) {
+                return Response.ok().build();
+            }
+        }
+
+        return Response.noContent().build();
     }
 
     /**
@@ -117,8 +130,11 @@ public class UserPermissionsResource {
      * 
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
+     * @param username username
+     * @param serviceId serviceId
+     * @param Permission permission
      */
-    @PUT
+    @POST
     @Path("{permissionId}")
     public Response grantPermissionToUser(@Context Request request,
         @Context UriInfo uriInfo,
@@ -128,19 +144,25 @@ public class UserPermissionsResource {
         @PathParam("serviceId") String serviceId,
         EntityHolder<com.rackspace.idm.jaxb.Permission> holder) {
 
-        ScopeAccessObject token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
 
-        boolean authorized = authorizeGrantRevokePermission(token, request, uriInfo, serviceId);
+        com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
+        PermissionObject perm = this.permissionConverter
+            .toPermissionObjectDO(permission);
 
+        ScopeAccessObject token = this.scopeAccessService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        boolean authorized = authorizeGrantRevokePermission(token, request,
+            uriInfo, serviceId);
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        com.rackspace.idm.jaxb.Permission perm = holder.getEntity();
+        User user = this.userService.checkAndGetUser(customerId, username);
 
-        PermissionObject permissionToGrant = this.clientService
-            .checkAndGetPermission(customerId, serviceId, perm.getPermissionId());
+        this.scopeAccessService.grantPermission(user.getUniqueId(), perm);
 
-        this.userService.grantPermission(username, permissionToGrant);
-        
         return Response.ok(perm).build();
     }
 
@@ -157,6 +179,8 @@ public class UserPermissionsResource {
      * 
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
+     * @param username username
+     * @param serviceId serviceId
      * @param permissionId Permission ID
      */
     @DELETE
@@ -170,39 +194,54 @@ public class UserPermissionsResource {
         @PathParam("permissionId") String permissionId) {
 
         ScopeAccessObject token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
-      
-        boolean authorized = authorizeGrantRevokePermission(token, request, uriInfo, serviceId);
+            .getAccessTokenByAuthHeader(authHeader);
+
+        boolean authorized = authorizeGrantRevokePermission(token, request,
+            uriInfo, serviceId);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        PermissionObject permissionToRevoke = this.clientService
-            .checkAndGetPermission(customerId, serviceId, permissionId);
+        User user = this.userService.checkAndGetUser(customerId, username);
 
-        this.userService.revokePermission(username, permissionToRevoke);
+        Permission definedPermission = this.clientService
+            .getDefinedPermissionByClientIdAndPermissionId(serviceId,
+                permissionId);
+
+        if (definedPermission == null) {
+            String errMsg = String.format("Permission %s not found",
+                permissionId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        ScopeAccessObject sa = this.scopeAccessService
+            .getScopeAccessForParentByClientId(user.getUniqueId(), serviceId);
+
+        if (sa != null) {
+            PermissionObject perm = this.scopeAccessService
+                .getPermissionOnScopeAccess(sa.getUniqueId(), permissionId);
+            if (perm != null) {
+                this.scopeAccessService.removePermission(perm);
+            }
+        }
 
         return Response.noContent().build();
     }
-    
-    private boolean authorizeGrantRevokePermission(ScopeAccessObject token, Request request, UriInfo uriInfo, String clientId) {
+
+    private boolean authorizeGrantRevokePermission(ScopeAccessObject token,
+        Request request, UriInfo uriInfo, String clientId) {
         // Rackers can grant any permission to a user
         // Rackspace Clients can grant their own permission to a user
         // Specific Clients can grant their own permission to a user
         // Customer IdM can grant any permission to user
         boolean authorized = authorizationService.authorizeRacker(token)
-        || (authorizationService.authorizeRackspaceClient(token) && token.getClientId().equalsIgnoreCase(clientId)) 
-        || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo) && token.getClientId().equalsIgnoreCase(clientId)) 
-        || authorizationService.authorizeCustomerIdm(token);
-        
+            || (authorizationService.authorizeRackspaceClient(token) && token
+                .getClientId().equalsIgnoreCase(clientId))
+            || (authorizationService.authorizeClient(token,
+                request.getMethod(), uriInfo) && token.getClientId()
+                .equalsIgnoreCase(clientId))
+            || authorizationService.authorizeCustomerIdm(token);
+
         return authorized;
-    }
-    
-    private Permission createPermission(PermissionObject perm) {
-        Permission p = new Permission();
-        p.setClientId(perm.getClientId());
-        p.setCustomerId(perm.getCustomerId());
-        p.setPermissionId(perm.getPermissionId());
-        p.setValue(perm.getValue());
-        return p;
     }
 }

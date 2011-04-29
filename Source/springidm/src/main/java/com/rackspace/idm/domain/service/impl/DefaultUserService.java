@@ -31,7 +31,6 @@ import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
-import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
@@ -457,55 +456,6 @@ public class DefaultUserService implements UserService {
 
         return passwordExpirationDate;
     }
-    
-    @Override
-    public void grantPermission(String username, PermissionObject permission) {
-       
-        User user = this.userDao.getUserByUsername(username);
-        UserScopeAccessObject scopeAccess = getOrCreateScopeAccess(user, permission.getClientId());
-                
-        try {
-            scopeAccessService.addPermissionToScopeAccess(scopeAccess.getUniqueId(), permission);
-        } catch(IllegalStateException illegalStateExp) {
-            String errorMessage = String.format("Could not add permission %s for user %s", permission.getPermissionId(), user.getUsername());
-            logger.warn(errorMessage);
-            throw illegalStateExp;
-        }
-    }
-    
-    @Override
-    public void revokePermission(String username, PermissionObject permission) {
-        
-     if (permission == null) {
-            String errorMessage = String.format("Permission not found.");
-            logger.warn(errorMessage);
-            throw new NotFoundException(errorMessage);
-        }
-        
-        try {
-            scopeAccessService.removePermission(permission);
-        } catch(IllegalStateException exp) {
-            String errorMessage = String.format("Could not revoke permission %s", permission.getPermissionId());
-            logger.warn(errorMessage);
-            throw exp;
-        }
-    }
-    
-    @Override
-    public PermissionObject getGrantedPermission(String username, String clientId, String permissionId) {
-        User user = this.userDao.getUserByUsername(username);
-        UserScopeAccessObject scopeAccess = getOrCreateScopeAccess(user, clientId);
-        
-        PermissionObject perm = scopeAccessService.getPermissionOnScopeAccess(scopeAccess.getUniqueId(), permissionId);
-        
-        if (perm == null) {
-            String errorMessage = String.format("Permisison %s not found.", permissionId);
-            throw new NotFoundException(errorMessage);
-        }
-        
-        return perm;
-    }
-    
     
     @Override
     public User checkAndGetUser(String customerId, String username) {
