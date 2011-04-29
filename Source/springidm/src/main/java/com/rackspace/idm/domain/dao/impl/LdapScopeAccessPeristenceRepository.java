@@ -102,7 +102,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
                 final ScopeAccessObject scopeAccess = getScopeAccessByAccessToken(accessToken);
 
                 final PermissionObject searchForObject = LDAPPersister.getInstance(PermissionObject.class)
-                .searchForObject(po, conn, scopeAccess.getUniqueId(), SearchScope.SUB);
+                .searchForObject(po, conn, scopeAccess.getLDAPEntry().getParentDNString(), SearchScope.SUB);
                 return searchForObject != null;
             } catch (final LDAPException e) {
                 getLogger().error("Error checking permission", e);
