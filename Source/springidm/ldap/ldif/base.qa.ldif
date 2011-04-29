@@ -809,24 +809,6 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=grantPermissionToClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: grantPermissionToClient
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-grantedByDefault: FALSE
-enabled: TRUE
-
-dn: cn=revokePermissionToClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientPermission
-cn: revokePermissionToClient
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-RCN: RACKSPACE
-grantedByDefault: FALSE
-enabled: TRUE
-
 dn: cn=getUsers,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
@@ -1299,6 +1281,42 @@ dn: cn=getServicesForUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum
 objectClass: top
 objectClass: clientPermission
 cn: getServicesForUser
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=checkIfPermissionGrantedToClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: checkIfPermissionGrantedToClient
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=grantPermissionToClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: grantPermissionToClient
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=revokePermissionFromClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: revokePermissionFromClient
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=getServicesForClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getServicesForClient
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 grantedByDefault: FALSE
