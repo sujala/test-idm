@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.user.permission.UserPermissionsResource;
+import com.rackspace.idm.api.resource.customer.user.service.CustomerUserServicesResource;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -43,6 +44,7 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class UserResource {
     
+    private final CustomerUserServicesResource customerUserServicesResource;
     private final ScopeAccessService scopeAccessService;
     private final ApiKeyResource apiKeyResource;
     private final UserLockResource userLockResource;
@@ -59,14 +61,14 @@ public class UserResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public UserResource(ScopeAccessService scopeAccessService, ApiKeyResource apiKeyResource,
+    public UserResource(CustomerUserServicesResource customerUserServicesResource, ScopeAccessService scopeAccessService, ApiKeyResource apiKeyResource,
         UserLockResource userLockResource, UserPasswordResource userPasswordResource,
         UserGroupsResource userGroupsResource, UserSecretResource userSecretResource,
         UserSoftDeleteResource userSoftDeleteResource, UserStatusResource userStatusResource, 
         UserPermissionsResource userPermissionsResource, 
         UserService userService, UserConverter userConverter, InputValidator inputValidator,
         AuthorizationService authorizationService) {
-        
+        this.customerUserServicesResource = customerUserServicesResource;
         this.scopeAccessService = scopeAccessService;
         this.apiKeyResource = apiKeyResource;
         this.userLockResource = userLockResource;
@@ -264,6 +266,11 @@ public class UserResource {
     @Path("permissions")
     public UserPermissionsResource getUserPermissionResource() {
         return userPermissionsResource;
+    }
+    
+    @Path("services")
+    public CustomerUserServicesResource getCustomerUserServicesResource() {
+        return customerUserServicesResource;
     }
     
     private void validateParam(Object inputParam) {
