@@ -111,7 +111,8 @@ public class ServiceConfiguration {
 
     @Bean
     public ClientService clientService() {
-        return new DefaultClientService(scopeAccessDao, clientDao, customerDao, userRepo);
+        return new DefaultClientService(scopeAccessDao, clientDao, customerDao,
+            userRepo);
     }
 
     @Bean
@@ -139,7 +140,8 @@ public class ServiceConfiguration {
             config = new PropertiesConfiguration(propsFileLoc);
         } catch (final ConfigurationException e) {
             e.printStackTrace();
-            throw new RuntimeException("Error encountered when loading the token config file.");
+            throw new RuntimeException(
+                "Error encountered when loading the token config file.");
         }
 
         final int smtpPort = config.getInt("smtpPort");
@@ -150,15 +152,16 @@ public class ServiceConfiguration {
         final boolean useSSL = config.getBoolean("SSL");
         final boolean useTSL = config.getBoolean("TLS");
 
-        final EmailSettings emailSettings = new EmailSettings(smtpPort, smtpHost, smtpUsername, smtpPassword,
-                debug, useSSL, useTSL);
+        final EmailSettings emailSettings = new EmailSettings(smtpPort,
+            smtpHost, smtpUsername, smtpPassword, debug, useSSL, useTSL);
 
         return new DefaultEmailService(emailSettings);
     }
 
     @Bean
     public InputValidator inputValidator() {
-        final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+        final Validator validator = Validation.buildDefaultValidatorFactory()
+            .getValidator();
         return new InputValidator(validator);
     }
 
@@ -169,26 +172,30 @@ public class ServiceConfiguration {
 
     @Bean
     public ScopeAccessService scopeAccessService() {
-        return new DefaultScopeAccessService(userService(),
-                clientDao, scopeAccessDao, authHeaderHelper(), config);
+        return new DefaultScopeAccessService(userRepo, clientDao,
+            scopeAccessDao, authHeaderHelper(), config);
     }
 
     @Bean
     public UserService userService() {
-        final boolean isTrustedServer = config.getBoolean("ldap.server.trusted", false);
-        return new DefaultUserService(userRepo, authDao, customerDao, scopeAccessDao, emailService(), clientService(), scopeAccessService(),
-                isTrustedServer);
+        final boolean isTrustedServer = config.getBoolean(
+            "ldap.server.trusted", false);
+        return new DefaultUserService(userRepo, authDao, customerDao,
+            scopeAccessDao, emailService(), clientService(),
+            scopeAccessService(), isTrustedServer);
     }
 
     @Bean
     public OAuthService oauthService() {
         return new DefaultOAuthService(userService(), clientService(),
-                authorizationService(), config, inputValidator, scopeAccessService());
+            authorizationService(), config, inputValidator,
+            scopeAccessService());
     }
 
     @Bean
     public AuthorizationService authorizationService() {
-        return new DefaultAuthorizationService(scopeAccessDao, clientDao, wadlTrie(), config);
+        return new DefaultAuthorizationService(scopeAccessDao, clientDao,
+            wadlTrie(), config);
     }
 
     @Bean
@@ -200,9 +207,12 @@ public class ServiceConfiguration {
     public MBeanExporter exporter() {
         final MBeanExporter exp = new MBeanExporter();
         final Map<String, Object> beans = new HashMap<String, Object>();
-        beans.put("com.rackspace.idm:name=loggerMonitoringBean", loggerMonitoringBean());
-        beans.put("com.rackspace.idm:name=ldapRouterMonitoringBean", ldapRouterMonitoringBean());
-        beans.put("com.rackspace.idm:name=memcacheMonitoringBean", memcacheMonitoringBean());
+        beans.put("com.rackspace.idm:name=loggerMonitoringBean",
+            loggerMonitoringBean());
+        beans.put("com.rackspace.idm:name=ldapRouterMonitoringBean",
+            ldapRouterMonitoringBean());
+        beans.put("com.rackspace.idm:name=memcacheMonitoringBean",
+            memcacheMonitoringBean());
         exp.setBeans(beans);
         return exp;
     }
