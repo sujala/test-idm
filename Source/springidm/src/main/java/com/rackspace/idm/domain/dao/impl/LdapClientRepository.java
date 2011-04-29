@@ -14,7 +14,6 @@ import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Clients;
-import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.exception.DuplicateClientGroupException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -23,7 +22,6 @@ import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
 import com.unboundid.ldap.sdk.ResultCode;
@@ -98,33 +96,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         audit.succeed();
 
         getLogger().debug("Added clientGroup {}", clientGroup);
-    }
-
-    @Override
-    public void addDefinedPermission(Permission permission,
-        String clientUniqueId) {
-        getLogger().info("Adding Permission {}", permission);
-
-        if (permission == null) {
-            String errMsg = "Null instance of Permission was passed";
-            getLogger().error(errMsg);
-            throw new IllegalArgumentException(errMsg);
-        }
-
-        Audit audit = Audit.log(permission).add();
-
-        Attribute[] atts = getAddAttributesForClientPermission(permission);
-
-        String permissionDN = new LdapDnBuilder(clientUniqueId).addAttriubte(
-            ATTR_NAME, permission.getPermissionId()).build();
-
-        permission.setUniqueId(permissionDN);
-
-        addEntry(permissionDN, atts, audit);
-
-        audit.succeed();
-
-        getLogger().debug("Added permission {}", permission);
     }
 
     @Override
@@ -221,23 +192,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         audit.succeed();
         getLogger().info("Deleted clientGroup {}", group);
-    }
-
-    @Override
-    public void deleteDefinedPermission(Permission permission) {
-        getLogger().info("Deleting permission {}", permission);
-        if (permission == null) {
-            getLogger().error("Null or Empty permission paramter");
-            throw new IllegalArgumentException(
-                "Null or Empty permission parameter.");
-        }
-
-        Audit audit = Audit.log(permission).delete();
-
-        this.deleteEntryAndSubtree(permission.getUniqueId(), audit);
-
-        audit.succeed();
-        getLogger().info("Deleted permission {}", permission);
     }
 
     @Override
@@ -451,82 +405,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     @Override
-    public List<Client> getClientsThatHavePermission(Permission permission) {
-        getLogger().debug("Doing search for clients that have permission {}",
-            permission);
-
-        if (permission == null) {
-            String errMsg = "Null permission passed in";
-            getLogger().error(errMsg);
-            throw new IllegalArgumentException(errMsg);
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_PERMISSION,
-                permission.getPermissionLDAPserialization())
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEAPPLICATION).build();
-
-        List<Client> clientList = new ArrayList<Client>();
-
-        List<SearchResultEntry> entries = this.getMultipleEntries(BASE_DN,
-            SearchScope.SUB, searchFilter, ATTR_NAME);
-
-        for (SearchResultEntry entry : entries) {
-            clientList.add(getClient(entry));
-        }
-
-        getLogger().debug("Found Clients - {}", clientList);
-
-        return clientList;
-    }
-
-    @Override
-    public Permission getDefinedPermissionByClientIdAndPermissionId(
-        String clientId, String permissionId) {
-        String clientDN = this.getClientByClientId(clientId).getUniqueId();
-
-        String searchDN = "ou=permissions," + clientDN;
-
-        Permission permission = null;
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_NAME, permissionId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTPERMISSION)
-            .build();
-
-        SearchResultEntry entry = this.getSingleEntry(searchDN,
-            SearchScope.ONE, searchFilter);
-
-        if (entry != null) {
-            permission = getPermission(entry);
-        }
-
-        return permission;
-    }
-
-    @Override
-    public List<Permission> getDefinedPermissionsByClientId(String clientId) {
-        String clientDN = this.getClientByClientId(clientId).getUniqueId();
-
-        String searchDN = "ou=permissions," + clientDN;
-
-        List<Permission> permissions = new ArrayList<Permission>();
-
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
-            ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTPERMISSION).build();
-
-        List<SearchResultEntry> entries = this.getMultipleEntries(searchDN,
-            SearchScope.ONE, searchFilter, ATTR_NAME);
-
-        for (SearchResultEntry entry : entries) {
-            permissions.add(getPermission(entry));
-        }
-
-        return permissions;
-    }
-
-    @Override
     public String getUnusedClientInum(String customerInum) {
         // TODO: We might may this call to the XDI server in the future.
         Client client = null;
@@ -537,60 +415,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         } while (client != null);
 
         return inum;
-    }
-
-    @Override
-    public void grantPermissionToClient(Permission permission, Client client) {
-
-        getLogger().info("Adding permission {} to {}", permission, client);
-
-        if (permission == null || StringUtils.isBlank(permission.getUniqueId())) {
-            String errMsg = "Null permission passed in or permission uniqueId was blank";
-            getLogger().error(errMsg);
-            throw new IllegalArgumentException(errMsg);
-        }
-
-        if (client == null || StringUtils.isBlank(client.getUniqueId())) {
-            String errMsg = "Null client passed in or client uniqueId was blank";
-            getLogger().error(errMsg);
-            throw new IllegalArgumentException(errMsg);
-        }
-
-        List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.ADD, ATTR_PERMISSION,
-            permission.getPermissionLDAPserialization()));
-
-        LDAPResult result;
-        Audit audit = Audit.log(client).modify(mods);
-
-        try {
-            result = getAppConnPool().modify(client.getUniqueId(), mods);
-        } catch (LDAPException ldapEx) {
-            getLogger().error("Error adding permission to client {} - {}",
-                permission, ldapEx);
-
-            if (ldapEx.getResultCode().equals(
-                ResultCode.ATTRIBUTE_OR_VALUE_EXISTS)) {
-                throw new DuplicateException("Client already has permission");
-            }
-
-            audit.fail(ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail(result.getResultCode().toString());
-            throw new IllegalStateException(
-                String
-                    .format(
-                        "LDAP error encountered when adding permission to client: %s - %s",
-                        permission, result.getResultCode().toString()));
-        }
-
-        audit.succeed();
-
-        getLogger()
-            .info("Added permission {} to client {}", permission, client);
     }
 
     @Override
@@ -644,56 +468,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         audit.succeed();
         getLogger().info("Removed user {} from group {}", userUniqueId, group);
-    }
-
-    @Override
-    public void revokePermissionFromClient(Permission permission, Client client) {
-        getLogger().info("Revoking permission {} from client {}", permission,
-            client);
-
-        if (permission == null || StringUtils.isBlank(permission.getUniqueId())) {
-            String errMsg = "Null permission passed in or permission uniqueId was blank";
-            getLogger().error(errMsg);
-            throw new IllegalArgumentException(errMsg);
-        }
-
-        if (client == null || StringUtils.isBlank(client.getUniqueId())) {
-            String errMsg = "Null client passed in or client uniqueId was blank";
-            getLogger().error(errMsg);
-            throw new IllegalArgumentException(errMsg);
-        }
-
-        List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.DELETE, ATTR_PERMISSION,
-            permission.getPermissionLDAPserialization()));
-
-        LDAPResult result;
-        Audit audit = Audit.log(client).modify(mods);
-        try {
-            result = getAppConnPool().modify(client.getUniqueId(), mods);
-        } catch (LDAPException ldapEx) {
-            audit.fail(ldapEx.getMessage());
-            getLogger().error("Error revoking permission from client {} - {}",
-                permission, ldapEx);
-            if (ldapEx.getResultCode().equals(ResultCode.NO_SUCH_ATTRIBUTE)) {
-                throw new NotFoundException("Client doesn't have permission");
-            }
-            throw new IllegalStateException(ldapEx);
-        }
-
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            audit.fail(result.getResultCode().toString());
-            getLogger().error("Error revoking permission from client {} - {}",
-                permission, result.getResultCode());
-            throw new IllegalStateException(
-                String
-                    .format(
-                        "LDAP error encountered when revoking permission from client: %s - %s",
-                        permission, result.getResultCode().toString()));
-        }
-        audit.succeed();
-        getLogger().info("Revoked permission {} from client {}", permission,
-            client);
     }
 
     @Override
@@ -781,41 +555,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().debug("Updated clientGroup {}", group.getName());
     }
 
-    @Override
-    public void updateDefinedPermission(Permission permission) {
-        getLogger().debug("Updating permission {}", permission);
-        if (permission == null || StringUtils.isBlank(permission.getClientId())) {
-            getLogger().error(
-                "Resouce instance is null or its clientId has no value");
-            throw new IllegalArgumentException(
-                "Bad parameter: The Permission instance either null or its clientName has no value.");
-        }
-        Permission oldPermission = this
-            .getDefinedPermissionByClientIdAndPermissionId(
-                permission.getClientId(), permission.getPermissionId());
-
-        if (oldPermission == null) {
-            getLogger().error("No record found for permission {}", permission);
-            throw new IllegalArgumentException(
-                "There is no exisiting record for the given permission instance.");
-        }
-
-        if (permission.equals(oldPermission)) {
-            // No changes!
-            return;
-        }
-
-        List<Modification> mods = getPermissionModifications(oldPermission,
-            permission);
-        Audit audit = Audit.log(oldPermission).modify(mods);
-
-        updateEntry(oldPermission.getUniqueId(), mods, audit);
-
-        audit.succeed();
-
-        getLogger().debug("Updated permission {}", permission);
-    }
-
     private Clients findFirst100ByCustomerIdAndLock(String customerId,
         boolean isLocked) {
         getLogger().debug("Doing search for customerId {}", customerId);
@@ -855,35 +594,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
         if (!StringUtils.isBlank(group.getType())) {
             atts.add(new Attribute(ATTR_GROUP_TYPE, group.getType()));
-        }
-
-        Attribute[] attributes = atts.toArray(new Attribute[0]);
-
-        return attributes;
-    }
-
-    private Attribute[] getAddAttributesForClientPermission(
-        Permission permission) {
-        List<Attribute> atts = new ArrayList<Attribute>();
-
-        atts.add(new Attribute(ATTR_OBJECT_CLASS,
-            ATTR_PERMISSION_OBJECT_CLASS_VALUES));
-
-        if (!StringUtils.isBlank(permission.getCustomerId())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, permission
-                .getCustomerId()));
-        }
-        if (!StringUtils.isBlank(permission.getClientId())) {
-            atts.add(new Attribute(ATTR_CLIENT_ID, permission.getClientId()));
-        }
-        if (!StringUtils.isBlank(permission.getPermissionId())) {
-            atts.add(new Attribute(ATTR_NAME, permission.getPermissionId()));
-        }
-        if (!StringUtils.isBlank(permission.getValue())) {
-            atts.add(new Attribute(ATTR_BLOB, permission.getValue()));
-        }
-        if (!StringUtils.isBlank(permission.getType())) {
-            atts.add(new Attribute(ATTR_PERMISSION_TYPE, permission.getType()));
         }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
@@ -977,23 +687,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 .getAttributeValueAsBoolean(ATTR_LOCKED));
         }
 
-        String[] permissions = resultEntry.getAttributeValues(ATTR_PERMISSION);
-
-        if (permissions != null && permissions.length > 0) {
-
-            List<Permission> perms = new ArrayList<Permission>();
-
-            for (String s : permissions) {
-                String[] split = s.split(Permission.LDAP_SEPERATOR);
-
-                if (split.length == 3) {
-                    perms
-                        .add(new Permission(split[0], split[1], split[2], null));
-                }
-            }
-            client.setPermissions(perms);
-        }
-
         return client;
     }
 
@@ -1051,18 +744,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return clients;
     }
 
-    private Permission getPermission(SearchResultEntry resultEntry) {
-        Permission permission = new Permission();
-        permission.setUniqueId(resultEntry.getDN());
-        permission.setCustomerId(resultEntry
-            .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
-        permission.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
-        permission.setPermissionId(resultEntry.getAttributeValue(ATTR_NAME));
-        permission.setType(resultEntry.getAttributeValue(ATTR_PERMISSION_TYPE));
-        permission.setValue(resultEntry.getAttributeValue(ATTR_BLOB));
-        return permission;
-    }
-
     private Client getSingleClient(Filter searchFilter) {
         Client client = null;
         SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.SUB,
@@ -1116,27 +797,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 ATTR_SOFT_DELETED, String.valueOf(cNew.isSoftDeleted())));
         }
 
-        return mods;
-    }
-
-    List<Modification> getPermissionModifications(Permission rOld,
-        Permission rNew) {
-        List<Modification> mods = new ArrayList<Modification>();
-        if (!StringUtils.equals(rOld.getValue(), rNew.getValue())) {
-            if (!StringUtils.isBlank(rNew.getValue())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_BLOB,
-                    rNew.getValue()));
-            }
-        }
-        if (!StringUtils.equals(rOld.getType(), rNew.getType())) {
-            if (!StringUtils.isBlank(rNew.getType())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_PERMISSION_TYPE, rNew.getType()));
-            } else {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_PERMISSION_TYPE));
-            }
-        }
         return mods;
     }
 }
