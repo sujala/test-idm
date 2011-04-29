@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,6 +14,7 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
 import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
@@ -20,6 +22,7 @@ import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -115,14 +118,26 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         if (client == null) {
             return;
         }
-        // TODO: Need to implement this method in DAO
-        // List<ScopeAccessObject> saList = this.scopeAccessDao.g
+        List<ScopeAccessObject> saList = this.scopeAccessDao.getScopeAccessesByParent(client.getUniqueId());
+        
+        for (ScopeAccessObject sa : saList) {
+            if (sa instanceof hasAccessToken) {
+                ((hasAccessToken)sa).setAccessTokenExpired();
+                this.scopeAccessDao.updateScopeAccess(sa);
+            }
+        }
     }
 
     @Override
     public void expireAllTokensForCustomer(String customerId) {
-        // TODO Auto-generated method stub
-
+        List<Client> clients = getAllClientsForCustomerId(customerId);
+        List<User> users = getAllUsersForCustomerId(customerId);
+        for (Client client : clients) {
+            this.expireAllTokensForClient(client.getClientId());
+        }
+        for (User user : users) {
+            this.expireAllTokensForUser(user.getUsername());
+        }
     }
 
     @Override
@@ -136,11 +151,38 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             .getScopeAccessesByParent(user.getUniqueId());
 
         for (final ScopeAccessObject sa : saList) {
-            final UserScopeAccessObject usa = (UserScopeAccessObject) sa;
-            usa.setAccessTokenExpired();
-            usa.setRefreshTokenExpired();
-            this.scopeAccessDao.updateScopeAccess(usa);
+            if (sa instanceof hasAccessToken) {
+                ((hasAccessToken)sa).setAccessTokenExpired();
+                this.scopeAccessDao.updateScopeAccess(sa);
+            }
         }
+    }
+    
+    // private functions
+    private List<Client> getAllClientsForCustomerId(final String customerId) {
+        final List<Client> clientsList = new ArrayList<Client>();
+        int total = 1; // This gets overwritten, just needs to be greater than
+        // offset right now.
+        for (int offset = 0; offset < total; offset += getPagingLimit()) {
+            final Clients clientsObj = clientService.getByCustomerId(
+                customerId, offset, getPagingLimit());
+            clientsList.addAll(clientsObj.getClients());
+            total = clientsObj.getTotalRecords();
+        }
+        return clientsList;
+    }
+
+    private List<User> getAllUsersForCustomerId(final String customerId) {
+        final List<User> usersList = new ArrayList<User>();
+        int total = 1; // This gets overwritten, just needs to be greater than
+        // offset right now.
+        for (int offset = 0; offset < total; offset += getPagingLimit()) {
+            final Users usersObj = userService.getByCustomerId(customerId,
+                offset, getPagingLimit());
+            usersList.addAll(usersObj.getUsers());
+            total = usersObj.getTotalRecords();
+        }
+        return usersList;
     }
 
     @Override
@@ -457,5 +499,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.info("Updating Permission {}", permission);
         this.scopeAccessDao.updatePermissionForScopeAccess(permission);
         logger.info("Updated Permission {}", permission);
+    }
+    
+    private int getPagingLimit() {
+        return config.getInt("ldap.paging.limit.max");
     }
 }
