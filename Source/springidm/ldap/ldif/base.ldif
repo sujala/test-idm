@@ -822,10 +822,10 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getPermissionForUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=checkIfUserHasPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: getPermissionForUser
+cn: checkIfUserHasPermission
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 grantedByDefault: FALSE
