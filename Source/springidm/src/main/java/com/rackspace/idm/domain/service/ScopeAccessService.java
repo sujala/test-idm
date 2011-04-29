@@ -33,7 +33,7 @@ public interface ScopeAccessService {
 
     PasswordResetScopeAccessObject getOrCreatePasswordResetScopeAccessForUser(String userUniqueId);
 
-    PermissionObject getPermissionForParent(String parentUniqueId, PermissionObject permissionId);
+    PermissionObject getPermissionForParent(String parentUniqueId, PermissionObject permission);
 
     RackerScopeAccessObject getRackerScopeAccessForClientId(String rackerUniqueId, String clientId);
 
