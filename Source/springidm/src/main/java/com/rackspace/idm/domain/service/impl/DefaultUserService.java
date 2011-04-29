@@ -31,7 +31,7 @@ import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
-import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
@@ -41,6 +41,7 @@ import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.EmailService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
@@ -66,6 +67,7 @@ public class DefaultUserService implements UserService {
     private final ScopeAccessObjectDao scopeAccessDao;
     private final EmailService emailService;
     private final ClientService clientService;
+    private final ScopeAccessService scopeAccessService;
 
     private final TemplateProcessor tproc = new TemplateProcessor();
     private final boolean isTrustedServer;
@@ -73,7 +75,7 @@ public class DefaultUserService implements UserService {
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
         CustomerDao customerDao, ScopeAccessObjectDao scopeAccessDao, EmailService emailService,
-        ClientService clientService, boolean isTrusted) {
+        ClientService clientService, ScopeAccessService scopeAccessService, boolean isTrusted) {
 
         this.userDao = userDao;
         this.authDao = rackerDao;
@@ -81,6 +83,7 @@ public class DefaultUserService implements UserService {
         this.scopeAccessDao = scopeAccessDao;
         this.emailService = emailService;
         this.clientService = clientService;
+        this.scopeAccessService = scopeAccessService;
         this.isTrustedServer = isTrusted;
     }
 
@@ -456,36 +459,54 @@ public class DefaultUserService implements UserService {
     }
     
     @Override
-    public void grantPermission(String username, Permission permission) {
-        
-        User user = checkAndGetUser(permission.getCustomerId(), username);
-        
-        ScopeAccessObject scopeAccess = getOrCreateScopeAccess(user, permission.getClientId());
-        
+    public void grantPermission(String username, PermissionObject permission) {
+       
+        User user = this.userDao.getUserByUsername(username);
+        UserScopeAccessObject scopeAccess = getOrCreateScopeAccess(user, permission.getClientId());
+                
         try {
-            //scopeAccessDao.addPermissionToScopeAccess(scopeAccess.getUniqueId(), permission);
+            scopeAccessService.addPermissionToScopeAccess(scopeAccess.getUniqueId(), permission);
         } catch(IllegalStateException illegalStateExp) {
-            String errorMessage = String.format("Could not add permission %s for user %s", permission.getPermissionId(), username);
+            String errorMessage = String.format("Could not add permission %s for user %s", permission.getPermissionId(), user.getUsername());
             logger.warn(errorMessage);
+            throw illegalStateExp;
         }
     }
     
     @Override
-    public void revokePermission(Permission permission) {
-      
+    public void revokePermission(String username, PermissionObject permission) {
+        
+     if (permission == null) {
+            String errorMessage = String.format("Permission not found.");
+            logger.warn(errorMessage);
+            throw new NotFoundException(errorMessage);
+        }
+        
         try {
-            //scopeAccessDao.removePermissionFromScopeAccess(permission);
-        } catch(IllegalStateException illegalStateExp) {
+            scopeAccessService.removePermission(permission);
+        } catch(IllegalStateException exp) {
             String errorMessage = String.format("Could not revoke permission %s", permission.getPermissionId());
             logger.warn(errorMessage);
+            throw exp;
         }
     }
     
     @Override
-    public Permission getGrantedPermission(String userName, String permissionId) {
-        return null;
+    public PermissionObject getGrantedPermission(String username, String clientId, String permissionId) {
+        User user = this.userDao.getUserByUsername(username);
+        UserScopeAccessObject scopeAccess = getOrCreateScopeAccess(user, clientId);
+        
+        PermissionObject perm = scopeAccessService.getPermissionOnScopeAccess(scopeAccess.getUniqueId(), permissionId);
+        
+        if (perm == null) {
+            String errorMessage = String.format("Permisison %s not found.", permissionId);
+            throw new NotFoundException(errorMessage);
+        }
+        
+        return perm;
     }
-
+    
+    
     @Override
     public User checkAndGetUser(String customerId, String username) {
         User user = this.getUser(customerId, username);
@@ -558,14 +579,14 @@ public class DefaultUserService implements UserService {
         }
     }
     
-    private ScopeAccessObject getOrCreateScopeAccess(User targetUser,
+    private UserScopeAccessObject getOrCreateScopeAccess(User targetUser,
         String scopeAccessClientId) {
-        ScopeAccessObject sa = scopeAccessDao.getScopeAccessForParentByClientId(
-            targetUser.getUniqueId(), scopeAccessClientId);
+        UserScopeAccessObject sa = (UserScopeAccessObject) scopeAccessDao.getScopeAccessByUsernameAndClientId(targetUser.getUsername(), scopeAccessClientId);
         if (sa == null) {
-            sa = new ScopeAccessObject();
-            //sa.setUsername(targetUser.getUsername());
-            //sa.setUserRCN(targetUser.getCustomerId());
+            sa = new UserScopeAccessObject();
+            sa.setUsername(targetUser.getUsername());
+            sa.setUserRCN(targetUser.getCustomerId());
+            sa.setClientId(scopeAccessClientId);
             scopeAccessDao.addScopeAccess(targetUser.getUniqueId(), sa);
         }
         return sa;

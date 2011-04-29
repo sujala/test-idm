@@ -18,6 +18,7 @@ import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.exception.DuplicateException;
@@ -525,8 +526,8 @@ public class DefaultClientService implements ClientService {
         return this.clientDao.getClientsThatHavePermission(permission);
     }
     
-    @Override
-    public Permission checkAndGetPermission(String customerId, String clientId, String permissionId) 
+    public PermissionObject checkAndGetPermission(String customerId, String clientId, String permissionId) 
+
     throws NotFoundException {
     
         Permission permission = this.getDefinedPermissionByClientIdAndPermissionId(clientId,
@@ -538,8 +539,11 @@ public class DefaultClientService implements ClientService {
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
-    
-        return permission;
+
+        PermissionObject permObj = new PermissionObject(permission.getCustomerId(), permission.getClientId(), permission.getPermissionId(),
+            permission.getValue());
+      
+        return permObj;
     }  
 
     private void addUserToClientGroup(String username, ClientGroup clientGroup) {
