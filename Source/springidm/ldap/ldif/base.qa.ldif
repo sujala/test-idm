@@ -1250,6 +1250,15 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
+dn: cn=addServiceToUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: addServiceToUser
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
 ################################################### IDM Permissions Granted to Clients #####################################
 
 dn: cn=setCustomerLockStatus,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!3333,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
