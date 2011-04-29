@@ -5,7 +5,6 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
@@ -213,120 +212,9 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
             .build();
     }
 
-    /**
-     * Grants a defined permission to a client.
-     * 
-     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}client
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}permission
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param customerId RCN
-     * @param clientId Client application ID
-     * @param permissionId Permission ID
-     */
-    @PUT
-    @Path("grant")
-    public Response grantPermissionToClient(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId,
-        @PathParam("permissionId") String permissionId,
-        EntityHolder<com.rackspace.idm.jaxb.Client> holder) {
-        if (!holder.hasEntity()) {
-            throw new BadRequestException("Request body missing.");
-        }
-
-        checkGrantRevokePermissionAuthorization(authHeader, clientId,
-            request.getMethod(), uriInfo);
-
-        Permission permissionToGrant = this.checkAndGetPermission(customerId,
-            clientId, permissionId);
-
-        com.rackspace.idm.jaxb.Client targetClient = holder.getEntity();
-
-        if (targetClient.getClientId().equals(permissionToGrant.getClientId())) {
-            String errorMessage = String.format(
-                "Permission %s defined by client %s. "
-                    + "Cannot grant to itself", permissionId, clientId);
-
-            logger.warn(errorMessage);
-
-            throw new BadRequestException(errorMessage);
-        }
-
-        this.clientService.grantPermission(targetClient.getClientId(),
-            permissionToGrant);
-
-        return Response.ok(
-            permissionConverter.toPermissionJaxb(permissionToGrant)).build();
-    }
-
-    /**
-     * Revokes a defined permission from a client.
-     * 
-     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}client
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}permission
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param customerId RCN
-     * @param clientId Client application ID
-     * @param permissionId Permission ID
-     */
-    @PUT
-    @Path("revoke")
-    public Response revokePermissionToClient(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId,
-        @PathParam("permissionId") String permissionId,
-        EntityHolder<com.rackspace.idm.jaxb.Client> holder) {
-        if (!holder.hasEntity()) {
-            throw new BadRequestException("Request body missing");
-        }
-        checkGrantRevokePermissionAuthorization(authHeader, clientId,
-            request.getMethod(), uriInfo);
-
-        Permission permissionToRevoke = this.checkAndGetPermission(customerId,
-            clientId, permissionId);
-        com.rackspace.idm.jaxb.Client targetClient = holder.getEntity();
-        this.clientService.revokePermission(targetClient.getClientId(),
-            permissionToRevoke);
-
-        return Response.ok(
-            permissionConverter.toPermissionJaxb(permissionToRevoke)).build();
-    }
-
     @Override
     protected Logger getLogger() {
         return logger;
-    }
-
-    private void checkGrantRevokePermissionAuthorization(String authHeader,
-        String clientId, String method, UriInfo uri) {
-        ScopeAccessObject token = this.scopeAccessService
-            .getAccessTokenByAuthHeader(authHeader);
-
-        // Only the client who "owns" the permission and IDM is allowed to grant
-        // or revoke it.
-        boolean authorized = ((token instanceof ClientScopeAccessObject && token
-            .getClientId().equalsIgnoreCase(clientId)))
-            || authorizationService.authorizeClient(token, method, uri);
-
-        authorizationService.checkAuthAndHandleFailure(authorized, token);
     }
 
     private Permission checkAndGetPermission(String customerId,
