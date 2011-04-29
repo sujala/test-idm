@@ -66,6 +66,20 @@ public class PermissionConverter {
         permJaxb.setEnabled(permDo.getEnabled());
         return permJaxb;
     }
+    
+    public com.rackspace.idm.jaxb.Permission toPermissionJaxb(PermissionObject permDo) {
+        com.rackspace.idm.jaxb.Permission permJaxb = of.createPermission();
+        permJaxb.setClientId(permDo.getClientId());
+        permJaxb.setCustomerId(permDo.getCustomerId());
+        permJaxb.setPermissionId(permDo.getPermissionId());
+        permJaxb.setType(permDo.getPermissionType());
+        permJaxb.setValue(permDo.getValue());
+        permJaxb.setTitle(permDo.getTitle());
+        permJaxb.setDescription(permDo.getDescription());
+        permJaxb.setGrantedByDefault(permDo.getGrantedByDefault());
+        permJaxb.setEnabled(permDo.getEnabled());
+        return permJaxb;
+    }
 
     public com.rackspace.idm.jaxb.PermissionList toPermissionListJaxb(List<Permission> permissions) {
 
