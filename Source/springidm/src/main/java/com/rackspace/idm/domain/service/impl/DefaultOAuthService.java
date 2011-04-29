@@ -433,9 +433,6 @@ public class DefaultOAuthService implements OAuthService {
         return scopeAccess;
     }
 
-    private int getCloudAuthDefaultTokenExpirationSeconds() {
-        return config.getInt("token.cloudAuthExpirationSeconds");
-    }
 
     private int getDefaultTokenExpirationSeconds() {
         return config.getInt("token.expirationSeconds");
