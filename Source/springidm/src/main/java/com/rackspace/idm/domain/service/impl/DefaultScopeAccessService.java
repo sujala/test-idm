@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
@@ -24,7 +25,6 @@ import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.entity.hasAccessToken;
-import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
@@ -36,7 +36,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private static final String PASSWORD_RESET_CLIENT_ID = "PASSWORDRESET";
 
     private final AuthHeaderHelper authHeaderHelper;
-    private final ClientService clientService;
+    private final ClientDao clientDao;
     private final Configuration config;
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -44,10 +44,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private final UserService userService;
 
     public DefaultScopeAccessService(UserService userService,
-        ClientService clientService, ScopeAccessObjectDao scopeAccessDao,
+        ClientDao clientDao, ScopeAccessObjectDao scopeAccessDao,
         AuthHeaderHelper authHeaderHelper, Configuration config) {
         this.userService = userService;
-        this.clientService = clientService;
+        this.clientDao  = clientDao;
         this.scopeAccessDao = scopeAccessDao;
         this.authHeaderHelper = authHeaderHelper;
         this.config = config;
@@ -114,7 +114,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public void expireAllTokensForClient(String clientId) {
-        final Client client = this.clientService.getById(clientId);
+        final Client client = this.clientDao.getClientByClientId(clientId);
         if (client == null) {
             return;
         }
@@ -164,7 +164,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         int total = 1; // This gets overwritten, just needs to be greater than
         // offset right now.
         for (int offset = 0; offset < total; offset += getPagingLimit()) {
-            final Clients clientsObj = clientService.getByCustomerId(
+            final Clients clientsObj = clientDao.getClientsByCustomerId(
                 customerId, offset, getPagingLimit());
             clientsList.addAll(clientsObj.getClients());
             total = clientsObj.getTotalRecords();
@@ -370,7 +370,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public PermissionObject grantPermission(String parentUniqueId,
         PermissionObject permission) {
-        Client dClient = this.clientService.getClient(
+        Client dClient = this.clientDao.getClientByCustomerIdAndClientId(
             permission.getCustomerId(), permission.getClientId());
 
         if (dClient == null) {
@@ -445,7 +445,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         String scopeAccessUniqueId, PermissionObject permission) {
         logger.info("Adding Permission {} to ScopeAccess {}", permission,
             scopeAccessUniqueId);
-        Client client = this.clientService.getById(permission.getClientId());
+        Client client = this.clientDao.getClientByClientId(permission.getClientId());
         ScopeAccessObject sa = this.getScopeAccessForParentByClientId(
             client.getUniqueId(), client.getClientId());
         PermissionObject exists = this.scopeAccessDao
