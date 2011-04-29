@@ -45,6 +45,9 @@ public class PermissionObject implements Auditable {
     @LDAPField(attribute = "resourceGroup", objectClass = "clientPermission", inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String            resourceGroup;
 
+    @LDAPField(attribute = "permissionType", objectClass = "clientPermission", inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private String            type;
+
     public PermissionObject() {
     }
 
@@ -71,6 +74,14 @@ public class PermissionObject implements Auditable {
 
     public void setLdapEntry(ReadOnlyEntry ldapEntry) {
         this.ldapEntry = ldapEntry;
+    }
+    
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public String getClientId() {
