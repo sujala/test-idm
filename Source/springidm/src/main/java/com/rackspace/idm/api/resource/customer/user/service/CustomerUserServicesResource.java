@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.customer.user.service;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.ClientConverter;
+import com.rackspace.idm.api.resource.customer.user.service.permission.UserPermissionsResource;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
@@ -40,6 +42,7 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class CustomerUserServicesResource {
 
+    private final UserPermissionsResource userPermissionsResource;
     private final ScopeAccessService scopeAccessService;
     private final InputValidator inputValidator;
     private final ClientConverter clientConverter;
@@ -49,7 +52,7 @@ public class CustomerUserServicesResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomerUserServicesResource(CustomerService customerService,
+    public CustomerUserServicesResource(UserPermissionsResource userPermissionsResource,CustomerService customerService,
         ScopeAccessService scopeAccessService, InputValidator inputValidator,
         ClientConverter clientConverter, ClientService clientService,
         UserService userService, AuthorizationService authorizationService) {
@@ -60,6 +63,7 @@ public class CustomerUserServicesResource {
         this.inputValidator = inputValidator;
         this.authorizationService = authorizationService;
         this.userService = userService;
+        this.userPermissionsResource = userPermissionsResource;
     }
 
     /**
@@ -129,5 +133,10 @@ public class CustomerUserServicesResource {
         this.scopeAccessService.addScopeAccess(user.getUniqueId(), sa);
 
         return Response.ok().build();
+    }
+    
+    @Path("permissions")
+    public UserPermissionsResource getUserPermissionResource() {
+        return userPermissionsResource;
     }
 }

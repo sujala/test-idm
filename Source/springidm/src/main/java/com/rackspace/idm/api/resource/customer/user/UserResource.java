@@ -23,7 +23,6 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.user.service.CustomerUserServicesResource;
-import com.rackspace.idm.api.resource.customer.user.service.permission.UserPermissionsResource;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -53,7 +52,6 @@ public class UserResource {
     private final UserSecretResource userSecretResource;
     private final UserSoftDeleteResource userSoftDeleteResource;
     private final UserStatusResource userStatusResource;
-    private final UserPermissionsResource userPermissionsResource;
     private final UserService userService;
     private final UserConverter userConverter;
     private final InputValidator inputValidator;
@@ -65,7 +63,6 @@ public class UserResource {
         UserLockResource userLockResource, UserPasswordResource userPasswordResource,
         UserGroupsResource userGroupsResource, UserSecretResource userSecretResource,
         UserSoftDeleteResource userSoftDeleteResource, UserStatusResource userStatusResource, 
-        UserPermissionsResource userPermissionsResource, 
         UserService userService, UserConverter userConverter, InputValidator inputValidator,
         AuthorizationService authorizationService) {
         this.customerUserServicesResource = customerUserServicesResource;
@@ -77,7 +74,6 @@ public class UserResource {
         this.userSecretResource = userSecretResource;
         this.userSoftDeleteResource = userSoftDeleteResource;
         this.userStatusResource = userStatusResource;
-        this.userPermissionsResource = userPermissionsResource;
         this.userService = userService;
         this.userConverter = userConverter;
         this.inputValidator = inputValidator;
@@ -261,11 +257,6 @@ public class UserResource {
     @Path("status")
     public UserStatusResource getUserStatusResource() {
         return userStatusResource;
-    }
-    
-    @Path("permissions")
-    public UserPermissionsResource getUserPermissionResource() {
-        return userPermissionsResource;
     }
     
     @Path("services")
