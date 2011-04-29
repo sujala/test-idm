@@ -52,10 +52,12 @@ public class CustomerUserServicesResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomerUserServicesResource(UserPermissionsResource userPermissionsResource,CustomerService customerService,
-        ScopeAccessService scopeAccessService, InputValidator inputValidator,
-        ClientConverter clientConverter, ClientService clientService,
-        UserService userService, AuthorizationService authorizationService) {
+    public CustomerUserServicesResource(
+        UserPermissionsResource userPermissionsResource,
+        CustomerService customerService, ScopeAccessService scopeAccessService,
+        InputValidator inputValidator, ClientConverter clientConverter,
+        ClientService clientService, UserService userService,
+        AuthorizationService authorizationService) {
 
         this.clientService = clientService;
         this.scopeAccessService = scopeAccessService;
@@ -103,12 +105,14 @@ public class CustomerUserServicesResource {
         ScopeAccessObject token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
+        // Rackers can add any service to a user
+        // Rackspace Clients can add their own service to a user
+        // Specific Clients can add their own service to a user
+        // Customer IdM can add any service to user
         boolean authorized = authorizationService.authorizeRacker(token)
-            || (authorizationService.authorizeClient(token,
-                request.getMethod(), uriInfo)
-                && token.getClientId().equalsIgnoreCase(
-                    inputClient.getClientId()) || authorizationService
-                .authorizeCustomerIdm(token));
+        || (authorizationService.authorizeRackspaceClient(token) && token.getClientId().equalsIgnoreCase(inputClient.getClientId())) 
+        || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo) && token.getClientId().equalsIgnoreCase(inputClient.getClientId())) 
+        || authorizationService.authorizeCustomerIdm(token);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
@@ -134,7 +138,7 @@ public class CustomerUserServicesResource {
 
         return Response.ok().build();
     }
-    
+
     @Path("permissions")
     public UserPermissionsResource getUserPermissionResource() {
         return userPermissionsResource;
