@@ -11,7 +11,7 @@ import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 
 @LDAPObject(structuralClass = "clientPermission")
-public class PermissionObject {
+public class PermissionObject implements Auditable {
     private static final long serialVersionUID = -6160709891135914013L;
 
     @LDAPEntryField()
@@ -54,6 +54,15 @@ public class PermissionObject {
         this.clientId = clientId;
         this.value = value;
         this.customerId = customerId;
+    }
+
+    public String getUniqueId() {
+        if (ldapEntry == null) {
+            return null;
+        }
+        else {
+            return ldapEntry.getDN();
+        }
     }
 
     public ReadOnlyEntry getLdapEntry() {
@@ -157,5 +166,11 @@ public class PermissionObject {
 
     public void setResourceGroup(String resourceGroup) {
         this.resourceGroup = resourceGroup;
+    }
+
+    @Override
+    public String getAuditContext() {
+        final String format = "Permission(clientId=%s,permissionId=%s)";
+        return String.format(format, getClientId(), getPermissionId());
     }
 }

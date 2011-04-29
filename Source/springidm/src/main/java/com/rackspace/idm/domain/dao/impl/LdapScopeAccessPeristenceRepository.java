@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
@@ -68,20 +69,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
 
     @Override
     public Boolean deleteScopeAccess(ScopeAccessObject scopeAccess) {
-        LDAPConnection conn = null;
-        try {
-            final LDAPPersister persister = LDAPPersister.getInstance(scopeAccess.getClass());
-            conn = getAppConnPool().getConnection();
-            final LDAPResult result = persister.delete(scopeAccess, conn);
-            return result.getResultCode().intValue() == ResultCode.SUCCESS_INT_VALUE;
-        } catch (final LDAPPersistException e) {
-            e.printStackTrace();
-        } catch (final LDAPException e) {
-            getLogger().error("Error deleting scope access", e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
-        }
-        return Boolean.FALSE;
+        final String dn = scopeAccess.getUniqueId();
+        final Audit audit = Audit.log(scopeAccess.getAuditContext());
+        deleteEntryAndSubtree(dn, audit);
+        return Boolean.TRUE;
     }
 
     @Override
@@ -230,22 +221,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
 
     @Override
     public Boolean removePermissionFromScopeAccess(PermissionObject permission) {
-        if (permission instanceof PermissionObject) {
-
-            LDAPConnection conn = null;
-            try {
-                final PermissionObject po = permission;
-                final LDAPPersister<PermissionObject> persister = LDAPPersister.getInstance(PermissionObject.class);
-                conn = getAppConnPool().getConnection();
-                final LDAPResult result = persister.delete(po, conn);
-                return result.getResultCode().intValue() == ResultCode.SUCCESS_INT_VALUE;
-            } catch (final LDAPException e) {
-                getLogger().error("Error deleting permission", e);
-            } finally {
-                getAppConnPool().releaseConnection(conn);
-            }
-        }
-        return Boolean.FALSE;
+        final String dn = permission.getUniqueId();
+        final Audit audit = Audit.log(permission.getAuditContext());
+        deleteEntryAndSubtree(dn, audit);
+        return Boolean.TRUE;
     }
 
     @Override
