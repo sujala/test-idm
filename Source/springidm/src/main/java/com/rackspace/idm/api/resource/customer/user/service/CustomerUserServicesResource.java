@@ -18,8 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.ClientConverter;
-import com.rackspace.idm.api.resource.customer.user.service.permission.UserPermissionsResource;
 import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccessObject;
@@ -30,7 +30,6 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -42,9 +41,8 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class CustomerUserServicesResource {
 
-    private final UserPermissionsResource userPermissionsResource;
+    private final CustomerUserServiceResource customerUserServiceResource;
     private final ScopeAccessService scopeAccessService;
-    private final InputValidator inputValidator;
     private final ClientConverter clientConverter;
     private final ClientService clientService;
     private final UserService userService;
@@ -52,20 +50,18 @@ public class CustomerUserServicesResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomerUserServicesResource(
-        UserPermissionsResource userPermissionsResource,
+    public CustomerUserServicesResource(CustomerUserServiceResource customerUserServiceResource,
         CustomerService customerService, ScopeAccessService scopeAccessService,
-        InputValidator inputValidator, ClientConverter clientConverter,
+        ClientConverter clientConverter,
         ClientService clientService, UserService userService,
         AuthorizationService authorizationService) {
 
+        this.customerUserServiceResource = customerUserServiceResource;
         this.clientService = clientService;
         this.scopeAccessService = scopeAccessService;
         this.clientConverter = clientConverter;
-        this.inputValidator = inputValidator;
         this.authorizationService = authorizationService;
         this.userService = userService;
-        this.userPermissionsResource = userPermissionsResource;
     }
 
     /**
@@ -102,6 +98,9 @@ public class CustomerUserServicesResource {
             throw new BadRequestException("Client must contain a clientId");
         }
 
+        logger.info("Adding service {} to user {}", inputClient.getClientId(),
+            username);
+
         ScopeAccessObject token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
@@ -110,22 +109,29 @@ public class CustomerUserServicesResource {
         // Specific Clients can add their own service to a user
         // Customer IdM can add any service to user
         boolean authorized = authorizationService.authorizeRacker(token)
-        || (authorizationService.authorizeRackspaceClient(token) && token.getClientId().equalsIgnoreCase(inputClient.getClientId())) 
-        || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo) && token.getClientId().equalsIgnoreCase(inputClient.getClientId())) 
-        || authorizationService.authorizeCustomerIdm(token);
+            || (authorizationService.authorizeRackspaceClient(token) && token
+                .getClientId().equalsIgnoreCase(inputClient.getClientId()))
+            || (authorizationService.authorizeClient(token,
+                request.getMethod(), uriInfo) && token.getClientId()
+                .equalsIgnoreCase(inputClient.getClientId()))
+            || authorizationService.authorizeCustomerIdm(token);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         Client client = this.clientService.getById(inputClient.getClientId());
 
         if (client == null) {
-            throw new NotFoundException(String.format("Client %s not found",
-                inputClient.getClientId()));
+            String errMsg = String.format("Client %s not found",
+                inputClient.getClientId());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
         }
         User user = this.userService.getUser(username);
         if (user == null) {
-            throw new NotFoundException(String.format("User %s not found",
-                username));
+            String errMsg = String.format("User %s not found",
+                username);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
         }
 
         UserScopeAccessObject sa = new UserScopeAccessObject();
@@ -136,11 +142,68 @@ public class CustomerUserServicesResource {
 
         this.scopeAccessService.addScopeAccess(user.getUniqueId(), sa);
 
+        logger.info("Added service {} to user {}", inputClient.getClientId(),
+            username);
+
         return Response.ok().build();
     }
+    
+    /**
+     * Gets the services a user has.
+     * 
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}clients
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param client New Client.
+     */
+    @POST
+    public Response getServicesForUser(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("username") String username) {
 
-    @Path("permissions")
-    public UserPermissionsResource getUserPermissionResource() {
-        return userPermissionsResource;
+        logger.debug("Getting services for user {}", username);
+
+        ScopeAccessObject token = this.scopeAccessService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Rackers can add any service to a user
+        // Rackspace Clients can add their own service to a user
+        // Specific Clients can add their own service to a user
+        // Customer IdM can add any service to user
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || authorizationService.authorizeRackspaceClient(token) 
+            || authorizationService.authorizeClient(token,
+                request.getMethod(), uriInfo)
+            || authorizationService.authorizeCustomerIdm(token);
+
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
+        
+        User user = this.userService.getUser(username);
+        if (user == null) {
+            String errMsg = String.format("User %s not found",
+                username);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
+        Clients services = this.userService.getUserServices(user);
+
+        logger.debug("Got services for user {} - {}", username, services);
+
+        return Response.ok(clientConverter.toClientListJaxb(services)).build();
+    }
+    
+    @Path("{clientId}")
+    public CustomerUserServiceResource getCustomerUserServiceResource() {
+        return customerUserServiceResource;
     }
 }
