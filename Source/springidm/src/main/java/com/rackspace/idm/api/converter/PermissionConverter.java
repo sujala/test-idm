@@ -4,18 +4,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.PermissionSet;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class PermissionConverter {
 
-    private ObjectFactory of = new ObjectFactory();
+    private final ObjectFactory of = new ObjectFactory();
 
     public PermissionConverter() {
     }
 
     public Permission toPermissionDO(com.rackspace.idm.jaxb.Permission permJaxb) {
         Permission permDo = new Permission();
+        permDo.setClientId(permJaxb.getClientId());
+        permDo.setCustomerId(permJaxb.getCustomerId());
+        permDo.setPermissionId(permJaxb.getPermissionId());
+        permDo.setType(permJaxb.getType());
+        permDo.setValue(permJaxb.getValue());
+        permDo.setTitle(permJaxb.getTitle());
+        permDo.setDescription(permJaxb.getDescription());
+        permDo.setGrantedByDefault(permJaxb.isGrantedByDefault());
+        permDo.setEnabled(permJaxb.isEnabled());
+        return permDo;
+    }
+    
+    public PermissionObject toPermissionObjectDO(com.rackspace.idm.jaxb.Permission permJaxb) {
+        PermissionObject permDo = new PermissionObject();
         permDo.setClientId(permJaxb.getClientId());
         permDo.setCustomerId(permJaxb.getCustomerId());
         permDo.setPermissionId(permJaxb.getPermissionId());
