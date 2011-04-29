@@ -518,7 +518,6 @@ objectClass: clientPermission
 cn: getServiceCatalog
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET users/[^/]+/servicecatalog
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -528,7 +527,6 @@ objectClass: clientPermission
 cn: updateUserMossoId
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT users/[^/]+/mossoId
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -538,7 +536,6 @@ objectClass: clientPermission
 cn: updateUserNastId
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT users/[^/]+/nastId
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -548,7 +545,6 @@ objectClass: clientPermission
 cn: updateUserRPN
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT users/[^/]+/rpn
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -558,7 +554,6 @@ objectClass: clientPermission
 cn: getBaseUrlRefs
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET users/[^/]+/baseurlrefs
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -568,7 +563,6 @@ objectClass: clientPermission
 cn: addBaseUrlRef
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT users/[^/]+/baseurlrefs
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -578,7 +572,6 @@ objectClass: clientPermission
 cn: deleteBaseUrlRef
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: DELETE users/[^/]+/baseurlrefs/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -588,7 +581,6 @@ objectClass: clientPermission
 cn: getBaseUrlRef
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET users/[^/]+/baseurlrefs/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -598,7 +590,6 @@ objectClass: clientPermission
 cn: getBaseUrls
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET baseurls
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -608,7 +599,6 @@ objectClass: clientPermission
 cn: addBaseUrl
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: POST baseurls
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -618,7 +608,6 @@ objectClass: clientPermission
 cn: getBaseUrl
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET baseurls/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -628,17 +617,15 @@ objectClass: clientPermission
 cn: deleteBaseUrl
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: DELETE baseurls/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=authWithUsernameAndApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=getUsernameAuth,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: authWithUsernameAndApiKey
+cn: getUsernameAuth
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: POST auth
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -648,7 +635,6 @@ objectClass: clientPermission
 cn: authByUsernameAndPassword
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: POST auth/username
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -658,7 +644,6 @@ objectClass: clientPermission
 cn: authWithMossoIdAndApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: POST auth/mosso
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -668,7 +653,6 @@ objectClass: clientPermission
 cn: authWithNastIdAndApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: POST auth/nast
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -678,7 +662,6 @@ objectClass: clientPermission
 cn: getUserByUsername
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET users/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -688,7 +671,6 @@ objectClass: clientPermission
 cn: getUserByMossoId
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET mosso/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -698,7 +680,6 @@ objectClass: clientPermission
 cn: getUserByNastId
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET nast/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -708,7 +689,6 @@ objectClass: clientPermission
 cn: addCustomer
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: POST customers
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -718,7 +698,6 @@ objectClass: clientPermission
 cn: getCustomer
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET customers/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -728,7 +707,6 @@ objectClass: clientPermission
 cn: deleteCustomer
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: DELETE customers/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -738,7 +716,6 @@ objectClass: clientPermission
 cn: setCustomerLockStatus
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT customers/[^/]+/actions/lock
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -748,7 +725,6 @@ objectClass: clientPermission
 cn: getClients
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET customers/[^/]+/clients
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -758,7 +734,6 @@ objectClass: clientPermission
 cn: addClient
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: POST customers/[^/]+/clients
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -768,7 +743,6 @@ objectClass: clientPermission
 cn: getClient
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET customers/[^/]+/clients/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -778,7 +752,6 @@ objectClass: clientPermission
 cn: getClientPermissions
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET customers/[^/]+/clients/[^/]+/permissions
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -788,7 +761,6 @@ objectClass: clientPermission
 cn: getClientGrantedPermissions
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET customers/[^/]+/clients/[^/]+/permissions/granted
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -798,7 +770,6 @@ objectClass: clientPermission
 cn: getClientDefinedPermissions
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET customers/[^/]+/clients/[^/]+/permissions/defined
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -808,7 +779,6 @@ objectClass: clientPermission
 cn: getClientDefinedPermission
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -818,7 +788,6 @@ objectClass: clientPermission
 cn: addClientDefinedPermission
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: POST customers/[^/]+/clients/[^/]+/permissions/defined
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -828,7 +797,6 @@ objectClass: clientPermission
 cn: updateClientDefinedPermission
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -838,7 +806,6 @@ objectClass: clientPermission
 cn: deleteClientDefinedPermission
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: DELETE customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -848,7 +815,6 @@ objectClass: clientPermission
 cn: grantPermissionToClient
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+/grant
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -858,7 +824,6 @@ objectClass: clientPermission
 cn: revokePermissionToClient
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT customers/[^/]+/clients/[^/]+/permissions/defined/[^/]+/revoke
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -868,7 +833,6 @@ objectClass: clientPermission
 cn: getUsers
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET customers/[^/]+/users
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -878,7 +842,6 @@ objectClass: clientPermission
 cn: addUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: POST customers/[^/]+/users
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -888,7 +851,6 @@ objectClass: clientPermission
 cn: getUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET customers/[^/]+/users/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -898,7 +860,6 @@ objectClass: clientPermission
 cn: UpdateCustomerUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT customers/[^/]+/users/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -908,7 +869,6 @@ objectClass: clientPermission
 cn: deleteUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: DELETE customers/[^/]+/users/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -918,7 +878,6 @@ objectClass: clientPermission
 cn: getApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET customers/[^/]+/users/[^/]+/key
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -928,7 +887,6 @@ objectClass: clientPermission
 cn: resetApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: POST customers/[^/]+/users/[^/]+/key
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -938,7 +896,6 @@ objectClass: clientPermission
 cn: setApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT customers/[^/]+/users/[^/]+/key
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -948,7 +905,6 @@ objectClass: clientPermission
 cn: setUserLock
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT customers/[^/]+/users/[^/]+/lock
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -958,7 +914,6 @@ objectClass: clientPermission
 cn: getUserPassword
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET customers/[^/]+/users/[^/]+/password
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -968,7 +923,6 @@ objectClass: clientPermission
 cn: resetUserPassword
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: POST customers/[^/]+/users/[^/]+/password
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -978,7 +932,6 @@ objectClass: clientPermission
 cn: setUserPassword
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT customers/[^/]+/users/[^/]+/password
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -988,7 +941,6 @@ objectClass: clientPermission
 cn: getPasswordResetToken
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: POST customers/[^/]+/users/[^/]+/password/recoverytoken
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -998,7 +950,6 @@ objectClass: clientPermission
 cn: sendRecoveryEmail
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: POST customers/[^/]+/users/[^/]+/password/recoveryemail
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -1008,7 +959,6 @@ objectClass: clientPermission
 cn: getUserSecret
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET customers/[^/]+/users/[^/]+/secret
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -1018,7 +968,6 @@ objectClass: clientPermission
 cn: setUserSecret
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT customers/[^/]+/users/[^/]+/secret
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -1028,7 +977,6 @@ objectClass: clientPermission
 cn: setUserSoftDelete
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT customers/[^/]+/users/[^/]+/softdelete
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -1038,7 +986,6 @@ objectClass: clientPermission
 cn: setUserStatus
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: PUT customers/[^/]+/users/[^/]+/status
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -1048,7 +995,6 @@ objectClass: clientPermission
 cn: addFirstUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: POST users
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -1058,7 +1004,6 @@ objectClass: clientPermission
 cn: validateAccessToken
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: GET token/[^/]+
 grantedByDefault: FALSE
 enabled: TRUE
 
@@ -1068,7 +1013,240 @@ objectClass: clientPermission
 cn: revokeAccessToken
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
-blob: DELETE token/[^/]+
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=addClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: addClientGroup
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=addUserToClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: addUserToClientGroup
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=addUserToGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: addUserToGroup
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=checkPassword,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: checkPassword
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: TRUE
+enabled: TRUE
+
+dn: cn=deleteClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: deleteClient
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=deleteClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: deleteClientGroup
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=getAccessToken,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getAccessToken
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=getClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getClientGroup
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=getClientGroups,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getClientGroups
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=getGroups,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getGroups
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=getPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getPermission
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=getRules,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getRules
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: TRUE
+enabled: TRUE
+
+dn: cn=getUserBasedOnRPN,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getUserBasedOnRPN
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=getVersionInfo,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getVersionInfo
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: TRUE
+enabled: TRUE
+
+dn: cn=getWadl,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getWadl
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=getWadl2,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getWadl2
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=getXSD,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getXSD
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=getXSLT,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: getXSLT
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=grantPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: grantPermission
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=removeUserFromClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: removeUserFromClientGroup
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=removeUserFromGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: removeUserFromGroup
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=resetClientSecret,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: resetClientSecret
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=revokePermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: revokePermission
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=updateClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: updateClientGroup
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=updatePasswordRotationCustomer,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: updatePasswordRotationCustomer
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=validateTokenPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientPermission
+cn: validateTokenPermission
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
