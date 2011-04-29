@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service;
 
 import org.joda.time.DateTime;
 
+import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.Racker;
@@ -46,6 +47,8 @@ public interface UserService {
     User getUserByMossoId(int mossoId);
 
     User getUser(String customerId, String username);
+    
+    Clients getUserServices(User user);
     
     User checkAndGetUser(String customerId, String username);
 

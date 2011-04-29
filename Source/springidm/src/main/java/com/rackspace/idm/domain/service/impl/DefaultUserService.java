@@ -25,7 +25,9 @@ import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
@@ -567,5 +569,29 @@ public class DefaultUserService implements UserService {
             scopeAccessDao.addScopeAccess(targetUser.getUniqueId(), sa);
         }
         return sa;
+    }
+    
+    @Override
+    public Clients getUserServices(User user) {
+        if (user == null || user.getUniqueId() == null) {
+            throw new IllegalArgumentException("User cannont be null and must have uniqueID");
+        }
+        List<ScopeAccessObject> services = this.scopeAccessDao.getScopeAccessesByParent(user.getUniqueId());
+        
+        List<Client> clientList = new ArrayList<Client>();
+        
+        for (ScopeAccessObject service : services) {
+            if (service instanceof UserScopeAccessObject) {
+                clientList.add(this.clientService.getById(service.getClientId()));
+            }
+        }
+        
+        Clients clients = new Clients();
+        clients.setClients(clientList);
+        clients.setOffset(0);
+        clients.setLimit(clientList.size());
+        clients.setTotalRecords(clientList.size());
+
+        return clients;
     }
 }

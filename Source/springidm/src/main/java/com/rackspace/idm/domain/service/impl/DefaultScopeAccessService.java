@@ -79,6 +79,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             .debug("Authorized Token: {} : {}", accessTokenStr, authenticated);
         return authenticated;
     }
+    
+    @Override
+    public void deleteScopeAccess(ScopeAccessObject scopeAccess) {
+        logger.info("Deleting ScopeAccess {}" , scopeAccess);
+        this.scopeAccessDao.deleteScopeAccess(scopeAccess);
+        logger.info("Deleted ScopeAccess {}" , scopeAccess);
+    }
 
     @Override
     public boolean doesAccessTokenHavePermission(String accessTokenString,
