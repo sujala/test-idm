@@ -9,7 +9,10 @@ public interface ScopeAccessObjectDao {
 
     ScopeAccessObject addScopeAccess(String parentUniqueId, ScopeAccessObject scopeAccess);
 
-    PermissionObject addPermissionToScopeAccess(String scopeAccessUniqueId,
+    PermissionObject grantPermission(String scopeAccessUniqueId,
+            PermissionObject permission);
+
+    PermissionObject definePermission(String scopeAccessUniqueId,
             PermissionObject permission);
 
     Boolean deleteScopeAccess(ScopeAccessObject scopeAccess);

@@ -48,21 +48,38 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     }
 
     @Override
-    public PermissionObject addPermissionToScopeAccess(String scopeAccessUniqueId, PermissionObject permission) {
-        if (permission instanceof PermissionObject) {
+    public PermissionObject grantPermission(String scopeAccessUniqueId, PermissionObject permission) {
+        LDAPConnection conn = null;
+        try {
+            final PermissionObject po = new PermissionObject();
+            po.setClientId(permission.getClientId());
+            po.setCustomerId(permission.getCustomerId());
+            po.setPermissionId(permission.getPermissionId());
+            po.setResourceGroup(permission.getResourceGroup());
+            final LDAPPersister<PermissionObject> persister = LDAPPersister.getInstance(PermissionObject.class);
+            conn = getAppConnPool().getConnection();
+            persister.add(po, conn, scopeAccessUniqueId);
+            return persister.get(po, conn, scopeAccessUniqueId);
+        } catch (final LDAPException e) {
+            getLogger().error("Error adding permission", e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        return null;
+    }
 
-            LDAPConnection conn = null;
-            try {
-                final PermissionObject po = permission;
-                final LDAPPersister<PermissionObject> persister = LDAPPersister.getInstance(PermissionObject.class);
-                conn = getAppConnPool().getConnection();
-                persister.add(po, conn, scopeAccessUniqueId);
-                return persister.get(po, conn, scopeAccessUniqueId);
-            } catch (final LDAPException e) {
-                getLogger().error("Error adding permission", e);
-            } finally {
-                getAppConnPool().releaseConnection(conn);
-            }
+    @Override
+    public PermissionObject definePermission(String scopeAccessUniqueId, PermissionObject permission) {
+        LDAPConnection conn = null;
+        try {
+            final LDAPPersister<PermissionObject> persister = LDAPPersister.getInstance(PermissionObject.class);
+            conn = getAppConnPool().getConnection();
+            persister.add(permission, conn, scopeAccessUniqueId);
+            return persister.get(permission, conn, scopeAccessUniqueId);
+        } catch (final LDAPException e) {
+            getLogger().error("Error adding permission", e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
         }
         return null;
     }

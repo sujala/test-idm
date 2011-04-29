@@ -392,7 +392,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         String scopeAccessUniqueId, PermissionObject permission) {
         logger.info("Adding Permission {} to ScopeAccess {}", permission,
             scopeAccessUniqueId);
-        PermissionObject perm = this.scopeAccessDao.addPermissionToScopeAccess(
+        PermissionObject perm = this.scopeAccessDao.grantPermission(
             scopeAccessUniqueId, permission);
         logger.info("Adding Permission {} to ScopeAccess {}", permission,
             scopeAccessUniqueId);
