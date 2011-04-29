@@ -136,7 +136,7 @@ public class CustomerClientServiceResource {
     * @param customerId RCN
     * @param clientId Client Id
     * @param serviceId Service Id
-    * @param Permission permission
+    * @param Permission Permission to grant
     */
     @POST
     @Path("{serviceId}/permissions")

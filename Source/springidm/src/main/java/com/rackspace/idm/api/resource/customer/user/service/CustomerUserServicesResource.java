@@ -78,7 +78,8 @@ public class CustomerUserServicesResource {
      * 
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
-     * @param client New Client.
+     * @param username username
+     * @param client New Service.
      */
     @POST
     public Response addServiceToUser(@Context Request request,
@@ -161,6 +162,7 @@ public class CustomerUserServicesResource {
      * 
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
+     * @param username username
      * @param client New Client.
      */
     @POST

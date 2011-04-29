@@ -62,6 +62,7 @@ public class CustomerUserServiceResource {
      *
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
+     * @param username username
      * @param clientId   Client application ID
      * @response.representation.204.doc Successful request
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
