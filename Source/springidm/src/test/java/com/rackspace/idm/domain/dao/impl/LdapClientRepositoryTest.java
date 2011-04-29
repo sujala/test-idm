@@ -10,7 +10,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
@@ -21,7 +20,6 @@ import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Password;
-import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserCredential;
 import com.rackspace.idm.domain.entity.UserHumanName;
@@ -113,27 +111,6 @@ public class LdapClientRepositoryTest {
 
         try {
             repo.updateClient(null);
-            Assert.fail("Should have thrown an exception!");
-        } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
-        }
-
-        try {
-            repo.addDefinedPermission(null, null);
-            Assert.fail("Should have thrown an exception!");
-        } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
-        }
-
-        try {
-            repo.deleteDefinedPermission(null);
-            Assert.fail("Should have thrown an exception!");
-        } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
-        }
-
-        try {
-            repo.updateDefinedPermission(null);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
@@ -236,50 +213,6 @@ public class LdapClientRepositoryTest {
         Client changedClient = repo.getClientByClientId(newClient.getClientId());
         Assert.assertEquals(changedClient.isLocked(), true);
         repo.deleteClient(newClient);
-    }
-
-    @Test
-    @Ignore
-    public void shouldAddAndDeleteNewPermisison() {
-        Client testClient = addNewTestClient();
-        Permission testPermission = addNewTestPermission(testClient.getUniqueId());
-        Permission checkPermission = repo
-            .getDefinedPermissionByClientIdAndPermissionId(
-                "DELETE_My_ClientId", "DELETE_My_Permission");
-        Assert.assertTrue(checkPermission.getValue().equals("Some Value"));
-        repo.deleteDefinedPermission(checkPermission);
-        repo.deleteClient(testClient);
-    }
-
-    @Test
-    @Ignore
-    public void shouldUpdatePermission() {
-        Client testClient = addNewTestClient();
-        Permission testPermission = addNewTestPermission(testClient.getUniqueId());
-        Permission checkPermission = repo
-            .getDefinedPermissionByClientIdAndPermissionId(
-                "DELETE_My_ClientId", "DELETE_My_Permission");
-        Assert.assertTrue(checkPermission.getValue().equals("Some Value"));
-        testPermission.setValue("Some Other Value");
-        repo.updateDefinedPermission(testPermission);
-        checkPermission = repo.getDefinedPermissionByClientIdAndPermissionId(
-            "DELETE_My_ClientId", "DELETE_My_Permission");
-        Assert
-            .assertTrue(checkPermission.getValue().equals("Some Other Value"));
-        repo.deleteDefinedPermission(checkPermission);
-        repo.deleteClient(testClient);
-    }
-
-    @Test
-    @Ignore
-    public void shouldGetPermissions() {
-        Client testClient = addNewTestClient();
-        Permission testPermission = addNewTestPermission(testClient.getUniqueId());
-        List<Permission> resources = repo
-            .getDefinedPermissionsByClientId("DELETE_My_ClientId");
-        Assert.assertTrue(resources.size() >= 1);
-        repo.deleteDefinedPermission(testPermission);
-        repo.deleteClient(testClient);
     }
     
     @Test
@@ -581,27 +514,6 @@ public class LdapClientRepositoryTest {
         repo.deleteClient(testClient);
     }
     
-    @Test
-    @Ignore
-    public void shouldGrantAndRevokePermissionToClient() {
-        Client testClient = addNewTestClient();
-        Permission permission = createTestPermissionInstance();
-        permission.setUniqueId("XXX");
-        repo.grantPermissionToClient(permission, testClient);
-        
-        Client returned = repo.getClientByCustomerIdAndClientId(testClient.getCustomerId(), testClient.getClientId());
-        
-        Assert.assertNotNull(returned);
-        Assert.assertNotNull(returned.getPermissions());
-        Assert.assertTrue(returned.getPermissions().get(0).getPermissionId().equals("DELETE_My_Permission"));
-        
-        repo.revokePermissionFromClient(permission, testClient);
-        returned = repo.getClientByCustomerIdAndClientId(testClient.getCustomerId(), testClient.getClientId());
-        repo.deleteClient(testClient);
-        
-        Assert.assertNotNull(returned);
-        Assert.assertNull(returned.getPermissions());
-    }
 
     @After
     public void tearDown() {
@@ -627,21 +539,6 @@ public class LdapClientRepositoryTest {
         newClient.setLocked(false);
         newClient.setSoftDeleted(false);
         return newClient;
-    }
-
-    private Permission addNewTestPermission(String clientUniqueId) {
-        Permission res = createTestPermissionInstance();
-        repo.addDefinedPermission(res,clientUniqueId);
-        return res;
-    }
-
-    private Permission createTestPermissionInstance() {
-        Permission res = new Permission();
-        res.setClientId("DELETE_My_ClientId");
-        res.setCustomerId("RCN-123-456-789");
-        res.setPermissionId("DELETE_My_Permission");
-        res.setValue("Some Value");
-        return res;
     }
     
     private User createTestUser() {
