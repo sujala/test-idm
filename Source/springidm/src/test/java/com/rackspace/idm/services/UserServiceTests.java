@@ -106,14 +106,15 @@ public class UserServiceTests {
         mockRackerDao = EasyMock.createMock(AuthDao.class);
         mockClientService = EasyMock.createMock(ClientService.class);
         mockScopeAccessObjectDao = EasyMock.createMock(ScopeAccessObjectDao.class);
+        mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
 
         userService = new DefaultUserService(mockUserDao, mockRackerDao,
                 mockCustomerDao,mockScopeAccessObjectDao,
-                mockEmailService, mockClientService, false);
+                mockEmailService, mockClientService, mockScopeAccessService, false);
 
         trustedUserService = new DefaultUserService(mockUserDao, mockRackerDao,
                 mockCustomerDao,mockScopeAccessObjectDao,
-                mockEmailService, mockClientService, true);
+                mockEmailService, mockClientService, mockScopeAccessService, true);
     }
 
     @Test
