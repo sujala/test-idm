@@ -53,6 +53,8 @@ public interface ScopeAccessService {
     
     UserScopeAccessObject getUserScopeAccessForClientIdByUsernameAndPassword(String username, String password, String clientId);
     
+    PermissionObject grantPermission(String parentUniqueId, PermissionObject permission);
+    
     void removePermission(PermissionObject permission);
     
     void updatePermission(PermissionObject permission);

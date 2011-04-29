@@ -45,6 +45,8 @@ public interface ClientService {
 
     List<ClientGroup> getClientGroupsForUserByClientIdAndType(String username, String clientId, String type);
 
+    Clients getClientServices(Client client);
+    
     Permission getDefinedPermissionByClientIdAndPermissionId(String clientId,
         String permissionId);
     

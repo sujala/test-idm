@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
+import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
@@ -28,6 +29,7 @@ import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 
 public class ClientServiceTests {
+    ScopeAccessObjectDao mockScopeAccessDao;
     ClientDao mockClientDao;
     CustomerDao mockCustomerDao;
     UserDao mockUserDao;
@@ -69,8 +71,9 @@ public class ClientServiceTests {
         mockClientDao = EasyMock.createMock(ClientDao.class);
         mockCustomerDao = EasyMock.createMock(CustomerDao.class);
         mockUserDao = EasyMock.createMock(UserDao.class);
+        mockScopeAccessDao = EasyMock.createMock(ScopeAccessObjectDao.class);
 
-        clientService = new DefaultClientService(mockClientDao,
+        clientService = new DefaultClientService(mockScopeAccessDao, mockClientDao,
             mockCustomerDao, mockUserDao);
     }
 

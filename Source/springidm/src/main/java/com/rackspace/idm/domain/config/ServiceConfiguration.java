@@ -111,7 +111,7 @@ public class ServiceConfiguration {
 
     @Bean
     public ClientService clientService() {
-        return new DefaultClientService(clientDao, customerDao, userRepo);
+        return new DefaultClientService(scopeAccessDao, clientDao, customerDao, userRepo);
     }
 
     @Bean

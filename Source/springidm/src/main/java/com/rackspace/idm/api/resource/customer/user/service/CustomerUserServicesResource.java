@@ -202,7 +202,7 @@ public class CustomerUserServicesResource {
         return Response.ok(clientConverter.toClientListJaxb(services)).build();
     }
     
-    @Path("{clientId}")
+    @Path("{serviceId}")
     public CustomerUserServiceResource getCustomerUserServiceResource() {
         return customerUserServiceResource;
     }

@@ -10,6 +10,7 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
+import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
@@ -19,6 +20,7 @@ import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.PermissionObject;
+import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.exception.DuplicateException;
@@ -28,16 +30,18 @@ import com.rackspace.idm.util.HashHelper;
 
 public class DefaultClientService implements ClientService {
 
+    private final ScopeAccessObjectDao scopeAccessDao;
     private final ClientDao clientDao;
     private final CustomerDao customerDao;
     private final UserDao userDao;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultClientService(ClientDao clientDao, CustomerDao customerDao,
+    public DefaultClientService(ScopeAccessObjectDao scopeAccessDao, ClientDao clientDao, CustomerDao customerDao,
         UserDao userDao) {
         this.clientDao = clientDao;
         this.customerDao = customerDao;
         this.userDao = userDao;
+        this.scopeAccessDao = scopeAccessDao;
     }
 
     @Override
@@ -526,6 +530,7 @@ public class DefaultClientService implements ClientService {
         return this.clientDao.getClientsThatHavePermission(permission);
     }
     
+    @Override
     public PermissionObject checkAndGetPermission(String customerId, String clientId, String permissionId) 
 
     throws NotFoundException {
@@ -570,4 +575,27 @@ public class DefaultClientService implements ClientService {
         }
     }
 
+    @Override
+    public Clients getClientServices(Client client) {
+        if (client == null || client.getUniqueId() == null) {
+            throw new IllegalArgumentException("Client cannont be null and must have uniqueID");
+        }
+        List<ScopeAccessObject> services = this.scopeAccessDao.getScopeAccessesByParent(client.getUniqueId());
+        
+        List<Client> clientList = new ArrayList<Client>();
+        
+        for (ScopeAccessObject service : services) {
+            if (service instanceof ScopeAccessObject) {
+                clientList.add(this.getById(service.getClientId()));
+            }
+        }
+        
+        Clients clients = new Clients();
+        clients.setClients(clientList);
+        clients.setOffset(0);
+        clients.setLimit(clientList.size());
+        clients.setTotalRecords(clientList.size());
+
+        return clients;
+    }
 }

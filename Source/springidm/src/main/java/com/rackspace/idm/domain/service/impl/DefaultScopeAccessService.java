@@ -25,6 +25,7 @@ import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 
 public class DefaultScopeAccessService implements ScopeAccessService {
@@ -322,6 +323,49 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess,
             clientId);
         return scopeAccess;
+    }
+    
+    @Override
+    public PermissionObject grantPermission(String parentUniqueId, PermissionObject permission) {
+        Client dClient = this.clientService.getClient(permission.getCustomerId(), permission.getClientId());
+        
+        if (dClient == null) {
+            String errMsg = String.format("Client %s not found", permission.getClientId());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
+        ScopeAccessObject dsa = this.getScopeAccessForParentByClientId(dClient.getUniqueId(), dClient.getClientId());
+        if (dsa == null) {
+            String errMsg = String.format("ScopeAccess for Client %s not found", permission.getClientId());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
+        PermissionObject perm = this.getPermissionOnScopeAccess(dsa.getUniqueId(), permission.getPermissionId());
+        if (perm == null) {
+            String errMsg = String.format("Permission %s not found for client %s", permission.getPermissionId(), permission.getClientId());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
+        ScopeAccessObject sa = this.getScopeAccessForParentByClientId(parentUniqueId, perm.getClientId());
+        
+        if (sa == null) {
+            sa = new ScopeAccessObject();
+            sa.setClientId(permission.getClientId());
+            sa.setClientRCN(permission.getCustomerId());
+            sa = this.addScopeAccess(parentUniqueId, sa);
+        }
+        
+        PermissionObject grantedPerm = new PermissionObject();
+        perm.setClientId(perm.getClientId());
+        perm.setCustomerId(perm.getCustomerId());
+        perm.setPermissionId(perm.getPermissionId());
+        
+        grantedPerm = this.addPermissionToScopeAccess(sa.getUniqueId(), grantedPerm);
+        
+        return grantedPerm;
     }
 
     @Override
