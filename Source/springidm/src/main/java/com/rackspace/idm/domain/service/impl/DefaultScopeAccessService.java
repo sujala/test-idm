@@ -80,12 +80,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             .debug("Authorized Token: {} : {}", accessTokenStr, authenticated);
         return authenticated;
     }
-    
+
     @Override
     public void deleteScopeAccess(ScopeAccessObject scopeAccess) {
-        logger.info("Deleting ScopeAccess {}" , scopeAccess);
+        logger.info("Deleting ScopeAccess {}", scopeAccess);
         this.scopeAccessDao.deleteScopeAccess(scopeAccess);
-        logger.info("Deleted ScopeAccess {}" , scopeAccess);
+        logger.info("Deleted ScopeAccess {}", scopeAccess);
     }
 
     @Override
@@ -324,47 +324,58 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             clientId);
         return scopeAccess;
     }
-    
+
     @Override
-    public PermissionObject grantPermission(String parentUniqueId, PermissionObject permission) {
-        Client dClient = this.clientService.getClient(permission.getCustomerId(), permission.getClientId());
-        
+    public PermissionObject grantPermission(String parentUniqueId,
+        PermissionObject permission) {
+        Client dClient = this.clientService.getClient(
+            permission.getCustomerId(), permission.getClientId());
+
         if (dClient == null) {
-            String errMsg = String.format("Client %s not found", permission.getClientId());
+            String errMsg = String.format("Client %s not found",
+                permission.getClientId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        
-        ScopeAccessObject dsa = this.getScopeAccessForParentByClientId(dClient.getUniqueId(), dClient.getClientId());
+
+        ScopeAccessObject dsa = this.getScopeAccessForParentByClientId(
+            dClient.getUniqueId(), dClient.getClientId());
         if (dsa == null) {
-            String errMsg = String.format("ScopeAccess for Client %s not found", permission.getClientId());
+            String errMsg = String
+                .format("ScopeAccess for Client %s not found",
+                    permission.getClientId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        
-        PermissionObject perm = this.getPermissionOnScopeAccess(dsa.getUniqueId(), permission.getPermissionId());
+
+        PermissionObject perm = this.getPermissionOnScopeAccess(
+            dsa.getUniqueId(), permission.getPermissionId());
         if (perm == null) {
-            String errMsg = String.format("Permission %s not found for client %s", permission.getPermissionId(), permission.getClientId());
+            String errMsg = String.format(
+                "Permission %s not found for client %s",
+                permission.getPermissionId(), permission.getClientId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        
-        ScopeAccessObject sa = this.getScopeAccessForParentByClientId(parentUniqueId, perm.getClientId());
-        
+
+        ScopeAccessObject sa = this.getScopeAccessForParentByClientId(
+            parentUniqueId, perm.getClientId());
+
         if (sa == null) {
             sa = new ScopeAccessObject();
             sa.setClientId(permission.getClientId());
             sa.setClientRCN(permission.getCustomerId());
             sa = this.addScopeAccess(parentUniqueId, sa);
         }
-        
+
         PermissionObject grantedPerm = new PermissionObject();
         perm.setClientId(perm.getClientId());
         perm.setCustomerId(perm.getCustomerId());
         perm.setPermissionId(perm.getPermissionId());
-        
-        grantedPerm = this.addPermissionToScopeAccess(sa.getUniqueId(), grantedPerm);
-        
+
+        grantedPerm = this.addPermissionToScopeAccess(sa.getUniqueId(),
+            grantedPerm);
+
         return grantedPerm;
     }
 
@@ -392,6 +403,18 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         String scopeAccessUniqueId, PermissionObject permission) {
         logger.info("Adding Permission {} to ScopeAccess {}", permission,
             scopeAccessUniqueId);
+        Client client = this.clientService.getById(permission.getClientId());
+        ScopeAccessObject sa = this.getScopeAccessForParentByClientId(
+            client.getUniqueId(), client.getClientId());
+        PermissionObject exists = this.scopeAccessDao
+            .getPermissionByParentAndPermissionId(sa.getUniqueId(),
+                permission.getPermissionId());
+        if (exists == null) {
+            String errMsg = String
+                .format("Permission %s not found", permission);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
         PermissionObject perm = this.scopeAccessDao.grantPermission(
             scopeAccessUniqueId, permission);
         logger.info("Adding Permission {} to ScopeAccess {}", permission,
