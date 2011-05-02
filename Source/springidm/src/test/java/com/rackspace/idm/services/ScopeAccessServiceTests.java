@@ -335,7 +335,7 @@ public class ScopeAccessServiceTests extends ServiceTests {
         EasyMock.verify(scopeAccessDao, mockUserDao);
 
     }
-    
+
     @Test
     public void shouldGetUserScopeAccessForClientIdByMossoIdAndApiCredentials() {
         User user = getFakeUser();
@@ -362,8 +362,8 @@ public class ScopeAccessServiceTests extends ServiceTests {
 
         EasyMock.verify(scopeAccessDao, mockUserDao);
 
-    }  
-    
+    }
+
     @Test
     public void shouldGetUserScopeAccessForClientIdByUsernameAndApiCredentials() {
         User user = getFakeUser();
@@ -371,8 +371,7 @@ public class ScopeAccessServiceTests extends ServiceTests {
         UserScopeAccessObject sa = getFakeUserScopeAccess();
 
         String apiKey = "fakeApiKey";
-        EasyMock.expect(
-            mockUserDao.authenticateByAPIKey(username, apiKey))
+        EasyMock.expect(mockUserDao.authenticateByAPIKey(username, apiKey))
             .andReturn(new UserAuthenticationResult(user, true));
 
         EasyMock.expect(
@@ -383,9 +382,42 @@ public class ScopeAccessServiceTests extends ServiceTests {
 
         EasyMock.replay(scopeAccessDao, mockUserDao);
 
-        scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(
-            username, apiKey, clientId);
+        scopeAccessService
+            .getUserScopeAccessForClientIdByUsernameAndApiCredentials(username,
+                apiKey, clientId);
 
         EasyMock.verify(scopeAccessDao, mockUserDao);
+    }
+
+    @Test
+    public void shouldGetUserScopeAccessForClientId() {
+        UserScopeAccessObject usao = getFakeUserScopeAccess();
+        EasyMock.expect(
+            scopeAccessDao.getScopeAccessForParentByClientId("userUniqueId",
+                "clientId")).andReturn(usao);
+        EasyMock.replay(scopeAccessDao);
+        scopeAccessService.getUserScopeAccessForClientId("userUniqueId",
+            "clientId");
+        EasyMock.verify(scopeAccessDao);
+    }
+    
+    @Test
+    public void shouldGetScopeAccessByRefreshToken() {
+        UserScopeAccessObject usao = getFakeUserScopeAccess();
+        EasyMock.expect(
+            scopeAccessDao.getScopeAccessByRefreshToken("refreshToken")).andReturn(usao);
+        EasyMock.replay(scopeAccessDao);
+        scopeAccessService.getScopeAccessByRefreshToken("refreshToken");
+        EasyMock.verify(scopeAccessDao);
+    }
+    
+    @Test
+    public void shouldGetScopeAccessByAccessToken() {
+        UserScopeAccessObject usao = getFakeUserScopeAccess();
+        EasyMock.expect(
+            scopeAccessDao.getScopeAccessByAccessToken("accessToken")).andReturn(usao);
+        EasyMock.replay(scopeAccessDao);
+        scopeAccessService.getScopeAccessByAccessToken("accessToken");
+        EasyMock.verify(scopeAccessDao);
     }
 }
