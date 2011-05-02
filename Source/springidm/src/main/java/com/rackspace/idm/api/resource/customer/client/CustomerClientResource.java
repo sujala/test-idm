@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.ClientConverter;
 import com.rackspace.idm.api.resource.customer.client.group.ClientGroupsResource;
-import com.rackspace.idm.api.resource.customer.client.permission.DefinedPermissionResource;
+import com.rackspace.idm.api.resource.customer.client.permission.DefinedPermissionsResource;
 import com.rackspace.idm.api.resource.customer.client.service.CustomerClientServicesResource;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientSecret;
@@ -41,7 +41,7 @@ import com.rackspace.idm.jaxb.ClientCredentials;
 @Component
 public class CustomerClientResource extends AbstractClientConsumer {
 
-    private final DefinedPermissionResource definedPermissionResource;
+    private final DefinedPermissionsResource definedPermissionsResource;
     private final CustomerClientServicesResource customerClientServicesResource;
     private final ScopeAccessService scopeAccessService;
     private final ClientConverter clientConverter;
@@ -52,14 +52,14 @@ public class CustomerClientResource extends AbstractClientConsumer {
 
     @Autowired
     public CustomerClientResource(
-        DefinedPermissionResource definedPermissionResource,
+        DefinedPermissionsResource definedPermissionsResource,
         CustomerClientServicesResource customerClientServicesResource,
         ClientService clientService, ScopeAccessService scopeAccessService,
         ClientConverter clientConverter,
         ClientGroupsResource clientGroupsResource,
         AuthorizationService authorizationService) {
         super(clientService);
-        this.definedPermissionResource = definedPermissionResource;
+        this.definedPermissionsResource = definedPermissionsResource;
         this.customerClientServicesResource = customerClientServicesResource;
         this.clientService = clientService;
         this.scopeAccessService = scopeAccessService;
@@ -220,8 +220,8 @@ public class CustomerClientResource extends AbstractClientConsumer {
     }
 
     @Path("permissions")
-    public DefinedPermissionResource getDefinedPermissionResource() {
-        return definedPermissionResource;
+    public DefinedPermissionsResource getDefinedPermissionsResource() {
+        return definedPermissionsResource;
     }
 
     @Path("services")
