@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.PermissionObject;
@@ -42,7 +41,6 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class UserPermissionsResource {
 
-    private final PermissionConverter permissionConverter;
     private final ScopeAccessService scopeAccessService;
     private final UserService userService;
     private ClientService clientService;
@@ -50,11 +48,9 @@ public class UserPermissionsResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public UserPermissionsResource(PermissionConverter permissionConverter,
-        UserService userService, AuthorizationService authorizationService,
-        ClientService clientService, ScopeAccessService scopeAccessService,
-        UserConverter userConverter) {
-        this.permissionConverter = permissionConverter;
+    public UserPermissionsResource(UserService userService,
+        AuthorizationService authorizationService, ClientService clientService,
+        ScopeAccessService scopeAccessService, UserConverter userConverter) {
         this.userService = userService;
         this.scopeAccessService = scopeAccessService;
         this.authorizationService = authorizationService;
@@ -95,10 +91,9 @@ public class UserPermissionsResource {
         // Specific Clients can check their own permissions granted to a user
         // Customer IdM can check any permissions granted to a user
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeRackspaceClient(token) 
-            || authorizationService.authorizeClient(token,
-                request.getMethod(), uriInfo)
-            || authorizationService.authorizeCustomerIdm(token);
+            || authorizationService.authorizeRackspaceClient(token)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo) || authorizationService.authorizeCustomerIdm(token);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
@@ -164,8 +159,8 @@ public class UserPermissionsResource {
         }
 
         ScopeAccessObject token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
-        
+            .getAccessTokenByAuthHeader(authHeader);
+
         boolean authorized = authorizeGrantRevokePermission(token, request,
             uriInfo, serviceId);
         authorizationService.checkAuthAndHandleFailure(authorized, token);
@@ -174,23 +169,24 @@ public class UserPermissionsResource {
         PermissionObject filter = new PermissionObject();
         filter.setClientId(serviceId);
         filter.setPermissionId(permission.getPermissionId());
-        
+
         Client client = this.clientService.getById(serviceId);
-        
+
         if (client == null) {
             String errMsg = String.format("Client %s not found", serviceId);
             logger.info(errMsg);
             throw new NotFoundException(errMsg);
         }
-        
-        PermissionObject defined = this.scopeAccessService.getPermissionForParent(client.getUniqueId(), filter);
+
+        PermissionObject defined = this.scopeAccessService
+            .getPermissionForParent(client.getUniqueId(), filter);
         if (defined == null) {
-            String errMsg = String.format("Permission %s not found", permission.getPermissionId());
+            String errMsg = String.format("Permission %s not found",
+                permission.getPermissionId());
             logger.info(errMsg);
             throw new NotFoundException(errMsg);
         }
 
-        
         PermissionObject granted = new PermissionObject();
         granted.setClientId(defined.getClientId());
         granted.setCustomerId(defined.getCustomerId());
