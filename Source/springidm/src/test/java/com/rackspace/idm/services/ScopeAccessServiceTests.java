@@ -11,8 +11,12 @@ import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.Customer;
+import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserAuthenticationResult;
+import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
 import com.rackspace.idm.exception.NotFoundException;
@@ -274,5 +278,25 @@ public class ScopeAccessServiceTests extends ServiceTests {
                 .getUniqueId(), perm)).andReturn(null);
         
         scopeAccessService.grantPermission(client.getUniqueId(), perm);
+    }
+    
+    @Test
+    public void shouldGetUserScopeAccessForClientIdByUsernameAndPassword() {
+        
+        User user = getFakeUser();
+        Client client = getFakeClient();
+        UserScopeAccessObject sa = getFakeUserScopeAccess();
+        EasyMock.expect(mockUserDao.authenticate(username, "password")).andReturn(new UserAuthenticationResult(user, true));
+        
+        EasyMock.expect(scopeAccessDao.getScopeAccessForParentByClientId(user.getUsername(), client.getClientId())).andReturn(sa);
+           
+        EasyMock.expect(scopeAccessDao.updateScopeAccess(sa)).andReturn(true);
+     
+        EasyMock.replay(scopeAccessDao, mockUserDao);
+        
+        scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(user.getUsername(), "password", client.getClientId());
+        
+        EasyMock.verify(scopeAccessDao, mockUserDao);
+        
     }
 }

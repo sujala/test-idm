@@ -1,6 +1,7 @@
 package com.rackspace.idm.services;
 
 import org.easymock.EasyMock;
+import org.joda.time.DateTime;
 
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientSecret;
@@ -10,6 +11,7 @@ import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 
 public class ServiceTests {
 
@@ -87,8 +89,22 @@ public class ServiceTests {
         ScopeAccessObject so = EasyMock.createNiceMock(ScopeAccessObject.class);
         so.setClientId(clientId);
         so.setClientRCN(customerInum);
+        
         EasyMock.expect(so.getUniqueId()).andReturn("soUniqueId").anyTimes();
         EasyMock.replay(so);
         return so;
   }
+    
+    protected UserScopeAccessObject getFakeUserScopeAccess() {
+        UserScopeAccessObject so = EasyMock.createNiceMock(UserScopeAccessObject.class);
+        so.setClientId(clientId);
+        so.setClientRCN(customerInum);
+        EasyMock.expect(so.isAccessTokenExpired(EasyMock.anyObject(DateTime.class))).andReturn(true);
+        
+        EasyMock.expect(so.getUniqueId()).andReturn("soUniqueId").anyTimes();
+        EasyMock.replay(so);
+        return so;
+  }
+    
+    
 }
