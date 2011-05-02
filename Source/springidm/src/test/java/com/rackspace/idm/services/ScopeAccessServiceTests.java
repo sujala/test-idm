@@ -115,6 +115,18 @@ public class ScopeAccessServiceTests extends ServiceTests {
        scopeAccessService.addPermissionToScopeAccess(sa.getUniqueId(), perm);
        
        EasyMock.verify(scopeAccessDao); 
-    }     
+    }
+    
+    @Test
+    public void shouldRemovePermission() {
+       
+       PermissionObject perm = getFakePermission();
+       
+       EasyMock.expect(scopeAccessDao.removePermissionFromScopeAccess(perm)).andReturn(true);
+       EasyMock.replay(scopeAccessDao);
+       
+       scopeAccessService.removePermission(perm);
+       EasyMock.verify(scopeAccessDao);
+    }
     
 }

@@ -62,11 +62,21 @@ public class ServiceTests {
     }
     
     protected PermissionObject getFakePermission() {
-        PermissionObject res = new PermissionObject();
+        PermissionObject res = EasyMock.createNiceMock(PermissionObject.class);
         res.setClientId(clientId);
         res.setCustomerId(customerId);
+        res.setDescription("description");
+        res.setEnabled(true);
+        res.setGrantedByDefault(false);
         res.setPermissionId(resourceId);
         res.setValue(resourceValue);
+        res.setPermissionType("type");
+        res.setResourceGroup("resourceGroup");
+        res.setTitle("title");     
+        
+        EasyMock.expect(res.getUniqueId()).andReturn("permUniqueId").anyTimes();
+        
+        EasyMock.replay(res);
         return res;
     }
     
