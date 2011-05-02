@@ -44,8 +44,11 @@ public class ServiceTests {
     String uniqueId = "uniqueId";
     
     protected Client getFakeClient() {
-        return new Client(clientId, clientSecret, name, inum, iname,
+        Client client = new Client(clientId, clientSecret, name, inum, iname,
             customerId, status);
+        
+        client.setUniqueId(uniqueId);
+        return client;   
     }
 
     protected Customer getFakeCustomer() {
@@ -62,18 +65,19 @@ public class ServiceTests {
     
     protected PermissionObject getFakePermission(String permissionId) {
         PermissionObject res = EasyMock.createNiceMock(PermissionObject.class);
-        res.setClientId(clientId);
-        res.setCustomerId(customerId);
+       
         res.setDescription("description");
         res.setEnabled(true);
         res.setGrantedByDefault(false);
-        res.setPermissionId(resourceId);
         res.setValue(resourceValue);
         res.setPermissionType("type");
         res.setResourceGroup("resourceGroup");
         res.setTitle("title");     
         
         EasyMock.expect(res.getUniqueId()).andReturn(permissionId).anyTimes();
+        EasyMock.expect(res.getClientId()).andReturn(clientId).anyTimes();
+        EasyMock.expect(res.getCustomerId()).andReturn(customerId).anyTimes();
+        EasyMock.expect(res.getPermissionId()).andReturn(permissionId).anyTimes();
         
         EasyMock.replay(res);
         return res;
