@@ -6,12 +6,14 @@ import java.util.Locale;
 
 import junit.framework.Assert;
 
+import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.AccessTokenDao;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ClientDao;
@@ -101,14 +103,20 @@ public class UserServiceTests {
         mockClientService = EasyMock.createMock(ClientService.class);
         mockScopeAccessObjectDao = EasyMock.createMock(ScopeAccessObjectDao.class);
         mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
+        
+        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        appConfig.setProperty("ldap.server.trusted", false);
 
         userService = new DefaultUserService(mockUserDao, mockRackerDao,
                 mockCustomerDao,mockScopeAccessObjectDao,
-                mockClientService, false);
-
+                mockClientService, appConfig);
+        
+        Configuration appConfig2 = new PropertyFileConfiguration().getConfigFromClasspath();
+        
+        appConfig2.setProperty("ldap.server.trusted", true);
         trustedUserService = new DefaultUserService(mockUserDao, mockRackerDao,
                 mockCustomerDao,mockScopeAccessObjectDao,
-                mockClientService, true);
+                mockClientService, appConfig2);
     }
 
     @Test

@@ -4,6 +4,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -43,20 +44,20 @@ public class DefaultUserService implements UserService {
     private final CustomerDao customerDao;
     private final ScopeAccessObjectDao scopeAccessDao;
     private final ClientService clientService;
+    private final Configuration config;
 
-    private final boolean isTrustedServer;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
         CustomerDao customerDao, ScopeAccessObjectDao scopeAccessDao,
-        ClientService clientService, boolean isTrusted) {
+        ClientService clientService, Configuration config) {
 
         this.userDao = userDao;
         this.authDao = rackerDao;
         this.customerDao = customerDao;
         this.scopeAccessDao = scopeAccessDao;
         this.clientService = clientService;
-        this.isTrustedServer = isTrusted;
+        this.config = config;
     }
 
     @Override
@@ -124,7 +125,7 @@ public class DefaultUserService implements UserService {
         String password) {
         logger.debug("Authenticating User: {}", username);
 
-        if (isTrustedServer) {
+        if (isTrustedServer()) {
             boolean authenticated = authDao.authenticate(username, password);
             logger.debug("Authenticated Racker {} : {}", username,
                 authenticated);
@@ -415,5 +416,9 @@ public class DefaultUserService implements UserService {
         clients.setTotalRecords(clientList.size());
 
         return clients;
+    }
+    
+    private boolean isTrustedServer() {
+        return config.getBoolean("ldap.server.trusted", false);
     }
 }
