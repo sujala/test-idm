@@ -76,7 +76,7 @@ public class CustomerClientServiceResource {
      * @param permissionId Permission Id
      */
     @GET
-    @Path("{serviceId}/permissions/{permissionId}")
+    @Path("permissions/{permissionId}")
     public Response checkIfPermissionGrantedToClient(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
@@ -138,7 +138,7 @@ public class CustomerClientServiceResource {
     * @param Permission Permission to grant
     */
     @POST
-    @Path("{serviceId}/permissions")
+    @Path("permissions")
     public Response grantPermissionToClient(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
@@ -208,7 +208,7 @@ public class CustomerClientServiceResource {
      * @param permissionId Permission Id
      */
     @DELETE
-    @Path("{serviceId}/permissions/{permissionId}")
+    @Path("permissions/{permissionId}")
     public Response revokePermissionFromClient(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,

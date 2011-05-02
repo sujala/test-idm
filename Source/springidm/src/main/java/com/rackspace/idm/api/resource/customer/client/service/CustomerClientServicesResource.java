@@ -108,7 +108,7 @@ public class CustomerClientServicesResource {
         return Response.ok(clientConverter.toClientListJaxb(services)).build();
     }
 
-    @Path("services")
+    @Path("{serviceId}")
     public CustomerClientServiceResource getCustomerClientServiceResource() {
         return customerClientServiceResource;
     }

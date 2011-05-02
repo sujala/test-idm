@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.ClientConverter;
 import com.rackspace.idm.api.resource.customer.client.group.ClientGroupsResource;
 import com.rackspace.idm.api.resource.customer.client.permission.PermissionsResource;
+import com.rackspace.idm.api.resource.customer.client.service.CustomerClientServicesResource;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
@@ -40,7 +41,7 @@ import com.rackspace.idm.jaxb.ClientCredentials;
 @Component
 public class CustomerClientResource extends AbstractClientConsumer {
 
-   
+    private final CustomerClientServicesResource customerClientServicesResource;
     private final ScopeAccessService scopeAccessService;
     private final ClientConverter clientConverter;
     private final ClientService clientService;
@@ -50,11 +51,11 @@ public class CustomerClientResource extends AbstractClientConsumer {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomerClientResource(ClientService clientService, ScopeAccessService scopeAccessService,
+    public CustomerClientResource(CustomerClientServicesResource customerClientServicesResource, ClientService clientService, ScopeAccessService scopeAccessService,
         ClientConverter clientConverter, PermissionsResource permissionsResource,
         ClientGroupsResource clientGroupsResource, AuthorizationService authorizationService) {
         super(clientService);
-     
+        this.customerClientServicesResource = customerClientServicesResource;
         this.clientService = clientService;
         this.scopeAccessService = scopeAccessService;
         this.clientConverter = clientConverter;
@@ -207,6 +208,11 @@ public class CustomerClientResource extends AbstractClientConsumer {
     @Path("permissions")
     public PermissionsResource getPermissionsResource() {
         return permissionsResource;
+    }
+    
+    @Path("services")
+    public CustomerClientServicesResource getCustomerClientServicesResource() {
+        return customerClientServicesResource;
     }
 
     @Override
