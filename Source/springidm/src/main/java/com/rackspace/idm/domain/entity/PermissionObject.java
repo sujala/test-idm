@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -172,5 +173,21 @@ public class PermissionObject implements Auditable {
     public String getAuditContext() {
         final String format = "Permission(clientId=%s,permissionId=%s)";
         return String.format(format, getClientId(), getPermissionId());
+    }
+    
+    public void copyChanges(PermissionObject modified) {
+
+        if (!StringUtils.isBlank(modified.getPermissionType())) {
+            setPermissionType(modified.getPermissionType());
+        }
+        if (!StringUtils.isBlank(modified.getValue())) {
+            setValue(modified.getValue());
+        }
+        if (!StringUtils.isBlank(modified.getDescription())) {
+            setDescription(modified.getDescription());
+        }
+        if (!StringUtils.isBlank(modified.getTitle())) {
+            setTitle(modified.getTitle());
+        }
     }
 }
