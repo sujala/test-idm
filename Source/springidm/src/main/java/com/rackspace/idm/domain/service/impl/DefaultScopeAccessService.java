@@ -279,18 +279,20 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             clientId);
         final UserAuthenticationResult result = this.userDao
             .authenticateByAPIKey(username, apiKey);
+        
         if (!result.isAuthenticated()) {
             throw new NotAuthenticatedException();
         }
-        final UserScopeAccessObject scopeAccess = this
-            .getUserScopeAccessForClientId(result.getUser().getUsername(),
-                clientId);
+        
+        final UserScopeAccessObject scopeAccess = checkAndGetUserScopeAccess(clientId, result.getUser().getUsername());
+        
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(
                 getDefaultCloudAuthTokenExpirationSeconds()).toDate());
             this.scopeAccessDao.updateScopeAccess(scopeAccess);
         }
+        
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess,
             clientId);
         return scopeAccess;
