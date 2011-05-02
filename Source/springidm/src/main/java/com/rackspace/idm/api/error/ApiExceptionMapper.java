@@ -59,7 +59,6 @@ import com.rackspace.idm.jaxb.StalePasswordFault;
 import com.rackspace.idm.jaxb.Unauthorized;
 import com.rackspace.idm.jaxb.UserDisabled;
 import com.rackspace.idm.jaxb.UsernameConflict;
-import com.unboundid.ldap.sdk.LDAPException;
 
 @Component
 @Provider
@@ -141,9 +140,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         if (e instanceof IdmException) {
             return toResponse(new ServerError(), e, 500);
         }
-        if (e instanceof LDAPException) {
-            return toResponse(new ServerError(), e.getCause(), 500);
-        }
         if (e instanceof WebApplicationException) {
             WebApplicationException wae = (WebApplicationException) e;
 
@@ -179,7 +175,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         }
 
         logger.error(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
-        return toResponse(new ServerError(), e, 500);
+        return toResponse(new ServerError(), new Exception("Server Error"), 500);
     }
 
     private Response toResponse(IdmFault fault, Throwable t, int code) {
