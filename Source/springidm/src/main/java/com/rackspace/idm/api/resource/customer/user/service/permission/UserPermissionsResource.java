@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.converter.UserConverter;
+import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
@@ -101,14 +102,28 @@ public class UserPermissionsResource {
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         User user = this.userService.checkAndGetUser(customerId, username);
-        
+
         PermissionObject po = new PermissionObject();
         po.setClientId(serviceId);
         po.setPermissionId(permissionId);
-        
-        PermissionObject perm = this.scopeAccessService
-            .getPermissionForParent(user.getUniqueId(), po);
-        if (perm != null) {
+
+        Client client = this.clientService.getById(serviceId);
+        if (client == null) {
+            String errMsg = String.format("Client %s not found", serviceId);
+            logger.info(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        PermissionObject definedPermission = this.scopeAccessService
+            .getPermissionForParent(client.getUniqueId(), po);
+
+        if (definedPermission == null || !definedPermission.getEnabled()) {
+            return Response.noContent().build();
+        }
+
+        if (definedPermission.getGrantedByDefault()
+            || this.scopeAccessService.getPermissionForParent(
+                user.getUniqueId(), po) != null) {
             return Response.ok().build();
         }
 
@@ -214,9 +229,9 @@ public class UserPermissionsResource {
         PermissionObject po = new PermissionObject();
         po.setClientId(serviceId);
         po.setPermissionId(permissionId);
-        
-        PermissionObject perm = this.scopeAccessService.
-            getPermissionForParent(user.getUniqueId(), po);
+
+        PermissionObject perm = this.scopeAccessService.getPermissionForParent(
+            user.getUniqueId(), po);
         if (perm != null) {
             this.scopeAccessService.removePermission(perm);
         }
