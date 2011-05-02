@@ -61,7 +61,7 @@ public class ServiceTests {
         return user;
     }
     
-    protected PermissionObject getFakePermission() {
+    protected PermissionObject getFakePermission(String permissionId) {
         PermissionObject res = EasyMock.createNiceMock(PermissionObject.class);
         res.setClientId(clientId);
         res.setCustomerId(customerId);
@@ -74,7 +74,7 @@ public class ServiceTests {
         res.setResourceGroup("resourceGroup");
         res.setTitle("title");     
         
-        EasyMock.expect(res.getUniqueId()).andReturn("permUniqueId").anyTimes();
+        EasyMock.expect(res.getUniqueId()).andReturn(permissionId).anyTimes();
         
         EasyMock.replay(res);
         return res;
