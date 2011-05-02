@@ -1,8 +1,8 @@
 package com.rackspace.idm.api.resource.customer.client.service;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -71,7 +71,7 @@ public class CustomerClientServicesResource {
      * @param customerId RCN
      * @param clientId Client Id
      */
-    @POST
+    @GET
     public Response getServicesForClient(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
