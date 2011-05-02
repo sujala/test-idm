@@ -3,8 +3,6 @@ package com.rackspace.idm.domain.entity;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -21,7 +19,6 @@ public class BaseClient implements Serializable {
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String customerId = null;
-    private List<Permission> permissions;
 
     public BaseClient() {
     }
@@ -30,18 +27,11 @@ public class BaseClient implements Serializable {
         this.clientId = clientId;
         this.customerId = customerId;
     }
-
-    public BaseClient(String clientId, String customerId, List<Permission> permissions) {
-        this.clientId = clientId;
-        this.customerId = customerId;
-        this.permissions = permissions;
-    }
     
-    public BaseClient(String uniqueId, String clientId, String customerId, List<Permission> permissions) {
+    public BaseClient(String uniqueId, String clientId, String customerId) {
         this.uniqueId = uniqueId;
         this.clientId = clientId;
         this.customerId = customerId;
-        this.permissions = permissions;
     }
     
     protected void setUniqueId(String uniqueId) {
@@ -70,14 +60,6 @@ public class BaseClient implements Serializable {
         this.customerId = customerId;
     }
     
-    public List<Permission> getPermissions() {
-        return permissions != null ? Collections.unmodifiableList(permissions) : null;
-    }
-    
-    protected void setPermissions(List<Permission> permissions) {
-        this.permissions = permissions;
-    }
-    
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -86,8 +68,6 @@ public class BaseClient implements Serializable {
             + ((clientId == null) ? 0 : clientId.hashCode());
         result = prime * result
             + ((customerId == null) ? 0 : customerId.hashCode());
-        result = prime * result
-            + ((permissions == null) ? 0 : permissions.hashCode());
         return result;
     }
 
@@ -117,20 +97,13 @@ public class BaseClient implements Serializable {
         } else if (!customerId.equals(other.customerId)) {
             return false;
         }
-        if (permissions == null) {
-            if (other.permissions != null) {
-                return false;
-            }
-        } else if (!permissions.equals(other.permissions)) {
-            return false;
-        }
         return true;
     }
 
     @Override
     public String toString() {
         return "TokenClient [clientId=" + clientId + ", customerId="
-            + customerId + ", permissions=" + permissions + "]";
+            + customerId + "]";
     }
 
      /**
@@ -167,17 +140,15 @@ public class BaseClient implements Serializable {
         private final String uniqueId;
         private final String clientId;
         private final String customerId;
-        private final List<Permission> permissions;
 
         SerializationProxy(BaseClient baseClient) {
             this.uniqueId = baseClient.uniqueId;
             this.clientId = baseClient.clientId;
             this.customerId = baseClient.customerId;
-            this.permissions = baseClient.permissions;
         }
 
         private Object readResolve() {
-            return new BaseClient(uniqueId, clientId, customerId, permissions);
+            return new BaseClient(uniqueId, clientId, customerId);
         }
 
     }

@@ -110,11 +110,6 @@ public final class AccessToken extends Token implements Serializable {
         return user == null && client != null;
     }
 
-    public boolean hasClientPermissions() {
-        return isClientToken() && client.getPermissions() != null
-            && client.getPermissions().size() > 0;
-    }
-
     public String getAuditString() {
         String auditString = null;
         if (isClientToken()) {

@@ -4,12 +4,6 @@ import org.apache.commons.lang.SerializationUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.entity.BaseClient;
-import com.rackspace.idm.domain.entity.Permission;
-
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * User: john.eo
  * Date: 1/11/11
@@ -18,10 +12,7 @@ import java.util.List;
 public class BaseClientTest {
     @Test
     public void shouldSerializeAndDeserialize() {
-        Permission perm = new Permission("customerId", "clientId", "permissionId", "value");
-        List<Permission> perms = new ArrayList<Permission>();
-        perms.add(perm);
-        BaseClient bc = new BaseClient("clientId", "customerId", perms);
+        BaseClient bc = new BaseClient("clientId", "customerId");
         byte[] serialized = SerializationUtils.serialize(bc);
         BaseClient dsbc = (BaseClient) SerializationUtils.deserialize(serialized);
         Assert.assertEquals(bc, dsbc);

@@ -21,7 +21,7 @@ import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
-import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.impl.DefaultClientService;
@@ -620,14 +620,14 @@ public class ClientServiceTests {
             customerStatus, customerSeeAlso, owner);
     }
 
-    private List<Permission> getFakePermissionList() {
-        List<Permission> perms = new ArrayList<Permission>();
+    private List<PermissionObject> getFakePermissionList() {
+        List<PermissionObject> perms = new ArrayList<PermissionObject>();
         perms.add(getFakePermission());
         return perms;
     }
 
-    private Permission getFakePermission() {
-        Permission res = new Permission();
+    private PermissionObject getFakePermission() {
+        PermissionObject res = new PermissionObject();
         res.setClientId(clientId);
         res.setCustomerId(customerId);
         res.setPermissionId(resourceId);

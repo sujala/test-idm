@@ -1,7 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import java.util.List;
-
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
@@ -151,13 +149,6 @@ public class Client extends BaseClient implements Auditable {
     public void setCustomerId(String customerId) {
         super.setCustomerId(customerId);
     }
-
-    @Override
-    public void setPermissions(List<Permission> permissions) {
-        // Make the setter more permissive here, but keep it restrictive in
-        // BaseClient
-        super.setPermissions(permissions);
-    }
     
     public void setDefaults() {
         this.setLocked(false);
@@ -167,7 +158,6 @@ public class Client extends BaseClient implements Auditable {
 
     public BaseClient getBaseClient() {
         BaseClient baseClient = getBaseClientWithoutClientPerms();
-        baseClient.setPermissions(getPermissions());
         return baseClient;
     }
 

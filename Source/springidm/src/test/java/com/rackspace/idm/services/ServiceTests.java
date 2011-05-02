@@ -7,7 +7,6 @@ import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
-import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;

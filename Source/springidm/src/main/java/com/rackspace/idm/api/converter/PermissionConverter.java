@@ -3,7 +3,6 @@ package com.rackspace.idm.api.converter;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
@@ -50,20 +49,6 @@ public class PermissionConverter {
         }
 
         return perms;
-    }
-
-    public com.rackspace.idm.jaxb.Permission toPermissionJaxb(Permission permDo) {
-        com.rackspace.idm.jaxb.Permission permJaxb = of.createPermission();
-        permJaxb.setClientId(permDo.getClientId());
-        permJaxb.setCustomerId(permDo.getCustomerId());
-        permJaxb.setPermissionId(permDo.getPermissionId());
-        permJaxb.setType(permDo.getType());
-        permJaxb.setValue(permDo.getValue());
-        permJaxb.setTitle(permDo.getTitle());
-        permJaxb.setDescription(permDo.getDescription());
-        permJaxb.setGrantedByDefault(permDo.getGrantedByDefault());
-        permJaxb.setEnabled(permDo.getEnabled());
-        return permJaxb;
     }
     
     public com.rackspace.idm.jaxb.Permission toPermissionJaxb(PermissionObject permDo) {
