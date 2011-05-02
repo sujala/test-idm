@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.error.ApiError;
@@ -34,7 +35,6 @@ import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.PermissionConflictException;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
@@ -103,7 +103,7 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
 
         checkAndGetClient(customerId, clientId);
 
-        List<PermissionObject> defineds = checkAndGetDefinedPermissions(clientId);
+        List<PermissionObject> defineds = this.clientService.getDefinedPermissionsByClientId(clientId);
 
         return Response.ok(permissionConverter.toPermissionListJaxb(defineds)).build();
     }
@@ -188,27 +188,23 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
         return logger;
     }
 
-    private List<PermissionObject> checkAndGetDefinedPermissions(String clientId) throws NotFoundException {
-        List<PermissionObject> defineds = this.clientService.getDefinedPermissionsByClientId(clientId);
-
-        if (defineds == null) {
-            String errorMsg = String.format("Permissions Not Found for client: %s", clientId);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-        return defineds;
-    }
-
     private void validatePermissionRequest(String customerId, String clientId,
         com.rackspace.idm.jaxb.Permission permission) throws BadRequestException {
-        if (!permission.getCustomerId().equals(customerId)) {
+        
+        if (!customerId.equalsIgnoreCase(permission.getCustomerId())) {
             String errMsg = "CustomerId mismatch";
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
 
-        if (!permission.getClientId().equals(clientId)) {
+        if (!clientId.equalsIgnoreCase(permission.getClientId())) {
             String errMsg = "ClientId mismatch";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+        
+        if (StringUtils.isBlank(permission.getPermissionId())) {
+            String errMsg = "PermissionId cannot be blank";
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }

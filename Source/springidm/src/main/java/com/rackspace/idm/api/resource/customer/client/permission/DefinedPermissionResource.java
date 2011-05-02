@@ -88,6 +88,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         @PathParam("clientId") String clientId,
         @PathParam("permissionId") String permissionId,
         EntityHolder<com.rackspace.idm.jaxb.Permission> holder) {
+        
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
@@ -103,15 +104,14 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
+        PermissionObject inputPermisison = permissionConverter.toPermissionDO(holder.getEntity());
         validateClientPermissionRequest(customerId, clientId, permissionId,
-            permission);
+            inputPermisison);
 
         PermissionObject permissionDO = this.checkAndGetPermission(customerId,
             clientId, permissionId);
-
-        permissionDO.setPermissionType(permission.getType());
-        permissionDO.setValue(permission.getValue());
+        
+        permissionDO.copyChanges(inputPermisison);
 
         ApiError err = inputValidator.validate(permissionDO);
         if (err != null) {
@@ -120,7 +120,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
 
         this.clientService.updateDefinedPermission(permissionDO);
 
-        return Response.ok(permission).build();
+        return Response.ok(permissionConverter.toPermissionJaxb(permissionDO)).build();
     }
 
     /**
@@ -235,23 +235,23 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
     }
 
     private void validateClientPermissionRequest(String customerId,
-        String clientId, String permissionId,
-        com.rackspace.idm.jaxb.Permission permission)
+        String clientId, String permissionId, PermissionObject permission)
         throws BadRequestException {
-        if (!permission.getPermissionId().equals(permissionId)) {
-            String errMsg = "PermissionId mismatch";
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
 
-        if (!permission.getCustomerId().equals(customerId)) {
+        if (!customerId.equalsIgnoreCase(permission.getCustomerId())) {
             String errMsg = "CustomerId mismatch";
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
 
-        if (!permission.getClientId().equals(clientId)) {
+        if (!clientId.equalsIgnoreCase(permission.getClientId())) {
             String errMsg = "ClientId mismatch";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+        
+        if (!permissionId.equalsIgnoreCase(permission.getPermissionId())) {
+            String errMsg = "PermissionId mismatch";
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
