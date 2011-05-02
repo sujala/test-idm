@@ -2,6 +2,7 @@ package com.rackspace.idm.services;
 
 import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -10,8 +11,8 @@ import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
 import com.rackspace.idm.domain.entity.PermissionObject;
-import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
@@ -21,7 +22,7 @@ import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 
-public class ScopeAccessServiceTests extends ServiceTests {
+public class ScopeAccessServiceTests extends ServiceTestsBase {
 
     UserDao mockUserDao;
     ScopeAccessObjectDao scopeAccessDao;
@@ -401,35 +402,54 @@ public class ScopeAccessServiceTests extends ServiceTests {
             "clientId");
         EasyMock.verify(scopeAccessDao);
     }
-    
+
     @Test
     public void shouldGetScopeAccessByRefreshToken() {
         UserScopeAccessObject usao = getFakeUserScopeAccess();
         EasyMock.expect(
-            scopeAccessDao.getScopeAccessByRefreshToken("refreshToken")).andReturn(usao);
+            scopeAccessDao.getScopeAccessByRefreshToken("refreshToken"))
+            .andReturn(usao);
         EasyMock.replay(scopeAccessDao);
         scopeAccessService.getScopeAccessByRefreshToken("refreshToken");
         EasyMock.verify(scopeAccessDao);
     }
-    
+
     @Test
     public void shouldGetScopeAccessByAccessToken() {
         UserScopeAccessObject usao = getFakeUserScopeAccess();
         EasyMock.expect(
-            scopeAccessDao.getScopeAccessByAccessToken("accessToken")).andReturn(usao);
+            scopeAccessDao.getScopeAccessByAccessToken("accessToken"))
+            .andReturn(usao);
         EasyMock.replay(scopeAccessDao);
         scopeAccessService.getScopeAccessByAccessToken("accessToken");
         EasyMock.verify(scopeAccessDao);
     }
-    
+
     @Test
     public void shouldgetRackerScopeAccessForClientId() {
-    
-        EasyMock.expect(scopeAccessDao.getScopeAccessForParentByClientId("rackerUniqueId", clientId)).andReturn(getFakeRackerScopeAccess());
+
+        EasyMock.expect(
+            scopeAccessDao.getScopeAccessForParentByClientId("rackerUniqueId",
+                clientId)).andReturn(getFakeRackerScopeAccess());
         EasyMock.replay(scopeAccessDao);
-        scopeAccessService.getRackerScopeAccessForClientId("rackerUniqueId", clientId);
+        scopeAccessService.getRackerScopeAccessForClientId("rackerUniqueId",
+            clientId);
         EasyMock.verify(scopeAccessDao);
-        
-    
+    }
+
+    @Test
+    public void shouldGetasswordResetScopeAccessForUser() {
+        PasswordResetScopeAccessObject prsao = getFakePasswordResetScopeAccessObject();
+        DateTime pastTime = new DateTime();
+        prsao.setAccessTokenExp(pastTime.minusSeconds(10).toDate());
+        EasyMock.expect(
+            scopeAccessDao.getScopeAccessForParentByClientId("userUniqueId",
+                "PASSWORDRESET")).andReturn(prsao);
+        EasyMock.expect(scopeAccessDao.updateScopeAccess(prsao)).andReturn(
+            Boolean.TRUE);
+        EasyMock.replay(scopeAccessDao);
+        scopeAccessService
+            .getOrCreatePasswordResetScopeAccessForUser("userUniqueId");
+        EasyMock.verify(scopeAccessDao);
     }
 }
