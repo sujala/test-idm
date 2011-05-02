@@ -180,4 +180,11 @@ public class WadlTrieTests {
         final Object permissionFor = trie.getPermissionFor("GET", uriInfo);
         Assert.assertEquals(permissionFor, "getBaseUrlRef");
     }
+    
+    @Test
+    public void shouldFindPermissionForArray() {
+        String[] paths = new String[] { "root", "/", "customers", "RCN-QATestingCustomer", "clients", "b5c7f48cee82dc30d3271d8aa9bfbc3ab874b772", "permissions", "defined", "POST"};
+        Object p = trie.getPermissionFor(paths);
+        Assert.assertEquals("addClientDefinedPermission", p);
+    }
 }

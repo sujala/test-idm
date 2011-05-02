@@ -55,7 +55,7 @@ public class WadlTrie {
             }
 
             // if this node is a path parameter place holder or exact match, iterate children
-            if (isWildcard() || element.equals(o[index]) ) {
+            if (index < o.length && (isWildcard() || element.equals(o[index])) ) {
                 for (final Object c : children.keySet()) {
                     final Object r = children.get(c).find(next, o);
                     if (r != null) {
