@@ -118,7 +118,7 @@ public class UserPermissionsResource {
             .getPermissionForParent(client.getUniqueId(), po);
 
         if (definedPermission == null || !definedPermission.getEnabled()) {
-            return Response.noContent().build();
+            return Response.status(404).build();
         }
 
         if (definedPermission.getGrantedByDefault()
@@ -127,7 +127,7 @@ public class UserPermissionsResource {
             return Response.ok().build();
         }
 
-        return Response.noContent().build();
+        return Response.status(404).build();
     }
 
     /**

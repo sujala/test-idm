@@ -116,7 +116,7 @@ public class CustomerClientServiceResource {
             return Response.ok().build();
         }
         
-        return Response.noContent().build();
+        return Response.status(404).build();
     }
 
    /**

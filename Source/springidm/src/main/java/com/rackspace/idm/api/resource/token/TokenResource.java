@@ -30,6 +30,7 @@ import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.OAuthGrantType;
 import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.OAuthService;
@@ -263,11 +264,12 @@ public class TokenResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @GET
-    @Path("{tokenString}/permissions/{permissionId}")
+    @Path("{tokenString}/services/{serviceId}/permissions/{permissionId}")
     public Response validateTokenPermission(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("tokenString") String tokenString,
+        @PathParam("serviceId") String serviceId,
         @PathParam("permissionId") String permissionId) {
 
         logger.debug("Checking whether token {} has permission {}",
@@ -276,7 +278,7 @@ public class TokenResource {
         ScopeAccessObject token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
-        boolean authorized = token instanceof ClientScopeAccessObject;
+        boolean authorized = token instanceof ClientScopeAccessObject && serviceId.equals(token.getClientId());
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
@@ -292,6 +294,18 @@ public class TokenResource {
         permission.setClientId(token.getClientId());
         permission.setCustomerId(token.getClientRCN());
         permission.setPermissionId(permissionId);
+        
+        PermissionObject defined = this.scopeAccessService.getPermissionForParent(token.getUniqueId(), permission);
+        
+        if (defined == null || !defined.getEnabled()) {
+            return Response.status(404).build();
+        }
+        
+        if (tokenToCheck instanceof UserScopeAccessObject) {
+            if (defined.getGrantedByDefault()) {
+                return Response.ok().build();
+            }
+        }
 
         if (this.scopeAccessService.doesAccessTokenHavePermission(
             ((hasAccessToken) tokenToCheck).getAccessTokenString(), permission)) {
