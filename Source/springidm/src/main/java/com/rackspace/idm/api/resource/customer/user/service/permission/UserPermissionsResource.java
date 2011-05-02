@@ -64,7 +64,6 @@ public class UserPermissionsResource {
      * Check to see if a user has a permission.
      * 
      * @response.representation.200.doc
-     * @response.representation.204.doc
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
      * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
@@ -91,13 +90,15 @@ public class UserPermissionsResource {
         ScopeAccessObject token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
-        // Racker's, Rackspace Clients and Specific Clients are
-        // authorized
-        // TODO Need to find out the correct authn
+        // Rackers can check any permissions granted to a user
+        // Rackspace Clients can check their own permissions granted to a user
+        // Specific Clients can check their own permissions granted to a user
+        // Customer IdM can check any permissions granted to a user
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo);
+            || authorizationService.authorizeRackspaceClient(token) 
+            || authorizationService.authorizeClient(token,
+                request.getMethod(), uriInfo)
+            || authorizationService.authorizeCustomerIdm(token);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
@@ -133,7 +134,8 @@ public class UserPermissionsResource {
     /**
      * Grant a permission to a User.
      * 
-     * @response.representation.204.doc
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}permission
+     * @response.representation.200.doc
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
      * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
@@ -161,22 +163,44 @@ public class UserPermissionsResource {
             throw new BadRequestException("Request body missing.");
         }
 
-        com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
-        PermissionObject perm = this.permissionConverter
-            .toPermissionObjectDO(permission);
-
         ScopeAccessObject token = this.scopeAccessService
-            .getAccessTokenByAuthHeader(authHeader);
-
+        .getAccessTokenByAuthHeader(authHeader);
+        
         boolean authorized = authorizeGrantRevokePermission(token, request,
             uriInfo, serviceId);
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
+        com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
+        PermissionObject filter = new PermissionObject();
+        filter.setClientId(serviceId);
+        filter.setPermissionId(permission.getPermissionId());
+        
+        Client client = this.clientService.getById(serviceId);
+        
+        if (client == null) {
+            String errMsg = String.format("Client %s not found", serviceId);
+            logger.info(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
+        PermissionObject defined = this.scopeAccessService.getPermissionForParent(client.getUniqueId(), filter);
+        if (defined == null) {
+            String errMsg = String.format("Permission %s not found", permission.getPermissionId());
+            logger.info(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        
+        PermissionObject granted = new PermissionObject();
+        granted.setClientId(defined.getClientId());
+        granted.setCustomerId(defined.getCustomerId());
+        granted.setPermissionId(defined.getPermissionId());
+
         User user = this.userService.checkAndGetUser(customerId, username);
 
-        this.scopeAccessService.grantPermission(user.getUniqueId(), perm);
+        this.scopeAccessService.grantPermission(user.getUniqueId(), granted);
 
-        return Response.ok(perm).build();
+        return Response.ok().build();
     }
 
     /**

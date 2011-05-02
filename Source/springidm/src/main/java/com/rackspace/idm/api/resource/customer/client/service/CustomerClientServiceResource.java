@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
@@ -44,14 +43,12 @@ public class CustomerClientServiceResource {
     private final ScopeAccessService scopeAccessService;
     private final ClientService clientService;
     private final AuthorizationService authorizationService;
-    private final PermissionConverter permissionConverter;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public CustomerClientServiceResource(CustomerService customerService,
-        ScopeAccessService scopeAccessService,PermissionConverter permissionConverter,
+        ScopeAccessService scopeAccessService,
         ClientService clientService, AuthorizationService authorizationService) {
-        this.permissionConverter = permissionConverter;
         this.clientService = clientService;
         this.scopeAccessService = scopeAccessService;
         this.authorizationService = authorizationService;
@@ -88,10 +85,10 @@ public class CustomerClientServiceResource {
         ScopeAccessObject token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
         
-        // Rackers can view any permissions granted to a client
-        // Rackspace Clients can view their own permissions granted to a client
-        // Specific Clients can view their own permissions granted to a client
-        // Customer IdM can view any permissions granted to a client
+        // Rackers can check any permissions granted to a client
+        // Rackspace Clients can check their own permissions granted to a client
+        // Specific Clients can check their own permissions granted to a client
+        // Customer IdM can check any permissions granted to a client
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token) 
             || authorizationService.authorizeClient(token,
@@ -151,8 +148,6 @@ public class CustomerClientServiceResource {
             throw new BadRequestException("Request body missing.");
         }
 
-        com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
-        PermissionObject perm = this.permissionConverter.toPermissionObjectDO(permission);
 
         ScopeAccessObject token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
@@ -177,15 +172,38 @@ public class CustomerClientServiceResource {
             throw new ForbiddenException(errMsg);
         }
 
-        Client client = this.clientService.getClient(customerId, clientId);
+        com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
+        PermissionObject filter = new PermissionObject();
+        filter.setClientId(serviceId);
+        filter.setPermissionId(permission.getPermissionId());
 
+        Client client = this.clientService.getClient(customerId, clientId);
         if (client == null) {
             String errMsg = String.format("Client %s not found", clientId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
         
-        this.scopeAccessService.grantPermission(client.getUniqueId(), perm);
+        Client grantingClient = this.clientService.getById(serviceId);
+        if (grantingClient == null) {
+            String errMsg = String.format("Client %s not found", serviceId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
+        PermissionObject defined = this.scopeAccessService.getPermissionForParent(grantingClient.getUniqueId(), filter);
+        if (defined == null) {
+            String errMsg = String.format("Permission %s not found", permission.getPermissionId());
+            logger.info(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
+        PermissionObject granted = new PermissionObject();
+        granted.setClientId(defined.getClientId());
+        granted.setCustomerId(defined.getCustomerId());
+        granted.setPermissionId(defined.getPermissionId());
+        
+        this.scopeAccessService.grantPermission(client.getUniqueId(), granted);
         
         return Response.ok().build();
     }
@@ -240,8 +258,8 @@ public class CustomerClientServiceResource {
             throw new ForbiddenException(errMsg);
         }
 
+        //Does client exist?
         Client client = this.clientService.getClient(customerId, clientId);
-
         if (client == null) {
             String errMsg = String.format("Client %s not found", clientId);
             logger.warn(errMsg);
@@ -252,6 +270,7 @@ public class CustomerClientServiceResource {
             .getDefinedPermissionByClientIdAndPermissionId(
                 serviceId, permissionId);
         
+        //Does permission exist?
         if (definedPermission == null) {
             String errMsg = String.format("Permission %s not found", permissionId);
             logger.warn(errMsg);
