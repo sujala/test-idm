@@ -100,7 +100,7 @@ public class DefaultClientService implements ClientService {
             throw new NotFoundException(errMsg);
         }
         
-        List<PermissionObject> definedPermissions = this.getDefinedPermissionsByClientId(clientId);
+        List<PermissionObject> definedPermissions = this.getDefinedPermissionsByClient(client);
         
         for (PermissionObject definedPerm : definedPermissions) {
             this.deleteDefinedPermission(definedPerm);
@@ -217,15 +217,15 @@ public class DefaultClientService implements ClientService {
     }
 
     @Override
-    public List<PermissionObject> getDefinedPermissionsByClientId(
-        String clientId) {
-
-        Client client = this.clientDao.getClientByClientId(clientId);
-
-        ScopeAccessObject sa = this.scopeAccessDao
-            .getScopeAccessForParentByClientId(client.getUniqueId(), clientId);
+    public List<PermissionObject> getDefinedPermissionsByClient(
+        Client client) {
+        
+        PermissionObject filter = new PermissionObject();
+        filter.setClientId(client.getClientId());
+        filter.setCustomerId(client.getCustomerId());
+        
         List<PermissionObject> permissions = this.scopeAccessDao
-            .getPermissionsByParentAndPermissionId(sa.getUniqueId(),
+            .getPermissionsByParentAndPermissionId(client.getUniqueId(),
                 new PermissionObject());
         return permissions;
     }

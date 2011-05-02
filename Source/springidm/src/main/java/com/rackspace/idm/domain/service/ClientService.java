@@ -51,7 +51,7 @@ public interface ClientService {
     
     PermissionObject checkAndGetPermission(String customerId, String clientId, String permissionId);
 
-    List<PermissionObject> getDefinedPermissionsByClientId(String clientId);
+    List<PermissionObject> getDefinedPermissionsByClient(Client client);
 
     boolean isUserMemberOfClientGroup(String username, ClientGroup group);
 

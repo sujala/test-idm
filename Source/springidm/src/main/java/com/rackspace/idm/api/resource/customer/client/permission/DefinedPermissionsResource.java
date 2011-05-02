@@ -27,6 +27,7 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
+import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
@@ -101,9 +102,9 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        checkAndGetClient(customerId, clientId);
+        Client client = checkAndGetClient(customerId, clientId);
 
-        List<PermissionObject> defineds = this.clientService.getDefinedPermissionsByClientId(clientId);
+        List<PermissionObject> defineds = this.clientService.getDefinedPermissionsByClient(client);
 
         return Response.ok(permissionConverter.toPermissionListJaxb(defineds)).build();
     }

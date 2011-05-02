@@ -220,8 +220,6 @@ public class ClientServiceTests {
         mockClientDao.deleteClient(getFakeClient());
         EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(
             getFakeClient());
-        EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(
-            getFakeClient());
 
         EasyMock.expect(
             mockScopeAccessDao.getScopeAccessForParentByClientId(uniqueId,
