@@ -183,7 +183,7 @@ public class WadlTrieTests {
     
     @Test
     public void shouldFindPermissionForArray() {
-        String[] paths = new String[] { "root", "/", "customers", "RCN-QATestingCustomer", "clients", "b5c7f48cee82dc30d3271d8aa9bfbc3ab874b772", "permissions", "defined", "POST"};
+        Object[] paths = new String[] { "root", "/", "customers", "RCN-QATestingCustomer", "clients", "b5c7f48cee82dc30d3271d8aa9bfbc3ab874b772", "permissions", "defined", "POST"};
         Object p = trie.getPermissionFor(paths);
         Assert.assertEquals("addClientDefinedPermission", p);
     }
