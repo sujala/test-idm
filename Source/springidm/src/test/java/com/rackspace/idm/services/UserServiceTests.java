@@ -6,7 +6,6 @@ import java.util.Locale;
 
 import junit.framework.Assert;
 
-import org.apache.commons.mail.EmailException;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -35,15 +34,12 @@ import com.rackspace.idm.domain.entity.UserLocale;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.ClientService;
-import com.rackspace.idm.domain.service.EmailService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.jaxb.CustomParamsList;
-import com.rackspace.idm.jaxb.PasswordRecovery;
 import com.rackspace.idm.jaxb.UserCredentials;
 import com.rackspace.idm.jaxb.UserPassword;
 
@@ -56,7 +52,6 @@ public class UserServiceTests {
     ClientDao mockClientDao;
     UserService userService;
     UserService trustedUserService;
-    EmailService mockEmailService;
     AuthDao mockRackerDao;
     ClientService mockClientService;
     ScopeAccessService mockScopeAccessService;
@@ -102,7 +97,6 @@ public class UserServiceTests {
 
         mockUserDao = EasyMock.createMock(UserDao.class);
         mockCustomerDao = EasyMock.createMock(CustomerDao.class);
-        mockEmailService = EasyMock.createMock(EmailService.class);
         mockRackerDao = EasyMock.createMock(AuthDao.class);
         mockClientService = EasyMock.createMock(ClientService.class);
         mockScopeAccessObjectDao = EasyMock.createMock(ScopeAccessObjectDao.class);
@@ -110,11 +104,11 @@ public class UserServiceTests {
 
         userService = new DefaultUserService(mockUserDao, mockRackerDao,
                 mockCustomerDao,mockScopeAccessObjectDao,
-                mockEmailService, mockClientService, false);
+                mockClientService, false);
 
         trustedUserService = new DefaultUserService(mockUserDao, mockRackerDao,
                 mockCustomerDao,mockScopeAccessObjectDao,
-                mockEmailService, mockClientService, true);
+                mockClientService, true);
     }
 
     @Test
@@ -441,33 +435,6 @@ public class UserServiceTests {
 
         Assert.assertTrue(returned.getUsers().size() == 2);
         EasyMock.verify(mockUserDao);
-    }
-
-    @Test
-    public void shouldSendRecoveryEmail() {
-        final List<String> recipients = new ArrayList<String>();
-        recipients.add(email);
-        final String from = "NoReply@rackspace.com";
-        final String link = String.format("%s?username=%s&token=%s", callbackUrl,
-                username, tokenString);
-        final String message = String.format("Here's your recovery link: %s", link);
-        final String subject = "Password Recovery";
-        try {
-            mockEmailService.sendEmail(recipients, from, subject, message);
-        } catch (final EmailException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        final PasswordRecovery recoveryParam = new PasswordRecovery();
-        recoveryParam.setCallbackUrl(callbackUrl);
-        recoveryParam.setCustomParams(new CustomParamsList());
-        recoveryParam.setFrom(from);
-        recoveryParam.setReplyTo(from);
-        recoveryParam.setSubject(subject);
-        recoveryParam.setTemplateUrl("");
-        userService.sendRecoveryEmail(subject, email, recoveryParam,
-                tokenString);
     }
 
     @Test

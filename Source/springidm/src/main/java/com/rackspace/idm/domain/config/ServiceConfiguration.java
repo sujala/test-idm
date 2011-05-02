@@ -7,8 +7,6 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jmx.export.MBeanExporter;
@@ -20,12 +18,10 @@ import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.EmailSettings;
 import com.rackspace.idm.domain.service.ApiDocService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.domain.service.EmailService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
@@ -35,7 +31,6 @@ import com.rackspace.idm.domain.service.impl.DefaultApiDocService;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.domain.service.impl.DefaultClientService;
 import com.rackspace.idm.domain.service.impl.DefaultCustomerService;
-import com.rackspace.idm.domain.service.impl.DefaultEmailService;
 import com.rackspace.idm.domain.service.impl.DefaultEndpointService;
 import com.rackspace.idm.domain.service.impl.DefaultOAuthService;
 import com.rackspace.idm.domain.service.impl.DefaultPasswordComplexityService;
@@ -131,34 +126,6 @@ public class ServiceConfiguration {
     }
 
     @Bean
-    public EmailService emailService() {
-
-        org.apache.commons.configuration.Configuration config;
-        final String propsFileLoc = "emailservice.properties";
-
-        try {
-            config = new PropertiesConfiguration(propsFileLoc);
-        } catch (final ConfigurationException e) {
-            e.printStackTrace();
-            throw new RuntimeException(
-                "Error encountered when loading the token config file.");
-        }
-
-        final int smtpPort = config.getInt("smtpPort");
-        final String smtpHost = config.getString("hostName");
-        final String smtpUsername = config.getString("smtpUsername");
-        final String smtpPassword = config.getString("smtpPassword");
-        final boolean debug = config.getBoolean("debug");
-        final boolean useSSL = config.getBoolean("SSL");
-        final boolean useTSL = config.getBoolean("TLS");
-
-        final EmailSettings emailSettings = new EmailSettings(smtpPort,
-            smtpHost, smtpUsername, smtpPassword, debug, useSSL, useTSL);
-
-        return new DefaultEmailService(emailSettings);
-    }
-
-    @Bean
     public InputValidator inputValidator() {
         final Validator validator = Validation.buildDefaultValidatorFactory()
             .getValidator();
@@ -181,7 +148,7 @@ public class ServiceConfiguration {
         final boolean isTrustedServer = config.getBoolean(
             "ldap.server.trusted", false);
         return new DefaultUserService(userRepo, authDao, customerDao,
-            scopeAccessDao, emailService(), clientService(), isTrustedServer);
+            scopeAccessDao, clientService(), isTrustedServer);
     }
 
     @Bean

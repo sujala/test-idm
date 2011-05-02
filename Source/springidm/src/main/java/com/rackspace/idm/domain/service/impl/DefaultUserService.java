@@ -1,21 +1,10 @@
 package com.rackspace.idm.domain.service.impl;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.mail.EmailException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,46 +28,33 @@ import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.ClientService;
-import com.rackspace.idm.domain.service.EmailService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.jaxb.CustomParam;
-import com.rackspace.idm.jaxb.PasswordRecovery;
 import com.rackspace.idm.jaxb.UserCredentials;
 import com.rackspace.idm.util.HashHelper;
-import com.rackspace.idm.util.TemplateProcessor;
-import com.rackspace.idm.validation.RegexPatterns;
 
 public class DefaultUserService implements UserService {
-
-    private static final String PASSWORD_RECOVERY_URL = "%s?username=%s&token=%s";
-    private static final String NEWLINE = System.getProperty("line.separator");
-    private static final Pattern emailPattern = Pattern
-        .compile(RegexPatterns.EMAIL_ADDRESS);
 
     private final UserDao userDao;
     private final AuthDao authDao;
     private final CustomerDao customerDao;
     private final ScopeAccessObjectDao scopeAccessDao;
-    private final EmailService emailService;
     private final ClientService clientService;
-  
-    private final TemplateProcessor tproc = new TemplateProcessor();
+
     private final boolean isTrustedServer;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
-        CustomerDao customerDao, ScopeAccessObjectDao scopeAccessDao, EmailService emailService,
+        CustomerDao customerDao, ScopeAccessObjectDao scopeAccessDao,
         ClientService clientService, boolean isTrusted) {
 
         this.userDao = userDao;
         this.authDao = rackerDao;
         this.customerDao = customerDao;
         this.scopeAccessDao = scopeAccessDao;
-        this.emailService = emailService;
         this.clientService = clientService;
         this.isTrustedServer = isTrusted;
     }
@@ -341,55 +317,6 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void sendRecoveryEmail(String username, String userEmail,
-        PasswordRecovery recoveryParam, String tokenString) {
-        logger.debug("Sending password recovery email for User: {}", username);
-
-        // validate from address
-        String fromEmail = recoveryParam.getFrom();
-        Matcher m = emailPattern.matcher(fromEmail);
-        boolean matchFound = m.matches();
-        if (!matchFound) {
-            String errorMsg = "Invalid from address";
-            logger.warn(errorMsg);
-            throw new IllegalArgumentException(errorMsg);
-        }
-
-        // validate reply-to address
-        String replyToEmail = recoveryParam.getReplyTo();
-        if (replyToEmail == null) {
-            replyToEmail = fromEmail;
-            recoveryParam.setReplyTo(replyToEmail);
-        }
-
-        Matcher replyToMatcher = emailPattern.matcher(replyToEmail);
-        matchFound = replyToMatcher.matches();
-        if (!matchFound) {
-            String errorMsg = "Invalid reply-to address";
-            logger.warn(errorMsg);
-            throw new IllegalArgumentException(errorMsg);
-        }
-
-        List<String> recipients = new ArrayList<String>();
-        recipients.add(userEmail);
-
-        String link = String.format(PASSWORD_RECOVERY_URL,
-            recoveryParam.getCallbackUrl(), username, tokenString);
-        String message = getEmailMessageBody(link, recoveryParam);
-        try {
-            emailService.sendEmail(recipients, recoveryParam.getFrom(),
-                recoveryParam.getSubject(), message);
-        } catch (EmailException e) {
-            logger.error("Could not send password recovery email for "
-                + username, e);
-            throw new IllegalStateException("Could not send email!", e);
-        }
-
-        logger.debug("Sent password recovery email for User: {}", username);
-
-    }
-
-    @Override
     public void updateUser(User user, boolean hasSelfUpdatedPassword) {
         logger.info("Updating User: {}", user);
         this.userDao.updateUser(user, hasSelfUpdatedPassword);
@@ -464,66 +391,6 @@ public class DefaultUserService implements UserService {
             throw new NotFoundException(errorMsg);
         }
         return user;
-    }
-
-    private Map<String, String> getCustomParamsMap(
-        PasswordRecovery recoveryParam) {
-        List<CustomParam> customParams = null;
-        if (recoveryParam.getCustomParams() == null) {
-            customParams = new ArrayList<CustomParam>();
-        } else {
-            customParams = recoveryParam.getCustomParams().getParams();
-        }
-        Map<String, String> params = new HashMap<String, String>();
-        for (CustomParam param : customParams) {
-            if (StringUtils.isBlank(param.getName())
-                || StringUtils.isBlank(param.getValue())) {
-                continue;
-            }
-            params.put(param.getName(), param.getValue());
-        }
-        return params;
-    }
-
-    private String getEmailMessageBody(String recoveryUrl,
-        PasswordRecovery recoveryParam) {
-        String message = String.format("Here's your recovery link: %s",
-            recoveryUrl);
-        String templateUrl = recoveryParam.getTemplateUrl();
-        if (StringUtils.isBlank(templateUrl)) {
-            return message;
-        }
-
-        // Build parameters lookup
-        Map<String, String> params = getCustomParamsMap(recoveryParam);
-
-        // Substitute param values
-        try {
-            URL url = new URL(templateUrl);
-            InputStream is = url.openStream();
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            String line = null;
-            StringBuffer sb = new StringBuffer();
-            while ((line = br.readLine()) != null) {
-                String subbedLine = tproc.getSubstituedOutput(line, params);
-                if (StringUtils.contains(subbedLine, "{{")) {
-                    // The template has an unknown parameter. Bail out.
-                    return message;
-                }
-                sb.append(subbedLine);
-                sb.append(NEWLINE);
-            }
-            return sb.toString();
-        } catch (MalformedURLException mue) {
-            logger.error("Could not retrieve template from URL " + templateUrl,
-                mue);
-            // Just use the default message body
-            return message;
-        } catch (IOException ie) {
-            logger.error("Could not connect to URL " + templateUrl, ie);
-            // Just use the default message body
-            return message;
-        }
     }
     
     @Override

@@ -15,7 +15,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +36,6 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.exception.UserDisabledException;
-import com.rackspace.idm.jaxb.PasswordRecovery;
 import com.rackspace.idm.jaxb.UserCredentials;
 import com.sun.jersey.core.provider.EntityHolder;
 
@@ -276,92 +274,5 @@ public class UserPasswordResource {
         return Response.ok(
             tokenConverter.toTokenJaxb(prsa.getAccessTokenString(),
                 prsa.getAccessTokenExp())).build();
-    }
-
-    /**
-     * Sends an email to a user to allow the user to reset their password.
-     *
-     * @param authHeader    HTTP Authorization header for authenticating the caller.
-     * @param customerId    RCN
-     * @param username      username
-     * @param recoveryParam Password recovery email parameters
-     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}passwordRecovery
-     * @response.representation.204.doc Successful request
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     */
-    @POST
-    @Path("recoveryemail")
-    public Response sendRecoveryEmail(@Context Request request,
-        @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
-        @PathParam("customerId") String customerId,
-        @PathParam("username") String username,
-        EntityHolder<PasswordRecovery> holder) {
-        if (!holder.hasEntity()) {
-            throw new BadRequestException("Request body missing.");
-        }
-        logger.debug("Sending password recovery email for User: {}", username);
-
-        ScopeAccessObject token = this.scopeAccessService
-            .getAccessTokenByAuthHeader(authHeader);
-
-        boolean authorized = authorizationService
-            .authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(),
-                uriInfo);
-
-        authorizationService.checkAuthAndHandleFailure(authorized, token);
-
-        User user = this.userService.checkAndGetUser(customerId, username);
-
-        if (!user.getStatus().equals(UserStatus.ACTIVE)) {
-            String errorMsg = "User is not active";
-            logger.warn(errorMsg);
-            throw new ForbiddenException(errorMsg);
-        }
-
-        if (user.isLocked()) {
-            String errorMsg = "User is locked";
-            logger.warn(errorMsg);
-            throw new ForbiddenException(errorMsg);
-        }
-
-        if (StringUtils.isBlank(user.getEmail())) {
-            String errorMsg = "User doesn't have an email address";
-            logger.warn(errorMsg);
-            throw new IdmException(errorMsg);
-        }
-
-        PasswordRecovery recoveryParam = holder.getEntity();
-        if (StringUtils.isBlank(recoveryParam.getCallbackUrl())) {
-            String errorMsg = "callbackUrl is a required parameter.";
-            logger.warn(errorMsg);
-            throw new BadRequestException(errorMsg);
-        }
-
-        PasswordResetScopeAccessObject prsa = this.scopeAccessService
-            .getOrCreatePasswordResetScopeAccessForUser(user.getUniqueId());
-
-        try {
-            userService.sendRecoveryEmail(username, user.getEmail(),
-                recoveryParam, prsa.getAccessTokenString());
-        } catch (IllegalArgumentException e) {
-            String errorMsg = e.getMessage();
-            logger.warn(errorMsg);
-            throw new BadRequestException(errorMsg);
-        } catch (IllegalStateException ise) {
-            String errorMsg = "Could not send password recovery email.";
-            logger.warn(errorMsg);
-            throw new IdmException(errorMsg);
-        }
-
-        logger.debug("Sent password recovery email for User: {}", username);
-
-        return Response.noContent().build();
     }
 }

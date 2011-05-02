@@ -10,7 +10,6 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.jaxb.PasswordRecovery;
 import com.rackspace.idm.jaxb.UserCredentials;
 
 public interface UserService {
@@ -52,9 +51,6 @@ public interface UserService {
     User checkAndGetUser(String customerId, String username);
 
     boolean isUsernameUnique(String username);
-
-    void sendRecoveryEmail(String username, String userEmail, PasswordRecovery recoveryParam,
-        String tokenString);
     
     void setUserPassword(String customerId, String username, UserCredentials userCred, ScopeAccessObject token, 
         boolean isRecovery);
