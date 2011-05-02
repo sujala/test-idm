@@ -41,7 +41,7 @@
         </annotation>
     </element>
 
-    <element name="permissions" type="idm:PermissionSet">
+    <element name="permissions" type="idm:PermissionList">
     	<annotation>
     		<xsd:documentation xml:lang="EN"
     			xmlns="http://www.w3.org/1999/xhtml">
@@ -128,14 +128,5 @@
             </element>
         </sequence>
         
-    </complexType>
-
-    <complexType name="PermissionSet">
-    	<sequence>
-    		<element name="granted" type="idm:PermissionList"
-    			minOccurs="0" maxOccurs="1">
-    		</element>
-    		<element name="defined" type="idm:PermissionList" minOccurs="0" maxOccurs="1"></element>
-    	</sequence>
     </complexType>
 </schema>
