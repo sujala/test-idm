@@ -115,8 +115,8 @@
     			<attribute name="description" type="xsd:string"
     				use="optional">
     			</attribute>
-    			<attribute name="grantedByDefault" type="xsd:boolean" use="optional" default="false"></attribute>
-    			<attribute name="enabled" type="xsd:boolean" use="optional" default="true"></attribute>
+    			<attribute name="grantedByDefault" type="xsd:boolean" use="optional"></attribute>
+    			<attribute name="enabled" type="xsd:boolean" use="optional"></attribute>
     		</extension>
     	</simpleContent>
     </complexType>
