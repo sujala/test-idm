@@ -452,4 +452,12 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
             .getOrCreatePasswordResetScopeAccessForUser("userUniqueId");
         EasyMock.verify(scopeAccessDao);
     }
+    
+    @Test
+    public void shouldGetClientScopeAccessForClientId() {
+        EasyMock.expect(scopeAccessDao.getScopeAccessForParentByClientId("clientUniqueId", clientId)).andReturn(getFakeClientScopeAccess());
+        EasyMock.replay(scopeAccessDao);
+        scopeAccessService.getClientScopeAccessForClientId("clientUniqueId", clientId);
+        EasyMock.verify(scopeAccessDao);        
+    }
 }
