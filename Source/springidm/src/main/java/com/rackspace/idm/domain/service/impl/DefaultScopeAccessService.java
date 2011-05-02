@@ -464,10 +464,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             throw new NotFoundException(errMsg);
         }
 
-        ScopeAccessObject sa = this.getScopeAccessForParentByClientId(client
-            .getUniqueId(), client.getClientId());
         PermissionObject exists = this.scopeAccessDao
-            .getPermissionByParentAndPermissionId(sa.getUniqueId(), permission);
+            .getPermissionByParentAndPermissionId(client.getUniqueId(), permission);
         if (exists == null) {
             String errMsg = String
                 .format("Permission %s not found", permission);
