@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.ClientConverter;
 import com.rackspace.idm.api.resource.customer.client.group.ClientGroupsResource;
-import com.rackspace.idm.api.resource.customer.client.permission.PermissionsResource;
+import com.rackspace.idm.api.resource.customer.client.permission.DefinedPermissionResource;
 import com.rackspace.idm.api.resource.customer.client.service.CustomerClientServicesResource;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientSecret;
@@ -41,25 +41,29 @@ import com.rackspace.idm.jaxb.ClientCredentials;
 @Component
 public class CustomerClientResource extends AbstractClientConsumer {
 
+    private final DefinedPermissionResource definedPermissionResource;
     private final CustomerClientServicesResource customerClientServicesResource;
     private final ScopeAccessService scopeAccessService;
     private final ClientConverter clientConverter;
     private final ClientService clientService;
-    private final PermissionsResource permissionsResource;
     private final ClientGroupsResource clientGroupsResource;
     private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomerClientResource(CustomerClientServicesResource customerClientServicesResource, ClientService clientService, ScopeAccessService scopeAccessService,
-        ClientConverter clientConverter, PermissionsResource permissionsResource,
-        ClientGroupsResource clientGroupsResource, AuthorizationService authorizationService) {
+    public CustomerClientResource(
+        DefinedPermissionResource definedPermissionResource,
+        CustomerClientServicesResource customerClientServicesResource,
+        ClientService clientService, ScopeAccessService scopeAccessService,
+        ClientConverter clientConverter,
+        ClientGroupsResource clientGroupsResource,
+        AuthorizationService authorizationService) {
         super(clientService);
+        this.definedPermissionResource = definedPermissionResource;
         this.customerClientServicesResource = customerClientServicesResource;
         this.clientService = clientService;
         this.scopeAccessService = scopeAccessService;
         this.clientConverter = clientConverter;
-        this.permissionsResource = permissionsResource;
         this.authorizationService = authorizationService;
         this.clientGroupsResource = clientGroupsResource;
     }
@@ -79,19 +83,22 @@ public class CustomerClientResource extends AbstractClientConsumer {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @GET
-    public Response getClient(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+    public Response getClient(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
         logger.debug("Getting Client: {}", clientId);
 
         ScopeAccessObject token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients, Admins and Users are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo)
             || authorizationService.authorizeAdmin(token, customerId);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
@@ -100,7 +107,8 @@ public class CustomerClientResource extends AbstractClientConsumer {
 
         logger.debug("Got Client: {}", client);
 
-        com.rackspace.idm.jaxb.Client returnedClient = clientConverter.toClientJaxbWithPermissions(client);
+        com.rackspace.idm.jaxb.Client returnedClient = clientConverter
+            .toClientJaxbWithPermissions(client);
 
         return Response.ok(returnedClient).build();
     }
@@ -120,18 +128,20 @@ public class CustomerClientResource extends AbstractClientConsumer {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @DELETE
-    public Response deleteClient(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+    public Response deleteClient(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
         logger.debug("Deleting Client: {}", clientId);
 
         ScopeAccessObject token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo);
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
@@ -162,16 +172,19 @@ public class CustomerClientResource extends AbstractClientConsumer {
      */
     @Path("secret")
     @POST
-    public Response resetClientSecret(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+    public Response resetClientSecret(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
         ScopeAccessObject token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Rackers, Admins and specific clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo)
             || authorizationService.authorizeAdmin(token, customerId);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
@@ -188,7 +201,8 @@ public class CustomerClientResource extends AbstractClientConsumer {
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         } catch (IllegalStateException e) {
-            String errorMsg = String.format("Error generating secret for client: %s", clientId);
+            String errorMsg = String.format(
+                "Error generating secret for client: %s", clientId);
             logger.warn(errorMsg);
             throw new IdmException(e);
         }
@@ -206,10 +220,10 @@ public class CustomerClientResource extends AbstractClientConsumer {
     }
 
     @Path("permissions")
-    public PermissionsResource getPermissionsResource() {
-        return permissionsResource;
+    public DefinedPermissionResource getDefinedPermissionResource() {
+        return definedPermissionResource;
     }
-    
+
     @Path("services")
     public CustomerClientServicesResource getCustomerClientServicesResource() {
         return customerClientServicesResource;
