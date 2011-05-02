@@ -285,6 +285,11 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     }
 
     @Override
+    public List<PermissionObject> getPermissionsByPermission(PermissionObject permission) {
+        return getPermissionsByParentAndPermissionId(BASE_DN, permission);
+    }
+    
+    @Override
     public PermissionObject getPermissionByParentAndPermissionId(String parentUniqueId, PermissionObject permission) {
         final List<PermissionObject> list = getPermissionsByParentAndPermissionId(parentUniqueId, permission);
         if(list.size() == 1) {

@@ -41,4 +41,6 @@ public interface ScopeAccessObjectDao {
     PermissionObject getPermissionByParentAndPermissionId(String parentUniqueId, PermissionObject permission);
 
     List<PermissionObject> getPermissionsByParentAndPermissionId(String parentUniqueId, PermissionObject permission);
+    
+    List<PermissionObject> getPermissionsByPermission(PermissionObject permission);
 }
