@@ -363,4 +363,29 @@ public class ScopeAccessServiceTests extends ServiceTests {
         EasyMock.verify(scopeAccessDao, mockUserDao);
 
     }  
+    
+    @Test
+    public void shouldGetUserScopeAccessForClientIdByUsernameAndApiCredentials() {
+        User user = getFakeUser();
+        Client client = getFakeClient();
+        UserScopeAccessObject sa = getFakeUserScopeAccess();
+
+        String apiKey = "fakeApiKey";
+        EasyMock.expect(
+            mockUserDao.authenticateByAPIKey(username, apiKey))
+            .andReturn(new UserAuthenticationResult(user, true));
+
+        EasyMock.expect(
+            scopeAccessDao.getScopeAccessForParentByClientId(
+                user.getUsername(), client.getClientId())).andReturn(sa);
+
+        EasyMock.expect(scopeAccessDao.updateScopeAccess(sa)).andReturn(true);
+
+        EasyMock.replay(scopeAccessDao, mockUserDao);
+
+        scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(
+            username, apiKey, clientId);
+
+        EasyMock.verify(scopeAccessDao, mockUserDao);
+    }
 }
