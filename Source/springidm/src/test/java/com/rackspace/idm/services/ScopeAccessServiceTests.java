@@ -1,5 +1,7 @@
 package com.rackspace.idm.services;
 
+import junit.framework.Assert;
+
 import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
@@ -452,12 +454,28 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
             .getOrCreatePasswordResetScopeAccessForUser("userUniqueId");
         EasyMock.verify(scopeAccessDao);
     }
-    
+
     @Test
     public void shouldGetClientScopeAccessForClientId() {
-        EasyMock.expect(scopeAccessDao.getScopeAccessForParentByClientId("clientUniqueId", clientId)).andReturn(getFakeClientScopeAccess());
+        EasyMock.expect(
+            scopeAccessDao.getScopeAccessForParentByClientId("clientUniqueId",
+                clientId)).andReturn(getFakeClientScopeAccess());
         EasyMock.replay(scopeAccessDao);
-        scopeAccessService.getClientScopeAccessForClientId("clientUniqueId", clientId);
-        EasyMock.verify(scopeAccessDao);        
+        scopeAccessService.getClientScopeAccessForClientId("clientUniqueId",
+            clientId);
+        EasyMock.verify(scopeAccessDao);
+    }
+
+    @Test
+    public void shouldGetAccessTokenByAuthHeader() {
+        ScopeAccessObject fakeScopeAccess = getFakeScopeAccess();
+        EasyMock.expect(
+            scopeAccessDao.getScopeAccessByAccessToken("accessToken"))
+            .andReturn(fakeScopeAccess);
+        EasyMock.replay(scopeAccessDao);
+        ScopeAccessObject sa = scopeAccessService
+            .getAccessTokenByAuthHeader("OAuth accessToken");
+        EasyMock.verify(scopeAccessDao);
+        Assert.assertEquals(fakeScopeAccess, sa);
     }
 }

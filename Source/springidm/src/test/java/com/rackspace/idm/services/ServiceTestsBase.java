@@ -3,6 +3,7 @@ package com.rackspace.idm.services;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 
+import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.ClientSecret;
