@@ -437,6 +437,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             scopeAccessUniqueId);
         Client client = this.clientDao.getClientByClientId(permission
             .getClientId());
+        
+        if (client == null) {
+            String errMsg = String.format("Client %s not found", permission.getClientId());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
         ScopeAccessObject sa = this.getScopeAccessForParentByClientId(
             client.getUniqueId(), client.getClientId());
         PermissionObject exists = this.scopeAccessDao
@@ -474,6 +481,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.debug("Getting by clientId {}", clientId);
         ScopeAccessObject sa = this.scopeAccessDao
             .getScopeAccessForParentByClientId(parentUniqueID, clientId);
+        
+        if (sa == null) {
+            String errorMessage = String.format("Client %s not found for parent %s", clientId, parentUniqueID);
+            logger.warn(errorMessage);
+            throw new NotFoundException(errorMessage);
+        }
+        
         logger.debug("Got by clientId {}", clientId);
         return sa;
     }
