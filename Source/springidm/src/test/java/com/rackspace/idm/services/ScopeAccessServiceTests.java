@@ -56,4 +56,65 @@ public class ScopeAccessServiceTests extends ServiceTests {
        
        EasyMock.verify(scopeAccessDao); 
     }
+    
+    @Test(expected = com.rackspace.idm.exception.NotFoundException.class)
+    public void shouldNotAddPermissionIfItDoesNotExist() {
+       Client client = getFakeClient();
+       ScopeAccessObject sa = getFakeScopeAccess();
+       PermissionObject perm = getFakePermission();
+       
+       EasyMock.expect(mockClientDao.getClientByClientId(perm.getClientId())).andReturn(client);
+       
+       EasyMock.expect(scopeAccessDao.getScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId())).andReturn(sa);
+       EasyMock.expect(scopeAccessDao.getPermissionByParentAndPermissionId(sa.getUniqueId(), perm)).andReturn(null);
+       
+       EasyMock.expect(scopeAccessDao.grantPermission(sa.getUniqueId(), perm)).andReturn(perm);
+      
+       EasyMock.replay(scopeAccessDao, mockClientDao);
+       
+       scopeAccessService.addPermissionToScopeAccess(sa.getUniqueId(), perm);
+       
+       EasyMock.verify(scopeAccessDao); 
+    }
+    
+    @Test(expected = com.rackspace.idm.exception.NotFoundException.class)
+    public void shouldNotAddPermissionIfScopeAccessForClientDoesNotExist() {
+       Client client = getFakeClient();
+       ScopeAccessObject sa = getFakeScopeAccess();
+       PermissionObject perm = getFakePermission();
+       
+       EasyMock.expect(mockClientDao.getClientByClientId(perm.getClientId())).andReturn(client);
+       
+       EasyMock.expect(scopeAccessDao.getScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId())).andReturn(null);
+       EasyMock.expect(scopeAccessDao.getPermissionByParentAndPermissionId(sa.getUniqueId(), perm)).andReturn(perm);
+       
+       EasyMock.expect(scopeAccessDao.grantPermission(sa.getUniqueId(), perm)).andReturn(perm);
+      
+       EasyMock.replay(scopeAccessDao, mockClientDao);
+       
+       scopeAccessService.addPermissionToScopeAccess(sa.getUniqueId(), perm);
+       
+       EasyMock.verify(scopeAccessDao); 
+    }
+    
+    @Test(expected = com.rackspace.idm.exception.NotFoundException.class)
+    public void shouldNotAddPermissionIfClientDoesNotExist() {
+       Client client = getFakeClient();
+       ScopeAccessObject sa = getFakeScopeAccess();
+       PermissionObject perm = getFakePermission();
+       
+       EasyMock.expect(mockClientDao.getClientByClientId(perm.getClientId())).andReturn(null);
+       
+       EasyMock.expect(scopeAccessDao.getScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId())).andReturn(sa);
+       EasyMock.expect(scopeAccessDao.getPermissionByParentAndPermissionId(sa.getUniqueId(), perm)).andReturn(perm);
+       
+       EasyMock.expect(scopeAccessDao.grantPermission(sa.getUniqueId(), perm)).andReturn(perm);
+      
+       EasyMock.replay(scopeAccessDao, mockClientDao);
+       
+       scopeAccessService.addPermissionToScopeAccess(sa.getUniqueId(), perm);
+       
+       EasyMock.verify(scopeAccessDao); 
+    }     
+    
 }
