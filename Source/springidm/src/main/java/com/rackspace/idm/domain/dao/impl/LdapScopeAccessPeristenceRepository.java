@@ -23,6 +23,7 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import com.unboundid.ldap.sdk.persist.LDAPPersister;
+import com.unboundid.ldap.sdk.persist.PersistedObjects;
 import com.unboundid.util.LDAPSDKRuntimeException;
 
 public class LdapScopeAccessPeristenceRepository extends LdapRepository implements ScopeAccessObjectDao {
@@ -282,20 +283,36 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     }
 
     @Override
-    public PermissionObject getPermissionByParentAndPermissionId(String parentUniqueId, String permissionId) {
+    public PermissionObject getPermissionByParentAndPermissionId(String parentUniqueId, PermissionObject permission) {
+        final List<PermissionObject> list = getPermissionsByParentAndPermissionId(parentUniqueId, permission);
+        if(list.size() == 1) {
+            return list.get(0);
+        }
+        return null;
+    }
+
+    @Override
+    public List<PermissionObject> getPermissionsByParentAndPermissionId(String parentUniqueId,
+            PermissionObject permission) {
         LDAPConnection conn = null;
+        final List<PermissionObject> list = new ArrayList<PermissionObject>();
         try {
             final LDAPPersister<PermissionObject> persister = LDAPPersister.getInstance(PermissionObject.class);
             conn = getAppConnPool().getConnection();
-            final PermissionObject po = new PermissionObject();
-            po.setPermissionId(permissionId);
-            return persister.get(po, conn, parentUniqueId);
+            final PersistedObjects<PermissionObject> objects = persister.search(permission,conn, parentUniqueId, SearchScope.SUB);
+            while(true) {
+                final PermissionObject next = objects.next();
+                if(next == null) {
+                    break;
+                }
+                list.add(next);
+            }
         } catch (final LDAPException e) {
             getLogger().error("Error reading permission by parent and permission", e);
         } finally {
             getAppConnPool().releaseConnection(conn);
         }
-        return null;
+        return list;
     }
 
 }
