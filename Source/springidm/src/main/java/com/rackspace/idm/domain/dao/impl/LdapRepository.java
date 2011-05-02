@@ -39,6 +39,11 @@ public abstract class LdapRepository {
     protected static final String OBJECTCLASS_RACKSPACEPERSON = "rsPerson";
     protected static final String OBJECTCLASS_RACKSPACETOKEN = "rsToken";
     protected static final String OBJECTCLASS_SCOPEACCESS = "scopeAccess";
+    protected static final String OBJECTCLASS_USERSCOPEACCESS = "userScopeAccess";
+    protected static final String OBJECTCLASS_CLIENTSCOPEACCESS = "clientScopeAccess";
+    protected static final String OBJECTCLASS_PASSWORDRESETSCOPEACCESS = "passwordResetScopeAccess";
+    protected static final String OBJECTCLASS_RACKERSCOPEACCESS = "rackerScopeAccess";
+
     protected static final String OBJECTCLASS_TOP = "top";
 
     protected static final String[] ATTR_BASEURL_OBJECT_CLASS_VALUES = {
