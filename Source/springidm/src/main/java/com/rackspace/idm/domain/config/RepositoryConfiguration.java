@@ -1,32 +1,24 @@
 package com.rackspace.idm.domain.config;
 
-import net.spy.memcached.MemcachedClient;
-
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
-import com.rackspace.idm.domain.dao.AccessTokenDao;
 import com.rackspace.idm.domain.dao.ApiDocDao;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.EndpointDao;
-import com.rackspace.idm.domain.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.dao.XdcAccessTokenDao;
 import com.rackspace.idm.domain.dao.impl.FileSystemApiDocRepository;
-import com.rackspace.idm.domain.dao.impl.HttpAccessTokenRepository;
 import com.rackspace.idm.domain.dao.impl.LdapAuthRepository;
 import com.rackspace.idm.domain.dao.impl.LdapClientRepository;
 import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
 import com.rackspace.idm.domain.dao.impl.LdapCustomerRepository;
 import com.rackspace.idm.domain.dao.impl.LdapEndpointRepository;
-import com.rackspace.idm.domain.dao.impl.LdapRefreshTokenRepository;
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessPeristenceRepository;
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
-import com.rackspace.idm.domain.dao.impl.MemcachedAccessTokenRepository;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
 /**
@@ -44,8 +36,6 @@ public class RepositoryConfiguration {
     @Autowired
     private LDAPConnectionPool authReposConnPool;
     @Autowired
-    private MemcachedClient memcached;
-    @Autowired
     private Configuration appConfig;
 
     @Bean
@@ -59,21 +49,11 @@ public class RepositoryConfiguration {
     }
 
     @Bean
-    public RefreshTokenDao refreshTokenRepository() {
-        return new LdapRefreshTokenRepository(connPools, appConfig);
-    }
-
-    @Bean
     public CustomerDao ldapCustomerRepository() {
         return new LdapCustomerRepository(connPools, appConfig);
     }
 
-    @Bean
-    public AccessTokenDao accessTokenRepository() {
-        return new MemcachedAccessTokenRepository(memcached, appConfig);
-    }
-
-    @Bean
+   @Bean
     public AuthDao authenticationRepository() {
         return new LdapAuthRepository(authReposConnPool, appConfig);
     }
@@ -81,16 +61,6 @@ public class RepositoryConfiguration {
     @Bean
     public EndpointDao endpointDao() {
         return new LdapEndpointRepository(connPools, appConfig);
-    }
-
-    @Bean
-    public DataCenterEndpoints dcEnpoints() {
-        return new DataCenterEndpoints(appConfig);
-    }
-
-    @Bean(name = "xdcTokenDao")
-    public XdcAccessTokenDao xdcTokenDao() {
-        return new HttpAccessTokenRepository(dcEnpoints(), appConfig);
     }
 
     @Bean

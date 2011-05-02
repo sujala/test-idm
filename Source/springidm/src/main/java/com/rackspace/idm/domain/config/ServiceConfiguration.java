@@ -39,7 +39,6 @@ import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.util.LdapRouterMBean;
 import com.rackspace.idm.util.LoggerMBean;
-import com.rackspace.idm.util.MemcacheMBean;
 import com.rackspace.idm.util.WadlTrie;
 import com.rackspace.idm.validation.InputValidator;
 
@@ -97,11 +96,6 @@ public class ServiceConfiguration {
     @Bean
     public LdapRouterMBean ldapRouterMonitoringBean() {
         return new LdapRouterMBean();
-    }
-
-    @Bean
-    public MemcacheMBean memcacheMonitoringBean() {
-        return new MemcacheMBean();
     }
 
     @Bean
@@ -175,8 +169,6 @@ public class ServiceConfiguration {
             loggerMonitoringBean());
         beans.put("com.rackspace.idm:name=ldapRouterMonitoringBean",
             ldapRouterMonitoringBean());
-        beans.put("com.rackspace.idm:name=memcacheMonitoringBean",
-            memcacheMonitoringBean());
         exp.setBeans(beans);
         return exp;
     }

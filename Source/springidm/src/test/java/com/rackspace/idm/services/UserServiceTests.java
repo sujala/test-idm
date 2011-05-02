@@ -14,11 +14,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
-import com.rackspace.idm.domain.dao.AccessTokenDao;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.RefreshTokenDao;
 import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
@@ -49,8 +47,6 @@ public class UserServiceTests {
 
     UserDao mockUserDao;
     CustomerDao mockCustomerDao;
-    AccessTokenDao mockTokenDao;
-    RefreshTokenDao mockRefreshTokenDao;
     ClientDao mockClientDao;
     UserService userService;
     UserService trustedUserService;
