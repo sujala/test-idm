@@ -349,22 +349,37 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         String username, String password, String clientId) {
         logger.debug("Getting User {} ScopeAccess by clientId {}", username,
             clientId);
+        
         final UserAuthenticationResult result = this.userDao.authenticate(
             username, password);
+        
         if (!result.isAuthenticated()) {
             throw new NotAuthenticatedException();
         }
+        
         final UserScopeAccessObject scopeAccess = this
             .getUserScopeAccessForClientId(result.getUser().getUsername(),
                 clientId);
-        if (scopeAccess.isAccessTokenExpired(new DateTime())) {
+        
+        if (scopeAccess == null) {
+            String errMsg = "Scope access not found.";
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
+        if (scopeAccess.isAccessTokenExpired(new DateTime())) 
+        {
+            
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(
                 getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            
             this.scopeAccessDao.updateScopeAccess(scopeAccess);
         }
+        
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess,
             clientId);
+        
         return scopeAccess;
     }
 
@@ -401,9 +416,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         PermissionObject grantedPerm = new PermissionObject();
-        perm.setClientId(perm.getClientId());
-        perm.setCustomerId(perm.getCustomerId());
-        perm.setPermissionId(perm.getPermissionId());
+        grantedPerm.setClientId(perm.getClientId());
+        grantedPerm.setCustomerId(perm.getCustomerId());
+        grantedPerm.setPermissionId(perm.getPermissionId());
 
         grantedPerm = this.addPermissionToScopeAccess(sa.getUniqueId(),
             grantedPerm);
@@ -414,22 +429,18 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public void updateScopeAccess(ScopeAccessObject scopeAccess) {
         logger.info("Updating ScopeAccess {}", scopeAccess);
+        
+        if (scopeAccess == null) {
+            String errorMsg = String.format("Null scope access object instance.");
+            logger.warn(errorMsg);
+            throw new IllegalArgumentException(errorMsg);
+        }
+        
         this.scopeAccessDao.updateScopeAccess(scopeAccess);
         logger.info("Updated ScopeAccess {}", scopeAccess);
     }
 
-    private String generateToken() {
-        return UUID.randomUUID().toString().replace("-", "");
-    }
-
-    private int getDefaultTokenExpirationSeconds() {
-        return config.getInt("token.expirationSeconds");
-    }
-
-    private int getDefaultCloudAuthTokenExpirationSeconds() {
-        return config.getInt("token.cloudAuthExpirationSeconds");
-    }
-
+   
     @Override
     public PermissionObject addPermissionToScopeAccess(
         String scopeAccessUniqueId, PermissionObject permission) {
@@ -482,12 +493,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         ScopeAccessObject sa = this.scopeAccessDao
             .getScopeAccessForParentByClientId(parentUniqueID, clientId);
         
-        if (sa == null) {
-            String errorMessage = String.format("Client %s not found for parent %s", clientId, parentUniqueID);
-            logger.warn(errorMessage);
-            throw new NotFoundException(errorMessage);
-        }
-        
         logger.debug("Got by clientId {}", clientId);
         return sa;
     }
@@ -508,5 +513,17 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     private int getPagingLimit() {
         return config.getInt("ldap.paging.limit.max");
+    }
+    
+    private String generateToken() {
+        return UUID.randomUUID().toString().replace("-", "");
+    }
+
+    private int getDefaultTokenExpirationSeconds() {
+        return config.getInt("token.expirationSeconds");
+    }
+
+    private int getDefaultCloudAuthTokenExpirationSeconds() {
+        return config.getInt("token.cloudAuthExpirationSeconds");
     }
 }
