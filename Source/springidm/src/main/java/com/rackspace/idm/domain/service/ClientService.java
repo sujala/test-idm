@@ -7,7 +7,6 @@ import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.Clients;
-import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.PermissionObject;
 
 public interface ClientService {
@@ -16,7 +15,7 @@ public interface ClientService {
 
     void addClientGroup(ClientGroup clientGroup);
 
-    void addDefinedPermission(Permission permission);
+    void addDefinedPermission(PermissionObject permission);
     
     void addUserToClientGroup(String username, String customerId, String clientId, String groupName);
 
@@ -26,7 +25,7 @@ public interface ClientService {
 
     void deleteClientGroup(String customerId, String clientId, String groupName);
 
-    void deleteDefinedPermission(Permission permission);
+    void deleteDefinedPermission(PermissionObject permission);
 
     Clients getByCustomerId(String customerId, int offset, int limit);
 
@@ -47,18 +46,14 @@ public interface ClientService {
 
     Clients getClientServices(Client client);
     
-    Permission getDefinedPermissionByClientIdAndPermissionId(String clientId,
+    PermissionObject getDefinedPermissionByClientIdAndPermissionId(String clientId,
         String permissionId);
     
     PermissionObject checkAndGetPermission(String customerId, String clientId, String permissionId);
 
-    List<Permission> getDefinedPermissionsByClientId(String clientId);
+    List<PermissionObject> getDefinedPermissionsByClientId(String clientId);
 
-    void grantPermission(String clientId, Permission p);
-    
     boolean isUserMemberOfClientGroup(String username, ClientGroup group);
-
-    void revokePermission(String clientId, Permission p);
 
     void removeUserFromClientGroup(String username, ClientGroup clientGroup);
 
@@ -70,7 +65,5 @@ public interface ClientService {
 
     void updateClientGroup(ClientGroup group);
 
-    void updateDefinedPermission(Permission permission);
-    
-    List<Client> getClientsThatHavePermission(Permission permission);
+    void updateDefinedPermission(PermissionObject permission);
 }

@@ -22,8 +22,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.Permission;
-import com.rackspace.idm.domain.entity.PermissionSet;
+import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
@@ -39,7 +38,6 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 public class PermissionsResource extends AbstractClientConsumer {
 
     private final DefinedPermissionsResource definedPermissionsResource;
-    private final GrantedPermissionsResource grantedPermissionsResource;
     private final ClientService clientService;
     private final ScopeAccessService scopeAccessService;
     private final PermissionConverter permissionConverter;
@@ -49,13 +47,12 @@ public class PermissionsResource extends AbstractClientConsumer {
     @Autowired
     public PermissionsResource(ScopeAccessService scopeAccessService,
         DefinedPermissionsResource definedPermissionsResource,
-        GrantedPermissionsResource grantedPermissionsResource, ClientService clientService,
+        ClientService clientService,
         PermissionConverter permissionConverter, AuthorizationService authorizationService) {
         super(clientService);
       
         this.scopeAccessService = scopeAccessService;
         this.definedPermissionsResource = definedPermissionsResource;
-        this.grantedPermissionsResource = grantedPermissionsResource;
         this.permissionConverter = permissionConverter;
         this.clientService = clientService;
         this.authorizationService = authorizationService;
@@ -96,24 +93,14 @@ public class PermissionsResource extends AbstractClientConsumer {
         
         Client client = checkAndGetClient(customerId, clientId);
 
-        List<Permission> defineds = this.clientService.getDefinedPermissionsByClientId(clientId);
+        List<PermissionObject> defineds = this.clientService.getDefinedPermissionsByClientId(client.getClientId());
 
-        PermissionSet permset = new PermissionSet();
-
-        permset.setDefineds(defineds);
-        permset.setGranteds(client.getPermissions());
-        logger.debug(String.format("Got Permissions for client %s", clientId));
-        return Response.ok(permissionConverter.toPermissionsJaxb(permset)).build();
+        return Response.ok(permissionConverter.toPermissionListJaxb(defineds)).build();
     }
 
     @Path("defined")
     public DefinedPermissionsResource getDefinedPermissionsResource() {
         return definedPermissionsResource;
-    }
-
-    @Path("granted")
-    public GrantedPermissionsResource getGrantedPermissionsResource() {
-        return grantedPermissionsResource;
     }
 
     @Override

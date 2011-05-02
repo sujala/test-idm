@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -249,7 +248,7 @@ public class CustomerClientServiceResource {
             throw new NotFoundException(errMsg);
         }
 
-        Permission definedPermission = this.clientService
+        PermissionObject definedPermission = this.clientService
             .getDefinedPermissionByClientIdAndPermissionId(
                 serviceId, permissionId);
         

@@ -9,11 +9,9 @@ import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class ClientConverter {
 
-    private final PermissionConverter permissionConverter;
     private final ObjectFactory of = new ObjectFactory();
 
-    public ClientConverter(PermissionConverter permissionConverter) {
-        this.permissionConverter = permissionConverter;
+    public ClientConverter() {
     }
 
     public Client toClientDO(com.rackspace.idm.jaxb.Client jaxbClient) {
@@ -36,12 +34,6 @@ public class ClientConverter {
         client.setLocked(jaxbClient.isLocked());
 
         client.setName(jaxbClient.getName());
-
-        if (jaxbClient.getPermissions() != null
-            && jaxbClient.getPermissions().getPermissions().size() > 0) {
-            client.setPermissions(permissionConverter
-                .toPermissionListDO(jaxbClient.getPermissions()));
-        }
 
         client.setSoftDeleted(jaxbClient.isSoftDeleted());
 
@@ -115,15 +107,6 @@ public class ClientConverter {
 
             creds.setClientSecret(client.getClientSecret());
             returnedClient.setCredentials(creds);
-        }
-
-        if (includePermissions && client.getPermissions() != null
-            && client.getPermissions().size() > 0) {
-
-            com.rackspace.idm.jaxb.PermissionList perms = permissionConverter
-                .toPermissionListJaxb(client.getPermissions());
-
-            returnedClient.setPermissions(perms);
         }
 
         return returnedClient;

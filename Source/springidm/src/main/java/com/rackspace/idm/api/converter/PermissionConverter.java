@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.PermissionObject;
-import com.rackspace.idm.domain.entity.PermissionSet;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class PermissionConverter {
@@ -15,12 +14,12 @@ public class PermissionConverter {
     public PermissionConverter() {
     }
 
-    public Permission toPermissionDO(com.rackspace.idm.jaxb.Permission permJaxb) {
-        Permission permDo = new Permission();
+    public PermissionObject toPermissionDO(com.rackspace.idm.jaxb.Permission permJaxb) {
+        PermissionObject permDo = new PermissionObject();
         permDo.setClientId(permJaxb.getClientId());
         permDo.setCustomerId(permJaxb.getCustomerId());
         permDo.setPermissionId(permJaxb.getPermissionId());
-        permDo.setType(permJaxb.getType());
+        permDo.setPermissionType(permJaxb.getType());
         permDo.setValue(permJaxb.getValue());
         permDo.setTitle(permJaxb.getTitle());
         permDo.setDescription(permJaxb.getDescription());
@@ -43,8 +42,8 @@ public class PermissionConverter {
         return permDo;
     }
 
-    public List<Permission> toPermissionListDO(com.rackspace.idm.jaxb.PermissionList permissions) {
-        List<Permission> perms = new ArrayList<Permission>();
+    public List<PermissionObject> toPermissionListDO(com.rackspace.idm.jaxb.Permissions permissions) {
+        List<PermissionObject> perms = new ArrayList<PermissionObject>();
 
         for (com.rackspace.idm.jaxb.Permission perm : permissions.getPermissions()) {
             perms.add(toPermissionDO(perm));
@@ -81,30 +80,17 @@ public class PermissionConverter {
         return permJaxb;
     }
 
-    public com.rackspace.idm.jaxb.PermissionList toPermissionListJaxb(List<Permission> permissions) {
+    public com.rackspace.idm.jaxb.Permissions toPermissionListJaxb(List<PermissionObject> permissions) {
 
         if (permissions == null || permissions.size() < 1) {
             return null;
         }
 
-        com.rackspace.idm.jaxb.PermissionList perms = of.createPermissionList();
-
-        for (Permission perm : permissions) {
-            perms.getPermissions().add(toPermissionJaxb(perm));
-        }
-        return perms;
-    }
-
-    public com.rackspace.idm.jaxb.Permissions toPermissionsJaxb(PermissionSet permset) {
         com.rackspace.idm.jaxb.Permissions perms = of.createPermissions();
 
-        if (permset.getDefineds() != null && permset.getDefineds().size() > 0) {
-            perms.setDefined(toPermissionListJaxb(permset.getDefineds()));
+        for (PermissionObject perm : permissions) {
+            perms.getPermissions().add(toPermissionJaxb(perm));
         }
-        if (permset.getGranteds() != null && permset.getGranteds().size() > 0) {
-            perms.setGranted(toPermissionListJaxb(permset.getGranteds()));
-        }
-
         return perms;
     }
 }

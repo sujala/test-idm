@@ -3,25 +3,25 @@ package com.rackspace.idm.domain.entity;
 import java.util.List;
 
 public class PermissionSet {
-    private List<Permission> defineds;
-    private List<Permission> granteds;
+    private List<PermissionObject> defineds;
+    private List<PermissionObject> granteds;
 
     public PermissionSet() {
     }
 
-    public List<Permission> getDefineds() {
+    public List<PermissionObject> getDefineds() {
         return defineds;
     }
 
-    public void setDefineds(List<Permission> defineds) {
+    public void setDefineds(List<PermissionObject> defineds) {
         this.defineds = defineds;
     }
 
-    public List<Permission> getGranteds() {
+    public List<PermissionObject> getGranteds() {
         return granteds;
     }
 
-    public void setGranteds(List<Permission> granteds) {
+    public void setGranteds(List<PermissionObject> granteds) {
         this.granteds = granteds;
     }
 

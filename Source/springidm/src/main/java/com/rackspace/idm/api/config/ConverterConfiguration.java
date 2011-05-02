@@ -37,7 +37,7 @@ public class ConverterConfiguration {
 
     @Bean
     ClientConverter clientConverter() {
-        return new ClientConverter(permissionConverter());
+        return new ClientConverter();
     }
 
     @Bean

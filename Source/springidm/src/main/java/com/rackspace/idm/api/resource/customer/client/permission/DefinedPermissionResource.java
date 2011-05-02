@@ -22,7 +22,7 @@ import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
-import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
@@ -107,10 +107,10 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         validateClientPermissionRequest(customerId, clientId, permissionId,
             permission);
 
-        Permission permissionDO = this.checkAndGetPermission(customerId,
+        PermissionObject permissionDO = this.checkAndGetPermission(customerId,
             clientId, permissionId);
 
-        permissionDO.setType(permission.getType());
+        permissionDO.setPermissionType(permission.getType());
         permissionDO.setValue(permission.getValue());
 
         ApiError err = inputValidator.validate(permissionDO);
@@ -159,7 +159,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        Permission permission = this.checkAndGetPermission(customerId,
+        PermissionObject permission = this.checkAndGetPermission(customerId,
             clientId, permissionId);
         this.clientService.deleteDefinedPermission(permission);
 
@@ -205,7 +205,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         checkAndGetClient(customerId, clientId);
-        Permission permission = this.checkAndGetPermission(customerId,
+        PermissionObject permission = this.checkAndGetPermission(customerId,
             clientId, permissionId);
 
         return Response.ok(permissionConverter.toPermissionJaxb(permission))
@@ -217,9 +217,9 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         return logger;
     }
 
-    private Permission checkAndGetPermission(String customerId,
+    private PermissionObject checkAndGetPermission(String customerId,
         String clientId, String permissionId) throws NotFoundException {
-        Permission permission = this.clientService
+        PermissionObject permission = this.clientService
             .getDefinedPermissionByClientIdAndPermissionId(clientId,
                 permissionId);
 

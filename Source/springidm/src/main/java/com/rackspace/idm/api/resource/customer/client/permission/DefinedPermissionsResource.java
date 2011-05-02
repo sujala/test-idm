@@ -27,8 +27,7 @@ import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
-import com.rackspace.idm.domain.entity.Permission;
-import com.rackspace.idm.domain.entity.PermissionSet;
+import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
@@ -104,11 +103,9 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
 
         checkAndGetClient(customerId, clientId);
 
-        List<Permission> defineds = checkAndGetDefinedPermissions(clientId);
-        PermissionSet permset = new PermissionSet();
-        permset.setDefineds(defineds);
+        List<PermissionObject> defineds = checkAndGetDefinedPermissions(clientId);
 
-        return Response.ok(permissionConverter.toPermissionsJaxb(permset)).build();
+        return Response.ok(permissionConverter.toPermissionListJaxb(defineds)).build();
     }
 
     /**
@@ -150,7 +147,7 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
         com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
         validatePermissionRequest(customerId, clientId, permission);
 
-        Permission permissionDO = permissionConverter.toPermissionDO(permission);
+        PermissionObject permissionDO = permissionConverter.toPermissionDO(permission);
 
         ApiError err = inputValidator.validate(permissionDO);
         if (err != null) {
@@ -191,8 +188,8 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
         return logger;
     }
 
-    private List<Permission> checkAndGetDefinedPermissions(String clientId) throws NotFoundException {
-        List<Permission> defineds = this.clientService.getDefinedPermissionsByClientId(clientId);
+    private List<PermissionObject> checkAndGetDefinedPermissions(String clientId) throws NotFoundException {
+        List<PermissionObject> defineds = this.clientService.getDefinedPermissionsByClientId(clientId);
 
         if (defineds == null) {
             String errorMsg = String.format("Permissions Not Found for client: %s", clientId);
