@@ -17,7 +17,6 @@ import com.rackspace.idm.api.resource.customer.client.group.ClientGroupResource;
 import com.rackspace.idm.api.resource.customer.client.group.ClientGroupsResource;
 import com.rackspace.idm.api.resource.customer.client.permission.DefinedPermissionResource;
 import com.rackspace.idm.api.resource.customer.client.permission.DefinedPermissionsResource;
-import com.rackspace.idm.api.resource.customer.client.permission.PermissionsResource;
 import com.rackspace.idm.api.resource.customer.user.ApiKeyResource;
 import com.rackspace.idm.api.resource.customer.user.CustomerUsersResource;
 import com.rackspace.idm.api.resource.customer.user.UserGroupsResource;
@@ -93,9 +92,6 @@ public class SpringConfigurationTest {
         
         PasswordRulesResource passwordRulesResource = ctx.getBean(PasswordRulesResource.class);
         Assert.assertNotNull(passwordRulesResource);
-        
-        PermissionsResource permissionsResource = ctx.getBean(PermissionsResource.class);
-        Assert.assertNotNull(permissionsResource);
         
         TokenResource tokenResource = ctx.getBean(TokenResource.class);
         Assert.assertNotNull(tokenResource);
