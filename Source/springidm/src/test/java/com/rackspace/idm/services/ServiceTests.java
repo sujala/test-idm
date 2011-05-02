@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.PermissionObject;
+import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccessObject;
@@ -105,6 +106,17 @@ public class ServiceTests {
         EasyMock.replay(so);
         return so;
   }
+    
+    protected RackerScopeAccessObject getFakeRackerScopeAccess() {
+        RackerScopeAccessObject so = EasyMock.createNiceMock(RackerScopeAccessObject.class);
+        so.setClientId(clientId);
+        so.setClientRCN(customerInum);
+        EasyMock.expect(so.isAccessTokenExpired(EasyMock.anyObject(DateTime.class))).andReturn(true);
+        
+        EasyMock.expect(so.getUniqueId()).andReturn("soUniqueId").anyTimes();
+        EasyMock.replay(so);
+        return so;
+    }
     
     
 }

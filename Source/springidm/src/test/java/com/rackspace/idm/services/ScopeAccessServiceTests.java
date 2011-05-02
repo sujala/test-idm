@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.PermissionObject;
+import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
@@ -419,5 +420,16 @@ public class ScopeAccessServiceTests extends ServiceTests {
         EasyMock.replay(scopeAccessDao);
         scopeAccessService.getScopeAccessByAccessToken("accessToken");
         EasyMock.verify(scopeAccessDao);
+    }
+    
+    @Test
+    public void shouldgetRackerScopeAccessForClientId() {
+    
+        EasyMock.expect(scopeAccessDao.getScopeAccessForParentByClientId("rackerUniqueId", clientId)).andReturn(getFakeRackerScopeAccess());
+        EasyMock.replay(scopeAccessDao);
+        scopeAccessService.getRackerScopeAccessForClientId("rackerUniqueId", clientId);
+        EasyMock.verify(scopeAccessDao);
+        
+    
     }
 }
