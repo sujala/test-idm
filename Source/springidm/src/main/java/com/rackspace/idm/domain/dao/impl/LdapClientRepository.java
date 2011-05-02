@@ -50,8 +50,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         Attribute[] attributes = getAddAttributesForClient(client);
 
         String clientDN = new LdapDnBuilder(customerUniqueId)
-            .addAttriubte(ATTR_INUM, client.getInum())
-            .addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME).build();
+            .addAttribute(ATTR_INUM, client.getInum())
+            .addAttribute(ATTR_OU, OU_APPLICATIONS_NAME).build();
 
         client.setUniqueId(clientDN);
 
@@ -86,7 +86,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         Attribute[] atts = getAddAttributesForClientGroup(clientGroup);
 
-        String groupDN = new LdapDnBuilder(clientUniqueId).addAttriubte(
+        String groupDN = new LdapDnBuilder(clientUniqueId).addAttribute(
             ATTR_NAME, clientGroup.getName()).build();
 
         clientGroup.setUniqueId(groupDN);

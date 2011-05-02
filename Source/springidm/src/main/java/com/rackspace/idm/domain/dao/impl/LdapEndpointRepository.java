@@ -79,7 +79,7 @@ public class LdapEndpointRepository extends LdapRepository implements
             atts.add(new Attribute(ATTR_DEF, baseUrl.getDef().toString()));
         }
 
-        String baseUrlDN = new LdapDnBuilder(BASEURL_BASE_DN).addAttriubte(
+        String baseUrlDN = new LdapDnBuilder(BASEURL_BASE_DN).addAttribute(
             ATTR_BASEURL_ID, String.valueOf(baseUrl.getBaseUrlId())).build();
 
         LDAPResult result;
@@ -156,7 +156,7 @@ public class LdapEndpointRepository extends LdapRepository implements
 
         LDAPResult result = null;
 
-        String baseUrlDN = new LdapDnBuilder(BASEURL_BASE_DN).addAttriubte(
+        String baseUrlDN = new LdapDnBuilder(BASEURL_BASE_DN).addAttribute(
             ATTR_BASEURL_ID, String.valueOf(baseUrlId)).build();
 
         try {
@@ -284,7 +284,7 @@ public class LdapEndpointRepository extends LdapRepository implements
 
         if (newEndpoints.size() < 1) {
             // If a user's last endpoint has been removed we need to delete
-            // the attriubte from LDAP
+            // the attribute from LDAP
             mods.add(new Modification(ModificationType.DELETE, ATTR_ENDPOINT));
         } else {
             // Else we'll just replace all the values for endpoints with the

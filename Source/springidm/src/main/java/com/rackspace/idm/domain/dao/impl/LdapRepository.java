@@ -350,7 +350,7 @@ public abstract class LdapRepository {
             this.queryPairs = new ArrayList<QueryPair>();
         }
 
-        public LdapDnBuilder addAttriubte(String attribute, String value) {
+        public LdapDnBuilder addAttribute(String attribute, String value) {
             queryPairs.add(new QueryPair(attribute, "=", value));
             return this;
         }

@@ -38,7 +38,7 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         Attribute[] attributes = getAddAttributes(customer);
 
-        String customerDN = new LdapDnBuilder(BASE_DN).addAttriubte(ATTR_O,
+        String customerDN = new LdapDnBuilder(BASE_DN).addAttribute(ATTR_O,
             customer.getInum()).build();
 
         customer.setUniqueId(customerDN);
@@ -48,7 +48,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         this.addEntry(conn, customerDN, attributes, audit);
 
         // Add ou=groups under new customer entry
-        String customerGroupsDN = new LdapDnBuilder(customerDN).addAttriubte(
+        String customerGroupsDN = new LdapDnBuilder(customerDN).addAttribute(
             ATTR_OU, OU_GROUPS_NAME).build();
         Attribute[] groupAttributes = {
             new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
@@ -57,7 +57,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         this.addEntry(conn, customerGroupsDN, groupAttributes, audit);
 
         // Add ou=people under new customer entry
-        String customerPeopleDN = new LdapDnBuilder(customerDN).addAttriubte(
+        String customerPeopleDN = new LdapDnBuilder(customerDN).addAttribute(
             ATTR_OU, OU_PEOPLE_NAME).build();
         Attribute[] peopleAttributes = {
             new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
@@ -67,7 +67,7 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         // Add ou=applications under new customer entry
         String customerApplicationsDN = new LdapDnBuilder(customerDN)
-            .addAttriubte(ATTR_OU, OU_APPLICATIONS_NAME).build();
+            .addAttribute(ATTR_OU, OU_APPLICATIONS_NAME).build();
         Attribute[] applicationAttributes = {
             new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
             new Attribute(ATTR_OU, "applications")};

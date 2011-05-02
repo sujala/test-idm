@@ -293,7 +293,7 @@ public class LdapRefreshTokenRepository extends LdapRepository implements
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
 
-        String tokenDN = new LdapDnBuilder(TOKEN_BASE_DN).addAttriubte(ATTR_O,
+        String tokenDN = new LdapDnBuilder(TOKEN_BASE_DN).addAttribute(ATTR_O,
             refreshToken.getTokenString()).build();
 
         Audit audit = Audit.log(refreshToken).add();
