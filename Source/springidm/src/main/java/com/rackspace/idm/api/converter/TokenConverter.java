@@ -5,7 +5,6 @@ import java.util.Date;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 
-import com.rackspace.idm.domain.entity.AccessToken;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class TokenConverter {
@@ -24,15 +23,5 @@ public class TokenConverter {
         }
 
         return jaxbToken;
-    }
-
-    public AccessToken toAccessTokenFromJaxb(
-        com.rackspace.idm.jaxb.Token JaxbToken) {
-        AccessToken tokenToReturn = new AccessToken();
-
-        tokenToReturn.setTokenString(JaxbToken.getId());
-        tokenToReturn.setExpiration(JaxbToken.getExpiresIn());
-
-        return tokenToReturn;
     }
 }
