@@ -150,6 +150,22 @@ public class AuthorizationServiceTests {
 
         Assert.assertTrue(authorized);
     }
+    
+    @Test
+    public void ShouldReturnFalseForClientForMissingPermissionInWadl() {
+
+        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(tokenString, perm)).andReturn(true);
+        EasyMock.replay(mockScopeAccessDao);
+
+        
+        EasyMock.expect(mockWadlTrie.getPermissionFor(verb, mockUriInfo)).andReturn(null);
+        EasyMock.replay(mockWadlTrie);
+
+
+        boolean authorized = service.authorizeClient(authorizedClientToken, verb, mockUriInfo);
+
+        Assert.assertFalse(authorized);
+    }
 
     @Test
     public void ShouldReturnFalseForClient() {

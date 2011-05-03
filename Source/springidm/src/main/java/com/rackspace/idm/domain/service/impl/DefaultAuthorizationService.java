@@ -5,6 +5,7 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
@@ -26,7 +27,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private final ScopeAccessObjectDao scopeAccessDao;
     private final WadlTrie wadlTrie;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
-    
+
     private static String IDM_ADMIN_GROUP_DN = null;
 
     public DefaultAuthorizationService(ScopeAccessObjectDao scopeAccessDao,
@@ -53,7 +54,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
         boolean authorized = scopeAccess.getClientRCN().equalsIgnoreCase(
             this.getRackspaceCustomerId());
-        logger.debug("Authorized {} as rackspace client - {}", scopeAccess, authorized);
+        logger.debug("Authorized {} as rackspace client - {}", scopeAccess,
+            authorized);
         return authorized;
     }
 
@@ -65,17 +67,21 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
 
-        String permissionId = wadlTrie.getPermissionFor(verb, uriInfo)
-            .toString();
+        Object o = wadlTrie.getPermissionFor(verb, uriInfo);
+        String permissionId = o == null ? null : o.toString();
 
-        PermissionObject permission = new PermissionObject();
-        permission.setClientId(getIdmClientId());
-        permission.setCustomerId(getRackspaceCustomerId());
-        permission.setPermissionId(permissionId);
+        boolean authorized = false;
 
-        boolean authorized = this.scopeAccessDao.doesAccessTokenHavePermission(
-            ((ClientScopeAccessObject) scopeAccess).getAccessTokenString(),
-            permission);
+        if (!StringUtils.isBlank(permissionId)) {
+            PermissionObject permission = new PermissionObject();
+            permission.setClientId(getIdmClientId());
+            permission.setCustomerId(getRackspaceCustomerId());
+            permission.setPermissionId(permissionId);
+
+            authorized = this.scopeAccessDao.doesAccessTokenHavePermission(
+                ((ClientScopeAccessObject) scopeAccess).getAccessTokenString(),
+                permission);
+        }
         logger.debug("Authorized {} as client - {}", scopeAccess, authorized);
         return authorized;
     }
@@ -107,7 +113,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
         UserScopeAccessObject usa = (UserScopeAccessObject) scopeAccess;
 
         boolean authorized = usa.getUserRCN().equalsIgnoreCase(customerId);
-        logger.debug("Authorized {} as customer user - {}", scopeAccess, authorized);
+        logger.debug("Authorized {} as customer user - {}", scopeAccess,
+            authorized);
         return authorized;
     }
 
@@ -132,7 +139,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
         authorized = this.clientDao.isUserInClientGroup(usa.getUsername(),
             IDM_ADMIN_GROUP_DN);
-        logger.debug("Authorized {} as admin user - {}", scopeAccess, authorized);
+        logger.debug("Authorized {} as admin user - {}", scopeAccess,
+            authorized);
         return authorized;
     }
 
@@ -176,13 +184,15 @@ public class DefaultAuthorizationService implements AuthorizationService {
                 .equals(
                     ((RackerScopeAccessObject) targetScopeAccess).getRackerId());
         }
-        logger.debug("Authorized as Requestor({}) or Owner({})", isRequestor, isOwner);
+        logger.debug("Authorized as Requestor({}) or Owner({})", isRequestor,
+            isOwner);
         boolean authorized = isRequestor || isOwner;
         return authorized;
     }
-    
+
     @Override
-    public void checkAuthAndHandleFailure(boolean authorized, ScopeAccessObject token) {
+    public void checkAuthAndHandleFailure(boolean authorized,
+        ScopeAccessObject token) {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 ((hasAccessToken) token).getAccessTokenString());
