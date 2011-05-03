@@ -589,4 +589,17 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         EasyMock.verify(scopeAccessDao);
 
     }
+
+    @Test
+    public void shouldVerifyAccessTokenHavePermission() {
+        String accessTokenString = "tokenString";
+        PermissionObject fakePermission = getFakePermission("permId");
+        EasyMock.expect(
+            scopeAccessDao.doesAccessTokenHavePermission(accessTokenString,
+                fakePermission)).andReturn(Boolean.TRUE);
+        EasyMock.replay(scopeAccessDao);
+        scopeAccessService.doesAccessTokenHavePermission(accessTokenString,
+            fakePermission);
+        EasyMock.verify(scopeAccessDao);
+    }
 }
