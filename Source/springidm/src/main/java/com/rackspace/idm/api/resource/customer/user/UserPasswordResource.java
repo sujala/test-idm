@@ -267,7 +267,7 @@ public class UserPasswordResource {
         }
 
         PasswordResetScopeAccessObject prsa = this.scopeAccessService
-            .getOrCreatePasswordResetScopeAccessForUser(user.getUniqueId());
+            .getOrCreatePasswordResetScopeAccessForUser(user);
 
         logger.debug("Got Password Reset Token for User :{}", user);
 

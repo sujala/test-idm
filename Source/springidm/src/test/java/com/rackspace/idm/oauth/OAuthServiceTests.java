@@ -282,7 +282,7 @@ public class OAuthServiceTests {
 
         EasyMock.expect(
                 mockScopeAccessService
-                .getOrCreatePasswordResetScopeAccessForUser(uniqueId))
+                .getOrCreatePasswordResetScopeAccessForUser(user))
                 .andReturn(getFakePasswordResetScopeAccess());
 
         EasyMock.replay(mockUserService, mockClientService,

@@ -139,7 +139,7 @@ public class DefaultOAuthService implements OAuthService {
             if (rotationDate != null && rotationDate.isBefore(currentTime)) {
                 PasswordResetScopeAccessObject prsa = this.scopeAccessService
                     .getOrCreatePasswordResetScopeAccessForUser(uaResult
-                        .getUser().getUniqueId());
+                        .getUser());
                 prsa.setUserPasswordExpirationDate(rotationDate);
                 return prsa;
             }

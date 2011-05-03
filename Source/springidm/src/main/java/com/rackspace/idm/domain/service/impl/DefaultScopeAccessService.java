@@ -14,6 +14,7 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.Clients;
@@ -208,17 +209,19 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public PasswordResetScopeAccessObject getOrCreatePasswordResetScopeAccessForUser(
-        String userUniqueId) {
+        BaseUser user) {
         PasswordResetScopeAccessObject prsa = (PasswordResetScopeAccessObject) this.scopeAccessDao
-            .getScopeAccessForParentByClientId(userUniqueId,
+            .getScopeAccessForParentByClientId(user.getUniqueId(),
                 PASSWORD_RESET_CLIENT_ID);
         if (prsa == null) {
             prsa = new PasswordResetScopeAccessObject();
+            prsa.setUsername(user.getUsername());
+            prsa.setUserRCN(user.getCustomerId());
             prsa.setAccessTokenExp(new DateTime().plusSeconds(
                 this.getDefaultTokenExpirationSeconds()).toDate());
             prsa.setAccessTokenString(this.generateToken());
             prsa.setClientId(PASSWORD_RESET_CLIENT_ID);
-            this.scopeAccessDao.addScopeAccess(userUniqueId, prsa);
+            this.scopeAccessDao.addScopeAccess(user.getUniqueId(), prsa);
         } else {
             if (prsa.isAccessTokenExpired(new DateTime())) {
                 prsa.setAccessTokenExp(new DateTime().plusSeconds(
@@ -279,20 +282,21 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             clientId);
         final UserAuthenticationResult result = this.userDao
             .authenticateByAPIKey(username, apiKey);
-        
+
         if (!result.isAuthenticated()) {
             throw new NotAuthenticatedException();
         }
-        
-        final UserScopeAccessObject scopeAccess = checkAndGetUserScopeAccess(clientId, result.getUser().getUsername());
-        
+
+        final UserScopeAccessObject scopeAccess = checkAndGetUserScopeAccess(
+            clientId, result.getUser());
+
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(
                 getDefaultCloudAuthTokenExpirationSeconds()).toDate());
             this.scopeAccessDao.updateScopeAccess(scopeAccess);
         }
-        
+
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess,
             clientId);
         return scopeAccess;
@@ -308,9 +312,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         if (!result.isAuthenticated()) {
             throw new NotAuthenticatedException();
         }
-        final UserScopeAccessObject scopeAccess = checkAndGetUserScopeAccess(clientId, result.getUser().getUsername());
-            
-        
+        final UserScopeAccessObject scopeAccess = checkAndGetUserScopeAccess(
+            clientId, result.getUser());
+
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(
@@ -333,7 +337,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             throw new NotAuthenticatedException();
         }
         final UserScopeAccessObject scopeAccess = checkAndGetUserScopeAccess(
-            clientId, result.getUser().getUsername());
+            clientId, result.getUser());
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(
@@ -359,7 +363,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         final UserScopeAccessObject scopeAccess = checkAndGetUserScopeAccess(
-            clientId, result.getUser().getUsername());
+            clientId, result.getUser());
 
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
 
@@ -377,9 +381,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     private UserScopeAccessObject checkAndGetUserScopeAccess(String clientId,
-        String userName) {
+        BaseUser user) {
         final UserScopeAccessObject scopeAccess = this
-            .getUserScopeAccessForClientId(userName, clientId);
+            .getUserScopeAccessForClientId(user.getUniqueId(), clientId);
 
         if (scopeAccess == null) {
             String errMsg = "Scope access not found.";
@@ -396,8 +400,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             permission.getCustomerId(), permission.getClientId());
 
         if (dClient == null) {
-            String errMsg = String.format("Client %s not found", permission
-                .getClientId());
+            String errMsg = String.format("Client %s not found",
+                permission.getClientId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
@@ -407,8 +411,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 permission);
         if (perm == null) {
             String errMsg = String.format(
-                "Permission %s not found for client %s", permission
-                    .getPermissionId(), permission.getClientId());
+                "Permission %s not found for client %s",
+                permission.getPermissionId(), permission.getClientId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
@@ -433,7 +437,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         return grantedPerm;
     }
-    
+
     @Override
     public PermissionObject grantPermissionToUser(User user,
         PermissionObject permission) {
@@ -446,8 +450,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        
-        PermissionObject perm = this.scopeAccessDao.getPermissionByParentAndPermissionId(dClient.getUniqueId(), permission);
+
+        PermissionObject perm = this.scopeAccessDao
+            .getPermissionByParentAndPermissionId(dClient.getUniqueId(),
+                permission);
         if (perm == null) {
             String errMsg = String.format(
                 "Permission %s not found for client %s",
@@ -456,8 +462,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             throw new NotFoundException(errMsg);
         }
 
-        UserScopeAccessObject sa = (UserScopeAccessObject)this.getScopeAccessForParentByClientId(
-            user.getUniqueId(), perm.getClientId());
+        UserScopeAccessObject sa = (UserScopeAccessObject) this
+            .getScopeAccessForParentByClientId(user.getUniqueId(),
+                perm.getClientId());
 
         if (sa == null) {
             sa = new UserScopeAccessObject();
@@ -465,7 +472,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             sa.setClientRCN(permission.getCustomerId());
             sa.setUsername(user.getUsername());
             sa.setUserRCN(user.getCustomerId());
-            sa = (UserScopeAccessObject)this.addScopeAccess(user.getUniqueId(), sa);
+            sa = (UserScopeAccessObject) this.addScopeAccess(
+                user.getUniqueId(), sa);
         }
 
         PermissionObject grantedPerm = new PermissionObject();
@@ -503,14 +511,15 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             .getClientId());
 
         if (client == null) {
-            String errMsg = String.format("Client %s not found", permission
-                .getClientId());
+            String errMsg = String.format("Client %s not found",
+                permission.getClientId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
         PermissionObject exists = this.scopeAccessDao
-            .getPermissionByParentAndPermissionId(client.getUniqueId(), permission);
+            .getPermissionByParentAndPermissionId(client.getUniqueId(),
+                permission);
         if (exists == null) {
             String errMsg = String
                 .format("Permission %s not found", permission);

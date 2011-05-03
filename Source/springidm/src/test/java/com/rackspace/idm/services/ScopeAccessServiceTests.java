@@ -441,17 +441,18 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
     @Test
     public void shouldGetasswordResetScopeAccessForUser() {
+        User user = getFakeUser();
         PasswordResetScopeAccessObject prsao = getFakePasswordResetScopeAccessObject();
         DateTime pastTime = new DateTime();
         prsao.setAccessTokenExp(pastTime.minusSeconds(10).toDate());
         EasyMock.expect(
-            scopeAccessDao.getScopeAccessForParentByClientId("userUniqueId",
+            scopeAccessDao.getScopeAccessForParentByClientId(user.getUniqueId(),
                 "PASSWORDRESET")).andReturn(prsao);
         EasyMock.expect(scopeAccessDao.updateScopeAccess(prsao)).andReturn(
             Boolean.TRUE);
         EasyMock.replay(scopeAccessDao);
         scopeAccessService
-            .getOrCreatePasswordResetScopeAccessForUser("userUniqueId");
+            .getOrCreatePasswordResetScopeAccessForUser(user);
         EasyMock.verify(scopeAccessDao);
     }
 
