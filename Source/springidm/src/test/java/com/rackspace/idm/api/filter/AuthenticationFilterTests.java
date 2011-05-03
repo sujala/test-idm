@@ -5,11 +5,9 @@ import javax.ws.rs.core.HttpHeaders;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
 
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.test.stub.StubLogger;
 import com.sun.jersey.spi.container.ContainerRequest;
 
 public class AuthenticationFilterTests {
@@ -22,8 +20,7 @@ public class AuthenticationFilterTests {
     public void setUp() {
         oauthService = EasyMock
         .createNiceMock(ScopeAccessService.class);
-        final Logger logger = new StubLogger();
-        authFilter = new AuthenticationFilter(oauthService, logger);
+        authFilter = new AuthenticationFilter(oauthService);
         request = EasyMock.createNiceMock(ContainerRequest.class);
     }
 

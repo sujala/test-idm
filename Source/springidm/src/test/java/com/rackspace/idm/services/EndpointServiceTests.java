@@ -15,7 +15,6 @@ import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.impl.DefaultEndpointService;
 import com.rackspace.idm.exception.BaseUrlConflictException;
-import com.rackspace.idm.test.stub.StubLogger;
 
 public class EndpointServiceTests {
 

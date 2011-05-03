@@ -30,11 +30,11 @@ public class AuthRepositoryLdapConfiguration {
 
     @Autowired
     private Configuration config;
-    private Logger logger;
+    private final Logger logger = LoggerFactory
+    .getLogger(AuthRepositoryLdapConfiguration.class);
 
     public AuthRepositoryLdapConfiguration() {
-        this(false, LoggerFactory
-            .getLogger(AuthRepositoryLdapConfiguration.class));
+        this(false);
     }
 
     /**
@@ -43,8 +43,7 @@ public class AuthRepositoryLdapConfiguration {
      * @param isTestMode
      *            Set to <b>true</b> if test LDAP config is to be used.
      */
-    public AuthRepositoryLdapConfiguration(boolean isTestMode, Logger logger) {
-        this.logger = logger;
+    public AuthRepositoryLdapConfiguration(boolean isTestMode) {
         if (!isTestMode) {
             return;
         }

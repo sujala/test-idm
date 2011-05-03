@@ -27,8 +27,8 @@ import com.sun.jersey.spi.container.ContainerRequestFilter;
  */
 @Component
 public class AuthenticationFilter implements ContainerRequestFilter, ApplicationContextAware {
-    private AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
-    private Logger logger;
+    private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
+    private final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
 
     @Context
     HttpServletRequest req;
@@ -37,12 +37,10 @@ public class AuthenticationFilter implements ContainerRequestFilter, Application
     private ScopeAccessService scopeAccessService;
 
     public AuthenticationFilter() {
-        logger = LoggerFactory.getLogger(AuthenticationFilter.class);
     }
 
-    AuthenticationFilter(ScopeAccessService scopeAccessService, Logger logger) {
+    AuthenticationFilter(ScopeAccessService scopeAccessService) {
         this.scopeAccessService = scopeAccessService;
-        this.logger = logger;
     }
 
     @Override

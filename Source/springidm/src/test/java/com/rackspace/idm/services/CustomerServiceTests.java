@@ -21,7 +21,6 @@ import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.impl.DefaultCustomerService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.test.stub.StubLogger;
 
 public class CustomerServiceTests {
     CustomerService service;

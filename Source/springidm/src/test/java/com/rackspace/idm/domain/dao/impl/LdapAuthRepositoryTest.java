@@ -10,8 +10,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.config.AuthRepositoryLdapConfiguration;
-import com.rackspace.idm.domain.dao.impl.LdapAuthRepository;
-import com.rackspace.idm.test.stub.StubLogger;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
 public class LdapAuthRepositoryTest {
@@ -36,7 +34,7 @@ public class LdapAuthRepositoryTest {
     }
 
     private static LDAPConnectionPool getConnPool() {
-        return new AuthRepositoryLdapConfiguration(true, new StubLogger())
+        return new AuthRepositoryLdapConfiguration(true)
             .connection();
     }
 
