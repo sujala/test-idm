@@ -1,7 +1,5 @@
 package com.rackspace.idm.api.resource.token;
 
-import java.util.Map;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -16,7 +14,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,22 +89,16 @@ public class TokenResource {
         AuthCredentials trParam = new AuthCredentials();
         trParam.setClientId(creds.getClientId());
         trParam.setClientSecret(creds.getClientSecret());
-        trParam.setGrantType(creds.getGrantType().value());
         trParam.setPassword(creds.getPassword());
         trParam.setRefreshToken(creds.getRefreshToken());
         trParam.setUsername(creds.getUsername());
 
-        // if request includes an authHeader then the values for clientId and
-        // clientSecret need to be parsed out. Also, the AuthHeader values will
-        // override the values for client_id and client_secret passed in the
-        // request
-        if (!StringUtils.isBlank(authHeader)) {
-            Map<String, String> authParams = authHeaderHelper
-                .parseBasicParams(authHeader);
-            if (authParams != null) {
-                trParam.setClientId(authParams.get("username"));
-                trParam.setClientSecret(authParams.get("password"));
-            }
+        try {
+            trParam.setGrantType(creds.getGrantType().value());
+        } catch (Exception ex) {
+            String errMsg = "Invalid Grant Type";
+            logger.info(errMsg);
+            throw new BadRequestException(errMsg);
         }
 
         OAuthGrantType grantType = this.oauthService.getGrantType(trParam
