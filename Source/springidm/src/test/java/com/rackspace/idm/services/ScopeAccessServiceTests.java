@@ -602,4 +602,13 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
             fakePermission);
         EasyMock.verify(scopeAccessDao);
     }
+    
+    @Test
+    public void shouldDeleteScopeAccess() {
+        ScopeAccessObject  sa = getFakeScopeAccess();
+        EasyMock.expect(scopeAccessDao.deleteScopeAccess(sa)).andReturn(Boolean.TRUE);
+        EasyMock.replay(scopeAccessDao);
+        scopeAccessService.deleteScopeAccess(sa);
+        EasyMock.verify(scopeAccessDao);
+    }
 }
