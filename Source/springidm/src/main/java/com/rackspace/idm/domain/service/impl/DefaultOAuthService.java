@@ -294,8 +294,7 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     private String generateToken() {
-        String token = UUID.randomUUID().toString().replace("-", "");
-        return token;
+        return UUID.randomUUID().toString().replace("-", "");
     }
 
     // private functions

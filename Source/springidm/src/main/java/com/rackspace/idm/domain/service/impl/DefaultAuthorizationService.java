@@ -188,8 +188,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         
         logger.debug("Authorized as Requestor({}) or Owner({})", isRequestor,
             isOwner);
-        boolean authorized = isRequestor || isOwner;
-        return authorized;
+        return (isRequestor || isOwner);
     }
 
     @Override

@@ -157,8 +157,7 @@ public class Client extends BaseClient implements Auditable {
     }
 
     public BaseClient getBaseClient() {
-        BaseClient baseClient = getBaseClientWithoutClientPerms();
-        return baseClient;
+        return getBaseClientWithoutClientPerms();
     }
 
     public BaseClient getBaseClientWithoutClientPerms() {

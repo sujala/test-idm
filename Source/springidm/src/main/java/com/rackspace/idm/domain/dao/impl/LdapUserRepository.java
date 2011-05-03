@@ -936,8 +936,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         atts.add(new Attribute(ATTR_OBJECT_CLASS,
             ATTR_RACKER_OBJECT_CLASS_VALUES));
         atts.add(new Attribute(ATTR_RACKER_ID, racker.getRackerId()));
-        Attribute[] attributes = atts.toArray(new Attribute[0]);
-        return attributes;
+        return atts.toArray(new Attribute[0]);
     }
 
     private User getSingleUser(Filter searchFilter, String[] searchAttributes) {

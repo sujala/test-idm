@@ -535,8 +535,7 @@ public class UsersResource {
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(username);
-        return endpoints;
+        return this.endpointService.getEndpointsForUser(username);
     }   
    
     private String getIdmAdminGroupName() {
