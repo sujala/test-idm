@@ -5,6 +5,7 @@ import java.util.Date;
 import org.joda.time.DateTime;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
@@ -21,7 +22,7 @@ public class UserScopeAccessObject extends ScopeAccessObject implements hasAcces
     @LDAPField(attribute="accessToken", objectClass="userScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String accessTokenString;
 
-    @LDAPField(attribute="accessTokenExp", objectClass="userScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass="userScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
 
     private Date accessTokenExp;
 

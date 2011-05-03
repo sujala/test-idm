@@ -39,7 +39,15 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         try {
             final LDAPPersister persister = LDAPPersister.getInstance(scopeAccess.getClass());
             conn = getAppConnPool().getConnection();
-            persister.add(scopeAccess, conn, parentUniqueId);
+            try {
+                persister.add(scopeAccess, conn, parentUniqueId);
+            } catch (final LDAPException e) {
+                if( e.getResultCode() == ResultCode.ENTRY_ALREADY_EXISTS ) {
+                    // noop
+                } else {
+                    throw e;
+                }
+            }
             audit.succeed();
             return (ScopeAccessObject) persister.get(scopeAccess, conn, parentUniqueId);
         } catch (final LDAPException e) {
@@ -63,7 +71,15 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             po.setResourceGroup(permission.getResourceGroup());
             final LDAPPersister<PermissionObject> persister = LDAPPersister.getInstance(PermissionObject.class);
             conn = getAppConnPool().getConnection();
-            persister.add(po, conn, scopeAccessUniqueId);
+            try {
+                persister.add(po, conn, scopeAccessUniqueId);
+            } catch (final LDAPException e) {
+                if( e.getResultCode() == ResultCode.ENTRY_ALREADY_EXISTS ) {
+                    // noop
+                } else {
+                    throw e;
+                }
+            }
             audit.succeed();
             return persister.get(po, conn, scopeAccessUniqueId);
         } catch (final LDAPException e) {
@@ -82,7 +98,15 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         try {
             final LDAPPersister<PermissionObject> persister = LDAPPersister.getInstance(PermissionObject.class);
             conn = getAppConnPool().getConnection();
-            persister.add(permission, conn, scopeAccessUniqueId);
+            try {
+                persister.add(permission, conn, scopeAccessUniqueId);
+            } catch (final LDAPException e) {
+                if( e.getResultCode() == ResultCode.ENTRY_ALREADY_EXISTS ) {
+                    // noop
+                } else {
+                    throw e;
+                }
+            }
             audit.succeed();
             return persister.get(permission, conn, scopeAccessUniqueId);
         } catch (final LDAPException e) {

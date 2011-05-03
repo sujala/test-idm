@@ -142,6 +142,8 @@ public class WadlTrie {
     }
 
     public WadlTrie() {
+        // use a class which is loaded by our application classloader, 
+        // not the system or glassfish classloader
         this(StringUtils.class.getResourceAsStream("/application.wadl"));
     }
 

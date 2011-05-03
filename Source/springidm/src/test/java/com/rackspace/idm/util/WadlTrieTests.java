@@ -144,7 +144,6 @@ public class WadlTrieTests {
 
     @Before
     public void setup() {
-        //final InputStream is = System.class.getResourceAsStream("/application.wadl");
         trie = new WadlTrie();
     }
 
@@ -174,7 +173,7 @@ public class WadlTrieTests {
     }
 
     @Test
-    public void shouldFindPermissionForUirInfo() {
+    public void shouldFindPermissionForUriInfo() {
         final UriInfo uriInfo = new MyUriInfo();
 
         final Object permissionFor = trie.getPermissionFor("GET", uriInfo);

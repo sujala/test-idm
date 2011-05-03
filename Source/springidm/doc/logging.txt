@@ -7,7 +7,7 @@ see: http://www.slf4j.org/manual.html
 Log levels are defined as:
 
 DEBUG
-	Normal debug tracing
+	Detailed program execution events
 	
 INFO
 	Initialization

@@ -163,6 +163,15 @@ public class TokenResource {
             throw new NotFoundException(errorMsg);
         }
 
+        if(scopeAccess instanceof hasAccessToken) {
+            boolean expired = ((hasAccessToken)scopeAccess).isAccessTokenExpired(new DateTime());
+            if(expired) {
+                String errorMsg = String
+                .format("Token expired : %s", tokenString);
+                logger.warn(errorMsg);
+                throw new NotFoundException(errorMsg);
+            }
+        }
         logger.debug("Validated Access Token: {}", tokenString);
 
         return Response.ok(authConverter.toAuthDataJaxb(scopeAccess)).build();
@@ -245,10 +254,9 @@ public class TokenResource {
      * Check if the given access token as the specified permission.
      *
      * @param authHeader HTTP Authorization header for authenticating the calling client.
-     * @param creds      AuthCredentials for authenticating the token request.
-     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}authCredentials
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}auth
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}notFound
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
      * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
      * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
@@ -279,6 +287,16 @@ public class TokenResource {
         if (tokenToCheck == null) {
             throw new NotFoundException(String.format("Token %s not found",
                 tokenString));
+        }
+        
+        if(tokenToCheck instanceof hasAccessToken) {
+            boolean expired = ((hasAccessToken)tokenToCheck).isAccessTokenExpired(new DateTime());
+            if(expired) {
+                String errorMsg = String
+                .format("Token expired : %s", tokenString);
+                logger.warn(errorMsg);
+                throw new NotFoundException(errorMsg);
+            }
         }
 
         PermissionObject permission = new PermissionObject();
