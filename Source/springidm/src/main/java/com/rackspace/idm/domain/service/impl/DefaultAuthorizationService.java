@@ -165,7 +165,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         ScopeAccessObject requestingScopeAccess) {
         logger.debug("Authorizing as Requestor or Owner");
         if (!(requestingScopeAccess instanceof ClientScopeAccessObject)
-            || !(targetScopeAccess instanceof UserScopeAccessObject)) {
+            && !(targetScopeAccess instanceof UserScopeAccessObject)) {
             return false;
         }
 
