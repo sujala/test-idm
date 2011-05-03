@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
@@ -23,7 +24,7 @@ public class WadlTrie {
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private class Tree {
-        private final HashMap<Object, Tree> children = new HashMap<Object, Tree>();
+        private final Map<Object, Tree> children = new HashMap<Object, Tree>();
         private final Object                element;
         private final Tree                  p;
         private boolean                     wildcard = false;
