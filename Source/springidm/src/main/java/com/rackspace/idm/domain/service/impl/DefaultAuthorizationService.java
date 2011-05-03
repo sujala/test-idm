@@ -138,7 +138,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
         boolean authorized = false;
 
         authorized = this.clientDao.isUserInClientGroup(usa.getUsername(),
-            IDM_ADMIN_GROUP_DN) && customerId.equalsIgnoreCase(usa.getUserRCN());
+            IDM_ADMIN_GROUP_DN)
+            && customerId.equalsIgnoreCase(usa.getUserRCN());
         logger.debug("Authorized {} as admin user - {}", scopeAccess,
             authorized);
         return authorized;
@@ -164,17 +165,17 @@ public class DefaultAuthorizationService implements AuthorizationService {
         ScopeAccessObject targetScopeAccess,
         ScopeAccessObject requestingScopeAccess) {
         logger.debug("Authorizing as Requestor or Owner");
-        if (!(requestingScopeAccess instanceof ClientScopeAccessObject)
-            && !(targetScopeAccess instanceof UserScopeAccessObject)) {
-            return false;
-        }
 
-        boolean isRequestor = requestingScopeAccess.getClientId()
-            .equalsIgnoreCase(targetScopeAccess.getClientId());
+        boolean isRequestor = requestingScopeAccess instanceof ClientScopeAccessObject
+            && requestingScopeAccess.getClientId().equalsIgnoreCase(
+                targetScopeAccess.getClientId());
 
         boolean isOwner = false;
 
-        if (targetScopeAccess instanceof UserScopeAccessObject) {
+        if (targetScopeAccess instanceof ClientScopeAccessObject) {
+            isOwner = requestingScopeAccess.getClientId().equals(
+                targetScopeAccess.getClientId());
+        } else if (targetScopeAccess instanceof UserScopeAccessObject) {
             isOwner = ((UserScopeAccessObject) requestingScopeAccess)
                 .getUsername().equals(
                     ((UserScopeAccessObject) targetScopeAccess).getUsername());
@@ -184,6 +185,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
                 .equals(
                     ((RackerScopeAccessObject) targetScopeAccess).getRackerId());
         }
+        
         logger.debug("Authorized as Requestor({}) or Owner({})", isRequestor,
             isOwner);
         boolean authorized = isRequestor || isOwner;
