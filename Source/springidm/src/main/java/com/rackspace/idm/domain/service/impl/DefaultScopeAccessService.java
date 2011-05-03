@@ -390,7 +390,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public PermissionObject grantPermission(String parentUniqueId,
+    public PermissionObject grantPermissionToClient(String parentUniqueId,
         PermissionObject permission) {
         Client dClient = this.clientDao.getClientByCustomerIdAndClientId(
             permission.getCustomerId(), permission.getClientId());
@@ -427,6 +427,51 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         grantedPerm.setClientId(perm.getClientId());
         grantedPerm.setCustomerId(perm.getCustomerId());
         grantedPerm.setPermissionId(perm.getPermissionId());
+
+        grantedPerm = this.addPermissionToScopeAccess(sa.getUniqueId(),
+            grantedPerm);
+
+        return grantedPerm;
+    }
+    
+    @Override
+    public PermissionObject grantPermissionToUser(User user,
+        PermissionObject permission) {
+        Client dClient = this.clientDao.getClientByCustomerIdAndClientId(
+            permission.getCustomerId(), permission.getClientId());
+
+        if (dClient == null) {
+            String errMsg = String.format("Client %s not found",
+                permission.getClientId());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
+        PermissionObject perm = this.scopeAccessDao.getPermissionByParentAndPermissionId(dClient.getUniqueId(), permission);
+        if (perm == null) {
+            String errMsg = String.format(
+                "Permission %s not found for client %s",
+                permission.getPermissionId(), permission.getClientId());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        UserScopeAccessObject sa = (UserScopeAccessObject)this.getScopeAccessForParentByClientId(
+            user.getUniqueId(), perm.getClientId());
+
+        if (sa == null) {
+            sa = new UserScopeAccessObject();
+            sa.setClientId(permission.getClientId());
+            sa.setClientRCN(permission.getCustomerId());
+            sa.setUsername(user.getUsername());
+            sa.setUserRCN(user.getCustomerId());
+            sa = (UserScopeAccessObject)this.addScopeAccess(user.getUniqueId(), sa);
+        }
+
+        PermissionObject grantedPerm = new PermissionObject();
+        perm.setClientId(perm.getClientId());
+        perm.setCustomerId(perm.getCustomerId());
+        perm.setPermissionId(perm.getPermissionId());
 
         grantedPerm = this.addPermissionToScopeAccess(sa.getUniqueId(),
             grantedPerm);

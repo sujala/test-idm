@@ -194,7 +194,7 @@ public class UserPermissionsResource {
 
         User user = this.userService.checkAndGetUser(customerId, username);
 
-        this.scopeAccessService.grantPermission(user.getUniqueId(), granted);
+        this.scopeAccessService.grantPermissionToUser(user, granted);
 
         return Response.ok().build();
     }

@@ -203,7 +203,7 @@ public class CustomerClientServiceResource {
         granted.setCustomerId(defined.getCustomerId());
         granted.setPermissionId(defined.getPermissionId());
         
-        this.scopeAccessService.grantPermission(client.getUniqueId(), granted);
+        this.scopeAccessService.grantPermissionToClient(client.getUniqueId(), granted);
         
         return Response.ok().build();
     }

@@ -247,7 +247,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
         EasyMock.replay(scopeAccessDao, mockClientDao);
 
-        scopeAccessService.grantPermission(client.getUniqueId(), perm);
+        scopeAccessService.grantPermissionToClient(client.getUniqueId(), perm);
 
         EasyMock.verify(scopeAccessDao, mockClientDao);
     }
@@ -265,7 +265,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         EasyMock.expect(mockClientDao.getClientByClientId(perm.getClientId()))
             .andReturn(null);
 
-        scopeAccessService.grantPermission(client.getUniqueId(), perm);
+        scopeAccessService.grantPermissionToClient(client.getUniqueId(), perm);
     }
 
     @Test(expected = NotFoundException.class)
@@ -285,7 +285,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
             scopeAccessDao.getPermissionByParentAndPermissionId(client
                 .getUniqueId(), perm)).andReturn(null);
 
-        scopeAccessService.grantPermission(client.getUniqueId(), perm);
+        scopeAccessService.grantPermissionToClient(client.getUniqueId(), perm);
     }
 
     @Test

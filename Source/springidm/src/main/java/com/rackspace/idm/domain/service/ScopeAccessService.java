@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
 import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 
 public interface ScopeAccessService {
@@ -53,8 +54,10 @@ public interface ScopeAccessService {
 
     UserScopeAccessObject getUserScopeAccessForClientIdByUsernameAndPassword(String username, String password, String clientId);
 
-    PermissionObject grantPermission(String parentUniqueId, PermissionObject permission);
+    PermissionObject grantPermissionToClient(String parentUniqueId, PermissionObject permission);
 
+    PermissionObject grantPermissionToUser(User user, PermissionObject permission);
+    
     void removePermission(PermissionObject permission);
 
     void updatePermission(PermissionObject permission);
