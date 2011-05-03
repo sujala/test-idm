@@ -205,10 +205,12 @@ public class DefaultClientService implements ClientService {
     public PermissionObject getDefinedPermissionByClientIdAndPermissionId(
         String clientId, String permissionId) {
 
+        Client client = this.getClient(clientId);
+        
         PermissionObject permission = new PermissionObject();
         permission.setPermissionId(permissionId);
-
-        Client client = this.getClient(clientId);
+        permission.setCustomerId(client.getCustomerId());
+        permission.setClientId(client.getClientId());
 
         permission = this.scopeAccessDao.getPermissionByParentAndPermissionId(
             client.getUniqueId(), permission);
