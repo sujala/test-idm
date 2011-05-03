@@ -299,7 +299,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
         EasyMock.expect(
             scopeAccessDao.getScopeAccessForParentByClientId(
-                user.getUsername(), client.getClientId())).andReturn(sa);
+                user.getUniqueId(), client.getClientId())).andReturn(sa);
 
         EasyMock.expect(scopeAccessDao.updateScopeAccess(sa)).andReturn(true);
 
@@ -326,7 +326,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
         EasyMock.expect(
             scopeAccessDao.getScopeAccessForParentByClientId(
-                user.getUsername(), client.getClientId())).andReturn(sa);
+                user.getUniqueId(), client.getClientId())).andReturn(sa);
 
         EasyMock.expect(scopeAccessDao.updateScopeAccess(sa)).andReturn(true);
 
@@ -354,7 +354,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
         EasyMock.expect(
             scopeAccessDao.getScopeAccessForParentByClientId(
-                user.getUsername(), client.getClientId())).andReturn(sa);
+                user.getUniqueId(), client.getClientId())).andReturn(sa);
 
         EasyMock.expect(scopeAccessDao.updateScopeAccess(sa)).andReturn(true);
 
@@ -380,7 +380,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
         EasyMock.expect(
             scopeAccessDao.getScopeAccessForParentByClientId(
-                user.getUsername(), client.getClientId())).andReturn(sa);
+                user.getUniqueId(), client.getClientId())).andReturn(sa);
 
         EasyMock.expect(scopeAccessDao.updateScopeAccess(sa)).andReturn(true);
 
