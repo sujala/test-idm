@@ -78,10 +78,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
             .andReturn(client);
 
         EasyMock.expect(
-            scopeAccessDao.getScopeAccessForParentByClientId(client
-                .getUniqueId(), client.getClientId())).andReturn(sa);
-        EasyMock.expect(
-            scopeAccessDao.getPermissionByParentAndPermissionId(sa
+            scopeAccessDao.getPermissionByParentAndPermissionId(client
                 .getUniqueId(), perm)).andReturn(null);
 
         EasyMock.expect(scopeAccessDao.grantPermission(sa.getUniqueId(), perm))
@@ -231,12 +228,12 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
                 .getUniqueId(), perm)).andReturn(perm);
 
         EasyMock.expect(
-            scopeAccessDao.getPermissionByParentAndPermissionId(sa
+            scopeAccessDao.getPermissionByParentAndPermissionId(client
                 .getUniqueId(), grantedPerm)).andReturn(grantedPerm);
 
         EasyMock.expect(
             scopeAccessDao.getScopeAccessForParentByClientId(client
-                .getUniqueId(), client.getClientId())).andReturn(sa).times(2);
+                .getUniqueId(), client.getClientId())).andReturn(sa);
 
         EasyMock.expect(
             scopeAccessDao.grantPermission(sa.getUniqueId(), grantedPerm))
