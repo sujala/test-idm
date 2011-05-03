@@ -100,10 +100,6 @@ public class UserPermissionsResource {
 
         User user = this.userService.checkAndGetUser(customerId, username);
 
-        PermissionObject po = new PermissionObject();
-        po.setClientId(serviceId);
-        po.setPermissionId(permissionId);
-
         Client client = this.clientService.getById(serviceId);
         if (client == null) {
             String errMsg = String.format("Client %s not found", serviceId);
@@ -111,20 +107,58 @@ public class UserPermissionsResource {
             throw new NotFoundException(errMsg);
         }
 
-        PermissionObject definedPermission = this.scopeAccessService
-            .getPermissionForParent(client.getUniqueId(), po);
-
-        if (definedPermission == null || !definedPermission.getEnabled()) {
+        boolean found = isGranted(serviceId, permissionId, user, client);
+        if (found) {
+            return Response.ok().build();
+        } else {
             return Response.status(404).build();
         }
+    }
 
-        if (definedPermission.getGrantedByDefault()
-            || this.scopeAccessService.getPermissionForParent(
-                user.getUniqueId(), po) != null) {
-            return Response.ok().build();
+    /**
+     * TODO Move this logic to a service method.
+     * 
+     * @param serviceId
+     * @param permissionId
+     * @param user
+     * @param client
+     * @return
+     */
+    private boolean isGranted(String serviceId, String permissionId, User user,
+        Client client) {
+        PermissionObject poSearchParam = new PermissionObject();
+        poSearchParam.setClientId(serviceId);
+        poSearchParam.setPermissionId(permissionId);
+
+        PermissionObject definedPermission = this.scopeAccessService
+            .getPermissionForParent(client.getUniqueId(), poSearchParam);
+
+        if (definedPermission == null || !definedPermission.getEnabled()) {
+            // No such permission defined. Not granted.
+            return false;
         }
 
-        return Response.status(404).build();
+        if (definedPermission.getGrantedByDefault()) {
+            // Granted by default, but has the user been provisioned for this
+            // service?
+            ScopeAccessObject provisionedSa = scopeAccessService
+                .getScopeAccessForParentByClientId(user.getUniqueId(),
+                    serviceId);
+            if (provisionedSa != null) {
+                // Provisioned, so granted.
+                return true;
+            }
+        } else {
+            PermissionObject grantedPermission = this.scopeAccessService
+                .getPermissionForParent(user.getUniqueId(), poSearchParam);
+            if (grantedPermission != null) {
+                // The permission has not been granted.
+                return true;
+            }
+        }
+
+        // Not granted.
+        return false;
     }
 
     /**
