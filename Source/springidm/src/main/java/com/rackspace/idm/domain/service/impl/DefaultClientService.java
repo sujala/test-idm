@@ -228,7 +228,7 @@ public class DefaultClientService implements ClientService {
         
         List<PermissionObject> permissions = this.scopeAccessDao
             .getPermissionsByParentAndPermissionId(client.getUniqueId(),
-                new PermissionObject());
+                filter);
         return permissions;
     }
 
