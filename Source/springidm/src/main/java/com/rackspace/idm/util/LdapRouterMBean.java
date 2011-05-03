@@ -48,14 +48,12 @@ public class LdapRouterMBean {
 	
 	@ManagedAttribute
 	public String getBindConfiguration() {
-		String params = connPools.getBindConnPool().toString();
-		return params;
+		return connPools.getBindConnPool().toString();
 	}
 	
 	@ManagedAttribute
 	public String getAppConfiguration() {
-		String params = connPools.getAppConnPool().toString();
-		return params;
+		return connPools.getAppConnPool().toString();
 	}
 	
 	@ManagedAttribute
