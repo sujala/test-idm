@@ -221,6 +221,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 this.getDefaultTokenExpirationSeconds()).toDate());
             prsa.setAccessTokenString(this.generateToken());
             prsa.setClientId(PASSWORD_RESET_CLIENT_ID);
+            prsa.setClientRCN(PASSWORD_RESET_CLIENT_ID);
             this.scopeAccessDao.addScopeAccess(user.getUniqueId(), prsa);
         } else {
             if (prsa.isAccessTokenExpired(new DateTime())) {
