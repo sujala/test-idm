@@ -16,12 +16,15 @@ import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
 import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
 import com.rackspace.idm.exception.NotFoundException;
@@ -479,6 +482,11 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     @Test
     public void shouldExpireAllTokensForUser() {
         User fakeUser = getFakeUser();
+        setUpUserTokenExiprationTest(true, fakeUser);
+        EasyMock.verify(mockUserDao, scopeAccessDao);
+    }
+
+    private void setUpUserTokenExiprationTest(boolean doTest, User fakeUser) {
         EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(
             fakeUser);
         List<ScopeAccessObject> sas = new ArrayList<ScopeAccessObject>();
@@ -495,8 +503,72 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
             .andReturn(Boolean.TRUE);
         EasyMock.expect(scopeAccessDao.updateScopeAccess(fakeUserScopeAccess1))
             .andReturn(Boolean.TRUE);
-        EasyMock.replay(mockUserDao, scopeAccessDao);
-        scopeAccessService.expireAllTokensForUser(fakeUser.getUsername());
-        EasyMock.verify(mockUserDao, scopeAccessDao);
+        if (doTest) {
+            EasyMock.replay(mockUserDao, scopeAccessDao);
+            scopeAccessService.expireAllTokensForUser(fakeUser.getUsername());
+        }
+    }
+
+    @Test
+    public void shouldExpireAllTokensForClient() {
+        Client fakeClient = getFakeClient();
+        setUpClientTokenExiprationTest(true, fakeClient);
+        EasyMock.verify(mockClientDao, scopeAccessDao);
+    }
+
+    private void setUpClientTokenExiprationTest(boolean doTest,
+        Client fakeClient) {
+        EasyMock.expect(
+            mockClientDao.getClientByClientId(fakeClient.getClientId()))
+            .andReturn(fakeClient);
+        List<ScopeAccessObject> sas = new ArrayList<ScopeAccessObject>();
+        ClientScopeAccessObject fakeClientScopeAccess0 = getFakeClientScopeAccess();
+        sas.add(fakeClientScopeAccess0);
+        ClientScopeAccessObject fakeClientScopeAccess1 = getFakeClientScopeAccess();
+        sas.add(fakeClientScopeAccess1);
+        EasyMock.expect(
+            scopeAccessDao.getScopeAccessesByParent(fakeClient.getUniqueId()))
+            .andReturn(sas);
+        fakeClientScopeAccess0.setAccessTokenExpired();
+        fakeClientScopeAccess1.setAccessTokenExpired();
+        EasyMock.expect(
+            scopeAccessDao.updateScopeAccess(fakeClientScopeAccess0))
+            .andReturn(Boolean.TRUE);
+        EasyMock.expect(
+            scopeAccessDao.updateScopeAccess(fakeClientScopeAccess1))
+            .andReturn(Boolean.TRUE);
+        if (doTest) {
+            EasyMock.replay(mockClientDao, scopeAccessDao);
+            scopeAccessService.expireAllTokensForClient(fakeClient
+                .getClientId());
+        }
+    }
+
+    @Test
+    public void shouldExpireAllTokensForCustomer() {
+        Configuration config = EasyMock.createMock(Configuration.class);
+        EasyMock.expect(config.getInt("ldap.paging.limit.max")).andReturn(10);
+        Client client0 = getFakeClient();
+        List<Client> clientsList = new ArrayList<Client>();
+        clientsList.add(client0);
+        Clients clients = new Clients();
+        clients.setClients(clientsList);
+        EasyMock.expect(
+            mockClientDao.getClientsByCustomerId(customerId, 0, 1000))
+            .andReturn(clients);
+
+        User user0 = getFakeUser();
+        List<User> usersList = new ArrayList<User>();
+        usersList.add(user0);
+        Users users = new Users();
+        users.setUsers(usersList);
+        EasyMock.expect(mockUserDao.getUsersByCustomerId(customerId, 0, 1000))
+            .andReturn(users);
+
+        setUpClientTokenExiprationTest(false, client0);
+        setUpUserTokenExiprationTest(false, user0);
+        EasyMock.replay(mockClientDao, mockUserDao, scopeAccessDao);
+        scopeAccessService.expireAllTokensForCustomer(customerId);
+        EasyMock.verify(mockClientDao, mockUserDao, scopeAccessDao);
     }
 }
