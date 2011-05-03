@@ -138,7 +138,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         boolean authorized = false;
 
         authorized = this.clientDao.isUserInClientGroup(usa.getUsername(),
-            IDM_ADMIN_GROUP_DN);
+            IDM_ADMIN_GROUP_DN) && customerId.equalsIgnoreCase(usa.getUserRCN());
         logger.debug("Authorized {} as admin user - {}", scopeAccess,
             authorized);
         return authorized;
