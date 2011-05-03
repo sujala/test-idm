@@ -50,7 +50,7 @@ public class UserPermissionsResource {
     @Autowired
     public UserPermissionsResource(UserService userService,
         AuthorizationService authorizationService, ClientService clientService,
-        ScopeAccessService scopeAccessService, UserConverter userConverter) {
+        ScopeAccessService scopeAccessService) {
         this.clientService = clientService;
         this.userService = userService;
         this.scopeAccessService = scopeAccessService;
