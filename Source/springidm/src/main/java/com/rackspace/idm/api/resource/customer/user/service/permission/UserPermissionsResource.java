@@ -146,7 +146,6 @@ public class UserPermissionsResource {
      * @param Permission permission
      */
     @POST
-    @Path("{permissionId}")
     public Response grantPermissionToUser(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
