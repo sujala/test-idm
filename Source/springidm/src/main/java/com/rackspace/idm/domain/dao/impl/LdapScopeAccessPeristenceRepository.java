@@ -35,13 +35,16 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     @Override
     public ScopeAccessObject addScopeAccess(String parentUniqueId, ScopeAccessObject scopeAccess) {
         LDAPConnection conn = null;
+        Audit audit = Audit.log(scopeAccess).add();
         try {
             final LDAPPersister persister = LDAPPersister.getInstance(scopeAccess.getClass());
             conn = getAppConnPool().getConnection();
             persister.add(scopeAccess, conn, parentUniqueId);
+            audit.succeed();
             return (ScopeAccessObject) persister.get(scopeAccess, conn, parentUniqueId);
         } catch (final LDAPException e) {
             getLogger().error("Error adding scope acccess object", e);
+            audit.fail();
             throw new IllegalStateException(e);
         } finally {
             getAppConnPool().releaseConnection(conn);
@@ -51,6 +54,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     @Override
     public PermissionObject grantPermission(String scopeAccessUniqueId, PermissionObject permission) {
         LDAPConnection conn = null;
+        Audit audit = Audit.log(permission).add();
         try {
             final PermissionObject po = new PermissionObject();
             po.setClientId(permission.getClientId());
@@ -60,9 +64,11 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             final LDAPPersister<PermissionObject> persister = LDAPPersister.getInstance(PermissionObject.class);
             conn = getAppConnPool().getConnection();
             persister.add(po, conn, scopeAccessUniqueId);
+            audit.succeed();
             return persister.get(po, conn, scopeAccessUniqueId);
         } catch (final LDAPException e) {
             getLogger().error("Error adding permission", e);
+            audit.fail();
             throw new IllegalStateException(e);
         } finally {
             getAppConnPool().releaseConnection(conn);
@@ -72,13 +78,16 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     @Override
     public PermissionObject definePermission(String scopeAccessUniqueId, PermissionObject permission) {
         LDAPConnection conn = null;
+        Audit audit = Audit.log(permission).add();
         try {
             final LDAPPersister<PermissionObject> persister = LDAPPersister.getInstance(PermissionObject.class);
             conn = getAppConnPool().getConnection();
             persister.add(permission, conn, scopeAccessUniqueId);
+            audit.succeed();
             return persister.get(permission, conn, scopeAccessUniqueId);
         } catch (final LDAPException e) {
             getLogger().error("Error adding permission", e);
+            audit.fail();
             throw new IllegalStateException(e);
         } finally {
             getAppConnPool().releaseConnection(conn);
@@ -88,8 +97,9 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     @Override
     public Boolean deleteScopeAccess(ScopeAccessObject scopeAccess) {
         final String dn = scopeAccess.getUniqueId();
-        final Audit audit = Audit.log(scopeAccess.getAuditContext());
+        final Audit audit = Audit.log(scopeAccess.getAuditContext()).delete();
         deleteEntryAndSubtree(dn, audit);
+        audit.succeed();
         return Boolean.TRUE;
     }
 
@@ -243,21 +253,25 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     @Override
     public Boolean removePermissionFromScopeAccess(PermissionObject permission) {
         final String dn = permission.getUniqueId();
-        final Audit audit = Audit.log(permission.getAuditContext());
+        final Audit audit = Audit.log(permission.getAuditContext()).delete();
         deleteEntryAndSubtree(dn, audit);
+        audit.succeed();
         return Boolean.TRUE;
     }
 
     @Override
     public Boolean updateScopeAccess(ScopeAccessObject scopeAccess) {
         LDAPConnection conn = null;
+        Audit audit = Audit.log(scopeAccess).modify();
         try {
             conn = getAppConnPool().getConnection();
             final LDAPPersister persister = LDAPPersister.getInstance(scopeAccess.getClass());
             persister.modify(scopeAccess, conn, null, true);
+            audit.succeed();
             return Boolean.TRUE;
         } catch (final LDAPException e) {
             getLogger().error("Error updating scope access", e);
+            audit.fail();
             throw new IllegalStateException(e);
         } catch (final LDAPSDKRuntimeException e) {
             //noop
@@ -270,14 +284,17 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     @Override
     public Boolean updatePermissionForScopeAccess(PermissionObject permission) {
         LDAPConnection conn = null;
+        Audit audit = Audit.log(permission).modify();
         try {
             final PermissionObject po = permission;
             final LDAPPersister<PermissionObject> persister = LDAPPersister.getInstance(PermissionObject.class);
             conn = getAppConnPool().getConnection();
             final LDAPResult result = persister.modify(po, conn, null, true);
+            audit.succeed();
             return result.getResultCode().intValue() == ResultCode.SUCCESS_INT_VALUE;
         } catch (final Exception e) {
             getLogger().error("Error updating permission", e);
+            audit.fail();
             throw new IllegalStateException(e);
         } finally {
             getAppConnPool().releaseConnection(conn);
