@@ -24,7 +24,6 @@ import com.rackspace.idm.domain.entity.PermissionObject;
 import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
-import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -46,8 +45,7 @@ public class CustomerClientServiceResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomerClientServiceResource(CustomerService customerService,
-        ScopeAccessService scopeAccessService,
+    public CustomerClientServiceResource(ScopeAccessService scopeAccessService,
         ClientService clientService, AuthorizationService authorizationService) {
         this.clientService = clientService;
         this.scopeAccessService = scopeAccessService;

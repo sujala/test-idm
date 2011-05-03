@@ -26,7 +26,6 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccessObject;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
-import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
@@ -52,7 +51,7 @@ public class CustomerUserServicesResource {
 
     @Autowired
     public CustomerUserServicesResource(CustomerUserServiceResource customerUserServiceResource,
-        CustomerService customerService, ScopeAccessService scopeAccessService,
+        ScopeAccessService scopeAccessService,
         ClientConverter clientConverter,
         ClientService clientService, UserService userService,
         AuthorizationService authorizationService) {

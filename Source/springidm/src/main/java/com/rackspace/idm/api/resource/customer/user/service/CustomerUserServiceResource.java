@@ -23,7 +23,6 @@ import com.rackspace.idm.domain.entity.ScopeAccessObject;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
-import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
@@ -47,7 +46,7 @@ public class CustomerUserServiceResource {
     @Autowired
     public CustomerUserServiceResource(
         UserPermissionsResource userPermissionsResource,
-        CustomerService customerService, ScopeAccessService scopeAccessService,
+        ScopeAccessService scopeAccessService,
         ClientService clientService, UserService userService,
         AuthorizationService authorizationService) {
         this.clientService = clientService;
