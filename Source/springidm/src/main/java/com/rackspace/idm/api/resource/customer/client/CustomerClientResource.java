@@ -108,7 +108,7 @@ public class CustomerClientResource extends AbstractClientConsumer {
         logger.debug("Got Client: {}", client);
 
         com.rackspace.idm.jaxb.Client returnedClient = clientConverter
-            .toClientJaxbWithPermissions(client);
+            .toClientJaxbWithoutPermissionsOrCredentials(client);
 
         return Response.ok(returnedClient).build();
     }

@@ -47,17 +47,12 @@ public class ClientConverter {
 
     public com.rackspace.idm.jaxb.Client toClientJaxbWithoutPermissionsOrCredentials(
         Client client) {
-        return toClientJaxb(client, false, false);
-    }
-
-    public com.rackspace.idm.jaxb.Client toClientJaxbWithPermissions(
-        Client client) {
-        return toClientJaxb(client, true, false);
+        return toClientJaxb(client, false);
     }
 
     public com.rackspace.idm.jaxb.Client toClientJaxbWithPermissionsAndCredentials(
         Client client) {
-        return toClientJaxb(client, true, true);
+        return toClientJaxb(client, true);
     }
 
     public Clients toClientListJaxb(com.rackspace.idm.domain.entity.Clients clients) {
@@ -81,7 +76,7 @@ public class ClientConverter {
     }
 
     private com.rackspace.idm.jaxb.Client toClientJaxb(Client client,
-        boolean includePermissions, boolean includeCredentials) {
+        boolean includeCredentials) {
         com.rackspace.idm.jaxb.Client returnedClient = of.createClient();
 
         returnedClient.setClientId(client.getClientId());
