@@ -43,7 +43,7 @@ public class UserPermissionsResource {
 
     private final ScopeAccessService scopeAccessService;
     private final UserService userService;
-    private ClientService clientService;
+    private final ClientService clientService;
     private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -51,6 +51,7 @@ public class UserPermissionsResource {
     public UserPermissionsResource(UserService userService,
         AuthorizationService authorizationService, ClientService clientService,
         ScopeAccessService scopeAccessService, UserConverter userConverter) {
+        this.clientService = clientService;
         this.userService = userService;
         this.scopeAccessService = scopeAccessService;
         this.authorizationService = authorizationService;
