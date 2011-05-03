@@ -571,4 +571,22 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         scopeAccessService.expireAllTokensForCustomer(customerId);
         EasyMock.verify(mockClientDao, mockUserDao, scopeAccessDao);
     }
+
+    @Test
+    public void shouldExpireAccessToken() {
+        UserScopeAccessObject sa = getFakeUserScopeAccess();
+        String tokenString = "tokenString";
+        EasyMock
+            .expect(scopeAccessDao.getScopeAccessByAccessToken(tokenString))
+            .andReturn(sa);
+
+        EasyMock.expect(scopeAccessDao.updateScopeAccess(sa)).andReturn(true);
+
+        EasyMock.replay(scopeAccessDao);
+
+        scopeAccessService.expireAccessToken(tokenString);
+
+        EasyMock.verify(scopeAccessDao);
+
+    }
 }
