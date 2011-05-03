@@ -624,4 +624,16 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         scopeAccessService.authenticateAccessToken(accessTokenStr);
         EasyMock.verify(scopeAccessDao);
     }
+    
+    @Test
+    public void shouldAddScopeAccess() {
+        UserScopeAccessObject sao = getFakeUserScopeAccess();
+        User user = getFakeUser();
+        EasyMock.expect(scopeAccessDao.addScopeAccess(
+            user.getUniqueId(), sao)).andReturn(sao);
+        EasyMock.replay(scopeAccessDao);
+        scopeAccessService.addScopeAccess(user.getUniqueId(), sao);
+        EasyMock.verify(scopeAccessDao);
+    
+    }
 }
