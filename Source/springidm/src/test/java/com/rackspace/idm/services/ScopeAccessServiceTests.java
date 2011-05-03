@@ -55,10 +55,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
             .andReturn(client);
 
         EasyMock.expect(
-            scopeAccessDao.getScopeAccessForParentByClientId(client
-                .getUniqueId(), client.getClientId())).andReturn(sa);
-        EasyMock.expect(
-            scopeAccessDao.getPermissionByParentAndPermissionId(sa
+            scopeAccessDao.getPermissionByParentAndPermissionId(client
                 .getUniqueId(), perm)).andReturn(perm);
 
         EasyMock.expect(scopeAccessDao.grantPermission(sa.getUniqueId(), perm))
