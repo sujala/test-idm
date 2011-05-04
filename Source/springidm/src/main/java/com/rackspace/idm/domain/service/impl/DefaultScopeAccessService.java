@@ -95,12 +95,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public boolean doesAccessTokenHavePermission(String accessTokenString,
         PermissionObject permission) {
+        logger.debug("Checking whether access token {} has permisison {}", accessTokenString, permission.getPermissionId());
         return this.scopeAccessDao.doesAccessTokenHavePermission(
             accessTokenString, permission);
     }
 
     @Override
     public void expireAccessToken(String tokenString) {
+        logger.debug("Expiring access token {}", tokenString);
         final ScopeAccessObject scopeAccess = this.scopeAccessDao
             .getScopeAccessByAccessToken(tokenString);
         if (scopeAccess == null) {
@@ -111,10 +113,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             ((hasAccessToken) scopeAccess).setAccessTokenExpired();
             this.scopeAccessDao.updateScopeAccess(scopeAccess);
         }
+        logger.debug("Done expiring access token {}", tokenString);
     }
 
     @Override
     public void expireAllTokensForClient(String clientId) {
+        logger.debug("Expiring all tokens for client {}", clientId);
         final Client client = this.clientDao.getClientByClientId(clientId);
         if (client == null) {
             return;
@@ -128,10 +132,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 this.scopeAccessDao.updateScopeAccess(sa);
             }
         }
+        logger.debug("Done expiring all tokens for client {}", clientId);
     }
 
     @Override
     public void expireAllTokensForCustomer(String customerId) {
+        logger.debug("Expiring all tokens for client {}", customerId);
         List<Client> clients = getAllClientsForCustomerId(customerId);
         List<User> users = getAllUsersForCustomerId(customerId);
         for (Client client : clients) {
@@ -140,10 +146,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         for (User user : users) {
             this.expireAllTokensForUser(user.getUsername());
         }
+        logger.debug("Done expiring all tokens for client {}", customerId);
     }
 
     @Override
     public void expireAllTokensForUser(String username) {
+        logger.debug("Expiring all tokens for user {}", username);
         final User user = this.userDao.getUserByUsername(username);
         if (user == null) {
             return;
@@ -158,41 +166,18 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 this.scopeAccessDao.updateScopeAccess(sa);
             }
         }
+        logger.debug("Done expiring all tokens for user {}", username);
     }
 
-    // private functions
-    private List<Client> getAllClientsForCustomerId(final String customerId) {
-        final List<Client> clientsList = new ArrayList<Client>();
-        int total = 1; // This gets overwritten, just needs to be greater than
-        // offset right now.
-        for (int offset = 0; offset < total; offset += getPagingLimit()) {
-            final Clients clientsObj = clientDao.getClientsByCustomerId(
-                customerId, offset, getPagingLimit());
-            clientsList.addAll(clientsObj.getClients());
-            total = clientsObj.getTotalRecords();
-        }
-        return clientsList;
-    }
-
-    private List<User> getAllUsersForCustomerId(final String customerId) {
-        final List<User> usersList = new ArrayList<User>();
-        int total = 1; // This gets overwritten, just needs to be greater than
-        // offset right now.
-        for (int offset = 0; offset < total; offset += getPagingLimit()) {
-            final Users usersObj = userDao.getUsersByCustomerId(customerId,
-                offset, getPagingLimit());
-            usersList.addAll(usersObj.getUsers());
-            total = usersObj.getTotalRecords();
-        }
-        return usersList;
-    }
-
+   
     @Override
     public ScopeAccessObject getAccessTokenByAuthHeader(String authHeader) {
+        logger.debug("Getting access token by auth header {}", authHeader);
         final String tokenStr = authHeaderHelper
             .getTokenFromAuthHeader(authHeader);
         final ScopeAccessObject scopeAccess = scopeAccessDao
             .getScopeAccessByAccessToken(tokenStr);
+        logger.debug("Done getting access token by auth header {}", authHeader);
         return scopeAccess;
     }
 
@@ -210,6 +195,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public PasswordResetScopeAccessObject getOrCreatePasswordResetScopeAccessForUser(
         BaseUser user) {
+        logger.debug("Getting or creating password reset scope access for user {}", user.getUsername());
         PasswordResetScopeAccessObject prsa = (PasswordResetScopeAccessObject) this.scopeAccessDao
             .getScopeAccessForParentByClientId(user.getUniqueId(),
                 PASSWORD_RESET_CLIENT_ID);
@@ -231,6 +217,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 this.scopeAccessDao.updateScopeAccess(prsa);
             }
         }
+        logger.debug("Done getting or creating password reset scope access for user {}", user.getUsername());
         return prsa;
     }
 
@@ -284,9 +271,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = this.userDao
             .authenticateByAPIKey(username, apiKey);
 
-        if (!result.isAuthenticated()) {
-            throw new NotAuthenticatedException();
-        }
+        handleAuthenticationFailure(username, result);
 
         final UserScopeAccessObject scopeAccess = checkAndGetUserScopeAccess(
             clientId, result.getUser());
@@ -303,6 +288,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
 
+   
+
     @Override
     public UserScopeAccessObject getUserScopeAccessForClientIdByMossoIdAndApiCredentials(
         int mossoId, String apiKey, String clientId) {
@@ -310,9 +297,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             clientId);
         final UserAuthenticationResult result = this.userDao
             .authenticateByMossoIdAndAPIKey(mossoId, apiKey);
-        if (!result.isAuthenticated()) {
-            throw new NotAuthenticatedException();
-        }
+        
+        handleAuthenticationFailure((new Integer(mossoId)).toString(), result);
+        
         final UserScopeAccessObject scopeAccess = checkAndGetUserScopeAccess(
             clientId, result.getUser());
 
@@ -334,9 +321,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             clientId);
         final UserAuthenticationResult result = this.userDao
             .authenticateByNastIdAndAPIKey(nastId, apiKey);
-        if (!result.isAuthenticated()) {
-            throw new NotAuthenticatedException();
-        }
+        
+        handleAuthenticationFailure(nastId, result);
+        
         final UserScopeAccessObject scopeAccess = checkAndGetUserScopeAccess(
             clientId, result.getUser());
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
@@ -359,9 +346,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = this.userDao.authenticate(
             username, password);
 
-        if (!result.isAuthenticated()) {
-            throw new NotAuthenticatedException();
-        }
+        handleAuthenticationFailure(username, result);
 
         final UserScopeAccessObject scopeAccess = checkAndGetUserScopeAccess(
             clientId, result.getUser());
@@ -381,22 +366,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
 
-    private UserScopeAccessObject checkAndGetUserScopeAccess(String clientId,
-        BaseUser user) {
-        final UserScopeAccessObject scopeAccess = this
-            .getUserScopeAccessForClientId(user.getUniqueId(), clientId);
-
-        if (scopeAccess == null) {
-            String errMsg = "Scope access not found.";
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-        return scopeAccess;
-    }
-
     @Override
     public PermissionObject grantPermissionToClient(String parentUniqueId,
         PermissionObject permission) {
+        logger.debug("Granting permission {} to client {}", parentUniqueId, permission.getPermissionId());
         Client dClient = this.clientDao.getClientByCustomerIdAndClientId(
             permission.getCustomerId(), permission.getClientId());
 
@@ -435,13 +408,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         grantedPerm = this.addPermissionToScopeAccess(sa.getUniqueId(),
             grantedPerm);
-
+        logger.debug("Done granting permission {} to client {}", parentUniqueId, permission.getPermissionId());
         return grantedPerm;
     }
 
     @Override
     public PermissionObject grantPermissionToUser(User user,
         PermissionObject permission) {
+        logger.debug("Granting permission {} to user {}", user.getUsername(), permission.getPermissionId());
         Client dClient = this.clientDao.getClientByCustomerIdAndClientId(
             permission.getCustomerId(), permission.getClientId());
 
@@ -484,7 +458,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         grantedPerm = this.addPermissionToScopeAccess(sa.getUniqueId(),
             grantedPerm); 
-
+        logger.debug("Done granting permission {} to user {}", user.getUsername(), permission.getPermissionId());
         return grantedPerm;
     }
 
@@ -570,6 +544,59 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.info("Updating Permission {}", permission);
         this.scopeAccessDao.updatePermissionForScopeAccess(permission);
         logger.info("Updated Permission {}", permission);
+    }
+    
+    // private functions
+    private List<Client> getAllClientsForCustomerId(final String customerId) {
+        logger.debug("Getting all clients for customer {}", customerId);
+        final List<Client> clientsList = new ArrayList<Client>();
+        int total = 1; // This gets overwritten, just needs to be greater than
+        // offset right now.
+        for (int offset = 0; offset < total; offset += getPagingLimit()) {
+            final Clients clientsObj = clientDao.getClientsByCustomerId(
+                customerId, offset, getPagingLimit());
+            clientsList.addAll(clientsObj.getClients());
+            total = clientsObj.getTotalRecords();
+        }
+        logger.debug("Done getting all clients for customer {}", customerId);
+        return clientsList;
+    }
+
+    private List<User> getAllUsersForCustomerId(final String customerId) {
+        logger.debug("Getting all users for customer {}", customerId);
+        final List<User> usersList = new ArrayList<User>();
+        int total = 1; // This gets overwritten, just needs to be greater than
+        // offset right now.
+        for (int offset = 0; offset < total; offset += getPagingLimit()) {
+            final Users usersObj = userDao.getUsersByCustomerId(customerId,
+                offset, getPagingLimit());
+            usersList.addAll(usersObj.getUsers());
+            total = usersObj.getTotalRecords();
+        }
+        logger.debug("Done getting all users for customer {}", customerId);
+        return usersList;
+    }
+  
+    private void handleAuthenticationFailure(String username,
+        final UserAuthenticationResult result) {
+        if (!result.isAuthenticated()) {
+            String errorMessage = String.format("User %s not authenticated.", username);
+            logger.warn(errorMessage);
+            throw new NotAuthenticatedException();
+        }
+    }
+    
+    private UserScopeAccessObject checkAndGetUserScopeAccess(String clientId,
+        BaseUser user) {
+        final UserScopeAccessObject scopeAccess = this
+            .getUserScopeAccessForClientId(user.getUniqueId(), clientId);
+
+        if (scopeAccess == null) {
+            String errMsg = "Scope access not found.";
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        return scopeAccess;
     }
 
     private int getPagingLimit() {
