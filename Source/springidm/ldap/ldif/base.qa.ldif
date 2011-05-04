@@ -510,6 +510,45 @@ clientId: QATESTCLIENT
 uid: huey
 userRCN: RACKSPACE
 
+
+######################################## qaadmin and qauser Scope Access for Customer IdM and Auth Service #######################################
+
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!E539,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RCN-QATestingCustomer
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+uid: qaadmin
+userRCN: RCN-QATestingCustomer
+
+dn: clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!E539,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RCN-QATestingCustomer
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+uid: qaadmin
+userRCN: RCN-QATestingCustomer
+
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!1838,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RCN-QATestingCustomer
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+uid: qauser
+userRCN: RCN-QATestingCustomer
+
+dn: clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.999!1838,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.999,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RCN-QATestingCustomer
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+uid: qauser
+userRCN: RCN-QATestingCustomer
+
 ######################################## Permissions #######################################
 
 dn: cn=getServiceCatalog,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
@@ -1318,10 +1357,10 @@ cn: authWithUsernameAndApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 
-dn: cn=authWithUsernameAndPassword,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+dn: cn=authByUsernameAndPassword,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AB9,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientPermission
-cn: authWithUsernameAndPassword
+cn: authByUsernameAndPassword
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 
