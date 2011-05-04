@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -56,7 +57,7 @@ public class PasswordRulesResource {
      * @param authHeader HTTP Authorization header for authenticating the caller.
      */
     @GET
-    public Response getRules() {
+    public Response getRules(@HeaderParam("Authorization") String authHeader) {
 
         logger.debug("Getting password complexity rules");
         List<PasswordRule> rules = passwordComplexityService.getRules();
@@ -81,7 +82,7 @@ public class PasswordRulesResource {
      */
     @POST
     @Path("/validation")
-    public Response checkPassword(
+    public Response checkPassword(@HeaderParam("Authorization") String authHeader,
         com.rackspace.idm.jaxb.UserPassword password) {
         
         if (password == null) {
