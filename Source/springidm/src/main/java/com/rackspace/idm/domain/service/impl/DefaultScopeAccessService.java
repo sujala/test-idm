@@ -478,9 +478,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         PermissionObject grantedPerm = new PermissionObject();
-        perm.setClientId(perm.getClientId());
-        perm.setCustomerId(perm.getCustomerId());
-        perm.setPermissionId(perm.getPermissionId());
+        grantedPerm.setClientId(perm.getClientId());
+        grantedPerm.setCustomerId(perm.getCustomerId());
+        grantedPerm.setPermissionId(perm.getPermissionId());
 
         grantedPerm = this.addPermissionToScopeAccess(sa.getUniqueId(),
             grantedPerm);
