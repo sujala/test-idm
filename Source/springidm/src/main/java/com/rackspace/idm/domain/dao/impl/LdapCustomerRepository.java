@@ -31,9 +31,9 @@ public class LdapCustomerRepository extends LdapRepository implements
     public void addCustomer(Customer customer) {
         getLogger().info("Adding customer {}", customer);
         if (customer == null) {
-            getLogger().error("Null instance of Customer was passed.");
-            throw new IllegalArgumentException(
-                "Null instance of Customer was passed.");
+            String errorMsg = "Null instance of Customer was passed.";
+            getLogger().error(errorMsg);
+            throw new IllegalArgumentException(errorMsg);
         }
 
         Attribute[] attributes = getAddAttributes(customer);
@@ -79,16 +79,16 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         getAppConnPool().releaseConnection(conn);
 
-        getLogger().debug("Added customer {}", customer);
+        getLogger().info("Added customer {}", customer);
     }
 
     @Override
     public void deleteCustomer(String customerId) {
         getLogger().info("Deleting customer {}", customerId);
         if (StringUtils.isBlank(customerId)) {
-            getLogger().error("Null or Empty customerId paramter");
-            throw new IllegalArgumentException(
-                "Null or Empty customerId parameter.");
+            String errMsg = "Null or Empty customerId paramter";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
         }
 
         Customer customer = getCustomerByCustomerId(customerId);
@@ -106,7 +106,7 @@ public class LdapCustomerRepository extends LdapRepository implements
 
     @Override
     public List<Customer> getAllCustomers() {
-        getLogger().debug("Search all customers");
+        getLogger().debug("Getting all customers");
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
@@ -132,9 +132,9 @@ public class LdapCustomerRepository extends LdapRepository implements
         getLogger().debug("Doing search for customerId {}", customerId);
 
         if (StringUtils.isBlank(customerId)) {
-            getLogger().error("Null or Empty customerId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty customerId parameter.");
+            String errMsg = "Null or Empty customerId paramter";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
         }
 
         Customer customer = null;
@@ -162,9 +162,9 @@ public class LdapCustomerRepository extends LdapRepository implements
         getLogger().debug("Doing search for customerInum {}", customerInum);
 
         if (StringUtils.isBlank(customerInum)) {
-            getLogger().error("Null or Empty customerInum parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty customerInum parameter.");
+            String errMsg = "Null or Empty customerInum paramter";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
         }
 
         Customer customer = null;
@@ -188,35 +188,33 @@ public class LdapCustomerRepository extends LdapRepository implements
 
     @Override
     public String getUnusedCustomerInum() {
-        // TODO: We might may this call to the XDI server in the future.
+        getLogger().debug("Getting Unused Customer Inum");
         Customer customer = null;
         String inum = "";
         do {
             inum = this.getRackspaceInumPrefix() + InumHelper.getRandomInum(2);
             customer = getCustomerByInum(inum);
         } while (customer != null);
-
+        getLogger().debug("Got Unused Customer Inum {}", inum);
         return inum;
     }
 
     @Override
     public void updateCustomer(Customer customer) {
-        getLogger().debug("Updating customer {}", customer);
+        getLogger().info("Updating customer {}", customer);
 
         if (customer == null || StringUtils.isBlank(customer.getCustomerId())) {
-            getLogger().error(
-                "Customer instance is null or its customerId has no value");
-            throw new IllegalArgumentException(
-                "Bad parameter: The Customer instance either null or its customerId has no value.");
+            String errMsg = "Customer instance is null or its customerId has no value";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
         }
 
         Customer oldCustomer = getCustomerByCustomerId(customer.getCustomerId());
 
         if (oldCustomer == null) {
-            getLogger().error("No record found for customer {}",
-                customer.getCustomerId());
-            throw new IllegalArgumentException(
-                "There is no exisiting record for the given customer instance.");
+            String errMsg = String.format("No record found for customer %s", customer.getCustomerId());
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
         }
 
         List<Modification> mods = getModifications(oldCustomer, customer);
@@ -231,7 +229,7 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         audit.succeed();
 
-        getLogger().debug("Updated customer {}", customer.getCustomerId());
+        getLogger().info("Updated customer {}", customer);
     }
 
     private Attribute[] getAddAttributes(Customer customer) {
