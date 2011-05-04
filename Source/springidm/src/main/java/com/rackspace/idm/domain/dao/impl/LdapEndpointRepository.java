@@ -33,7 +33,7 @@ public class LdapEndpointRepository extends LdapRepository implements
     }
 
     public void addBaseUrl(CloudBaseUrl baseUrl) {
-        getLogger().info("Adding baseUlr {}", baseUrl);
+        getLogger().debug("Adding baseUlr {}", baseUrl);
         if (baseUrl == null) {
             getLogger().error("Null instance of baseUrl was passed");
             throw new IllegalArgumentException(
@@ -86,6 +86,7 @@ public class LdapEndpointRepository extends LdapRepository implements
 
         try {
             result = getAppConnPool().add(baseUrlDN, atts);
+            getLogger().info("Added basedUrl {}", baseUrl);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error adding baseUrl {} - {}", baseUrl, ldapEx);
             throw new IllegalStateException(ldapEx);
@@ -103,6 +104,7 @@ public class LdapEndpointRepository extends LdapRepository implements
     }
 
     public void addBaseUrlToUser(int baseUrlId, boolean def, String username) {
+        getLogger().debug("Adding baseUlr {} to user {}", baseUrlId, username);
         CloudBaseUrl baseUrl = this.getBaseUrlById(baseUrlId);
         if (baseUrl == null) {
             String errMsg = String.format("BaseUrlId %s not found", baseUrlId);
@@ -136,6 +138,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         LDAPResult result = null;
         try {
             result = getAppConnPool().modify(oldEndpoints.getUserDN(), mods);
+            getLogger().info("Added baseUlr {} to user {}", baseUrlId, username);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating user {} endpoints - {}",
                 username, ldapEx);
@@ -149,10 +152,11 @@ public class LdapEndpointRepository extends LdapRepository implements
                 "LDAP error encountered when updating user %s endpoints - %s",
                 username, result.getResultCode().toString()));
         }
+        getLogger().debug("Adding baseUlr {} to user {}", baseUrlId, username);
     }
 
     public void deleteBaseUrl(int baseUrlId) {
-        getLogger().info("Deleting baseUrl - {}", baseUrlId);
+        getLogger().debug("Deleting baseUrl - {}", baseUrlId);
 
         LDAPResult result = null;
 
@@ -162,6 +166,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         try {
             result = getAppConnPool().delete(
                 String.format(baseUrlDN, baseUrlId));
+            getLogger().info("Deleted baseUrl - {}", baseUrlId);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error deleting baseUlr {} - {}", baseUrlId,
                 ldapEx);
@@ -176,10 +181,11 @@ public class LdapEndpointRepository extends LdapRepository implements
                 baseUrlId, result.getResultCode().toString()));
         }
 
-        getLogger().info("Deleted baseUrl - {}", baseUrlId);
+        getLogger().debug("Deleted baseUrl - {}", baseUrlId);
     }
 
     public CloudBaseUrl getBaseUrlById(int baseUrlId) {
+        getLogger().debug("Get baseurl by Id {}", baseUrlId);
         CloudBaseUrl baseUrl = null;
         SearchResult searchResult = null;
 
@@ -190,6 +196,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         try {
             searchResult = getAppConnPool().search(BASEURL_BASE_DN,
                 SearchScope.ONE, searchFilter);
+            getLogger().info("Got baseurl by Id {}", baseUrlId);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for baseUrl - {}", ldapEx);
             throw new IllegalStateException(ldapEx);
@@ -205,10 +212,13 @@ public class LdapEndpointRepository extends LdapRepository implements
             throw new IllegalStateException(errMsg);
         }
 
+        getLogger().debug("Get baseurl by Id {}", baseUrlId);
         return baseUrl;
     }
 
     public List<CloudBaseUrl> getBaseUrls() {
+        
+        getLogger().debug("Getting baseurls");
 
         List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
         SearchResult searchResult = null;
@@ -219,6 +229,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         try {
             searchResult = getAppConnPool().search(BASEURL_BASE_DN,
                 SearchScope.ONE, searchFilter);
+            getLogger().info("Got baseurls");
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for baseUrls - {}", ldapEx);
             throw new IllegalStateException(ldapEx);
@@ -229,10 +240,15 @@ public class LdapEndpointRepository extends LdapRepository implements
                 baseUrls.add(getBaseUrl(entry));
             }
         }
+        
+        getLogger().debug("Got baseurls");
         return baseUrls;
     }
 
     public List<CloudEndpoint> getEndpointsForUser(String username) {
+        
+        getLogger().debug("Getting Endpoints for User {}",username);
+        
         EndPoints points = this.getRawEndpointsForUser(username);
 
         if (points == null || points.getEndpoints().size() < 1) {
@@ -253,12 +269,17 @@ public class LdapEndpointRepository extends LdapRepository implements
                 point.setNastId(points.getNastId());
                 point.setV1preferred(def);
                 endpoints.add(point);
+                getLogger().info("Got Endpoints for User {}",username);
             }
         }
+        getLogger().info("Got Endpoints for User {}",username);
         return endpoints;
     }
 
     public void removeBaseUrlFromUser(int baseUrlId, String username) {
+        
+        getLogger().debug("Removing baseurl {} from user {}", baseUrlId, username);
+        
         CloudBaseUrl baseUrl = this.getBaseUrlById(baseUrlId);
         if (baseUrl == null) {
             String errMsg = String.format("BaseUrlId %s not found", baseUrlId);
@@ -298,6 +319,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         LDAPResult result = null;
         try {
             result = getAppConnPool().modify(endpoints.getUserDN(), mods);
+            getLogger().info("Removed baseurl {} from user {}", baseUrlId, username);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating user {} endpoints - {}",
                 username, ldapEx);
@@ -311,9 +333,11 @@ public class LdapEndpointRepository extends LdapRepository implements
                 "LDAP error encountered when updating user %s endpoints - %s",
                 username, result.getResultCode().toString()));
         }
+        getLogger().debug("Removed baseurl {} from user {}", baseUrlId, username);
     }
 
     private CloudBaseUrl getBaseUrl(SearchResultEntry resultEntry) {
+        getLogger().debug("Inside getBaseUrl");
         CloudBaseUrl baseUrl = new CloudBaseUrl();
         baseUrl.setAdminUrl(resultEntry.getAttributeValue(ATTR_ADMIN_URL));
         baseUrl.setBaseUrlId(resultEntry
@@ -326,10 +350,12 @@ public class LdapEndpointRepository extends LdapRepository implements
         baseUrl.setPublicUrl(resultEntry.getAttributeValue(ATTR_PUBLIC_URL));
         baseUrl.setRegion(resultEntry.getAttributeValue(ATTR_REGION));
         baseUrl.setService(resultEntry.getAttributeValue(ATTR_SERVICE));
+        getLogger().debug("Exiting getBaseUrl");
         return baseUrl;
     }
 
     private EndPoints getRawEndpointsForUser(String username) {
+        getLogger().debug("Inside getRawEndpointsForUser {}", username);
         List<String> userEndpoints = new ArrayList<String>();
         String userDN = null;
         String nastId = null;
@@ -379,6 +405,8 @@ public class LdapEndpointRepository extends LdapRepository implements
         points.setNastId(nastId);
         points.setEndpoints(userEndpoints);
         points.setUserDN(userDN);
+        
+        getLogger().debug("Exiting getRawEndpointsForUser {}", username);
         return points;
     }
 }
