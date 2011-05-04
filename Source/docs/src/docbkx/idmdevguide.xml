@@ -58,9 +58,9 @@
       <year>2011</year>
       <holder>Rackspace Hosting, Inc.</holder>
     </copyright>
-    <releaseinfo>API v1.0.2011.14</releaseinfo>
+    <releaseinfo>API v1.0.2011.15</releaseinfo>
     <productname>Global Auth API</productname>
-    <pubdate>4/20/11</pubdate>
+    <pubdate>2011-05-04</pubdate>
     <legalnotice role="apache2">
       <annotation>
         <remark>Copyright details are filled in by the template.</remark>
@@ -542,6 +542,29 @@
 <xi:include href="../../formattedsamples/validatetoken.json" parse="text"/>
 </programlisting>
         </example>
+      </section>
+      <section>
+        <title>Check if Token has Permission for Service</title>
+        <note>
+          <para> This is a management API function. </para>
+        </note>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &GET; </td>
+              <td colspan="4"
+                  >/tokens/<parameter>tokenId</parameter>/services/<parameter>serviceId</parameter>/permissions/<parameter>permissionId</parameter></td>
+              <td colspan="3">Revoke a user permission for a service</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue>
+          <returnvalue>404</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), idmFault
+            (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
       </section>
       <section>
         <title>Revoke Token</title>
@@ -1422,42 +1445,7 @@
 </programlisting>
         </example>
       </section>
-      <section>
-        <title>Initiate Forget Password</title>
-        <note>
-          <para>
-            This is a management API function.
-          </para>
-        </note>
-        <informaltable rules="all">
-          &LONG_URI_REFHEAD;
-          <tbody>
-            <tr>
-              <td colspan="1"> &POST; </td>
-              <td colspan="4"
-                  >/customers/<parameter>customerId</parameter>/users/<parameter>username</parameter>/password/recoveryEmail</td>
-              <td colspan="3">Send a request to recover a user&apos;s password.</td>
-            </tr>
-          </tbody>
-        </informaltable>
-        <simpara>&CODES;<returnvalue>204</returnvalue></simpara>
-        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
-            (<errorcode>400</errorcode>), forbidden(<errorcode>403</errorcode>), itemNotFound
-            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
-            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
-        <example>
-          <title>XML Initiate Forgot Password Request</title>
-          <programlisting language="xml">
-<xi:include href="../../formattedsamples/forgot_password.xml" parse="text"/>
-</programlisting>
-        </example>
-        <example>
-          <title>JSON Initiate Forgot Password Request</title>
-          <programlisting language="javascript">
-<xi:include href="../../formattedsamples/forgot_password.json" parse="text"/>
-</programlisting>
-        </example>
-      </section>
+      
       <section>
         <title>Get Password Recovery Token</title>
         <note>
@@ -1581,6 +1569,178 @@
 </programlisting>
         </example>
       </section>
+      <section>
+        <title>Get the Services that a User has Provisioned</title>
+        <note>
+          <para> This is a management API function. </para>
+        </note>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &GET; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter>/services</td>
+              <td colspan="3">Get the services that a user has provisioned</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+        <example>
+          <title>XML Get User Services Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/clients.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Get User Services Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/clients.json" parse="text"/>
+</programlisting>
+        </example>
+      </section>
+      <section>
+        <title>Provision a Service for a User</title>
+        <note>
+          <para> This is a management API function. </para>
+        </note>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &POST; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter>/services</td>
+              <td colspan="3">Get the services that a user has provisioned</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        <example>
+          <title>XML Provision User Service Request</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/client_only_id.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Get Provision User Service Request</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/client_only_id.json" parse="text"/>
+</programlisting>
+        </example>
+      </section>
+      <section>
+        <title>Remove Provision a Service for a User</title>
+        <note>
+          <para> This is a management API function. </para>
+        </note>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &DELETE; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter>/services/<parameter>serviceId</parameter></td>
+              <td colspan="3">Removes a provisioned service from a user</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>204</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+      </section>
+      <section>
+        <title>Grant a User Permission for Service</title>
+        <note>
+          <para> This is a management API function. </para>
+        </note>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &POST; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter>/services/<parameter>serviceId</parameter>/permissions</td>
+              <td colspan="3">Grant a user permission for a service</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        <example>
+          <title>XML Grant User Permission Request</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/permission_grant.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Grant User Permission Request</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/permission_grant.json" parse="text"/>
+</programlisting>
+        </example>
+      </section>
+      <section>
+        <title>Revoke a User Permission for Service</title>
+        <note>
+          <para> This is a management API function. </para>
+        </note>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &DELETE; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter>/services/<parameter>serviceId</parameter>/permissions/<parameter>permissionId</parameter></td>
+              <td colspan="3">Revoke a user permission for a service</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>204</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+      </section>
+      <section>
+        <title>Check if User has Permission for Service</title>
+        <note>
+          <para> This is a management API function. </para>
+        </note>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &GET; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter>/services/<parameter>serviceId</parameter>/permissions/<parameter>permissionId</parameter></td>
+              <td colspan="3">Check to see if user has permisison for a service</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue>
+          <returnvalue>404</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), idmFault
+            (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+      </section>
     </section>
     <section>
       <title> Authentication Operations </title>
@@ -1597,7 +1757,8 @@
             </tr>
           </tbody>
         </informaltable>
-        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&CODES;<returnvalue>200</returnvalue>
+        </simpara>
         <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
           (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
           (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
@@ -1714,9 +1875,9 @@
       </section>    
     </section>
     <section>
-      <title>Customer Application Operations </title>
+      <title>Application Operations </title>
       <section>
-        <title>Add a Customer Application</title>
+        <title>Add an Application</title>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1758,7 +1919,7 @@
         </example>
       </section>
       <section>
-        <title>Get a Customer Application</title>
+        <title>Get an Application</title>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1819,7 +1980,7 @@
         </example>
       </section>
       <section>
-        <title>Soft Delete a Customer Application</title>
+        <title>Soft Delete an Application</title>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1837,32 +1998,32 @@
             (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         <example>
-          <title>XML Soft Delete Customer Application Request</title>
+          <title>XML Soft Delete Application Request</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/clientWithOnlySoftDeleted.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Soft Delete Customer Application Request</title>
+          <title>JSON Soft Delete Application Request</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/clientWithOnlySoftDeleted.json" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>XML Soft Delete Customer Application Response</title>
+          <title>XML Soft Delete Application Response</title>
           <programlisting language="xml">
 <xi:include href="../../formattedsamples/clientWithOnlySoftDeleted.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
-          <title>JSON Soft Delete Customer Application Response</title>
+          <title>JSON Soft Delete Application Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/clientWithOnlySoftDeleted.json" parse="text"/>
 </programlisting>
         </example>
       </section>
       <section>
-        <title>Delete a customer application</title>
+        <title>Delete an Application</title>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1882,7 +2043,7 @@
         &NO_REQUEST;
       </section>
       <section>
-        <title>Get Permissions for a Customer Application</title>
+        <title>Get Permissions defined by an Application</title>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1890,7 +2051,7 @@
               <td colspan="1"> &GET; </td>
               <td colspan="4"
                   >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/permissions</td>
-              <td colspan="3">Get all permissions for a <parameter>clientId</parameter> of a
+              <td colspan="3">Get all permissions defined by <parameter>clientId</parameter> of a
                   <parameter>customerId</parameter></td>
             </tr>
           </tbody>
@@ -1915,78 +2076,7 @@
         </example>
       </section>
       <section>
-        <title>Get Granted Permissions for a Customer Application</title>
-        <informaltable rules="all">
-          &LONG_URI_REFHEAD;
-          <tbody>
-            <tr>
-              <td colspan="1"> &GET; </td>
-              <td colspan="4"
-                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/permissions/granted</td>
-              <td colspan="3">Get all permissions for a <parameter>clientId</parameter> of a
-                  <parameter>customerId</parameter></td>
-            </tr>
-          </tbody>
-        </informaltable>
-        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
-        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
-            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
-            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
-            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
-        &NO_REQUEST;
-        <example>
-          <title>XML Get Granted Permissions Response</title>
-          <programlisting language="xml">
-<xi:include href="../../formattedsamples/grantedpermissions.xml" parse="text"/>
-</programlisting>
-        </example>
-        <example>
-          <title>JSON Get Granted Permissions Response</title>
-          <programlisting language="javascript">
-<xi:include href="../../formattedsamples/grantedpermissions.json" parse="text"/>
-</programlisting>
-        </example>
-      </section>
-      <section>
-        <title>Get Defined Permissions for a Customer Application</title>
-        <note>
-          <para>
-            This is a management API function.
-          </para>
-        </note>
-        <informaltable rules="all">
-          &LONG_URI_REFHEAD;
-          <tbody>
-            <tr>
-              <td colspan="1"> &GET; </td>
-              <td colspan="4"
-                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/permissions/defined</td>
-              <td colspan="3">Get all permissions for a <parameter>clientId</parameter> of a
-                  <parameter>customerId</parameter></td>
-            </tr>
-          </tbody>
-        </informaltable>
-        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
-        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
-            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
-            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
-            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
-        &NO_REQUEST;
-        <example>
-          <title>XML Get Defined Permissions Response</title>
-          <programlisting language="xml">
-<xi:include href="../../formattedsamples/definedpermissions.xml" parse="text"/>
-</programlisting>
-        </example>
-        <example>
-          <title>JSON Get Defined Permissions Response</title>
-          <programlisting language="javascript">
-<xi:include href="../../formattedsamples/definedpermissions.json" parse="text"/>
-</programlisting>
-        </example>
-      </section>
-      <section>
-        <title>Add a Defined Permission for a Customer Application</title>
+        <title>Add a Permission defined by an Application</title>
         <note>
           <para>
             This is a management API function.
@@ -1998,8 +2088,8 @@
             <tr>
               <td colspan="1"> &POST; </td>
               <td colspan="4"
-                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/permissions/defined</td>
-              <td colspan="3">Add a resource for a <parameter>clientId</parameter> of a
+                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/permissions</td>
+              <td colspan="3">Define a permission for a <parameter>clientId</parameter> of a
                   <parameter>customerId</parameter></td>
             </tr>
           </tbody>
@@ -2035,7 +2125,7 @@
         </example>
       </section>
       <section>
-        <title>Get a Defined Permission for a Customer Application</title>
+        <title>Get a Permission defined by an Application</title>
         <note>
           <para>
             This is a management API function.
@@ -2073,7 +2163,7 @@
         </example>
       </section>
       <section>
-        <title>Update a Defined Permission for a Customer Application</title>
+        <title>Update a Permission defined by an Application</title>
         <note>
           <para>
             This is a management API function.
@@ -2086,7 +2176,7 @@
               <td colspan="1"> &PUT; </td>
               <td colspan="4"
                   >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/permissions/defined/<parameter>permissionId</parameter></td>
-              <td colspan="3">Update a defined permission for a <parameter>clientId</parameter> of a
+              <td colspan="3">Update a permission defined by a <parameter>clientId</parameter> of a
                   <parameter>customerId</parameter></td>
             </tr>
           </tbody>
@@ -2122,7 +2212,7 @@
         </example>
       </section>
       <section>
-        <title>Delete a Defined Permission for a Customer Application</title>
+        <title>Delete a Permission defined by an Application</title>
         <note>
           <para>
             This is a management API function.
@@ -2135,7 +2225,7 @@
               <td colspan="1"> &DELETE; </td>
               <td colspan="4"
                   >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/permissions/defined/<parameter>permissionId</parameter></td>
-              <td colspan="3">Delete a defined permission for a <parameter>clientId</parameter> of a
+              <td colspan="3">Delete a permission defined by a <parameter>clientId</parameter> of a
                   <parameter>customerId</parameter></td>
             </tr>
           </tbody>
@@ -2148,7 +2238,7 @@
         &NO_REQUEST;
       </section>
       <section>
-        <title>Reset Customer Application Secret</title>
+        <title>Reset an Application Secret</title>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2180,7 +2270,7 @@
         </example>
       </section>
       <section>
-        <title>Add a Group for a Customer Application</title>
+        <title>Add a Group for an Application</title>
         <note>
           <para>
             This is a management API function.
@@ -2229,7 +2319,7 @@
         </example>
       </section>
       <section>
-        <title>Get all Groups for a Customer Application</title>
+        <title>Get all Groups for an Application</title>
         <note>
           <para>
             This is a management API function.
@@ -2267,7 +2357,7 @@
         </example>
       </section>
       <section>
-        <title>Update a Group for a Customer Application</title>
+        <title>Update a Group for an Application</title>
         <note>
           <para>
             This is a management API function.
@@ -2316,7 +2406,7 @@
         </example>
       </section>
       <section>
-        <title>Delete a Group for a Customer Application</title>
+        <title>Delete a Group for an Application</title>
         <note>
           <para>
             This is a management API function.
@@ -2342,7 +2432,7 @@
         &NO_REQUEST;
       </section>
       <section>
-        <title>Add a User to a Group for a Customer Application</title>
+        <title>Add a User to a Group for an Application</title>
         <note>
           <para>
             This is a management API function.
@@ -2368,7 +2458,7 @@
         &NO_REQUEST;
       </section>
       <section>
-        <title>Remove a User from a Group for a Customer Application</title>
+        <title>Remove a User from a Group for an Application</title>
         <note>
           <para>
             This is a management API function.
@@ -2391,6 +2481,121 @@
             (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
             (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
             serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+      </section>
+      <section>
+        <title>Get the Services that a Client has Provisioned</title>
+        <note>
+          <para> This is a management API function. </para>
+        </note>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &GET; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/services</td>
+              <td colspan="3">Get the services that a user has provisioned</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+        <example>
+          <title>XML Get Cilent Services Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/clients.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Get Client Services Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/clients.json" parse="text"/>
+</programlisting>
+        </example>
+      </section>
+      <section>
+        <title>Grant a Client Permission for Service</title>
+        <note>
+          <para> This is a management API function. </para>
+        </note>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &POST; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/services/<parameter>serviceId</parameter>/permissions</td>
+              <td colspan="3">Grant a client permission for a service</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        <example>
+          <title>XML Grant Client Permission Request</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/permission_grant.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Grant Client Permission Request</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/permission_grant.json" parse="text"/>
+</programlisting>
+        </example>
+      </section>
+      <section>
+        <title>Revoke a Client Permission for Service</title>
+        <note>
+          <para> This is a management API function. </para>
+        </note>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &DELETE; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/cilents/<parameter>clientId</parameter>/services/<parameter>serviceId</parameter>/permissions/<parameter>permissionId</parameter></td>
+              <td colspan="3">Check to see if client has permisison for a service</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>204</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+      </section>
+      <section>
+        <title>Check if Client has Permission for Service</title>
+        <note>
+          <para> This is a management API function. </para>
+        </note>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &GET; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter>/services/<parameter>serviceId</parameter>/permissions/<parameter>permissionId</parameter></td>
+              <td colspan="3">Revoke a client permission for a service</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue>
+          <returnvalue>404</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), idmFault
+            (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
       </section>
     </section>
