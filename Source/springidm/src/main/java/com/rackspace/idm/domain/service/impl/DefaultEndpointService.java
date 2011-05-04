@@ -21,6 +21,7 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     public void addBaseUrl(CloudBaseUrl baseUrl) {
+        logger.debug("Adding base url");
         
         CloudBaseUrl exists = this.endpointDao.getBaseUrlById(baseUrl.getBaseUrlId());
         
@@ -31,25 +32,33 @@ public class DefaultEndpointService implements EndpointService {
         }
         
         this.endpointDao.addBaseUrl(baseUrl);
+        logger.debug("Done adding base url.");
     }
 
     public void addBaseUrlToUser(int baseUrlId, boolean def, String username) {
+        logger.debug("Adding baseurl {} to user {}", baseUrlId, username);
        this.endpointDao.addBaseUrlToUser(baseUrlId, def, username);
+       logger.debug("Done adding baseurl {} to user {}", baseUrlId, username); 
     }
 
     public void deleteBaseUrl(int baseUrlId) {
+        logger.debug("Deleting base url {}", baseUrlId);
         this.endpointDao.deleteBaseUrl(baseUrlId);
+        logger.debug("Done deleting base url {}", baseUrlId);
     }
 
     public List<CloudBaseUrl> getBaseUrls() {
+        logger.debug("Getting baseurls");
         return this.endpointDao.getBaseUrls();
     }
     
     public CloudBaseUrl getBaseUrlById(int baseUrlId) {
+        logger.debug("Getting baserul {}", baseUrlId);
         return this.endpointDao.getBaseUrlById(baseUrlId);
     }
     
     public CloudEndpoint getEndpointForUser(String username, int baseUrlId) {
+        logger.debug("Getting endpoint {} for user {}", baseUrlId, username);
         List<CloudEndpoint> endpoints = this.getEndpointsForUser(username);
         CloudEndpoint endpoint = null;
         if (endpoints != null && endpoints.size() > 0) {
@@ -60,14 +69,17 @@ public class DefaultEndpointService implements EndpointService {
                 }
             }
         }
+        logger.debug("Got endpoint {} for user {}", baseUrlId, username);
         return endpoint;
     }
 
     public List<CloudEndpoint> getEndpointsForUser(String username) {
+        logger.debug("Getting endpoints for user {}", username);
         return this.endpointDao.getEndpointsForUser(username);
     }
 
     public void removeBaseUrlFromUser(int baseUrlId, String username) {
+        logger.debug("Removing baseurl {} from user {}", baseUrlId, username);
         this.endpointDao.removeBaseUrlFromUser(baseUrlId, username);
     }
 
