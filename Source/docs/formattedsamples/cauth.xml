@@ -4,7 +4,7 @@
 	<access_token 
 	   expires_in="3600" 
 	   id="ab48a9efdfedb23ty3494" />
-	<client xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
+	<client
         customerId="RACKSPACE" 
         clientId="ab4820dhcb39347" />
 </auth>

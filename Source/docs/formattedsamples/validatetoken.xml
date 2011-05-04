@@ -6,17 +6,5 @@
 	   id="ab48a9efdfedb23ty3494" />
 	<user 
 	    customerId="RCN-000-000-000"
-	    username="jqsmith">
-	    <groups>
-	        <clientGroup 
-	           customerId="RCN-000-000-000"
-	           clientId="ab48a9efdfedb23ty3494"
-	           type="Role" 
-	           name="Idm Admin" />
-	    </groups>
-	</user>
-	<client
-	    customerId="RCN-000-000-000" 
-	    clientId="ab4820dhcb39347">
-	</client>
+	    username="jqsmith" />
 </auth>

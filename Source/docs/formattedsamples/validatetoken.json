@@ -4,18 +4,7 @@
         "expires_in": "3600"
     },
     "user" : {
-        "groups": { "clientGroup": [
-              {
-                "customerId" : "RCN-000-000-000",
-                "clientId" : "ab48a9efdfedb23ty3494",
-                "name": "Admin",
-                "type": "RackspaceDefined"
-              }]},
           "username": "jqsmith",
-          "customerId": "RCN-000-000-000",
-     },
-     "client": { 
-          "clientId": "ab4820dhcb39347",
           "customerId": "RCN-000-000-000",
      }
 }

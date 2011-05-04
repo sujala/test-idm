@@ -10,7 +10,4 @@
 	    xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
 	    customerId="RCN-000-000-000"
 	    username="jqsmith" />
-	<client xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
-        customerId="RCN-000-000-000" 
-        clientId="ab4820dhcb39347" />
 </auth>
