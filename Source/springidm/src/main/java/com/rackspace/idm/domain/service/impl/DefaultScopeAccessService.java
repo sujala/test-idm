@@ -483,7 +483,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         grantedPerm.setPermissionId(perm.getPermissionId());
 
         grantedPerm = this.addPermissionToScopeAccess(sa.getUniqueId(),
-            grantedPerm);
+            grantedPerm); 
 
         return grantedPerm;
     }
