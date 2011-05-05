@@ -154,7 +154,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             conn = getAppConnPool().getConnection();
             final Filter filter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
             .build();
-            final SearchResult searchResult = conn.search(parentUniqueId, SearchScope.SUBORDINATE_SUBTREE, filter);
+            final SearchResult searchResult = conn.search(parentUniqueId, SearchScope.SUB, filter);
 
             final List<SearchResultEntry> searchEntries = searchResult.getSearchEntries();
             for (final SearchResultEntry searchResultEntry : searchEntries) {
