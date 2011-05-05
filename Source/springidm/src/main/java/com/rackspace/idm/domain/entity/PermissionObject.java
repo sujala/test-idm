@@ -189,5 +189,11 @@ public class PermissionObject implements Auditable {
         if (!StringUtils.isBlank(modified.getTitle())) {
             setTitle(modified.getTitle());
         }
+        if (modified.getEnabled() != null) {
+            setEnabled(modified.getEnabled());
+        }
+        if (modified.getGrantedByDefault()) {
+            setGrantedByDefault(modified.getGrantedByDefault());
+        }
     }
 }
