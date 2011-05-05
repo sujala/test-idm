@@ -62,7 +62,7 @@ public class CustomerUserServiceResource {
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
      * @param username username
-     * @param clientId   Client application ID
+     * @param serviceId  Service Id
      * @response.representation.204.doc Successful request
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
@@ -77,9 +77,9 @@ public class CustomerUserServiceResource {
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username,
-        @PathParam("clientId") String clientId) {
+        @PathParam("serviceId") String serviceId) {
 
-        logger.info("Removing service {} from user {}", clientId, username);
+        logger.info("Removing service {} from user {}", serviceId, username);
 
         ScopeAccessObject token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
@@ -90,19 +90,19 @@ public class CustomerUserServiceResource {
         // Customer IdM can add any service to user
         boolean authorized = authorizationService.authorizeRacker(token)
             || (authorizationService.authorizeRackspaceClient(token) && token
-                .getClientId().equalsIgnoreCase(clientId))
+                .getClientId().equalsIgnoreCase(serviceId))
             || (authorizationService.authorizeClient(token,
                 request.getMethod(), uriInfo) && token.getClientId()
-                .equalsIgnoreCase(clientId))
+                .equalsIgnoreCase(serviceId))
             || authorizationService.authorizeCustomerIdm(token);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        Client client = this.clientService.getById(clientId);
+        Client client = this.clientService.getById(serviceId);
 
         if (client == null) {
             String errMsg = String.format("Client %s not found",
-                clientId);
+                serviceId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
@@ -114,13 +114,13 @@ public class CustomerUserServiceResource {
             throw new NotFoundException(errMsg);
         }
 
-        ScopeAccessObject service = this.scopeAccessService.getScopeAccessForParentByClientId(user.getUniqueId(), clientId);
+        ScopeAccessObject service = this.scopeAccessService.getScopeAccessForParentByClientId(user.getUniqueId(), serviceId);
         
         if (service != null) {
             this.scopeAccessService.deleteScopeAccess(service);
         }
 
-        logger.info("Removed service {} from user {}", clientId, username);
+        logger.info("Removed service {} from user {}", serviceId, username);
 
         return Response.noContent().build();
     }
