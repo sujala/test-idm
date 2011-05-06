@@ -127,7 +127,7 @@ public class CustomerUserServicesResource {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        User user = this.userService.getUser(username);
+        User user = this.userService.checkAndGetUser(customerId, username);
         if (user == null) {
             String errMsg = String.format("User %s not found",
                 username);
