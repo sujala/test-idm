@@ -354,6 +354,7 @@ public class DefaultUserService implements UserService {
         User user = getUser(userName);
 
         if (user == null) {
+            logger.debug("No user found, returning null.");
             return null;
         }
 
@@ -361,6 +362,7 @@ public class DefaultUserService implements UserService {
             .getCustomerId());
 
         if (customer == null) {
+            logger.debug("No customer found, returning null");
             return null;
         }
 
@@ -378,10 +380,12 @@ public class DefaultUserService implements UserService {
             passwordExpirationDate = timeOfLastPwdChange
                 .plusDays(passwordRotationDurationInDays);
         }
+        logger
+            .debug("Password expiration date set: {}", passwordExpirationDate);
 
         return passwordExpirationDate;
     }
-    
+
     @Override
     public User checkAndGetUser(String customerId, String username) {
         User user = this.getUser(customerId, username);
@@ -393,31 +397,36 @@ public class DefaultUserService implements UserService {
         }
         return user;
     }
-    
+
     @Override
     public Clients getUserServices(User user) {
         if (user == null || user.getUniqueId() == null) {
-            throw new IllegalArgumentException("User cannont be null and must have uniqueID");
+            String errmsg = "Null User instance or is lacking uniqueID";
+            logger.debug(errmsg);
+            throw new IllegalArgumentException(errmsg);
         }
-        List<ScopeAccessObject> services = this.scopeAccessDao.getScopeAccessesByParent(user.getUniqueId());
-        
+        List<ScopeAccessObject> services = this.scopeAccessDao
+            .getScopeAccessesByParent(user.getUniqueId());
+
         List<Client> clientList = new ArrayList<Client>();
-        
+
         for (ScopeAccessObject service : services) {
             if (service instanceof UserScopeAccessObject) {
-                clientList.add(this.clientService.getById(service.getClientId()));
+                clientList
+                    .add(this.clientService.getById(service.getClientId()));
             }
         }
-        
+
         Clients clients = new Clients();
         clients.setClients(clientList);
         clients.setOffset(0);
         clients.setLimit(clientList.size());
         clients.setTotalRecords(clientList.size());
+        logger.debug("Found Clients: {}.", clients);
 
         return clients;
     }
-    
+
     private boolean isTrustedServer() {
         return config.getBoolean("ldap.server.trusted", false);
     }
