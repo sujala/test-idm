@@ -56,9 +56,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public void addRacker(Racker racker) {
         getLogger().debug("Adding racker - {}", racker);
         if (racker == null) {
-            getLogger().error("Null instance of Racer was passed");
-            throw new IllegalArgumentException(
-                "Null instance of Racker was passed");
+            String errmsg = "Null instance of Racer was passed";
+            getLogger().error(errmsg);
+            throw new IllegalArgumentException(errmsg);
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -71,7 +71,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             SearchScope.ONE, searchFilter, ATTR_NO_ATTRIBUTES);
 
         String userDN = new LdapDnBuilder(rackspace.getDN())
-        .addAttribute(ATTR_RACKER_ID, racker.getRackerId())
+            .addAttribute(ATTR_RACKER_ID, racker.getRackerId())
             .addAttribute(ATTR_OU, OU_PEOPLE_NAME).build();
 
         racker.setUniqueId(userDN);
@@ -91,9 +91,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public void addUser(User user, String customerUniqueId) {
         getLogger().debug("Adding user - {}", user);
         if (user == null) {
-            getLogger().error("Null instance of User was passed");
-            throw new IllegalArgumentException(
-                "Null instance of User was passed");
+            String errmsg = "Null instance of User was passed";
+            getLogger().error(errmsg);
+            throw new IllegalArgumentException(errmsg);
         }
 
         String userDN = new LdapDnBuilder(customerUniqueId)
@@ -132,12 +132,13 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         String password) {
         getLogger().debug("Authenticating User {}", username);
         if (StringUtils.isBlank(username)) {
-            getLogger().error("Null or Empty username parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty username parameter.");
+            String errmsg = "Null or Empty username parameter";
+            getLogger().error(errmsg);
+            throw new IllegalArgumentException(errmsg);
         }
 
         User user = getUserByUsername(username);
+        getLogger().debug("Found user {}, authenticating...", user);
         return authenticateByPassword(user, password);
     }
 
@@ -146,13 +147,13 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         String apiKey) {
         getLogger().debug("Authenticating User {} by API Key ", username);
         if (StringUtils.isBlank(username)) {
-            getLogger().error("Null or Empty username parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty username parameter.");
+            String errmsg = "Null or Empty username parameter";
+            getLogger().error(errmsg);
+            throw new IllegalArgumentException(errmsg);
         }
 
         User user = getUserByUsername(username);
-
+        getLogger().debug("Found user {}, authenticating...", user);
         return authenticateUserByApiKey(user, apiKey);
     }
 
@@ -162,7 +163,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Authenticating User with MossoId {}", mossoId);
 
         User user = getUserByMossoId(mossoId);
-
+        getLogger().debug("Found user {}, authenticating...", user);
         return authenticateUserByApiKey(user, apiKey);
     }
 
@@ -171,13 +172,13 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         String nastId, String apiKey) {
         getLogger().debug("Authenticating User with NastId {}", nastId);
         if (StringUtils.isBlank(nastId)) {
-            getLogger().error("Null or Empty NastId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty NastId parameter.");
+            String errmsg = "Null or Empty NastId parameter";
+            getLogger().error(errmsg);
+            throw new IllegalArgumentException(errmsg);
         }
 
         User user = getUserByNastId(nastId);
-
+        getLogger().debug("Found user {}, authenticating...", user);
         return authenticateUserByApiKey(user, apiKey);
     }
 
@@ -198,9 +199,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             audit.fail(errorMsg);
             throw new NotFoundException(errorMsg);
         }
+        getLogger().debug("Found Racker {}, deleting...", racker);
 
         this.deleteEntryAndSubtree(racker.getUniqueId(), audit);
-
         audit.succeed();
         getLogger().info("Deleted racker - {}", rackerId);
     }
@@ -222,6 +223,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             audit.fail(errorMsg);
             throw new NotFoundException(errorMsg);
         }
+        getLogger().debug("Found user {}, deleting... {}", user);
 
         this.deleteEntryAndSubtree(user.getUniqueId(), audit);
 
@@ -558,7 +560,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public void removeUsersFromClientGroup(ClientGroup group) {
 
         getLogger().debug("Doing search for users that belong to group {}",
-                group);
+            group);
 
         if (group == null) {
             String errMsg = "Null group passed in";
@@ -567,15 +569,15 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         Filter searchFilter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_MEMBER_OF, group.getUniqueId())
-                .addEqualAttribute(ATTR_OBJECT_CLASS,
-                        OBJECTCLASS_RACKSPACEPERSON).build();
+            .addEqualAttribute(ATTR_MEMBER_OF, group.getUniqueId())
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
 
         List<User> userList = new ArrayList<User>();
         SearchResult searchResult = null;
         try {
             SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
-                    searchFilter);
+                searchFilter);
             searchResult = getAppConnPool().search(request);
 
             for (SearchResultEntry entry : searchResult.getSearchEntries()) {
@@ -591,13 +593,13 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             getLogger().error(e.getMessage());
             throw new IllegalStateException(e);
         }
-        
+
         getLogger().debug("Found Users - {}", userList);
 
         List<Modification> mods = new ArrayList<Modification>();
         mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER_OF,
-                group.getUniqueId()));
-        
+            group.getUniqueId()));
+
         Audit audit = null;
         for (User user : userList) {
             audit = Audit.log(user).modify(mods);
@@ -612,7 +614,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         getLogger().info("Removed users from clientGroup {}", group);
     }
-    
+
     private void throwIfEmptyOldUser(User oldUser, User user)
         throws IllegalArgumentException {
         if (oldUser == null) {
