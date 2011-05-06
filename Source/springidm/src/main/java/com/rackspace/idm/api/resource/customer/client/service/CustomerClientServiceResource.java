@@ -107,11 +107,13 @@ public class CustomerClientServiceResource {
         po.setPermissionId(permissionId);
         
         PermissionObject perm = this.scopeAccessService.getPermissionForParent(client.getUniqueId(), po);
-        if (perm != null) {
-            return Response.ok().build();
+        if (perm == null) {
+            String errMsg = String.format("Client %s does not have permission %s", clientId, permissionId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
         }
         
-        return Response.status(404).build();
+        return Response.ok().build();
     }
 
    /**
