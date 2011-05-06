@@ -116,8 +116,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.ADD, ATTR_MEMBER_OF,
-            group.getUniqueId()));
+        mods.add(new Modification(ModificationType.ADD, ATTR_MEMBER_OF, group
+            .getUniqueId()));
 
         Audit audit = Audit.log(group).modify(mods);
 
@@ -149,6 +149,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         Client client = getClientByClientId(clientId);
 
         if (client == null) {
+            getLogger().debug("Client {} could not be found.", clientId);
             return new ClientAuthenticationResult(null, false);
         }
 
@@ -167,8 +168,10 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             throw new IllegalStateException(e);
         }
 
-        return new ClientAuthenticationResult(client,
-            ResultCode.SUCCESS.equals(result.getResultCode()));
+        boolean isAuthenticated = ResultCode.SUCCESS.equals(result
+            .getResultCode());
+        getLogger().debug("Client {} authenticated == {}", isAuthenticated);
+        return new ClientAuthenticationResult(client, isAuthenticated);
     }
 
     @Override
@@ -212,7 +215,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             clients.add(getClient(entry));
         }
 
-        getLogger().debug("Found clients {}", clients);
+        getLogger().debug("Found {} clients.", clients.size());
 
         return clients;
     }
@@ -329,6 +332,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             group = getClientGroup(entry);
         }
 
+        getLogger().debug("Found client group {}", group);
+
         return group;
     }
 
@@ -376,6 +381,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 groups.add(getClientGroup(entry));
             }
         }
+
+        getLogger().debug("Found {} client groups.", groups.size());
+
         return groups;
     }
 
@@ -398,8 +406,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         Clients clients = getMultipleClients(searchFilter, offset, limit);
 
-        getLogger().debug("Found clients {} for customer {}", clients,
-            customerId);
+        getLogger().debug("Found {} clients for customer {}",
+            clients.getTotalRecords(), customerId);
 
         return clients;
     }
@@ -413,7 +421,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             inum = customerInum + InumHelper.getRandomInum(1);
             client = getClientByInum(inum);
         } while (client != null);
-
+        getLogger().debug("Returning inum {}.", inum);
         return inum;
     }
 
@@ -475,6 +483,10 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         boolean locked) {
         Clients clients = this.findFirst100ByCustomerIdAndLock(customerId,
             !locked);
+        String msg = String.format(
+            "Setting lock status to %s for %s clients under customer %s",
+            locked, clients.getTotalRecords(), customerId);
+        getLogger().debug(msg);
         if (clients.getClients() != null && clients.getClients().size() > 0) {
             for (Client client : clients.getClients()) {
                 client.setLocked(locked);
@@ -482,6 +494,9 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             }
         }
         if (clients.getTotalRecords() > 0) {
+            getLogger().debug(
+                "Attempting lookup of additional users under customer {}.",
+                customerId);
             this.setClientsLockedFlagByCustomerId(customerId, locked);
         }
     }
@@ -597,7 +612,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
-
+        getLogger().debug("Found {} add attributes for client group {}.",
+            attributes.length, group);
         return attributes;
     }
 
@@ -651,7 +667,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
-
+        getLogger().debug("Found {} attributes for client {}.",
+            attributes.length, client);
         return attributes;
     }
 
@@ -687,6 +704,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 .getAttributeValueAsBoolean(ATTR_LOCKED));
         }
 
+        getLogger().debug("Materialized Client object {}.", client);
         return client;
     }
 
@@ -698,6 +716,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         clientGroup.setCustomerId(resultEntry
             .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
         clientGroup.setType(resultEntry.getAttributeValue(ATTR_GROUP_TYPE));
+        getLogger().debug("Materialized client group {}.", clientGroup);
+
         return clientGroup;
     }
 
@@ -732,7 +752,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             }
         }
 
-        getLogger().debug("Found clients {}", clientList);
+        getLogger().debug("Found {} clients.", clientList.size());
 
         Clients clients = new Clients();
 
@@ -796,6 +816,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_SOFT_DELETED, String.valueOf(cNew.isSoftDeleted())));
         }
+
+        getLogger().debug("Found {} modifications.", mods.size());
 
         return mods;
     }
