@@ -492,7 +492,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .build();
 
         User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
+        getLogger().debug("Unique user search attempt yielded: {}", user);
         return user == null;
     }
 
@@ -501,6 +501,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         boolean isLocked) {
         Users users = this.findFirst100ByCustomerIdAndLock(customerId,
             !isLocked);
+        String msg = String.format(
+            "Setting lock status to %s for %s users under customer %s",
+            isLocked, users.getTotalRecords(), customerId);
+        getLogger().debug(msg);
         if (users.getUsers() != null && users.getUsers().size() > 0) {
             for (User user : users.getUsers()) {
                 user.setLocked(isLocked);
@@ -508,6 +512,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             }
         }
         if (users.getTotalRecords() > 0) {
+            getLogger().debug(
+                "Attempting lookup of additional users under customer {}.",
+                customerId);
             this.setUsersLockedFlagByCustomerId(customerId, isLocked);
         }
     }
