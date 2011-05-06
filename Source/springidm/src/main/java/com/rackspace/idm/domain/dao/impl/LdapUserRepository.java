@@ -318,6 +318,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             user = getUserByInum(inum);
         } while (user != null);
 
+        getLogger().debug("Generated a new inum {}", inum);
+
         return inum;
     }
 
