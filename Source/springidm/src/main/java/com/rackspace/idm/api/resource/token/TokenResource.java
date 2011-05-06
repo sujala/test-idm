@@ -163,11 +163,12 @@ public class TokenResource {
             throw new NotFoundException(errorMsg);
         }
 
-        if(scopeAccess instanceof hasAccessToken) {
-            boolean expired = ((hasAccessToken)scopeAccess).isAccessTokenExpired(new DateTime());
-            if(expired) {
-                String errorMsg = String
-                .format("Token expired : %s", tokenString);
+        if (scopeAccess instanceof hasAccessToken) {
+            boolean expired = ((hasAccessToken) scopeAccess)
+                .isAccessTokenExpired(new DateTime());
+            if (expired) {
+                String errorMsg = String.format("Token expired : %s",
+                    tokenString);
                 logger.warn(errorMsg);
                 throw new NotFoundException(errorMsg);
             }
@@ -254,6 +255,9 @@ public class TokenResource {
      * Check if the given access token as the specified permission.
      *
      * @param authHeader HTTP Authorization header for authenticating the calling client.
+     * @param tokenString The token to check for permission
+     * @param serviceId The serviceId for the service that defines the permission
+     * @param permissionId The permission to check
      * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}auth
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}notFound
@@ -277,23 +281,25 @@ public class TokenResource {
         ScopeAccessObject token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
-        boolean authorized = token instanceof ClientScopeAccessObject && serviceId.equals(token.getClientId());
+        boolean authorized = token instanceof ClientScopeAccessObject
+            && serviceId.equals(token.getClientId());
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         ScopeAccessObject tokenToCheck = this.scopeAccessService
-            .getAccessTokenByAuthHeader(tokenString);
+            .getScopeAccessByAccessToken(tokenString);
 
         if (tokenToCheck == null) {
             throw new NotFoundException(String.format("Token %s not found",
                 tokenString));
         }
-        
-        if(tokenToCheck instanceof hasAccessToken) {
-            boolean expired = ((hasAccessToken)tokenToCheck).isAccessTokenExpired(new DateTime());
-            if(expired) {
-                String errorMsg = String
-                .format("Token expired : %s", tokenString);
+
+        if (tokenToCheck instanceof hasAccessToken) {
+            boolean expired = ((hasAccessToken) tokenToCheck)
+                .isAccessTokenExpired(new DateTime());
+            if (expired) {
+                String errorMsg = String.format("Token expired : %s",
+                    tokenString);
                 logger.warn(errorMsg);
                 throw new NotFoundException(errorMsg);
             }
@@ -303,13 +309,14 @@ public class TokenResource {
         permission.setClientId(token.getClientId());
         permission.setCustomerId(token.getClientRCN());
         permission.setPermissionId(permissionId);
-        
-        PermissionObject defined = this.scopeAccessService.getPermissionForParent(token.getUniqueId(), permission);
-        
+
+        PermissionObject defined = this.scopeAccessService
+            .getPermissionForParent(token.getUniqueId(), permission);
+
         if (defined == null || !defined.getEnabled()) {
-            return Response.status(404).build();
+            throw new NotFoundException();
         }
-        
+
         if (tokenToCheck instanceof UserScopeAccessObject) {
             if (defined.getGrantedByDefault()) {
                 return Response.ok().build();
@@ -321,7 +328,7 @@ public class TokenResource {
             return Response.ok().build();
         }
 
-        return Response.status(404).build();
+        throw new NotFoundException();
     }
 
     // private funcs
