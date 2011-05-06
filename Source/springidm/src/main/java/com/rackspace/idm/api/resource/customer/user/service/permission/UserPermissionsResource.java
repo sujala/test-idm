@@ -110,7 +110,9 @@ public class UserPermissionsResource {
         if (found) {
             return Response.ok().build();
         } else {
-            return Response.status(404).build();
+            String errMsg = String.format("User %s does not have permission %s", username, permissionId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
         }
     }
 
