@@ -57,4 +57,9 @@ public class ScopeAccessObject implements Auditable {
         final String format = "ScopeAccess(clientId=%s)";
         return String.format(format, getClientId());
     }
+    
+    @Override
+    public String toString() {
+        return getAuditContext() ;
+    }
 }

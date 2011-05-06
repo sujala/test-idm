@@ -22,4 +22,4 @@ WARN
 	
 ERROR
 	Environment and System related failures
-	Memcached or LDAP Server issues
+	LDAP Server issues
