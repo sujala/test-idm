@@ -213,7 +213,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     }
 
     @Test
-    public void shouldGrantPermission() {
+    public void shouldGrantPermissionToClient() {
         Client client = getFakeClient();
         ScopeAccessObject sa = getFakeScopeAccess();
         PermissionObject perm = getFakePermission("fakePermissionObjectId");
@@ -247,10 +247,62 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
         EasyMock.replay(scopeAccessDao, mockClientDao);
 
-        scopeAccessService.grantPermissionToClient(client.getUniqueId(), perm);
+        PermissionObject returnedPerm = scopeAccessService.grantPermissionToClient(client.getUniqueId(), perm);
+        
+        Assert.assertEquals(grantedPerm, returnedPerm);
+        Assert.assertEquals(grantedPerm.getClientId(), returnedPerm.getClientId());
+        Assert.assertEquals(grantedPerm.getCustomerId(), returnedPerm.getCustomerId());
+        Assert.assertEquals(grantedPerm.getPermissionId(), returnedPerm.getPermissionId());
 
         EasyMock.verify(scopeAccessDao, mockClientDao);
     }
+    
+    @Test
+    public void shouldGrantPermissionToUser() {
+        User user = getFakeUser();
+        Client client = getFakeClient();
+        UserScopeAccessObject sa = getFakeUserScopeAccess();
+        PermissionObject perm = getFakePermission("fakePermissionObjectId");
+
+        EasyMock.expect(
+            mockClientDao.getClientByCustomerIdAndClientId(
+                perm.getCustomerId(), perm.getClientId())).andReturn(client);
+
+        EasyMock.expect(mockClientDao.getClientByClientId(perm.getClientId()))
+            .andReturn(client);
+        
+        PermissionObject grantedPerm = new PermissionObject();
+        grantedPerm.setClientId(perm.getClientId());
+        grantedPerm.setCustomerId(perm.getCustomerId());
+        grantedPerm.setPermissionId(perm.getPermissionId());
+
+        EasyMock.expect(
+            scopeAccessDao.getPermissionByParentAndPermissionId(
+                client.getUniqueId(), perm)).andReturn(perm);
+
+        EasyMock.expect(
+            scopeAccessDao.getPermissionByParentAndPermissionId(
+                client.getUniqueId(), grantedPerm)).andReturn(grantedPerm);
+
+        EasyMock.expect(
+            scopeAccessDao.getScopeAccessForParentByClientId(
+                user.getUniqueId(), client.getClientId())).andReturn(sa);
+
+        EasyMock.expect(
+            scopeAccessDao.grantPermission(sa.getUniqueId(), grantedPerm))
+            .andReturn(grantedPerm);
+
+        EasyMock.replay(scopeAccessDao, mockClientDao);
+
+        PermissionObject returnedPerm = scopeAccessService.grantPermissionToUser(user, perm);
+        
+        Assert.assertEquals(grantedPerm, returnedPerm);
+        Assert.assertEquals(grantedPerm.getClientId(), returnedPerm.getClientId());
+        Assert.assertEquals(grantedPerm.getCustomerId(), returnedPerm.getCustomerId());
+        Assert.assertEquals(grantedPerm.getPermissionId(), returnedPerm.getPermissionId());
+
+        EasyMock.verify(scopeAccessDao, mockClientDao);
+    }   
 
     @Test(expected = NotFoundException.class)
     public void shouldNotGrantPermissionIfClientIsNotFound() {
