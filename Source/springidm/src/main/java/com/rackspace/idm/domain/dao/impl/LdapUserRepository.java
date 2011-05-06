@@ -521,12 +521,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     @Override
     public void updateUser(User user, boolean hasSelfUpdatedPassword) {
-        getLogger().info("Updating user {}", user);
+        getLogger().info("Updating user to {}", user);
 
         throwIfEmptyUsername(user);
 
         User oldUser = getUserByUsername(user.getUsername());
-
+        getLogger().debug("Found existing user {}", oldUser);
         throwIfEmptyOldUser(oldUser, user);
 
         Audit audit = Audit.log(user);
@@ -603,7 +603,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalStateException(e);
         }
 
-        getLogger().debug("Found Users - {}", userList);
+        getLogger().debug("Found {} Users", userList.size());
 
         List<Modification> mods = new ArrayList<Modification>();
         mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER_OF,
@@ -758,7 +758,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         Users users = getMultipleUsers(searchFilter,
             ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
 
-        getLogger().debug("Found Users - {}", users);
+        getLogger().debug("Found {} Users", users.getTotalRecords());
 
         return users;
     }
@@ -884,7 +884,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
-
+        getLogger().debug("Found {} attributes to add", attributes.length);
         return attributes;
     }
 
@@ -937,7 +937,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         users.setOffset(offset);
         users.setTotalRecords(contentCount);
         users.setUsers(userList);
-
+        getLogger().debug("Returning {} Users.", users.getTotalRecords());
         return users;
     }
 
@@ -947,6 +947,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         atts.add(new Attribute(ATTR_OBJECT_CLASS,
             ATTR_RACKER_OBJECT_CLASS_VALUES));
         atts.add(new Attribute(ATTR_RACKER_ID, racker.getRackerId()));
+        getLogger().debug("Adding Racker attribute {}", racker.getRackerId());
         return atts.toArray(new Attribute[0]);
     }
 
@@ -1070,7 +1071,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             passwordFailureLocked = passwordFailureDateTime.isAfterNow();
         }
         user.setMaxLoginFailuresExceded(passwordFailureLocked);
-
+        getLogger().debug("Built user object {}.", user);
         return user;
     }
 
@@ -1082,6 +1083,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             getLogger().error(errMsg);
             throw new UserDisabledException(errMsg);
         }
+        getLogger().debug("User {} authenticated == {}", user.getUsername(),
+            isAuthenticated);
 
         return new UserAuthenticationResult(user, isAuthenticated);
     }
@@ -1300,6 +1303,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                     ATTR_MOSSO_ID, String.valueOf(uNew.getMossoId())));
             }
         }
+
+        getLogger().debug("Found {} mods.", mods.size());
 
         return mods;
     }
