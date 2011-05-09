@@ -1743,7 +1743,7 @@
       </section>
     </section>
     <section>
-      <title> Authentication Operations </title>
+      <title>Authentication Operations </title>
       <section>
         <title>Authenticate a user by Mosso ID</title>
         <informaltable rules="all">
