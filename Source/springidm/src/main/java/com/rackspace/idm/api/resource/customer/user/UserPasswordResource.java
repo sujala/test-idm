@@ -24,9 +24,9 @@ import com.rackspace.idm.api.converter.PasswordConverter;
 import com.rackspace.idm.api.converter.TokenConverter;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
@@ -90,7 +90,7 @@ public class UserPasswordResource {
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Specific Clients are authorized
@@ -128,12 +128,12 @@ public class UserPasswordResource {
         @PathParam("username") String username) {
         logger.debug("Reseting Password for User: {}", username);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
-        boolean isSelfUpdate = (token instanceof UserScopeAccessObject && username
-            .equals(((UserScopeAccessObject) token).getUsername()));
+        boolean isSelfUpdate = (token instanceof UserScopeAccess && username
+            .equals(((UserScopeAccess) token).getUsername()));
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeClient(token, request.getMethod(),
                 uriInfo)
@@ -181,7 +181,7 @@ public class UserPasswordResource {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         boolean authorized = false;
@@ -241,7 +241,7 @@ public class UserPasswordResource {
         @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Only Rackspace Clients and Specific Clients are authorized

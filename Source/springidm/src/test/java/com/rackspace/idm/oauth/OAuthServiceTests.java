@@ -20,14 +20,14 @@ import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.OAuthGrantType;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
-import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.RackerScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserCredential;
 import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
-import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
@@ -107,7 +107,7 @@ public class OAuthServiceTests {
     @Test
     public void shouldRevokeAccessToken() {
 
-        final UserScopeAccessObject usa = getFakeUserScopeAccess();
+        final UserScopeAccess usa = getFakeUserScopeAccess();
         final ClientScopeAccessObject csa = getFakeClientScopeAccess();
         EasyMock.expect(
                 mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
@@ -117,7 +117,7 @@ public class OAuthServiceTests {
                 .andReturn(csa);
         EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(csa))
         .andReturn(true);
-        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccessObject.class));
+        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
 
         EasyMock.replay(mockScopeAccessService, mockAuthorizationService);
         oauthService.revokeAccessToken(tokenVal, tokenVal);
@@ -138,7 +138,7 @@ public class OAuthServiceTests {
                 .andReturn(csa);
         EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(csa))
         .andReturn(true);
-        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccessObject.class));
+        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
 
         EasyMock.replay(mockScopeAccessService, mockAuthorizationService);
         oauthService.revokeAccessToken(tokenVal, tokenVal);
@@ -149,7 +149,7 @@ public class OAuthServiceTests {
     @Test(expected = IllegalStateException.class)
     public void shouldNotRevokeAccessTokenForRequestingTokenNotFound() {
 
-        final UserScopeAccessObject usa = getFakeUserScopeAccess();
+        final UserScopeAccess usa = getFakeUserScopeAccess();
         final ClientScopeAccessObject csa = getFakeClientScopeAccess();
         EasyMock.expect(
                 mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
@@ -159,7 +159,7 @@ public class OAuthServiceTests {
                 .andReturn(null);
         EasyMock.expect(mockAuthorizationService.authorizeCustomerIdm(csa))
         .andReturn(true);
-        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccessObject.class));
+        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
 
         EasyMock.replay(mockScopeAccessService, mockAuthorizationService);
         oauthService.revokeAccessToken(tokenVal, tokenVal);
@@ -170,7 +170,7 @@ public class OAuthServiceTests {
     @Test(expected = ForbiddenException.class)
     public void shouldNotRevokeAccessTokenForForbidden() {
 
-        final UserScopeAccessObject usa = getFakeUserScopeAccess();
+        final UserScopeAccess usa = getFakeUserScopeAccess();
         final ClientScopeAccessObject csa = getFakeClientScopeAccess();
         EasyMock.expect(
                 mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
@@ -182,7 +182,7 @@ public class OAuthServiceTests {
         .andReturn(false);
         EasyMock.expect(mockAuthorizationService.authorizeAsRequestorOrOwner(usa, csa))
         .andReturn(false);
-        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccessObject.class));
+        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
 
         EasyMock.replay(mockScopeAccessService, mockAuthorizationService);
         oauthService.revokeAccessToken(tokenVal, tokenVal);
@@ -192,7 +192,7 @@ public class OAuthServiceTests {
 
     @Test
     public void shouldAssertTokenIsExpired() throws Exception {
-        final ScopeAccessObject sa = getFakeUserScopeAccess();
+        final ScopeAccess sa = getFakeUserScopeAccess();
         final boolean isExpired = ((hasAccessToken) sa)
         .isAccessTokenExpired(new DateTime().plusDays(2));
         Assert.assertTrue(isExpired);
@@ -200,7 +200,7 @@ public class OAuthServiceTests {
 
     @Test
     public void shouldPassAuthenticationWithNotExpiredToken() throws Exception {
-        final ScopeAccessObject sa = getFakeUserScopeAccess();
+        final ScopeAccess sa = getFakeUserScopeAccess();
         final boolean isExpired = ((hasAccessToken) sa)
         .isAccessTokenExpired(new DateTime());
         Assert.assertFalse(isExpired);
@@ -228,7 +228,7 @@ public class OAuthServiceTests {
                         user.getUniqueId(), testClient.getClientId())).andReturn(
                                 getFakeUserScopeAccess());
         mockScopeAccessService.updateScopeAccess(EasyMock
-                .anyObject(ScopeAccessObject.class));
+                .anyObject(ScopeAccess.class));
 
         EasyMock
         .expect(mockUserService.getUserPasswordExpirationDate(username))
@@ -242,12 +242,12 @@ public class OAuthServiceTests {
         EasyMock.replay(mockUserService, mockClientService,
                 mockScopeAccessService);
 
-        final ScopeAccessObject authData = oauthService.getTokens(grantType,
+        final ScopeAccess authData = oauthService.getTokens(grantType,
                 authCredentials, currentTime);
 
-        Assert.assertNotNull(((UserScopeAccessObject) authData)
+        Assert.assertNotNull(((UserScopeAccess) authData)
                 .getAccessTokenString());
-        Assert.assertNotNull(((UserScopeAccessObject) authData)
+        Assert.assertNotNull(((UserScopeAccess) authData)
                 .getRefreshTokenString());
 
         EasyMock.verify(mockUserService, mockClientService,
@@ -288,7 +288,7 @@ public class OAuthServiceTests {
         EasyMock.replay(mockUserService, mockClientService,
                 mockScopeAccessService);
 
-        final ScopeAccessObject authData = oauthService.getTokens(grantType,
+        final ScopeAccess authData = oauthService.getTokens(grantType,
                 authCredentials, currentTime);
 
         Assert.assertNotNull(authData);
@@ -315,10 +315,10 @@ public class OAuthServiceTests {
                 mockScopeAccessService.getClientScopeAccessForClientId(uniqueId,
                         clientId)).andReturn(getFakeClientScopeAccess());
         mockScopeAccessService.updateScopeAccess(EasyMock
-                .anyObject(ScopeAccessObject.class));
+                .anyObject(ScopeAccess.class));
 
         EasyMock.replay(mockClientService, mockScopeAccessService);
-        final ScopeAccessObject authData = oauthService.getTokens(grantType,
+        final ScopeAccess authData = oauthService.getTokens(grantType,
                 authCredentials, currentTime);
 
         Assert.assertNotNull(authData);
@@ -345,18 +345,18 @@ public class OAuthServiceTests {
                 .getScopeAccessByRefreshToken(refreshTokenVal)).andReturn(
                         getFakeUserScopeAccess());
         mockScopeAccessService.updateScopeAccess(EasyMock
-                .anyObject(ScopeAccessObject.class));
+                .anyObject(ScopeAccess.class));
 
         EasyMock.expect(mockUserService.getUser(username)).andReturn(
                 getFakeUser());
         EasyMock.replay(mockScopeAccessService, mockClientService,
                 mockUserService);
 
-        final ScopeAccessObject authData = oauthService.getTokens(grantType,
+        final ScopeAccess authData = oauthService.getTokens(grantType,
                 authCredentials, currentTime);
 
         Assert.assertNotNull(authData);
-        Assert.assertTrue(authData instanceof UserScopeAccessObject);
+        Assert.assertTrue(authData instanceof UserScopeAccess);
 
         EasyMock.verify(mockScopeAccessService, mockClientService);
     }
@@ -364,7 +364,7 @@ public class OAuthServiceTests {
     @Test
     public void shouldCreateNewAccessTokenWhenExpired() throws Exception {
 
-        final UserScopeAccessObject usa = getFakeUserScopeAccess();
+        final UserScopeAccess usa = getFakeUserScopeAccess();
         usa.setAccessTokenExp(new DateTime().minusDays(1).toDate());
 
         final OAuthGrantType grantType = OAuthGrantType.PASSWORD;
@@ -385,7 +385,7 @@ public class OAuthServiceTests {
                 mockScopeAccessService.getUserScopeAccessForClientId(
                         user.getUniqueId(), testClient.getClientId())).andReturn(usa);
         mockScopeAccessService.updateScopeAccess(EasyMock
-                .anyObject(ScopeAccessObject.class));
+                .anyObject(ScopeAccess.class));
 
         EasyMock
         .expect(mockUserService.getUserPasswordExpirationDate(username))
@@ -399,14 +399,14 @@ public class OAuthServiceTests {
         EasyMock.replay(mockUserService, mockClientService,
                 mockScopeAccessService);
 
-        final ScopeAccessObject authData = oauthService.getTokens(grantType,
+        final ScopeAccess authData = oauthService.getTokens(grantType,
                 authCredentials, currentTime);
 
-        Assert.assertNotNull(((UserScopeAccessObject) authData)
+        Assert.assertNotNull(((UserScopeAccess) authData)
                 .getAccessTokenString());
-        Assert.assertNotNull(((UserScopeAccessObject) authData)
+        Assert.assertNotNull(((UserScopeAccess) authData)
                 .getRefreshTokenString());
-        Assert.assertTrue(((UserScopeAccessObject) authData)
+        Assert.assertTrue(((UserScopeAccess) authData)
                 .getAccessTokenExp().after(new Date()));
 
         EasyMock.verify(mockUserService, mockClientService,
@@ -442,7 +442,7 @@ public class OAuthServiceTests {
 
         EasyMock.replay(mockUserService, mockClientService);
 
-        final ScopeAccessObject authData = oauthService.getTokens(grantType,
+        final ScopeAccess authData = oauthService.getTokens(grantType,
                 authCredentials, currentTime);
 
         Assert.assertNull(authData);
@@ -453,7 +453,7 @@ public class OAuthServiceTests {
     @Test(expected = NotAuthenticatedException.class)
     public void shouldNotGetAccessTokenIfInvalidRefreshToken() {
 
-        final UserScopeAccessObject usa = getFakeUserScopeAccess();
+        final UserScopeAccess usa = getFakeUserScopeAccess();
         usa.setRefreshTokenExp(new DateTime().minusDays(1).toDate());
 
         final OAuthGrantType grantType = OAuthGrantType.REFRESH_TOKEN;
@@ -469,17 +469,17 @@ public class OAuthServiceTests {
                 mockScopeAccessService
                 .getScopeAccessByRefreshToken(refreshTokenVal)).andReturn(null);
         mockScopeAccessService.updateScopeAccess(EasyMock
-                .anyObject(ScopeAccessObject.class));
+                .anyObject(ScopeAccess.class));
         EasyMock.expect(mockUserService.getUser(username)).andReturn(
                 getFakeUser());
         EasyMock.replay(mockScopeAccessService, mockClientService,
                 mockUserService);
 
-        final ScopeAccessObject authData = oauthService.getTokens(grantType,
+        final ScopeAccess authData = oauthService.getTokens(grantType,
                 authCredentials, currentTime);
 
         Assert.assertNotNull(authData);
-        Assert.assertTrue(authData instanceof UserScopeAccessObject);
+        Assert.assertTrue(authData instanceof UserScopeAccess);
 
         EasyMock.verify(mockScopeAccessService, mockClientService);
     }
@@ -487,7 +487,7 @@ public class OAuthServiceTests {
     @Test(expected = NotAuthenticatedException.class)
     public void shouldNotGetAccessTokenIfRefreshTokenIsExpired() {
 
-        final UserScopeAccessObject usa = getFakeUserScopeAccess();
+        final UserScopeAccess usa = getFakeUserScopeAccess();
         usa.setRefreshTokenExp(new DateTime().minusDays(1).toDate());
 
         final OAuthGrantType grantType = OAuthGrantType.REFRESH_TOKEN;
@@ -503,14 +503,14 @@ public class OAuthServiceTests {
                 mockScopeAccessService
                 .getScopeAccessByRefreshToken(refreshTokenVal)).andReturn(usa);
         mockScopeAccessService.updateScopeAccess(EasyMock
-                .anyObject(ScopeAccessObject.class));
+                .anyObject(ScopeAccess.class));
         EasyMock.replay(mockScopeAccessService, mockClientService);
 
-        final ScopeAccessObject authData = oauthService.getTokens(grantType,
+        final ScopeAccess authData = oauthService.getTokens(grantType,
                 authCredentials, currentTime);
 
         Assert.assertNotNull(authData);
-        Assert.assertTrue(authData instanceof UserScopeAccessObject);
+        Assert.assertTrue(authData instanceof UserScopeAccess);
 
         EasyMock.verify(mockScopeAccessService, mockClientService);
     }
@@ -521,7 +521,7 @@ public class OAuthServiceTests {
         final User user = getFakeUser();
         user.setLocked(true);
 
-        final UserScopeAccessObject usa = getFakeUserScopeAccess();
+        final UserScopeAccess usa = getFakeUserScopeAccess();
 
         final OAuthGrantType grantType = OAuthGrantType.REFRESH_TOKEN;
         final AuthCredentials authCredentials = getTestAuthCredentials();
@@ -536,17 +536,17 @@ public class OAuthServiceTests {
                 mockScopeAccessService
                 .getScopeAccessByRefreshToken(refreshTokenVal)).andReturn(usa);
         mockScopeAccessService.updateScopeAccess(EasyMock
-                .anyObject(ScopeAccessObject.class));
+                .anyObject(ScopeAccess.class));
 
         EasyMock.expect(mockUserService.getUser(username)).andReturn(user);
         EasyMock.replay(mockScopeAccessService, mockClientService,
                 mockUserService);
 
-        final ScopeAccessObject authData = oauthService.getTokens(grantType,
+        final ScopeAccess authData = oauthService.getTokens(grantType,
                 authCredentials, currentTime);
 
         Assert.assertNotNull(authData);
-        Assert.assertTrue(authData instanceof UserScopeAccessObject);
+        Assert.assertTrue(authData instanceof UserScopeAccess);
 
         EasyMock.verify(mockScopeAccessService, mockClientService,
                 mockUserService);
@@ -719,8 +719,8 @@ public class OAuthServiceTests {
     // mockClientService, mockRefreshTokenService);
     // }
 
-    private UserScopeAccessObject getFakeUserScopeAccess() {
-        final UserScopeAccessObject usa = new UserScopeAccessObject();
+    private UserScopeAccess getFakeUserScopeAccess() {
+        final UserScopeAccess usa = new UserScopeAccess();
         usa.setAccessTokenString(tokenVal);
         usa.setAccessTokenExp(new DateTime().plusDays(1).toDate());
         usa.setRefreshTokenString(refreshTokenVal);
@@ -741,8 +741,8 @@ public class OAuthServiceTests {
         return csa;
     }
 
-    private RackerScopeAccessObject getFakeRackerScopeAcces() {
-        final RackerScopeAccessObject csa = new RackerScopeAccessObject();
+    private RackerScopeAccess getFakeRackerScopeAcces() {
+        final RackerScopeAccess csa = new RackerScopeAccess();
         csa.setAccessTokenString(tokenVal);
         csa.setAccessTokenExp(new DateTime().plusDays(1).toDate());
         csa.setRefreshTokenString(refreshTokenVal);

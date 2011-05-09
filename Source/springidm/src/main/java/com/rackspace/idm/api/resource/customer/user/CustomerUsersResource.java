@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.AbstractCustomerConsumer;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -100,7 +100,7 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
 
         logger.debug("Getting Customer Users: {}", customerId);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
@@ -144,7 +144,7 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
@@ -236,7 +236,7 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("rpn") String rpn) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients, Admins and User's are

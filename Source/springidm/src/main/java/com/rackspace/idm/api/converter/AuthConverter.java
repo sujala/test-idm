@@ -11,9 +11,9 @@ import org.joda.time.DateTime;
 
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
-import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
-import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.RackerScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.entity.hasRefreshToken;
 import com.rackspace.idm.jaxb.CloudAuth;
@@ -38,7 +38,7 @@ public class AuthConverter {
         this.endpointConverter = endpointConverter;
     }
 
-    public com.rackspace.idm.jaxb.Auth toAuthDataJaxb(ScopeAccessObject scopeAccess) {
+    public com.rackspace.idm.jaxb.Auth toAuthDataJaxb(ScopeAccess scopeAccess) {
         com.rackspace.idm.jaxb.Auth authJaxb = of.createAuth();
 
         DateTime passwordExpirationDate = null;
@@ -61,8 +61,8 @@ public class AuthConverter {
                 .getClientId(), scopeAccess.getClientRCN()));
         }
 
-        if (scopeAccess instanceof UserScopeAccessObject) {
-            UserScopeAccessObject userScopeAccess = (UserScopeAccessObject) scopeAccess;
+        if (scopeAccess instanceof UserScopeAccess) {
+            UserScopeAccess userScopeAccess = (UserScopeAccess) scopeAccess;
             passwordExpirationDate = userScopeAccess.getUserPasswordExpirationDate();
             
             if(userScopeAccess.getUsername() != null) {
@@ -71,8 +71,8 @@ public class AuthConverter {
             }
         }
         
-        if (scopeAccess instanceof RackerScopeAccessObject) {
-            RackerScopeAccessObject rackerScopeAccess = (RackerScopeAccessObject) scopeAccess;
+        if (scopeAccess instanceof RackerScopeAccess) {
+            RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;
             
             if(rackerScopeAccess.getRackerId() != null) {
                 authJaxb.setRacker(userConverter.toRackerJaxb(rackerScopeAccess.getRackerId()));
@@ -109,7 +109,7 @@ public class AuthConverter {
         return authJaxb;
     }
 
-    public CloudAuth toCloudAuthJaxb(UserScopeAccessObject usa, List<CloudEndpoint> endpoints) {
+    public CloudAuth toCloudAuthJaxb(UserScopeAccess usa, List<CloudEndpoint> endpoints) {
         CloudAuth auth = of.createCloudAuth();
         
         if (usa.getAccessTokenString() != null) {

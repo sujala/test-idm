@@ -20,8 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.PermissionObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -80,7 +80,7 @@ public class CustomerClientServiceResource {
         @PathParam("serviceId") String serviceId,
         @PathParam("permissionId") String permissionId) {
         
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
         
         // Rackers can check any permissions granted to a client
@@ -102,11 +102,11 @@ public class CustomerClientServiceResource {
             throw new NotFoundException(errMsg);
         }
         
-        PermissionObject po = new PermissionObject();
+        PermissionEntity po = new PermissionEntity();
         po.setClientId(serviceId);
         po.setPermissionId(permissionId);
         
-        PermissionObject perm = this.scopeAccessService.getPermissionForParent(client.getUniqueId(), po);
+        PermissionEntity perm = this.scopeAccessService.getPermissionForParent(client.getUniqueId(), po);
         if (perm == null) {
             String errMsg = String.format("Client %s does not have permission %s", clientId, permissionId);
             logger.warn(errMsg);
@@ -149,7 +149,7 @@ public class CustomerClientServiceResource {
         }
 
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Rackers can add any permission to a client
@@ -173,7 +173,7 @@ public class CustomerClientServiceResource {
         }
 
         com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
-        PermissionObject filter = new PermissionObject();
+        PermissionEntity filter = new PermissionEntity();
         filter.setClientId(serviceId);
         filter.setPermissionId(permission.getPermissionId());
 
@@ -191,14 +191,14 @@ public class CustomerClientServiceResource {
             throw new NotFoundException(errMsg);
         }
         
-        PermissionObject defined = this.scopeAccessService.getPermissionForParent(grantingClient.getUniqueId(), filter);
+        PermissionEntity defined = this.scopeAccessService.getPermissionForParent(grantingClient.getUniqueId(), filter);
         if (defined == null) {
             String errMsg = String.format("Permission %s not found", permission.getPermissionId());
             logger.info(errMsg);
             throw new NotFoundException(errMsg);
         }
         
-        PermissionObject granted = new PermissionObject();
+        PermissionEntity granted = new PermissionEntity();
         granted.setClientId(defined.getClientId());
         granted.setCustomerId(defined.getCustomerId());
         granted.setPermissionId(defined.getPermissionId());
@@ -235,7 +235,7 @@ public class CustomerClientServiceResource {
         @PathParam("serviceId") String serviceId,
         @PathParam("permissionId") String permissionId) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Rackers can add any permission to a client
@@ -266,7 +266,7 @@ public class CustomerClientServiceResource {
             throw new NotFoundException(errMsg);
         }
 
-        PermissionObject definedPermission = this.clientService
+        PermissionEntity definedPermission = this.clientService
             .getDefinedPermissionByClientIdAndPermissionId(
                 serviceId, permissionId);
         
@@ -277,11 +277,11 @@ public class CustomerClientServiceResource {
             throw new NotFoundException(errMsg);
         }
         
-        PermissionObject po = new PermissionObject();
+        PermissionEntity po = new PermissionEntity();
         po.setClientId(serviceId);
         po.setPermissionId(permissionId);
         
-        PermissionObject perm = this.scopeAccessService.getPermissionForParent(client.getUniqueId(), po);
+        PermissionEntity perm = this.scopeAccessService.getPermissionForParent(client.getUniqueId(), po);
         if (perm != null) {
             this.scopeAccessService.removePermission(perm);
         }

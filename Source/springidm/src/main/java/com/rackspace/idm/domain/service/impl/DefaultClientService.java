@@ -10,7 +10,7 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
@@ -19,8 +19,8 @@ import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.PermissionObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.exception.DuplicateException;
@@ -30,13 +30,13 @@ import com.rackspace.idm.util.HashHelper;
 
 public class DefaultClientService implements ClientService {
 
-    private final ScopeAccessObjectDao scopeAccessDao;
+    private final ScopeAccessDao scopeAccessDao;
     private final ClientDao clientDao;
     private final CustomerDao customerDao;
     private final UserDao userDao;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultClientService(ScopeAccessObjectDao scopeAccessDao,
+    public DefaultClientService(ScopeAccessDao scopeAccessDao,
         ClientDao clientDao, CustomerDao customerDao, UserDao userDao) {
         this.clientDao = clientDao;
         this.customerDao = customerDao;
@@ -101,9 +101,9 @@ public class DefaultClientService implements ClientService {
             throw new NotFoundException(errMsg);
         }
         
-        List<PermissionObject> definedPermissions = this.getDefinedPermissionsByClient(client);
+        List<PermissionEntity> definedPermissions = this.getDefinedPermissionsByClient(client);
         
-        for (PermissionObject definedPerm : definedPermissions) {
+        for (PermissionEntity definedPerm : definedPermissions) {
             this.deleteDefinedPermission(definedPerm);
         }
 
@@ -119,7 +119,7 @@ public class DefaultClientService implements ClientService {
     }
 
     @Override
-    public void addDefinedPermission(PermissionObject permission) {
+    public void addDefinedPermission(PermissionEntity permission) {
         logger.debug("Define Permission: {}", permission);
         Customer customer = customerDao.getCustomerByCustomerId(permission
             .getCustomerId());
@@ -140,7 +140,7 @@ public class DefaultClientService implements ClientService {
             throw new IllegalStateException("Client doesn't exist");
         }
 
-        ScopeAccessObject sa = this.scopeAccessDao
+        ScopeAccess sa = this.scopeAccessDao
             .getScopeAccessForParentByClientId(client.getUniqueId(),
                 client.getClientId());
 
@@ -151,7 +151,7 @@ public class DefaultClientService implements ClientService {
             sa = this.scopeAccessDao.addScopeAccess(client.getUniqueId(), sa);
         }
 
-        PermissionObject exists = this.scopeAccessDao
+        PermissionEntity exists = this.scopeAccessDao
             .getPermissionByParentAndPermissionId(sa.getUniqueId(), permission);
 
         if (exists != null) {
@@ -169,16 +169,16 @@ public class DefaultClientService implements ClientService {
     }
 
     @Override
-    public void deleteDefinedPermission(PermissionObject permission) {
+    public void deleteDefinedPermission(PermissionEntity permission) {
         logger.debug("Delete Permission: {}", permission);
-        PermissionObject perm = new PermissionObject();
+        PermissionEntity perm = new PermissionEntity();
         perm.setClientId(permission.getClientId());
         perm.setCustomerId(permission.getCustomerId());
         perm.setPermissionId(permission.getPermissionId());
         
-        List<PermissionObject> perms = this.scopeAccessDao.getPermissionsByPermission(permission);
+        List<PermissionEntity> perms = this.scopeAccessDao.getPermissionsByPermission(permission);
         
-        for(PermissionObject p : perms) {
+        for(PermissionEntity p : perms) {
             logger.debug("Deleting Permission: {}", permission);
             this.scopeAccessDao.removePermissionFromScopeAccess(p);
         }
@@ -206,13 +206,13 @@ public class DefaultClientService implements ClientService {
     }
 
     @Override
-    public PermissionObject getDefinedPermissionByClientIdAndPermissionId(
+    public PermissionEntity getDefinedPermissionByClientIdAndPermissionId(
         String clientId, String permissionId) {
         logger.debug("Find Permission: {} by ClientId: {}", permissionId, clientId);
 
         Client client = this.getClient(clientId);
         
-        PermissionObject permission = new PermissionObject();
+        PermissionEntity permission = new PermissionEntity();
         permission.setPermissionId(permissionId);
         permission.setCustomerId(client.getCustomerId());
         permission.setClientId(client.getClientId());
@@ -225,14 +225,14 @@ public class DefaultClientService implements ClientService {
     }
 
     @Override
-    public List<PermissionObject> getDefinedPermissionsByClient(
+    public List<PermissionEntity> getDefinedPermissionsByClient(
         Client client) {
         logger.debug("Find Permission by ClientId: {}", client.getClientId());
-        PermissionObject filter = new PermissionObject();
+        PermissionEntity filter = new PermissionEntity();
         filter.setClientId(client.getClientId());
         filter.setCustomerId(client.getCustomerId());
         
-        List<PermissionObject> permissions = this.scopeAccessDao
+        List<PermissionEntity> permissions = this.scopeAccessDao
             .getPermissionsByParentAndPermissionId(client.getUniqueId(),
                 filter);
         logger.debug("Found {} Permission(s) by ClientId: {}", permissions.size(), client.getClientId());
@@ -284,7 +284,7 @@ public class DefaultClientService implements ClientService {
     }
 
     @Override
-    public void updateDefinedPermission(PermissionObject permission) {
+    public void updateDefinedPermission(PermissionEntity permission) {
         this.scopeAccessDao.updatePermissionForScopeAccess(permission);
     }
 
@@ -497,12 +497,12 @@ public class DefaultClientService implements ClientService {
     }
 
     @Override
-    public PermissionObject checkAndGetPermission(String customerId,
+    public PermissionEntity checkAndGetPermission(String customerId,
         String clientId, String permissionId)
 
     throws NotFoundException {
         logger.debug("Check and get Permission: {} for ClientId: {}", permissionId, clientId);
-        PermissionObject permission = this
+        PermissionEntity permission = this
             .getDefinedPermissionByClientIdAndPermissionId(clientId,
                 permissionId);
 
@@ -555,13 +555,13 @@ public class DefaultClientService implements ClientService {
             throw new IllegalArgumentException(
                 "Client cannont be null and must have uniqueID");
         }
-        List<ScopeAccessObject> services = this.scopeAccessDao
+        List<ScopeAccess> services = this.scopeAccessDao
             .getScopeAccessesByParent(client.getUniqueId());
 
         List<Client> clientList = new ArrayList<Client>();
 
-        for (ScopeAccessObject service : services) {
-            if (service instanceof ScopeAccessObject) {
+        for (ScopeAccess service : services) {
+            if (service instanceof ScopeAccess) {
                 clientList.add(this.getById(service.getClientId()));
             }
         }

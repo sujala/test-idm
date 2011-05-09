@@ -11,11 +11,11 @@ import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
-import com.rackspace.idm.domain.entity.PermissionObject;
-import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.RackerScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 
 public class ServiceTestsBase {
 
@@ -72,8 +72,8 @@ public class ServiceTestsBase {
         return user;
     }
 
-    protected PermissionObject getFakePermission(String permissionId) {
-        PermissionObject res = EasyMock.createNiceMock(PermissionObject.class);
+    protected PermissionEntity getFakePermission(String permissionId) {
+        PermissionEntity res = EasyMock.createNiceMock(PermissionEntity.class);
 
         res.setDescription("description");
         res.setEnabled(true);
@@ -93,8 +93,8 @@ public class ServiceTestsBase {
         return res;
     }
 
-    protected ScopeAccessObject getFakeScopeAccess() {
-        ScopeAccessObject so = EasyMock.createNiceMock(ScopeAccessObject.class);
+    protected ScopeAccess getFakeScopeAccess() {
+        ScopeAccess so = EasyMock.createNiceMock(ScopeAccess.class);
         so.setClientId(clientId);
         so.setClientRCN(customerInum);
 
@@ -103,9 +103,9 @@ public class ServiceTestsBase {
         return so;
     }
 
-    protected UserScopeAccessObject getFakeUserScopeAccess() {
-        UserScopeAccessObject so = EasyMock
-            .createNiceMock(UserScopeAccessObject.class);
+    protected UserScopeAccess getFakeUserScopeAccess() {
+        UserScopeAccess so = EasyMock
+            .createNiceMock(UserScopeAccess.class);
         so.setClientId(clientId);
         so.setClientRCN(customerInum);
         EasyMock.expect(
@@ -132,9 +132,9 @@ public class ServiceTestsBase {
     }
    
 
-    protected RackerScopeAccessObject getFakeRackerScopeAccess() {
-        RackerScopeAccessObject so = EasyMock
-            .createNiceMock(RackerScopeAccessObject.class);
+    protected RackerScopeAccess getFakeRackerScopeAccess() {
+        RackerScopeAccess so = EasyMock
+            .createNiceMock(RackerScopeAccess.class);
         so.setClientId(clientId);
         so.setClientRCN(customerInum);
         EasyMock.expect(

@@ -28,7 +28,7 @@ import com.rackspace.idm.api.converter.GroupConverter;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -81,7 +81,7 @@ public class ClientGroupsResource extends AbstractClientConsumer {
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients andSpecific Clients are
@@ -123,7 +123,7 @@ public class ClientGroupsResource extends AbstractClientConsumer {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, CustomerIdm and the specified client are authorized

@@ -16,21 +16,21 @@ import org.junit.Test;
 
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.ClientDao;
-import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
-import com.rackspace.idm.domain.entity.PermissionObject;
-import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
-import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.RackerScopeAccess;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.util.WadlTrie;
 
 public class AuthorizationServiceTests {
     ClientDao mockClientDao;
-    ScopeAccessObjectDao mockScopeAccessDao;
+    ScopeAccessDao mockScopeAccessDao;
     AuthorizationService service;
     WadlTrie mockWadlTrie;
     UriInfo mockUriInfo;
@@ -73,27 +73,27 @@ public class AuthorizationServiceTests {
     BaseUser authorizedAdmin;
     BaseUser otherCompanyAdmin;
 
-    PermissionObject perm;
-    List<PermissionObject> permissions;
+    PermissionEntity perm;
+    List<PermissionEntity> permissions;
     ClientGroup admin;
     List<ClientGroup> groups;
 
     String adminGroupName = "Idm Admin";
 
-    RackerScopeAccessObject trustedToken;
+    RackerScopeAccess trustedToken;
     ClientScopeAccessObject authorizedClientToken;
     ClientScopeAccessObject notAuthorizedClientToken;
     ClientScopeAccessObject nonRackspaceClientToken;
-    UserScopeAccessObject authorizedUserToken;
-    UserScopeAccessObject otherCompanyUserToken;
-    UserScopeAccessObject authorizedAdminToken;
-    UserScopeAccessObject otherCompanyAdminToken;
+    UserScopeAccess authorizedUserToken;
+    UserScopeAccess otherCompanyUserToken;
+    UserScopeAccess authorizedAdminToken;
+    UserScopeAccess otherCompanyAdminToken;
     ClientScopeAccessObject customerIdmToken;
 
     @Before
     public void setUp() throws Exception {
         mockClientDao = EasyMock.createMock(ClientDao.class);
-        mockScopeAccessDao = EasyMock.createMock(ScopeAccessObjectDao.class);
+        mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
         mockWadlTrie = EasyMock.createMock(WadlTrie.class);
         mockUriInfo = EasyMock.createMock(UriInfo.class);
         Configuration appConfig = new PropertyFileConfiguration()
@@ -259,12 +259,12 @@ public class AuthorizationServiceTests {
 
     private void setUpObjects() {
         
-        perm = new PermissionObject();
+        perm = new PermissionEntity();
         perm.setClientId(idmClientId);
         perm.setCustomerId(customerId);
         perm.setPermissionId(permissionId);
 
-        permissions = new ArrayList<PermissionObject>();
+        permissions = new ArrayList<PermissionEntity>();
         permissions.add(perm);
 
         admin = new ClientGroup();
@@ -273,7 +273,7 @@ public class AuthorizationServiceTests {
         admin.setClientId(idmClientId);
         admin.setCustomerId(customerId);
 
-        trustedToken = new RackerScopeAccessObject();
+        trustedToken = new RackerScopeAccess();
         trustedToken.setRackerId(rackerId);
 
         authorizedClientToken = new ClientScopeAccessObject();
@@ -291,22 +291,22 @@ public class AuthorizationServiceTests {
         nonRackspaceClientToken.setClientId(clientId);
         nonRackspaceClientToken.setClientRCN(otherCustomerId);
 
-        authorizedUserToken = new UserScopeAccessObject();
+        authorizedUserToken = new UserScopeAccess();
         authorizedUserToken.setAccessTokenString(tokenString);
         authorizedUserToken.setUsername(username);
         authorizedUserToken.setUserRCN(customerId);
 
-        otherCompanyUserToken = new UserScopeAccessObject();
+        otherCompanyUserToken = new UserScopeAccess();
         otherCompanyUserToken.setAccessTokenString(tokenString);
         otherCompanyUserToken.setUsername(username);
         otherCompanyUserToken.setUserRCN(otherCustomerId);
 
-        authorizedAdminToken = new UserScopeAccessObject();
+        authorizedAdminToken = new UserScopeAccess();
         authorizedAdminToken.setAccessTokenString(tokenString);
         authorizedAdminToken.setUsername(username);
         authorizedAdminToken.setUserRCN(customerId);
 
-        otherCompanyAdminToken = new UserScopeAccessObject();
+        otherCompanyAdminToken = new UserScopeAccess();
         otherCompanyAdminToken.setAccessTokenString(tokenString);
         otherCompanyAdminToken.setUsername(username);
         otherCompanyAdminToken.setUserRCN(otherCustomerId);

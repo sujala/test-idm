@@ -7,7 +7,7 @@ import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 
 @LDAPObject(structuralClass="scopeAccess")
-public class ScopeAccessObject implements Auditable {
+public class ScopeAccess implements Auditable {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
@@ -21,7 +21,7 @@ public class ScopeAccessObject implements Auditable {
     @LDAPField(attribute="objectClass", objectClass="scopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String[] objectClass;
 
-    public ScopeAccessObject() {}
+    public ScopeAccess() {}
 
     public ReadOnlyEntry getLDAPEntry() {
         return ldapEntry;

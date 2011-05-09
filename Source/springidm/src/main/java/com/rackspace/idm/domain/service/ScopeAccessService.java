@@ -3,23 +3,23 @@ package com.rackspace.idm.domain.service;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
-import com.rackspace.idm.domain.entity.PermissionObject;
-import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.RackerScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 
 public interface ScopeAccessService {
 
-    PermissionObject addPermissionToScopeAccess(String scopeAccessUniqueId, PermissionObject permission);
+    PermissionEntity addPermissionToScopeAccess(String scopeAccessUniqueId, PermissionEntity permission);
 
-    ScopeAccessObject addScopeAccess(String parentUniqueId, ScopeAccessObject scopeAccess);
+    ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
 
     boolean authenticateAccessToken(String accessTokenStr);
 
-    void deleteScopeAccess(ScopeAccessObject scopeAccess);
+    void deleteScopeAccess(ScopeAccess scopeAccess);
 
-    boolean doesAccessTokenHavePermission(String accessTokenString, PermissionObject permission);
+    boolean doesAccessTokenHavePermission(String accessTokenString, PermissionEntity permission);
 
     void expireAccessToken(String tokenString);
 
@@ -29,39 +29,39 @@ public interface ScopeAccessService {
 
     void expireAllTokensForUser(String username);
 
-    ScopeAccessObject getAccessTokenByAuthHeader(String authHeader);
+    ScopeAccess getAccessTokenByAuthHeader(String authHeader);
 
     ClientScopeAccessObject getClientScopeAccessForClientId(String clientUniqueId, String clientId);
 
     PasswordResetScopeAccessObject getOrCreatePasswordResetScopeAccessForUser(BaseUser user);
 
-    PermissionObject getPermissionForParent(String parentUniqueId, PermissionObject permission);
+    PermissionEntity getPermissionForParent(String parentUniqueId, PermissionEntity permission);
 
-    RackerScopeAccessObject getRackerScopeAccessForClientId(String rackerUniqueId, String clientId);
+    RackerScopeAccess getRackerScopeAccessForClientId(String rackerUniqueId, String clientId);
 
-    ScopeAccessObject getScopeAccessByAccessToken(String accessToken);
+    ScopeAccess getScopeAccessByAccessToken(String accessToken);
 
-    ScopeAccessObject getScopeAccessByRefreshToken(String refreshToken);
+    ScopeAccess getScopeAccessByRefreshToken(String refreshToken);
 
-    ScopeAccessObject getScopeAccessForParentByClientId(String parentUniqueID, String clientId);
+    ScopeAccess getScopeAccessForParentByClientId(String parentUniqueID, String clientId);
 
-    UserScopeAccessObject getUserScopeAccessForClientId(String userUniqueId, String clientId);
+    UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId);
 
-    UserScopeAccessObject getUserScopeAccessForClientIdByMossoIdAndApiCredentials(int mossoId, String apiKey, String clientId);
+    UserScopeAccess getUserScopeAccessForClientIdByMossoIdAndApiCredentials(int mossoId, String apiKey, String clientId);
 
-    UserScopeAccessObject getUserScopeAccessForClientIdByNastIdAndApiCredentials(String nastId, String apiKey, String clientId);
+    UserScopeAccess getUserScopeAccessForClientIdByNastIdAndApiCredentials(String nastId, String apiKey, String clientId);
 
-    UserScopeAccessObject getUserScopeAccessForClientIdByUsernameAndApiCredentials(String username, String apiKey, String clientId);
+    UserScopeAccess getUserScopeAccessForClientIdByUsernameAndApiCredentials(String username, String apiKey, String clientId);
 
-    UserScopeAccessObject getUserScopeAccessForClientIdByUsernameAndPassword(String username, String password, String clientId);
+    UserScopeAccess getUserScopeAccessForClientIdByUsernameAndPassword(String username, String password, String clientId);
 
-    PermissionObject grantPermissionToClient(String parentUniqueId, PermissionObject permission);
+    PermissionEntity grantPermissionToClient(String parentUniqueId, PermissionEntity permission);
 
-    PermissionObject grantPermissionToUser(User user, PermissionObject permission);
+    PermissionEntity grantPermissionToUser(User user, PermissionEntity permission);
     
-    void removePermission(PermissionObject permission);
+    void removePermission(PermissionEntity permission);
 
-    void updatePermission(PermissionObject permission);
+    void updatePermission(PermissionEntity permission);
 
-    void updateScopeAccess(ScopeAccessObject scopeAccess);
+    void updateScopeAccess(ScopeAccess scopeAccess);
 }

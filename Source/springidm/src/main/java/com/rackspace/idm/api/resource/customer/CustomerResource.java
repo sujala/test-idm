@@ -23,7 +23,7 @@ import com.rackspace.idm.api.converter.CustomerConverter;
 import com.rackspace.idm.api.resource.customer.client.CustomerClientsResource;
 import com.rackspace.idm.api.resource.customer.user.CustomerUsersResource;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -85,7 +85,7 @@ public class CustomerResource extends AbstractCustomerConsumer {
 
         logger.debug("Getting Customer: {}", customerId);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients and Specific Clients are authorized
@@ -123,7 +123,7 @@ public class CustomerResource extends AbstractCustomerConsumer {
 
         logger.info("Deleting Customer :{}", customerId);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
@@ -164,7 +164,7 @@ public class CustomerResource extends AbstractCustomerConsumer {
         }
         logger.debug("Updating Customer's Password Rotation Policy: {}", customerId);
         
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's and Rackspace Clients are authorized

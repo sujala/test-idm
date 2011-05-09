@@ -3,7 +3,7 @@ package com.rackspace.idm.api.converter;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.rackspace.idm.domain.entity.PermissionObject;
+import com.rackspace.idm.domain.entity.PermissionEntity;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class PermissionConverter {
@@ -13,8 +13,8 @@ public class PermissionConverter {
     public PermissionConverter() {
     }
 
-    public PermissionObject toPermissionDO(com.rackspace.idm.jaxb.Permission permJaxb) {
-        PermissionObject permDo = new PermissionObject();
+    public PermissionEntity toPermissionDO(com.rackspace.idm.jaxb.Permission permJaxb) {
+        PermissionEntity permDo = new PermissionEntity();
         permDo.setClientId(permJaxb.getClientId());
         permDo.setCustomerId(permJaxb.getCustomerId());
         permDo.setPermissionId(permJaxb.getPermissionId());
@@ -27,8 +27,8 @@ public class PermissionConverter {
         return permDo;
     }
     
-    public PermissionObject toPermissionObjectDO(com.rackspace.idm.jaxb.Permission permJaxb) {
-        PermissionObject permDo = new PermissionObject();
+    public PermissionEntity toPermissionObjectDO(com.rackspace.idm.jaxb.Permission permJaxb) {
+        PermissionEntity permDo = new PermissionEntity();
         permDo.setClientId(permJaxb.getClientId());
         permDo.setCustomerId(permJaxb.getCustomerId());
         permDo.setPermissionId(permJaxb.getPermissionId());
@@ -41,8 +41,8 @@ public class PermissionConverter {
         return permDo;
     }
 
-    public List<PermissionObject> toPermissionListDO(com.rackspace.idm.jaxb.Permissions permissions) {
-        List<PermissionObject> perms = new ArrayList<PermissionObject>();
+    public List<PermissionEntity> toPermissionListDO(com.rackspace.idm.jaxb.Permissions permissions) {
+        List<PermissionEntity> perms = new ArrayList<PermissionEntity>();
 
         for (com.rackspace.idm.jaxb.Permission perm : permissions.getPermissions()) {
             perms.add(toPermissionDO(perm));
@@ -51,7 +51,7 @@ public class PermissionConverter {
         return perms;
     }
     
-    public com.rackspace.idm.jaxb.Permission toPermissionJaxb(PermissionObject permDo) {
+    public com.rackspace.idm.jaxb.Permission toPermissionJaxb(PermissionEntity permDo) {
         com.rackspace.idm.jaxb.Permission permJaxb = of.createPermission();
         permJaxb.setClientId(permDo.getClientId());
         permJaxb.setCustomerId(permDo.getCustomerId());
@@ -65,7 +65,7 @@ public class PermissionConverter {
         return permJaxb;
     }
 
-    public com.rackspace.idm.jaxb.Permissions toPermissionListJaxb(List<PermissionObject> permissions) {
+    public com.rackspace.idm.jaxb.Permissions toPermissionListJaxb(List<PermissionEntity> permissions) {
 
         if (permissions == null || permissions.size() < 1) {
             return null;
@@ -73,7 +73,7 @@ public class PermissionConverter {
 
         com.rackspace.idm.jaxb.Permissions perms = of.createPermissions();
 
-        for (PermissionObject perm : permissions) {
+        for (PermissionEntity perm : permissions) {
             perms.getPermissions().add(toPermissionJaxb(perm));
         }
         return perms;

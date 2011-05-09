@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.resource.customer.user.service.permission.UserPermissionsResource;
 import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
@@ -81,7 +81,7 @@ public class CustomerUserServiceResource {
 
         logger.info("Removing service {} from user {}", serviceId, username);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Rackers can add any service to a user
@@ -114,7 +114,7 @@ public class CustomerUserServiceResource {
             throw new NotFoundException(errMsg);
         }
 
-        ScopeAccessObject service = this.scopeAccessService.getScopeAccessForParentByClientId(user.getUniqueId(), serviceId);
+        ScopeAccess service = this.scopeAccessService.getScopeAccessForParentByClientId(user.getUniqueId(), serviceId);
         
         if (service != null) {
             this.scopeAccessService.deleteScopeAccess(service);

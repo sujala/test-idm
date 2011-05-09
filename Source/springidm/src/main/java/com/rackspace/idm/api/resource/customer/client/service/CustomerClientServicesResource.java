@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.ClientConverter;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.Clients;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.CustomerService;
@@ -80,7 +80,7 @@ public class CustomerClientServicesResource {
 
         logger.debug("Getting services for client {}", clientId);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Rackers can add any service to a user

@@ -11,7 +11,7 @@ import org.junit.Test;
 
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
@@ -21,8 +21,8 @@ import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
-import com.rackspace.idm.domain.entity.PermissionObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.impl.DefaultClientService;
@@ -30,7 +30,7 @@ import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 
 public class ClientServiceTests {
-    ScopeAccessObjectDao mockScopeAccessDao;
+    ScopeAccessDao mockScopeAccessDao;
     ClientDao mockClientDao;
     CustomerDao mockCustomerDao;
     UserDao mockUserDao;
@@ -72,7 +72,7 @@ public class ClientServiceTests {
         mockClientDao = EasyMock.createMock(ClientDao.class);
         mockCustomerDao = EasyMock.createMock(CustomerDao.class);
         mockUserDao = EasyMock.createMock(UserDao.class);
-        mockScopeAccessDao = EasyMock.createMock(ScopeAccessObjectDao.class);
+        mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
 
         clientService = new DefaultClientService(mockScopeAccessDao,
             mockClientDao, mockCustomerDao, mockUserDao);
@@ -216,7 +216,7 @@ public class ClientServiceTests {
 
     @Test
     public void shouldDeleteClient() {
-        List<PermissionObject> perms = new ArrayList<PermissionObject>();
+        List<PermissionEntity> perms = new ArrayList<PermissionEntity>();
         mockClientDao.deleteClient(getFakeClient());
         EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(
             getFakeClient());
@@ -227,7 +227,7 @@ public class ClientServiceTests {
         EasyMock.expect(
             mockScopeAccessDao.getPermissionsByParentAndPermissionId(
                 EasyMock.anyObject(String.class),
-                EasyMock.anyObject(PermissionObject.class))).andReturn(perms);
+                EasyMock.anyObject(PermissionEntity.class))).andReturn(perms);
 
         EasyMock.expect(mockClientDao.getClientGroupsByClientId(clientId))
             .andReturn(getFakeClientGroupList());
@@ -693,14 +693,14 @@ public class ClientServiceTests {
             customerStatus, customerSeeAlso, owner);
     }
 
-    private List<PermissionObject> getFakePermissionList() {
-        List<PermissionObject> perms = new ArrayList<PermissionObject>();
+    private List<PermissionEntity> getFakePermissionList() {
+        List<PermissionEntity> perms = new ArrayList<PermissionEntity>();
         perms.add(getFakePermission());
         return perms;
     }
 
-    private PermissionObject getFakePermission() {
-        PermissionObject res = new PermissionObject();
+    private PermissionEntity getFakePermission() {
+        PermissionEntity res = new PermissionEntity();
         res.setClientId(clientId);
         res.setCustomerId(customerId);
         res.setPermissionId(resourceId);
@@ -728,8 +728,8 @@ public class ClientServiceTests {
         return user;
     }
 
-    private ScopeAccessObject getFakeScopeAccess() {
-        ScopeAccessObject sa = new ScopeAccessObject();
+    private ScopeAccess getFakeScopeAccess() {
+        ScopeAccess sa = new ScopeAccess();
         sa.setClientId(clientId);
         sa.setClientRCN(customerId);
         return sa;

@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
@@ -22,10 +22,10 @@ import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
 import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.ClientService;
@@ -42,14 +42,14 @@ public class DefaultUserService implements UserService {
     private final UserDao userDao;
     private final AuthDao authDao;
     private final CustomerDao customerDao;
-    private final ScopeAccessObjectDao scopeAccessDao;
+    private final ScopeAccessDao scopeAccessDao;
     private final ClientService clientService;
     private final Configuration config;
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
-        CustomerDao customerDao, ScopeAccessObjectDao scopeAccessDao,
+        CustomerDao customerDao, ScopeAccessDao scopeAccessDao,
         ClientService clientService, Configuration config) {
 
         this.userDao = userDao;
@@ -279,7 +279,7 @@ public class DefaultUserService implements UserService {
 
     @Override
     public void setUserPassword(String customerId, String username,
-        UserCredentials userCred, ScopeAccessObject token, boolean isRecovery) {
+        UserCredentials userCred, ScopeAccess token, boolean isRecovery) {
 
         logger.debug("Updating Password for User: {}", username);
 
@@ -307,7 +307,7 @@ public class DefaultUserService implements UserService {
 
         user.setPasswordObj(Password.newInstance(userCred.getNewPassword()
             .getPassword()));
-        boolean isSelfUpdate = (token instanceof UserScopeAccessObject && ((UserScopeAccessObject) token)
+        boolean isSelfUpdate = (token instanceof UserScopeAccess && ((UserScopeAccess) token)
             .getUsername().equals(username))
             || (token instanceof PasswordResetScopeAccessObject && ((PasswordResetScopeAccessObject) token)
                 .getUsername().equals(username));
@@ -405,13 +405,13 @@ public class DefaultUserService implements UserService {
             logger.debug(errmsg);
             throw new IllegalArgumentException(errmsg);
         }
-        List<ScopeAccessObject> services = this.scopeAccessDao
+        List<ScopeAccess> services = this.scopeAccessDao
             .getScopeAccessesByParent(user.getUniqueId());
 
         List<Client> clientList = new ArrayList<Client>();
 
-        for (ScopeAccessObject service : services) {
-            if (service instanceof UserScopeAccessObject) {
+        for (ScopeAccess service : services) {
+            if (service instanceof UserScopeAccess) {
                 clientList
                     .add(this.clientService.getById(service.getClientId()));
             }

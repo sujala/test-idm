@@ -5,6 +5,7 @@ import java.util.Date;
 import org.joda.time.DateTime;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
@@ -12,26 +13,30 @@ import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPGetter;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 
-@LDAPObject(structuralClass="rackerScopeAccess",requestAllAttributes=true)
-public class RackerScopeAccessObject extends ScopeAccessObject implements hasAccessToken, hasRefreshToken {
+@LDAPObject(structuralClass="userScopeAccess",requestAllAttributes=true)
+public class UserScopeAccess extends ScopeAccess implements hasAccessToken, hasRefreshToken {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
 
-    @LDAPField(attribute="accessToken", objectClass="rackerScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    @LDAPField(attribute="accessToken", objectClass="userScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String accessTokenString;
 
-    @LDAPField(attribute="accesTokenExp", objectClass="rackerScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass="userScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+
     private Date accessTokenExp;
 
-    @LDAPField(attribute="refreshToken", objectClass="rackerScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    @LDAPField(attribute="refreshToken", objectClass="userScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String refreshTokenString;
 
-    @LDAPField(attribute="refreshTokenExp", objectClass="rackerScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    @LDAPField(attribute="refreshTokenExp", objectClass="userScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date refreshTokenExp;
 
-    @LDAPField(attribute="rackerId", objectClass="rackerScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
-    private String rackerId;
+    @LDAPField(attribute="uid", objectClass="userScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+    private String username;
+
+    @LDAPField(attribute="userRCN", objectClass="userScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+    private String userRCN;
 
     @Override
     @LDAPGetter(attribute="clientId", inRDN=true)
@@ -49,10 +54,13 @@ public class RackerScopeAccessObject extends ScopeAccessObject implements hasAcc
         }
     }
 
+    private DateTime userPasswordExpirationDate;
+
     @Override
     public String getRefreshTokenString() {
         return refreshTokenString;
     }
+
 
     @Override
     public void setRefreshTokenString(String refreshTokenString) {
@@ -69,12 +77,20 @@ public class RackerScopeAccessObject extends ScopeAccessObject implements hasAcc
         this.refreshTokenExp = refreshTokenExp;
     }
 
-    public String getRackerId() {
-        return rackerId;
+    public String getUsername() {
+        return username;
     }
 
-    public void setRackerId(String rackerId) {
-        this.rackerId = rackerId;
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getUserRCN() {
+        return userRCN;
+    }
+
+    public void setUserRCN(String userRCN) {
+        this.userRCN = userRCN;
     }
 
     @Override
@@ -107,6 +123,14 @@ public class RackerScopeAccessObject extends ScopeAccessObject implements hasAcc
         this.accessTokenExp = new DateTime().minusDays(1).toDate();
     }
 
+    public DateTime getUserPasswordExpirationDate() {
+        return userPasswordExpirationDate;
+    }
+
+    public void setUserPasswordExpirationDate(DateTime userPasswordExpirationDate) {
+        this.userPasswordExpirationDate = userPasswordExpirationDate;
+    }
+
     @Override
     public boolean isAccessTokenExpired(DateTime time) {
         return StringUtils.isBlank(this.accessTokenString)
@@ -123,7 +147,8 @@ public class RackerScopeAccessObject extends ScopeAccessObject implements hasAcc
 
     @Override
     public String getAuditContext() {
-        final String format = "Racker(rackerId=%s)";
-        return String.format(format, getRackerId());
+        final String format = "User(username=%s,customerId=%s)";
+        return String.format(format, this.getUsername(), this.getUserRCN());
     }
+
 }

@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.OAuthService;
@@ -74,7 +74,7 @@ public class CustomerLockResource extends AbstractCustomerConsumer {
         com.rackspace.idm.jaxb.Customer inputCustomer = holder.getEntity();
         logger.debug("Getting Customer: {}", customerId);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's and Specific Clients are authorized

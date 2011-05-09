@@ -21,9 +21,9 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.ClientConverter;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.Clients;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -102,7 +102,7 @@ public class CustomerUserServicesResource {
         logger.info("Adding service {} to user {}", inputClient.getClientId(),
             username);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Rackers can add any service to a user
@@ -135,7 +135,7 @@ public class CustomerUserServicesResource {
             throw new NotFoundException(errMsg);
         }
 
-        UserScopeAccessObject sa = new UserScopeAccessObject();
+        UserScopeAccess sa = new UserScopeAccess();
         sa.setUsername(user.getUsername());
         sa.setUserRCN(user.getCustomerId());
         sa.setClientId(client.getClientId());
@@ -174,7 +174,7 @@ public class CustomerUserServicesResource {
 
         logger.debug("Getting services for user {}", username);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Rackers can add any service to a user

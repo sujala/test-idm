@@ -12,7 +12,7 @@ import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 
 @LDAPObject(structuralClass = "clientPermission")
-public class PermissionObject implements Auditable {
+public class PermissionEntity implements Auditable {
     private static final long serialVersionUID = -6160709891135914013L;
 
     @LDAPEntryField()
@@ -46,10 +46,10 @@ public class PermissionObject implements Auditable {
     @LDAPField(attribute = "resourceGroup", objectClass = "clientPermission", inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String            resourceGroup;
 
-    public PermissionObject() {
+    public PermissionEntity() {
     }
 
-    public PermissionObject(String customerId, String clientId, String permissionId, String value) {
+    public PermissionEntity(String customerId, String clientId, String permissionId, String value) {
         super();
         this.permissionId = permissionId;
         this.clientId = clientId;
@@ -175,7 +175,7 @@ public class PermissionObject implements Auditable {
         return String.format(format, getClientId(), getPermissionId());
     }
     
-    public void copyChanges(PermissionObject modified) {
+    public void copyChanges(PermissionEntity modified) {
 
         if (!StringUtils.isBlank(modified.getPermissionType())) {
             setPermissionType(modified.getPermissionType());

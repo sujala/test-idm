@@ -29,8 +29,8 @@ import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
-import com.rackspace.idm.domain.entity.PermissionObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -90,7 +90,7 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
@@ -104,7 +104,7 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
 
         Client client = checkAndGetClient(customerId, clientId);
 
-        List<PermissionObject> defineds = this.clientService.getDefinedPermissionsByClient(client);
+        List<PermissionEntity> defineds = this.clientService.getDefinedPermissionsByClient(client);
 
         return Response.ok(permissionConverter.toPermissionListJaxb(defineds)).build();
     }
@@ -133,7 +133,7 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's or the specified client are authorized
@@ -148,7 +148,7 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
         com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
         validatePermissionRequest(customerId, clientId, permission);
 
-        PermissionObject permissionDO = permissionConverter.toPermissionDO(permission);
+        PermissionEntity permissionDO = permissionConverter.toPermissionDO(permission);
 
         ApiError err = inputValidator.validate(permissionDO);
         if (err != null) {

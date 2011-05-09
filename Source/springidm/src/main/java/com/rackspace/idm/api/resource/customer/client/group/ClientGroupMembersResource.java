@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -75,7 +75,7 @@ public class ClientGroupMembersResource extends AbstractClientConsumer {
         @PathParam("groupName") String groupName,
         @PathParam("username") String username) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, CustomerIdm and the specified client are authorized
@@ -119,7 +119,7 @@ public class ClientGroupMembersResource extends AbstractClientConsumer {
         @PathParam("groupName") String groupName,
         @PathParam("username") String username) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, CustomerIdm and the specified client are authorized

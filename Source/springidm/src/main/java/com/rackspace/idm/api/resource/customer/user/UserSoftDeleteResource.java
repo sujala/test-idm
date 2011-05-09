@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.UserConverter;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.OAuthService;
@@ -76,7 +76,7 @@ public class UserSoftDeleteResource {
         com.rackspace.idm.jaxb.User inputUser = holder.getEntity();
         logger.debug("Updating SoftDelete for User: {} - {}", username, inputUser.isSoftDeleted());
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's and Admins are authorized

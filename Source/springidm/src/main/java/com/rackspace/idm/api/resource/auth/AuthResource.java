@@ -22,8 +22,8 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
-import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.EndpointService;
@@ -86,7 +86,7 @@ public class AuthResource {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
@@ -105,7 +105,7 @@ public class AuthResource {
             throw new BadRequestException(errMsg);
         }
 
-        UserScopeAccessObject usa = this.scopeAccessService
+        UserScopeAccess usa = this.scopeAccessService
             .getUserScopeAccessForClientIdByUsernameAndApiCredentials(username,
                 apiKey, token.getClientId());
 
@@ -140,7 +140,7 @@ public class AuthResource {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
@@ -164,7 +164,7 @@ public class AuthResource {
             throw new BadRequestException(errMsg);
         }
 
-        UserScopeAccessObject usa = this.scopeAccessService
+        UserScopeAccess usa = this.scopeAccessService
             .getUserScopeAccessForClientIdByMossoIdAndApiCredentials(mossoId,
                 apiKey, token.getClientId());
 
@@ -199,7 +199,7 @@ public class AuthResource {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
@@ -223,7 +223,7 @@ public class AuthResource {
             throw new BadRequestException(errMsg);
         }
 
-        UserScopeAccessObject usa = this.scopeAccessService
+        UserScopeAccess usa = this.scopeAccessService
             .getUserScopeAccessForClientIdByNastIdAndApiCredentials(nastId,
                 apiKey, token.getClientId());
 
@@ -258,7 +258,7 @@ public class AuthResource {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
@@ -274,7 +274,7 @@ public class AuthResource {
 
         AuthCredentials creds = holder.getEntity();
 
-        UserScopeAccessObject usa = this.scopeAccessService
+        UserScopeAccess usa = this.scopeAccessService
             .getUserScopeAccessForClientIdByUsernameAndPassword(
                 creds.getUsername(), creds.getPassword(), token.getClientId());
 

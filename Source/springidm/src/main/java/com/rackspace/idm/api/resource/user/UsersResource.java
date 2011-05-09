@@ -32,7 +32,7 @@ import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
@@ -257,7 +257,7 @@ public class UsersResource {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
@@ -292,7 +292,7 @@ public class UsersResource {
         @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
         @PathParam("baseUrlId") int baseUrlId) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
@@ -332,7 +332,7 @@ public class UsersResource {
         @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
         @PathParam("baseUrlId") int baseUrlId) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
@@ -365,7 +365,7 @@ public class UsersResource {
     public Response getUserByUsername(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("username") String username) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Rackers, Rackspace Clients, Specific Clients are authorized
@@ -476,7 +476,7 @@ public class UsersResource {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
 
@@ -514,7 +514,7 @@ public class UsersResource {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Specific clients are authorized
@@ -526,7 +526,7 @@ public class UsersResource {
     
     private List<CloudEndpoint> checkAndGetEndPoints(Request request,
         UriInfo uriInfo, String authHeader, String username) {
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized

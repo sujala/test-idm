@@ -20,8 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.PermissionObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
@@ -83,7 +83,7 @@ public class UserPermissionsResource {
         @PathParam("serviceId") String serviceId,
         @PathParam("permissionId") String permissionId) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Rackers can check any permissions granted to a user
@@ -127,11 +127,11 @@ public class UserPermissionsResource {
      */
     private boolean isGranted(String serviceId, String permissionId, User user,
         Client client) {
-        PermissionObject poSearchParam = new PermissionObject();
+        PermissionEntity poSearchParam = new PermissionEntity();
         poSearchParam.setClientId(serviceId);
         poSearchParam.setPermissionId(permissionId);
 
-        PermissionObject definedPermission = this.scopeAccessService
+        PermissionEntity definedPermission = this.scopeAccessService
             .getPermissionForParent(client.getUniqueId(), poSearchParam);
 
         if (definedPermission == null || !definedPermission.getEnabled()) {
@@ -142,7 +142,7 @@ public class UserPermissionsResource {
         if (definedPermission.getGrantedByDefault()) {
             // Granted by default, but has the user been provisioned for this
             // service?
-            ScopeAccessObject provisionedSa = scopeAccessService
+            ScopeAccess provisionedSa = scopeAccessService
                 .getScopeAccessForParentByClientId(user.getUniqueId(),
                     serviceId);
             if (provisionedSa != null) {
@@ -150,7 +150,7 @@ public class UserPermissionsResource {
                 return true;
             }
         } else {
-            PermissionObject grantedPermission = this.scopeAccessService
+            PermissionEntity grantedPermission = this.scopeAccessService
                 .getPermissionForParent(user.getUniqueId(), poSearchParam);
             if (grantedPermission != null) {
                 // The permission has not been granted.
@@ -193,7 +193,7 @@ public class UserPermissionsResource {
             throw new BadRequestException("Request body missing.");
         }
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         boolean authorized = authorizeGrantRevokePermission(token, request,
@@ -201,7 +201,7 @@ public class UserPermissionsResource {
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
-        PermissionObject filter = new PermissionObject();
+        PermissionEntity filter = new PermissionEntity();
         filter.setClientId(serviceId);
         filter.setPermissionId(permission.getPermissionId());
 
@@ -213,7 +213,7 @@ public class UserPermissionsResource {
             throw new NotFoundException(errMsg);
         }
 
-        PermissionObject defined = this.scopeAccessService
+        PermissionEntity defined = this.scopeAccessService
             .getPermissionForParent(client.getUniqueId(), filter);
         if (defined == null) {
             String errMsg = String.format("Permission %s not found",
@@ -222,7 +222,7 @@ public class UserPermissionsResource {
             throw new NotFoundException(errMsg);
         }
 
-        PermissionObject granted = new PermissionObject();
+        PermissionEntity granted = new PermissionEntity();
         granted.setClientId(defined.getClientId());
         granted.setCustomerId(defined.getCustomerId());
         granted.setPermissionId(defined.getPermissionId());
@@ -261,7 +261,7 @@ public class UserPermissionsResource {
         @PathParam("serviceId") String serviceId,
         @PathParam("permissionId") String permissionId) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         boolean authorized = authorizeGrantRevokePermission(token, request,
@@ -271,7 +271,7 @@ public class UserPermissionsResource {
 
         User user = this.userService.checkAndGetUser(customerId, username);
 
-        PermissionObject definedPermission = this.clientService
+        PermissionEntity definedPermission = this.clientService
             .getDefinedPermissionByClientIdAndPermissionId(serviceId,
                 permissionId);
 
@@ -281,11 +281,11 @@ public class UserPermissionsResource {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        PermissionObject po = new PermissionObject();
+        PermissionEntity po = new PermissionEntity();
         po.setClientId(serviceId);
         po.setPermissionId(permissionId);
 
-        PermissionObject perm = this.scopeAccessService.getPermissionForParent(
+        PermissionEntity perm = this.scopeAccessService.getPermissionForParent(
             user.getUniqueId(), po);
         if (perm != null) {
             this.scopeAccessService.removePermission(perm);
@@ -294,7 +294,7 @@ public class UserPermissionsResource {
         return Response.noContent().build();
     }
 
-    private boolean authorizeGrantRevokePermission(ScopeAccessObject token,
+    private boolean authorizeGrantRevokePermission(ScopeAccess token,
         Request request, UriInfo uriInfo, String clientId) {
         // Rackers can grant any permission to a user
         // Rackspace Clients can grant their own permission to a user

@@ -8,13 +8,13 @@ import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.domain.dao.ClientDao;
-import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
-import com.rackspace.idm.domain.entity.PermissionObject;
-import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
-import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.RackerScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -24,13 +24,13 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     private final ClientDao clientDao;
     private final Configuration config;
-    private final ScopeAccessObjectDao scopeAccessDao;
+    private final ScopeAccessDao scopeAccessDao;
     private final WadlTrie wadlTrie;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static String IDM_ADMIN_GROUP_DN = null;
 
-    public DefaultAuthorizationService(ScopeAccessObjectDao scopeAccessDao,
+    public DefaultAuthorizationService(ScopeAccessDao scopeAccessDao,
         ClientDao clientDao, WadlTrie wadlTrie, Configuration config) {
         this.scopeAccessDao = scopeAccessDao;
         this.clientDao = clientDao;
@@ -39,15 +39,15 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeRacker(ScopeAccessObject scopeAccess) {
+    public boolean authorizeRacker(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as racker", scopeAccess);
-        boolean authorized = scopeAccess instanceof RackerScopeAccessObject;
+        boolean authorized = scopeAccess instanceof RackerScopeAccess;
         logger.debug("Authorized {} as racker - {}", scopeAccess, authorized);
         return authorized;
     }
 
     @Override
-    public boolean authorizeRackspaceClient(ScopeAccessObject scopeAccess) {
+    public boolean authorizeRackspaceClient(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as rackspace client", scopeAccess);
         if (!(scopeAccess instanceof ClientScopeAccessObject)) {
             return false;
@@ -60,7 +60,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeClient(ScopeAccessObject scopeAccess, String verb,
+    public boolean authorizeClient(ScopeAccess scopeAccess, String verb,
         UriInfo uriInfo) {
         logger.debug("Authorizing {} as client", scopeAccess);
         if (!(scopeAccess instanceof ClientScopeAccessObject)) {
@@ -73,7 +73,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         boolean authorized = false;
 
         if (!StringUtils.isBlank(permissionId)) {
-            PermissionObject permission = new PermissionObject();
+            PermissionEntity permission = new PermissionEntity();
             permission.setClientId(getIdmClientId());
             permission.setCustomerId(getRackspaceCustomerId());
             permission.setPermissionId(permissionId);
@@ -87,14 +87,14 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeUser(ScopeAccessObject scopeAccess,
+    public boolean authorizeUser(ScopeAccess scopeAccess,
         String customerId, String username) {
         logger.debug("Authorizing {} as user", scopeAccess);
-        if (!(scopeAccess instanceof UserScopeAccessObject)) {
+        if (!(scopeAccess instanceof UserScopeAccess)) {
             return false;
         }
 
-        UserScopeAccessObject usa = (UserScopeAccessObject) scopeAccess;
+        UserScopeAccess usa = (UserScopeAccess) scopeAccess;
 
         boolean authorized = usa.getUsername().equals(username)
             && usa.getUserRCN().equalsIgnoreCase(customerId);
@@ -103,14 +103,14 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeCustomerUser(ScopeAccessObject scopeAccess,
+    public boolean authorizeCustomerUser(ScopeAccess scopeAccess,
         String customerId) {
         logger.debug("Authorizing {} as customer user", scopeAccess);
-        if (!(scopeAccess instanceof UserScopeAccessObject)) {
+        if (!(scopeAccess instanceof UserScopeAccess)) {
             return false;
         }
 
-        UserScopeAccessObject usa = (UserScopeAccessObject) scopeAccess;
+        UserScopeAccess usa = (UserScopeAccess) scopeAccess;
 
         boolean authorized = usa.getUserRCN().equalsIgnoreCase(customerId);
         logger.debug("Authorized {} as customer user - {}", scopeAccess,
@@ -119,14 +119,14 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeAdmin(ScopeAccessObject scopeAccess,
+    public boolean authorizeAdmin(ScopeAccess scopeAccess,
         String customerId) {
         logger.debug("Authorizing {} as admin user", scopeAccess);
-        if (!(scopeAccess instanceof UserScopeAccessObject)) {
+        if (!(scopeAccess instanceof UserScopeAccess)) {
             return false;
         }
 
-        UserScopeAccessObject usa = (UserScopeAccessObject) scopeAccess;
+        UserScopeAccess usa = (UserScopeAccess) scopeAccess;
 
         if (IDM_ADMIN_GROUP_DN == null) {
             ClientGroup group = this.clientDao.getClientGroup(
@@ -146,7 +146,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeCustomerIdm(ScopeAccessObject scopeAccess) {
+    public boolean authorizeCustomerIdm(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as Idm", scopeAccess);
         if (!(scopeAccess instanceof ClientScopeAccessObject)) {
             return false;
@@ -162,8 +162,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public boolean authorizeAsRequestorOrOwner(
-        ScopeAccessObject targetScopeAccess,
-        ScopeAccessObject requestingScopeAccess) {
+        ScopeAccess targetScopeAccess,
+        ScopeAccess requestingScopeAccess) {
         logger.debug("Authorizing as Requestor or Owner");
 
         boolean isRequestor = requestingScopeAccess instanceof ClientScopeAccessObject
@@ -175,15 +175,15 @@ public class DefaultAuthorizationService implements AuthorizationService {
         if (targetScopeAccess instanceof ClientScopeAccessObject) {
             isOwner = requestingScopeAccess.getClientId().equals(
                 targetScopeAccess.getClientId());
-        } else if (targetScopeAccess instanceof UserScopeAccessObject) {
-            isOwner = ((UserScopeAccessObject) requestingScopeAccess)
+        } else if (targetScopeAccess instanceof UserScopeAccess) {
+            isOwner = ((UserScopeAccess) requestingScopeAccess)
                 .getUsername().equals(
-                    ((UserScopeAccessObject) targetScopeAccess).getUsername());
-        } else if (targetScopeAccess instanceof RackerScopeAccessObject) {
-            isOwner = ((RackerScopeAccessObject) requestingScopeAccess)
+                    ((UserScopeAccess) targetScopeAccess).getUsername());
+        } else if (targetScopeAccess instanceof RackerScopeAccess) {
+            isOwner = ((RackerScopeAccess) requestingScopeAccess)
                 .getRackerId()
                 .equals(
-                    ((RackerScopeAccessObject) targetScopeAccess).getRackerId());
+                    ((RackerScopeAccess) targetScopeAccess).getRackerId());
         }
         
         logger.debug("Authorized as Requestor({}) or Owner({})", isRequestor,
@@ -193,7 +193,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public void checkAuthAndHandleFailure(boolean authorized,
-        ScopeAccessObject token) {
+        ScopeAccess token) {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 ((hasAccessToken) token).getAccessTokenString());

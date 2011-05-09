@@ -25,9 +25,9 @@ import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
 import com.rackspace.idm.domain.entity.OAuthGrantType;
-import com.rackspace.idm.domain.entity.PermissionObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
-import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.OAuthService;
@@ -112,7 +112,7 @@ public class TokenResource {
         }
 
         DateTime currentTime = this.getCurrentTime();
-        ScopeAccessObject scopeAccess = oauthService.getTokens(grantType,
+        ScopeAccess scopeAccess = oauthService.getTokens(grantType,
             trParam, currentTime);
         return Response.ok(authConverter.toAuthDataJaxb(scopeAccess)).build();
     }
@@ -142,7 +142,7 @@ public class TokenResource {
 
         logger.debug("Validating Access Token: {}", tokenString);
 
-        ScopeAccessObject authToken = this.scopeAccessService
+        ScopeAccess authToken = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Only Rackers, Rackspace Clients and Specific Clients are authorized
@@ -154,7 +154,7 @@ public class TokenResource {
         authorizationService.checkAuthAndHandleFailure(authorized, authToken);
 
         // Validate Token exists and is valid
-        ScopeAccessObject scopeAccess = this.scopeAccessService
+        ScopeAccess scopeAccess = this.scopeAccessService
             .getScopeAccessByAccessToken(tokenString);
         if (scopeAccess == null) {
             String errorMsg = String
@@ -278,7 +278,7 @@ public class TokenResource {
         logger.debug("Checking whether token {} has permission {}",
             tokenString, permissionId);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         boolean authorized = token instanceof ClientScopeAccessObject
@@ -286,7 +286,7 @@ public class TokenResource {
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        ScopeAccessObject tokenToCheck = this.scopeAccessService
+        ScopeAccess tokenToCheck = this.scopeAccessService
             .getScopeAccessByAccessToken(tokenString);
 
         if (tokenToCheck == null) {
@@ -305,19 +305,19 @@ public class TokenResource {
             }
         }
 
-        PermissionObject permission = new PermissionObject();
+        PermissionEntity permission = new PermissionEntity();
         permission.setClientId(token.getClientId());
         permission.setCustomerId(token.getClientRCN());
         permission.setPermissionId(permissionId);
 
-        PermissionObject defined = this.scopeAccessService
+        PermissionEntity defined = this.scopeAccessService
             .getPermissionForParent(token.getUniqueId(), permission);
 
         if (defined == null || !defined.getEnabled()) {
             throw new NotFoundException();
         }
 
-        if (tokenToCheck instanceof UserScopeAccessObject) {
+        if (tokenToCheck instanceof UserScopeAccess) {
             if (defined.getGrantedByDefault()) {
                 return Response.ok().build();
             }

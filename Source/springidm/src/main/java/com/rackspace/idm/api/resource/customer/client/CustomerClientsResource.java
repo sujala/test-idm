@@ -28,7 +28,7 @@ import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.AbstractCustomerConsumer;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.Clients;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.CustomerService;
@@ -91,7 +91,7 @@ public class CustomerClientsResource extends AbstractCustomerConsumer {
 
         logger.debug("Getting Customer Clients: {}", customerId);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
@@ -136,7 +136,7 @@ public class CustomerClientsResource extends AbstractCustomerConsumer {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized

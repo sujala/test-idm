@@ -17,7 +17,7 @@ import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.ScopeAccessObjectDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientGroup;
@@ -53,7 +53,7 @@ public class UserServiceTests {
     AuthDao mockRackerDao;
     ClientService mockClientService;
     ScopeAccessService mockScopeAccessService;
-    ScopeAccessObjectDao mockScopeAccessObjectDao;
+    ScopeAccessDao mockScopeAccessObjectDao;
 
     String customerId = "123456";
     String username = "testuser";
@@ -97,7 +97,7 @@ public class UserServiceTests {
         mockCustomerDao = EasyMock.createMock(CustomerDao.class);
         mockRackerDao = EasyMock.createMock(AuthDao.class);
         mockClientService = EasyMock.createMock(ClientService.class);
-        mockScopeAccessObjectDao = EasyMock.createMock(ScopeAccessObjectDao.class);
+        mockScopeAccessObjectDao = EasyMock.createMock(ScopeAccessDao.class);
         mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
         
         Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();

@@ -25,7 +25,7 @@ import com.rackspace.idm.api.resource.customer.client.permission.DefinedPermissi
 import com.rackspace.idm.api.resource.customer.client.service.CustomerClientServicesResource;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -90,7 +90,7 @@ public class CustomerClientResource extends AbstractClientConsumer {
         @PathParam("clientId") String clientId) {
         logger.debug("Getting Client: {}", clientId);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients, Admins and Users are
@@ -136,7 +136,7 @@ public class CustomerClientResource extends AbstractClientConsumer {
 
         logger.debug("Deleting Client: {}", clientId);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
@@ -178,7 +178,7 @@ public class CustomerClientResource extends AbstractClientConsumer {
         @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Rackers, Admins and specific clients are authorized

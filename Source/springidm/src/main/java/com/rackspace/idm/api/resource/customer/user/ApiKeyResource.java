@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -80,7 +80,7 @@ public class ApiKeyResource {
         @PathParam("username") String username) {
         logger.debug("Reseting Cloud Auth service API key for User: {}", username);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Specific Clients and Users are authorized
@@ -123,7 +123,7 @@ public class ApiKeyResource {
 
         logger.debug("Reseting Cloud Auth service API key for User: {}", username);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients, Admins and Users are authorized
@@ -176,7 +176,7 @@ public class ApiKeyResource {
         }
         logger.debug("Reseting Cloud Auth service API key for User: {}", username);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Rackers and Specific Clients are authorized

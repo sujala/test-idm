@@ -13,7 +13,7 @@ import com.unboundid.ldap.sdk.persist.LDAPGetter;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 
 @LDAPObject(structuralClass="passwordResetScopeAccess",requestAllAttributes=true)
-public class PasswordResetScopeAccessObject extends ScopeAccessObject implements
+public class PasswordResetScopeAccessObject extends ScopeAccess implements
 hasAccessToken {
 
     @LDAPEntryField()

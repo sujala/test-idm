@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.CustomerConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -84,7 +84,7 @@ public class CustomersResource {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized

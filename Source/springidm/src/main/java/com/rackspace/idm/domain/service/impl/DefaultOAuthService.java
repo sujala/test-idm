@@ -27,11 +27,11 @@ import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.OAuthGrantType;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
 import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.entity.RackerScopeAccessObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.RackerScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.UserScopeAccessObject;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.entity.hasRefreshToken;
@@ -77,7 +77,7 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     @Override
-    public ScopeAccessObject getAccessTokenByAuthHeader(final String authHeader) {
+    public ScopeAccess getAccessTokenByAuthHeader(final String authHeader) {
         return this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
     }
 
@@ -90,7 +90,7 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     @Override
-    public ScopeAccessObject getTokens(final OAuthGrantType grantType,
+    public ScopeAccess getTokens(final OAuthGrantType grantType,
         final AuthCredentials trParam, final DateTime currentTime)
         throws NotAuthenticatedException {
 
@@ -135,7 +135,7 @@ public class DefaultOAuthService implements OAuthService {
                     racker.setRackerId(uaResult.getUser().getUsername());
                     this.userService.addRacker(racker);
                 }
-                RackerScopeAccessObject scopeAccess = this
+                RackerScopeAccess scopeAccess = this
                     .getAndUpdateRackerScopeAccessForClientId(racker,
                         caResult.getClient());
                 return scopeAccess;
@@ -152,7 +152,7 @@ public class DefaultOAuthService implements OAuthService {
                 return prsa;
             }
 
-            UserScopeAccessObject usa = this
+            UserScopeAccess usa = this
                 .getAndUpdateUserScopeAccessForClientId(uaResult.getUser(),
                     caResult.getClient());
             usa.setUserPasswordExpirationDate(rotationDate);
@@ -161,7 +161,7 @@ public class DefaultOAuthService implements OAuthService {
 
         if (REFRESH_TOKEN == grantType) {
 
-            ScopeAccessObject scopeAccess = this.scopeAccessService
+            ScopeAccess scopeAccess = this.scopeAccessService
                 .getScopeAccessByRefreshToken(trParam.getRefreshToken());
             if (scopeAccess == null
                 || ((hasRefreshToken) scopeAccess)
@@ -175,8 +175,8 @@ public class DefaultOAuthService implements OAuthService {
                 throw new NotAuthenticatedException(msg);
             }
 
-            if (scopeAccess instanceof UserScopeAccessObject) {
-                String username = ((UserScopeAccessObject) scopeAccess)
+            if (scopeAccess instanceof UserScopeAccess) {
+                String username = ((UserScopeAccess) scopeAccess)
                     .getUsername();
                 User user = this.userService.getUser(username);
                 if (user == null || user.isDisabled()) {
@@ -210,7 +210,7 @@ public class DefaultOAuthService implements OAuthService {
     public void revokeAccessToken(String tokenStringRequestingDelete,
         String tokenToDelete) {
         logger.debug("Deleting Token {}", tokenToDelete);
-        ScopeAccessObject scopeAccessToDelete = this.scopeAccessService
+        ScopeAccess scopeAccessToDelete = this.scopeAccessService
             .getScopeAccessByAccessToken(tokenToDelete);
 
         if (scopeAccessToDelete == null) {
@@ -219,7 +219,7 @@ public class DefaultOAuthService implements OAuthService {
             throw new NotFoundException(error);
         }
 
-        ScopeAccessObject scopeAccessRequestor = this.scopeAccessService
+        ScopeAccess scopeAccessRequestor = this.scopeAccessService
             .getScopeAccessByAccessToken(tokenStringRequestingDelete);
 
         if (scopeAccessRequestor == null) {
@@ -373,23 +373,23 @@ public class DefaultOAuthService implements OAuthService {
         return scopeAccess;
     }
 
-    private RackerScopeAccessObject getAndUpdateRackerScopeAccessForClientId(
+    private RackerScopeAccess getAndUpdateRackerScopeAccessForClientId(
         Racker racker, BaseClient client) {
         
         logger.debug("Get and Update ScopeAccess for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
         
-        RackerScopeAccessObject scopeAccess = this.scopeAccessService
+        RackerScopeAccess scopeAccess = this.scopeAccessService
             .getRackerScopeAccessForClientId(racker.getUniqueId(),
                 client.getClientId());
 
         if (scopeAccess == null) {
             // Auto-Provision Scope Access Objects for Rackers
-            scopeAccess = new RackerScopeAccessObject();
+            scopeAccess = new RackerScopeAccess();
             scopeAccess.setRackerId(racker.getRackerId());
             scopeAccess.setClientId(client.getClientId());
             scopeAccess.setClientRCN(client.getCustomerId());
             logger.debug("Creating ScopeAccess for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
-            scopeAccess = (RackerScopeAccessObject)this.scopeAccessService.addScopeAccess(racker.getUniqueId(),
+            scopeAccess = (RackerScopeAccess)this.scopeAccessService.addScopeAccess(racker.getUniqueId(),
                 scopeAccess);
         }
 
@@ -419,12 +419,12 @@ public class DefaultOAuthService implements OAuthService {
         return scopeAccess;
     }
 
-    private UserScopeAccessObject getAndUpdateUserScopeAccessForClientId(
+    private UserScopeAccess getAndUpdateUserScopeAccessForClientId(
         BaseUser user, BaseClient client) {
         
         logger.debug("Get and Update ScopeAccess for User: {} and ClientId: {}", user.getUsername(), client.getClientId());
         
-        UserScopeAccessObject scopeAccess = this.scopeAccessService
+        UserScopeAccess scopeAccess = this.scopeAccessService
             .getUserScopeAccessForClientId(user.getUniqueId(),
                 client.getClientId());
 

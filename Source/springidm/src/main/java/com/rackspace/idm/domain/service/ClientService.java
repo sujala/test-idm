@@ -7,7 +7,7 @@ import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.Clients;
-import com.rackspace.idm.domain.entity.PermissionObject;
+import com.rackspace.idm.domain.entity.PermissionEntity;
 
 public interface ClientService {
 
@@ -15,7 +15,7 @@ public interface ClientService {
 
     void addClientGroup(ClientGroup clientGroup);
 
-    void addDefinedPermission(PermissionObject permission);
+    void addDefinedPermission(PermissionEntity permission);
     
     void addUserToClientGroup(String username, String customerId, String clientId, String groupName);
 
@@ -25,7 +25,7 @@ public interface ClientService {
 
     void deleteClientGroup(String customerId, String clientId, String groupName);
 
-    void deleteDefinedPermission(PermissionObject permission);
+    void deleteDefinedPermission(PermissionEntity permission);
 
     Clients getByCustomerId(String customerId, int offset, int limit);
 
@@ -46,12 +46,12 @@ public interface ClientService {
 
     Clients getClientServices(Client client);
     
-    PermissionObject getDefinedPermissionByClientIdAndPermissionId(String clientId,
+    PermissionEntity getDefinedPermissionByClientIdAndPermissionId(String clientId,
         String permissionId);
     
-    PermissionObject checkAndGetPermission(String customerId, String clientId, String permissionId);
+    PermissionEntity checkAndGetPermission(String customerId, String clientId, String permissionId);
 
-    List<PermissionObject> getDefinedPermissionsByClient(Client client);
+    List<PermissionEntity> getDefinedPermissionsByClient(Client client);
 
     boolean isUserMemberOfClientGroup(String username, ClientGroup group);
 
@@ -65,5 +65,5 @@ public interface ClientService {
 
     void updateClientGroup(ClientGroup group);
 
-    void updateDefinedPermission(PermissionObject permission);
+    void updateDefinedPermission(PermissionEntity permission);
 }

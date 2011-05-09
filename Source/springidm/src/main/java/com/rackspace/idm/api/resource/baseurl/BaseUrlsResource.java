@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.EndPointConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -79,7 +79,7 @@ public class BaseUrlsResource {
     public Response getBaseUrls(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
@@ -112,7 +112,7 @@ public class BaseUrlsResource {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
@@ -160,7 +160,7 @@ public class BaseUrlsResource {
     public Response getBaseUrl(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("baseUrlId") int baseUrlId) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         CloudBaseUrl url = checkAndGetUrl(request, uriInfo, baseUrlId, token);
@@ -186,7 +186,7 @@ public class BaseUrlsResource {
     public Response deleteBaseUrl(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("baseUrlId") int baseUrlId) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
         
         checkAndGetUrl(request, uriInfo, baseUrlId, token);
@@ -196,7 +196,7 @@ public class BaseUrlsResource {
     }
 
     
-    private CloudBaseUrl checkAndGetUrl(Request request, UriInfo uriInfo, int baseUrlId, ScopeAccessObject token) {
+    private CloudBaseUrl checkAndGetUrl(Request request, UriInfo uriInfo, int baseUrlId, ScopeAccess token) {
         // Only Specific Clients are authorized
         boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
             uriInfo);

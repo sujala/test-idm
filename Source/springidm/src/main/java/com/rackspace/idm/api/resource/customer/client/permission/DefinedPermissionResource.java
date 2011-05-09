@@ -22,8 +22,8 @@ import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
-import com.rackspace.idm.domain.entity.PermissionObject;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -92,7 +92,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's or the specified client are authorized
@@ -104,11 +104,11 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        PermissionObject inputPermisison = permissionConverter.toPermissionDO(holder.getEntity());
+        PermissionEntity inputPermisison = permissionConverter.toPermissionDO(holder.getEntity());
         validateClientPermissionRequest(customerId, clientId, permissionId,
             inputPermisison);
 
-        PermissionObject permissionDO = this.checkAndGetPermission(customerId,
+        PermissionEntity permissionDO = this.checkAndGetPermission(customerId,
             clientId, permissionId);
         
         permissionDO.copyChanges(inputPermisison);
@@ -147,7 +147,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         @PathParam("clientId") String clientId,
         @PathParam("permissionId") String permissionId) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's or the specified client are authorized
@@ -159,7 +159,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        PermissionObject permission = this.checkAndGetPermission(customerId,
+        PermissionEntity permission = this.checkAndGetPermission(customerId,
             clientId, permissionId);
         this.clientService.deleteDefinedPermission(permission);
 
@@ -190,7 +190,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         @PathParam("clientId") String clientId,
         @PathParam("permissionId") String permissionId) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
@@ -205,7 +205,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         checkAndGetClient(customerId, clientId);
-        PermissionObject permission = this.checkAndGetPermission(customerId,
+        PermissionEntity permission = this.checkAndGetPermission(customerId,
             clientId, permissionId);
 
         return Response.ok(permissionConverter.toPermissionJaxb(permission))
@@ -217,9 +217,9 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         return logger;
     }
 
-    private PermissionObject checkAndGetPermission(String customerId,
+    private PermissionEntity checkAndGetPermission(String customerId,
         String clientId, String permissionId) throws NotFoundException {
-        PermissionObject permission = this.clientService
+        PermissionEntity permission = this.clientService
             .getDefinedPermissionByClientIdAndPermissionId(clientId,
                 permissionId);
 
@@ -235,7 +235,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
     }
 
     private void validateClientPermissionRequest(String customerId,
-        String clientId, String permissionId, PermissionObject permission)
+        String clientId, String permissionId, PermissionEntity permission)
         throws BadRequestException {
 
         if (!customerId.equalsIgnoreCase(permission.getCustomerId())) {

@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.user.service.CustomerUserServicesResource;
-import com.rackspace.idm.domain.entity.ScopeAccessObject;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -100,7 +100,7 @@ public class UserResource {
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients, Admins and User's are
@@ -143,7 +143,7 @@ public class UserResource {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients, Admins and User's are authorized
@@ -206,7 +206,7 @@ public class UserResource {
 
         logger.debug("Deleting User :{}", username);
 
-        ScopeAccessObject token = this.scopeAccessService
+        ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
         // Only Specific Clients are authorized
