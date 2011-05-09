@@ -55,10 +55,14 @@ public class DefaultOAuthService implements OAuthService {
     private final ClientService clientService;
     private final Configuration config;
     private final InputValidator inputValidator;
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    final private Logger logger = LoggerFactory.getLogger(DefaultOAuthService.class);
     private final ScopeAccessService scopeAccessService;
     private final UserService userService;
 
+    {
+        logger.info("Instantiating DefaultOauthService");
+    }
+    
     public DefaultOAuthService(final UserService userService,
         final ClientService clientService,
         final AuthorizationService authorizationService,
@@ -91,7 +95,9 @@ public class DefaultOAuthService implements OAuthService {
         throws NotAuthenticatedException {
 
         if (StringUtils.isBlank(trParam.getClientId())) {
-            throw new BadRequestException("client_id cannot be blank");
+            String msg = "client_id cannot be blank";
+            logger.warn(msg);
+            throw new BadRequestException(msg);
         }
 
         final ClientAuthenticationResult caResult = clientService.authenticate(
@@ -106,7 +112,9 @@ public class DefaultOAuthService implements OAuthService {
         if (PASSWORD == grantType) {
 
             if (StringUtils.isBlank(trParam.getUsername())) {
-                throw new BadRequestException("username cannot be blank");
+                String msg = "username cannot be blank";
+                logger.warn(msg);
+                throw new BadRequestException(msg);
             }
 
             final UserAuthenticationResult uaResult = userService.authenticate(
@@ -255,6 +263,7 @@ public class DefaultOAuthService implements OAuthService {
 
     @Override
     public void revokeAllTokensForCustomer(final String customerId) {
+        logger.debug("Revoking all access tokens for customer: {}.", customerId);
         final List<User> usersList = getAllUsersForCustomerId(customerId);
         for (final User user : usersList) {
             this.scopeAccessService.expireAllTokensForUser(user.getUsername());
@@ -299,6 +308,7 @@ public class DefaultOAuthService implements OAuthService {
 
     // private functions
     private List<Client> getAllClientsForCustomerId(final String customerId) {
+        logger.debug("Finding Clients from CustomerId: {}", customerId);
         final List<Client> clientsList = new ArrayList<Client>();
         int total = 1; // This gets overwritten, just needs to be greater than
         // offset right now.
@@ -308,10 +318,12 @@ public class DefaultOAuthService implements OAuthService {
             clientsList.addAll(clientsObj.getClients());
             total = clientsObj.getTotalRecords();
         }
+        logger.debug("Found {} Client(s) from CustomerId: {}", clientsList.size(), customerId);
         return clientsList;
     }
 
     private List<User> getAllUsersForCustomerId(final String customerId) {
+        logger.debug("Finding Users for CustomerId: {}", customerId);
         final List<User> usersList = new ArrayList<User>();
         int total = 1; // This gets overwritten, just needs to be greater than
         // offset right now.
@@ -321,16 +333,21 @@ public class DefaultOAuthService implements OAuthService {
             usersList.addAll(usersObj.getUsers());
             total = usersObj.getTotalRecords();
         }
+        logger.debug("Found {} User(s) for CustomerId: {}", usersList.size(), customerId);
         return usersList;
     }
 
     private ClientScopeAccessObject getAndUpdateClientScopeAccessForClientId(
         BaseClient client) {
+        
+        logger.debug("Get and Update Client ScopeAccess for ClientId: {}", client.getClientId());
+        
         ClientScopeAccessObject scopeAccess = this.scopeAccessService
             .getClientScopeAccessForClientId(client.getUniqueId(),
                 client.getClientId());
 
         if (scopeAccess == null) {
+            logger.debug("Creating ScopeAccess for Client: {} and ClientId: {}", client.getClientId(), client.getClientId());
             scopeAccess = new ClientScopeAccessObject();
             scopeAccess.setClientId(client.getClientId());
             scopeAccess.setClientRCN(client.getCustomerId());
@@ -347,15 +364,20 @@ public class DefaultOAuthService implements OAuthService {
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(current.plusSeconds(
                 this.getDefaultTokenExpirationSeconds()).toDate());
+            logger.debug("Updating ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
         }
 
         this.scopeAccessService.updateScopeAccess(scopeAccess);
 
+        logger.debug("Found ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
         return scopeAccess;
     }
 
     private RackerScopeAccessObject getAndUpdateRackerScopeAccessForClientId(
         Racker racker, BaseClient client) {
+        
+        logger.debug("Get and Update ScopeAccess for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
+        
         RackerScopeAccessObject scopeAccess = this.scopeAccessService
             .getRackerScopeAccessForClientId(racker.getUniqueId(),
                 client.getClientId());
@@ -366,6 +388,7 @@ public class DefaultOAuthService implements OAuthService {
             scopeAccess.setRackerId(racker.getRackerId());
             scopeAccess.setClientId(client.getClientId());
             scopeAccess.setClientRCN(client.getCustomerId());
+            logger.debug("Creating ScopeAccess for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
             scopeAccess = (RackerScopeAccessObject)this.scopeAccessService.addScopeAccess(racker.getUniqueId(),
                 scopeAccess);
         }
@@ -389,13 +412,18 @@ public class DefaultOAuthService implements OAuthService {
             scopeAccess.setRefreshTokenExp(current.plusYears(100).toDate());
         }
 
+        logger.debug("Updating Expirations for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
         this.scopeAccessService.updateScopeAccess(scopeAccess);
 
+        logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
         return scopeAccess;
     }
 
     private UserScopeAccessObject getAndUpdateUserScopeAccessForClientId(
         BaseUser user, BaseClient client) {
+        
+        logger.debug("Get and Update ScopeAccess for User: {} and ClientId: {}", user.getUsername(), client.getClientId());
+        
         UserScopeAccessObject scopeAccess = this.scopeAccessService
             .getUserScopeAccessForClientId(user.getUniqueId(),
                 client.getClientId());
@@ -427,8 +455,10 @@ public class DefaultOAuthService implements OAuthService {
             scopeAccess.setRefreshTokenExp(current.plusYears(100).toDate());
         }
 
+        logger.debug("Updating Expirations for User: {} and ClientId: {}", user.getUsername(), client.getClientId());
         this.scopeAccessService.updateScopeAccess(scopeAccess);
 
+        logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
         return scopeAccess;
     }
 
