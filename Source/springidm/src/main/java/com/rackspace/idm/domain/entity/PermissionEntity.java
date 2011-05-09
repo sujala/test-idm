@@ -103,7 +103,7 @@ public class PermissionEntity implements Auditable {
     }
 
     public void setValue(String value) {
-        this.value = value;
+        this.value = StringUtils.isBlank(value) ? null : value;
     }
 
     @Override
@@ -126,7 +126,7 @@ public class PermissionEntity implements Auditable {
     }
 
     public void setPermissionType(String permissionType) {
-        this.permissionType = permissionType;
+        this.permissionType = StringUtils.isBlank(permissionType) ? null : permissionType;
     }
 
     public String getTitle() {
@@ -134,7 +134,7 @@ public class PermissionEntity implements Auditable {
     }
 
     public void setTitle(String title) {
-        this.title = title;
+        this.title = StringUtils.isBlank(title) ? null : title;
     }
 
     public String getDescription() {
@@ -142,7 +142,7 @@ public class PermissionEntity implements Auditable {
     }
 
     public void setDescription(String description) {
-        this.description = description;
+        this.description = StringUtils.isBlank(description) ? null : description;
     }
 
     public Boolean getGrantedByDefault() {

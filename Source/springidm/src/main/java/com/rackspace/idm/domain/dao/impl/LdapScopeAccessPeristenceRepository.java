@@ -237,7 +237,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             conn = getAppConnPool().getConnection();
             final Filter filter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
             .addEqualAttribute(ATTR_CLIENT_ID, clientId).build();
-            final SearchResult searchResult = conn.search(parentUniqueId, SearchScope.ONE, filter);
+            final SearchResult searchResult = conn.search(parentUniqueId, SearchScope.SUB, filter);
 
             final List<SearchResultEntry> searchEntries = searchResult.getSearchEntries();
             getLogger().debug("Found {} ScopeAccess(s) for Parent: {} by ClientId: {}", new Object[] { searchEntries.size(), parentUniqueId, clientId});
