@@ -33,12 +33,14 @@ public class LdapEndpointRepository extends LdapRepository implements
     }
 
     public void addBaseUrl(CloudBaseUrl baseUrl) {
-        getLogger().debug("Adding baseUlr {}", baseUrl);
+        
         if (baseUrl == null) {
             getLogger().error("Null instance of baseUrl was passed");
             throw new IllegalArgumentException(
                 "Null instance of baseUrl was passed.");
         }
+        
+        getLogger().debug("Adding baseUlr {}", baseUrl);
 
         List<Attribute> atts = new ArrayList<Attribute>();
 
