@@ -105,6 +105,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         PermissionEntity inputPermisison = permissionConverter.toPermissionDO(holder.getEntity());
+        
         validateClientPermissionRequest(customerId, clientId, permissionId,
             inputPermisison);
 
@@ -161,6 +162,7 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
 
         PermissionEntity permission = this.checkAndGetPermission(customerId,
             clientId, permissionId);
+        
         this.clientService.deleteDefinedPermission(permission);
 
         return Response.noContent().build();
@@ -226,8 +228,8 @@ public class DefinedPermissionResource extends AbstractClientConsumer {
         if (permission == null
             || !customerId.equalsIgnoreCase(permission.getCustomerId())
             || !clientId.equalsIgnoreCase(permission.getClientId())) {
-            String errorMsg = String.format("Permission Not Found: %s",
-                permissionId);
+            String errorMsg = String.format("Permission %s Not Found for Customer %s and Client %s",
+                permissionId, customerId, clientId);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
