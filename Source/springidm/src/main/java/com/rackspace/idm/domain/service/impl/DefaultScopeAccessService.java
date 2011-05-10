@@ -57,6 +57,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public ScopeAccess addScopeAccess(String parentUniqueId,
         ScopeAccess scopeAccess) {
+        if (scopeAccess == null) {
+            String errMsg = String.format("Null argument passed in.");
+            logger.error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
         logger.info("Adding scopeAccess {}", scopeAccess);
         ScopeAccess newScopeAccess = this.scopeAccessDao.addScopeAccess(
             parentUniqueId, scopeAccess);
@@ -88,6 +93,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public void deleteScopeAccess(ScopeAccess scopeAccess) {
         logger.info("Deleting ScopeAccess {}", scopeAccess);
+        if (scopeAccess == null) {
+            String errMsg = String.format("Null argument passed in.");
+            logger.error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
         this.scopeAccessDao.deleteScopeAccess(scopeAccess);
         logger.info("Deleted ScopeAccess {}", scopeAccess);
     }
@@ -95,6 +105,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public boolean doesAccessTokenHavePermission(String accessTokenString,
         PermissionEntity permission) {
+        if (permission == null) {
+            String errMsg = String.format("Null argument passed in.");
+            logger.error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
         logger.debug("Checking whether access token {} has permisison {}", accessTokenString, permission.getPermissionId());
         return this.scopeAccessDao.doesAccessTokenHavePermission(
             accessTokenString, permission);
@@ -195,6 +210,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public PasswordResetScopeAccessObject getOrCreatePasswordResetScopeAccessForUser(
         BaseUser user) {
+        
+        if (user == null) {
+            String errMsg = String.format("Null argument passed in.");
+            logger.error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
+        
         logger.debug("Getting or creating password reset scope access for user {}", user.getUsername());
         PasswordResetScopeAccessObject prsa = (PasswordResetScopeAccessObject) this.scopeAccessDao
             .getScopeAccessForParentByClientId(user.getUniqueId(),
@@ -369,6 +391,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public PermissionEntity grantPermissionToClient(String parentUniqueId,
         PermissionEntity permission) {
+        if (permission == null) {
+            String errMsg = String.format("Null argument passed in.");
+            logger.error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
         logger.debug("Granting permission {} to client {}", parentUniqueId, permission.getPermissionId());
         Client dClient = this.clientDao.getClientByCustomerIdAndClientId(
             permission.getCustomerId(), permission.getClientId());
@@ -415,6 +442,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public PermissionEntity grantPermissionToUser(User user,
         PermissionEntity permission) {
+        if (permission == null) {
+            String errMsg = String.format("Null argument passed in.");
+            logger.error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
         logger.debug("Granting permission {} to user {}", user.getUsername(), permission.getPermissionId());
         Client dClient = this.clientDao.getClientByCustomerIdAndClientId(
             permission.getCustomerId(), permission.getClientId());
@@ -464,14 +496,15 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public void updateScopeAccess(ScopeAccess scopeAccess) {
-        logger.info("Updating ScopeAccess {}", scopeAccess);
-
+       
         if (scopeAccess == null) {
             String errorMsg = String
                 .format("Null scope access object instance.");
             logger.warn(errorMsg);
             throw new IllegalArgumentException(errorMsg);
         }
+        
+        logger.info("Updating ScopeAccess {}", scopeAccess);
 
         this.scopeAccessDao.updateScopeAccess(scopeAccess);
         logger.info("Updated ScopeAccess {}", scopeAccess);
@@ -480,6 +513,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public PermissionEntity addPermissionToScopeAccess(
         String scopeAccessUniqueId, PermissionEntity permission) {
+        
+        if (permission == null) {
+            String errorMsg = String
+                .format("Null scope access object instance.");
+            logger.warn(errorMsg);
+            throw new IllegalArgumentException(errorMsg);
+        }
+        
         logger.info("Adding Permission {} to ScopeAccess {}", permission,
             scopeAccessUniqueId);
         Client client = this.clientDao.getClientByClientId(permission
@@ -511,6 +552,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public PermissionEntity getPermissionForParent(String scopeAccessUniqueId,
         PermissionEntity permission) {
+        if (permission == null) {
+            String errorMsg = String
+                .format("Null scope access object instance.");
+            logger.warn(errorMsg);
+            throw new IllegalArgumentException(errorMsg);
+        }
+        
         logger.debug("Getting Permission {} on ScopeAccess {}", permission,
             scopeAccessUniqueId);
         PermissionEntity perm = this.scopeAccessDao
@@ -534,6 +582,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public void removePermission(PermissionEntity permission) {
+        if (permission == null) {
+            String errorMsg = String
+                .format("Null scope access object instance.");
+            logger.warn(errorMsg);
+            throw new IllegalArgumentException(errorMsg);
+        }
         logger.info("Removing Permission {}", permission);
         this.scopeAccessDao.removePermissionFromScopeAccess(permission);
         logger.info("Removing Permission {}", permission);
@@ -541,6 +595,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public void updatePermission(PermissionEntity permission) {
+        if (permission == null) {
+            String errorMsg = String
+                .format("Null scope access object instance.");
+            logger.warn(errorMsg);
+            throw new IllegalArgumentException(errorMsg);
+        }
+        
         logger.info("Updating Permission {}", permission);
         this.scopeAccessDao.updatePermissionForScopeAccess(permission);
         logger.info("Updated Permission {}", permission);
