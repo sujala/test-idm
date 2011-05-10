@@ -241,10 +241,10 @@ public class DefaultClientService implements ClientService {
 
     @Override
     public ClientSecret resetClientSecret(Client client) {
-        logger.debug("Reseting Client secret ClientId: {}", client.getClientId());
         if (client == null) {
             throw new IllegalArgumentException();
         }
+        logger.debug("Reseting Client secret ClientId: {}", client.getClientId());
 
         ClientSecret clientSecret = null;
         try {
