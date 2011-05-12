@@ -54,7 +54,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     @Override
     public void addRacker(Racker racker) {
-        getLogger().debug("Adding racker - {}", racker);
+        getLogger().info("Adding racker - {}", racker);
         if (racker == null) {
             String errmsg = "Null instance of Racer was passed";
             getLogger().error(errmsg);
@@ -84,12 +84,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         audit.succeed();
 
-        getLogger().debug("Added racker {}", racker);
+        getLogger().info("Added racker {}", racker);
     }
 
     @Override
     public void addUser(User user, String customerUniqueId) {
-        getLogger().debug("Adding user - {}", user);
+        getLogger().info("Adding user - {}", user);
         if (user == null) {
             String errmsg = "Null instance of User was passed";
             getLogger().error(errmsg);
@@ -124,7 +124,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         audit.succeed();
 
-        getLogger().debug("Added user {}", user);
+        getLogger().info("Added user {}", user);
     }
 
     @Override
