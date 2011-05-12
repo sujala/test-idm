@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.AuthCredentials;
-import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.OAuthGrantType;
 import com.rackspace.idm.domain.entity.PermissionEntity;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -281,7 +281,7 @@ public class TokenResource {
         ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
-        boolean authorized = token instanceof ClientScopeAccessObject
+        boolean authorized = token instanceof ClientScopeAccess
             && serviceId.equals(token.getClientId());
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);

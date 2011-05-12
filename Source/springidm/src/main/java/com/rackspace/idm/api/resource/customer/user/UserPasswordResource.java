@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.PasswordConverter;
 import com.rackspace.idm.api.converter.TokenConverter;
 import com.rackspace.idm.domain.entity.Password;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
@@ -187,10 +187,10 @@ public class UserPasswordResource {
         boolean authorized = false;
 
         if (isRecovery) {
-            authorized = token instanceof PasswordResetScopeAccessObject
-                && ((PasswordResetScopeAccessObject) token).getUserRCN()
+            authorized = token instanceof PasswordResetScopeAccess
+                && ((PasswordResetScopeAccess) token).getUserRCN()
                     .equalsIgnoreCase(customerId)
-                && ((PasswordResetScopeAccessObject) token).getUsername()
+                && ((PasswordResetScopeAccess) token).getUsername()
                     .equals(username);
         } else {
             authorized = authorizationService.authorizeRacker(token)
@@ -266,7 +266,7 @@ public class UserPasswordResource {
             throw new UserDisabledException(errorMsg);
         }
 
-        PasswordResetScopeAccessObject prsa = this.scopeAccessService
+        PasswordResetScopeAccess prsa = this.scopeAccessService
             .getOrCreatePasswordResetScopeAccessForUser(user);
 
         logger.debug("Got Password Reset Token for User :{}", user);

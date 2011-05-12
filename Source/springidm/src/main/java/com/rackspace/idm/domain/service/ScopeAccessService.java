@@ -1,8 +1,8 @@
 package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.PermissionEntity;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -31,9 +31,9 @@ public interface ScopeAccessService {
 
     ScopeAccess getAccessTokenByAuthHeader(String authHeader);
 
-    ClientScopeAccessObject getClientScopeAccessForClientId(String clientUniqueId, String clientId);
+    ClientScopeAccess getClientScopeAccessForClientId(String clientUniqueId, String clientId);
 
-    PasswordResetScopeAccessObject getOrCreatePasswordResetScopeAccessForUser(BaseUser user);
+    PasswordResetScopeAccess getOrCreatePasswordResetScopeAccessForUser(BaseUser user);
 
     PermissionEntity getPermissionForParent(String parentUniqueId, PermissionEntity permission);
 

@@ -15,7 +15,7 @@ import com.unboundid.ldap.sdk.persist.LDAPObject;
 
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_PASSWORDRESETSCOPEACCESS
     ,requestAllAttributes=true)
-public class PasswordResetScopeAccessObject extends ScopeAccess implements
+public class PasswordResetScopeAccess extends ScopeAccess implements
 hasAccessToken {
 
     @LDAPEntryField()

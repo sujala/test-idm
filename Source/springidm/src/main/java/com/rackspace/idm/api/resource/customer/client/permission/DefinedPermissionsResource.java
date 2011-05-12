@@ -28,7 +28,7 @@ import com.rackspace.idm.api.converter.PermissionConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.PermissionEntity;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -139,7 +139,7 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
         // Racker's or the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo) && (token instanceof ClientScopeAccessObject && token
+            || (authorizationService.authorizeClient(token, request.getMethod(), uriInfo) && (token instanceof ClientScopeAccess && token
                 .getClientId().equalsIgnoreCase(
                     clientId)));
 

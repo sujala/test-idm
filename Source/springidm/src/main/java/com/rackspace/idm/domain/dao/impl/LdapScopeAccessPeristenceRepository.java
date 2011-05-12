@@ -7,8 +7,8 @@ import org.apache.commons.configuration.Configuration;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.PermissionEntity;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -258,9 +258,9 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_USERSCOPEACCESS)) {
             object = LDAPPersister.getInstance(UserScopeAccess.class).decode(searchResultEntry);
         } else if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_CLIENTSCOPEACCESS)) {
-            object = LDAPPersister.getInstance(ClientScopeAccessObject.class).decode(searchResultEntry);
+            object = LDAPPersister.getInstance(ClientScopeAccess.class).decode(searchResultEntry);
         } else if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_PASSWORDRESETSCOPEACCESS)) {
-            object = LDAPPersister.getInstance(PasswordResetScopeAccessObject.class).decode(searchResultEntry);
+            object = LDAPPersister.getInstance(PasswordResetScopeAccess.class).decode(searchResultEntry);
         } else if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_RACKERSCOPEACCESS)) {
             object = LDAPPersister.getInstance(RackerScopeAccess.class).decode(searchResultEntry);
         } else if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_SCOPEACCESS)) {

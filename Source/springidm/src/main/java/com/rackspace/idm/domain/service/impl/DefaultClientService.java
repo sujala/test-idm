@@ -15,7 +15,7 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Customer;
@@ -145,7 +145,7 @@ public class DefaultClientService implements ClientService {
                 client.getClientId());
 
         if (sa == null) {
-            sa = new ClientScopeAccessObject();
+            sa = new ClientScopeAccess();
             sa.setClientId(client.getClientId());
             sa.setClientRCN(client.getCustomerId());
             sa = this.scopeAccessDao.addScopeAccess(client.getUniqueId(), sa);

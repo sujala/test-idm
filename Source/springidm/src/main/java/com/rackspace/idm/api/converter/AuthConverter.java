@@ -10,7 +10,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.joda.time.DateTime;
 
 import com.rackspace.idm.domain.entity.CloudEndpoint;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
@@ -79,9 +79,9 @@ public class AuthConverter {
             }
         }
         
-        if (scopeAccess instanceof PasswordResetScopeAccessObject) {
+        if (scopeAccess instanceof PasswordResetScopeAccess) {
             authJaxb.setIsPasswordResetOnlyToken(true);
-            passwordExpirationDate = ((PasswordResetScopeAccessObject)scopeAccess).getUserPasswordExpirationDate();
+            passwordExpirationDate = ((PasswordResetScopeAccess)scopeAccess).getUserPasswordExpirationDate();
         }
         
         if (passwordExpirationDate != null) {    

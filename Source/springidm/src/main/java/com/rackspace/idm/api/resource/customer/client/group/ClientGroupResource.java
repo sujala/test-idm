@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.GroupConverter;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
@@ -88,7 +88,7 @@ public class ClientGroupResource extends AbstractClientConsumer {
         // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token instanceof ClientScopeAccessObject && token.getClientId()
+            || (token instanceof ClientScopeAccess && token.getClientId()
                 .equalsIgnoreCase(clientId));
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
@@ -174,7 +174,7 @@ public class ClientGroupResource extends AbstractClientConsumer {
         // Racker's, CustomerIdm and the specified client are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeCustomerIdm(token)
-            || (token instanceof ClientScopeAccessObject && token.getClientId()
+            || (token instanceof ClientScopeAccess && token.getClientId()
                 .equalsIgnoreCase(clientId));
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);

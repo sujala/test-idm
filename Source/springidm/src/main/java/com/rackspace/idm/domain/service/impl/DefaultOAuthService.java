@@ -22,10 +22,10 @@ import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
-import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.OAuthGrantType;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -141,7 +141,7 @@ public class DefaultOAuthService implements OAuthService {
                 .getUserPasswordExpirationDate(uaResult.getUser().getUsername());
 
             if (rotationDate != null && rotationDate.isBefore(currentTime)) {
-                PasswordResetScopeAccessObject prsa = this.scopeAccessService
+                PasswordResetScopeAccess prsa = this.scopeAccessService
                     .getOrCreatePasswordResetScopeAccessForUser(uaResult
                         .getUser());
                 prsa.setUserPasswordExpirationDate(rotationDate);
@@ -333,21 +333,21 @@ public class DefaultOAuthService implements OAuthService {
         return usersList;
     }
 
-    private ClientScopeAccessObject getAndUpdateClientScopeAccessForClientId(
+    private ClientScopeAccess getAndUpdateClientScopeAccessForClientId(
         BaseClient client) {
         
         logger.debug("Get and Update Client ScopeAccess for ClientId: {}", client.getClientId());
         
-        ClientScopeAccessObject scopeAccess = this.scopeAccessService
+        ClientScopeAccess scopeAccess = this.scopeAccessService
             .getClientScopeAccessForClientId(client.getUniqueId(),
                 client.getClientId());
 
         if (scopeAccess == null) {
             logger.debug("Creating ScopeAccess for Client: {} and ClientId: {}", client.getClientId(), client.getClientId());
-            scopeAccess = new ClientScopeAccessObject();
+            scopeAccess = new ClientScopeAccess();
             scopeAccess.setClientId(client.getClientId());
             scopeAccess.setClientRCN(client.getCustomerId());
-            scopeAccess = (ClientScopeAccessObject)this.scopeAccessService.addScopeAccess(client.getUniqueId(),
+            scopeAccess = (ClientScopeAccess)this.scopeAccessService.addScopeAccess(client.getUniqueId(),
                 scopeAccess);
         }
 

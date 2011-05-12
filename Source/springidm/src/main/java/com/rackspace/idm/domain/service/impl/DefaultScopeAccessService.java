@@ -16,9 +16,9 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.Clients;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.PermissionEntity;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -197,10 +197,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public ClientScopeAccessObject getClientScopeAccessForClientId(
+    public ClientScopeAccess getClientScopeAccessForClientId(
         String clientUniqueId, String clientId) {
         logger.debug("Getting Client ScopeAccess by clientId", clientId);
-        final ClientScopeAccessObject scopeAccess = (ClientScopeAccessObject) this.scopeAccessDao
+        final ClientScopeAccess scopeAccess = (ClientScopeAccess) this.scopeAccessDao
             .getScopeAccessForParentByClientId(clientUniqueId, clientId);
         logger.debug("Got Client ScopeAccess {} by clientId {}", scopeAccess,
             clientId);
@@ -208,7 +208,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public PasswordResetScopeAccessObject getOrCreatePasswordResetScopeAccessForUser(
+    public PasswordResetScopeAccess getOrCreatePasswordResetScopeAccessForUser(
         BaseUser user) {
         
         if (user == null) {
@@ -218,11 +218,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
         
         logger.debug("Getting or creating password reset scope access for user {}", user.getUsername());
-        PasswordResetScopeAccessObject prsa = (PasswordResetScopeAccessObject) this.scopeAccessDao
+        PasswordResetScopeAccess prsa = (PasswordResetScopeAccess) this.scopeAccessDao
             .getScopeAccessForParentByClientId(user.getUniqueId(),
                 PASSWORD_RESET_CLIENT_ID);
         if (prsa == null) {
-            prsa = new PasswordResetScopeAccessObject();
+            prsa = new PasswordResetScopeAccess();
             prsa.setUsername(user.getUsername());
             prsa.setUserRCN(user.getCustomerId());
             prsa.setAccessTokenExp(new DateTime().plusSeconds(
