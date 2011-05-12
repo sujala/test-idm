@@ -127,14 +127,10 @@ public class DefaultOAuthService implements OAuthService {
             }
 
             if (isTrustedServer()) {
-                Racker racker = this.userService.getRackerByRackerId(uaResult
-                    .getUser().getUsername());
-                if (racker == null) {
-                    // Auto-Provision Racker Objects for Rackers
-                    racker = new Racker();
-                    racker.setRackerId(uaResult.getUser().getUsername());
-                    this.userService.addRacker(racker);
-                }
+                Racker racker = new Racker();
+                racker.setRackerId(uaResult.getUser().getUsername());
+                racker.setUniqueId(uaResult.getUser().getUniqueId());
+                
                 RackerScopeAccess scopeAccess = this
                     .getAndUpdateRackerScopeAccessForClientId(racker,
                         caResult.getClient());

@@ -130,6 +130,13 @@ public class DefaultUserService implements UserService {
             logger.debug("Authenticated Racker {} : {}", username,
                 authenticated);
             Racker racker = this.getRackerByRackerId(username);
+            
+            if (racker == null) {
+                racker = new Racker();
+                racker.setRackerId(username);
+                this.userDao.addRacker(racker);
+            }
+            
             BaseUser user = new BaseUser(username);
             user.setUniqueId(racker.getUniqueId());
             return new UserAuthenticationResult(user, authenticated);
