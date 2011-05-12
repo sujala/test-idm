@@ -16,9 +16,9 @@ import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.Clients;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.PermissionEntity;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
@@ -494,7 +494,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     @Test
     public void shouldGetasswordResetScopeAccessForUser() {
         User user = getFakeUser();
-        PasswordResetScopeAccessObject prsao = getFakePasswordResetScopeAccessObject();
+        PasswordResetScopeAccess prsao = getFakePasswordResetScopeAccessObject();
         DateTime pastTime = new DateTime();
         prsao.setAccessTokenExp(pastTime.minusSeconds(10).toDate());
         EasyMock.expect(
@@ -574,9 +574,9 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
             mockClientDao.getClientByClientId(fakeClient.getClientId()))
             .andReturn(fakeClient);
         List<ScopeAccess> sas = new ArrayList<ScopeAccess>();
-        ClientScopeAccessObject fakeClientScopeAccess0 = getFakeClientScopeAccess();
+        ClientScopeAccess fakeClientScopeAccess0 = getFakeClientScopeAccess();
         sas.add(fakeClientScopeAccess0);
-        ClientScopeAccessObject fakeClientScopeAccess1 = getFakeClientScopeAccess();
+        ClientScopeAccess fakeClientScopeAccess1 = getFakeClientScopeAccess();
         sas.add(fakeClientScopeAccess1);
         EasyMock.expect(
             scopeAccessDao.getScopeAccessesByParent(fakeClient.getUniqueId()))

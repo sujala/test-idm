@@ -14,12 +14,12 @@ import org.junit.Test;
 import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
-import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.OAuthGrantType;
 import com.rackspace.idm.domain.entity.Password;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
@@ -108,7 +108,7 @@ public class OAuthServiceTests {
     public void shouldRevokeAccessToken() {
 
         final UserScopeAccess usa = getFakeUserScopeAccess();
-        final ClientScopeAccessObject csa = getFakeClientScopeAccess();
+        final ClientScopeAccess csa = getFakeClientScopeAccess();
         EasyMock.expect(
                 mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
                 .andReturn(usa);
@@ -129,7 +129,7 @@ public class OAuthServiceTests {
     public void shouldNotRevokeAccessTokenForDeletingTokenNotFound() {
 
         getFakeUserScopeAccess();
-        final ClientScopeAccessObject csa = getFakeClientScopeAccess();
+        final ClientScopeAccess csa = getFakeClientScopeAccess();
         EasyMock.expect(
                 mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
                 .andReturn(null);
@@ -150,7 +150,7 @@ public class OAuthServiceTests {
     public void shouldNotRevokeAccessTokenForRequestingTokenNotFound() {
 
         final UserScopeAccess usa = getFakeUserScopeAccess();
-        final ClientScopeAccessObject csa = getFakeClientScopeAccess();
+        final ClientScopeAccess csa = getFakeClientScopeAccess();
         EasyMock.expect(
                 mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
                 .andReturn(usa);
@@ -171,7 +171,7 @@ public class OAuthServiceTests {
     public void shouldNotRevokeAccessTokenForForbidden() {
 
         final UserScopeAccess usa = getFakeUserScopeAccess();
-        final ClientScopeAccessObject csa = getFakeClientScopeAccess();
+        final ClientScopeAccess csa = getFakeClientScopeAccess();
         EasyMock.expect(
                 mockScopeAccessService.getScopeAccessByAccessToken(tokenVal))
                 .andReturn(usa);
@@ -292,7 +292,7 @@ public class OAuthServiceTests {
                 authCredentials, currentTime);
 
         Assert.assertNotNull(authData);
-        Assert.assertTrue(authData instanceof PasswordResetScopeAccessObject);
+        Assert.assertTrue(authData instanceof PasswordResetScopeAccess);
 
         EasyMock.verify(mockUserService, mockClientService,
                 mockScopeAccessService);
@@ -322,7 +322,7 @@ public class OAuthServiceTests {
                 authCredentials, currentTime);
 
         Assert.assertNotNull(authData);
-        Assert.assertTrue(authData instanceof ClientScopeAccessObject);
+        Assert.assertTrue(authData instanceof ClientScopeAccess);
 
         EasyMock.verify(mockClientService, mockScopeAccessService,
                 mockScopeAccessService);
@@ -732,8 +732,8 @@ public class OAuthServiceTests {
         return usa;
     }
 
-    private ClientScopeAccessObject getFakeClientScopeAccess() {
-        final ClientScopeAccessObject csa = new ClientScopeAccessObject();
+    private ClientScopeAccess getFakeClientScopeAccess() {
+        final ClientScopeAccess csa = new ClientScopeAccess();
         csa.setAccessTokenString(tokenVal);
         csa.setAccessTokenExp(new DateTime().plusDays(1).toDate());
         csa.setClientId(clientId);
@@ -753,8 +753,8 @@ public class OAuthServiceTests {
         return csa;
     }
 
-    private PasswordResetScopeAccessObject getFakePasswordResetScopeAccess() {
-        final PasswordResetScopeAccessObject csa = new PasswordResetScopeAccessObject();
+    private PasswordResetScopeAccess getFakePasswordResetScopeAccess() {
+        final PasswordResetScopeAccess csa = new PasswordResetScopeAccess();
         csa.setAccessTokenString(tokenVal);
         csa.setAccessTokenExp(new DateTime().plusDays(1).toDate());
         csa.setClientId(clientId);

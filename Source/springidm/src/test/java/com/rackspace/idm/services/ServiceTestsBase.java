@@ -5,12 +5,12 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.PermissionEntity;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -117,9 +117,9 @@ public class ServiceTestsBase {
         return so;
     }
     
-    protected ClientScopeAccessObject getFakeClientScopeAccess() {
-        ClientScopeAccessObject so = EasyMock
-            .createNiceMock(ClientScopeAccessObject.class);
+    protected ClientScopeAccess getFakeClientScopeAccess() {
+        ClientScopeAccess so = EasyMock
+            .createNiceMock(ClientScopeAccess.class);
         so.setClientId(clientId);
         so.setClientRCN(customerInum);
         EasyMock.expect(
@@ -146,8 +146,8 @@ public class ServiceTestsBase {
         return so;
     }
 
-    protected PasswordResetScopeAccessObject getFakePasswordResetScopeAccessObject() {
-        PasswordResetScopeAccessObject prsa = new PasswordResetScopeAccessObject();
+    protected PasswordResetScopeAccess getFakePasswordResetScopeAccessObject() {
+        PasswordResetScopeAccess prsa = new PasswordResetScopeAccess();
         prsa.setAccessTokenExp(new DateTime().toDate());
         prsa.setAccessTokenString("passwordResetToken");
         prsa.setClientId("PASSWORDRESET");

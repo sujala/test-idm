@@ -18,12 +18,12 @@ import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.PermissionEntity;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
@@ -136,7 +136,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
     @Test
     public void testAddClientScopeAccess() {
-        final ClientScopeAccessObject clientScopeAccess = new ClientScopeAccessObject();
+        final ClientScopeAccess clientScopeAccess = new ClientScopeAccess();
         clientScopeAccess.setClientId(client.getClientId());
         clientScopeAccess.setClientRCN(client.getName());
         clientScopeAccess.setTokenScope("test scope");
@@ -146,13 +146,13 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         final ScopeAccess scopeAccessObject = repo.getScopeAccessForParentByClientId(client.getUniqueId(),
                 client.getClientId());
 
-        Assert.assertTrue(scopeAccessObject instanceof ClientScopeAccessObject);
+        Assert.assertTrue(scopeAccessObject instanceof ClientScopeAccess);
         Assert.assertEquals(scopeAccessObject.getClientId(), client.getClientId());
     }
 
     @Test
     public void testAddPasswordResetScopeAccess() {
-        final PasswordResetScopeAccessObject sa = new PasswordResetScopeAccessObject();
+        final PasswordResetScopeAccess sa = new PasswordResetScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
         sa.setAccessTokenString(accessToken);
@@ -164,7 +164,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         final ScopeAccess scopeAccessObject = repo.getScopeAccessForParentByClientId(client.getUniqueId(),
                 client.getClientId());
 
-        Assert.assertTrue(scopeAccessObject instanceof PasswordResetScopeAccessObject);
+        Assert.assertTrue(scopeAccessObject instanceof PasswordResetScopeAccess);
         Assert.assertEquals(scopeAccessObject.getClientId(), client.getClientId());
     }
 
@@ -301,14 +301,14 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
     @Test
     public void testDoesAccessTokenHavePermission() {
-        ClientScopeAccessObject sa = new ClientScopeAccessObject();
+        ClientScopeAccess sa = new ClientScopeAccess();
         sa.setTokenScope("testScope");
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
         sa.setAccessTokenString(accessToken);
         sa.setAccessTokenExp(new Date());
 
-        sa = (ClientScopeAccessObject) repo.addScopeAccess(client.getUniqueId(), sa);
+        sa = (ClientScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
 
         PermissionEntity p = createPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         p = repo.grantPermission(sa.getUniqueId(), p);
@@ -345,7 +345,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
     @Test
     public void testGetScopeAccessByAccessToken() {
-        PasswordResetScopeAccessObject sa = new PasswordResetScopeAccessObject();
+        PasswordResetScopeAccess sa = new PasswordResetScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
         sa.setAccessTokenString(accessToken);
@@ -353,14 +353,14 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
 
-        sa = (PasswordResetScopeAccessObject) repo.addScopeAccess(client.getUniqueId(), sa);
+        sa = (PasswordResetScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
 
         Assert.assertNotNull(sa.getUniqueId());
 
         final ScopeAccess scopeAccessByAccessToken = repo.getScopeAccessByAccessToken(accessToken);
 
         Assert.assertNotNull(scopeAccessByAccessToken);
-        Assert.assertTrue(scopeAccessByAccessToken instanceof PasswordResetScopeAccessObject);
+        Assert.assertTrue(scopeAccessByAccessToken instanceof PasswordResetScopeAccess);
     }
 
     @Test

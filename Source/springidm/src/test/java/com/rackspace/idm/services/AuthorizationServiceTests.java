@@ -20,7 +20,7 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.ClientScopeAccessObject;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.PermissionEntity;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
@@ -81,14 +81,14 @@ public class AuthorizationServiceTests {
     String adminGroupName = "Idm Admin";
 
     RackerScopeAccess trustedToken;
-    ClientScopeAccessObject authorizedClientToken;
-    ClientScopeAccessObject notAuthorizedClientToken;
-    ClientScopeAccessObject nonRackspaceClientToken;
+    ClientScopeAccess authorizedClientToken;
+    ClientScopeAccess notAuthorizedClientToken;
+    ClientScopeAccess nonRackspaceClientToken;
     UserScopeAccess authorizedUserToken;
     UserScopeAccess otherCompanyUserToken;
     UserScopeAccess authorizedAdminToken;
     UserScopeAccess otherCompanyAdminToken;
-    ClientScopeAccessObject customerIdmToken;
+    ClientScopeAccess customerIdmToken;
 
     @Before
     public void setUp() throws Exception {
@@ -276,17 +276,17 @@ public class AuthorizationServiceTests {
         trustedToken = new RackerScopeAccess();
         trustedToken.setRackerId(rackerId);
 
-        authorizedClientToken = new ClientScopeAccessObject();
+        authorizedClientToken = new ClientScopeAccess();
         authorizedClientToken.setAccessTokenString(tokenString);
         authorizedClientToken.setClientId(clientId);
         authorizedClientToken.setClientRCN(customerId);
 
-        notAuthorizedClientToken = new ClientScopeAccessObject();
+        notAuthorizedClientToken = new ClientScopeAccess();
         notAuthorizedClientToken.setAccessTokenString(tokenString);
         notAuthorizedClientToken.setClientId(clientId);
         notAuthorizedClientToken.setClientRCN(customerId);
 
-        nonRackspaceClientToken = new ClientScopeAccessObject();
+        nonRackspaceClientToken = new ClientScopeAccess();
         nonRackspaceClientToken.setAccessTokenString(tokenString);
         nonRackspaceClientToken.setClientId(clientId);
         nonRackspaceClientToken.setClientRCN(otherCustomerId);
@@ -311,7 +311,7 @@ public class AuthorizationServiceTests {
         otherCompanyAdminToken.setUsername(username);
         otherCompanyAdminToken.setUserRCN(otherCustomerId);
 
-        customerIdmToken = new ClientScopeAccessObject();
+        customerIdmToken = new ClientScopeAccess();
         customerIdmToken.setAccessTokenString(tokenString);
         customerIdmToken.setClientId(idmClientId);
         customerIdmToken.setClientRCN(customerId);

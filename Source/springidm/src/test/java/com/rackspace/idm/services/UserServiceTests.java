@@ -24,7 +24,7 @@ import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.Password;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccessObject;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
@@ -452,7 +452,7 @@ public class UserServiceTests {
 
         getFakeClients();
 
-        final PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
+        final PasswordResetScopeAccess token = new PasswordResetScopeAccess();
         token.setAccessTokenString(tokenString);
         token.setAccessTokenExp(tokenExpiration.toDate());
         token.setUsername(username);
@@ -505,7 +505,7 @@ public class UserServiceTests {
 
         getFakeClients();
 
-        final PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
+        final PasswordResetScopeAccess token = new PasswordResetScopeAccess();
         token.setAccessTokenString(tokenString);
         token.setAccessTokenExp(tokenExpiration.toDate());
         token.setUsername(username);
@@ -551,7 +551,7 @@ public class UserServiceTests {
 
         getFakeClients();
 
-        final PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
+        final PasswordResetScopeAccess token = new PasswordResetScopeAccess();
         token.setAccessTokenString(tokenString);
         token.setAccessTokenExp(tokenExpiration.toDate());
         token.setUsername(username);
@@ -597,7 +597,7 @@ public class UserServiceTests {
 
         getFakeClients();
 
-        final PasswordResetScopeAccessObject token = new PasswordResetScopeAccessObject();
+        final PasswordResetScopeAccess token = new PasswordResetScopeAccess();
         token.setAccessTokenString(tokenString);
         token.setAccessTokenExp(tokenExpiration.toDate());
         token.setUsername(username);
