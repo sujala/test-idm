@@ -5,6 +5,7 @@ import java.util.Date;
 import org.joda.time.DateTime;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
@@ -12,24 +13,23 @@ import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPGetter;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 
-@LDAPObject(structuralClass="clientScopeAccess",requestAllAttributes=true)
+@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_CLIENTSCOPEACCESS,requestAllAttributes=true)
 public class ClientScopeAccessObject extends ScopeAccess implements hasAccessToken {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
 
-    @LDAPField(attribute="accessToken", objectClass="clientScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN, objectClass=LdapRepository.OBJECTCLASS_CLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String accessTokenString;
 
-    @LDAPField(attribute="accessTokenExp", objectClass="clientScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-
+    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_CLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date accessTokenExp;
 
-    @LDAPField(attribute="tokenScope", objectClass="clientScopeAccess", inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    @LDAPField(attribute=LdapRepository.ATTR_TOKEN_SCOPE, objectClass=LdapRepository.OBJECTCLASS_CLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String tokenScope;
 
     @Override
-    @LDAPGetter(attribute="clientId", inRDN=true)
+    @LDAPGetter(attribute=LdapRepository.ATTR_CLIENT_ID, inRDN=true)
     public String getClientId() {
         return super.getClientId();
     }
