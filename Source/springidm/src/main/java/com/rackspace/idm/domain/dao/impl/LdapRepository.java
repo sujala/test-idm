@@ -27,22 +27,22 @@ import com.unboundid.ldap.sdk.controls.SortKey;
 public abstract class LdapRepository {
 
     // Definitions for LDAP Objectclasses
-    protected static final String OBJECTCLASS_BASEURL = "baseUrl";
-    protected static final String OBJECTCLASS_CLIENTGROUP = "clientGroup";
-    protected static final String OBJECTCLASS_CLIENTPERMISSION = "clientPermission";
-    protected static final String OBJECTCLASS_GROUPOFNAMES = "groupOfNames";
-    protected static final String OBJECTCLASS_ORGANIZATIONALUNIT = "organizationalUnit";
-    protected static final String OBJECTCLASS_RACKER = "rsRacker";
-    protected static final String OBJECTCLASS_RACKSPACEAPPLICATION = "rsApplication";
-    protected static final String OBJECTCLASS_RACKSPACEGROUP = "rsGroup";
-    protected static final String OBJECTCLASS_RACKSPACEORGANIZATION = "rsOrganization";
-    protected static final String OBJECTCLASS_RACKSPACEPERSON = "rsPerson";
-    protected static final String OBJECTCLASS_RACKSPACETOKEN = "rsToken";
-    protected static final String OBJECTCLASS_SCOPEACCESS = "scopeAccess";
-    protected static final String OBJECTCLASS_USERSCOPEACCESS = "userScopeAccess";
-    protected static final String OBJECTCLASS_CLIENTSCOPEACCESS = "clientScopeAccess";
-    protected static final String OBJECTCLASS_PASSWORDRESETSCOPEACCESS = "passwordResetScopeAccess";
-    protected static final String OBJECTCLASS_RACKERSCOPEACCESS = "rackerScopeAccess";
+    public static final String OBJECTCLASS_BASEURL = "baseUrl";
+    public static final String OBJECTCLASS_CLIENTGROUP = "clientGroup";
+    public static final String OBJECTCLASS_CLIENTPERMISSION = "clientPermission";
+    public static final String OBJECTCLASS_GROUPOFNAMES = "groupOfNames";
+    public static final String OBJECTCLASS_ORGANIZATIONALUNIT = "organizationalUnit";
+    public static final String OBJECTCLASS_RACKER = "rsRacker";
+    public static final String OBJECTCLASS_RACKSPACEAPPLICATION = "rsApplication";
+    public static final String OBJECTCLASS_RACKSPACEGROUP = "rsGroup";
+    public static final String OBJECTCLASS_RACKSPACEORGANIZATION = "rsOrganization";
+    public static final String OBJECTCLASS_RACKSPACEPERSON = "rsPerson";
+    public static final String OBJECTCLASS_RACKSPACETOKEN = "rsToken";
+    public static final String OBJECTCLASS_SCOPEACCESS = "scopeAccess";
+    public static final String OBJECTCLASS_USERSCOPEACCESS = "userScopeAccess";
+    public static final String OBJECTCLASS_CLIENTSCOPEACCESS = "clientScopeAccess";
+    public static final String OBJECTCLASS_PASSWORDRESETSCOPEACCESS = "passwordResetScopeAccess";
+    public static final String OBJECTCLASS_RACKERSCOPEACCESS = "rackerScopeAccess";
 
     protected static final String OBJECTCLASS_TOP = "top";
 
