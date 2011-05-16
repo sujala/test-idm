@@ -411,92 +411,28 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.54) = {
     description = "Group the user belongs to"
 };
 
-schema set object-class (1.3.6.1.4.1.20988.2.2.10) = {
-    name = rsRacker
-    ldap-names = rsRacker
-    subclass-of top
-    kind = structural
-    must-contain
-        rackerId
+schema set attribute (1.3.6.1.4.1.20988.2.1.55) = {
+    name = authCode
+    ldap-names = authCode
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "An OAuth authorization code"
 };
 
-schema set object-class (1.3.6.1.4.1.20988.2.2.9) = {
-    name = scopeAccess
-    ldap-names = scopeAccess
-    subclass-of top
-    kind = structural
-    must-contain
-        clientId,
-        clientRCN
+schema set attribute (1.3.6.1.4.1.20988.2.1.56) = {
+        name = authCodeExp
+        ldap-names = authCodeExp
+        equality = generalizedTimeMatch
+        syntax = generalizedTime
+        description = "Expiration Time for an Authorization Code"
 };
 
-schema set object-class (1.3.6.1.4.1.20988.2.2.11) = {
-    name = clientScopeAccess
-    ldap-names = clientScopeAccess
-    subclass-of scopeAccess
-    kind = structural
-    may-contain
-        accessToken,
-        accessTokenExp,
-        tokenScope
-};
-
-schema set object-class (1.3.6.1.4.1.20988.2.2.12) = {
-    name = passwordResetScopeAccess
-    ldap-names = passwordResetScopeAccess
-    subclass-of scopeAccess
-    kind = structural
-    must-contain
-        uid,
-        userRCN
-    may-contain
-        accessToken,
-        accessTokenExp
-};
-
-schema set object-class (1.3.6.1.4.1.20988.2.2.13) = {
-    name = rackerScopeAccess
-    ldap-names = rackerScopeAccess
-    subclass-of scopeAccess
-    kind = structural
-    must-contain
-        rackerId
-    may-contain
-        accessToken,
-        accessTokenExp,
-        refreshToken,
-        refreshTokenExp
-};
-
-schema set object-class (1.3.6.1.4.1.20988.2.2.14) = {
-    name = userScopeAccess
-    ldap-names = userScopeAccess
-    subclass-of scopeAccess
-    kind = structural
-    must-contain
-        uid,
-        userRCN
-    may-contain
-        accessToken,
-        accessTokenExp,
-        refreshToken,
-        refreshTokenExp
-};
-
-schema set object-class (1.3.6.1.4.1.20988.2.2.8) = {
-	name = clientGroup
-	ldap-names = clientGroup
-	subclass-of groupOfNames
-	kind = structural
-	must-contain
-		cn,
-		clientId,
-		RCN
-	may-contain
-		c,
-		displayName,
-		permission,
-		groupType
+schema set attribute (1.3.6.1.4.1.20988.2.1.57) = {
+        name = callbackUrl
+        ldap-names = callbackUrl
+        equality = caseIgnoreMatch
+        syntax = directoryString
+        description = "A client callback URL"
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
@@ -571,6 +507,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.3) = {
 		clientId,
 		userPassword
 	may-contain
+	    callbackUrl,
 	    description,
 		iname,
 		locked,
@@ -581,6 +518,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.3) = {
 		status,
 		seeAlso,
 		softDeleted,
+		title,
 		tokenScope
 };
 
@@ -652,4 +590,152 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.7) = {
 		rsRegion,
 		internalUrl,
 		rsAdminUrl
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.8) = {
+    name = clientGroup
+    ldap-names = clientGroup
+    subclass-of groupOfNames
+    kind = structural
+    must-contain
+        cn,
+        clientId,
+        RCN
+    may-contain
+        c,
+        displayName,
+        permission,
+        groupType
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.9) = {
+    name = scopeAccess
+    ldap-names = scopeAccess
+    subclass-of top
+    kind = structural
+    must-contain
+        clientId,
+        clientRCN
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.10) = {
+    name = rsRacker
+    ldap-names = rsRacker
+    subclass-of top
+    kind = structural
+    must-contain
+        rackerId
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.11) = {
+    name = clientScopeAccess
+    ldap-names = clientScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    may-contain
+        accessToken,
+        accessTokenExp,
+        tokenScope
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.12) = {
+    name = passwordResetScopeAccess
+    ldap-names = passwordResetScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    must-contain
+        uid,
+        userRCN
+    may-contain
+        accessToken,
+        accessTokenExp
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.13) = {
+    name = rackerScopeAccess
+    ldap-names = rackerScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    must-contain
+        rackerId
+    may-contain
+        accessToken,
+        accessTokenExp,
+        refreshToken,
+        refreshTokenExp
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.14) = {
+    name = userScopeAccess
+    ldap-names = userScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    must-contain
+        uid,
+        userRCN
+    may-contain
+        accessToken,
+        accessTokenExp,
+        refreshToken,
+        refreshTokenExp
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.14) = {
+    name = delegatedClientScopeAccess
+    ldap-names = delegatedClientScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    must-contain
+        uid,
+        userRCN
+    may-contain
+        accessToken,
+        accessTokenExp,
+        authCode,
+        authCodeExp,
+        refreshToken,
+        refreshTokenExp
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.15) = {
+    name = rsPermission
+    ldap-names = rsPermission
+    subclass-of top
+    kind = structural
+    must-contain
+        cn,
+        clientId,
+        RCN
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.16) = {
+    name = grantedPermission
+    ldap-names = grantedPermission
+    subclass-of rsPermission
+    kind = structural
+    may-contain
+        resourceGroup
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.17) = {
+    name = definedPermission
+    ldap-names = definedPermission
+    subclass-of top
+    kind = structural
+    may-contain
+        blob,
+        permissionType,
+        title,
+        description,
+        grantedByDefault,
+        enabled
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.18) = {
+    name = delegatedPermission
+    ldap-names = delegatedPermission
+    subclass-of top
+    kind = structural
+    may-contain
+        resourceGroup
 };
