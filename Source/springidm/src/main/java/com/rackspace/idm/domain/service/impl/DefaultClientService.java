@@ -19,7 +19,8 @@ import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.DefinedPermission;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ClientService;
@@ -101,9 +102,9 @@ public class DefaultClientService implements ClientService {
             throw new NotFoundException(errMsg);
         }
         
-        List<PermissionEntity> definedPermissions = this.getDefinedPermissionsByClient(client);
+        List<DefinedPermission> definedPermissions = this.getDefinedPermissionsByClient(client);
         
-        for (PermissionEntity definedPerm : definedPermissions) {
+        for (DefinedPermission definedPerm : definedPermissions) {
             this.deleteDefinedPermission(definedPerm);
         }
 
@@ -119,7 +120,7 @@ public class DefaultClientService implements ClientService {
     }
 
     @Override
-    public void addDefinedPermission(PermissionEntity permission) {
+    public void addDefinedPermission(DefinedPermission permission) {
         logger.debug("Define Permission: {}", permission);
         Customer customer = customerDao.getCustomerByCustomerId(permission
             .getCustomerId());
@@ -151,8 +152,8 @@ public class DefaultClientService implements ClientService {
             sa = this.scopeAccessDao.addScopeAccess(client.getUniqueId(), sa);
         }
 
-        PermissionEntity exists = this.scopeAccessDao
-            .getPermissionByParentAndPermissionId(sa.getUniqueId(), permission);
+        DefinedPermission exists = (DefinedPermission) this.scopeAccessDao
+            .getPermissionByParentAndPermission(sa.getUniqueId(), permission);
 
         if (exists != null) {
             logger
@@ -169,16 +170,16 @@ public class DefaultClientService implements ClientService {
     }
 
     @Override
-    public void deleteDefinedPermission(PermissionEntity permission) {
+    public void deleteDefinedPermission(DefinedPermission permission) {
         logger.debug("Delete Permission: {}", permission);
-        PermissionEntity perm = new PermissionEntity();
+        Permission perm = new Permission();
         perm.setClientId(permission.getClientId());
         perm.setCustomerId(permission.getCustomerId());
         perm.setPermissionId(permission.getPermissionId());
         
-        List<PermissionEntity> perms = this.scopeAccessDao.getPermissionsByPermission(permission);
+        List<Permission> perms = this.scopeAccessDao.getPermissionsByPermission(permission);
         
-        for(PermissionEntity p : perms) {
+        for(Permission p : perms) {
             logger.debug("Deleting Permission: {}", permission);
             this.scopeAccessDao.removePermissionFromScopeAccess(p);
         }
@@ -204,39 +205,52 @@ public class DefaultClientService implements ClientService {
     public Client getByName(String clientName) {
         return clientDao.getClientByClientname(clientName);
     }
+    
+    @Override
+    public Client getClientByScope(String scope) {
+        return clientDao.getClientByScope(scope);
+    }
 
     @Override
-    public PermissionEntity getDefinedPermissionByClientIdAndPermissionId(
+    public DefinedPermission getDefinedPermissionByClientIdAndPermissionId(
         String clientId, String permissionId) {
         logger.debug("Find Permission: {} by ClientId: {}", permissionId, clientId);
 
         Client client = this.getClient(clientId);
         
-        PermissionEntity permission = new PermissionEntity();
+        Permission permission = new DefinedPermission();
         permission.setPermissionId(permissionId);
         permission.setCustomerId(client.getCustomerId());
         permission.setClientId(client.getClientId());
 
-        permission = this.scopeAccessDao.getPermissionByParentAndPermissionId(
+        permission = this.scopeAccessDao.getPermissionByParentAndPermission(
             client.getUniqueId(), permission);
+        
+        DefinedPermission perm = (DefinedPermission)permission;
 
-        logger.debug("Found Permission: {}", permission);
-        return permission;
+        logger.debug("Found Permission: {}", perm);
+        return perm;
     }
 
     @Override
-    public List<PermissionEntity> getDefinedPermissionsByClient(
+    public List<DefinedPermission> getDefinedPermissionsByClient(
         Client client) {
         logger.debug("Find Permission by ClientId: {}", client.getClientId());
-        PermissionEntity filter = new PermissionEntity();
+        Permission filter = new Permission();
         filter.setClientId(client.getClientId());
         filter.setCustomerId(client.getCustomerId());
         
-        List<PermissionEntity> permissions = this.scopeAccessDao
-            .getPermissionsByParentAndPermissionId(client.getUniqueId(),
+        List<Permission> permissions = this.scopeAccessDao
+            .getPermissionsByParentAndPermission(client.getUniqueId(),
                 filter);
+        
+        List<DefinedPermission> perms = new ArrayList<DefinedPermission>();
+        for (Permission p : permissions) {
+            perms.add((DefinedPermission)p);
+        }
+        
         logger.debug("Found {} Permission(s) by ClientId: {}", permissions.size(), client.getClientId());
-        return permissions;
+        return perms;
     }
 
     @Override
@@ -284,7 +298,7 @@ public class DefaultClientService implements ClientService {
     }
 
     @Override
-    public void updateDefinedPermission(PermissionEntity permission) {
+    public void updateDefinedPermission(DefinedPermission permission) {
         this.scopeAccessDao.updatePermissionForScopeAccess(permission);
     }
 
@@ -497,12 +511,12 @@ public class DefaultClientService implements ClientService {
     }
 
     @Override
-    public PermissionEntity checkAndGetPermission(String customerId,
+    public DefinedPermission checkAndGetPermission(String customerId,
         String clientId, String permissionId)
 
     throws NotFoundException {
         logger.debug("Check and get Permission: {} for ClientId: {}", permissionId, clientId);
-        PermissionEntity permission = this
+        DefinedPermission permission = this
             .getDefinedPermissionByClientIdAndPermissionId(clientId,
                 permissionId);
 
@@ -574,5 +588,12 @@ public class DefaultClientService implements ClientService {
 
         logger.debug("Found {} Client Service(s) for Client: {}", clientList.size(), client.getClientId());
         return clients;
+    }
+    
+    @Override
+    public void updateClient(Client client) {
+        logger.info("Updating Client: {}", client);
+        this.clientDao.updateClient(client);
+        logger.info("Updated Client: {}", client);
     }
 }

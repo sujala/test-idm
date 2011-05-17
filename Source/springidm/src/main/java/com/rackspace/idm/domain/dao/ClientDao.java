@@ -30,6 +30,8 @@ public interface ClientDao {
     Client getClientByCustomerIdAndClientId(String customerId, String clientId);
 
     Client getClientByInum(String inum);
+    
+    Client getClientByScope(String scope);
 
     ClientGroup getClientGroup(String customerId, String clientId,
         String groupName);
