@@ -230,6 +230,14 @@
 				</xsd:documentation>
 			</annotation>
 		</attribute>
+		<attribute name="authorization_code" type="string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN"
+                    xmlns="http://www.w3.org/1999/xhtml">
+                    <p>The authorization code.</p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
 	</complexType>
 
 	<!-- Simple Types -->
