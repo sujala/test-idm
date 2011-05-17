@@ -11,7 +11,7 @@ import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
-import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
@@ -72,16 +72,8 @@ public class ServiceTestsBase {
         return user;
     }
 
-    protected PermissionEntity getFakePermission(String permissionId) {
-        PermissionEntity res = EasyMock.createNiceMock(PermissionEntity.class);
-
-        res.setDescription("description");
-        res.setEnabled(true);
-        res.setGrantedByDefault(false);
-        res.setValue(resourceValue);
-        res.setPermissionType("type");
-        res.setResourceGroup("resourceGroup");
-        res.setTitle("title");
+    protected Permission getFakePermission(String permissionId) {
+        Permission res = EasyMock.createNiceMock(Permission.class);
 
         EasyMock.expect(res.getUniqueId()).andReturn(permissionId).anyTimes();
         EasyMock.expect(res.getClientId()).andReturn(clientId).anyTimes();

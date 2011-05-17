@@ -21,7 +21,7 @@ import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
-import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ClientService;
@@ -216,7 +216,7 @@ public class ClientServiceTests {
 
     @Test
     public void shouldDeleteClient() {
-        List<PermissionEntity> perms = new ArrayList<PermissionEntity>();
+        List<Permission> perms = new ArrayList<Permission>();
         mockClientDao.deleteClient(getFakeClient());
         EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(
             getFakeClient());
@@ -225,9 +225,9 @@ public class ClientServiceTests {
             mockScopeAccessDao.getScopeAccessForParentByClientId(uniqueId,
                 clientId)).andReturn(getFakeScopeAccess());
         EasyMock.expect(
-            mockScopeAccessDao.getPermissionsByParentAndPermissionId(
+            mockScopeAccessDao.getPermissionsByParentAndPermission(
                 EasyMock.anyObject(String.class),
-                EasyMock.anyObject(PermissionEntity.class))).andReturn(perms);
+                EasyMock.anyObject(Permission.class))).andReturn(perms);
 
         EasyMock.expect(mockClientDao.getClientGroupsByClientId(clientId))
             .andReturn(getFakeClientGroupList());
@@ -691,21 +691,6 @@ public class ClientServiceTests {
     private Customer getFakeCustomer() {
         return new Customer(customerId, customerInum, customerIname,
             customerStatus, customerSeeAlso, owner);
-    }
-
-    private List<PermissionEntity> getFakePermissionList() {
-        List<PermissionEntity> perms = new ArrayList<PermissionEntity>();
-        perms.add(getFakePermission());
-        return perms;
-    }
-
-    private PermissionEntity getFakePermission() {
-        PermissionEntity res = new PermissionEntity();
-        res.setClientId(clientId);
-        res.setCustomerId(customerId);
-        res.setPermissionId(resourceId);
-        res.setValue(resourceValue);
-        return res;
     }
 
     private List<ClientGroup> getFakeClientGroupList() {

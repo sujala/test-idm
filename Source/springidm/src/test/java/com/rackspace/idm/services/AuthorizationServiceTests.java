@@ -21,7 +21,7 @@ import com.rackspace.idm.domain.entity.BaseClient;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -73,8 +73,8 @@ public class AuthorizationServiceTests {
     BaseUser authorizedAdmin;
     BaseUser otherCompanyAdmin;
 
-    PermissionEntity perm;
-    List<PermissionEntity> permissions;
+    Permission perm;
+    List<Permission> permissions;
     ClientGroup admin;
     List<ClientGroup> groups;
 
@@ -259,12 +259,12 @@ public class AuthorizationServiceTests {
 
     private void setUpObjects() {
         
-        perm = new PermissionEntity();
+        perm = new Permission();
         perm.setClientId(idmClientId);
         perm.setCustomerId(customerId);
         perm.setPermissionId(permissionId);
 
-        permissions = new ArrayList<PermissionEntity>();
+        permissions = new ArrayList<Permission>();
         permissions.add(perm);
 
         admin = new ClientGroup();
