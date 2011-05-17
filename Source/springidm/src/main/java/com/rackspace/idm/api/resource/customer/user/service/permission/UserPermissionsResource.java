@@ -20,7 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.DefinedPermission;
+import com.rackspace.idm.domain.entity.GrantedPermission;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -127,11 +129,11 @@ public class UserPermissionsResource {
      */
     private boolean isGranted(String serviceId, String permissionId, User user,
         Client client) {
-        PermissionEntity poSearchParam = new PermissionEntity();
+        Permission poSearchParam = new Permission();
         poSearchParam.setClientId(serviceId);
         poSearchParam.setPermissionId(permissionId);
 
-        PermissionEntity definedPermission = this.scopeAccessService
+        DefinedPermission definedPermission = (DefinedPermission) this.scopeAccessService
             .getPermissionForParent(client.getUniqueId(), poSearchParam);
 
         if (definedPermission == null || !definedPermission.getEnabled()) {
@@ -150,7 +152,7 @@ public class UserPermissionsResource {
                 return true;
             }
         } else {
-            PermissionEntity grantedPermission = this.scopeAccessService
+            Permission grantedPermission = this.scopeAccessService
                 .getPermissionForParent(user.getUniqueId(), poSearchParam);
             if (grantedPermission != null) {
                 // The permission has not been granted.
@@ -201,7 +203,7 @@ public class UserPermissionsResource {
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
-        PermissionEntity filter = new PermissionEntity();
+        Permission filter = new Permission();
         filter.setClientId(serviceId);
         filter.setPermissionId(permission.getPermissionId());
 
@@ -213,7 +215,7 @@ public class UserPermissionsResource {
             throw new NotFoundException(errMsg);
         }
 
-        PermissionEntity defined = this.scopeAccessService
+        DefinedPermission defined = (DefinedPermission) this.scopeAccessService
             .getPermissionForParent(client.getUniqueId(), filter);
         if (defined == null) {
             String errMsg = String.format("Permission %s not found",
@@ -222,7 +224,7 @@ public class UserPermissionsResource {
             throw new NotFoundException(errMsg);
         }
 
-        PermissionEntity granted = new PermissionEntity();
+        GrantedPermission granted = new GrantedPermission();
         granted.setClientId(defined.getClientId());
         granted.setCustomerId(defined.getCustomerId());
         granted.setPermissionId(defined.getPermissionId());
@@ -271,7 +273,7 @@ public class UserPermissionsResource {
 
         User user = this.userService.checkAndGetUser(customerId, username);
 
-        PermissionEntity definedPermission = this.clientService
+        DefinedPermission definedPermission = this.clientService
             .getDefinedPermissionByClientIdAndPermissionId(serviceId,
                 permissionId);
 
@@ -281,11 +283,11 @@ public class UserPermissionsResource {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        PermissionEntity po = new PermissionEntity();
+        Permission po = new Permission();
         po.setClientId(serviceId);
         po.setPermissionId(permissionId);
 
-        PermissionEntity perm = this.scopeAccessService.getPermissionForParent(
+        Permission perm = this.scopeAccessService.getPermissionForParent(
             user.getUniqueId(), po);
         if (perm != null) {
             this.scopeAccessService.removePermission(perm);
