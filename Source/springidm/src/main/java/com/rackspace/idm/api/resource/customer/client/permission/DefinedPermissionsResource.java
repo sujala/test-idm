@@ -29,7 +29,7 @@ import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.client.AbstractClientConsumer;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.DefinedPermission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
@@ -104,9 +104,9 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
 
         Client client = checkAndGetClient(customerId, clientId);
 
-        List<PermissionEntity> defineds = this.clientService.getDefinedPermissionsByClient(client);
+        List<DefinedPermission> defineds = this.clientService.getDefinedPermissionsByClient(client);
 
-        return Response.ok(permissionConverter.toPermissionListJaxb(defineds)).build();
+        return Response.ok(permissionConverter.toDefinedPermissionListJaxb(defineds)).build();
     }
 
     /**
@@ -148,7 +148,7 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
         com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
         validatePermissionRequest(customerId, clientId, permission);
 
-        PermissionEntity permissionDO = permissionConverter.toPermissionDO(permission);
+        DefinedPermission permissionDO = permissionConverter.toDefinedPermissionDO(permission);
 
         ApiError err = inputValidator.validate(permissionDO);
         if (err != null) {
