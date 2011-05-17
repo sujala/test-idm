@@ -4,6 +4,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
+import com.rackspace.idm.validation.AuthorizationCodeCredentialsCheck;
 import com.rackspace.idm.validation.BasicCredentialsCheck;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
@@ -38,6 +39,11 @@ public class AuthCredentials {
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY, groups = {
         RefreshTokenCredentialsCheck.class})
     private String refreshToken;
+    
+    @NotNull(groups = {AuthorizationCodeCredentialsCheck.class})
+    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY, groups = {
+        AuthorizationCodeCredentialsCheck.class})
+    private String authorizationCode;
 
     public AuthCredentials() {
         // Needed by JAXB
@@ -97,5 +103,13 @@ public class AuthCredentials {
 
     public void setRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
+    }
+
+    public String getAuthorizationCode() {
+        return authorizationCode;
+    }
+
+    public void setAuthorizationCode(String authorizationCode) {
+        this.authorizationCode = authorizationCode;
     }
 }
