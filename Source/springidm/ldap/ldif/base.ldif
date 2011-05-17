@@ -63,12 +63,15 @@ dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF
 objectClass: top
 objectClass: rsApplication
 cn: Customer Idm
+description: Our description here ...
 inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0
 locked: FALSE
 o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
 RCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 status: ACTIVE
+title: Rackspace User Management
+tokenScope: user_mgmt
 softDeleted: FALSE
 userPassword: password
 
