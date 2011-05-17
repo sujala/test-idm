@@ -168,6 +168,10 @@
 				</documentation>
 			</annotation>
 		</attribute>
+		<attribute name="title" type="xsd:string"></attribute>
+		<attribute name="description" type="xsd:string"></attribute>
+		<attribute name="callBackUrl" type="xsd:string"></attribute>
+		<attribute name="scope" type="xsd:string"></attribute>
 	</complexType>
 
 	<complexType name="ClientList">
