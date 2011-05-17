@@ -213,7 +213,6 @@ public class DefaultOAuthService implements OAuthService {
             }
 
             scopeAccess.setRefreshTokenString(this.generateToken());
-            scopeAccess.setRefreshTokenExp(currentTime.plusYears(100).toDate());
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(currentTime.plusSeconds(
                 this.getDefaultTokenExpirationSeconds()).toDate());
