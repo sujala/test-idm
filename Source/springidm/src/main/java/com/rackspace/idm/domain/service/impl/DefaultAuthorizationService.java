@@ -11,7 +11,7 @@ import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
@@ -73,7 +73,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         boolean authorized = false;
 
         if (!StringUtils.isBlank(permissionId)) {
-            PermissionEntity permission = new PermissionEntity();
+            Permission permission = new Permission();
             permission.setClientId(getIdmClientId());
             permission.setCustomerId(getRackspaceCustomerId());
             permission.setPermissionId(permissionId);

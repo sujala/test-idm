@@ -23,7 +23,6 @@ public class UserScopeAccess extends ScopeAccess implements hasAccessToken, hasR
     private String accessTokenString;
 
     @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-
     private Date accessTokenExp;
 
     @LDAPField(attribute=LdapRepository.ATTR_REFRESH_TOKEN, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
@@ -55,12 +54,11 @@ public class UserScopeAccess extends ScopeAccess implements hasAccessToken, hasR
     }
 
     private DateTime userPasswordExpirationDate;
-
+    
     @Override
     public String getRefreshTokenString() {
         return refreshTokenString;
     }
-
 
     @Override
     public void setRefreshTokenString(String refreshTokenString) {

@@ -428,43 +428,43 @@ public class User extends BaseUser implements Auditable {
 
     public void copyChanges(User modifiedUser) {
 
-        if (!StringUtils.isBlank(modifiedUser.getPersonId())) {
+        if (modifiedUser.getPersonId() != null) {
             setPersonId(modifiedUser.getPersonId());
         }
 
-        if (!StringUtils.isBlank(modifiedUser.getFirstname())) {
+        if (modifiedUser.getFirstname() != null) {
             setFirstname(modifiedUser.getFirstname());
         }
 
-        if (!StringUtils.isBlank(modifiedUser.getMiddlename())) {
+        if (modifiedUser.getMiddlename() != null) {
             setMiddlename(modifiedUser.getMiddlename());
         }
 
-        if (!StringUtils.isBlank(modifiedUser.getLastname())) {
+        if (modifiedUser.getLastname() != null) {
             setLastname(modifiedUser.getLastname());
         }
 
-        if (!StringUtils.isBlank(modifiedUser.getDisplayName())) {
+        if (modifiedUser.getDisplayName() != null) {
             setDisplayName(modifiedUser.getDisplayName());
         }
 
-        if (!StringUtils.isBlank(modifiedUser.getEmail())) {
+        if (modifiedUser.getEmail() != null) {
             setEmail(modifiedUser.getEmail());
         }
 
-        if (!StringUtils.isBlank(modifiedUser.getPreferredLang())) {
+        if (modifiedUser.getPreferredLang() != null) {
             setPreferredLang(modifiedUser.getPreferredLang());
         }
 
-        if (!StringUtils.isBlank(modifiedUser.getTimeZone())) {
+        if (modifiedUser.getTimeZone() != null) {
             setTimeZone(modifiedUser.getTimeZone());
         }
 
-        if (!StringUtils.isBlank(modifiedUser.getCountry())) {
+        if (modifiedUser.getCountry() != null) {
             setCountry(modifiedUser.getCountry());
         }
 
-        if (!StringUtils.isBlank(modifiedUser.getRegion())) {
+        if (modifiedUser.getRegion() != null) {
             setRegion(modifiedUser.getRegion());
         }
     }

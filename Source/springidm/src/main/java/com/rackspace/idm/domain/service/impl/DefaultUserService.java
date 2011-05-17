@@ -45,7 +45,7 @@ public class DefaultUserService implements UserService {
     private final ScopeAccessDao scopeAccessDao;
     private final ClientService clientService;
     private final Configuration config;
-
+    
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
@@ -118,6 +118,16 @@ public class DefaultUserService implements UserService {
 
         userDao.addUser(user, customerDN);
         logger.info("Added User: {}", user);
+        
+        logger.info("Adding User Scope Access for Idm to user {}", user);
+        UserScopeAccess usa = new UserScopeAccess();
+        usa.setUsername(user.getUsername());
+        usa.setUserRCN(user.getCustomerId());
+        usa.setClientId(getIdmClientId());
+        usa.setClientRCN(getRackspaceCustomerId());
+        
+        this.scopeAccessDao.addScopeAccess(user.getUniqueId(), usa);
+        logger.info("Added User Scope Access for Idm to user {}", user);
     }
 
     @Override
@@ -436,5 +446,13 @@ public class DefaultUserService implements UserService {
 
     private boolean isTrustedServer() {
         return config.getBoolean("ldap.server.trusted", false);
+    }
+    
+    private String getIdmClientId() {
+        return config.getString("idm.clientId");
+    }
+
+    private String getRackspaceCustomerId() {
+        return config.getString("rackspace.customerId");
     }
 }
