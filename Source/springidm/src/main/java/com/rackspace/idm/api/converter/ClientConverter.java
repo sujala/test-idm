@@ -36,6 +36,11 @@ public class ClientConverter {
         client.setName(jaxbClient.getName());
 
         client.setSoftDeleted(jaxbClient.isSoftDeleted());
+        
+        client.setCallBackUrl(jaxbClient.getCallBackUrl());
+        client.setTitle(jaxbClient.getTitle());
+        client.setDescription(jaxbClient.getDescription());
+        client.setScope(jaxbClient.getScope());
 
         if (jaxbClient.getStatus() != null) {
             client.setStatus(Enum.valueOf(ClientStatus.class, jaxbClient
@@ -87,6 +92,10 @@ public class ClientConverter {
         returnedClient.setLocked(client.isLocked());
         returnedClient.setName(client.getName());
         returnedClient.setSoftDeleted(client.isSoftDeleted());
+        returnedClient.setCallBackUrl(client.getCallBackUrl());
+        returnedClient.setTitle(client.getTitle());
+        returnedClient.setDescription(client.getDescription());
+        returnedClient.setScope(client.getScope());
 
         if (client.getStatus() != null) {
             returnedClient.setStatus(Enum.valueOf(
