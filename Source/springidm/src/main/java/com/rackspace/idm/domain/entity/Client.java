@@ -23,6 +23,11 @@ public class Client extends BaseClient implements Auditable {
     private String orgInum = null;
     private Boolean locked = null;
     private Boolean softDeleted = null;
+    
+    private String scope = null;
+    private String callBackUrl = null;
+    private String title = null;
+    private String description = null;
 
     public Client() {
     }
@@ -134,6 +139,38 @@ public class Client extends BaseClient implements Auditable {
     public String getInum() {
         return inum;
     }
+    
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
+
+    public String getCallBackUrl() {
+        return callBackUrl;
+    }
+
+    public void setCallBackUrl(String callBackUrl) {
+        this.callBackUrl = callBackUrl;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     // The following overrides allow for a more permissive mutators in the child
     // (Client)
@@ -155,6 +192,14 @@ public class Client extends BaseClient implements Auditable {
         this.setSoftDeleted(false);
         this.setStatus(ClientStatus.ACTIVE);
     }
+    
+    public boolean isDisabled() {
+        boolean disabled = false;
+        disabled = this.isLocked() == null ? disabled : disabled || this.isLocked().booleanValue();
+        disabled = this.isSoftDeleted() == null ? disabled : disabled || this.isSoftDeleted().booleanValue();
+        disabled = this.getStatus() == null ? disabled : disabled || this.getStatus().equals(ClientStatus.INACTIVE);
+        return disabled;
+    }
 
     public BaseClient getBaseClient() {
         return getBaseClientWithoutClientPerms();
@@ -163,21 +208,46 @@ public class Client extends BaseClient implements Auditable {
     public BaseClient getBaseClientWithoutClientPerms() {
         return new BaseClient(getClientId(),getCustomerId());
     }
+    
+    public void copyChanges(Client modifiedClient) {
+
+        if (modifiedClient.getCallBackUrl() != null) {
+            setCallBackUrl(modifiedClient.getCallBackUrl());
+        }
+
+        if (modifiedClient.getDescription() != null) {
+            setDescription(modifiedClient.getDescription());
+        }
+        
+        if (modifiedClient.getScope() != null) {
+            setScope(modifiedClient.getScope());
+        }
+
+        if (modifiedClient.getTitle() != null) {
+            setTitle(modifiedClient.getTitle());
+        }
+    }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result
+            + ((callBackUrl == null) ? 0 : callBackUrl.hashCode());
+        result = prime * result
             + ((clientSecret == null) ? 0 : clientSecret.hashCode());
+        result = prime * result
+            + ((description == null) ? 0 : description.hashCode());
         result = prime * result + ((iname == null) ? 0 : iname.hashCode());
         result = prime * result + ((inum == null) ? 0 : inum.hashCode());
         result = prime * result + ((locked == null) ? 0 : locked.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((orgInum == null) ? 0 : orgInum.hashCode());
+        result = prime * result + ((scope == null) ? 0 : scope.hashCode());
         result = prime * result
             + ((softDeleted == null) ? 0 : softDeleted.hashCode());
         result = prime * result + ((status == null) ? 0 : status.hashCode());
+        result = prime * result + ((title == null) ? 0 : title.hashCode());
         return result;
     }
 
@@ -193,11 +263,25 @@ public class Client extends BaseClient implements Auditable {
             return false;
         }
         Client other = (Client) obj;
+        if (callBackUrl == null) {
+            if (other.callBackUrl != null) {
+                return false;
+            }
+        } else if (!callBackUrl.equals(other.callBackUrl)) {
+            return false;
+        }
         if (clientSecret == null) {
             if (other.clientSecret != null) {
                 return false;
             }
         } else if (!clientSecret.equals(other.clientSecret)) {
+            return false;
+        }
+        if (description == null) {
+            if (other.description != null) {
+                return false;
+            }
+        } else if (!description.equals(other.description)) {
             return false;
         }
         if (iname == null) {
@@ -235,6 +319,13 @@ public class Client extends BaseClient implements Auditable {
         } else if (!orgInum.equals(other.orgInum)) {
             return false;
         }
+        if (scope == null) {
+            if (other.scope != null) {
+                return false;
+            }
+        } else if (!scope.equals(other.scope)) {
+            return false;
+        }
         if (softDeleted == null) {
             if (other.softDeleted != null) {
                 return false;
@@ -245,6 +336,13 @@ public class Client extends BaseClient implements Auditable {
         if (status != other.status) {
             return false;
         }
+        if (title == null) {
+            if (other.title != null) {
+                return false;
+            }
+        } else if (!title.equals(other.title)) {
+            return false;
+        }
         return true;
     }
 
@@ -253,7 +351,10 @@ public class Client extends BaseClient implements Auditable {
         return "Client [clientSecret=" + clientSecret + ", name=" + name
             + ", status=" + status + ", inum=" + inum + ", iname=" + iname
             + ", orgInum=" + orgInum + ", locked=" + locked + ", softDeleted="
-            + softDeleted + "]";
+            + softDeleted + ", scope=" + scope + ", callBackUrl=" + callBackUrl
+            + ", title=" + title + ", description=" + description
+            + ", getClientId()=" + getClientId() + ", getCustomerId()="
+            + getCustomerId() + "]";
     }
 
     @Override
