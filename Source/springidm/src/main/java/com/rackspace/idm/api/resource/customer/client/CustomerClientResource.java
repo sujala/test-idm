@@ -5,6 +5,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -29,9 +30,11 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.jaxb.ClientCredentials;
+import com.sun.jersey.core.provider.EntityHolder;
 
 /**
  * Client application resource.
@@ -134,7 +137,7 @@ public class CustomerClientResource extends AbstractClientConsumer {
         @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId) {
 
-        logger.debug("Deleting Client: {}", clientId);
+        logger.info("Deleting Client: {}", clientId);
 
         ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
@@ -151,7 +154,64 @@ public class CustomerClientResource extends AbstractClientConsumer {
 
         this.clientService.delete(clientId);
 
-        logger.debug("Deleted client: {}", clientId);
+        logger.info("Deleted client: {}", clientId);
+
+        return Response.noContent().build();
+    }
+
+    /**
+     * Update a client.
+     *
+     * @param authHeader HTTP Authorization header for authenticating the caller.
+     * @param customerId RCN
+     * @param clientId   Client application ID
+     * @param client Updated client
+     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}client
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}client
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     */
+    @PUT
+    public Response updateClient(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("clientId") String clientId,
+        EntityHolder<com.rackspace.idm.jaxb.Client> holder) {
+        if (!holder.hasEntity()) {
+            throw new BadRequestException("Request body missing.");
+        }
+
+        logger.info("Updating Client: {}", clientId);
+
+        ScopeAccess token = this.scopeAccessService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Racker's, Specific Clients, Admins and IdM are authorized
+        boolean authorized = authorizationService.authorizeRacker(token)
+            || (authorizationService.authorizeClient(token,
+                request.getMethod(), uriInfo) && clientId.equals(token
+                .getClientId()))
+            || authorizationService.authorizeCustomerIdm(token)
+            || authorizationService.authorizeAdmin(token, customerId);
+
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
+        
+        com.rackspace.idm.jaxb.Client inputClient = holder.getEntity();
+        Client updatedClient = clientConverter.toClientDO(inputClient);
+
+        Client client = checkAndGetClient(customerId, clientId);
+        client.copyChanges(updatedClient);
+
+        logger.debug("Got Client: {}", client);
+
+        this.clientService.updateClient(client);
+
+        logger.info("Udpated client: {}", clientId);
 
         return Response.noContent().build();
     }
