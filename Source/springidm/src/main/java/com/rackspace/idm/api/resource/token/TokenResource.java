@@ -24,8 +24,9 @@ import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
+import com.rackspace.idm.domain.entity.DefinedPermission;
 import com.rackspace.idm.domain.entity.OAuthGrantType;
-import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.entity.hasAccessToken;
@@ -305,12 +306,12 @@ public class TokenResource {
             }
         }
 
-        PermissionEntity permission = new PermissionEntity();
+        Permission permission = new Permission();
         permission.setClientId(token.getClientId());
         permission.setCustomerId(token.getClientRCN());
         permission.setPermissionId(permissionId);
 
-        PermissionEntity defined = this.scopeAccessService
+        DefinedPermission defined = (DefinedPermission)this.scopeAccessService
             .getPermissionForParent(token.getUniqueId(), permission);
 
         if (defined == null || !defined.getEnabled()) {
