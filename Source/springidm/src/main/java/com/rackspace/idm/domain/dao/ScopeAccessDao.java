@@ -2,23 +2,30 @@ package com.rackspace.idm.domain.dao;
 
 import java.util.List;
 
-import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.DefinedPermission;
+import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
+import com.rackspace.idm.domain.entity.DelegatedPermission;
+import com.rackspace.idm.domain.entity.GrantedPermission;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 
 public interface ScopeAccessDao {
+    
+    DelegatedPermission delegatePermission(String scopeAccessUniqueId,
+        DelegatedPermission permission);
 
     ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
 
-    PermissionEntity grantPermission(String scopeAccessUniqueId,
-            PermissionEntity permission);
+    GrantedPermission grantPermission(String scopeAccessUniqueId,
+        GrantedPermission permission);
 
-    PermissionEntity definePermission(String scopeAccessUniqueId,
-            PermissionEntity permission);
+    DefinedPermission definePermission(String scopeAccessUniqueId,
+        DefinedPermission permission);
 
     Boolean deleteScopeAccess(ScopeAccess scopeAccess);
 
     Boolean doesAccessTokenHavePermission(String accessToken,
-            PermissionEntity permission);
+            Permission permission);
 
     List<ScopeAccess> getScopeAccessesByParent(String parentUniqueId);
 
@@ -32,15 +39,18 @@ public interface ScopeAccessDao {
     ScopeAccess getScopeAccessByUsernameAndClientId(String username,
             String clientId);
 
-    Boolean removePermissionFromScopeAccess(PermissionEntity permission);
+    Boolean removePermissionFromScopeAccess(Permission permission);
 
     Boolean updateScopeAccess(ScopeAccess scopeAccess);
 
-    Boolean updatePermissionForScopeAccess(PermissionEntity permission);
+    Boolean updatePermissionForScopeAccess(Permission permission);
 
-    PermissionEntity getPermissionByParentAndPermissionId(String parentUniqueId, PermissionEntity permission);
+    Permission getPermissionByParentAndPermission(String parentUniqueId, Permission permission);
 
-    List<PermissionEntity> getPermissionsByParentAndPermissionId(String parentUniqueId, PermissionEntity permission);
+    List<Permission> getPermissionsByParentAndPermission(String parentUniqueId, Permission permission);
     
-    List<PermissionEntity> getPermissionsByPermission(PermissionEntity permission);
+    List<Permission> getPermissionsByPermission(Permission permission);
+
+    DelegatedClientScopeAccess getScopeAccessByAuthorizationCode(
+        String authorizationCode);
 }

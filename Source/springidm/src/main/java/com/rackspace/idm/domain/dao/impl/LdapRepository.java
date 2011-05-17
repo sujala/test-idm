@@ -30,8 +30,12 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_BASEURL = "baseUrl";
     public static final String OBJECTCLASS_CLIENTGROUP = "clientGroup";
     public static final String OBJECTCLASS_CLIENTPERMISSION = "clientPermission";
+    public static final String OBJECTCLASS_DEFINEDPERMISSION = "definedPermission";
+    public static final String OBJECTCLASS_DELEGATEDPERMISSION = "delegatedPermission";
+    public static final String OBJECTCLASS_GRANTEDPERMISSION = "grantedPermission";
     public static final String OBJECTCLASS_GROUPOFNAMES = "groupOfNames";
     public static final String OBJECTCLASS_ORGANIZATIONALUNIT = "organizationalUnit";
+    public static final String OBJECTCLASS_PERMISSION = "rsPermission";
     public static final String OBJECTCLASS_RACKER = "rsRacker";
     public static final String OBJECTCLASS_RACKSPACEAPPLICATION = "rsApplication";
     public static final String OBJECTCLASS_RACKSPACEGROUP = "rsGroup";
@@ -41,6 +45,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_SCOPEACCESS = "scopeAccess";
     public static final String OBJECTCLASS_USERSCOPEACCESS = "userScopeAccess";
     public static final String OBJECTCLASS_CLIENTSCOPEACCESS = "clientScopeAccess";
+    public static final String OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS = "delegatedClientScopeAccess";
     public static final String OBJECTCLASS_PASSWORDRESETSCOPEACCESS = "passwordResetScopeAccess";
     public static final String OBJECTCLASS_RACKERSCOPEACCESS = "rackerScopeAccess";
 
@@ -70,11 +75,14 @@ public abstract class LdapRepository {
     // Definitions for LDAP Attributes
     public static final String ATTR_ACCESS_TOKEN = "accessToken";
     public static final String ATTR_ACCESS_TOKEN_EXP = "accessTokenExp";
+    public static final String ATTR_AUTH_CODE = "authCode";
+    public static final String ATTR_AUTH_CODE_EXP = "authCodeExp";
     public static final String ATTR_ADMIN_URL = "rsAdminUrl";
     public static final String ATTR_BASEURL_ID = "baseUrlId";
     public static final String ATTR_BASEURL_TYPE = "baseUrlType";
     public static final String ATTR_BLOB = "blob";
     public static final String ATTR_C = "c";
+    public static final String ATTR_CALLBACK_URL = "callBackUrl";
     public static final String ATTR_CLIENT_ID = "clientId";
     public static final String ATTR_CLIENT_RCN = "clientRCN";
     public static final String ATTR_CLIENT_SECRET = "userPassword";
@@ -143,7 +151,6 @@ public abstract class LdapRepository {
     // Definitions for LDAP DNs
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
     protected static final String BASEURL_BASE_DN = "ou=BaseUrls,dc=rackspace,dc=com";
-    protected static final String TOKEN_BASE_DN = "ou=Tokens,dc=rackspace,dc=com";
 
     // Definitions for OU names
     protected static final String OU_GROUPS_NAME = "groups";

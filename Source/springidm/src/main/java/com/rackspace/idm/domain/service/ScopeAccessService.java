@@ -1,9 +1,14 @@
 package com.rackspace.idm.domain.service;
 
+import java.util.List;
+
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
+import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
+import com.rackspace.idm.domain.entity.DelegatedPermission;
+import com.rackspace.idm.domain.entity.GrantedPermission;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
-import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
@@ -11,15 +16,16 @@ import com.rackspace.idm.domain.entity.UserScopeAccess;
 
 public interface ScopeAccessService {
 
-    PermissionEntity addPermissionToScopeAccess(String scopeAccessUniqueId, PermissionEntity permission);
-
+    List<Permission> getPermissionsForParent(String scopeAccessUniqueId,
+        Permission permission);
+        
     ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
 
     boolean authenticateAccessToken(String accessTokenStr);
 
     void deleteScopeAccess(ScopeAccess scopeAccess);
 
-    boolean doesAccessTokenHavePermission(String accessTokenString, PermissionEntity permission);
+    boolean doesAccessTokenHavePermission(String accessTokenString, Permission permission);
 
     void expireAccessToken(String tokenString);
 
@@ -35,7 +41,7 @@ public interface ScopeAccessService {
 
     PasswordResetScopeAccess getOrCreatePasswordResetScopeAccessForUser(BaseUser user);
 
-    PermissionEntity getPermissionForParent(String parentUniqueId, PermissionEntity permission);
+    Permission getPermissionForParent(String parentUniqueId, Permission permission);
 
     RackerScopeAccess getRackerScopeAccessForClientId(String rackerUniqueId, String clientId);
 
@@ -55,13 +61,17 @@ public interface ScopeAccessService {
 
     UserScopeAccess getUserScopeAccessForClientIdByUsernameAndPassword(String username, String password, String clientId);
 
-    PermissionEntity grantPermissionToClient(String parentUniqueId, PermissionEntity permission);
+    GrantedPermission grantPermissionToClient(String parentUniqueId, GrantedPermission permission);
 
-    PermissionEntity grantPermissionToUser(User user, PermissionEntity permission);
+    GrantedPermission grantPermissionToUser(User user, GrantedPermission permission);
     
-    void removePermission(PermissionEntity permission);
+    void removePermission(Permission permission);
 
-    void updatePermission(PermissionEntity permission);
+    void updatePermission(Permission permission);
 
     void updateScopeAccess(ScopeAccess scopeAccess);
+
+    DelegatedClientScopeAccess getScopeAccessByAuthCode(String authorizationCode);
+
+    DelegatedPermission delegatePermission(String scopeAccessUniqueId, DelegatedPermission permission);
 }

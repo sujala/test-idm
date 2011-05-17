@@ -23,8 +23,10 @@ import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
+import com.rackspace.idm.domain.entity.DefinedPermission;
+import com.rackspace.idm.domain.entity.GrantedPermission;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
-import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 
@@ -91,7 +93,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     public void testAddDuplicateScopeAccess() {
         ScopeAccess sa = new ScopeAccess();
         sa.setClientId(client.getClientId());
-        sa.setClientRCN(client.getName());
+        sa.setClientRCN(client.getCustomerId());
 
         sa = repo.addScopeAccess(client.getUniqueId(), sa);
         sa = repo.addScopeAccess(client.getUniqueId(), sa);
@@ -139,7 +141,6 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         final ClientScopeAccess clientScopeAccess = new ClientScopeAccess();
         clientScopeAccess.setClientId(client.getClientId());
         clientScopeAccess.setClientRCN(client.getName());
-        clientScopeAccess.setTokenScope("test scope");
         clientScopeAccess.setAccessTokenString(accessToken);
         repo.addScopeAccess(client.getUniqueId(), clientScopeAccess);
 
@@ -182,7 +183,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
 
-        PermissionEntity p = createPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         p.setDescription("description");
         p.setTitle("title");
         p.setEnabled(false);
@@ -212,7 +213,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
 
-        PermissionEntity p = createPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         p.setDescription("description");
         p.setTitle("title");
         p.setEnabled(false);
@@ -243,12 +244,11 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
 
-        PermissionEntity p = createPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
-        p.setTitle("title");
-        p.setEnabled(true);
+        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        p.setResourceGroups(new String[] { "test" });
         p = repo.grantPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(p);
-        Assert.assertNull(p.getTitle());
+        Assert.assertNotNull(p.getResourceGroups());
 
         final Boolean doesAccessTokenHavePermission = repo.doesAccessTokenHavePermission(accessToken, p);
         Assert.assertTrue(doesAccessTokenHavePermission);
@@ -268,13 +268,12 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
 
-        PermissionEntity p = createPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
-        p.setTitle("title");
-        p.setEnabled(true);
+        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        p.setResourceGroups(new String[] { "test" });
         p = repo.grantPermission(sa.getUniqueId(), p);
         p = repo.grantPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(p);
-        Assert.assertNull(p.getTitle());
+        Assert.assertNotNull(p.getResourceGroups());
 
         final Boolean doesAccessTokenHavePermission = repo.doesAccessTokenHavePermission(accessToken, p);
         Assert.assertTrue(doesAccessTokenHavePermission);
@@ -302,7 +301,6 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     @Test
     public void testDoesAccessTokenHavePermission() {
         ClientScopeAccess sa = new ClientScopeAccess();
-        sa.setTokenScope("testScope");
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
         sa.setAccessTokenString(accessToken);
@@ -310,7 +308,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (ClientScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
 
-        PermissionEntity p = createPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         p = repo.grantPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(p);
 
@@ -430,7 +428,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
 
-        PermissionEntity p = createPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         p.setDescription("description");
         p.setTitle("title");
         p.setEnabled(false);
@@ -441,10 +439,12 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         Assert.assertTrue(p.getGrantedByDefault());
         Assert.assertEquals("title", p.getTitle());
         Assert.assertEquals("description",p.getDescription());
-
-        List<PermissionEntity> list = repo.getPermissionsByPermission(p);
         
-        Assert.assertTrue(list.contains(p));
+        Permission filter = new Permission(p.getCustomerId(), p.getClientId(), p.getPermissionId());
+
+        List<Permission> list = repo.getPermissionsByPermission(filter);
+        
+        Assert.assertTrue(list.size() >= 1);
     }
     @Test
     public void testRemovePermissionFromScopeAccess() {
@@ -460,20 +460,20 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
 
-        PermissionEntity p = createPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         p = repo.grantPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(p);
 
         final Boolean doesAccessTokenHavePermission = repo.doesAccessTokenHavePermission(accessToken, p);
         Assert.assertTrue(doesAccessTokenHavePermission);
 
-        PermissionEntity po = repo.getPermissionByParentAndPermissionId(sa.getUniqueId(), p);
+        Permission po = repo.getPermissionByParentAndPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(po);
 
         final Boolean result = repo.removePermissionFromScopeAccess(po);
         Assert.assertNotNull(result);
 
-        po = repo.getPermissionByParentAndPermissionId(sa.getUniqueId(), p);
+        po = repo.getPermissionByParentAndPermission(sa.getUniqueId(), p);
         Assert.assertNull(po);
     }
 
@@ -516,23 +516,23 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
 
-        PermissionEntity p = createPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         p = repo.grantPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(p);
 
         final Boolean doesAccessTokenHavePermission = repo.doesAccessTokenHavePermission(accessToken, p);
         Assert.assertTrue(doesAccessTokenHavePermission);
 
-        PermissionEntity po = repo.getPermissionByParentAndPermissionId(sa.getUniqueId(), p);
+        GrantedPermission po = (GrantedPermission)repo.getPermissionByParentAndPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(po);
 
-        po.setEnabled(false);
+        po.setResourceGroups(new String[] { "test" });
         final Boolean result = repo.updatePermissionForScopeAccess(po);
         Assert.assertTrue(result);
 
-        po = repo.getPermissionByParentAndPermissionId(sa.getUniqueId(), p);
+        po = (GrantedPermission) repo.getPermissionByParentAndPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(po);
-        Assert.assertFalse(po.getEnabled());
+        Assert.assertNotNull(po.getResourceGroups());
     }
 
     private static LdapClientRepository getClientRepo(LdapConnectionPools connPools) {
@@ -585,9 +585,13 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         return newClient;
     }
 
-    private PermissionEntity createPermissionInstance(String clientId, String RCN, String permissionId) {
-        final PermissionEntity res = new PermissionEntity(RCN,clientId,permissionId,null);
+    private DefinedPermission createDefinedPermissionInstance(String clientId, String RCN, String permissionId) {
+        final DefinedPermission res = new DefinedPermission(RCN,clientId,permissionId);
         return res;
     }
-
+    
+    private GrantedPermission createGrantedPermissionInstance(String clientId, String RCN, String permissionId) {
+        final GrantedPermission res = new GrantedPermission(RCN,clientId,permissionId);
+        return res;
+    }
 }
