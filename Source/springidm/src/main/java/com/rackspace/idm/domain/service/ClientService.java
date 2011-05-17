@@ -7,7 +7,7 @@ import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.Clients;
-import com.rackspace.idm.domain.entity.PermissionEntity;
+import com.rackspace.idm.domain.entity.DefinedPermission;
 
 public interface ClientService {
 
@@ -15,7 +15,7 @@ public interface ClientService {
 
     void addClientGroup(ClientGroup clientGroup);
 
-    void addDefinedPermission(PermissionEntity permission);
+    void addDefinedPermission(DefinedPermission permission);
     
     void addUserToClientGroup(String username, String customerId, String clientId, String groupName);
 
@@ -25,7 +25,7 @@ public interface ClientService {
 
     void deleteClientGroup(String customerId, String clientId, String groupName);
 
-    void deleteDefinedPermission(PermissionEntity permission);
+    void deleteDefinedPermission(DefinedPermission permission);
 
     Clients getByCustomerId(String customerId, int offset, int limit);
 
@@ -46,12 +46,12 @@ public interface ClientService {
 
     Clients getClientServices(Client client);
     
-    PermissionEntity getDefinedPermissionByClientIdAndPermissionId(String clientId,
+    DefinedPermission getDefinedPermissionByClientIdAndPermissionId(String clientId,
         String permissionId);
     
-    PermissionEntity checkAndGetPermission(String customerId, String clientId, String permissionId);
+    DefinedPermission checkAndGetPermission(String customerId, String clientId, String permissionId);
 
-    List<PermissionEntity> getDefinedPermissionsByClient(Client client);
+    List<DefinedPermission> getDefinedPermissionsByClient(Client client);
 
     boolean isUserMemberOfClientGroup(String username, ClientGroup group);
 
@@ -62,8 +62,12 @@ public interface ClientService {
     void save(Client client);
 
     void softDelete(String clientId);
+    
+    void updateClient(Client client);
 
     void updateClientGroup(ClientGroup group);
 
-    void updateDefinedPermission(PermissionEntity permission);
+    void updateDefinedPermission(DefinedPermission permission);
+
+    Client getClientByScope(String scope);
 }
