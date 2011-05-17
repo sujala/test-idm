@@ -25,9 +25,6 @@ public class ClientScopeAccess extends ScopeAccess implements hasAccessToken {
     @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_CLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date accessTokenExp;
 
-    @LDAPField(attribute=LdapRepository.ATTR_TOKEN_SCOPE, objectClass=LdapRepository.OBJECTCLASS_CLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String tokenScope;
-
     @Override
     @LDAPGetter(attribute=LdapRepository.ATTR_CLIENT_ID, inRDN=true)
     public String getClientId() {
@@ -43,16 +40,6 @@ public class ClientScopeAccess extends ScopeAccess implements hasAccessToken {
             return ldapEntry.getDN();
         }
     }
-
-    public String getTokenScope() {
-        return tokenScope;
-    }
-
-    public void setTokenScope(String tokenScope) {
-        this.tokenScope = tokenScope;
-    }
-
-
 
     @Override
     public String getAccessTokenString() {
