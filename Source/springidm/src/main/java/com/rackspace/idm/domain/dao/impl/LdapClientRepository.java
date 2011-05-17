@@ -311,6 +311,27 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         return client;
     }
+    
+    @Override
+    public Client getClientByScope(String scope) {
+        getLogger().debug("Doing search for Client with Scope {}", scope);
+
+        if (StringUtils.isBlank(scope)) {
+            getLogger().error("Null or Empty scope parameter");
+            throw new IllegalArgumentException("Null or Empty scope parameter.");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_TOKEN_SCOPE, scope)
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+
+        Client client = getSingleClient(searchFilter);
+
+        getLogger().debug("Found client - {}", client);
+
+        return client;
+    }
 
     @Override
     public ClientGroup getClientGroup(String customerId, String clientId,
@@ -665,6 +686,22 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             atts.add(new Attribute(ATTR_SOFT_DELETED, String.valueOf(client
                 .isSoftDeleted())));
         }
+        
+        if (client.getTitle() != null) {
+            atts.add(new Attribute(ATTR_TITLE, client.getTitle()));
+        }
+        
+        if (client.getDescription() != null) {
+            atts.add(new Attribute(ATTR_DESCRIPTION, client.getDescription()));
+        }
+        
+        if (client.getScope() != null) {
+            atts.add(new Attribute(ATTR_TOKEN_SCOPE, client.getScope()));
+        }
+        
+        if (client.getCallBackUrl() != null) {
+            atts.add(new Attribute(ATTR_CALLBACK_URL, client.getCallBackUrl()));
+        }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
         getLogger().debug("Found {} attributes for client {}.",
@@ -815,6 +852,46 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             && cNew.isSoftDeleted() != cOld.isSoftDeleted()) {
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_SOFT_DELETED, String.valueOf(cNew.isSoftDeleted())));
+        }
+        
+        if (cNew.getTitle() != null) {
+            if (StringUtils.isBlank(cNew.getTitle())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_TITLE));
+            } else if (!StringUtils
+                .equals(cOld.getTitle(), cNew.getTitle())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_TITLE,
+                    cNew.getTitle()));
+            }
+        }
+        
+        if (cNew.getDescription() != null) {
+            if (StringUtils.isBlank(cNew.getDescription())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_DESCRIPTION));
+            } else if (!StringUtils
+                .equals(cOld.getDescription(), cNew.getDescription())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_DESCRIPTION,
+                    cNew.getDescription()));
+            }
+        }
+        
+        if (cNew.getScope() != null) {
+            if (StringUtils.isBlank(cNew.getScope())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_TOKEN_SCOPE));
+            } else if (!StringUtils
+                .equals(cOld.getScope(), cNew.getScope())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_TOKEN_SCOPE,
+                    cNew.getScope()));
+            }
+        }
+        
+        if (cNew.getCallBackUrl() != null) {
+            if (StringUtils.isBlank(cNew.getCallBackUrl())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_CALLBACK_URL));
+            } else if (!StringUtils
+                .equals(cOld.getCallBackUrl(), cNew.getCallBackUrl())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_CALLBACK_URL,
+                    cNew.getCallBackUrl()));
+            }
         }
 
         getLogger().debug("Found {} modifications.", mods.size());
