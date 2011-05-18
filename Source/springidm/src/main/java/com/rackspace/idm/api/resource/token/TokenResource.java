@@ -251,9 +251,68 @@ public class TokenResource {
 
         return Response.noContent().build();
     }
+    
+    /**
+     * Check if the given access token has the specifice service.
+     *
+     * @param authHeader HTTP Authorization header for authenticating the calling client.
+     * @param tokenString The token to check for permission
+     * @param serviceId The serviceId for the service that defines the permission
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}auth
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}notFound
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     */
+    @GET
+    @Path("{tokenString}/services/{serviceId}")
+    public Response validateTokenService(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("tokenString") String tokenString,
+        @PathParam("serviceId") String serviceId) {
+
+        logger.debug("Checking whether token {} has service {}",
+            tokenString, serviceId);
+
+        ScopeAccess token = this.scopeAccessService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        boolean authorized = token instanceof ClientScopeAccess
+            && serviceId.equals(token.getClientId());
+
+        authorizationService.checkAuthAndHandleFailure(authorized, token);
+
+        ScopeAccess tokenToCheck = this.scopeAccessService
+            .getScopeAccessByAccessToken(tokenString);
+
+        if (tokenToCheck == null) {
+            throw new NotFoundException(String.format("Token %s not found",
+                tokenString));
+        }
+
+        if (tokenToCheck instanceof hasAccessToken) {
+            boolean expired = ((hasAccessToken) tokenToCheck)
+                .isAccessTokenExpired(new DateTime());
+            if (expired) {
+                String errorMsg = String.format("Token expired : %s",
+                    tokenString);
+                logger.warn(errorMsg);
+                throw new NotFoundException(errorMsg);
+            }
+        }
+
+        if (this.scopeAccessService.doesAccessTokenHaveService(tokenToCheck, serviceId)) {
+            return Response.ok().build();
+        }
+
+        throw new NotFoundException();
+    }
 
     /**
-     * Check if the given access token as the specified permission.
+     * Check if the given access token has the specified permission.
      *
      * @param authHeader HTTP Authorization header for authenticating the calling client.
      * @param tokenString The token to check for permission
@@ -324,8 +383,7 @@ public class TokenResource {
             }
         }
 
-        if (this.scopeAccessService.doesAccessTokenHavePermission(
-            ((hasAccessToken) tokenToCheck).getAccessTokenString(), permission)) {
+        if (this.scopeAccessService.doesAccessTokenHavePermission(tokenToCheck, permission)) {
             return Response.ok().build();
         }
 
