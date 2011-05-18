@@ -71,6 +71,10 @@ public class AuthenticationFilter implements ContainerRequestFilter, Application
         if ("GET".equals(method) && path.startsWith("xslt")) {
             return request;
         }
+        
+        if (path.startsWith("authorize")) {
+            return request;
+        }
 
         if ("GET".equals(method) && "".equals(path)) {
             return request;
