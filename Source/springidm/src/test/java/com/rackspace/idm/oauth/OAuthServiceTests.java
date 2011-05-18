@@ -53,7 +53,7 @@ public class OAuthServiceTests {
     Configuration mockConfiguration;
     ScopeAccessService mockScopeAccessService;
 
-    String customerId = "123-456-789";
+    String customerId = "RACKSPACE";
     String clientId = "DELETE_My_ClientId";
     String clientSecret = "DELETE_My_Client_Secret";
     String username = "someuser";
@@ -82,6 +82,7 @@ public class OAuthServiceTests {
 
         final Configuration appConfig = new PropertiesConfiguration();
         appConfig.addProperty("token.expirationSeconds", expireInSeconds);
+        appConfig.addProperty("rackspace.customerId", "RACKSPACE");
 
         oauthService = new DefaultOAuthService(mockUserService,
                 mockClientService, mockAuthorizationService, appConfig,

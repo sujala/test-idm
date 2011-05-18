@@ -115,6 +115,15 @@ public class DefaultOAuthService implements OAuthService {
 
         if (PASSWORD == grantType) {
 
+            if (!caResult.getClient().getCustomerId()
+                .equals(getRackspaceCustomerId())) {
+                String errMsg = String.format(
+                    "Client %s is forbidden from using PASSWORD grant_type",
+                    caResult.getClient().getClientId());
+                logger.warn(errMsg);
+                throw new ForbiddenException(errMsg);
+            }
+
             if (StringUtils.isBlank(trParam.getUsername())) {
                 String msg = "username cannot be blank";
                 logger.warn(msg);
@@ -199,6 +208,16 @@ public class DefaultOAuthService implements OAuthService {
         }
 
         if (AUTHORIZATION_CODE == grantType) {
+            
+            if (caResult.getClient().getCustomerId()
+                .equals(getRackspaceCustomerId())) {
+                String errMsg = String.format(
+                    "Client %s is forbidden from using AUTHORIZATION_CODE grant_type",
+                    caResult.getClient().getClientId());
+                logger.warn(errMsg);
+                throw new ForbiddenException(errMsg);
+            }
+            
             DelegatedClientScopeAccess scopeAccess = this.scopeAccessService
                 .getScopeAccessByAuthCode(trParam.getAuthorizationCode());
             if (scopeAccess == null
@@ -207,7 +226,7 @@ public class DefaultOAuthService implements OAuthService {
                     caResult.getClient().getClientId())) {
                 final String msg = String.format(
                     "Unauthorized Authorization Code: %s",
-                    trParam.getRefreshToken());
+                    trParam.getAuthorizationCode());
                 logger.warn(msg);
                 throw new NotAuthenticatedException(msg);
             }
@@ -218,9 +237,9 @@ public class DefaultOAuthService implements OAuthService {
                 this.getDefaultTokenExpirationSeconds()).toDate());
             scopeAccess.setAuthCode(null);
             scopeAccess.setAuthCodeExp(null);
-            
+
             this.scopeAccessService.updateScopeAccess(scopeAccess);
-            
+
             return scopeAccess;
         }
 
@@ -386,8 +405,8 @@ public class DefaultOAuthService implements OAuthService {
             scopeAccess = new ClientScopeAccess();
             scopeAccess.setClientId(client.getClientId());
             scopeAccess.setClientRCN(client.getCustomerId());
-            scopeAccess = (ClientScopeAccess)this.scopeAccessService.addScopeAccess(client.getUniqueId(),
-                scopeAccess);
+            scopeAccess = (ClientScopeAccess) this.scopeAccessService
+                .addScopeAccess(client.getUniqueId(), scopeAccess);
         }
 
         DateTime current = new DateTime();
@@ -526,5 +545,9 @@ public class DefaultOAuthService implements OAuthService {
 
     private boolean isTrustedServer() {
         return config.getBoolean("ldap.server.trusted", false);
+    }
+
+    private String getRackspaceCustomerId() {
+        return config.getString("rackspace.customerId");
     }
 }

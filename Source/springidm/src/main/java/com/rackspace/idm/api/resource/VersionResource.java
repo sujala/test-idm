@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.resource.auth.AuthResource;
+import com.rackspace.idm.api.resource.authorize.AuthorizeResource;
 import com.rackspace.idm.api.resource.baseurl.BaseUrlsResource;
 import com.rackspace.idm.api.resource.customer.CustomersResource;
 import com.rackspace.idm.api.resource.mosso.MossoUserResource;
@@ -32,24 +33,26 @@ import com.rackspace.idm.domain.service.ApiDocService;
 @Component
 public class VersionResource {
 
-    private AuthResource authResource;
-    private UsersResource usersResource;
-    private CustomersResource customersResource;
-    private MossoUserResource mossoUserResource;
-    private NastUserResource nastUserResource;
-    private PasswordRulesResource passwordRulesResource;
-    private TokenResource tokenResource;
-    private BaseUrlsResource baseUrlsResource;
-    private ApiDocService apiDocService;
+    private final AuthorizeResource authorizeResource;
+    private final AuthResource authResource;
+    private final UsersResource usersResource;
+    private final CustomersResource customersResource;
+    private final MossoUserResource mossoUserResource;
+    private final NastUserResource nastUserResource;
+    private final PasswordRulesResource passwordRulesResource;
+    private final TokenResource tokenResource;
+    private final BaseUrlsResource baseUrlsResource;
+    private final ApiDocService apiDocService;
 
-    private Configuration config;
+    private final Configuration config;
 
     @Autowired
-    public VersionResource(AuthResource authResource, UsersResource usersResource,
+    public VersionResource(AuthorizeResource authorizeResource,AuthResource authResource, UsersResource usersResource,
         CustomersResource customersResource, MossoUserResource mossoUserResource,
         NastUserResource nastUserResource, PasswordRulesResource passwordRulesResource,
         TokenResource tokenResource, BaseUrlsResource baseUrlsResource, ApiDocService apiDocService,
         Configuration config) {
+        this.authorizeResource = authorizeResource;
         this.authResource = authResource;
         this.usersResource = usersResource;
         this.customersResource = customersResource;
@@ -150,5 +153,10 @@ public class VersionResource {
     public Response getWadl() {
         String myString = apiDocService.getWadl();
         return Response.ok(myString).build();
+    }
+    
+    @Path("authorize")
+    public AuthorizeResource getAuthorizeResource() {
+        return authorizeResource;
     }
 }

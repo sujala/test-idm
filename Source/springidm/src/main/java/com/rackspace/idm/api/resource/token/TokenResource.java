@@ -93,6 +93,7 @@ public class TokenResource {
         trParam.setPassword(creds.getPassword());
         trParam.setRefreshToken(creds.getRefreshToken());
         trParam.setUsername(creds.getUsername());
+        trParam.setAuthorizationCode(creds.getAuthorizationCode());
 
         try {
             trParam.setGrantType(creds.getGrantType().value());

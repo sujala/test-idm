@@ -9,7 +9,9 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.joda.time.DateTime;
 
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -56,7 +58,7 @@ public class AuthConverter {
                     tokenScopeAccessObject.getRefreshTokenString(), null));
         }
 
-        if (scopeAccess.getClientId() != null) {
+        if (scopeAccess instanceof ClientScopeAccess) {
             authJaxb.setClient(clientConverter.toClientJaxbFromClient(scopeAccess
                 .getClientId(), scopeAccess.getClientRCN()));
         }
@@ -69,6 +71,12 @@ public class AuthConverter {
                 authJaxb.setUser(userConverter.toUserJaxbFromUser(userScopeAccess.getUsername(), 
                         userScopeAccess.getUserRCN()));
             }
+        }
+        
+        if (scopeAccess instanceof DelegatedClientScopeAccess) {
+            DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) scopeAccess;
+                authJaxb.setUser(userConverter.toUserJaxbFromUser(dcsa.getUsername(), 
+                        dcsa.getUserRCN()));
         }
         
         if (scopeAccess instanceof RackerScopeAccess) {

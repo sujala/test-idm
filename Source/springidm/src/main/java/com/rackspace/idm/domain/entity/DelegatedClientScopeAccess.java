@@ -31,16 +31,16 @@ public class DelegatedClientScopeAccess extends ScopeAccess implements hasAccess
     @LDAPField(attribute=LdapRepository.ATTR_REFRESH_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date refreshTokenExp;
     
-    @LDAPField(attribute=LdapRepository.ATTR_AUTH_CODE, objectClass=LdapRepository.OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true) 
+    @LDAPField(attribute=LdapRepository.ATTR_AUTH_CODE, objectClass=LdapRepository.OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false) 
     private String authCode;
     
-    @LDAPField(attribute=LdapRepository.ATTR_AUTH_CODE_EXP, objectClass=LdapRepository.OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true) 
+    @LDAPField(attribute=LdapRepository.ATTR_AUTH_CODE_EXP, objectClass=LdapRepository.OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false) 
     private Date authCodeExp;
     
-    @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+    @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String username;
 
-    @LDAPField(attribute=LdapRepository.ATTR_USER_RCN, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+    @LDAPField(attribute=LdapRepository.ATTR_USER_RCN, objectClass=LdapRepository.OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String userRCN;
     
     @Override
@@ -156,9 +156,14 @@ public class DelegatedClientScopeAccess extends ScopeAccess implements hasAccess
     }
 
     public boolean isAuthorizationCodeExpired(DateTime time) {
-        return StringUtils.isBlank(this.authCode)
-        || this.authCodeExp == null
-        || new DateTime(this.authCodeExp).isBefore(time);
+        
+        if (StringUtils.isBlank(this.authCode) || this.authCodeExp == null) {
+            return true;
+        }
+            
+        DateTime exp = new DateTime(this.authCodeExp);
+        boolean expired = exp.isBefore(time);
+        return expired;
     }
     
     @Override
