@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
+import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -78,25 +79,30 @@ public class DefaultAuthorizationService implements AuthorizationService {
             permission.setCustomerId(getRackspaceCustomerId());
             permission.setPermissionId(permissionId);
 
-            authorized = this.scopeAccessDao.doesAccessTokenHavePermission(scopeAccess,
-                permission);
+            authorized = this.scopeAccessDao.doesAccessTokenHavePermission(
+                scopeAccess, permission);
         }
         logger.debug("Authorized {} as client - {}", scopeAccess, authorized);
         return authorized;
     }
 
     @Override
-    public boolean authorizeUser(ScopeAccess scopeAccess,
-        String customerId, String username) {
+    public boolean authorizeUser(ScopeAccess scopeAccess, String customerId,
+        String username) {
         logger.debug("Authorizing {} as user", scopeAccess);
-        if (!(scopeAccess instanceof UserScopeAccess)) {
-            return false;
+
+        boolean authorized = false;
+
+        if (scopeAccess instanceof UserScopeAccess) {
+            UserScopeAccess usa = (UserScopeAccess) scopeAccess;
+            authorized = usa.getUsername().equals(username)
+                && usa.getUserRCN().equalsIgnoreCase(customerId);
+        } else if (scopeAccess instanceof DelegatedClientScopeAccess) {
+            DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) scopeAccess;
+            authorized = dcsa.getUsername().equals(username)
+                && dcsa.getUserRCN().equalsIgnoreCase(customerId);
         }
 
-        UserScopeAccess usa = (UserScopeAccess) scopeAccess;
-
-        boolean authorized = usa.getUsername().equals(username)
-            && usa.getUserRCN().equalsIgnoreCase(customerId);
         logger.debug("Authorized {} as user - {}", scopeAccess, authorized);
         return authorized;
     }
@@ -105,27 +111,41 @@ public class DefaultAuthorizationService implements AuthorizationService {
     public boolean authorizeCustomerUser(ScopeAccess scopeAccess,
         String customerId) {
         logger.debug("Authorizing {} as customer user", scopeAccess);
-        if (!(scopeAccess instanceof UserScopeAccess)) {
-            return false;
+
+        boolean authorized = false;
+
+        if (scopeAccess instanceof UserScopeAccess) {
+            UserScopeAccess usa = (UserScopeAccess) scopeAccess;
+            authorized = usa.getUserRCN().equalsIgnoreCase(customerId);
+        } else if (scopeAccess instanceof DelegatedClientScopeAccess) {
+            DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) scopeAccess;
+            authorized = dcsa.getUserRCN().equalsIgnoreCase(customerId);
         }
 
-        UserScopeAccess usa = (UserScopeAccess) scopeAccess;
-
-        boolean authorized = usa.getUserRCN().equalsIgnoreCase(customerId);
         logger.debug("Authorized {} as customer user - {}", scopeAccess,
             authorized);
         return authorized;
     }
 
     @Override
-    public boolean authorizeAdmin(ScopeAccess scopeAccess,
-        String customerId) {
+    public boolean authorizeAdmin(ScopeAccess scopeAccess, String customerId) {
         logger.debug("Authorizing {} as admin user", scopeAccess);
-        if (!(scopeAccess instanceof UserScopeAccess)) {
+        if (!(scopeAccess instanceof UserScopeAccess || scopeAccess instanceof DelegatedClientScopeAccess)) {
             return false;
         }
 
-        UserScopeAccess usa = (UserScopeAccess) scopeAccess;
+        String username = null;
+        String RCN = null;
+
+        if (scopeAccess instanceof UserScopeAccess) {
+            UserScopeAccess usa = (UserScopeAccess) scopeAccess;
+            username = usa.getUsername();
+            RCN = usa.getUserRCN();
+        } else if (scopeAccess instanceof DelegatedClientScopeAccess) {
+            DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) scopeAccess;
+            username = dcsa.getUsername();
+            RCN = dcsa.getUserRCN();
+        }
 
         if (IDM_ADMIN_GROUP_DN == null) {
             ClientGroup group = this.clientDao.getClientGroup(
@@ -136,9 +156,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
         boolean authorized = false;
 
-        authorized = this.clientDao.isUserInClientGroup(usa.getUsername(),
-            IDM_ADMIN_GROUP_DN)
-            && customerId.equalsIgnoreCase(usa.getUserRCN());
+        authorized = this.clientDao.isUserInClientGroup(username,
+            IDM_ADMIN_GROUP_DN) && customerId.equalsIgnoreCase(RCN);
         logger.debug("Authorized {} as admin user - {}", scopeAccess,
             authorized);
         return authorized;
@@ -160,8 +179,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeAsRequestorOrOwner(
-        ScopeAccess targetScopeAccess,
+    public boolean authorizeAsRequestorOrOwner(ScopeAccess targetScopeAccess,
         ScopeAccess requestingScopeAccess) {
         logger.debug("Authorizing as Requestor or Owner");
 
@@ -175,24 +193,20 @@ public class DefaultAuthorizationService implements AuthorizationService {
             isOwner = requestingScopeAccess.getClientId().equals(
                 targetScopeAccess.getClientId());
         } else if (targetScopeAccess instanceof UserScopeAccess) {
-            isOwner = ((UserScopeAccess) requestingScopeAccess)
-                .getUsername().equals(
-                    ((UserScopeAccess) targetScopeAccess).getUsername());
+            isOwner = ((UserScopeAccess) requestingScopeAccess).getUsername()
+                .equals(((UserScopeAccess) targetScopeAccess).getUsername());
         } else if (targetScopeAccess instanceof RackerScopeAccess) {
-            isOwner = ((RackerScopeAccess) requestingScopeAccess)
-                .getRackerId()
-                .equals(
-                    ((RackerScopeAccess) targetScopeAccess).getRackerId());
+            isOwner = ((RackerScopeAccess) requestingScopeAccess).getRackerId()
+                .equals(((RackerScopeAccess) targetScopeAccess).getRackerId());
         }
-        
+
         logger.debug("Authorized as Requestor({}) or Owner({})", isRequestor,
             isOwner);
         return (isRequestor || isOwner);
     }
 
     @Override
-    public void checkAuthAndHandleFailure(boolean authorized,
-        ScopeAccess token) {
+    public void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token) {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
                 ((hasAccessToken) token).getAccessTokenString());
