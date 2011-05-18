@@ -25,7 +25,9 @@ public interface ScopeAccessService {
 
     void deleteScopeAccess(ScopeAccess scopeAccess);
 
-    boolean doesAccessTokenHavePermission(String accessTokenString, Permission permission);
+    boolean doesAccessTokenHavePermission(ScopeAccess token, Permission permission);
+    
+    boolean doesAccessTokenHaveService(ScopeAccess token, String clientId);
 
     void expireAccessToken(String tokenString);
 

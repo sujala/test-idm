@@ -11,46 +11,48 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 
 public interface ScopeAccessDao {
     
-    DelegatedPermission delegatePermission(String scopeAccessUniqueId,
-        DelegatedPermission permission);
-
     ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
-
-    GrantedPermission grantPermission(String scopeAccessUniqueId,
-        GrantedPermission permission);
 
     DefinedPermission definePermission(String scopeAccessUniqueId,
         DefinedPermission permission);
 
-    Boolean deleteScopeAccess(ScopeAccess scopeAccess);
+    DelegatedPermission delegatePermission(String scopeAccessUniqueId,
+        DelegatedPermission permission);
 
-    Boolean doesAccessTokenHavePermission(String accessToken,
+    boolean deleteScopeAccess(ScopeAccess scopeAccess);
+
+    boolean doesAccessTokenHavePermission(ScopeAccess token,
             Permission permission);
-
-    List<ScopeAccess> getScopeAccessesByParent(String parentUniqueId);
-
-    ScopeAccess getScopeAccessByAccessToken(String accessToken);
-
-    ScopeAccess getScopeAccessByRefreshToken(String refreshToken);
-
-    ScopeAccess getScopeAccessForParentByClientId(String parentUniqueId,
-            String clientId);
-
-    ScopeAccess getScopeAccessByUsernameAndClientId(String username,
-            String clientId);
-
-    Boolean removePermissionFromScopeAccess(Permission permission);
-
-    Boolean updateScopeAccess(ScopeAccess scopeAccess);
-
-    Boolean updatePermissionForScopeAccess(Permission permission);
+    
+    boolean doesParentHaveScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
 
     Permission getPermissionByParentAndPermission(String parentUniqueId, Permission permission);
 
     List<Permission> getPermissionsByParentAndPermission(String parentUniqueId, Permission permission);
-    
+
     List<Permission> getPermissionsByPermission(Permission permission);
+
+    ScopeAccess getScopeAccessByAccessToken(String accessToken);
 
     DelegatedClientScopeAccess getScopeAccessByAuthorizationCode(
         String authorizationCode);
+
+    ScopeAccess getScopeAccessByRefreshToken(String refreshToken);
+
+    ScopeAccess getScopeAccessByUsernameAndClientId(String username,
+            String clientId);
+
+    List<ScopeAccess> getScopeAccessesByParent(String parentUniqueId);
+
+    ScopeAccess getScopeAccessForParentByClientId(String parentUniqueId,
+            String clientId);
+
+    GrantedPermission grantPermission(String scopeAccessUniqueId,
+        GrantedPermission permission);
+
+    boolean removePermissionFromScopeAccess(Permission permission);
+    
+    boolean updatePermissionForScopeAccess(Permission permission);
+
+    boolean updateScopeAccess(ScopeAccess scopeAccess);
 }

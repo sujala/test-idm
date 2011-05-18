@@ -78,8 +78,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
             permission.setCustomerId(getRackspaceCustomerId());
             permission.setPermissionId(permissionId);
 
-            authorized = this.scopeAccessDao.doesAccessTokenHavePermission(
-                ((ClientScopeAccess) scopeAccess).getAccessTokenString(),
+            authorized = this.scopeAccessDao.doesAccessTokenHavePermission(scopeAccess,
                 permission);
         }
         logger.debug("Authorized {} as client - {}", scopeAccess, authorized);

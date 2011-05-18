@@ -138,7 +138,7 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnTrueForClient() {
 
-        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(tokenString, perm)).andReturn(true);
+        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(authorizedClientToken, perm)).andReturn(true);
         EasyMock.replay(mockScopeAccessDao);
 
         
@@ -154,7 +154,7 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnFalseForClientForMissingPermissionInWadl() {
 
-        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(tokenString, perm)).andReturn(true);
+        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(authorizedClientToken, perm)).andReturn(true);
         EasyMock.replay(mockScopeAccessDao);
 
         
@@ -170,7 +170,7 @@ public class AuthorizationServiceTests {
     @Test
     public void ShouldReturnFalseForClient() {
 
-        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(tokenString, perm)).andReturn(false);
+        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(notAuthorizedClientToken, perm)).andReturn(false);
         EasyMock.replay(mockScopeAccessDao);
         
 
