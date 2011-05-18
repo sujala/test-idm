@@ -740,6 +740,11 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             client.setLocked(resultEntry
                 .getAttributeValueAsBoolean(ATTR_LOCKED));
         }
+        
+        client.setCallBackUrl(resultEntry.getAttributeValue(ATTR_CALLBACK_URL));
+        client.setTitle(resultEntry.getAttributeValue(ATTR_TITLE));
+        client.setDescription(resultEntry.getAttributeValue(ATTR_DESCRIPTION));
+        client.setScope(resultEntry.getAttributeValue(ATTR_TOKEN_SCOPE));
 
         getLogger().debug("Materialized Client object {}.", client);
         return client;

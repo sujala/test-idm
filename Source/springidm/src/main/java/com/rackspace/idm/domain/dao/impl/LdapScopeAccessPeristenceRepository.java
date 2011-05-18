@@ -509,7 +509,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
             final LDAPPersister persister = LDAPPersister
                 .getInstance(scopeAccess.getClass());
             List<Modification> modifications = persister.getModifications(
-                scopeAccess, true, null);
+                scopeAccess, true);
             audit.modify(modifications);
             persister.modify(scopeAccess, conn, null, true);
             getLogger().debug("Updated ScopeAccess: {}", scopeAccess);
