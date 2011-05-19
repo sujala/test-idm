@@ -13,8 +13,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import com.rackspace.idm.validation.MessageTexts;
-
 public class UserTest {
 
     private User getTestUser() {
@@ -268,16 +266,6 @@ public class UserTest {
         Assert.assertEquals(2, violations.size());
         System.out.println(violations);
     }
-    
-    @Test
-    public void shouldRunValidationsForEmail() {
-        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-        User user = new User();
-        user.setEmail("BADEMAIL");
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
-        Assert.assertEquals(3, violations.size());
-        System.out.println(violations);
-    }
 
     @Test
     public void shouldAllowValidUserName() {
@@ -306,39 +294,6 @@ public class UserTest {
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         Assert.assertEquals(0, violations.size());
 
-        System.out.println(violations);
-    }
-
-    @Test
-    public void shouldAllowValidEmail() {
-        User user = getTestUser();
-        user.setEmail("valid-email-format@example.com");
-        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
-        Assert.assertTrue(violations.isEmpty());
-    }
-
-    @Test
-    public void shouldNotAllowEmailNoDomain() {
-        User user = getTestUser();
-        user.setEmail("invalidemail");
-
-        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
-        Assert.assertEquals(1, violations.size());
-        Assert.assertEquals(MessageTexts.EMAIL, violations.iterator().next().getMessage());
-        System.out.println(violations);
-    }
-
-    @Test
-    public void shouldNotAllowEmailInvalidDomain() {
-        User user = getTestUser();
-        user.setEmail("invalidemail@baddomaincom");
-
-        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
-        Assert.assertEquals(1, violations.size());
-        Assert.assertEquals(MessageTexts.EMAIL, violations.iterator().next().getMessage());
         System.out.println(violations);
     }
 }

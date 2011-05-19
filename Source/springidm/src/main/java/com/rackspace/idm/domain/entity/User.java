@@ -15,7 +15,6 @@ import com.rackspace.idm.validation.RegexPatterns;
 public class User extends BaseUser implements Auditable {
     private static final long serialVersionUID = 1347677880811855274L;
 
-    @Pattern(regexp = RegexPatterns.EMAIL_ADDRESS, message = MessageTexts.EMAIL)
     private String email = null;
 
 

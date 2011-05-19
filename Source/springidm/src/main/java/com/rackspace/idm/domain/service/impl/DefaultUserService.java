@@ -3,6 +3,8 @@ package com.rackspace.idm.domain.service.impl;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -46,6 +48,8 @@ public class DefaultUserService implements UserService {
     private final ClientService clientService;
     private final Configuration config;
     
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(".+@.+\\.[\\w]+");
+    
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
@@ -75,6 +79,8 @@ public class DefaultUserService implements UserService {
     public void addUser(User user) throws DuplicateException {
         logger.info("Adding User: {}", user);
         String customerId = user.getCustomerId();
+        
+        validateUserEmailAddress(user);
 
         boolean isUsernameUnique = userDao.isUsernameUnique(user.getUsername());
 
@@ -337,6 +343,7 @@ public class DefaultUserService implements UserService {
     @Override
     public void updateUser(User user, boolean hasSelfUpdatedPassword) {
         logger.info("Updating User: {}", user);
+        validateUserEmailAddress(user);
         this.userDao.updateUser(user, hasSelfUpdatedPassword);
         logger.info("Updated User: {}", user);
     }
@@ -454,5 +461,20 @@ public class DefaultUserService implements UserService {
 
     private String getRackspaceCustomerId() {
         return config.getString("rackspace.customerId");
+    }
+    
+    private void validateUserEmailAddress(User user) {
+        if (StringUtils.isBlank(user.getEmail())) {
+            return;
+        }
+        
+        Matcher m = EMAIL_PATTERN.matcher(user.getEmail());
+        
+        if (!m.find()) {
+            String errMsg = String.format("%s is not a valid email", user.getEmail());
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+        
     }
 }
