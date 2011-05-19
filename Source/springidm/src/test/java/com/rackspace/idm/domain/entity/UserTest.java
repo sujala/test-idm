@@ -265,6 +265,16 @@ public class UserTest {
     public void shouldRunValidations() {
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         Set<ConstraintViolation<User>> violations = validator.validate(new User());
+        Assert.assertEquals(2, violations.size());
+        System.out.println(violations);
+    }
+    
+    @Test
+    public void shouldRunValidationsForEmail() {
+        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+        User user = new User();
+        user.setEmail("BADEMAIL");
+        Set<ConstraintViolation<User>> violations = validator.validate(user);
         Assert.assertEquals(3, violations.size());
         System.out.println(violations);
     }
