@@ -740,7 +740,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.19) = {
         refreshTokenExp
 };
 
-schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {
+schema set object-class (1.3.6.1.4.1.20988.2.2.20) = {
     name = saContainer
     ldap-names = saContainer
     subclass-of top
