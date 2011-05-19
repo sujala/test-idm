@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<schema elementFormDefault="qualified" attributeFormDefault="unqualified"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
+    xmlns:idm="http://docs.rackspacecloud.com/idm/api/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+    xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" jaxb:version="2.1"
+    xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+    jaxb:extensionBindingPrefixes="xjc"
+    targetNamespace="http://docs.rackspacecloud.com/idm/api/v1.0">
+    
+    <element name="scopeAccessList" type="idm:ScopeAccessList"></element>
+    
+    <complexType name="ScopeAccess">
+    	<attribute name="name" type="xsd:string"></attribute>
+    	<attribute name="url" type="xsd:string"></attribute>
+    </complexType>
+    
+    <complexType name="ScopeAccessList">
+		<sequence>
+			<element name="scopeAccess" type="idm:ScopeAccess" minOccurs="0"
+				maxOccurs="unbounded">
+			</element>
+		</sequence>
+	</complexType>
+    
+</schema>
