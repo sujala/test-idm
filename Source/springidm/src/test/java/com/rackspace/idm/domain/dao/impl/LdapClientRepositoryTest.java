@@ -514,6 +514,14 @@ public class LdapClientRepositoryTest {
         repo.deleteClient(testClient);
     }
     
+    @Test
+    public void shouldGetClientWithDefinedScopeAccess() {
+        List<Client> clients = repo.getScopeAccessDefinedForThisApplication();
+        Assert.assertTrue(clients.size() > 0);
+        Assert.assertEquals("RACKSPACE", clients.get(0).getCustomerId());
+        Assert.assertEquals("user_mgmt", clients.get(0).getScope());
+    }
+    
 
     @After
     public void tearDown() {
