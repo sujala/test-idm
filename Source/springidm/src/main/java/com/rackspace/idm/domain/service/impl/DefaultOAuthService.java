@@ -115,15 +115,6 @@ public class DefaultOAuthService implements OAuthService {
 
         if (PASSWORD == grantType) {
 
-            if (!caResult.getClient().getCustomerId()
-                .equals(getRackspaceCustomerId())) {
-                String errMsg = String.format(
-                    "Client %s is forbidden from using PASSWORD grant_type",
-                    caResult.getClient().getClientId());
-                logger.warn(errMsg);
-                throw new ForbiddenException(errMsg);
-            }
-
             if (StringUtils.isBlank(trParam.getUsername())) {
                 String msg = "username cannot be blank";
                 logger.warn(msg);
@@ -208,15 +199,6 @@ public class DefaultOAuthService implements OAuthService {
         }
 
         if (AUTHORIZATION_CODE == grantType) {
-            
-            if (caResult.getClient().getCustomerId()
-                .equals(getRackspaceCustomerId())) {
-                String errMsg = String.format(
-                    "Client %s is forbidden from using AUTHORIZATION_CODE grant_type",
-                    caResult.getClient().getClientId());
-                logger.warn(errMsg);
-                throw new ForbiddenException(errMsg);
-            }
             
             DelegatedClientScopeAccess scopeAccess = this.scopeAccessService
                 .getScopeAccessByAuthCode(trParam.getAuthorizationCode());
