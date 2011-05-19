@@ -66,9 +66,6 @@ public class ScopeResource {
         
         List<Client> clientList = this.clientService.getScopeAccessesDefinedForThisApplication();
         
-        Clients clients = new Clients();
-        clients.setClients(clientList);
-        
-        return Response.ok(clientConverter.toClientListJaxb(clients)).build();
+        return Response.ok(clientConverter.toScopeAccessListFromClientList(clientList)).build();
     }
 }

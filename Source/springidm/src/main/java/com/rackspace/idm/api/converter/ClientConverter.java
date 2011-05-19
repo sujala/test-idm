@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.converter;
 
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
 
 import com.rackspace.idm.domain.entity.Client;
@@ -124,5 +126,20 @@ public class ClientConverter {
         returnedClient.setCustomerId(customerId);
 
         return returnedClient;
+    }
+    
+    public com.rackspace.idm.jaxb.ScopeAccessList toScopeAccessListFromClientList(List<Client> clientList) {
+        com.rackspace.idm.jaxb.ScopeAccessList scopeAccessList = of.createScopeAccessList();
+        
+        for(Client c : clientList) {
+            com.rackspace.idm.jaxb.ScopeAccess scopeAccess = of.createScopeAccess();
+            if ( c.getScope() != null) {
+                scopeAccess.setName(c.getScope());
+            }
+            if (c.getCallBackUrl() != null) {
+                scopeAccess.setUrl(c.getCallBackUrl());
+            }
+        }
+        return scopeAccessList;
     }
 }
