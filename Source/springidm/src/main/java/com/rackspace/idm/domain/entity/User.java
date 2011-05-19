@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.entity;
 
 import java.util.Locale;
 
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 import org.apache.commons.lang.StringUtils;
@@ -16,7 +15,6 @@ import com.rackspace.idm.validation.RegexPatterns;
 public class User extends BaseUser implements Auditable {
     private static final long serialVersionUID = 1347677880811855274L;
 
-    @NotNull
     @Pattern(regexp = RegexPatterns.EMAIL_ADDRESS, message = MessageTexts.EMAIL)
     private String email = null;
 
