@@ -408,6 +408,12 @@ public abstract class LdapRepository {
             filters.add(filter);
             return this;
         }
+        
+        public LdapSearchBuilder addPresenceAttribute(String attribute) {
+            Filter filter = Filter.createPresenceFilter(attribute);
+            filters.add(filter);
+            return this;
+        }
 
         public Filter build() {
             if (filters.isEmpty()) {

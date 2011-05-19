@@ -70,4 +70,6 @@ public interface ClientService {
     void updateDefinedPermission(DefinedPermission permission);
 
     Client getClientByScope(String scope);
+    
+    List<Client> getScopeAccessesDefinedForThisApplication();
 }

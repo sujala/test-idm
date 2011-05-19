@@ -286,6 +286,19 @@ public class DefaultClientService implements ClientService {
         this.clientDao.updateClient(client);
         logger.info("Soft Deleted cilent: {}", clientId);
     }
+    
+    @Override
+    public List<Client> getScopeAccessesDefinedForThisApplication() {
+        List<Client> clientList = this.clientDao.getScopeAccessDefinedForThisApplication();
+        
+        if ( clientList == null) {
+            String errorMsg = String.format("No defined scope accesses found for this application.");
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+        
+        return clientList;
+    }  
 
     private Client getClient(String clientId) {
         Client targetClient = this.clientDao.getClientByClientId(clientId);

@@ -53,4 +53,6 @@ public interface ClientDao {
     void updateClient(Client client);
     
     void updateClientGroup(ClientGroup group);
+    
+    List<Client> getScopeAccessDefinedForThisApplication();
 }

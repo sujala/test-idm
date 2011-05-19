@@ -8,6 +8,7 @@ import org.apache.commons.lang.StringUtils;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;
@@ -21,10 +22,12 @@ import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
 import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 
@@ -589,6 +592,40 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         audit.succeed();
         getLogger().debug("Updated clientGroup {}", group.getName());
+    }
+    
+    
+    @Override
+    public List<Client> getScopeAccessDefinedForThisApplication() {
+        getLogger().debug("Search the scope accesses defined in the system.");
+   
+        Filter filter = new LdapSearchBuilder().
+            addPresenceAttribute(ATTR_TOKEN_SCOPE).
+            addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION).build();
+        
+        LDAPConnection conn = null;
+        
+        List<Client> clients = new ArrayList<Client>();
+        
+        try {
+            conn = getAppConnPool().getConnection();
+            final SearchResult searchResult = conn.search(BASE_DN, SearchScope.SUB,filter);
+            
+            final List<SearchResultEntry> entries = searchResult.getSearchEntries();
+            
+            for (SearchResultEntry entry : entries) {
+                clients.add(getClient(entry));
+            }     
+        } catch (final LDAPException e) {
+            getLogger().error("Error reading scopeAccessList for clients.", e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        
+        getLogger().debug("Found the scope accesses defined in the system.");
+        
+        return clients;
     }
 
     private Clients findFirst100ByCustomerIdAndLock(String customerId,
