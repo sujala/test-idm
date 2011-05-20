@@ -89,7 +89,6 @@
 		</annotation>
 	</element>
 
-
 	<element name="token" type="idm:Token">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -108,6 +107,15 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+	
+	<element name="tokens" type="idm:Tokens"></element>
+	
+	<complexType name="Tokens">
+		<sequence>
+			<element name="token" type="idm:Token" minOccurs="0" maxOccurs="unbounded">
+			</element>
+		</sequence>
+	</complexType>
 
 	<!-- Complex Types -->
 	<complexType name="Token">
