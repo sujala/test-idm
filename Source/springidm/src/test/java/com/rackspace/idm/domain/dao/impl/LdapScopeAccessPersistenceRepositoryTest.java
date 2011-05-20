@@ -413,6 +413,26 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         Assert.assertNotNull(scopeAccess);
     }
+    
+    @Test
+    public void testGetScopeAccessByUsername() {
+        UserScopeAccess sa = new UserScopeAccess();
+        sa.setClientId(client.getClientId());
+        sa.setClientRCN(client.getName());
+        sa.setAccessTokenString(accessToken);
+        sa.setAccessTokenExp(new Date());
+        sa.setUsername("username");
+        sa.setUserRCN("user RCN");
+        sa.setRefreshTokenString(refreshToken);
+        sa.setRefreshTokenExp(new Date());
+
+        sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
+
+        final List<UserScopeAccess> scopeAccessList = repo.getScopeAccessByUsername("username");
+        
+        Assert.assertNotNull(scopeAccessList);
+        Assert.assertEquals(1, scopeAccessList.size());
+    }   
 
     @Test
     public void testGetPermissions() {
