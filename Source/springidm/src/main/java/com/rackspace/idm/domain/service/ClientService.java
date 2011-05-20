@@ -71,5 +71,5 @@ public interface ClientService {
 
     Client getClientByScope(String scope);
     
-    List<Client> getScopeAccessesDefinedForThisApplication();
+    List<Client> getAvailableScopes();
 }

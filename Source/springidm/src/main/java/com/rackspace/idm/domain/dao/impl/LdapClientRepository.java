@@ -596,7 +596,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     
     
     @Override
-    public List<Client> getScopeAccessDefinedForThisApplication() {
+    public List<Client> getAvailableScopes() {
         getLogger().debug("Search the scope accesses defined in the system.");
    
         Filter filter = new LdapSearchBuilder().

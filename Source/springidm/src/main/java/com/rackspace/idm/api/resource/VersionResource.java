@@ -21,7 +21,7 @@ import com.rackspace.idm.api.resource.nast.NastUserResource;
 import com.rackspace.idm.api.resource.passwordrule.PasswordRulesResource;
 import com.rackspace.idm.api.resource.token.TokenResource;
 import com.rackspace.idm.api.resource.user.UsersResource;
-import com.rackspace.idm.api.resource.scope.ScopeResource;
+import com.rackspace.idm.api.resource.scope.ScopesResource;
 import com.rackspace.idm.domain.service.ApiDocService;
 
 /**
@@ -43,7 +43,7 @@ public class VersionResource {
     private final PasswordRulesResource passwordRulesResource;
     private final TokenResource tokenResource;
     private final BaseUrlsResource baseUrlsResource;
-    private final ScopeResource scopeAccessResource;
+    private final ScopesResource scopeAccessResource;
     private final ApiDocService apiDocService;
     private final Configuration config;
 
@@ -51,7 +51,7 @@ public class VersionResource {
     public VersionResource(AuthorizeResource authorizeResource,AuthResource authResource, UsersResource usersResource,
         CustomersResource customersResource, MossoUserResource mossoUserResource,
         NastUserResource nastUserResource, PasswordRulesResource passwordRulesResource,
-        TokenResource tokenResource, BaseUrlsResource baseUrlsResource, ScopeResource scopeAccessResource, ApiDocService apiDocService,
+        TokenResource tokenResource, BaseUrlsResource baseUrlsResource, ScopesResource scopeAccessResource, ApiDocService apiDocService,
         Configuration config) {
         this.authorizeResource = authorizeResource;
         this.authResource = authResource;
@@ -159,7 +159,7 @@ public class VersionResource {
     
     @GET
     @Path("scopeAccess")
-    public ScopeResource getScopeAccesses() {
+    public ScopesResource getScopeAccesses() {
         return scopeAccessResource;   
     }
     

@@ -288,8 +288,8 @@ public class DefaultClientService implements ClientService {
     }
     
     @Override
-    public List<Client> getScopeAccessesDefinedForThisApplication() {
-        List<Client> clientList = this.clientDao.getScopeAccessDefinedForThisApplication();
+    public List<Client> getAvailableScopes() {
+        List<Client> clientList = this.clientDao.getAvailableScopes();
         
         if ( clientList == null) {
             String errorMsg = String.format("No defined scope accesses found for this application.");

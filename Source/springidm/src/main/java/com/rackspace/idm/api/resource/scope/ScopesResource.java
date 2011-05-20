@@ -29,7 +29,7 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class ScopeResource {
+public class ScopesResource {
     private final AuthorizationService authorizationService;
     private final ClientService clientService;
     private final ClientConverter clientConverter;
@@ -37,7 +37,7 @@ public class ScopeResource {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public ScopeResource(AuthConverter authConverter, 
+    public ScopesResource(AuthConverter authConverter, 
         AuthorizationService authorizationService, ClientService clientService, ClientConverter clientConverter) {
        
         this.authorizationService = authorizationService;
@@ -64,7 +64,7 @@ public class ScopeResource {
     public Response getAvailableScopes(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader) {
         
-        List<Client> clientList = this.clientService.getScopeAccessesDefinedForThisApplication();
+        List<Client> clientList = this.clientService.getAvailableScopes();
         
         return Response.ok(clientConverter.toScopeAccessListFromClientList(clientList)).build();
     }
