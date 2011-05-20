@@ -139,6 +139,7 @@ public class ClientConverter {
             if (c.getCallBackUrl() != null) {
                 scopeAccess.setUrl(c.getCallBackUrl());
             }
+            scopeAccessList.getScopes().add(scopeAccess);
         }
         return scopeAccessList;
     }
