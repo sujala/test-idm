@@ -57,6 +57,8 @@ public interface ScopeAccessService {
     ScopeAccess getDirectScopeAccessForParentByClientId(String parentUniqueID, String clientId);
 
     UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId);
+    
+    //UserScopeAccess getUserScopeAccessForUsername(String userUniqueId);
 
     UserScopeAccess getUserScopeAccessForClientIdByMossoIdAndApiCredentials(int mossoId, String apiKey, String clientId);
 

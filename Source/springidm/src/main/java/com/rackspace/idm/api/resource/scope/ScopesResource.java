@@ -48,7 +48,7 @@ public class ScopesResource {
     /**
      * Get all scopes defined in the system.
      * 
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}customer
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}scopes
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
      * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
