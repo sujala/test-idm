@@ -8,16 +8,16 @@
     jaxb:extensionBindingPrefixes="xjc"
     targetNamespace="http://docs.rackspacecloud.com/idm/api/v1.0">
     
-    <element name="scopeAccessList" type="idm:ScopeAccessList"></element>
+    <element name="scopesList" type="idm:ScopesList"></element>
     
-    <complexType name="ScopeAccess">
+    <complexType name="Scopes">
     	<attribute name="name" type="xsd:string"></attribute>
     	<attribute name="url" type="xsd:string"></attribute>
     </complexType>
     
-    <complexType name="ScopeAccessList">
+    <complexType name="ScopesList">
 		<sequence>
-			<element name="scopeAccess" type="idm:ScopeAccess" minOccurs="0"
+			<element name="scopeAccess" type="idm:Scopes" minOccurs="0"
 				maxOccurs="unbounded">
 			</element>
 		</sequence>
