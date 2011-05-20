@@ -465,6 +465,41 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         }
         return null;
     }
+    
+    @Override
+    public List<UserScopeAccess> getScopeAccessByUsername(String username) {
+        getLogger().debug("Find ScopeAccess by Username: {}",username);
+        LDAPConnection conn = null;
+        List<UserScopeAccess> scopeAccessList = null; 
+        try {
+            conn = getAppConnPool().getConnection();
+            final Filter filter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
+                .addEqualAttribute(ATTR_UID, username)
+                .build();
+            final SearchResult searchResult = conn.search(BASE_DN,
+                SearchScope.SUB, filter);
+
+            final List<SearchResultEntry> searchEntries = searchResult
+                .getSearchEntries();
+            getLogger().debug(
+                "Found {}  ScopeAccess(s) by Username: {}",
+                new Object[]{searchEntries.size(), username});
+            
+            scopeAccessList = new ArrayList<UserScopeAccess>();
+            
+            for (final SearchResultEntry searchResultEntry : searchEntries) {
+                UserScopeAccess scopeAccess = (UserScopeAccess)decodeScopeAccess(searchResultEntry);
+                scopeAccessList.add(scopeAccess);
+            }
+        } catch (final LDAPException e) {
+            getLogger().error("Error reading scope access by username", e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        return scopeAccessList;   
+    }
 
     @Override
     public List<ScopeAccess> getScopeAccessesByParent(String parentUniqueId) {

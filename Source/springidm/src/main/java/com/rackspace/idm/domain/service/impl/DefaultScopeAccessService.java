@@ -479,6 +479,20 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             clientId);
         return scopeAccess;
     }
+    
+    @Override
+    public List<UserScopeAccess> getUserScopeAccessForUsername(String username) {
+        logger.debug("Getting User ScopeAccess by username {}", username);
+        final List<UserScopeAccess> scopeAccessList = this.scopeAccessDao.getScopeAccessByUsername(username);
+        if ( scopeAccessList == null) {
+            String errMsg = String.format("Could not find scope accesses for the user {}",username);
+            logger.error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        logger.debug("Got User ScopeAccesses {} by username {}", scopeAccessList,
+            username);
+        return scopeAccessList;
+    }
 
     @Override
     public UserScopeAccess getUserScopeAccessForClientIdByMossoIdAndApiCredentials(

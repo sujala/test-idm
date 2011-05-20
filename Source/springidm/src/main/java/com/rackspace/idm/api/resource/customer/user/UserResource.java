@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.user.service.CustomerUserServicesResource;
+import com.rackspace.idm.api.resource.customer.user.token.UserTokenResource;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -52,6 +53,7 @@ public class UserResource {
     private final UserSecretResource userSecretResource;
     private final UserSoftDeleteResource userSoftDeleteResource;
     private final UserStatusResource userStatusResource;
+    private final UserTokenResource userTokenResource;
     private final UserService userService;
     private final UserConverter userConverter;
     private final InputValidator inputValidator;
@@ -62,7 +64,7 @@ public class UserResource {
     public UserResource(CustomerUserServicesResource customerUserServicesResource, ScopeAccessService scopeAccessService, ApiKeyResource apiKeyResource,
         UserLockResource userLockResource, UserPasswordResource userPasswordResource,
         UserGroupsResource userGroupsResource, UserSecretResource userSecretResource,
-        UserSoftDeleteResource userSoftDeleteResource, UserStatusResource userStatusResource, 
+        UserSoftDeleteResource userSoftDeleteResource, UserStatusResource userStatusResource,UserTokenResource userTokenResource,
         UserService userService, UserConverter userConverter, InputValidator inputValidator,
         AuthorizationService authorizationService) {
         this.customerUserServicesResource = customerUserServicesResource;
@@ -74,6 +76,7 @@ public class UserResource {
         this.userSecretResource = userSecretResource;
         this.userSoftDeleteResource = userSoftDeleteResource;
         this.userStatusResource = userStatusResource;
+        this.userTokenResource = userTokenResource;
         this.userService = userService;
         this.userConverter = userConverter;
         this.inputValidator = inputValidator;
@@ -262,6 +265,11 @@ public class UserResource {
     @Path("services")
     public CustomerUserServicesResource getCustomerUserServicesResource() {
         return customerUserServicesResource;
+    }
+    
+    @Path("tokens")
+    public UserTokenResource getUserTokenResource() {
+        return userTokenResource;
     }
     
     private void validateParam(Object inputParam) {

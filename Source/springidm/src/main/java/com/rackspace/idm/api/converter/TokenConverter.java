@@ -1,10 +1,12 @@
 package com.rackspace.idm.api.converter;
 
 import java.util.Date;
+import java.util.List;
 
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class TokenConverter {
@@ -23,5 +25,15 @@ public class TokenConverter {
         }
 
         return jaxbToken;
+    }
+    
+    public com.rackspace.idm.jaxb.Tokens toTokensJaxb(List<UserScopeAccess> scopeAccessList) {
+        com.rackspace.idm.jaxb.Tokens jaxbTokens = of.createTokens();
+        
+        for(UserScopeAccess u : scopeAccessList) {
+            com.rackspace.idm.jaxb.Token token = toTokenJaxb(u.getAccessTokenString(), u.getAccessTokenExp());
+            jaxbTokens.getTokens().add(token);
+        }
+        return jaxbTokens;
     }
 }
