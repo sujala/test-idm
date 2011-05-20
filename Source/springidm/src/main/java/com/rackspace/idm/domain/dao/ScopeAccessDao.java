@@ -11,7 +11,11 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 
 public interface ScopeAccessDao {
     
-    ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
+//    ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
+    
+    ScopeAccess addDelegateScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
+    
+    ScopeAccess addDirectScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
 
     DefinedPermission definePermission(String scopeAccessUniqueId,
         DefinedPermission permission);
@@ -44,7 +48,7 @@ public interface ScopeAccessDao {
 
     List<ScopeAccess> getScopeAccessesByParent(String parentUniqueId);
 
-    ScopeAccess getScopeAccessForParentByClientId(String parentUniqueId,
+    ScopeAccess getDirectScopeAccessForParentByClientId(String parentUniqueId,
             String clientId);
 
     GrantedPermission grantPermission(String scopeAccessUniqueId,
@@ -55,4 +59,14 @@ public interface ScopeAccessDao {
     boolean updatePermissionForScopeAccess(Permission permission);
 
     boolean updateScopeAccess(ScopeAccess scopeAccess);
+
+    ScopeAccess getDelegateScopeAccessForParentByClientId(
+        String parentUniqueId, String clientId);
+    
+    List<ScopeAccess> getDelegateScopeAccessesByParent(String parentUniqueId);
+    
+    ScopeAccess getScopeAccessByParentAndClientId(String parentUniqueId, String clientId);
+
+    List<ScopeAccess> getScopeAccessesByParentAndClientId(
+        String parentUniqueId, String clientId);
 }

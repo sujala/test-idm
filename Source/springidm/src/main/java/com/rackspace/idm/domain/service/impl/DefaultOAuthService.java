@@ -388,7 +388,7 @@ public class DefaultOAuthService implements OAuthService {
             scopeAccess.setClientId(client.getClientId());
             scopeAccess.setClientRCN(client.getCustomerId());
             scopeAccess = (ClientScopeAccess) this.scopeAccessService
-                .addScopeAccess(client.getUniqueId(), scopeAccess);
+                .addDirectScopeAccess(client.getUniqueId(), scopeAccess);
         }
 
         DateTime current = new DateTime();
@@ -435,7 +435,7 @@ public class DefaultOAuthService implements OAuthService {
                 "Creating ScopeAccess for Racker: {} and ClientId: {}",
                 racker.getRackerId(), client.getClientId());
             scopeAccess = (RackerScopeAccess) this.scopeAccessService
-                .addScopeAccess(racker.getUniqueId(), scopeAccess);
+                .addDirectScopeAccess(racker.getUniqueId(), scopeAccess);
         }
 
         DateTime current = new DateTime();

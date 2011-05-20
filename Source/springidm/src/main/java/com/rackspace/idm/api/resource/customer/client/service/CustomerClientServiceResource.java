@@ -175,7 +175,7 @@ public class CustomerClientServiceResource {
         }
 
         com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
-        Permission filter = new Permission();
+        GrantedPermission filter = new GrantedPermission();
         filter.setClientId(serviceId);
         filter.setPermissionId(permission.getPermissionId());
 
@@ -186,26 +186,7 @@ public class CustomerClientServiceResource {
             throw new NotFoundException(errMsg);
         }
         
-        Client grantingClient = this.clientService.getById(serviceId);
-        if (grantingClient == null) {
-            String errMsg = String.format("Client %s not found", serviceId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-        
-        DefinedPermission defined = (DefinedPermission) this.scopeAccessService.getPermissionForParent(grantingClient.getUniqueId(), filter);
-        if (defined == null) {
-            String errMsg = String.format("Permission %s not found", permission.getPermissionId());
-            logger.info(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-        
-        GrantedPermission granted = new GrantedPermission();
-        granted.setClientId(defined.getClientId());
-        granted.setCustomerId(defined.getCustomerId());
-        granted.setPermissionId(defined.getPermissionId());
-        
-        this.scopeAccessService.grantPermissionToClient(client.getUniqueId(), granted);
+        this.scopeAccessService.grantPermissionToClient(client.getUniqueId(), filter);
         
         return Response.ok().build();
     }
@@ -287,7 +268,6 @@ public class CustomerClientServiceResource {
         if (perm != null) {
             this.scopeAccessService.removePermission(perm);
         }
-
 
         return Response.noContent().build();
     }

@@ -170,7 +170,7 @@ public class AuthorizeResource {
 
         for (Client c : clients) {
             ScopeAccess sa = this.scopeAccessService
-                .getScopeAccessForParentByClientId(user.getUniqueId(),
+                .getDelegateScopeAccessForParentByClientId(user.getUniqueId(),
                     c.getClientId());
             if (sa == null) {
                 URI uri = UriBuilder.fromPath(redirectUri)
@@ -216,7 +216,7 @@ public class AuthorizeResource {
         Client client = this.clientService.getById(clientId);
 
         DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) this.scopeAccessService
-            .getScopeAccessForParentByClientId(user.getUniqueId(),
+            .getDelegateScopeAccessForParentByClientId(user.getUniqueId(),
                 client.getClientId());
 
         if (dcsa == null) {
@@ -226,7 +226,7 @@ public class AuthorizeResource {
             dcsa.setUsername(user.getUsername());
             dcsa.setUserRCN(user.getCustomerId());
             dcsa = (DelegatedClientScopeAccess) this.scopeAccessService
-                .addScopeAccess(user.getUniqueId(), dcsa);
+                .addDelegateScopeAccess(user.getUniqueId(), dcsa);
         }
 
         // TODO: Implement User Choice for how long token lasts
@@ -255,14 +255,14 @@ public class AuthorizeResource {
 
         for (Client c : clients) {
             ScopeAccess sa = this.scopeAccessService
-                .getScopeAccessForParentByClientId(user.getUniqueId(),
+                .getDirectScopeAccessForParentByClientId(user.getUniqueId(),
                     c.getClientId());
 
             if (sa != null) {
                 ScopeAccess newSa = new ScopeAccess();
                 newSa.setClientId(sa.getClientId());
                 newSa.setClientRCN(sa.getClientRCN());
-                newSa = this.scopeAccessService.addScopeAccess(
+                newSa = this.scopeAccessService.addDirectScopeAccess(
                     dcsa.getUniqueId(), newSa);
 
                 Permission filter = new Permission();

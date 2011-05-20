@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.customer.user.service.permission;
 
+import java.util.List;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -108,60 +110,19 @@ public class UserPermissionsResource {
             throw new NotFoundException(errMsg);
         }
 
-        boolean found = isGranted(serviceId, permissionId, user, client);
+        Permission perm = new Permission();
+        perm.setPermissionId(permissionId);
+
+        boolean found = this.scopeAccessService
+            .doesUserHavePermissionForClient(user, perm, client);
         if (found) {
             return Response.ok().build();
         } else {
-            String errMsg = String.format("User %s does not have permission %s", username, permissionId);
+            String errMsg = String.format(
+                "User %s does not have permission %s", username, permissionId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-    }
-
-    /**
-     * TODO Move this logic to a service method.
-     * 
-     * @param serviceId
-     * @param permissionId
-     * @param user
-     * @param client
-     * @return
-     */
-    private boolean isGranted(String serviceId, String permissionId, User user,
-        Client client) {
-        Permission poSearchParam = new Permission();
-        poSearchParam.setClientId(serviceId);
-        poSearchParam.setPermissionId(permissionId);
-
-        DefinedPermission definedPermission = (DefinedPermission) this.scopeAccessService
-            .getPermissionForParent(client.getUniqueId(), poSearchParam);
-
-        if (definedPermission == null || !definedPermission.getEnabled()) {
-            // No such permission defined. Not granted.
-            return false;
-        }
-
-        if (definedPermission.getGrantedByDefault()) {
-            // Granted by default, but has the user been provisioned for this
-            // service?
-            ScopeAccess provisionedSa = scopeAccessService
-                .getScopeAccessForParentByClientId(user.getUniqueId(),
-                    serviceId);
-            if (provisionedSa != null) {
-                // Provisioned, so granted.
-                return true;
-            }
-        } else {
-            Permission grantedPermission = this.scopeAccessService
-                .getPermissionForParent(user.getUniqueId(), poSearchParam);
-            if (grantedPermission != null) {
-                // The permission has not been granted.
-                return true;
-            }
-        }
-
-        // Not granted.
-        return false;
     }
 
     /**
@@ -200,38 +161,25 @@ public class UserPermissionsResource {
 
         boolean authorized = authorizeGrantRevokePermission(token, request,
             uriInfo, serviceId);
+        
         authorizationService.checkAuthAndHandleFailure(authorized, token);
-
-        com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
-        Permission filter = new Permission();
-        filter.setClientId(serviceId);
-        filter.setPermissionId(permission.getPermissionId());
+        
+        User user = this.userService.checkAndGetUser(customerId, username);        
 
         Client client = this.clientService.getById(serviceId);
-
         if (client == null) {
             String errMsg = String.format("Client %s not found", serviceId);
             logger.info(errMsg);
             throw new NotFoundException(errMsg);
         }
+        
+        com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
+        GrantedPermission filter = new GrantedPermission();
+        filter.setClientId(serviceId);
+        filter.setCustomerId(client.getCustomerId());
+        filter.setPermissionId(permission.getPermissionId());
 
-        DefinedPermission defined = (DefinedPermission) this.scopeAccessService
-            .getPermissionForParent(client.getUniqueId(), filter);
-        if (defined == null) {
-            String errMsg = String.format("Permission %s not found",
-                permission.getPermissionId());
-            logger.info(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-
-        GrantedPermission granted = new GrantedPermission();
-        granted.setClientId(defined.getClientId());
-        granted.setCustomerId(defined.getCustomerId());
-        granted.setPermissionId(defined.getPermissionId());
-
-        User user = this.userService.checkAndGetUser(customerId, username);
-
-        this.scopeAccessService.grantPermissionToUser(user, granted);
+        this.scopeAccessService.grantPermissionToUser(user, filter);
 
         return Response.ok().build();
     }
@@ -283,14 +231,17 @@ public class UserPermissionsResource {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
+
         Permission po = new Permission();
         po.setClientId(serviceId);
         po.setPermissionId(permissionId);
 
-        Permission perm = this.scopeAccessService.getPermissionForParent(
-            user.getUniqueId(), po);
-        if (perm != null) {
-            this.scopeAccessService.removePermission(perm);
+        List<Permission> perms = this.scopeAccessService
+            .getPermissionsForParent(user.getUniqueId(), po);
+        for (Permission perm : perms) {
+            if (perm != null) {
+                this.scopeAccessService.removePermission(perm);
+            }
         }
 
         return Response.noContent().build();

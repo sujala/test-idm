@@ -141,7 +141,7 @@ public class CustomerUserServicesResource {
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getCustomerId());
 
-        this.scopeAccessService.addScopeAccess(user.getUniqueId(), sa);
+        this.scopeAccessService.addDirectScopeAccess(user.getUniqueId(), sa);
 
         logger.info("Added service {} to user {}", inputClient.getClientId(),
             username);

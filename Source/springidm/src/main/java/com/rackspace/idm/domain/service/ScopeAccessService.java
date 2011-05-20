@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service;
 import java.util.List;
 
 import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.DelegatedPermission;
@@ -19,7 +20,9 @@ public interface ScopeAccessService {
     List<Permission> getPermissionsForParent(String scopeAccessUniqueId,
         Permission permission);
         
-    ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
+    ScopeAccess addDirectScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
+    
+    ScopeAccess addDelegateScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
 
     boolean authenticateAccessToken(String accessTokenStr);
 
@@ -51,7 +54,7 @@ public interface ScopeAccessService {
 
     ScopeAccess getScopeAccessByRefreshToken(String refreshToken);
 
-    ScopeAccess getScopeAccessForParentByClientId(String parentUniqueID, String clientId);
+    ScopeAccess getDirectScopeAccessForParentByClientId(String parentUniqueID, String clientId);
 
     UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId);
 
@@ -76,4 +79,15 @@ public interface ScopeAccessService {
     DelegatedClientScopeAccess getScopeAccessByAuthCode(String authorizationCode);
 
     DelegatedPermission delegatePermission(String scopeAccessUniqueId, DelegatedPermission permission);
+
+    ScopeAccess getDelegateScopeAccessForParentByClientId(
+        String parentUniqueID, String clientId);
+    
+    List<ScopeAccess> getDelegateScopeAccessesForParent(String parentUniqueId);
+
+    List<ScopeAccess> getScopeAccessesForParentByClientId(String parentUniqueId,
+        String clientId);
+
+    boolean doesUserHavePermissionForClient(User user, Permission permission,
+        Client client);
 }

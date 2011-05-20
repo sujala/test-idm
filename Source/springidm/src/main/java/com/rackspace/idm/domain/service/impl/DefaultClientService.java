@@ -142,14 +142,14 @@ public class DefaultClientService implements ClientService {
         }
 
         ScopeAccess sa = this.scopeAccessDao
-            .getScopeAccessForParentByClientId(client.getUniqueId(),
+            .getDirectScopeAccessForParentByClientId(client.getUniqueId(),
                 client.getClientId());
 
         if (sa == null) {
             sa = new ClientScopeAccess();
             sa.setClientId(client.getClientId());
             sa.setClientRCN(client.getCustomerId());
-            sa = this.scopeAccessDao.addScopeAccess(client.getUniqueId(), sa);
+            sa = this.scopeAccessDao.addDirectScopeAccess(client.getUniqueId(), sa);
         }
 
         DefinedPermission exists = (DefinedPermission) this.scopeAccessDao

@@ -95,9 +95,9 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getCustomerId());
 
-        sa = repo.addScopeAccess(client.getUniqueId(), sa);
-        sa = repo.addScopeAccess(client.getUniqueId(), sa);
-        sa = repo.getScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        sa = repo.addDirectScopeAccess(client.getUniqueId(), sa);
+        sa = repo.addDirectScopeAccess(client.getUniqueId(), sa);
+        sa = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
 
         Assert.assertEquals(sa.getClientId(), client.getClientId());
     }
@@ -108,9 +108,9 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
 
-        repo.addScopeAccess(client.getUniqueId(), sa);
+        repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        sa = repo.getScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        sa = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
 
         Assert.assertEquals(sa.getClientId(), client.getClientId());
     }
@@ -127,9 +127,9 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         userScopeAccess.setRefreshTokenString(refreshToken);
         userScopeAccess.setRefreshTokenExp(new Date());
 
-        repo.addScopeAccess(client.getUniqueId(), userScopeAccess);
+        repo.addDirectScopeAccess(client.getUniqueId(), userScopeAccess);
 
-        final ScopeAccess scopeAccessObject = repo.getScopeAccessForParentByClientId(client.getUniqueId(),
+        final ScopeAccess scopeAccessObject = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(),
                 client.getClientId());
 
         Assert.assertTrue(scopeAccessObject instanceof UserScopeAccess);
@@ -142,9 +142,9 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         clientScopeAccess.setClientId(client.getClientId());
         clientScopeAccess.setClientRCN(client.getName());
         clientScopeAccess.setAccessTokenString(accessToken);
-        repo.addScopeAccess(client.getUniqueId(), clientScopeAccess);
+        repo.addDirectScopeAccess(client.getUniqueId(), clientScopeAccess);
 
-        final ScopeAccess scopeAccessObject = repo.getScopeAccessForParentByClientId(client.getUniqueId(),
+        final ScopeAccess scopeAccessObject = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(),
                 client.getClientId());
 
         Assert.assertTrue(scopeAccessObject instanceof ClientScopeAccess);
@@ -160,9 +160,9 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setAccessTokenExp(new Date());
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
-        repo.addScopeAccess(client.getUniqueId(), sa);
+        repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        final ScopeAccess scopeAccessObject = repo.getScopeAccessForParentByClientId(client.getUniqueId(),
+        final ScopeAccess scopeAccessObject = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(),
                 client.getClientId());
 
         Assert.assertTrue(scopeAccessObject instanceof PasswordResetScopeAccess);
@@ -181,7 +181,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
-        sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
+        sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         p.setDescription("description");
@@ -211,7 +211,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
-        sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
+        sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         p.setDescription("description");
@@ -242,7 +242,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
-        sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
+        sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         p.setResourceGroups(new String[] { "test" });
@@ -266,7 +266,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
-        sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
+        sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         p.setResourceGroups(new String[] { "test" });
@@ -285,15 +285,15 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
 
-        repo.addScopeAccess(client.getUniqueId(), sa);
+        repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        sa = repo.getScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        sa = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
 
         Assert.assertEquals(sa.getClientId(), client.getClientId());
 
         repo.deleteScopeAccess(sa);
 
-        sa = repo.getScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        sa = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
 
         Assert.assertNull(sa);
     }
@@ -306,7 +306,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setAccessTokenString(accessToken);
         sa.setAccessTokenExp(new Date());
 
-        sa = (ClientScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
+        sa = (ClientScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         p = repo.grantPermission(sa.getUniqueId(), p);
@@ -328,7 +328,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
-        sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
+        sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         final List<ScopeAccess> scopeAccessesByParent = repo.getScopeAccessesByParent(client.getUniqueId());
 
@@ -351,7 +351,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
 
-        sa = (PasswordResetScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
+        sa = (PasswordResetScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         Assert.assertNotNull(sa.getUniqueId());
 
@@ -373,7 +373,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
-        sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
+        sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         final ScopeAccess scopeAccessByRefreshToken = repo.getScopeAccessByRefreshToken(refreshToken);
 
@@ -388,9 +388,9 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
 
-        repo.addScopeAccess(client.getUniqueId(), sa);
+        repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        sa = repo.getScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        sa = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
 
         Assert.assertEquals(sa.getClientId(), client.getClientId());
     }
@@ -407,7 +407,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
-        sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
+        sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         final ScopeAccess scopeAccess = repo.getScopeAccessByUsernameAndClientId("username", client.getClientId());
 
@@ -426,7 +426,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
-        sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
+        sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         p.setDescription("description");
@@ -458,7 +458,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
-        sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
+        sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         p = repo.grantPermission(sa.getUniqueId(), p);
@@ -490,7 +490,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(date);
 
-        sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
+        sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         final Date newDate = new Date();
         sa.setAccessTokenExp(newDate);
@@ -514,7 +514,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
-        sa = (UserScopeAccess) repo.addScopeAccess(client.getUniqueId(), sa);
+        sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
         p = repo.grantPermission(sa.getUniqueId(), p);

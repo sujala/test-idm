@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.customer.user.service;
 
+import java.util.List;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.HeaderParam;
@@ -46,16 +48,15 @@ public class CustomerUserServiceResource {
     @Autowired
     public CustomerUserServiceResource(
         UserPermissionsResource userPermissionsResource,
-        ScopeAccessService scopeAccessService,
-        ClientService clientService, UserService userService,
-        AuthorizationService authorizationService) {
+        ScopeAccessService scopeAccessService, ClientService clientService,
+        UserService userService, AuthorizationService authorizationService) {
         this.clientService = clientService;
         this.scopeAccessService = scopeAccessService;
         this.authorizationService = authorizationService;
         this.userService = userService;
         this.userPermissionsResource = userPermissionsResource;
     }
-    
+
     /**
      * Remove a service from a user
      *
@@ -82,7 +83,7 @@ public class CustomerUserServiceResource {
         logger.info("Removing service {} from user {}", serviceId, username);
 
         ScopeAccess token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Rackers can add any service to a user
         // Rackspace Clients can add their own service to a user
@@ -101,30 +102,30 @@ public class CustomerUserServiceResource {
         Client client = this.clientService.getById(serviceId);
 
         if (client == null) {
-            String errMsg = String.format("Client %s not found",
-                serviceId);
+            String errMsg = String.format("Client %s not found", serviceId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
+        
         User user = this.userService.checkAndGetUser(customerId, username);
         if (user == null) {
-            String errMsg = String.format("User %s not found",
-                username);
+            String errMsg = String.format("User %s not found", username);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
-        ScopeAccess service = this.scopeAccessService.getScopeAccessForParentByClientId(user.getUniqueId(), serviceId);
-        
-        if (service != null) {
-            this.scopeAccessService.deleteScopeAccess(service);
+        List<ScopeAccess> saList = this.scopeAccessService
+            .getScopeAccessesForParentByClientId(user.getUniqueId(), serviceId);
+
+        for (ScopeAccess sa : saList) {
+            this.scopeAccessService.deleteScopeAccess(sa);
         }
 
         logger.info("Removed service {} from user {}", serviceId, username);
 
         return Response.noContent().build();
     }
-    
+
     @Path("permissions")
     public UserPermissionsResource getUserPermissionResource() {
         return userPermissionsResource;

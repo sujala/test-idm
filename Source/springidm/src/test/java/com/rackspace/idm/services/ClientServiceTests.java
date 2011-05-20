@@ -222,7 +222,7 @@ public class ClientServiceTests {
             getFakeClient());
 
         EasyMock.expect(
-            mockScopeAccessDao.getScopeAccessForParentByClientId(uniqueId,
+            mockScopeAccessDao.getDirectScopeAccessForParentByClientId(uniqueId,
                 clientId)).andReturn(getFakeScopeAccess());
         EasyMock.expect(
             mockScopeAccessDao.getPermissionsByParentAndPermission(

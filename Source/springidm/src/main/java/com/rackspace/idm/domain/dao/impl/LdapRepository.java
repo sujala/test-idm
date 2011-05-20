@@ -48,6 +48,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS = "delegatedClientScopeAccess";
     public static final String OBJECTCLASS_PASSWORDRESETSCOPEACCESS = "passwordResetScopeAccess";
     public static final String OBJECTCLASS_RACKERSCOPEACCESS = "rackerScopeAccess";
+    public static final String OBJECTCLASS_SCOPEACCESS_CONTAINER = "saContainer";
 
     protected static final String OBJECTCLASS_TOP = "top";
 
@@ -158,6 +159,10 @@ public abstract class LdapRepository {
     protected static final String OU_APPLICATIONS_NAME = "applications";
     protected static final String OU_PERMISSIONS_NAME = "permissions";
     
+    // Definitions for ScopeAccess Contatiner Names
+    protected static final String CONTAINER_DIRECT = "DIRECT";
+    protected static final String CONTAINER_DELEGATE = "DELEGATE";
+    
     //Search Attributes
     protected static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {
         ATTR_OBJECT_CLASS, ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_CLIENT_ID, ATTR_GROUP_TYPE,
@@ -252,6 +257,19 @@ public abstract class LdapRepository {
         SearchResultEntry entry = null;
         try {
             entry = getAppConnPool().searchForEntry(baseDN, scope,
+                searchFilter, attributes);
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+
+        return entry;
+    }
+    
+    protected SearchResultEntry getSingleEntry(LDAPConnection conn, String baseDN, SearchScope scope, Filter searchFilter, String... attributes) {
+        SearchResultEntry entry = null;
+        try {
+            entry = conn.searchForEntry(baseDN, scope,
                 searchFilter, attributes);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());

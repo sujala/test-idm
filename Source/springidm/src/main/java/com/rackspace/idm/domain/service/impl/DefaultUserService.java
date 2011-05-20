@@ -132,7 +132,7 @@ public class DefaultUserService implements UserService {
         usa.setClientId(getIdmClientId());
         usa.setClientRCN(getRackspaceCustomerId());
         
-        this.scopeAccessDao.addScopeAccess(user.getUniqueId(), usa);
+        this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), usa);
         logger.info("Added User Scope Access for Idm to user {}", user);
     }
 
