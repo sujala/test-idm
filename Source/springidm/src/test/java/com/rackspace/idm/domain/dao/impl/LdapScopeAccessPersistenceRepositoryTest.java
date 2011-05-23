@@ -24,6 +24,7 @@ import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.DefinedPermission;
+import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.GrantedPermission;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.Permission;
@@ -416,22 +417,41 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     
     @Test
     public void testGetScopeAccessByUsername() {
-        UserScopeAccess sa = new UserScopeAccess();
-        sa.setClientId(client.getClientId());
-        sa.setClientRCN(client.getName());
-        sa.setAccessTokenString(accessToken);
-        sa.setAccessTokenExp(new Date());
-        sa.setUsername("username");
-        sa.setUserRCN("user RCN");
-        sa.setRefreshTokenString(refreshToken);
-        sa.setRefreshTokenExp(new Date());
+        DelegatedClientScopeAccess sa1 = new DelegatedClientScopeAccess();
+        sa1.setClientId(client.getClientId());
+        sa1.setClientRCN(client.getName());
+        sa1.setAccessTokenString(accessToken);
+        sa1.setAccessTokenExp(new Date());
+        sa1.setUsername("username");
+        sa1.setUserRCN("user RCN");
+        sa1.setRefreshTokenString(refreshToken);
+        sa1.setRefreshTokenExp(new Date());
 
-        sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
-
-        final List<UserScopeAccess> scopeAccessList = repo.getScopeAccessByUsername("username");
+        sa1 = (DelegatedClientScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa1);
+        
+        String suffix = "4";
+        Customer customer2 = addNewTestCustomer(customerId + suffix, customerName + suffix, inum + suffix, iname + suffix, 
+            status, seeAlso, owner, country);
+        Client client2 = addNewTestClient(customer2);
+        
+        DelegatedClientScopeAccess sa2 = new DelegatedClientScopeAccess();
+        sa2.setClientId(client2.getClientId());
+        sa2.setClientRCN(client2.getName());
+        sa2.setAccessTokenString(accessToken);
+        sa2.setAccessTokenExp(new Date());
+        sa2.setUsername("username");
+        sa2.setUserRCN("user RCN");
+        sa2.setRefreshTokenString(refreshToken);
+        sa2.setRefreshTokenExp(new Date());
+        
+        sa2 = (DelegatedClientScopeAccess) repo.addDirectScopeAccess(client2.getUniqueId(), sa2);
+       
+        final List<DelegatedClientScopeAccess> scopeAccessList = repo.getScopeAccessByUsername("username");
         
         Assert.assertNotNull(scopeAccessList);
-        Assert.assertEquals(1, scopeAccessList.size());
+        Assert.assertEquals(4, scopeAccessList.size());
+        
+        customerRepo.deleteCustomer(customer2.getCustomerId());
     }   
 
     @Test
