@@ -467,14 +467,14 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
     
     @Override
-    public List<UserScopeAccess> getScopeAccessByUsername(String username) {
+    public List<DelegatedClientScopeAccess> getScopeAccessByUsername(String username) {
         getLogger().debug("Find ScopeAccess by Username: {}",username);
         LDAPConnection conn = null;
-        List<UserScopeAccess> scopeAccessList = null; 
+        List<DelegatedClientScopeAccess> scopeAccessList = null; 
         try {
             conn = getAppConnPool().getConnection();
             final Filter filter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS)
                 .addEqualAttribute(ATTR_UID, username)
                 .build();
             final SearchResult searchResult = conn.search(BASE_DN,
@@ -486,10 +486,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
                 "Found {}  ScopeAccess(s) by Username: {}",
                 new Object[]{searchEntries.size(), username});
             
-            scopeAccessList = new ArrayList<UserScopeAccess>();
+            scopeAccessList = new ArrayList<DelegatedClientScopeAccess>();
             
             for (final SearchResultEntry searchResultEntry : searchEntries) {
-                UserScopeAccess scopeAccess = (UserScopeAccess)decodeScopeAccess(searchResultEntry);
+                DelegatedClientScopeAccess scopeAccess = (DelegatedClientScopeAccess)decodeScopeAccess(searchResultEntry);
                 scopeAccessList.add(scopeAccess);
             }
         } catch (final LDAPException e) {

@@ -6,6 +6,7 @@ import java.util.List;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 
+import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.jaxb.ObjectFactory;
 
@@ -27,11 +28,11 @@ public class TokenConverter {
         return jaxbToken;
     }
     
-    public com.rackspace.idm.jaxb.Tokens toTokensJaxb(List<UserScopeAccess> scopeAccessList) {
+    public com.rackspace.idm.jaxb.Tokens toTokensJaxb(List<DelegatedClientScopeAccess> scopeAccessList) {
         com.rackspace.idm.jaxb.Tokens jaxbTokens = of.createTokens();
         
-        for(UserScopeAccess u : scopeAccessList) {
-            com.rackspace.idm.jaxb.Token token = toTokenJaxb(u.getAccessTokenString(), u.getAccessTokenExp());
+        for(DelegatedClientScopeAccess u : scopeAccessList) {
+            com.rackspace.idm.jaxb.Token token = toTokenJaxb(u.getRefreshTokenString(), u.getRefreshTokenExp());
             jaxbTokens.getTokens().add(token);
         }
         return jaxbTokens;

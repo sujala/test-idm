@@ -8,7 +8,6 @@ import com.rackspace.idm.domain.entity.DelegatedPermission;
 import com.rackspace.idm.domain.entity.GrantedPermission;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
 
 public interface ScopeAccessDao {
     
@@ -47,7 +46,7 @@ public interface ScopeAccessDao {
     ScopeAccess getScopeAccessByUsernameAndClientId(String username,
             String clientId);
     
-    List<UserScopeAccess> getScopeAccessByUsername(String username);
+    List<DelegatedClientScopeAccess> getScopeAccessByUsername(String username);
 
     List<ScopeAccess> getScopeAccessesByParent(String parentUniqueId);
 
