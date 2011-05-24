@@ -27,7 +27,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         super(connPools, config);
     }
 
-    @Override
+    
     public void addCustomer(Customer customer) {
         getLogger().info("Adding customer {}", customer);
         if (customer == null) {
@@ -82,7 +82,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         getLogger().info("Added customer {}", customer);
     }
 
-    @Override
+    
     public void deleteCustomer(String customerId) {
         getLogger().info("Deleting customer {}", customerId);
         if (StringUtils.isBlank(customerId)) {
@@ -104,7 +104,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         getLogger().info("Deleted customer {}", customerId);
     }
 
-    @Override
+    
     public List<Customer> getAllCustomers() {
         getLogger().debug("Getting all customers");
 
@@ -127,7 +127,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         return customers;
     }
 
-    @Override
+    
     public Customer getCustomerByCustomerId(String customerId) {
         getLogger().debug("Doing search for customerId {}", customerId);
 
@@ -157,7 +157,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         return customer;
     }
 
-    @Override
+    
     public Customer getCustomerByInum(String customerInum) {
         getLogger().debug("Doing search for customerInum {}", customerInum);
 
@@ -186,7 +186,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         return customer;
     }
 
-    @Override
+    
     public String getUnusedCustomerInum() {
         getLogger().debug("Getting Unused Customer Inum");
         Customer customer = null;
@@ -199,7 +199,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         return inum;
     }
 
-    @Override
+    
     public void updateCustomer(Customer customer) {
         getLogger().info("Updating customer {}", customer);
 

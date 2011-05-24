@@ -23,7 +23,7 @@ public class LdapAuthRepository implements AuthDao {
         this.config = config;
     }
 
-    @Override
+    
     public boolean authenticate(String userName, String password) {
         logger.debug("Authenticating racker {}", userName);
         BindResult result = null;

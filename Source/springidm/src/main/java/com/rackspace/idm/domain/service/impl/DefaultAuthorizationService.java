@@ -39,7 +39,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         this.config = config;
     }
 
-    @Override
+    
     public boolean authorizeRacker(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as racker", scopeAccess);
         boolean authorized = scopeAccess instanceof RackerScopeAccess;
@@ -47,7 +47,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    @Override
+    
     public boolean authorizeRackspaceClient(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as rackspace client", scopeAccess);
         if (!(scopeAccess instanceof ClientScopeAccess)) {
@@ -60,7 +60,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    @Override
+    
     public boolean authorizeClient(ScopeAccess scopeAccess, String verb,
         UriInfo uriInfo) {
         logger.debug("Authorizing {} as client", scopeAccess);
@@ -86,7 +86,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    @Override
+    
     public boolean authorizeUser(ScopeAccess scopeAccess, String customerId,
         String username) {
         logger.debug("Authorizing {} as user", scopeAccess);
@@ -107,7 +107,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    @Override
+    
     public boolean authorizeCustomerUser(ScopeAccess scopeAccess,
         String customerId) {
         logger.debug("Authorizing {} as customer user", scopeAccess);
@@ -127,7 +127,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    @Override
+    
     public boolean authorizeAdmin(ScopeAccess scopeAccess, String customerId) {
         logger.debug("Authorizing {} as admin user", scopeAccess);
         if (!(scopeAccess instanceof UserScopeAccess || scopeAccess instanceof DelegatedClientScopeAccess)) {
@@ -163,7 +163,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    @Override
+    
     public boolean authorizeCustomerIdm(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as Idm", scopeAccess);
         if (!(scopeAccess instanceof ClientScopeAccess)) {
@@ -178,7 +178,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    @Override
+    
     public boolean authorizeAsRequestorOrOwner(ScopeAccess targetScopeAccess,
         ScopeAccess requestingScopeAccess) {
         logger.debug("Authorizing as Requestor or Owner");
@@ -205,7 +205,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return (isRequestor || isOwner);
     }
 
-    @Override
+    
     public void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token) {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",

@@ -80,12 +80,12 @@ public class DefaultOAuthService implements OAuthService {
         this.scopeAccessService = scopeAccessService;
     }
 
-    @Override
+    
     public ScopeAccess getAccessTokenByAuthHeader(final String authHeader) {
         return this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
     }
 
-    @Override
+    
     public OAuthGrantType getGrantType(final String grantTypeStrVal) {
         final OAuthGrantType grantType = OAuthGrantType.valueOf(grantTypeStrVal
             .replace("-", "_").toUpperCase());
@@ -93,7 +93,7 @@ public class DefaultOAuthService implements OAuthService {
         return grantType;
     }
 
-    @Override
+    
     public ScopeAccess getTokens(final OAuthGrantType grantType,
         final AuthCredentials trParam, final DateTime currentTime)
         throws NotAuthenticatedException {
@@ -231,7 +231,7 @@ public class DefaultOAuthService implements OAuthService {
         throw new NotAuthenticatedException(message);
     }
 
-    @Override
+    
     public void revokeAccessToken(String tokenStringRequestingDelete,
         String tokenToDelete) {
         logger.debug("Deleting Token {}", tokenToDelete);
@@ -279,14 +279,14 @@ public class DefaultOAuthService implements OAuthService {
         logger.debug("Deleted Token {}", tokenToDelete);
     }
 
-    @Override
+    
     public void revokeAllTokensForClient(final String clientId) {
         logger.debug("Deleting all access tokens for client {}.", clientId);
         this.scopeAccessService.expireAllTokensForClient(clientId);
         logger.debug("Deleted all access tokens for client {}.", clientId);
     }
 
-    @Override
+    
     public void revokeAllTokensForCustomer(final String customerId) {
         logger
             .debug("Revoking all access tokens for customer: {}.", customerId);
@@ -304,14 +304,14 @@ public class DefaultOAuthService implements OAuthService {
         logger.debug("Deleted all access tokens for customer {}.", customerId);
     }
 
-    @Override
+    
     public void revokeAllTokensForUser(final String username) {
         logger.debug("Deleting all access tokens for user {}.", username);
         this.scopeAccessService.expireAllTokensForUser(username);
         logger.debug("Deleted all access tokens for user {}.", username);
     }
 
-    @Override
+    
     public ApiError validateGrantType(final AuthCredentials trParam,
         final OAuthGrantType grantType) {
 

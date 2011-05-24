@@ -8,7 +8,6 @@ import org.apache.commons.lang.StringUtils;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ClientDao;
-import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;
@@ -38,7 +37,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         super(connPools, config);
     }
 
-    @Override
+    
     public void addClient(Client client, String customerUniqueId) {
         getLogger().info("Adding client {}", client);
 
@@ -65,7 +64,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().debug("Added client {}", client);
     }
 
-    @Override
+    
     public void addClientGroup(ClientGroup clientGroup, String clientUniqueId) {
         getLogger().info("Adding ClientGroup {}", clientGroup);
 
@@ -101,7 +100,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().debug("Added clientGroup {}", clientGroup);
     }
 
-    @Override
+    
     public void addUserToClientGroup(String userUniqueId, ClientGroup group) {
 
         getLogger().info("Adding user {} to {}", userUniqueId, group);
@@ -145,7 +144,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().info("Added user {} to group {}", userUniqueId, group);
     }
 
-    @Override
+    
     public ClientAuthenticationResult authenticate(String clientId,
         String clientSecret) {
         BindResult result;
@@ -177,7 +176,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return new ClientAuthenticationResult(client, isAuthenticated);
     }
 
-    @Override
+    
     public void deleteClient(Client client) {
         getLogger().info("Deleting client {}", client.getClientId());
 
@@ -189,7 +188,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().info("Deleted client {}", client.getClientId());
     }
 
-    @Override
+    
     public void deleteClientGroup(ClientGroup group) {
         getLogger().info("Deleting clientGroup {}", group.getName());
         Audit audit = Audit.log(group).delete();
@@ -200,7 +199,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().info("Deleted clientGroup {}", group);
     }
 
-    @Override
+    
     public List<Client> getAllClients() {
         getLogger().debug("Search all clients");
 
@@ -223,7 +222,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return clients;
     }
 
-    @Override
+    
     public Client getClientByClientId(String clientId) {
         getLogger().debug("Doing search for clientId {}", clientId);
 
@@ -246,7 +245,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return client;
     }
 
-    @Override
+    
     public Client getClientByClientname(String clientName) {
         getLogger().debug("Searching for client {}", clientName);
 
@@ -269,7 +268,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return client;
     }
 
-    @Override
+    
     public Client getClientByCustomerIdAndClientId(String customerId,
         String clientId) {
         getLogger().debug("Doing search for clientId {}", clientId);
@@ -294,7 +293,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return client;
     }
 
-    @Override
+    
     public Client getClientByInum(String inum) {
         getLogger().debug("Doing search for Inum {}", inum);
 
@@ -315,7 +314,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return client;
     }
     
-    @Override
+    
     public Client getClientByScope(String scope) {
         getLogger().debug("Doing search for Client with Scope {}", scope);
 
@@ -336,7 +335,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return client;
     }
 
-    @Override
+    
     public ClientGroup getClientGroup(String customerId, String clientId,
         String groupName) {
 
@@ -361,7 +360,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return group;
     }
 
-    @Override
+    
     public ClientGroup getClientGroupByUniqueId(String uniqueId) {
         ClientGroup group = null;
 
@@ -380,7 +379,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return group;
     }
 
-    @Override
+    
     public List<ClientGroup> getClientGroupsByClientId(String clientId) {
 
         List<ClientGroup> groups = new ArrayList<ClientGroup>();
@@ -411,7 +410,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return groups;
     }
 
-    @Override
+    
     public Clients getClientsByCustomerId(String customerId, int offset,
         int limit) {
         getLogger().debug("Doing search for customerId {}", customerId);
@@ -436,7 +435,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return clients;
     }
 
-    @Override
+    
     public String getUnusedClientInum(String customerInum) {
         // TODO: We might may this call to the XDI server in the future.
         Client client = null;
@@ -449,7 +448,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return inum;
     }
 
-    @Override
+    
     public boolean isUserInClientGroup(String username, String groupDN) {
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -463,7 +462,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return entry != null;
     }
 
-    @Override
+    
     public void removeUserFromGroup(String userUniqueId, ClientGroup group) {
         getLogger().info("Removing user {} from {}", userUniqueId, group);
 
@@ -502,7 +501,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().info("Removed user {} from group {}", userUniqueId, group);
     }
 
-    @Override
+    
     public void setClientsLockedFlagByCustomerId(String customerId,
         boolean locked) {
         Clients clients = this.findFirst100ByCustomerIdAndLock(customerId,
@@ -525,7 +524,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
     }
 
-    @Override
+    
     public void updateClient(Client client) {
         getLogger().debug("Updating client {}", client);
 
@@ -559,7 +558,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         getLogger().debug("Updated client {}", client.getName());
     }
 
-    @Override
+    
     public void updateClientGroup(ClientGroup group) {
         getLogger().debug("Updating client group {}", group);
 
@@ -595,7 +594,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
     
     
-    @Override
+    
     public List<Client> getAvailableScopes() {
         getLogger().debug("Search the scope accesses defined in the system.");
    

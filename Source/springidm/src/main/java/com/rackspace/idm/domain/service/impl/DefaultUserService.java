@@ -64,7 +64,7 @@ public class DefaultUserService implements UserService {
         this.config = config;
     }
 
-    @Override
+    
     public void addRacker(Racker racker) {
         logger.info("Adding Racker {}", racker);
         Racker exists = this.userDao.getRackerByRackerId(racker.getRackerId());
@@ -75,7 +75,7 @@ public class DefaultUserService implements UserService {
         logger.info("Added Racker {}", racker);
     }
 
-    @Override
+    
     public void addUser(User user) throws DuplicateException {
         logger.info("Adding User: {}", user);
         String customerId = user.getCustomerId();
@@ -136,7 +136,7 @@ public class DefaultUserService implements UserService {
         logger.info("Added User Scope Access for Idm to user {}", user);
     }
 
-    @Override
+    
     public UserAuthenticationResult authenticate(String username,
         String password) {
         logger.debug("Authenticating User: {}", username);
@@ -165,7 +165,7 @@ public class DefaultUserService implements UserService {
         return result;
     }
 
-    @Override
+    
     public UserAuthenticationResult authenticateWithApiKey(String username,
         String apiKey) {
         logger.debug("Authenticating User: {} by API Key", username);
@@ -176,7 +176,7 @@ public class DefaultUserService implements UserService {
         return authenticated;
     }
 
-    @Override
+    
     public UserAuthenticationResult authenticateWithMossoIdAndApiKey(
         int mossoId, String apiKey) {
         logger
@@ -188,7 +188,7 @@ public class DefaultUserService implements UserService {
         return authenticated;
     }
 
-    @Override
+    
     public UserAuthenticationResult authenticateWithNastIdAndApiKey(
         String nastId, String apiKey) {
         logger.debug("Authenticating User with NastId {} and API Key", nastId);
@@ -199,7 +199,7 @@ public class DefaultUserService implements UserService {
         return authenticated;
     }
 
-    @Override
+    
     public void deleteRacker(String rackerId) {
         logger.info("Deleting Racker: {}", rackerId);
 
@@ -208,7 +208,7 @@ public class DefaultUserService implements UserService {
         logger.info("Deleted Racker: {}", rackerId);
     }
 
-    @Override
+    
     public void deleteUser(String username) {
         logger.info("Deleting User: {}", username);
 
@@ -224,7 +224,7 @@ public class DefaultUserService implements UserService {
         logger.info("Deleted User: {}", username);
     }
 
-    @Override
+    
     public String generateApiKey() {
         try {
             return HashHelper.getRandomSha1();
@@ -234,7 +234,7 @@ public class DefaultUserService implements UserService {
         }
     }
 
-    @Override
+    
     public Users getByCustomerId(String customerId, int offset, int limit) {
         logger.debug("Getting Users for Cutomer: {}", customerId);
 
@@ -246,7 +246,7 @@ public class DefaultUserService implements UserService {
         return users;
     }
 
-    @Override
+    
     public Racker getRackerByRackerId(String rackerId) {
         logger.debug("Getting Racker: {}", rackerId);
         Racker racker = userDao.getRackerByRackerId(rackerId);
@@ -254,7 +254,7 @@ public class DefaultUserService implements UserService {
         return racker;
     }
 
-    @Override
+    
     public User getUser(String username) {
         logger.debug("Getting User: {}", username);
         User user = userDao.getUserByUsername(username);
@@ -262,7 +262,7 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-    @Override
+    
     public User getUser(String customerId, String username) {
         logger.debug("Getting User: {} - {}", customerId, username);
         User user = userDao
@@ -271,7 +271,7 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-    @Override
+    
     public User getUserByMossoId(int mossoId) {
         logger.debug("Getting User: {}", mossoId);
         User user = userDao.getUserByMossoId(mossoId);
@@ -279,7 +279,7 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-    @Override
+    
     public User getUserByNastId(String nastId) {
         logger.debug("Getting User: {}", nastId);
         User user = userDao.getUserByNastId(nastId);
@@ -287,7 +287,7 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-    @Override
+    
     public User getUserByRPN(String rpn) {
         logger.debug("Getting User: {}", rpn);
         User user = userDao.getUserByRPN(rpn);
@@ -295,12 +295,12 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-    @Override
+    
     public boolean isUsernameUnique(String username) {
         return userDao.isUsernameUnique(username);
     }
 
-    @Override
+    
     public void setUserPassword(String customerId, String username,
         UserCredentials userCred, ScopeAccess token, boolean isRecovery) {
 
@@ -340,7 +340,7 @@ public class DefaultUserService implements UserService {
 
     }
 
-    @Override
+    
     public void updateUser(User user, boolean hasSelfUpdatedPassword) {
         logger.info("Updating User: {}", user);
         validateUserEmailAddress(user);
@@ -348,7 +348,7 @@ public class DefaultUserService implements UserService {
         logger.info("Updated User: {}", user);
     }
 
-    @Override
+    
     public void updateUserStatus(User user, String statusStr) {
         UserStatus status = Enum.valueOf(UserStatus.class,
             statusStr.toUpperCase());
@@ -358,7 +358,7 @@ public class DefaultUserService implements UserService {
         logger.info("Updated User's status: {}, {}", user, status);
     }
 
-    @Override
+    
     public Password resetUserPassword(User user) {
         Password newPassword = Password.generateRandom(false); // Would the user
                                                                // ever reset his
@@ -370,7 +370,7 @@ public class DefaultUserService implements UserService {
         return newPassword.toExisting();
     }
 
-    @Override
+    
     public DateTime getUserPasswordExpirationDate(String userName) {
 
         DateTime passwordExpirationDate = null;
@@ -410,7 +410,7 @@ public class DefaultUserService implements UserService {
         return passwordExpirationDate;
     }
 
-    @Override
+    
     public User checkAndGetUser(String customerId, String username) {
         User user = this.getUser(customerId, username);
         if (user == null) {
@@ -422,7 +422,7 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-    @Override
+    
     public Clients getUserServices(User user) {
         if (user == null || user.getUniqueId() == null) {
             String errmsg = "Null User instance or is lacking uniqueID";

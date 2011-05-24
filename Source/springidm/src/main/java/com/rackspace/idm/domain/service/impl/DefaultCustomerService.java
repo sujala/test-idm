@@ -34,7 +34,7 @@ public class DefaultCustomerService implements CustomerService {
         this.userDao = userDao;
     }
 
-    @Override
+    
     public void addCustomer(Customer customer) {
         logger.info("Adding Customer: {}", customer);
 
@@ -54,7 +54,7 @@ public class DefaultCustomerService implements CustomerService {
         logger.info("Added Customer: {}", customer);
     }
 
-    @Override
+    
     public void deleteCustomer(String customerId) {
         logger.info("Deleting Customer: {}", customerId);
         
@@ -79,7 +79,7 @@ public class DefaultCustomerService implements CustomerService {
         logger.info("Deleted Customer: {}", customerId);
     }
 
-    @Override
+    
     public Customer getCustomer(String customerId) {
         logger.debug("Getting Customer: {}", customerId);
         Customer customer = customerDao.getCustomerByCustomerId(customerId);
@@ -87,7 +87,7 @@ public class DefaultCustomerService implements CustomerService {
         return customer;
     }
 
-    @Override
+    
     public void setCustomerLocked(Customer customer, boolean locked) {
         logger.info("Setting customer's locked state: {}", customer);
 
@@ -106,7 +106,7 @@ public class DefaultCustomerService implements CustomerService {
         logger.info("Locked customer: {}", customer);
     }
 
-    @Override
+    
     public void softDeleteCustomer(String customerId) {
         logger.info("Soft Deleting customer: {}", customerId);
         Customer customer = this.customerDao.getCustomerByCustomerId(customerId);
@@ -115,7 +115,7 @@ public class DefaultCustomerService implements CustomerService {
         logger.info("Soft Deleted customer: {}", customerId);
     }
 
-    @Override
+    
     public void updateCustomer(Customer customer) {
         logger.info("Updating Customer: {}", customer);
         this.customerDao.updateCustomer(customer);
