@@ -448,10 +448,11 @@ public class LdapScopeAccessPersistenceRepositoryTest {
        
         final List<DelegatedClientScopeAccess> scopeAccessList = repo.getScopeAccessByUsername("username");
         
-        Assert.assertNotNull(scopeAccessList);
-        Assert.assertEquals(4, scopeAccessList.size());
+        customerRepo.deleteCustomer(customer2.getCustomerId());    
         
-        customerRepo.deleteCustomer(customer2.getCustomerId());
+        Assert.assertNotNull(scopeAccessList);
+        Assert.assertEquals(2, scopeAccessList.size());
+        
     }   
 
     @Test
