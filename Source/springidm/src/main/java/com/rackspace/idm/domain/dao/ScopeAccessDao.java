@@ -37,6 +37,8 @@ public interface ScopeAccessDao {
     List<Permission> getPermissionsByPermission(Permission permission);
 
     ScopeAccess getScopeAccessByAccessToken(String accessToken);
+    
+    DelegatedClientScopeAccess getDelegatedScopeAccessByAccessToken(String accessToken);
 
     DelegatedClientScopeAccess getScopeAccessByAuthorizationCode(
         String authorizationCode);

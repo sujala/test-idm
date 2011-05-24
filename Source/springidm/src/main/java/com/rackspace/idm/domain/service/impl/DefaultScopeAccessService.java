@@ -436,6 +436,15 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             accessToken);
         return scopeAccess;
     }
+    
+    public DelegatedClientScopeAccess getDelegatedScopeAccessByAccessToken(String accessToken) {
+        logger.debug("Getting Delegated ScopeAccess by Access Token {}", accessToken);
+        final DelegatedClientScopeAccess delegatedScopeAccess = this.scopeAccessDao
+            .getDelegatedScopeAccessByAccessToken(accessToken);
+        logger.debug("Got ScopeAccess {} by Access Token {}", delegatedScopeAccess,
+            accessToken);
+        return delegatedScopeAccess;
+    }
 
     
     public DelegatedClientScopeAccess getScopeAccessByAuthCode(

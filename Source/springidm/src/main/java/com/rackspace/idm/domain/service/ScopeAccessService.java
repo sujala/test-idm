@@ -58,6 +58,8 @@ public interface ScopeAccessService {
 
     UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId);
     
+    DelegatedClientScopeAccess getDelegatedScopeAccessByAccessToken(String accessToken);
+    
     List<DelegatedClientScopeAccess> getDelegatedUserScopeAccessForUsername(String userUniqueId);
 
     UserScopeAccess getUserScopeAccessForClientIdByMossoIdAndApiCredentials(int mossoId, String apiKey, String clientId);

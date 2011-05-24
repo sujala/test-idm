@@ -15,15 +15,24 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.api.converter.TokenConverter;
+import com.rackspace.idm.api.resource.token.TokenResource;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.entity.hasAccessToken;
+import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.NotFoundException;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -31,14 +40,20 @@ import com.rackspace.idm.domain.service.UserService;
 public class UserTokenResource {
 
     private final ScopeAccessService scopeAccessService;
+    private final AuthorizationService authorizationService;
     private final UserService userService;
     private final TokenConverter tokenConverter;
+    private final AuthConverter authConverter;
+    final private Logger logger = LoggerFactory.getLogger(UserTokenResource.class);
     
     @Autowired
-    public UserTokenResource(ScopeAccessService scopeAccessService, UserService userService, TokenConverter tokenConverter) {
+    public UserTokenResource(ScopeAccessService scopeAccessService, UserService userService, AuthorizationService authorizationService,
+        TokenConverter tokenConverter, AuthConverter authConverter) {
         this.scopeAccessService = scopeAccessService;
         this.userService = userService;
+        this.authorizationService = authorizationService;
         this.tokenConverter = tokenConverter;
+        this.authConverter = authConverter;
     }
     
     /**
@@ -83,14 +98,47 @@ public class UserTokenResource {
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
      */
-   /* @GET
-    @Path("{tokenId}")
+    @GET
+    @Path("{tokenString}")
     public Response getTokenDetails(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("username") String username, @PathParam("tokenId") String tokenId) {
+        @PathParam("username") String username, @PathParam("tokenId") String tokenString) {
         
-        List<DelegatedClientScopeAccess> scopeAccessList = this.scopeAccessService.getDelegatedUserScopeAccessForUsername(username);
+        logger.debug("Validating Access Token: {}", tokenString);
+
+        ScopeAccess authToken = this.scopeAccessService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Only Rackers, Rackspace Clients and Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeRacker(authToken)
+            || authorizationService.authorizeRackspaceClient(authToken)
+            || authorizationService.authorizeClient(authToken,
+                request.getMethod(), uriInfo);
+
+        authorizationService.checkAuthAndHandleFailure(authorized, authToken);
         
-        return Response.ok(tokenConverter.toTokensJaxb(scopeAccessList)).build();
-    }  */
+        DelegatedClientScopeAccess delegatedScopeAccess = this.scopeAccessService.getDelegatedScopeAccessByAccessToken(tokenString);
+
+     // Validate Token exists and is valid
+        if (delegatedScopeAccess == null) {
+            String errorMsg = String
+                .format("Token not found : %s", tokenString);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+
+        if (delegatedScopeAccess instanceof hasAccessToken) {
+            boolean expired = ((hasAccessToken) delegatedScopeAccess)
+                .isAccessTokenExpired(new DateTime());
+            if (expired) {
+                String errorMsg = String.format("Token expired : %s",
+                    tokenString);
+                logger.warn(errorMsg);
+                throw new NotFoundException(errorMsg);
+            }
+        }
+        logger.debug("Validated Access Token: {}", tokenString);
+
+        return Response.ok(authConverter.toAuthDataJaxb(delegatedScopeAccess)).build();
+    }
 }
