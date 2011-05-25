@@ -446,7 +446,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         
         sa2 = (DelegatedClientScopeAccess) repo.addDirectScopeAccess(client2.getUniqueId(), sa2);
        
-        final List<DelegatedClientScopeAccess> scopeAccessList = repo.getScopeAccessByUsername("username");
+        final List<DelegatedClientScopeAccess> scopeAccessList = repo.getDelegatedClientScopeAccessByUsername("username");
         
         customerRepo.deleteCustomer(customer2.getCustomerId());    
         
