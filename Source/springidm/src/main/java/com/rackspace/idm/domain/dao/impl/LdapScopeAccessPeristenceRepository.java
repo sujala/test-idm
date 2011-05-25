@@ -369,35 +369,6 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         return null;
     }
     
-    public DelegatedClientScopeAccess getDelegatedScopeAccessByAccessToken(String accessToken) {
-        getLogger().debug("Find ScopeAccess by AccessToken: {}", accessToken);
-        LDAPConnection conn = null;
-        try {
-            conn = getAppConnPool().getConnection();
-            final Filter filter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS)
-                .addEqualAttribute(ATTR_ACCESS_TOKEN, accessToken).build();
-            final SearchResult searchResult = conn.search(BASE_DN,
-                SearchScope.SUB, filter);
-
-            final List<SearchResultEntry> searchEntries = searchResult
-                .getSearchEntries();
-            getLogger().debug("Found {} Delegated ScopeAccess for AccessToken: {}",
-                searchEntries.size(), accessToken);
-            for (final SearchResultEntry searchResultEntry : searchEntries) {
-                return (DelegatedClientScopeAccess)decodeScopeAccess(searchResultEntry);
-            }
-        } catch (final LDAPException e) {
-            getLogger().error(
-                "Error reading Delegated ScopeAccess by AccessToken: " + accessToken, e);
-            throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
-        }
-        return null;
-    }
-
-    
     public DelegatedClientScopeAccess getScopeAccessByAuthorizationCode(
         String authorizationCode) {
         getLogger().debug("Find ScopeAccess by Authorization Code: {}",
@@ -495,7 +466,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
     
     
-    public List<DelegatedClientScopeAccess> getScopeAccessByUsername(String username) {
+    public List<DelegatedClientScopeAccess> getDelegatedClientScopeAccessByUsername(String username) {
         getLogger().debug("Find ScopeAccess by Username: {}",username);
         LDAPConnection conn = null;
         List<DelegatedClientScopeAccess> scopeAccessList = null; 

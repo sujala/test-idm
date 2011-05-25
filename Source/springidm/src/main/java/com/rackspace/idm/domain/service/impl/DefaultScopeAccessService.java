@@ -437,11 +437,21 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
     
-    public DelegatedClientScopeAccess getDelegatedScopeAccessByAccessToken(String accessToken) {
+    public DelegatedClientScopeAccess getDelegatedScopeAccessByAccessToken(User user, String accessToken) {
         logger.debug("Getting Delegated ScopeAccess by Access Token {}", accessToken);
-        final DelegatedClientScopeAccess delegatedScopeAccess = this.scopeAccessDao
-            .getDelegatedScopeAccessByAccessToken(accessToken);
-        logger.debug("Got ScopeAccess {} by Access Token {}", delegatedScopeAccess,
+        
+        List<DelegatedClientScopeAccess> scopeAccessList = this.getDelegatedUserScopeAccessForUsername(user.getUsername());
+        
+        if (scopeAccessList != null && scopeAccessList.size() == 0) {
+            String errMsg = String.format("No delegated access tokens available for the user %s", user.getUsername());
+            logger.error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
+        final DelegatedClientScopeAccess delegatedScopeAccess = (DelegatedClientScopeAccess) 
+        this.scopeAccessDao.getScopeAccessByAccessToken(accessToken);
+        
+        logger.debug("Got Delegated ScopeAccess {} by Access Token {}", delegatedScopeAccess,
             accessToken);
         return delegatedScopeAccess;
     }
@@ -492,7 +502,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     
     public List<DelegatedClientScopeAccess> getDelegatedUserScopeAccessForUsername(String username) {
         logger.debug("Getting User ScopeAccess by username {}", username);
-        final List<DelegatedClientScopeAccess> scopeAccessList = this.scopeAccessDao.getScopeAccessByUsername(username);
+        final List<DelegatedClientScopeAccess> scopeAccessList = this.scopeAccessDao.getDelegatedClientScopeAccessByUsername(username);
         if ( scopeAccessList == null) {
             String errMsg = String.format("Could not find scope accesses for the user {}",username);
             logger.error(errMsg);

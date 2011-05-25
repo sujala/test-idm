@@ -117,7 +117,9 @@ public class UserTokenResource {
 
         authorizationService.checkAuthAndHandleFailure(authorized, authToken);
         
-        DelegatedClientScopeAccess delegatedScopeAccess = this.scopeAccessService.getDelegatedScopeAccessByAccessToken(tokenString);
+        User user = userService.checkAndGetUser(customerId, username);
+        
+        DelegatedClientScopeAccess delegatedScopeAccess = this.scopeAccessService.getDelegatedScopeAccessByAccessToken(user, tokenString);
 
      // Validate Token exists and is valid
         if (delegatedScopeAccess == null) {
@@ -137,7 +139,7 @@ public class UserTokenResource {
                 throw new NotFoundException(errorMsg);
             }
         }
-        logger.debug("Validated Access Token: {}", tokenString);
+        logger.debug("Delegated Access Token Found: {}", tokenString);
 
         return Response.ok(authConverter.toAuthDataJaxb(delegatedScopeAccess)).build();
     }

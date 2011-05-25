@@ -38,8 +38,6 @@ public interface ScopeAccessDao {
 
     ScopeAccess getScopeAccessByAccessToken(String accessToken);
     
-    DelegatedClientScopeAccess getDelegatedScopeAccessByAccessToken(String accessToken);
-
     DelegatedClientScopeAccess getScopeAccessByAuthorizationCode(
         String authorizationCode);
 
@@ -48,7 +46,7 @@ public interface ScopeAccessDao {
     ScopeAccess getScopeAccessByUsernameAndClientId(String username,
             String clientId);
     
-    List<DelegatedClientScopeAccess> getScopeAccessByUsername(String username);
+    List<DelegatedClientScopeAccess> getDelegatedClientScopeAccessByUsername(String username);
 
     List<ScopeAccess> getScopeAccessesByParent(String parentUniqueId);
 
