@@ -438,6 +438,7 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.57) = {
 schema set attribute (1.3.6.1.4.1.20988.2.1.58) = {
     name = rsSecureId
     ldap-names = rsSecureId
+    equality = caseIgnoreMatch
     syntax = directoryString
     description = "A private id for a user"
 };
