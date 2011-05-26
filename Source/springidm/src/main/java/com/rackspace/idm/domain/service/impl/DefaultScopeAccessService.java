@@ -122,7 +122,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return perm;
     }
 
-    
     public void deleteScopeAccess(ScopeAccess scopeAccess) {
         logger.info("Deleting ScopeAccess {}", scopeAccess);
         if (scopeAccess == null) {
@@ -133,8 +132,33 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         this.scopeAccessDao.deleteScopeAccess(scopeAccess);
         logger.info("Deleted ScopeAccess {}", scopeAccess);
     }
-
     
+    public void deleteDelegatedToken(User user, String tokenString) {
+        
+        DelegatedClientScopeAccess delegatedScopeAccess = this.getDelegatedScopeAccessByAccessToken(user, tokenString);
+
+        // Validate Token exists and is valid
+        if (delegatedScopeAccess == null) {
+            String errorMsg = String
+            .format("Token not found : %s", tokenString);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+
+        if (delegatedScopeAccess instanceof hasAccessToken) {
+            boolean expired = ((hasAccessToken) delegatedScopeAccess)
+            .isAccessTokenExpired(new DateTime());
+            if (expired) {
+                String errorMsg = String.format("Token expired : %s",
+                    tokenString);
+                logger.warn(errorMsg);
+                throw new NotFoundException(errorMsg);
+            }
+        }
+
+        deleteScopeAccess(delegatedScopeAccess);
+    }
+
     public boolean doesAccessTokenHavePermission(ScopeAccess token,
         Permission permission) {
         if (permission == null) {

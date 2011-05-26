@@ -27,6 +27,8 @@ public interface ScopeAccessService {
     boolean authenticateAccessToken(String accessTokenStr);
 
     void deleteScopeAccess(ScopeAccess scopeAccess);
+    
+    void deleteDelegatedToken(User user, String tokenString);
 
     boolean doesAccessTokenHavePermission(ScopeAccess token, Permission permission);
     
