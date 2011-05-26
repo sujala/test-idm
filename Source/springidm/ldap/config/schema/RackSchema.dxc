@@ -435,6 +435,13 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.57) = {
         description = "A client callback URL"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.58) = {
+    name = rsSecureId
+    ldap-names = rsSecureId
+    syntax = directoryString
+    description = "A private id for a user"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 	name = rsPerson
 	ldap-names = rsPerson
@@ -473,7 +480,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 		endpoint,
 		passwordUpdatedTimestamp,
 		passwordSelfUpdated,
-		rsGroupDN
+		rsGroupDN,
+		rsSecureId
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {
