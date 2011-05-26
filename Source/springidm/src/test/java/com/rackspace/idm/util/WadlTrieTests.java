@@ -52,7 +52,7 @@ public class WadlTrieTests {
         public List<PathSegment> getPathSegments() {
             final List<PathSegment> psegs = new ArrayList<PathSegment>();
 
-            final String[] paths = new String[] { "users", "mkovacs", "baseurlrefs", "wildcard" };
+            final String[] paths = new String[] { "v1.0", "users", "mkovacs", "baseurlrefs", "wildcard" };
 
             for (final String string : paths) {
                 psegs.add(
@@ -156,7 +156,7 @@ public class WadlTrieTests {
 
     @Test
     public void shouldFindPermission() {
-        final Object permissionFor = trie.getPermissionFor("root" , "/", "users", "mkovacs", "GET");
+        final Object permissionFor = trie.getPermissionFor("root" , "/", "v1.0", "users", "mkovacs", "GET");
         Assert.assertEquals(permissionFor, "getUserByUsername");
     }
 
@@ -168,7 +168,7 @@ public class WadlTrieTests {
 
     @Test
     public void shouldFindPermissionForMultipleWildcards() {
-        final Object permissionFor = trie.getPermissionFor("root" , "/", "users", "mkovacs", "baseurlrefs", "wildcard", "GET");
+        final Object permissionFor = trie.getPermissionFor("root" , "/", "v1.0", "users", "mkovacs", "baseurlrefs", "wildcard", "GET");
         Assert.assertEquals(permissionFor, "getBaseUrlRef");
     }
 
@@ -182,7 +182,7 @@ public class WadlTrieTests {
     
     @Test
     public void shouldFindPermissionForArray() {
-        Object[] paths = new String[] { "root", "/", "customers", "RCN-QATestingCustomer", "clients", "b5c7f48cee82dc30d3271d8aa9bfbc3ab874b772", "permissions", "POST"};
+        Object[] paths = new String[] { "root", "/", "v1.0", "customers", "RCN-QATestingCustomer", "clients", "b5c7f48cee82dc30d3271d8aa9bfbc3ab874b772", "permissions", "POST"};
         Object p = trie.getPermissionFor(paths);
         Assert.assertEquals("addClientDefinedPermission", p);
     }
