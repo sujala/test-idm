@@ -130,6 +130,7 @@ public abstract class LdapRepository {
     public static final String ATTR_REFRESH_TOKEN_EXP = "refreshTokenExp";
     public static final String ATTR_REGION = "rsRegion";
     public static final String ATTR_RESOURCE_GROUP = "resourceGroup";
+    public static final String ATTR_SECURE_ID = "rsSecureId";
     public static final String ATTR_SEE_ALSO = "seeAlso";
     public static final String ATTR_SERVICE = "service";
     public static final String ATTR_SN = "rsSn";

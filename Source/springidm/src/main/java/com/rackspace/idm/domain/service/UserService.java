@@ -43,6 +43,8 @@ public interface UserService {
     User getUserByNastId(String natsId);
 
     User getUserByMossoId(int mossoId);
+    
+    User getUserBySecureId(String secureId);
 
     User getUser(String customerId, String username);
     

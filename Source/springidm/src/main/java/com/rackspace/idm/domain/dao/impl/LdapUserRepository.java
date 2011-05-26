@@ -52,7 +52,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         super(connPools, config);
     }
 
-    
+    @Override
     public void addRacker(Racker racker) {
         getLogger().info("Adding racker - {}", racker);
         if (racker == null) {
@@ -87,7 +87,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Added racker {}", racker);
     }
 
-    
+    @Override
     public void addUser(User user, String customerUniqueId) {
         getLogger().info("Adding user - {}", user);
         if (user == null) {
@@ -127,7 +127,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Added user {}", user);
     }
 
-    
+    @Override
     public UserAuthenticationResult authenticate(String username,
         String password) {
         getLogger().debug("Authenticating User {}", username);
@@ -142,7 +142,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return authenticateByPassword(user, password);
     }
 
-    
+    @Override
     public UserAuthenticationResult authenticateByAPIKey(String username,
         String apiKey) {
         getLogger().debug("Authenticating User {} by API Key ", username);
@@ -157,7 +157,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return authenticateUserByApiKey(user, apiKey);
     }
 
-    
+    @Override
     public UserAuthenticationResult authenticateByMossoIdAndAPIKey(int mossoId,
         String apiKey) {
         getLogger().info("Authenticating User with MossoId {}", mossoId);
@@ -167,7 +167,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return authenticateUserByApiKey(user, apiKey);
     }
 
-    
+    @Override
     public UserAuthenticationResult authenticateByNastIdAndAPIKey(
         String nastId, String apiKey) {
         getLogger().debug("Authenticating User with NastId {}", nastId);
@@ -182,7 +182,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return authenticateUserByApiKey(user, apiKey);
     }
 
-    
+    @Override
     public void deleteRacker(String rackerId) {
         getLogger().info("Deleting racker - {}", rackerId);
         if (StringUtils.isBlank(rackerId)) {
@@ -206,7 +206,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Deleted racker - {}", rackerId);
     }
 
-    
+    @Override
     public void deleteUser(String username) {
         getLogger().info("Deleting username - {}", username);
         if (StringUtils.isBlank(username)) {
@@ -231,7 +231,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Deleted username - {}", username);
     }
 
-    
+    @Override
     public Users getAllUsers(int offset, int limit) {
         getLogger().debug("Search all users");
 
@@ -246,7 +246,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     }
 
-    
+    @Override
     public String[] getGroupIdsForUser(String username) {
         getLogger().debug("Getting GroupIds for User {}", username);
         if (StringUtils.isBlank(username)) {
@@ -275,7 +275,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return groupIds;
     }
 
-    
+    @Override
     public Racker getRackerByRackerId(String rackerId) {
         getLogger().debug("Getting Racker {}", rackerId);
         if (StringUtils.isBlank(rackerId)) {
@@ -302,7 +302,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return racker;
     }
 
-    
+    @Override
     public String getUnusedUserInum(String customerInum) {
         // TODO: We might may this call to the XDI server in the future.
         if (StringUtils.isBlank(customerInum)) {
@@ -323,7 +323,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return inum;
     }
 
-    
+    @Override
     public User getUserByCustomerIdAndUsername(String customerId,
         String username) {
 
@@ -356,7 +356,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
-    
+    @Override
     public User getUserByInum(String inum) {
         // NOTE: This method returns a user regardless of whether the
         // softDeleted flag is set or not because this method is only
@@ -379,7 +379,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
-    
+    @Override
     public User getUserByMossoId(int mossoId) {
         getLogger().debug("Doing search for nastId " + mossoId);
 
@@ -395,7 +395,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
-    
+    @Override
     public User getUserByNastId(String nastId) {
         getLogger().debug("Doing search for nastId " + nastId);
         if (StringUtils.isBlank(nastId)) {
@@ -416,9 +416,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
-    
+    @Override
     public User getUserByRPN(String rpn) {
-        getLogger().debug("Doing search for rpn " + rpn);
+        getLogger().debug("Doing User search by rpn " + rpn);
         if (StringUtils.isBlank(rpn)) {
             getLogger().error("Null or Empty rpn parameter");
             throw new IllegalArgumentException("Null or Empty rpn parameter.");
@@ -436,7 +436,28 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
-    
+    @Override
+    public User getUserBySecureId(String secureId) {
+        getLogger().debug("Doing User search by secureId " + secureId);
+        if (StringUtils.isBlank(secureId)) {
+            getLogger().error("Null or Empty secureId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty secureId parameter.");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_SECURE_ID, secureId)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
+        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
+
+        getLogger().debug("Found User - {}", user);
+
+        return user;
+    }
+
+    @Override
     public User getUserByUsername(String username) {
         // This method returns a user whether or not the user has been
         // soft-deleted
@@ -459,7 +480,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
-    
+    @Override
     public Users getUsersByCustomerId(String customerId, int offset, int limit) {
         getLogger().debug("Doing search for customerId {}", customerId);
 
@@ -483,7 +504,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return users;
     }
 
-    
+    @Override
     public boolean isUsernameUnique(String username) {
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -496,7 +517,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user == null;
     }
 
-    
+    @Override
     public void setUsersLockedFlagByCustomerId(String customerId,
         boolean isLocked) {
         Users users = this.findFirst100ByCustomerIdAndLock(customerId,
@@ -519,7 +540,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    
+    @Override
     public void updateUser(User user, boolean hasSelfUpdatedPassword) {
         getLogger().info("Updating user to {}", user);
 
@@ -565,7 +586,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Updated user - {}", user);
     }
 
-    
+    @Override
     public void removeUsersFromClientGroup(ClientGroup group) {
 
         getLogger().debug("Doing search for users that belong to group {}",
@@ -1071,6 +1092,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             passwordFailureLocked = passwordFailureDateTime.isAfterNow();
         }
         user.setMaxLoginFailuresExceded(passwordFailureLocked);
+
+        user.setSecureId(resultEntry.getAttributeValue(ATTR_SECURE_ID));
+
         getLogger().debug("Built user object {}.", user);
         return user;
     }
@@ -1138,6 +1162,17 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 mods.add(new Modification(ModificationType.REPLACE,
                     ATTR_DISPLAY_NAME, cryptHelper.encrypt(uNew
                         .getDisplayName())));
+            }
+        }
+
+        if (uNew.getSecureId() != null) {
+            if (StringUtils.isBlank(uNew.getSecureId())) {
+                mods.add(new Modification(ModificationType.DELETE,
+                    ATTR_SECURE_ID));
+            } else if (!StringUtils.equals(uOld.getSecureId(),
+                uNew.getSecureId())) {
+                mods.add(new Modification(ModificationType.REPLACE,
+                    ATTR_SECURE_ID, uNew.getSecureId()));
             }
         }
 

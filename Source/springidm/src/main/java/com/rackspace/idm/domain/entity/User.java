@@ -2,15 +2,11 @@ package com.rackspace.idm.domain.entity;
 
 import java.util.Locale;
 
-import javax.validation.constraints.Pattern;
-
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.validation.MessageTexts;
-import com.rackspace.idm.validation.RegexPatterns;
 
 public class User extends BaseUser implements Auditable {
     private static final long serialVersionUID = 1347677880811855274L;
@@ -45,6 +41,10 @@ public class User extends BaseUser implements Auditable {
     
     private Boolean maxLoginFailuresExceded = null;
     
+    private String secureId = null;
+    
+
+
     public User() {
         // Needed by JAX-RS
     }
@@ -96,6 +96,14 @@ public class User extends BaseUser implements Auditable {
         if (uniqueId != null) {
             super.setUniqueId(uniqueId);
         }
+    }
+    
+    public String getSecureId() {
+        return secureId;
+    }
+
+    public void setSecureId(String secureId) {
+        this.secureId = secureId;
     }
 
     public String getCountry() {

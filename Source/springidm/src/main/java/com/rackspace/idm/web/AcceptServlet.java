@@ -13,10 +13,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.UriBuilder;
 
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
@@ -31,8 +30,6 @@ import com.rackspace.idm.domain.service.UserService;
 
 public class AcceptServlet extends HttpServlet  {
     
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
-
     private ClientService clientService;
     private UserService userService;
     private ScopeAccessService scopeAccessService;
@@ -42,12 +39,28 @@ public class AcceptServlet extends HttpServlet  {
         throws ServletException, IOException {
         
         String redirectUri = request.getParameter("redirect_uri");
-        String responseType = request.getParameter("response_type");
         String clientId = request.getParameter("client_id");
         String scopeList = request.getParameter("scope");
         String accept = request.getParameter("accept");
         String days = request.getParameter("days");
         String username = request.getParameter("username");
+        String verification = request.getParameter("verificaiton");
+        
+        if (StringUtils.isBlank(verification)) {
+            response.setStatus(400);
+            return;
+        }
+
+        User user = getUserService().getUserBySecureId(verification);
+        
+        if (user == null || !verification.equalsIgnoreCase(user.getSecureId()) || !username.equals(user.getUsername())) {
+            response.setStatus(400);
+            return;
+        }
+        
+        //remove the secureId since its no longer needed
+        user.setSecureId("");
+        getUserService().updateUser(user, false);
         
         if (!accept.equals("Accept")) {
             URI uri = UriBuilder.fromPath(redirectUri)
@@ -59,7 +72,6 @@ public class AcceptServlet extends HttpServlet  {
 
         String authCode = generateAuthCode();
 
-        User user = getUserService().getUser(username);
         Client client = getClientService().getById(clientId);
 
         DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) getScopeAccessService()

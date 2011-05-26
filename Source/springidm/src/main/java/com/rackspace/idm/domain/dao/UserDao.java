@@ -9,27 +9,29 @@ import com.rackspace.idm.domain.entity.Users;
 public interface UserDao {
 
     void addUser(User user, String customerUniqueId);
-    
+
     void addRacker(Racker racker);
 
     UserAuthenticationResult authenticate(String userName, String password);
 
     UserAuthenticationResult authenticateByAPIKey(String username, String apiKey);
 
-    UserAuthenticationResult authenticateByMossoIdAndAPIKey(int mossoId, String apiKey);
+    UserAuthenticationResult authenticateByMossoIdAndAPIKey(int mossoId,
+        String apiKey);
 
-    UserAuthenticationResult authenticateByNastIdAndAPIKey(String nastId, String apiKey);
+    UserAuthenticationResult authenticateByNastIdAndAPIKey(String nastId,
+        String apiKey);
 
     void deleteRacker(String rackerId);
-    
+
     void deleteUser(String username);
 
     void removeUsersFromClientGroup(ClientGroup group);
-    
+
     Users getAllUsers(int offset, int limit);
 
     String[] getGroupIdsForUser(String username);
-    
+
     Racker getRackerByRackerId(String rackerId);
 
     String getUnusedUserInum(String customerInum);
@@ -43,6 +45,8 @@ public interface UserDao {
     User getUserByNastId(String nastId);
 
     User getUserByRPN(String rpn);
+
+    User getUserBySecureId(String secureId);
 
     User getUserByUsername(String username);
 

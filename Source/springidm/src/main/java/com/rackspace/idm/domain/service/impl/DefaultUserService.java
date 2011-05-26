@@ -41,16 +41,16 @@ import com.rackspace.idm.util.HashHelper;
 
 public class DefaultUserService implements UserService {
 
-    private final UserDao userDao;
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(".+@.+\\.[\\w]+");
     private final AuthDao authDao;
-    private final CustomerDao customerDao;
-    private final ScopeAccessDao scopeAccessDao;
     private final ClientService clientService;
     private final Configuration config;
-    
-    private static final Pattern EMAIL_PATTERN = Pattern.compile(".+@.+\\.[\\w]+");
-    
+    private final CustomerDao customerDao;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    
+    private final ScopeAccessDao scopeAccessDao;
+    
+    private final UserDao userDao;
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
         CustomerDao customerDao, ScopeAccessDao scopeAccessDao,
@@ -65,6 +65,7 @@ public class DefaultUserService implements UserService {
     }
 
     
+    @Override
     public void addRacker(Racker racker) {
         logger.info("Adding Racker {}", racker);
         Racker exists = this.userDao.getRackerByRackerId(racker.getRackerId());
@@ -76,6 +77,7 @@ public class DefaultUserService implements UserService {
     }
 
     
+    @Override
     public void addUser(User user) throws DuplicateException {
         logger.info("Adding User: {}", user);
         String customerId = user.getCustomerId();
@@ -137,6 +139,7 @@ public class DefaultUserService implements UserService {
     }
 
     
+    @Override
     public UserAuthenticationResult authenticate(String username,
         String password) {
         logger.debug("Authenticating User: {}", username);
@@ -166,6 +169,7 @@ public class DefaultUserService implements UserService {
     }
 
     
+    @Override
     public UserAuthenticationResult authenticateWithApiKey(String username,
         String apiKey) {
         logger.debug("Authenticating User: {} by API Key", username);
@@ -177,6 +181,7 @@ public class DefaultUserService implements UserService {
     }
 
     
+    @Override
     public UserAuthenticationResult authenticateWithMossoIdAndApiKey(
         int mossoId, String apiKey) {
         logger
@@ -189,6 +194,7 @@ public class DefaultUserService implements UserService {
     }
 
     
+    @Override
     public UserAuthenticationResult authenticateWithNastIdAndApiKey(
         String nastId, String apiKey) {
         logger.debug("Authenticating User with NastId {} and API Key", nastId);
@@ -200,6 +206,20 @@ public class DefaultUserService implements UserService {
     }
 
     
+    @Override
+    public User checkAndGetUser(String customerId, String username) {
+        User user = this.getUser(customerId, username);
+        if (user == null) {
+            String errorMsg = String.format("User not found: %s - %s",
+                customerId, username);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+        return user;
+    }
+
+    
+    @Override
     public void deleteRacker(String rackerId) {
         logger.info("Deleting Racker: {}", rackerId);
 
@@ -209,6 +229,7 @@ public class DefaultUserService implements UserService {
     }
 
     
+    @Override
     public void deleteUser(String username) {
         logger.info("Deleting User: {}", username);
 
@@ -225,6 +246,7 @@ public class DefaultUserService implements UserService {
     }
 
     
+    @Override
     public String generateApiKey() {
         try {
             return HashHelper.getRandomSha1();
@@ -235,6 +257,7 @@ public class DefaultUserService implements UserService {
     }
 
     
+    @Override
     public Users getByCustomerId(String customerId, int offset, int limit) {
         logger.debug("Getting Users for Cutomer: {}", customerId);
 
@@ -247,6 +270,7 @@ public class DefaultUserService implements UserService {
     }
 
     
+    @Override
     public Racker getRackerByRackerId(String rackerId) {
         logger.debug("Getting Racker: {}", rackerId);
         Racker racker = userDao.getRackerByRackerId(rackerId);
@@ -255,6 +279,7 @@ public class DefaultUserService implements UserService {
     }
 
     
+    @Override
     public User getUser(String username) {
         logger.debug("Getting User: {}", username);
         User user = userDao.getUserByUsername(username);
@@ -263,6 +288,7 @@ public class DefaultUserService implements UserService {
     }
 
     
+    @Override
     public User getUser(String customerId, String username) {
         logger.debug("Getting User: {} - {}", customerId, username);
         User user = userDao
@@ -272,6 +298,7 @@ public class DefaultUserService implements UserService {
     }
 
     
+    @Override
     public User getUserByMossoId(int mossoId) {
         logger.debug("Getting User: {}", mossoId);
         User user = userDao.getUserByMossoId(mossoId);
@@ -280,6 +307,7 @@ public class DefaultUserService implements UserService {
     }
 
     
+    @Override
     public User getUserByNastId(String nastId) {
         logger.debug("Getting User: {}", nastId);
         User user = userDao.getUserByNastId(nastId);
@@ -287,90 +315,24 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-    
+    @Override
     public User getUserByRPN(String rpn) {
         logger.debug("Getting User: {}", rpn);
         User user = userDao.getUserByRPN(rpn);
         logger.debug("Got User: {}", user);
         return user;
     }
-
     
-    public boolean isUsernameUnique(String username) {
-        return userDao.isUsernameUnique(username);
+    @Override
+    public User getUserBySecureId(String secureId) {
+        logger.debug("Getting User by secureId: {}", secureId);
+        User user = userDao.getUserBySecureId(secureId);
+        logger.debug("Got User: {}", user);
+        return user;
     }
 
     
-    public void setUserPassword(String customerId, String username,
-        UserCredentials userCred, ScopeAccess token, boolean isRecovery) {
-
-        logger.debug("Updating Password for User: {}", username);
-
-        if (!isRecovery) {
-            if (userCred.getCurrentPassword() == null
-                || StringUtils.isBlank(userCred.getCurrentPassword()
-                    .getPassword())) {
-                String errMsg = "Value for Current Password cannot be blank";
-                logger.warn(errMsg);
-                throw new BadRequestException(errMsg);
-            }
-
-            // authenticate using old password
-            UserAuthenticationResult uaResult = this.authenticate(username,
-                userCred.getCurrentPassword().getPassword());
-            if (!uaResult.isAuthenticated()) {
-                String errorMsg = String.format(
-                    "Current password does not match for user: %s", username);
-                logger.warn(errorMsg);
-                throw new NotAuthenticatedException(errorMsg);
-            }
-        }
-
-        User user = this.checkAndGetUser(customerId, username);
-
-        user.setPasswordObj(Password.newInstance(userCred.getNewPassword()
-            .getPassword()));
-        boolean isSelfUpdate = (token instanceof UserScopeAccess && ((UserScopeAccess) token)
-            .getUsername().equals(username))
-            || (token instanceof PasswordResetScopeAccess && ((PasswordResetScopeAccess) token)
-                .getUsername().equals(username));
-
-        this.updateUser(user, isSelfUpdate);
-        logger.debug("Updated password for user: {}", user);
-
-    }
-
-    
-    public void updateUser(User user, boolean hasSelfUpdatedPassword) {
-        logger.info("Updating User: {}", user);
-        validateUserEmailAddress(user);
-        this.userDao.updateUser(user, hasSelfUpdatedPassword);
-        logger.info("Updated User: {}", user);
-    }
-
-    
-    public void updateUserStatus(User user, String statusStr) {
-        UserStatus status = Enum.valueOf(UserStatus.class,
-            statusStr.toUpperCase());
-        user.setStatus(status);
-        this.userDao.updateUser(user, false);
-
-        logger.info("Updated User's status: {}, {}", user, status);
-    }
-
-    
-    public Password resetUserPassword(User user) {
-        Password newPassword = Password.generateRandom(false); // Would the user
-                                                               // ever reset his
-                                                               // own password?
-        user.setPasswordObj(newPassword);
-        userDao.updateUser(user, false);
-        logger.debug("Updated password for user: {}", user);
-
-        return newPassword.toExisting();
-    }
-
-    
+    @Override
     public DateTime getUserPasswordExpirationDate(String userName) {
 
         DateTime passwordExpirationDate = null;
@@ -411,18 +373,7 @@ public class DefaultUserService implements UserService {
     }
 
     
-    public User checkAndGetUser(String customerId, String username) {
-        User user = this.getUser(customerId, username);
-        if (user == null) {
-            String errorMsg = String.format("User not found: %s - %s",
-                customerId, username);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-        return user;
-    }
-
-    
+    @Override
     public Clients getUserServices(User user) {
         if (user == null || user.getUniqueId() == null) {
             String errmsg = "Null User instance or is lacking uniqueID";
@@ -451,16 +402,96 @@ public class DefaultUserService implements UserService {
         return clients;
     }
 
-    private boolean isTrustedServer() {
-        return config.getBoolean("ldap.server.trusted", false);
-    }
     
+    @Override
+    public boolean isUsernameUnique(String username) {
+        return userDao.isUsernameUnique(username);
+    }
+
+    
+    @Override
+    public Password resetUserPassword(User user) {
+        Password newPassword = Password.generateRandom(false); // Would the user
+                                                               // ever reset his
+                                                               // own password?
+        user.setPasswordObj(newPassword);
+        userDao.updateUser(user, false);
+        logger.debug("Updated password for user: {}", user);
+
+        return newPassword.toExisting();
+    }
+
+    
+    @Override
+    public void setUserPassword(String customerId, String username,
+        UserCredentials userCred, ScopeAccess token, boolean isRecovery) {
+
+        logger.debug("Updating Password for User: {}", username);
+
+        if (!isRecovery) {
+            if (userCred.getCurrentPassword() == null
+                || StringUtils.isBlank(userCred.getCurrentPassword()
+                    .getPassword())) {
+                String errMsg = "Value for Current Password cannot be blank";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
+
+            // authenticate using old password
+            UserAuthenticationResult uaResult = this.authenticate(username,
+                userCred.getCurrentPassword().getPassword());
+            if (!uaResult.isAuthenticated()) {
+                String errorMsg = String.format(
+                    "Current password does not match for user: %s", username);
+                logger.warn(errorMsg);
+                throw new NotAuthenticatedException(errorMsg);
+            }
+        }
+
+        User user = this.checkAndGetUser(customerId, username);
+
+        user.setPasswordObj(Password.newInstance(userCred.getNewPassword()
+            .getPassword()));
+        boolean isSelfUpdate = (token instanceof UserScopeAccess && ((UserScopeAccess) token)
+            .getUsername().equals(username))
+            || (token instanceof PasswordResetScopeAccess && ((PasswordResetScopeAccess) token)
+                .getUsername().equals(username));
+
+        this.updateUser(user, isSelfUpdate);
+        logger.debug("Updated password for user: {}", user);
+
+    }
+
+    
+    @Override
+    public void updateUser(User user, boolean hasSelfUpdatedPassword) {
+        logger.info("Updating User: {}", user);
+        validateUserEmailAddress(user);
+        this.userDao.updateUser(user, hasSelfUpdatedPassword);
+        logger.info("Updated User: {}", user);
+    }
+
+    
+    @Override
+    public void updateUserStatus(User user, String statusStr) {
+        UserStatus status = Enum.valueOf(UserStatus.class,
+            statusStr.toUpperCase());
+        user.setStatus(status);
+        this.userDao.updateUser(user, false);
+
+        logger.info("Updated User's status: {}, {}", user, status);
+    }
+
     private String getIdmClientId() {
         return config.getString("idm.clientId");
     }
-
+    
     private String getRackspaceCustomerId() {
         return config.getString("rackspace.customerId");
+    }
+
+    private boolean isTrustedServer() {
+        return config.getBoolean("ldap.server.trusted", false);
     }
     
     private void validateUserEmailAddress(User user) {

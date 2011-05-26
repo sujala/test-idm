@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -19,6 +20,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -88,7 +90,6 @@ public class AuthorizeServlet extends HttpServlet {
         throws ServletException, IOException {
 
         String redirectUri = request.getParameter("redirect_uri");
-        String responseType = request.getParameter("response_type");
         String clientId = request.getParameter("client_id");
         String scopeList = request.getParameter("scope");
 
@@ -143,10 +144,16 @@ public class AuthorizeServlet extends HttpServlet {
                 return;
             }
         }
+        
+        User user = getUserService().getUser(username);
+        String secureId = generateSecureId();
+        user.setSecureId(secureId);
+        getUserService().updateUser(user, false);
 
         request.setAttribute("requestingClient", client);
         request.setAttribute("scopes", clients);
         request.setAttribute("username", uaResult.getUser().getUsername());
+        request.setAttribute("verification", secureId);
 
         request.getRequestDispatcher("/web/scope.jsp").forward(request,
             response);
@@ -178,5 +185,9 @@ public class AuthorizeServlet extends HttpServlet {
             scopeAccessService = context.getBean(ScopeAccessService.class);
         }
         return scopeAccessService;
+    }
+    
+    private String generateSecureId() {
+        return UUID.randomUUID().toString().replace("-", "");
     }
 }
