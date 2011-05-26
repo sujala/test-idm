@@ -70,6 +70,8 @@ public class UserServiceTests {
     String secretAnswer = "answer";
     String preferredLang = "en_US";
     String timeZone = "America/Chicago";
+    
+    String secureId = "XXX";
 
     String customerDN = "o=@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA,o=rackspace,dc=rackspace,dc=com";
 
@@ -216,6 +218,19 @@ public class UserServiceTests {
         EasyMock.replay(mockUserDao);
 
         final User retrievedUser = userService.getUserByNastId(nastId);
+
+        Assert.assertTrue(retrievedUser.getUsername().equals(username));
+        EasyMock.verify(mockUserDao);
+    }
+    
+    @Test
+    public void shouldGetUserBySecureId() {
+        final User user = getFakeUser();
+
+        EasyMock.expect(mockUserDao.getUserBySecureId(secureId)).andReturn(user);
+        EasyMock.replay(mockUserDao);
+
+        final User retrievedUser = userService.getUserBySecureId(secureId);
 
         Assert.assertTrue(retrievedUser.getUsername().equals(username));
         EasyMock.verify(mockUserDao);

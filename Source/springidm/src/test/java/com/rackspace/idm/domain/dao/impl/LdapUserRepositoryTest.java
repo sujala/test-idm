@@ -540,6 +540,18 @@ public class LdapUserRepositoryTest {
         Assert.assertTrue(users.getTotalRecords() >= 1);
         Assert.assertTrue(users.getUsers().size() >= 1);
     }
+    
+    @Test
+    public void shouldFindBySecureID() {
+        User user = addNewTestUser();
+        user.setSecureId("XXX");
+        repo.updateUser(user, false);
+        
+        User returnedUser = repo.getUserBySecureId("XXX");
+        repo.deleteUser(user.getUsername());
+        
+        Assert.assertNotNull(returnedUser);
+    }
 
     @Test
     public void shouldReturnTrueForMaxLoginFailures() {
