@@ -81,11 +81,13 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     
+    @Override
     public ScopeAccess getAccessTokenByAuthHeader(final String authHeader) {
         return this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
     }
 
     
+    @Override
     public OAuthGrantType getGrantType(final String grantTypeStrVal) {
         final OAuthGrantType grantType = OAuthGrantType.valueOf(grantTypeStrVal
             .replace("-", "_").toUpperCase());
@@ -94,6 +96,7 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     
+    @Override
     public ScopeAccess getTokens(final OAuthGrantType grantType,
         final AuthCredentials trParam, final DateTime currentTime)
         throws NotAuthenticatedException {
@@ -232,6 +235,7 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     
+    @Override
     public void revokeAccessToken(String tokenStringRequestingDelete,
         String tokenToDelete) {
         logger.debug("Deleting Token {}", tokenToDelete);
@@ -280,6 +284,7 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     
+    @Override
     public void revokeAllTokensForClient(final String clientId) {
         logger.debug("Deleting all access tokens for client {}.", clientId);
         this.scopeAccessService.expireAllTokensForClient(clientId);
@@ -287,6 +292,7 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     
+    @Override
     public void revokeAllTokensForCustomer(final String customerId) {
         logger
             .debug("Revoking all access tokens for customer: {}.", customerId);
@@ -305,6 +311,7 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     
+    @Override
     public void revokeAllTokensForUser(final String username) {
         logger.debug("Deleting all access tokens for user {}.", username);
         this.scopeAccessService.expireAllTokensForUser(username);
@@ -312,6 +319,7 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     
+    @Override
     public ApiError validateGrantType(final AuthCredentials trParam,
         final OAuthGrantType grantType) {
 
@@ -527,9 +535,5 @@ public class DefaultOAuthService implements OAuthService {
 
     private boolean isTrustedServer() {
         return config.getBoolean("ldap.server.trusted", false);
-    }
-
-    private String getRackspaceCustomerId() {
-        return config.getString("rackspace.customerId");
     }
 }
