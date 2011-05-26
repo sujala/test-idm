@@ -26,9 +26,11 @@ import com.sun.jersey.spi.container.ContainerRequestFilter;
  *         several that are checked for in the if clauses below.
  */
 @Component
-public class AuthenticationFilter implements ContainerRequestFilter, ApplicationContextAware {
+public class AuthenticationFilter implements ContainerRequestFilter,
+    ApplicationContextAware {
     private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
-    private final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
+    private final Logger logger = LoggerFactory
+        .getLogger(AuthenticationFilter.class);
 
     @Context
     HttpServletRequest req;
@@ -45,7 +47,7 @@ public class AuthenticationFilter implements ContainerRequestFilter, Application
 
     @Override
     public ContainerRequest filter(ContainerRequest request) {
-        final String path = request.getPath();
+        String path = request.getPath();
         final String method = request.getMethod();
 
         if (req != null) {
@@ -55,6 +57,9 @@ public class AuthenticationFilter implements ContainerRequestFilter, Application
             MDC.put(Audit.GUUID, UUID.randomUUID().toString());
         }
         // Skip authentication for the following 5 calls
+
+        int index = path.indexOf("/");
+        path = index > 0 ? path.substring(index + 1) : "";
 
         if ("GET".equals(method) && "application.wadl".equals(path)) {
             return request;
@@ -71,10 +76,6 @@ public class AuthenticationFilter implements ContainerRequestFilter, Application
         if ("GET".equals(method) && path.startsWith("xslt")) {
             return request;
         }
-        
-        if (path.startsWith("authorize")) {
-            return request;
-        }
 
         if ("GET".equals(method) && "".equals(path)) {
             return request;
@@ -83,13 +84,16 @@ public class AuthenticationFilter implements ContainerRequestFilter, Application
         if ("POST".equals(method) && "token".equals(path)) {
             return request;
         }
-        final String authHeader = request.getHeaderValue(HttpHeaders.AUTHORIZATION);
+        final String authHeader = request
+            .getHeaderValue(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || authHeader.isEmpty()) {
             throw new NotAuthenticatedException(
-            "The request for the resource must include the Authorization header.");
+                "The request for the resource must include the Authorization header.");
         }
-        final String tokenString = authHeaderHelper.getTokenFromAuthHeader(authHeader);
-        final boolean authResult = getScopeAccessService().authenticateAccessToken(tokenString );
+        final String tokenString = authHeaderHelper
+            .getTokenFromAuthHeader(authHeader);
+        final boolean authResult = getScopeAccessService()
+            .authenticateAccessToken(tokenString);
 
         if (authResult) {
             // Authenticated
@@ -102,7 +106,8 @@ public class AuthenticationFilter implements ContainerRequestFilter, Application
     }
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(ApplicationContext applicationContext)
+        throws BeansException {
         springCtx = applicationContext;
     }
 

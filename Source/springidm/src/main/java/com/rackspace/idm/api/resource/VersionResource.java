@@ -13,28 +13,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.resource.auth.AuthResource;
-import com.rackspace.idm.api.resource.authorize.AuthorizeResource;
 import com.rackspace.idm.api.resource.baseurl.BaseUrlsResource;
 import com.rackspace.idm.api.resource.customer.CustomersResource;
 import com.rackspace.idm.api.resource.mosso.MossoUserResource;
 import com.rackspace.idm.api.resource.nast.NastUserResource;
 import com.rackspace.idm.api.resource.passwordrule.PasswordRulesResource;
+import com.rackspace.idm.api.resource.scope.ScopesResource;
 import com.rackspace.idm.api.resource.token.TokenResource;
 import com.rackspace.idm.api.resource.user.UsersResource;
-import com.rackspace.idm.api.resource.scope.ScopesResource;
 import com.rackspace.idm.domain.service.ApiDocService;
 
 /**
  * API Version
  * 
  */
-@Path("/")
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class VersionResource {
 
-    private final AuthorizeResource authorizeResource;
     private final AuthResource authResource;
     private final UsersResource usersResource;
     private final CustomersResource customersResource;
@@ -48,12 +45,11 @@ public class VersionResource {
     private final Configuration config;
 
     @Autowired
-    public VersionResource(AuthorizeResource authorizeResource,AuthResource authResource, UsersResource usersResource,
+    public VersionResource(AuthResource authResource, UsersResource usersResource,
         CustomersResource customersResource, MossoUserResource mossoUserResource,
         NastUserResource nastUserResource, PasswordRulesResource passwordRulesResource,
         TokenResource tokenResource, BaseUrlsResource baseUrlsResource, ScopesResource scopeAccessResource, ApiDocService apiDocService,
         Configuration config) {
-        this.authorizeResource = authorizeResource;
         this.authResource = authResource;
         this.usersResource = usersResource;
         this.customersResource = customersResource;
@@ -79,7 +75,7 @@ public class VersionResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      */
     @GET
-    public Response getVersionInfo() {
+    public Response getVersionInfo(@PathParam("versionId") String versionId) {
         com.rackspace.idm.jaxb.Version version = new com.rackspace.idm.jaxb.Version();
         version.setDocURL(config.getString("app.version.doc.url"));
         version.setId(config.getString("app.version"));
@@ -161,10 +157,5 @@ public class VersionResource {
     @Path("scopeAccess")
     public ScopesResource getScopeAccesses() {
         return scopeAccessResource;   
-    }
-    
-    @Path("authorize")
-    public AuthorizeResource getAuthorizeResource() {
-        return authorizeResource;
     }
 }
