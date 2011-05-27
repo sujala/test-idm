@@ -7,8 +7,10 @@ import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.jaxb.ObjectFactory;
+import com.rackspace.idm.jaxb.Permissions;
 
 public class TokenConverter {
     private final ObjectFactory of = new ObjectFactory();
@@ -23,6 +25,25 @@ public class TokenConverter {
         
         if(expiration != null) {
             jaxbToken.setExpiresIn(secs);
+        }
+        
+        return jaxbToken;
+    }
+    
+    public com.rackspace.idm.jaxb.Token toTokenJaxb(String tokenString, Date expiration, Permissions permList) {
+        com.rackspace.idm.jaxb.Token jaxbToken = of.createToken();
+
+        Seconds diff = Seconds.secondsBetween(new DateTime(), new DateTime(expiration));
+        int secs = diff.getSeconds();
+        
+        jaxbToken.setId(tokenString);
+        
+        if(expiration != null) {
+            jaxbToken.setExpiresIn(secs);
+        }
+        
+        if ( permList != null) {
+            jaxbToken.setPermissionList(permList);
         }
 
         return jaxbToken;

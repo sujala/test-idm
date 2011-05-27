@@ -439,7 +439,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             scopeAccessUniqueId);
         return perms;
     }
-
+    
+    public List<Permission> getPermissionsForParent(String scopeAccessUniqueId) {
+        logger.debug("Getting Permissions on ScopeAccess {}", scopeAccessUniqueId);
+        List<Permission> perms = this.scopeAccessDao.getPermissionsByParent(scopeAccessUniqueId);
+        logger.debug("Done Getting Permissions on ScopeAccess {}", scopeAccessUniqueId);
+        return perms;
+    }  
     
     public RackerScopeAccess getRackerScopeAccessForClientId(
         String rackerUniqueId, String clientId) {

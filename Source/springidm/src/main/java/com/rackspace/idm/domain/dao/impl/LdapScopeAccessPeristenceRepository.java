@@ -334,8 +334,11 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
             new Object[]{list.size(), parentUniqueId, permission});
         return list;
     }
-
     
+    public List<Permission> getPermissionsByParent(String parentUniqueId) {        
+        return getPermissionsByParentAndPermission(parentUniqueId, null);
+    }
+
     public List<Permission> getPermissionsByPermission(Permission permission) {
         return getPermissionsByParentAndPermission(BASE_DN, permission);
     }
@@ -811,13 +814,13 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         LdapSearchBuilder builder = new LdapSearchBuilder().addEqualAttribute(
             ATTR_OBJECT_CLASS, OBJECTCLASS_PERMISSION);
 
-        if (permission.getPermissionId() != null) {
+        if (permission != null && permission.getPermissionId() != null) {
             builder.addEqualAttribute(ATTR_NAME, permission.getPermissionId());
         }
-        if (permission.getClientId() != null) {
+        if (permission != null && permission.getClientId() != null) {
             builder.addEqualAttribute(ATTR_CLIENT_ID, permission.getClientId());
         }
-        if (permission.getCustomerId() != null) {
+        if (permission != null && permission.getCustomerId() != null) {
             builder.addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER,
                 permission.getCustomerId());
         }

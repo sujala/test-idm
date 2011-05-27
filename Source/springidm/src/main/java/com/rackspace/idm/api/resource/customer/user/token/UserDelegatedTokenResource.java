@@ -27,6 +27,7 @@ import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.api.converter.TokenConverter;
 import com.rackspace.idm.api.resource.token.TokenResource;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
@@ -39,17 +40,17 @@ import com.rackspace.idm.exception.NotFoundException;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class UserTokenResource {
+public class UserDelegatedTokenResource {
 
     private final ScopeAccessService scopeAccessService;
     private final AuthorizationService authorizationService;
     private final UserService userService;
     private final TokenConverter tokenConverter;
     private final AuthConverter authConverter;
-    final private Logger logger = LoggerFactory.getLogger(UserTokenResource.class);
+    final private Logger logger = LoggerFactory.getLogger(UserDelegatedTokenResource.class);
 
     @Autowired
-    public UserTokenResource(ScopeAccessService scopeAccessService, UserService userService, AuthorizationService authorizationService,
+    public UserDelegatedTokenResource(ScopeAccessService scopeAccessService, UserService userService, AuthorizationService authorizationService,
         TokenConverter tokenConverter, AuthConverter authConverter) {
         this.scopeAccessService = scopeAccessService;
         this.userService = userService;
@@ -142,10 +143,11 @@ public class UserTokenResource {
             }
         }
 
-
         logger.debug("Delegated Access Token Found: {}", tokenString);
+        
+        List<Permission> permsForToken = this.scopeAccessService.getPermissionsForParent(delegatedScopeAccess.getUniqueId());
 
-        return Response.ok(authConverter.toAuthDataJaxb(delegatedScopeAccess)).build();
+        return Response.ok(authConverter.toAuthDataJaxb(delegatedScopeAccess, permsForToken)).build();
     }
 
     /**

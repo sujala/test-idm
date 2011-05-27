@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
+import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
@@ -20,6 +21,7 @@ import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.entity.hasRefreshToken;
 import com.rackspace.idm.jaxb.CloudAuth;
 import com.rackspace.idm.jaxb.ObjectFactory;
+import com.rackspace.idm.jaxb.Permissions;
 import com.rackspace.idm.jaxb.ServiceCatalog;
 
 public class AuthConverter {
@@ -28,16 +30,34 @@ public class AuthConverter {
     private final ClientConverter clientConverter;
     private final TokenConverter tokenConverter;
     private final EndPointConverter endpointConverter;
+    private final PermissionConverter permissionConverter;
 
     private final ObjectFactory of = new ObjectFactory();
 
     public AuthConverter(TokenConverter tokenConverter,
         ClientConverter clientConverter, UserConverter userConverter,
-        EndPointConverter endpointConverter) {
+        EndPointConverter endpointConverter, PermissionConverter permissionConverter) {
         this.tokenConverter = tokenConverter;
         this.clientConverter = clientConverter;
         this.userConverter = userConverter;
         this.endpointConverter = endpointConverter;
+        this.permissionConverter = permissionConverter;
+    }
+    
+    public com.rackspace.idm.jaxb.Auth toAuthDataJaxb(ScopeAccess scopeAccess, List<Permission> perms) {
+        com.rackspace.idm.jaxb.Auth authJaxb = this.toAuthDataJaxb(scopeAccess);
+        Permissions permsJaxb = permissionConverter.toPermissionListJaxb(perms);
+ 
+        if (permsJaxb != null) {
+            if (scopeAccess instanceof hasAccessToken) {
+                hasAccessToken tokenScopeAccessObject = ((hasAccessToken)scopeAccess);
+                    authJaxb.setAccessToken(tokenConverter.toTokenJaxb(
+                        tokenScopeAccessObject.getAccessTokenString(), 
+                        tokenScopeAccessObject.getAccessTokenExp(), permsJaxb));        
+            }
+        }
+        
+        return authJaxb;
     }
 
     public com.rackspace.idm.jaxb.Auth toAuthDataJaxb(ScopeAccess scopeAccess) {
@@ -47,9 +67,10 @@ public class AuthConverter {
 
         if (scopeAccess instanceof hasAccessToken) {
             hasAccessToken tokenScopeAccessObject = ((hasAccessToken)scopeAccess);
-            authJaxb.setAccessToken(tokenConverter.toTokenJaxb(
+           
+                authJaxb.setAccessToken(tokenConverter.toTokenJaxb(
                     tokenScopeAccessObject.getAccessTokenString(), 
-                    tokenScopeAccessObject.getAccessTokenExp()));
+                    tokenScopeAccessObject.getAccessTokenExp()));        
         }
 
         if (scopeAccess instanceof hasRefreshToken) {
@@ -77,6 +98,7 @@ public class AuthConverter {
             DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) scopeAccess;
                 authJaxb.setUser(userConverter.toUserJaxbFromUser(dcsa.getUsername(), 
                         dcsa.getUserRCN()));
+               
         }
         
         if (scopeAccess instanceof RackerScopeAccess) {

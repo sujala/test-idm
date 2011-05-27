@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.api.resource.customer.user.service.CustomerUserServicesResource;
-import com.rackspace.idm.api.resource.customer.user.token.UserTokenResource;
+import com.rackspace.idm.api.resource.customer.user.token.UserDelegatedTokenResource;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -53,7 +53,7 @@ public class UserResource {
     private final UserSecretResource userSecretResource;
     private final UserSoftDeleteResource userSoftDeleteResource;
     private final UserStatusResource userStatusResource;
-    private final UserTokenResource userTokenResource;
+    private final UserDelegatedTokenResource userTokenResource;
     private final UserService userService;
     private final UserConverter userConverter;
     private final InputValidator inputValidator;
@@ -64,7 +64,7 @@ public class UserResource {
     public UserResource(CustomerUserServicesResource customerUserServicesResource, ScopeAccessService scopeAccessService, ApiKeyResource apiKeyResource,
         UserLockResource userLockResource, UserPasswordResource userPasswordResource,
         UserGroupsResource userGroupsResource, UserSecretResource userSecretResource,
-        UserSoftDeleteResource userSoftDeleteResource, UserStatusResource userStatusResource,UserTokenResource userTokenResource,
+        UserSoftDeleteResource userSoftDeleteResource, UserStatusResource userStatusResource,UserDelegatedTokenResource userTokenResource,
         UserService userService, UserConverter userConverter, InputValidator inputValidator,
         AuthorizationService authorizationService) {
         this.customerUserServicesResource = customerUserServicesResource;
@@ -268,7 +268,7 @@ public class UserResource {
     }
     
     @Path("tokens")
-    public UserTokenResource getUserTokenResource() {
+    public UserDelegatedTokenResource getUserTokenResource() {
         return userTokenResource;
     }
     

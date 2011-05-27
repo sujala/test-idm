@@ -19,6 +19,8 @@ public interface ScopeAccessService {
 
     List<Permission> getPermissionsForParent(String scopeAccessUniqueId,
         Permission permission);
+    
+    List<Permission> getPermissionsForParent(String scopeAccessUniqueId);
         
     ScopeAccess addDirectScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
     

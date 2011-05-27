@@ -33,6 +33,8 @@ public interface ScopeAccessDao {
     Permission getPermissionByParentAndPermission(String parentUniqueId, Permission permission);
 
     List<Permission> getPermissionsByParentAndPermission(String parentUniqueId, Permission permission);
+    
+    List<Permission> getPermissionsByParent(String parentUniqueId);
 
     List<Permission> getPermissionsByPermission(Permission permission);
 
