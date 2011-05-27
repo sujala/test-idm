@@ -11,7 +11,6 @@
     jaxb:extensionBindingPrefixes="xjc"
     targetNamespace="http://docs.rackspacecloud.com/idm/api/v1.0">
 
-
 	<annotation>
 		<xsd:appinfo xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
 			<xsdxt:title>Tokens</xsdxt:title>
@@ -119,6 +118,10 @@
 
 	<!-- Complex Types -->
 	<complexType name="Token">
+		<sequence>
+			<element name="PermissionList" type="idm:PermissionList" minOccurs="0" maxOccurs="1">
+				</element>
+		</sequence>
 		<attribute name="id" type="xsd:string" use="required">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
