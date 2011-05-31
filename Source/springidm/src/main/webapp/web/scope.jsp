@@ -32,6 +32,7 @@
 <input type='hidden' name='response_type' value='<%= request.getParameter("response_type") %>'> 
 <input type='hidden' name='scope' value='<%= request.getParameter("scope") %>'> 
 <input type='hidden' name='username' value='<%= request.getAttribute("username") %>'>
+<input type='hidden' name='verification' value='<%= request.getAttribute("verification") %>'>
 </form>
 </body>
 </html>
