@@ -165,7 +165,7 @@
 
 	<complexType name="VersionList">
 		<sequence>
-			<element name="version" type="idm:Version" minOccurs="1" maxOccurs="unbounded"></element>
+			<element name="version" type="idm:Version" minOccurs="1" maxOccurs="100"></element>
 		</sequence>
 	</complexType>
 

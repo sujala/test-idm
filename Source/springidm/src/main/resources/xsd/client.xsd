@@ -177,7 +177,7 @@
 	<complexType name="ClientList">
 		<sequence>
 			<element name="client" type="idm:Client" minOccurs="0"
-				maxOccurs="unbounded">
+				maxOccurs="1000">
 			</element>
 		</sequence>
 		<attribute name="totalRecords" type="xsd:int"></attribute>
@@ -239,7 +239,7 @@
 
 	<complexType name="ClientGroupList">
 		<sequence>
-			<element name="clientGroup" type="idm:ClientGroup" minOccurs="0" maxOccurs="unbounded"></element>
+			<element name="clientGroup" type="idm:ClientGroup" minOccurs="0" maxOccurs="1000"></element>
 		</sequence>
 	</complexType>
 

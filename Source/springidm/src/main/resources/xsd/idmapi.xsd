@@ -23,7 +23,6 @@
 			<xsdxt:link rev="index" href="user.xsd" />
 			<xsdxt:link rev="index" href="version.xsd" />
 			<xsdxt:link rev="index" href="permission.xsd" />
-			<xsdxt:link rev="index" href="password_recovery.xsd" />
 			<xsdxt:link rev="index" href="passwordRotationPolicy.xsd" />
 			<xsdxt:link rev="index" href="scopes.xsd" />
 			   
@@ -123,15 +122,6 @@
 			<xsd:documentation xml:lang="EN"
 				xmlns="http://www.w3.org/1999/xhtml">
 				<p>All fault types.</p>
-			</xsd:documentation>
-		</annotation>
-	</include>
-	
-	<include schemaLocation="password_recovery.xsd">
-		<annotation>
-			<xsd:documentation xml:lang="EN"
-				xmlns="http://www.w3.org/1999/xhtml">
-				<p>End user password recovery request..</p>
 			</xsd:documentation>
 		</annotation>
 	</include>

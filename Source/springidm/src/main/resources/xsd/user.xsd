@@ -403,7 +403,7 @@
 	<complexType name="UserList">
 		<sequence>
 			<element name="user" type="idm:User" minOccurs="0"
-				maxOccurs="unbounded">
+				maxOccurs="1000">
 			</element>
 		</sequence>
 		<attribute name="totalRecords" type="xsd:int" use="optional"></attribute>

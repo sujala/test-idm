@@ -45,7 +45,7 @@
 
          <complexType name="ServiceCatalog">
              <sequence>
-                 <element name="service" type="idm:Service" minOccurs="1" maxOccurs="unbounded">
+                 <element name="service" type="idm:Service" minOccurs="1" maxOccurs="1000">
                      <annotation>
                          <xsd:documentation
                                  xml:lang="EN"
@@ -60,7 +60,7 @@
          </complexType>
          <complexType name="Service">
              <sequence>
-                 <element name="endpoint" type="idm:Endpoint" minOccurs="1" maxOccurs="unbounded">
+                 <element name="endpoint" type="idm:Endpoint" minOccurs="1" maxOccurs="1000">
                      <annotation>
                          <xsd:documentation
                                  xml:lang="EN"
@@ -364,13 +364,13 @@
      
          <complexType name="BaseURLList">
              <sequence>
-                 <element name="baseURL" type="idm:BaseURL" minOccurs="0" maxOccurs="unbounded"/>
+                 <element name="baseURL" type="idm:BaseURL" minOccurs="0" maxOccurs="1000"/>
              </sequence>
          </complexType>
      
          <complexType name="BaseURLRefList">
              <sequence>
-                 <element name="baseURLRef" type="idm:BaseURLRef" minOccurs="0" maxOccurs="unbounded"/>
+                 <element name="baseURLRef" type="idm:BaseURLRef" minOccurs="0" maxOccurs="1000"/>
              </sequence>
          </complexType>
          <simpleType name="UserType">

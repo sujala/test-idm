@@ -124,7 +124,7 @@
     <complexType name="PermissionList">
         <sequence>
             <element name="permission" type="idm:Permission" minOccurs="0"
-                maxOccurs="unbounded">
+                maxOccurs="1000">
             </element>
         </sequence>
         

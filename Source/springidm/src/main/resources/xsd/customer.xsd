@@ -119,7 +119,7 @@
 	<complexType name="CustomerList">
 		<sequence>
 			<element name="customer" type="idm:Customer" minOccurs="0"
-				maxOccurs="unbounded"></element>
+				maxOccurs="1000"></element>
 		</sequence>
 	</complexType>
 

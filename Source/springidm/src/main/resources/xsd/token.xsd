@@ -107,11 +107,11 @@
 		</annotation>
 	</element>
 	
-	<element name="tokens" type="idm:Tokens"></element>
+	<element name="tokens" type="idm:TokenList"></element>
 	
-	<complexType name="Tokens">
+	<complexType name="TokenList">
 		<sequence>
-			<element name="token" type="idm:Token" minOccurs="0" maxOccurs="unbounded">
+			<element name="token" type="idm:Token" minOccurs="0" maxOccurs="100">
 			</element>
 		</sequence>
 	</complexType>
