@@ -3,12 +3,12 @@ package com.rackspace.idm.api.converter;
 import java.util.Date;
 import java.util.List;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+
 import org.joda.time.DateTime;
-import org.joda.time.Seconds;
 
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
-import com.rackspace.idm.domain.entity.Permission;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.jaxb.ObjectFactory;
 import com.rackspace.idm.jaxb.Permissions;
 
@@ -17,14 +17,19 @@ public class TokenConverter {
 
     public com.rackspace.idm.jaxb.Token toTokenJaxb(String tokenString, Date expiration) {
         com.rackspace.idm.jaxb.Token jaxbToken = of.createToken();
-
-        Seconds diff = Seconds.secondsBetween(new DateTime(), new DateTime(expiration));
-        int secs = diff.getSeconds();
         
         jaxbToken.setId(tokenString);
         
-        if(expiration != null) {
-            jaxbToken.setExpiresIn(secs);
+        try {
+            if (expiration != null) {
+
+                jaxbToken.setExpires(DatatypeFactory.newInstance()
+                    .newXMLGregorianCalendar(new DateTime(expiration).toGregorianCalendar()));
+            }
+
+        } catch (DatatypeConfigurationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
         
         return jaxbToken;
@@ -32,14 +37,19 @@ public class TokenConverter {
     
     public com.rackspace.idm.jaxb.Token toTokenJaxb(String tokenString, Date expiration, Permissions permList) {
         com.rackspace.idm.jaxb.Token jaxbToken = of.createToken();
-
-        Seconds diff = Seconds.secondsBetween(new DateTime(), new DateTime(expiration));
-        int secs = diff.getSeconds();
         
         jaxbToken.setId(tokenString);
         
-        if(expiration != null) {
-            jaxbToken.setExpiresIn(secs);
+        try {
+            if (expiration != null) {
+
+                jaxbToken.setExpires(DatatypeFactory.newInstance()
+                    .newXMLGregorianCalendar(new DateTime(expiration).toGregorianCalendar()));
+            }
+
+        } catch (DatatypeConfigurationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
         
         if ( permList != null) {

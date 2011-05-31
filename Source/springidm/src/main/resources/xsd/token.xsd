@@ -130,7 +130,7 @@
 				</xsd:documentation>
 			</annotation>
 		</attribute>
-		<attribute name="expires_in" type="xsd:int" use="optional">
+		<attribute name="expires" type="xsd:dateTime" use="optional">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
