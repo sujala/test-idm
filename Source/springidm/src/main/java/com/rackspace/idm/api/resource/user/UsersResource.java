@@ -134,7 +134,7 @@ public class UsersResource {
 
         if (userDO.getPasswordObj() != null && !StringUtils.isBlank(userDO.getPasswordObj().getValue())) {
             String password = userDO.getPasswordObj().getValue();
-            if (!passwordComplexityService.checkPassword(password).isValidPassword()) {
+            if (isPasswordRulesEnforced() && !passwordComplexityService.checkPassword(password).isValidPassword()) {
                 String errorMsg = String.format("Invalid password %s", password);
                 logger.warn(errorMsg);
                 throw new PasswordValidationException(errorMsg);
@@ -548,5 +548,9 @@ public class UsersResource {
 
     private String getRackspaceCustomerId() {
         return config.getString("rackspace.customerId");
+    }
+    
+    private boolean isPasswordRulesEnforced() {
+        return config.getBoolean("password.rules.enforced", false);
     }
 }

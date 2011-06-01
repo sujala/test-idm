@@ -15,6 +15,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,7 @@ public class UserPasswordResource {
     private final PasswordConverter passwordConverter;
     private final TokenConverter tokenConverter;
     private final AuthorizationService authorizationService;
+    private final Configuration config;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
     String errorMsg = String.format("Authorization Failed");
 
@@ -60,13 +62,14 @@ public class UserPasswordResource {
         UserService userService,
         PasswordComplexityService passwordComplexityService,
         PasswordConverter passwordConverter, TokenConverter tokenConverter,
-        AuthorizationService authorizationService) {
+        AuthorizationService authorizationService, Configuration config) {
         this.scopeAccessService = scopeAccessService;
         this.userService = userService;
         this.passwordComplexityService = passwordComplexityService;
         this.passwordConverter = passwordConverter;
         this.tokenConverter = tokenConverter;
         this.authorizationService = authorizationService;
+        this.config = config;
     }
 
     /**
@@ -205,7 +208,7 @@ public class UserPasswordResource {
 
         UserCredentials userCred = holder.getEntity();
 
-        if (!passwordComplexityService.checkPassword(
+        if (isPasswordRulesEnforced() && !passwordComplexityService.checkPassword(
             userCred.getNewPassword().getPassword()).isValidPassword()) {
             String errorMsg = String.format("Invalid password %s", userCred
                 .getNewPassword().getPassword());
@@ -274,5 +277,9 @@ public class UserPasswordResource {
         return Response.ok(
             tokenConverter.toTokenJaxb(prsa.getAccessTokenString(),
                 prsa.getAccessTokenExp())).build();
+    }
+    
+    private boolean isPasswordRulesEnforced() {
+        return config.getBoolean("password.rules.enforced", false);
     }
 }

@@ -53,15 +53,6 @@ auth.ldap.base.dn=ou=users\,o=rackspace
 
 #################################################################################
 #
-# MEMCAHED SERVER
-#
-#################################################################################
-
-# Space delimited list of memcached instances in host:port format
-memcached.serverList=10.127.7.165:11211
-
-#################################################################################
-#
 # RACKSPACE SETTINGS
 #
 #################################################################################
@@ -90,17 +81,6 @@ token.cloudAuthExpirationSeconds=86400
 token.maxExpirationSeconds=86400
 token.minExpirationSeconds=10
 token.refreshTokenExpirationSeconds=86400
-token.dataCenterPrefix=QA
-
-#################################################################################
-#
-# DATA CENTERS
-#
-#################################################################################
-
-# Values that are useful only for testing.
-dc=DEV|http://10.127.7.166:8080/v1.0
-dc=QA|http://10.127.7.164:8080/v1.0
 
 #################################################################################
 #
@@ -109,3 +89,4 @@ dc=QA|http://10.127.7.164:8080/v1.0
 #################################################################################
 
 cloud.baseurl.ref.string=https://idm.rackspace.com/v%s/baseurls/%s
+password.rules.enforced=false

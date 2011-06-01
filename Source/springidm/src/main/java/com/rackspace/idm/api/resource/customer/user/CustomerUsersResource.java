@@ -18,6 +18,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,15 +61,18 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
     private final InputValidator inputValidator;
     private final PasswordComplexityService passwordComplexityService;
     private final AuthorizationService authorizationService;
+    private final Configuration config;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public CustomerUsersResource(ScopeAccessService scopeAccessService, UserResource userResource,
-        UserService userService, CustomerService customerService, UserConverter userConverter,
-        InputValidator inputValidator, PasswordComplexityService passwordComplexityService,
-        AuthorizationService authorizationService) {
+    public CustomerUsersResource(ScopeAccessService scopeAccessService,
+        UserResource userResource, UserService userService,
+        CustomerService customerService, UserConverter userConverter,
+        InputValidator inputValidator,
+        PasswordComplexityService passwordComplexityService,
+        AuthorizationService authorizationService, Configuration config) {
         super(customerService);
-        
+
         this.scopeAccessService = scopeAccessService;
         this.userResource = userResource;
         this.userService = userService;
@@ -76,6 +80,7 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
         this.inputValidator = inputValidator;
         this.passwordComplexityService = passwordComplexityService;
         this.authorizationService = authorizationService;
+        this.config = config;
     }
 
     /**
@@ -94,20 +99,23 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
      * @param customerId RCN
      */
     @GET
-    public Response getUsers(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+    public Response getUsers(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
         @QueryParam("offset") int offset, @QueryParam("limit") int limit) {
 
         logger.debug("Getting Customer Users: {}", customerId);
 
         ScopeAccess token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients and Admins are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo)
             || authorizationService.authorizeAdmin(token, customerId);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
@@ -138,25 +146,29 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
      */
     @POST
     public Response addUser(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
         EntityHolder<com.rackspace.idm.jaxb.User> holder) {
 
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
         ScopeAccess token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Specific Clients and Admins are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo)
             || authorizationService.authorizeAdmin(token, customerId);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         com.rackspace.idm.jaxb.User user = holder.getEntity();
-        if (user.getApiKey() != null && !StringUtils.isEmpty(user.getApiKey().getApiKey())) {
-            String errMsg = String.format("Setting the apiKey is Forbidden from this call for user %s",
+        if (user.getApiKey() != null
+            && !StringUtils.isEmpty(user.getApiKey().getApiKey())) {
+            String errMsg = String.format(
+                "Setting the apiKey is Forbidden from this call for user %s",
                 user.getUsername());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
@@ -174,10 +186,14 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
 
         logger.debug("Adding User: {}", user.getUsername());
 
-        if (userDO.getPasswordObj() != null && !StringUtils.isBlank(userDO.getPasswordObj().getValue())) {
+        if (userDO.getPasswordObj() != null
+            && !StringUtils.isBlank(userDO.getPasswordObj().getValue())) {
             String password = userDO.getPasswordObj().getValue();
-            if (!passwordComplexityService.checkPassword(password).isValidPassword()) {
-                String errorMsg = String.format("Invalid password %s", password);
+            if (isPasswordRulesEnforced()
+                && !passwordComplexityService.checkPassword(password)
+                    .isValidPassword()) {
+                String errorMsg = String
+                    .format("Invalid password %s", password);
                 logger.warn(errorMsg);
                 throw new PasswordValidationException(errorMsg);
             }
@@ -232,18 +248,20 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
      */
     @GET
     @Path("rpn/{rpn}")
-    public Response getUserBasedOnRPN(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("rpn") String rpn) {
+    public Response getUserBasedOnRPN(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId, @PathParam("rpn") String rpn) {
 
         ScopeAccess token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Racker's, Rackspace Clients, Specific Clients, Admins and User's are
         // authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo)
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo)
             || authorizationService.authorizeAdmin(token, customerId)
             || authorizationService.authorizeUser(token, customerId, rpn);
 
@@ -259,11 +277,16 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
         }
 
         logger.debug("Got User :{}", user);
-        return Response.ok(userConverter.toUserJaxbWithoutAnyAdditionalElements(user)).build();
+        return Response.ok(
+            userConverter.toUserJaxbWithoutAnyAdditionalElements(user)).build();
     }
 
     @Override
     protected Logger getLogger() {
         return logger;
+    }
+
+    private boolean isPasswordRulesEnforced() {
+        return config.getBoolean("password.rules.enforced", false);
     }
 }
