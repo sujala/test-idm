@@ -39,7 +39,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         super(connPools, config);
     }
 
-    
+    @Override
     public ScopeAccess addDelegateScopeAccess(String parentUniqueId,
         ScopeAccess scopeAccess) {
         getLogger().info("Adding Delegate ScopeAccess: {}", scopeAccess);
@@ -65,7 +65,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         }
     }
 
-    
+    @Override
     public ScopeAccess addDirectScopeAccess(String parentUniqueId,
         ScopeAccess scopeAccess) {
         getLogger().info("Adding Delegate ScopeAccess: {}", scopeAccess);
@@ -91,7 +91,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         }
     }
 
-    
+    @Override
     public DefinedPermission definePermission(String scopeAccessUniqueId,
         DefinedPermission permission) {
         getLogger().debug("Defining Permission: {}", permission);
@@ -122,7 +122,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         }
     }
 
-    
+    @Override
     public DelegatedPermission delegatePermission(String scopeAccessUniqueId,
         DelegatedPermission permission) {
         getLogger().debug("Delegating Permission: {}", permission);
@@ -153,7 +153,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         }
     }
 
-    
+    @Override
     public boolean deleteScopeAccess(ScopeAccess scopeAccess) {
         getLogger().debug("Deleting ScopeAccess: {}", scopeAccess);
         final String dn = scopeAccess.getUniqueId();
@@ -164,7 +164,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         return true;
     }
 
-    
+    @Override
     public boolean doesAccessTokenHavePermission(ScopeAccess token,
         Permission permission) {
         getLogger().debug("Checking Permission: {}", permission);
@@ -173,11 +173,14 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         Permission perm = new Permission(permission.getCustomerId(),
             permission.getClientId(), permission.getPermissionId());
         try {
+            String dn = token instanceof DelegatedClientScopeAccess ? token
+                .getUniqueId() : token.getLDAPEntry().getParentDNString();
+
             conn = getAppConnPool().getConnection();
 
             final Permission result = LDAPPersister.getInstance(
-                Permission.class).searchForObject(perm, conn,
-                token.getLDAPEntry().getParentDNString(), SearchScope.SUB);
+                Permission.class).searchForObject(perm, conn, dn,
+                SearchScope.SUB);
             getLogger().debug("{} : {}",
                 result == null ? "Found" : "Did not find", perm);
             return result != null;
@@ -189,7 +192,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         }
     }
 
-    
+    @Override
     public boolean doesParentHaveScopeAccess(String parentUniqueId,
         ScopeAccess scopeAccess) {
         LDAPConnection conn = null;
@@ -215,7 +218,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         }
     }
 
-    
+    @Override
     public ScopeAccess getDelegateScopeAccessForParentByClientId(
         String parentUniqueId, String clientId) {
         getLogger().debug("Find ScopeAccess for Parent: {} by ClientId: {}",
@@ -250,7 +253,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         return null;
     }
 
-    
+    @Override
     public ScopeAccess getDirectScopeAccessForParentByClientId(
         String parentUniqueId, String clientId) {
         getLogger().debug("Find ScopeAccess for Parent: {} by ClientId: {}",
@@ -285,7 +288,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         return null;
     }
 
-    
+    @Override
     public Permission getPermissionByParentAndPermission(String parentUniqueId,
         Permission permission) {
         getLogger().debug("Find Permission: {} by ParentId: {}", permission,
@@ -303,7 +306,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         return null;
     }
 
-    
+    @Override
     public List<Permission> getPermissionsByParentAndPermission(
         String parentUniqueId, Permission permission) {
         getLogger().debug(
@@ -334,16 +337,18 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
             new Object[]{list.size(), parentUniqueId, permission});
         return list;
     }
-    
-    public List<Permission> getPermissionsByParent(String parentUniqueId) {        
+
+    @Override
+    public List<Permission> getPermissionsByParent(String parentUniqueId) {
         return getPermissionsByParentAndPermission(parentUniqueId, null);
     }
 
+    @Override
     public List<Permission> getPermissionsByPermission(Permission permission) {
         return getPermissionsByParentAndPermission(BASE_DN, permission);
     }
 
-    
+    @Override
     public ScopeAccess getScopeAccessByAccessToken(String accessToken) {
         getLogger().debug("Find ScopeAccess by AccessToken: {}", accessToken);
         LDAPConnection conn = null;
@@ -371,7 +376,8 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         }
         return null;
     }
-    
+
+    @Override
     public DelegatedClientScopeAccess getScopeAccessByAuthorizationCode(
         String authorizationCode) {
         getLogger().debug("Find ScopeAccess by Authorization Code: {}",
@@ -404,7 +410,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         return null;
     }
 
-    
+    @Override
     public ScopeAccess getScopeAccessByRefreshToken(String refreshToken) {
         getLogger().debug("Find ScopeAccess by RefreshToken: {}", refreshToken);
         LDAPConnection conn = null;
@@ -436,7 +442,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         return null;
     }
 
-    
+    @Override
     public ScopeAccess getScopeAccessByUsernameAndClientId(String username,
         String clientId) {
         getLogger().debug("Find ScopeAccess by Username: {} and ClientId: {}",
@@ -467,31 +473,31 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         }
         return null;
     }
-    
-    
-    public List<DelegatedClientScopeAccess> getDelegatedClientScopeAccessByUsername(String username) {
-        getLogger().debug("Find ScopeAccess by Username: {}",username);
+
+    @Override
+    public List<DelegatedClientScopeAccess> getDelegatedClientScopeAccessByUsername(
+        String username) {
+        getLogger().debug("Find ScopeAccess by Username: {}", username);
         LDAPConnection conn = null;
-        List<DelegatedClientScopeAccess> scopeAccessList = null; 
+        List<DelegatedClientScopeAccess> scopeAccessList = null;
         try {
             conn = getAppConnPool().getConnection();
             final Filter filter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS)
-                .addEqualAttribute(ATTR_UID, username)
-                .build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS,
+                    OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS)
+                .addEqualAttribute(ATTR_UID, username).build();
             final SearchResult searchResult = conn.search(BASE_DN,
                 SearchScope.SUB, filter);
 
             final List<SearchResultEntry> searchEntries = searchResult
                 .getSearchEntries();
-            getLogger().debug(
-                "Found {}  ScopeAccess(s) by Username: {}",
+            getLogger().debug("Found {}  ScopeAccess(s) by Username: {}",
                 new Object[]{searchEntries.size(), username});
-            
+
             scopeAccessList = new ArrayList<DelegatedClientScopeAccess>();
-            
+
             for (final SearchResultEntry searchResultEntry : searchEntries) {
-                DelegatedClientScopeAccess scopeAccess = (DelegatedClientScopeAccess)decodeScopeAccess(searchResultEntry);
+                DelegatedClientScopeAccess scopeAccess = (DelegatedClientScopeAccess) decodeScopeAccess(searchResultEntry);
                 scopeAccessList.add(scopeAccess);
             }
         } catch (final LDAPException e) {
@@ -500,10 +506,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         } finally {
             getAppConnPool().releaseConnection(conn);
         }
-        return scopeAccessList;   
+        return scopeAccessList;
     }
 
-    
+    @Override
     public List<ScopeAccess> getScopeAccessesByParent(String parentUniqueId) {
         getLogger().debug("Finding ScopeAccesses for: {}", parentUniqueId);
         final List<ScopeAccess> list = new ArrayList<ScopeAccess>();
@@ -531,7 +537,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         return list;
     }
 
-    
+    @Override
     public ScopeAccess getScopeAccessByParentAndClientId(String parentUniqueId,
         String clientId) {
         getLogger().debug("Find ScopeAccess for Parent: {} by ClientId: {}",
@@ -563,7 +569,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         return null;
     }
 
-    
+    @Override
     public List<ScopeAccess> getScopeAccessesByParentAndClientId(
         String parentUniqueId, String clientId) {
         getLogger().debug("Find ScopeAccess for Parent: {} by ClientId: {}",
@@ -593,7 +599,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         return null;
     }
 
-    
+    @Override
     public List<ScopeAccess> getDelegateScopeAccessesByParent(
         String parentUniqueId) {
         getLogger().debug("Finding ScopeAccesses for: {}", parentUniqueId);
@@ -624,7 +630,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         return list;
     }
 
-    
+    @Override
     public GrantedPermission grantPermission(String scopeAccessUniqueId,
         GrantedPermission permission) {
         getLogger().debug("Granting Permission: {}", permission);
@@ -655,7 +661,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         }
     }
 
-    
+    @Override
     public boolean removePermissionFromScopeAccess(Permission permission) {
         getLogger().debug("Remove Permission: {}", permission);
         final String dn = permission.getUniqueId();
@@ -666,7 +672,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         return true;
     }
 
-    
+    @Override
     public boolean updatePermissionForScopeAccess(Permission permission) {
         getLogger().debug("Updating Permission: {}", permission);
         LDAPConnection conn = null;
@@ -689,7 +695,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         }
     }
 
-    
+    @Override
     public boolean updateScopeAccess(ScopeAccess scopeAccess) {
         getLogger().debug("Updating ScopeAccess: {}", scopeAccess);
         LDAPConnection conn = null;
