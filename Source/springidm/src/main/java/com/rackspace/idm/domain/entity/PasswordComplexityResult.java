@@ -3,22 +3,13 @@ package com.rackspace.idm.domain.entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
-
-@XmlRootElement(name = "passwordValidation")
-@XmlAccessorType(XmlAccessType.NONE)
 public class PasswordComplexityResult {
 
-    private List<PasswordRuleResult> passwordRuleResults = new ArrayList<PasswordRuleResult>();
+    private final List<PasswordRuleResult> passwordRuleResults = new ArrayList<PasswordRuleResult>();
 
     public PasswordComplexityResult() {
     }
 
-    @XmlElement(name = "validPassword")
     public boolean isValidPassword() {
         boolean isValid = true;
 
@@ -34,8 +25,6 @@ public class PasswordComplexityResult {
         this.passwordRuleResults.add(result);
     }
 
-    @XmlElementWrapper(name = "ruleResults")
-    @XmlElement(name = "ruleResult")
     public List<PasswordRuleResult> getPasswordRuleResults() {
         return passwordRuleResults;
     }
