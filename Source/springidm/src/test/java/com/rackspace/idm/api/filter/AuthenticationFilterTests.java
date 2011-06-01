@@ -40,7 +40,7 @@ public class AuthenticationFilterTests {
 
     @Test
     public void shouldIgnoreTokenRequest() {
-        EasyMock.expect(request.getPath()).andReturn("token");
+        EasyMock.expect(request.getPath()).andReturn("v1.0/token");
         EasyMock.expect(request.getMethod()).andReturn("POST");
         replayAndRunFilter();
     }
@@ -74,7 +74,7 @@ public class AuthenticationFilterTests {
 
     @Test(expected = NotAuthenticatedException.class)
     public void shouldFailAuthenticationWhenTokenIsInvalid() {
-        EasyMock.expect(request.getPath()).andReturn("foo");
+        EasyMock.expect(request.getPath()).andReturn("something/foo");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         final String tokenString = "hiiamatoken";
         final String header = "OAuth " + tokenString;
@@ -87,7 +87,7 @@ public class AuthenticationFilterTests {
 
     @Test(expected = NotAuthenticatedException.class)
     public void shouldFailAuthenticationWhenTokenIsMissing() {
-        EasyMock.expect(request.getPath()).andReturn("foo");
+        EasyMock.expect(request.getPath()).andReturn("something/foo");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
         .andReturn(null);
