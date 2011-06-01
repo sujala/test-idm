@@ -1,0 +1,250 @@
+html {
+    background-color: #161718;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    overflow: hidden;
+    background: #161718 url(../images/loginBodyBkg.gif) repeat-x 0 0;
+}
+
+body {
+    top: 0px;
+    position: relative;
+    color: black;
+    margin: 0px;
+    padding: 0px;
+    width: 100%;
+    height: 100%;
+    font-size: 14px;
+    font-family: Helvetica, Verdana, sans-serif;
+    background: #161718 url(../images/loginBodyBkg.gif) repeat-x 0 0;
+}
+
+h1 {
+    display: none;
+}
+
+#dialogContent {
+    width: 387px;
+    text-align: left;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0;
+}
+
+#dialogBottom {
+    margin: 0;
+    height: 20px;
+    background: url(../images/loginBottomBkg.gif) no-repeat 0 bottom;
+}
+
+#buttonRow {
+    padding-left: 90px;
+    margin: 0;
+}
+
+#dialogTop {
+    margin: 0;
+    padding-top: 80px;
+    padding-bottom: 0;
+    background: url(../images/loginWindowBkgRSCloud.gif) no-repeat left top;
+}
+
+.generic-error #dialogTop {
+    padding-top: 0px;
+    background-image: none !important;
+}
+
+#dialogContent a {
+    color: #00184c;
+    font-size: 100%;
+    padding-top: 0;
+}
+
+#dialogContent label {
+    display: block;
+    color: black;
+    font-size: 90%;
+    padding-left: 15px;
+}
+
+p.buttons {
+    margin-left: 10px;
+}
+
+p.formInstructions {
+    margin-top: 1px;
+    margin-bottom: 25px;
+    font-size: 90%;
+    padding-left: 15px;
+}
+
+input {
+    width: 200px;
+}
+
+form.form {
+    padding: 0px !important;
+    margin: 0px !important;
+}
+
+.field {
+    padding-left: 80px;
+}
+
+.msgBoxInfo {
+    color: #212120;
+    border: none;
+    background: none;
+    padding: 10px;
+    font-size: 90%;
+    margin: 0 15px 25px;
+    text-align: left;
+}
+
+.msgBoxPrompt {
+    color: #fff;
+    border: 1px solid #1f69af;
+    background: #edf5fe url(/resources/images/rackspaceCloudImages/uiMessages/contentInfoBkg.gif) repeat-x 0 0;
+    padding: 10px;
+    font-size: 90%;
+    margin: 15px 35px 25px;
+    text-align: left;
+}
+
+.msgBoxUpdate {
+    color: black;
+    border: 1px solid #E4CB10;
+    margin-top: 0;
+    margin-bottom: 30px;
+    background: #FEFADE;
+    padding: 10px;
+    width: 460px;
+}
+
+.msgBoxAppError {
+    color: #fff;
+    padding: 10px;
+    font-size: 90%;
+    text-align: left;
+    margin: 0 15px 25px;
+}
+
+.msgBoxError {
+    color: #ff0000;
+    padding: 10px;
+    font-size: 90%;
+    margin: 0 15px 25px;
+    text-align: left;
+}
+
+.msgBoxWelcome {
+    display: none;
+}
+
+table#login-wrapper {
+    width: 100%;
+    height: 100%;
+}
+
+td#login-wrapper-cell {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.fieldError {
+    margin-left: 60px;
+    padding-left: 20px;
+    padding-right: 10px;
+    padding-bottom: .9em;
+    position: relative;
+    top: -5px;
+    margin-top: -.9em;
+}
+
+#acceptAUP, #SecretQnAForm {
+    margin-left: 20px !important;
+    margin-right: 20px !important;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+#acceptAUP input, #SecretQnAForm input {
+    width: 90%;
+}
+
+#SecretQnAForm .field {
+    padding-left: 0px;
+    padding-top: 15px;
+}
+
+button {
+    border: 0;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 0 17px 0 0;
+    text-align: center;
+    background: url(../images/buttonUpRight.gif) right no-repeat;
+    background-position: right center;
+    background-repeat: no-repeat;
+    font-size: .8em;
+    margin: 5px;
+    cursor: pointer;
+}
+
+button span {
+    display: block;
+    white-space: nowrap;
+    padding: 0 0 0 17px;
+    height: 20px;
+    line-height: 20px;
+    background-image: url(../images/buttonUpLeft.gif);
+    background-position: left center;
+    background-repeat: no-repeat;
+    color: #fff;
+}
+
+#version7 button span {
+    position: relative;
+    top: 1px;
+}
+
+button:hover, .buttonOver {
+    background-image: url(../images/buttonOverRight.gif);
+    background-position: right center !important;
+    background-repeat: no-repeat;
+}
+
+button:active, .buttonDown {
+    background-image: url(../images/buttonDownRight.gif);
+    background-position: right center;
+    background-repeat: no-repeat;
+}
+
+button:hover span, .buttonOver span {
+    background-image: url(../images/buttonOverLeft.gif);
+    background-position: left center;
+    background-repeat: no-repeat;
+}
+
+button:active span, .buttonDown span {
+    background-image: url(../images/buttonDownLeft.gif);
+    background-position: left center;
+    background-repeat: no-repeat;
+    position: relative;
+    top: 0px;
+}
+
+button {
+    width: auto;
+    overflow: visible;
+}
+
+button span {
+    margin-top: 0px;
+    text-shadow: #000 0 0 4px;
+}
