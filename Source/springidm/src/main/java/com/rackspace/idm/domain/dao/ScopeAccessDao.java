@@ -11,7 +11,7 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 
 public interface ScopeAccessDao {
     
-//    ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
+    ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
     
     ScopeAccess addDelegateScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
     

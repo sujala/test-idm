@@ -92,6 +92,26 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     @Override
+    public ScopeAccess addScopeAccess(String parentUniqueId,
+        ScopeAccess scopeAccess) {
+        getLogger().info("Adding Delegate ScopeAccess: {}", scopeAccess);
+        Audit audit = Audit.log(scopeAccess).add();
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            getLogger().info("Added Delegate ScopeAccess: {}", scopeAccess);
+            audit.succeed();
+            return addScopeAccess(conn, parentUniqueId, scopeAccess);
+        } catch (final LDAPException e) {
+            getLogger().error("Error adding scope acccess object", e);
+            audit.fail();
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+    }
+
+    @Override
     public DefinedPermission definePermission(String scopeAccessUniqueId,
         DefinedPermission permission) {
         getLogger().debug("Defining Permission: {}", permission);
@@ -817,13 +837,14 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     private Filter getFilterForPermission(Permission permission) {
-        
+
         try {
             LDAPPersister persister = LDAPPersister.getInstance(permission
                 .getClass());
             return persister.getObjectHandler().createFilter(permission);
         } catch (Exception e) {
-            return Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_PERMISSION);
+            return Filter.createEqualityFilter(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_PERMISSION);
         }
 
     }

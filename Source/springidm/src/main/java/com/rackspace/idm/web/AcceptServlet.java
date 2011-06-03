@@ -150,7 +150,7 @@ public class AcceptServlet extends HttpServlet  {
                 ScopeAccess newSa = new ScopeAccess();
                 newSa.setClientId(sa.getClientId());
                 newSa.setClientRCN(sa.getClientRCN());
-                newSa = getScopeAccessService().addDirectScopeAccess(
+                newSa = getScopeAccessService().addScopeAccess(
                     dcsa.getUniqueId(), newSa);
 
                 Permission filter = new Permission();

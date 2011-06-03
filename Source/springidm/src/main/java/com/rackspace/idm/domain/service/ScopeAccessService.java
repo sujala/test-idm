@@ -25,6 +25,8 @@ public interface ScopeAccessService {
     ScopeAccess addDirectScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
     
     ScopeAccess addDelegateScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
+    
+    ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
 
     boolean authenticateAccessToken(String accessTokenStr);
 

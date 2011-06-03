@@ -90,6 +90,20 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.info("Added scopeAccess {}", scopeAccess);
         return newScopeAccess;
     }
+    
+    @Override
+    public ScopeAccess addScopeAccess(String parentUniqueId,
+        ScopeAccess scopeAccess) {
+        if (scopeAccess == null) {
+            String errMsg = String.format("Null argument passed in.");
+            logger.error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
+        logger.info("Adding scopeAccess {}", scopeAccess);
+        ScopeAccess newScopeAccess = this.scopeAccessDao.addScopeAccess(parentUniqueId, scopeAccess);
+        logger.info("Added scopeAccess {}", scopeAccess);
+        return newScopeAccess;
+    }
 
     
     @Override
