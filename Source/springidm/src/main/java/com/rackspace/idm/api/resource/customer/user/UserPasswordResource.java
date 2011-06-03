@@ -280,6 +280,6 @@ public class UserPasswordResource {
     }
     
     private boolean isPasswordRulesEnforced() {
-        return config.getBoolean("password.rules.enforced", false);
+        return config.getBoolean("password.rules.enforced", true);
     }
 }
