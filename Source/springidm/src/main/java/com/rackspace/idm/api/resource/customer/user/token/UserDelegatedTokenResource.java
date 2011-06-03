@@ -6,18 +6,15 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,13 +22,10 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.api.converter.TokenConverter;
-import com.rackspace.idm.api.resource.token.TokenResource;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
@@ -62,7 +56,7 @@ public class UserDelegatedTokenResource {
     /**
      * Gets a list of tokens for a user
      * 
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}tokens
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}delegateTokens
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
      * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
@@ -83,13 +77,13 @@ public class UserDelegatedTokenResource {
 
         List<DelegatedClientScopeAccess> scopeAccessList = this.scopeAccessService.getDelegatedUserScopeAccessForUsername(user.getUsername());
 
-        return Response.ok(tokenConverter.toTokensJaxb(scopeAccessList)).build();
+        return Response.ok(tokenConverter.toDelegateTokensJaxb(scopeAccessList)).build();
     }
 
     /**
      * Get details of the token delegated to a user. 
      * 
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}token
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}delegateToken
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
      * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
@@ -132,22 +126,11 @@ public class UserDelegatedTokenResource {
             throw new NotFoundException(errorMsg);
         }
 
-        if (delegatedScopeAccess instanceof hasAccessToken) {
-            boolean expired = ((hasAccessToken) delegatedScopeAccess)
-            .isAccessTokenExpired(new DateTime());
-            if (expired) {
-                String errorMsg = String.format("Token expired : %s",
-                    tokenString);
-                logger.warn(errorMsg);
-                throw new NotFoundException(errorMsg);
-            }
-        }
-
         logger.debug("Delegated Access Token Found: {}", tokenString);
         
         List<Permission> permsForToken = this.scopeAccessService.getPermissionsForParent(delegatedScopeAccess.getUniqueId());
 
-        return Response.ok(authConverter.toAuthDataJaxb(delegatedScopeAccess, permsForToken)).build();
+        return Response.ok(tokenConverter.toDelegatedTokenJaxb(delegatedScopeAccess, permsForToken)).build();
     }
 
     /**

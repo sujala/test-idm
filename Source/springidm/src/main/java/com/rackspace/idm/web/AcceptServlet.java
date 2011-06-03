@@ -66,7 +66,7 @@ public class AcceptServlet extends HttpServlet  {
         String accept = request.getParameter("accept");
         String days = request.getParameter("days");
         String username = request.getParameter("username");
-        String verification = request.getParameter("verificaiton");
+        String verification = request.getParameter("verification");
         
         if (StringUtils.isBlank(verification)) {
             response.setStatus(400);

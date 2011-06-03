@@ -62,7 +62,7 @@ public class ConverterConfiguration {
 
     @Bean
     TokenConverter tokenConverter() {
-        return new TokenConverter();
+        return new TokenConverter(permissionConverter());
     }
 
     @Bean
