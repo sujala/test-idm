@@ -817,21 +817,15 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     private Filter getFilterForPermission(Permission permission) {
-        LdapSearchBuilder builder = new LdapSearchBuilder().addEqualAttribute(
-            ATTR_OBJECT_CLASS, OBJECTCLASS_PERMISSION);
-
-        if (permission != null && permission.getPermissionId() != null) {
-            builder.addEqualAttribute(ATTR_NAME, permission.getPermissionId());
-        }
-        if (permission != null && permission.getClientId() != null) {
-            builder.addEqualAttribute(ATTR_CLIENT_ID, permission.getClientId());
-        }
-        if (permission != null && permission.getCustomerId() != null) {
-            builder.addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER,
-                permission.getCustomerId());
+        
+        try {
+            LDAPPersister persister = LDAPPersister.getInstance(permission
+                .getClass());
+            return persister.getObjectHandler().createFilter(permission);
+        } catch (Exception e) {
+            return Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_PERMISSION);
         }
 
-        return builder.build();
     }
 
     private SearchResultEntry getScopeAccessContainer(LDAPConnection conn,

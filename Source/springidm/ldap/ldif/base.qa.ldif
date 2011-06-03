@@ -133,7 +133,8 @@ ou: applications
 dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!2222,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsApplication
-cn: Cloud Control Panel
+cn: Rackspace Cloud Servers
+description: Rackspace Cloud Servers description...
 inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!2222
 locked: FALSE
 o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
@@ -141,6 +142,8 @@ RCN: RACKSPACE
 clientId: ABCDEF
 status: ACTIVE
 softDeleted: FALSE
+title: Rackspace Cloud Servers
+tokenScope: cloud_servers
 userPassword: password
 
 dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!3333,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
@@ -172,13 +175,16 @@ userPassword: password
 dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!5555,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsApplication
-cn: Cloud Control
+cn: Rackspace Cloud Files
+description: Rackspace Cloud Files description ...
 inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!5555
 locked: FALSE
 o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
 RCN: RACKSPACE
 clientId: STUVWX
 status: ACTIVE
+title: Rackspace Cloud Files
+tokenScope: cloud_files
 softDeleted: FALSE
 userPassword: password
 

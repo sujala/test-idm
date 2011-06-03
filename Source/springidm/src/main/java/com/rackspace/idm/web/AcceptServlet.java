@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.UriBuilder;
 
+import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
@@ -33,6 +34,7 @@ public class AcceptServlet extends HttpServlet  {
     private ClientService clientService;
     private UserService userService;
     private ScopeAccessService scopeAccessService;
+    private Configuration config;
     
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -106,7 +108,7 @@ public class AcceptServlet extends HttpServlet  {
         }
 
         dcsa.setAuthCode(authCode);
-        dcsa.setAuthCodeExp(current.plusSeconds(20).toDate());
+        dcsa.setAuthCodeExp(current.plusSeconds(getAuthCodeExpirationSeconds()).toDate());
         getScopeAccessService().updateScopeAccess(dcsa);
 
         List<Client> clients = new ArrayList<Client>();
@@ -186,5 +188,14 @@ public class AcceptServlet extends HttpServlet  {
     
     private String generateAuthCode() {
         return UUID.randomUUID().toString().replace("-", "");
+    }
+    
+    private int getAuthCodeExpirationSeconds() {
+        if (config == null) {
+            WebApplicationContext context = WebApplicationContextUtils
+            .getWebApplicationContext(getServletContext());
+        config = context.getBean(Configuration.class);
+        }
+        return config.getInt("authcode.expiration.seconds", 20);
     }
 }
