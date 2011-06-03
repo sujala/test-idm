@@ -23,7 +23,7 @@
 <option value="7">One Week</option>
 <option value="30">One Month</option>
 <option value="365">One Year</option>
-<option value="-1">Until Canceled</option>
+<option value="-1" selected="selected">Until Canceled</option>
 </select>
 <input name='accept' type='submit' value='Accept' />
 <input name='accept' type='submit' value='Deny' />

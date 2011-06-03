@@ -1,6 +1,7 @@
 package com.rackspace.idm.web;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,25 @@ public class AcceptServlet extends HttpServlet  {
     private UserService userService;
     private ScopeAccessService scopeAccessService;
     private Configuration config;
+    
+    
+    // FIXME: This should be removed its only here for to help QA test
+    @Override
+    public void doGet(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        
+        PrintWriter out = response.getWriter();
+
+        String error = request.getParameter("error");
+        String code = request.getParameter("code");
+        
+        if (StringUtils.isBlank(code)) {
+            out.println("error=" + error);
+        }
+        else {
+            out.println("code=" + code);
+        }
+    }
     
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response)
