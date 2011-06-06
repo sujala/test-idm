@@ -21,7 +21,7 @@ public class DelegatedPermission extends Permission implements Auditable {
     public DelegatedPermission() {}
     
     @Override
-    @LDAPGetter(attribute=LdapRepository.ATTR_NAME, inRDN=true)
+    @LDAPGetter(attribute=LdapRepository.ATTR_NAME, inRDN=true, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     public String getPermissionId() {
         return super.getPermissionId();
     }

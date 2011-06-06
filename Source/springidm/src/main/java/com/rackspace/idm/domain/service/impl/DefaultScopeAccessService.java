@@ -707,8 +707,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
         logger.info("Granting permission {} to client {}", parentUniqueId,
             permission.getPermissionId());
-        Client dClient = this.clientDao.getClientByCustomerIdAndClientId(
-            permission.getCustomerId(), permission.getClientId());
+        Client dClient = this.clientDao.getClientByClientId(permission.getClientId());
 
         if (dClient == null) {
             String errMsg = String.format("Client %s not found",
@@ -718,8 +717,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
         
         DefinedPermission dp = new DefinedPermission();
-        dp.setClientId(permission.getClientId());
-        dp.setCustomerId(permission.getCustomerId());
+        dp.setClientId(dClient.getClientId());
+        dp.setCustomerId(dClient.getCustomerId());
         dp.setPermissionId(permission.getPermissionId());
 
         Permission perm = this.scopeAccessDao
@@ -738,8 +737,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         if (sa == null) {
             sa = new ScopeAccess();
-            sa.setClientId(permission.getClientId());
-            sa.setClientRCN(permission.getCustomerId());
+            sa.setClientId(perm.getClientId());
+            sa.setClientRCN(perm.getCustomerId());
             sa = this.addDirectScopeAccess(parentUniqueId, sa);
         }
 
@@ -749,7 +748,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         grantedPerm.setPermissionId(perm.getPermissionId());
 
         grantedPerm = this.scopeAccessDao.grantPermission(sa.getUniqueId(),
-            permission);
+            grantedPerm);
 
         logger.info("Done granting permission {} to client {}", parentUniqueId,
             permission.getPermissionId());
@@ -814,7 +813,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         grantedPerm.setPermissionId(perm.getPermissionId());
 
         grantedPerm = this.scopeAccessDao.grantPermission(sa.getUniqueId(),
-            permission);
+            grantedPerm);
 
         logger.info("Done granting permission {} to user {}",
             user.getUsername(), permission.getPermissionId());

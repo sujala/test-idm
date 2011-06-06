@@ -35,7 +35,7 @@ public class DefinedPermission extends Permission implements Auditable {
     }
 
     @Override
-    @LDAPGetter(attribute=LdapRepository.ATTR_NAME, inRDN=true)
+    @LDAPGetter(attribute=LdapRepository.ATTR_NAME, inRDN=true, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     public String getPermissionId() {
         return super.getPermissionId();
     }

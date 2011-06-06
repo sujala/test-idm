@@ -43,19 +43,18 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     public ScopeAccess addDelegateScopeAccess(String parentUniqueId,
         ScopeAccess scopeAccess) {
         getLogger().info("Adding Delegate ScopeAccess: {}", scopeAccess);
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME,
-            CONTAINER_DELEGATE).build();
         Audit audit = Audit.log(scopeAccess).add();
         LDAPConnection conn = null;
         try {
             conn = getAppConnPool().getConnection();
-            SearchResultEntry entry = getScopeAccessContainer(conn, dn);
+            SearchResultEntry entry = getScopeAccessContainer(conn, parentUniqueId, CONTAINER_DELEGATE);
             if (entry == null) {
-                addScopeAccessContianer(conn, dn, CONTAINER_DIRECT);
+                addScopeAccessContianer(conn, parentUniqueId, CONTAINER_DELEGATE);
+                entry = getScopeAccessContainer(conn, parentUniqueId, CONTAINER_DELEGATE);
             }
             audit.succeed();
             getLogger().info("Added Delegate ScopeAccess: {}", scopeAccess);
-            return addScopeAccess(conn, dn, scopeAccess);
+            return addScopeAccess(conn, entry.getDN(), scopeAccess);
         } catch (final LDAPException e) {
             getLogger().error("Error adding scope acccess object", e);
             audit.fail();
@@ -69,19 +68,20 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     public ScopeAccess addDirectScopeAccess(String parentUniqueId,
         ScopeAccess scopeAccess) {
         getLogger().info("Adding Delegate ScopeAccess: {}", scopeAccess);
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME,
-            CONTAINER_DIRECT).build();
         Audit audit = Audit.log(scopeAccess).add();
         LDAPConnection conn = null;
         try {
             conn = getAppConnPool().getConnection();
-            SearchResultEntry entry = getScopeAccessContainer(conn, dn);
+            SearchResultEntry entry = getScopeAccessContainer(conn,
+                parentUniqueId, CONTAINER_DIRECT);
             if (entry == null) {
-                addScopeAccessContianer(conn, dn, CONTAINER_DIRECT);
+                addScopeAccessContianer(conn, parentUniqueId, CONTAINER_DIRECT);
+                entry = getScopeAccessContainer(conn,
+                    parentUniqueId, CONTAINER_DIRECT);
             }
             audit.succeed();
             getLogger().info("Added Delegate ScopeAccess: {}", scopeAccess);
-            return addScopeAccess(conn, dn, scopeAccess);
+            return addScopeAccess(conn, entry.getDN(), scopeAccess);
         } catch (final LDAPException e) {
             getLogger().error("Error adding scope acccess object", e);
             audit.fail();
@@ -265,6 +265,9 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
                 return decodeScopeAccess(searchResultEntry);
             }
         } catch (final LDAPException e) {
+            if (e.getResultCode() == ResultCode.NO_SUCH_OBJECT) {
+                return null;
+            }
             getLogger().error("Error reading scope access by clientId", e);
             throw new IllegalStateException(e);
         } finally {
@@ -300,6 +303,9 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
                 return decodeScopeAccess(searchResultEntry);
             }
         } catch (final LDAPException e) {
+            if (e.getResultCode() == ResultCode.NO_SUCH_OBJECT) {
+                return null;
+            }
             getLogger().error("Error reading scope access by clientId", e);
             throw new IllegalStateException(e);
         } finally {
@@ -616,7 +622,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         } finally {
             getAppConnPool().releaseConnection(conn);
         }
-        return null;
+        return list;
     }
 
     @Override
@@ -640,6 +646,9 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
                 list.add(decodeScopeAccess(searchResultEntry));
             }
         } catch (final LDAPException e) {
+            if (e.getResultCode() == ResultCode.NO_SUCH_OBJECT) {
+                return list;
+            }
             getLogger().error("Error reading scope accesses by parent", e);
             throw new IllegalStateException(e);
         } finally {
@@ -769,14 +778,16 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         }
     }
 
-    private void addScopeAccessContianer(LDAPConnection conn, String dn,
-        String name) {
+    private void addScopeAccessContianer(LDAPConnection conn,
+        String parentUniqueId, String name) {
         Audit audit = Audit.log("Adding ScopeAccess_Container").add();
         List<Attribute> atts = new ArrayList<Attribute>();
         atts.add(new Attribute(ATTR_OBJECT_CLASS,
             OBJECTCLASS_SCOPEACCESS_CONTAINER));
         atts.add(new Attribute(ATTR_NAME, name));
         Attribute[] attributes = atts.toArray(new Attribute[0]);
+        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME,
+            name).build();
         this.addEntry(conn, dn, attributes, audit);
         audit.succeed();
     }
@@ -850,12 +861,14 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     private SearchResultEntry getScopeAccessContainer(LDAPConnection conn,
-        String dn) {
-        Filter filter = new LdapSearchBuilder().addEqualAttribute(
-            ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS_CONTAINER).build();
+        String parentUniqueId, String name) {
+        Filter filter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_SCOPEACCESS_CONTAINER)
+            .addEqualAttribute(ATTR_NAME, name).build();
 
-        SearchResultEntry entry = this.getSingleEntry(conn, dn,
-            SearchScope.BASE, filter);
+        SearchResultEntry entry = this.getSingleEntry(conn, parentUniqueId,
+            SearchScope.ONE, filter);
 
         return entry;
     }
