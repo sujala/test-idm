@@ -772,10 +772,15 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
+        
+        DefinedPermission dp = new DefinedPermission();
+        dp.setClientId(permission.getClientId());
+        dp.setCustomerId(permission.getCustomerId());
+        dp.setPermissionId(permission.getPermissionId());
 
         Permission perm = this.scopeAccessDao
             .getPermissionByParentAndPermission(dClient.getUniqueId(),
-                permission);
+                dp);
         if (perm == null) {
             String errMsg = String.format(
                 "Permission %s not found for client %s",
