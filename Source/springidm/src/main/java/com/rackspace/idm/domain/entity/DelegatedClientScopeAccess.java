@@ -44,7 +44,7 @@ public class DelegatedClientScopeAccess extends ScopeAccess implements hasAccess
     private String userRCN;
     
     @Override
-    @LDAPGetter(attribute=LdapRepository.ATTR_CLIENT_ID, inRDN=true)
+    @LDAPGetter(attribute=LdapRepository.ATTR_CLIENT_ID, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
     public String getClientId() {
         return super.getClientId();
     }

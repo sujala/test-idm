@@ -26,7 +26,7 @@ public class ClientScopeAccess extends ScopeAccess implements hasAccessToken {
     private Date accessTokenExp;
 
     @Override
-    @LDAPGetter(attribute=LdapRepository.ATTR_CLIENT_ID, inRDN=true)
+    @LDAPGetter(attribute=LdapRepository.ATTR_CLIENT_ID, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
     public String getClientId() {
         return super.getClientId();
     }

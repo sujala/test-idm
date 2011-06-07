@@ -83,7 +83,7 @@ public abstract class LdapRepository {
     public static final String ATTR_BASEURL_TYPE = "baseUrlType";
     public static final String ATTR_BLOB = "blob";
     public static final String ATTR_C = "c";
-    public static final String ATTR_CALLBACK_URL = "callBackUrl";
+    public static final String ATTR_CALLBACK_URL = "callbackUrl";
     public static final String ATTR_CLIENT_ID = "clientId";
     public static final String ATTR_CLIENT_RCN = "clientRCN";
     public static final String ATTR_CLIENT_SECRET = "userPassword";

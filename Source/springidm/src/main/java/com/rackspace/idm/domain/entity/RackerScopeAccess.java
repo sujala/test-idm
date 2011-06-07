@@ -35,7 +35,7 @@ public class RackerScopeAccess extends ScopeAccess implements hasAccessToken, ha
     private String rackerId;
 
     @Override
-    @LDAPGetter(attribute=LdapRepository.ATTR_CLIENT_ID, inRDN=true)
+    @LDAPGetter(attribute=LdapRepository.ATTR_CLIENT_ID, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
     public String getClientId() {
         return super.getClientId();
     }
