@@ -38,6 +38,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public void addClient(Client client, String customerUniqueId) {
         getLogger().info("Adding client {}", client);
 
@@ -65,6 +66,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public void addClientGroup(ClientGroup clientGroup, String clientUniqueId) {
         getLogger().info("Adding ClientGroup {}", clientGroup);
 
@@ -101,6 +103,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public void addUserToClientGroup(String userUniqueId, ClientGroup group) {
 
         getLogger().info("Adding user {} to {}", userUniqueId, group);
@@ -145,6 +148,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public ClientAuthenticationResult authenticate(String clientId,
         String clientSecret) {
         BindResult result;
@@ -177,6 +181,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public void deleteClient(Client client) {
         getLogger().info("Deleting client {}", client.getClientId());
 
@@ -189,6 +194,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public void deleteClientGroup(ClientGroup group) {
         getLogger().info("Deleting clientGroup {}", group.getName());
         Audit audit = Audit.log(group).delete();
@@ -200,6 +206,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public List<Client> getAllClients() {
         getLogger().debug("Search all clients");
 
@@ -223,6 +230,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public Client getClientByClientId(String clientId) {
         getLogger().debug("Doing search for clientId {}", clientId);
 
@@ -246,6 +254,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public Client getClientByClientname(String clientName) {
         getLogger().debug("Searching for client {}", clientName);
 
@@ -269,6 +278,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public Client getClientByCustomerIdAndClientId(String customerId,
         String clientId) {
         getLogger().debug("Doing search for clientId {}", clientId);
@@ -294,6 +304,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public Client getClientByInum(String inum) {
         getLogger().debug("Doing search for Inum {}", inum);
 
@@ -315,6 +326,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
     
     
+    @Override
     public Client getClientByScope(String scope) {
         getLogger().debug("Doing search for Client with Scope {}", scope);
 
@@ -336,6 +348,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public ClientGroup getClientGroup(String customerId, String clientId,
         String groupName) {
 
@@ -361,6 +374,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public ClientGroup getClientGroupByUniqueId(String uniqueId) {
         ClientGroup group = null;
 
@@ -380,6 +394,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public List<ClientGroup> getClientGroupsByClientId(String clientId) {
 
         List<ClientGroup> groups = new ArrayList<ClientGroup>();
@@ -411,6 +426,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public Clients getClientsByCustomerId(String customerId, int offset,
         int limit) {
         getLogger().debug("Doing search for customerId {}", customerId);
@@ -436,6 +452,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public String getUnusedClientInum(String customerInum) {
         // TODO: We might may this call to the XDI server in the future.
         Client client = null;
@@ -449,6 +466,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public boolean isUserInClientGroup(String username, String groupDN) {
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -463,6 +481,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public void removeUserFromGroup(String userUniqueId, ClientGroup group) {
         getLogger().info("Removing user {} from {}", userUniqueId, group);
 
@@ -502,6 +521,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public void setClientsLockedFlagByCustomerId(String customerId,
         boolean locked) {
         Clients clients = this.findFirst100ByCustomerIdAndLock(customerId,
@@ -525,6 +545,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public void updateClient(Client client) {
         getLogger().debug("Updating client {}", client);
 
@@ -559,6 +580,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     
+    @Override
     public void updateClientGroup(ClientGroup group) {
         getLogger().debug("Updating client group {}", group);
 
@@ -595,6 +617,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     
     
     
+    @Override
     public List<Client> getAvailableScopes() {
         getLogger().debug("Search the scope accesses defined in the system.");
    
@@ -723,19 +746,19 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
                 .isSoftDeleted())));
         }
         
-        if (client.getTitle() != null) {
+        if (!StringUtils.isBlank(client.getTitle())) {
             atts.add(new Attribute(ATTR_TITLE, client.getTitle()));
         }
         
-        if (client.getDescription() != null) {
+        if (!StringUtils.isBlank(client.getDescription())) {
             atts.add(new Attribute(ATTR_DESCRIPTION, client.getDescription()));
         }
         
-        if (client.getScope() != null) {
+        if (!StringUtils.isBlank(client.getScope())) {
             atts.add(new Attribute(ATTR_TOKEN_SCOPE, client.getScope()));
         }
         
-        if (client.getCallBackUrl() != null) {
+        if (!StringUtils.isBlank(client.getCallBackUrl())) {
             atts.add(new Attribute(ATTR_CALLBACK_URL, client.getCallBackUrl()));
         }
 
