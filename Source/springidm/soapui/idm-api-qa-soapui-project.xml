@@ -15277,7 +15277,38 @@ assert status.contains("HTTP/1.1 401 Unauthorized")</scriptText></con:configurat
   <con:entry key="versionId" value="v1.0"/>
   <con:entry key="permissionId" value="${#TestSuite#permissionId}"/>
   <con:entry key="clientId" value="${#TestSuite#newClientId}"/>
-</con:parameters></con:restRequest></con:config></con:testStep><con:properties/><con:reportParameters/></con:testCase><con:properties><con:property><con:name>adminToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">b2aca787f9b34506adfad02506034638</con:value></con:property><con:property><con:name>AuthServiceClientId</con:name><con:value>bde1268ebabeeabb70a0e702a4626977c331d5c4</con:value></con:property><con:property><con:name>AuthServiceClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>authserviceToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">94f3f32090774a7f93b04b9d7d029f16</con:value></con:property><con:property><con:name>clientToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">4ed38d7d33d04f04a261a1133bccda9f</con:value></con:property><con:property><con:name>CustomeridmClientId</con:name><con:value>18e7a7032733486cd32f472d7bd58f709ac0d221</con:value></con:property><con:property><con:name>CustomeridmClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>customeridmToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">00b73b534cd6466385935e78f6740903</con:value></con:property><con:property><con:name>newClientId</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">94a8175f90d33fae6ab923da055d04c48dfa0eba</con:value></con:property><con:property><con:name>newClientSecret</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">098ba6f5c663e9eff4adda7cea61302c5a65f251</con:value></con:property><con:property><con:name>newClientToken</con:name><con:value>533962d7291e46a38e93c47a7322a5d8</con:value></con:property><con:property><con:name>newUserPassword</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>permissionId</con:name><con:value>someNewPermission</con:value></con:property><con:property><con:name>permissionId2</con:name><con:value>anotherNewPermission</con:value></con:property><con:property><con:name>QAAdminPassword</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAAdminUserName</con:name><con:value>qaadmin</con:value></con:property><con:property><con:name>QAClientId</con:name><con:value>QATESTCLIENT</con:value></con:property><con:property><con:name>QAClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>QACustomerId</con:name><con:value>RCN-QATestingCustomer</con:value></con:property><con:property><con:name>QACustomerIdmGroup</con:name><con:value>Idm Admin</con:value></con:property><con:property><con:name>QAPassword</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAPassword2</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAUserName</con:name><con:value>qauser</con:value></con:property><con:property><con:name>userToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">88ed271bd55e46109855d6d5f165f80f</con:value></con:property><con:property><con:name>QAUserName2</con:name><con:value>qatester1</con:value></con:property><con:property><con:name>QAUserRPN</con:name><con:value>RPN-qauser-000-10001</con:value></con:property><con:property><con:name>soapuiTestUsername</con:name><con:value>soapuiTestUser-4400168</con:value></con:property><con:property><con:name>newUserToken</con:name><con:value>1cabcde0d39a4332a8a3414a44ecb926</con:value></con:property><con:property><con:name>valid_password</con:name><con:value>P@ssw0rd!</con:value></con:property><con:property><con:name>invalid_password</con:name><con:value>asdf</con:value></con:property><con:property><con:name>cidmPermissionId</con:name><con:value>getServicesForUser</con:value></con:property><con:property><con:name>cidmPermissionId2</con:name><con:value>getUsers</con:value></con:property><con:property><con:name>newUserCidmToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">6d43e11922494d918bd2da95ea103a89</con:value></con:property></con:properties><con:reportScript/><con:reportParameters/></con:testSuite>
+</con:parameters></con:restRequest></con:config></con:testStep><con:properties/><con:reportParameters/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Cleanup" searchProperties="true" id="f47fa364-3e03-4349-bc26-587569f44853"><con:settings/><con:testStep type="restrequest" name="DELETE deleteUser - customeridm"><con:settings/><con:config service="CustomerIDM API" methodName="DELETE - deleteUser" resourcePath="/idm/rest/{versionId}/customers/{customerId}/users/{username}" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="DELETE deleteUser - customeridm" mediaType="application/xml" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request/><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
+  <con:entry key="username" value="${#TestSuite#soapuiTestUsername}"/>
+  <con:entry key="customerId" value="${#TestSuite#QACustomerId}"/>
+  <con:entry key="Authorization" value="OAuth ${#TestSuite#customeridmToken}"/>
+  <con:entry key="versionId" value="v1.0"/>
+</con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="DELETE deleteClient"><con:settings/><con:config service="CustomerIDM API" methodName="DELETE - deleteClient" resourcePath="/idm/rest/{versionId}/customers/{customerId}/clients/{clientId}" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="DELETE deleteClient" mediaType="application/xml" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request/><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
+  <con:entry key="Authorization" value="OAuth ${#TestSuite#customeridmToken}"/>
+  <con:entry key="customerId" value="${#TestSuite#QACustomerId}"/>
+  <con:entry key="versionId" value="v1.0"/>
+  <con:entry key="clientId" value="${#TestSuite#newClientId}"/>
+</con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="DELETE revokeAccessToken - customeridm"><con:settings/><con:config service="CustomerIDM API" methodName="DELETE - revokeAccessToken" resourcePath="/idm/rest/{versionId}/token/{tokenString}" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="DELETE revokeAccessToken - customeridm" mediaType="application/xml" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request/><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
+  <con:entry key="tokenId" value="${#TestSuite#customeridmToken}"/>
+  <con:entry key="Authorization" value="OAuth ${#TestSuite#customeridmToken}"/>
+  <con:entry key="versionId" value="v1.0"/>
+  <con:entry key="tokenString" value="${#TestSuite#customeridmToken}"/>
+</con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="DELETE revokeAccessToken - admin"><con:settings/><con:config service="CustomerIDM API" methodName="DELETE - revokeAccessToken" resourcePath="/idm/rest/{versionId}/token/{tokenString}" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="DELETE revokeAccessToken - admin" mediaType="application/xml" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request/><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
+  <con:entry key="Authorization" value="OAuth ${#TestSuite#adminToken}"/>
+  <con:entry key="versionId" value="v1.0"/>
+  <con:entry key="tokenString" value="${#TestSuite#adminToken}"/>
+</con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="DELETE revokeAccessToken - user"><con:settings/><con:config service="CustomerIDM API" methodName="DELETE - revokeAccessToken" resourcePath="/idm/rest/{versionId}/token/{tokenString}" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="DELETE revokeAccessToken - user" mediaType="application/xml" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request/><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
+  <con:entry key="Authorization" value="OAuth ${#TestSuite#userToken}"/>
+  <con:entry key="versionId" value="v1.0"/>
+  <con:entry key="tokenString" value="${#TestSuite#userToken}"/>
+</con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="DELETE revokeAccessToken - auth service"><con:settings/><con:config service="CustomerIDM API" methodName="DELETE - revokeAccessToken" resourcePath="/idm/rest/{versionId}/token/{tokenString}" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="DELETE revokeAccessToken - auth service" mediaType="application/xml" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request/><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
+  <con:entry key="Authorization" value="OAuth ${#TestSuite#authserviceToken}"/>
+  <con:entry key="versionId" value="v1.0"/>
+  <con:entry key="tokenString" value="${#TestSuite#authserviceToken}"/>
+</con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="DELETE revokeAccessToken - client"><con:settings/><con:config service="CustomerIDM API" methodName="DELETE - revokeAccessToken" resourcePath="/idm/rest/{versionId}/token/{tokenString}" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="DELETE revokeAccessToken - client" mediaType="application/xml" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request/><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
+  <con:entry key="Authorization" value="OAuth ${#TestSuite#clientToken}"/>
+  <con:entry key="versionId" value="v1.0"/>
+  <con:entry key="tokenString" value="${#TestSuite#clientToken}"/>
+</con:parameters></con:restRequest></con:config></con:testStep><con:properties/><con:reportParameters/></con:testCase><con:properties><con:property><con:name>adminToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">f6b67fd669e64db1b234e79ecb66deba</con:value></con:property><con:property><con:name>AuthServiceClientId</con:name><con:value>bde1268ebabeeabb70a0e702a4626977c331d5c4</con:value></con:property><con:property><con:name>AuthServiceClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>authserviceToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">c55c91674d864b64a2eafda99b24528f</con:value></con:property><con:property><con:name>clientToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">bf4b4157046f4d148ba4bda06690d218</con:value></con:property><con:property><con:name>CustomeridmClientId</con:name><con:value>18e7a7032733486cd32f472d7bd58f709ac0d221</con:value></con:property><con:property><con:name>CustomeridmClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>customeridmToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">170d160b68d84273a3c2c61a34b32764</con:value></con:property><con:property><con:name>newClientId</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">48c3cdfa19c35f0f6ad128645e14a805c49f4bf7</con:value></con:property><con:property><con:name>newClientSecret</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">75d1ead499bf9fe40d57ac6178345181d5f99e98</con:value></con:property><con:property><con:name>newClientToken</con:name><con:value>9550824c738340d885bf397ca3710f47</con:value></con:property><con:property><con:name>newUserPassword</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>permissionId</con:name><con:value>someNewPermission</con:value></con:property><con:property><con:name>permissionId2</con:name><con:value>anotherNewPermission</con:value></con:property><con:property><con:name>QAAdminPassword</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAAdminUserName</con:name><con:value>qaadmin</con:value></con:property><con:property><con:name>QAClientId</con:name><con:value>QATESTCLIENT</con:value></con:property><con:property><con:name>QAClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>QACustomerId</con:name><con:value>RCN-QATestingCustomer</con:value></con:property><con:property><con:name>QACustomerIdmGroup</con:name><con:value>Idm Admin</con:value></con:property><con:property><con:name>QAPassword</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAPassword2</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAUserName</con:name><con:value>qauser</con:value></con:property><con:property><con:name>userToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">2899679b33d643859eee5dbff9ac8adb</con:value></con:property><con:property><con:name>QAUserName2</con:name><con:value>qatester1</con:value></con:property><con:property><con:name>QAUserRPN</con:name><con:value>RPN-qauser-000-10001</con:value></con:property><con:property><con:name>soapuiTestUsername</con:name><con:value>soapuiTestUser-8847363</con:value></con:property><con:property><con:name>newUserToken</con:name><con:value>8cae4f09694b4e9d8ba5299240e0eea2</con:value></con:property><con:property><con:name>valid_password</con:name><con:value>P@ssw0rd!</con:value></con:property><con:property><con:name>invalid_password</con:name><con:value>asdf</con:value></con:property><con:property><con:name>cidmPermissionId</con:name><con:value>getServicesForUser</con:value></con:property><con:property><con:name>cidmPermissionId2</con:name><con:value>getUsers</con:value></con:property><con:property><con:name>newUserCidmToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">ad839bdc180146c092aa80f58509a6a1</con:value></con:property></con:properties><con:reportScript/><con:reportParameters/></con:testSuite>
     <con:testSuite name="TestSuite - sprint14"><con:settings/><con:runType>SEQUENTIAL</con:runType><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Setup (acquire and revoke existing tokens)" searchProperties="true" id="c91048a3-6d3f-40c5-862a-58b46159e2c2"><con:settings/><con:testStep type="restrequest" name="POST getToken - admin"><con:settings/><con:config service="CustomerIDM API" methodName="POST - getAccessToken" resourcePath="/idm/rest/{versionId}/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - admin" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="${#TestSuite#QAClientId}" client_secret="${#TestSuite#QAClientSecret}" grant_type="PASSWORD" password="${#TestSuite#QAAdminPassword}" refresh_token="" username="${#TestSuite#QAAdminUserName}" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters><entry key="versionId" value="v1.0" xmlns="http://eviware.com/soapui/config"/></con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="POST getToken - customeridm"><con:settings/><con:config service="CustomerIDM API" methodName="POST - getAccessToken" resourcePath="/idm/rest/{versionId}/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - customeridm" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="${#TestSuite#CustomeridmClientId}" client_secret="${#TestSuite#CustomeridmClientSecret}" grant_type="CLIENT_CREDENTIALS" password="" refresh_token="" username="" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters><entry key="versionId" value="v1.0" xmlns="http://eviware.com/soapui/config"/></con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="POST getToken - client"><con:settings/><con:config service="CustomerIDM API" methodName="POST - getAccessToken" resourcePath="/idm/rest/{versionId}/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - client" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="${#TestSuite#QAClientId}" client_secret="${#TestSuite#QAClientSecret}" grant_type="CLIENT_CREDENTIALS" password="" refresh_token="" username="" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters><entry key="versionId" value="v1.0" xmlns="http://eviware.com/soapui/config"/></con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="POST getToken - user"><con:settings/><con:config service="CustomerIDM API" methodName="POST - getAccessToken" resourcePath="/idm/rest/{versionId}/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - user" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="${#TestSuite#QAClientId}" client_secret="${#TestSuite#QAClientSecret}" grant_type="PASSWORD" password="${#TestSuite#QAPassword}" refresh_token="" username="${#TestSuite#QAUserName}" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters><entry key="versionId" value="v1.0" xmlns="http://eviware.com/soapui/config"/></con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="POST getToken - auth service"><con:settings/><con:config service="CustomerIDM API" methodName="POST - getAccessToken" resourcePath="/idm/rest/{versionId}/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - auth service" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="${#TestSuite#AuthServiceClientId}" client_secret="${#TestSuite#AuthServiceClientSecret}" grant_type="CLIENT_CREDENTIALS" password="" refresh_token="" username="" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters><entry key="versionId" value="v1.0" xmlns="http://eviware.com/soapui/config"/></con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="transfer" name="Property Transfer"><con:settings/><con:config xsi:type="con:PropertyTransfersStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="false" ignoreEmpty="false" transferToAll="false" useXQuery="false" entitize="false" transferChildNodes="false"><con:name>adminToken</con:name><con:sourceType>ResponseAsXml</con:sourceType><con:sourceStep>POST getToken - admin</con:sourceStep><con:sourcePath>declare namespace ns1='http://docs.rackspacecloud.com/idm/api/v1.0';
 //ns1:auth[1]/ns1:access_token[1]/@id</con:sourcePath><con:targetType>adminToken</con:targetType><con:targetStep>#TestSuite#</con:targetStep></con:transfers><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="false" disabled="false" entitize="false" ignoreEmpty="false" transferChildNodes="false" transferToAll="false" useXQuery="false"><con:name>customeridmToken</con:name><con:sourceType>ResponseAsXml</con:sourceType><con:sourceStep>POST getToken - customeridm</con:sourceStep><con:sourcePath>declare namespace ns1='http://docs.rackspacecloud.com/idm/api/v1.0';
 //ns1:auth[1]/ns1:access_token[1]/@id</con:sourcePath><con:targetType>customeridmToken</con:targetType><con:targetStep>#TestSuite#</con:targetStep><con:targetPath xsi:nil="true"/></con:transfers><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="false" ignoreEmpty="false" transferToAll="false" useXQuery="false" entitize="false" transferChildNodes="false"><con:name>clientToken</con:name><con:sourceType>ResponseAsXml</con:sourceType><con:sourceStep>POST getToken - client</con:sourceStep><con:sourcePath>declare namespace ns1='http://docs.rackspacecloud.com/idm/api/v1.0';
@@ -15391,7 +15422,7 @@ exists( //ns1:itemNotFound)</path><content>true</content><allowWildcards>false</
   <con:entry key="customerId" value="${Properties#testdelete-customerid}"/>
   <con:entry key="Authorization" value="OAuth ${#TestSuite#customeridmToken}"/>
   <con:entry key="versionId" value="v1.0"/>
-</con:parameters></con:restRequest></con:config></con:testStep><con:properties/><con:reportParameters/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="IDM-209 deleteClient" searchProperties="true" id="d24701ce-7e89-41f0-87b6-47195a2f8566"><con:settings/><con:testStep type="datagen" name="DataGen"><con:settings/><con:config xsi:type="con:DataGeneratorStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:property type="Number"><con:configuration><start>9999</start><end>99999999</end><step/><pattern>testdeleteClient-</pattern><random>true</random><persist>false</persist></con:configuration><con:name>testdeleteClientId</con:name><con:mode>STEP</con:mode><con:shared>false</con:shared></con:property></con:config></con:testStep><con:testStep type="properties" name="Properties"><con:settings/><con:config xsi:type="con:PropertiesStep" saveFirst="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:properties><con:property><con:name>testdelete-clientName</con:name><con:value>testdeleteClient-7976681</con:value></con:property><con:property><con:name>testdelete-clientId</con:name><con:value>71b9c359b8cda9eb13e15af8e2400db46073fab2</con:value></con:property></con:properties></con:config></con:testStep><con:testStep type="transfer" name="PropertyTransfer 1"><con:settings/><con:config xsi:type="con:PropertyTransfersStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="true" ignoreEmpty="false" transferToAll="false" useXQuery="false" entitize="false" transferChildNodes="false"><con:name>clientName</con:name><con:sourceType>testdeleteClientId</con:sourceType><con:sourceStep>DataGen</con:sourceStep><con:sourcePath/><con:targetType>testdelete-clientName</con:targetType><con:targetStep>Properties</con:targetStep></con:transfers></con:config></con:testStep><con:testStep type="restrequest" name="POST addClient"><con:settings/><con:config service="CustomerIDM API" methodName="POST - addClient" resourcePath="/idm/rest/{versionId}/customers/{customerId}/clients" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST addClient" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request><![CDATA[<v1:client clientId="" customerId="${#TestSuite#QACustomerId}" customerInum="" iname="" inum="" locked="" name="${Properties#testdelete-clientName}" softDeleted="" status="" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0">
+</con:parameters></con:restRequest></con:config></con:testStep><con:properties/><con:reportParameters/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="IDM-209 deleteClient" searchProperties="true" id="d24701ce-7e89-41f0-87b6-47195a2f8566"><con:settings/><con:testStep type="datagen" name="DataGen"><con:settings/><con:config xsi:type="con:DataGeneratorStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:property type="Number"><con:configuration><start>9999</start><end>99999999</end><step/><pattern>testdeleteClient-</pattern><random>true</random><persist>false</persist></con:configuration><con:name>testdeleteClientId</con:name><con:mode>STEP</con:mode><con:shared>false</con:shared></con:property></con:config></con:testStep><con:testStep type="properties" name="Properties"><con:settings/><con:config xsi:type="con:PropertiesStep" saveFirst="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:properties><con:property><con:name>testdelete-clientName</con:name><con:value>testdeleteClient-55803748</con:value></con:property><con:property><con:name>testdelete-clientId</con:name><con:value>69567279e508da815d6f6321875766247d4f809d</con:value></con:property></con:properties></con:config></con:testStep><con:testStep type="transfer" name="PropertyTransfer 1"><con:settings/><con:config xsi:type="con:PropertyTransfersStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="true" ignoreEmpty="false" transferToAll="false" useXQuery="false" entitize="false" transferChildNodes="false"><con:name>clientName</con:name><con:sourceType>testdeleteClientId</con:sourceType><con:sourceStep>DataGen</con:sourceStep><con:sourcePath/><con:targetType>testdelete-clientName</con:targetType><con:targetStep>Properties</con:targetStep></con:transfers></con:config></con:testStep><con:testStep type="restrequest" name="POST addClient"><con:settings/><con:config service="CustomerIDM API" methodName="POST - addClient" resourcePath="/idm/rest/{versionId}/customers/{customerId}/clients" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST addClient" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request><![CDATA[<v1:client clientId="" customerId="${#TestSuite#QACustomerId}" customerInum="" iname="" inum="" locked="" name="${Properties#testdelete-clientName}" softDeleted="" status="" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0">
    <!--Optional:-->
    <v1:credentials clientSecret=""/>
    <!--Optional:-->
@@ -16017,7 +16048,17 @@ assert status.contains("HTTP/1.1 200 OK")</scriptText></con:configuration></con:
   <con:entry key="customerId" value="${#TestSuite#QACustomerId}"/>
   <con:entry key="versionId" value="v1.0"/>
   <con:entry key="clientId" value="${#TestSuite#QAClientId}"/>
-</con:parameters></con:restRequest></con:config></con:testStep><con:properties/><con:reportParameters/></con:testCase><con:properties><con:property><con:name>adminToken</con:name><con:value>b2aca787f9b34506adfad02506034638</con:value></con:property><con:property><con:name>AuthServiceClientId</con:name><con:value>bde1268ebabeeabb70a0e702a4626977c331d5c4</con:value></con:property><con:property><con:name>AuthServiceClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>authserviceToken</con:name><con:value>94f3f32090774a7f93b04b9d7d029f16</con:value></con:property><con:property><con:name>clientToken</con:name><con:value>4ed38d7d33d04f04a261a1133bccda9f</con:value></con:property><con:property><con:name>CustomeridmClientId</con:name><con:value>18e7a7032733486cd32f472d7bd58f709ac0d221</con:value></con:property><con:property><con:name>CustomeridmClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>customeridmToken</con:name><con:value>00b73b534cd6466385935e78f6740903</con:value></con:property><con:property><con:name>newClientId</con:name><con:value>c65aaccda3a050f37cb550e48115f4eb62494f91</con:value></con:property><con:property><con:name>newClientSecret</con:name><con:value>a059de015d35c10f7d7bc187305192f2466c40d1</con:value></con:property><con:property><con:name>newClientToken</con:name><con:value>0658143407c3462b9fc2d934ba5706c1</con:value></con:property><con:property><con:name>newUserPassword</con:name><con:value>520666Md%u</con:value></con:property><con:property><con:name>newUserToken</con:name><con:value>7a488cd671264ff3b0aea48402f2877a</con:value></con:property><con:property><con:name>permissionId</con:name><con:value>addCustomer</con:value></con:property><con:property><con:name>permissionId2</con:name><con:value>deleteCustomer</con:value></con:property><con:property><con:name>QAAdminPassword</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAAdminUserName</con:name><con:value>qaadmin</con:value></con:property><con:property><con:name>QAClientId</con:name><con:value>QATESTCLIENT</con:value></con:property><con:property><con:name>QAClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>QACustomerId</con:name><con:value>RCN-QATestingCustomer</con:value></con:property><con:property><con:name>QACustomerIdmGroup</con:name><con:value>Idm Admin</con:value></con:property><con:property><con:name>QAPassword</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAPassword2</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAUserName</con:name><con:value>qauser</con:value></con:property><con:property><con:name>QAUserName2</con:name><con:value>qatester1</con:value></con:property><con:property><con:name>QAUserRPN</con:name><con:value>RPN-qauser-000-10001</con:value></con:property><con:property><con:name>soapuiTestUsername</con:name><con:value>soapuiTestUser-2268544</con:value></con:property><con:property><con:name>userToken</con:name><con:value>88ed271bd55e46109855d6d5f165f80f</con:value></con:property></con:properties><con:reportScript/><con:reportParameters/></con:testSuite>
+</con:parameters></con:restRequest></con:config></con:testStep><con:properties/><con:reportParameters/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Cleanup" searchProperties="true" id="9f2f0f1c-8b4e-4a88-85b3-0aa01e2e6e61"><con:settings/><con:testStep type="restrequest" name="DELETE deleteUser - customeridm"><con:settings/><con:config service="CustomerIDM API" methodName="DELETE - deleteUser" resourcePath="/idm/rest/{versionId}/customers/{customerId}/users/{username}" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="DELETE deleteUser - customeridm" mediaType="application/xml" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request/><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
+  <con:entry key="username" value="${#TestSuite#soapuiTestUsername}"/>
+  <con:entry key="customerId" value="${#TestSuite#QACustomerId}"/>
+  <con:entry key="Authorization" value="OAuth ${#TestSuite#customeridmToken}"/>
+  <con:entry key="versionId" value="v1.0"/>
+</con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="DELETE deleteClient"><con:settings/><con:config service="CustomerIDM API" methodName="DELETE - deleteClient" resourcePath="/idm/rest/{versionId}/customers/{customerId}/clients/{clientId}" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="DELETE deleteClient" mediaType="application/xml" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request/><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
+  <con:entry key="Authorization" value="OAuth ${#TestSuite#customeridmToken}"/>
+  <con:entry key="customerId" value="${#TestSuite#QACustomerId}"/>
+  <con:entry key="versionId" value="v1.0"/>
+  <con:entry key="clientId" value="${#TestSuite#newClientId}"/>
+</con:parameters></con:restRequest></con:config></con:testStep><con:properties/><con:reportParameters/></con:testCase><con:properties><con:property><con:name>adminToken</con:name><con:value>cca32519969f4dd6a82496e1dcf8118a</con:value></con:property><con:property><con:name>AuthServiceClientId</con:name><con:value>bde1268ebabeeabb70a0e702a4626977c331d5c4</con:value></con:property><con:property><con:name>AuthServiceClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>authserviceToken</con:name><con:value>2a4537d28e5a428e80f3d36f5033e215</con:value></con:property><con:property><con:name>clientToken</con:name><con:value>99d1b1281102488e8c3dbb35174c2fd2</con:value></con:property><con:property><con:name>CustomeridmClientId</con:name><con:value>18e7a7032733486cd32f472d7bd58f709ac0d221</con:value></con:property><con:property><con:name>CustomeridmClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>customeridmToken</con:name><con:value>fb0bc5610b864cc888b9ad8c8f98cd43</con:value></con:property><con:property><con:name>newClientId</con:name><con:value>aaee48c5f0424cc18dbf0353120bd73e5bfd5609</con:value></con:property><con:property><con:name>newClientSecret</con:name><con:value>5eac3337f82a39821fe2a28ca4cd6a20b070c953</con:value></con:property><con:property><con:name>newClientToken</con:name><con:value>c3228532be264aeebc69ae28414ce50c</con:value></con:property><con:property><con:name>newUserPassword</con:name><con:value>9095e?0G86</con:value></con:property><con:property><con:name>newUserToken</con:name><con:value>e216d69b18284572abc5ff3d58445433</con:value></con:property><con:property><con:name>permissionId</con:name><con:value>addCustomer</con:value></con:property><con:property><con:name>permissionId2</con:name><con:value>deleteCustomer</con:value></con:property><con:property><con:name>QAAdminPassword</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAAdminUserName</con:name><con:value>qaadmin</con:value></con:property><con:property><con:name>QAClientId</con:name><con:value>QATESTCLIENT</con:value></con:property><con:property><con:name>QAClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>QACustomerId</con:name><con:value>RCN-QATestingCustomer</con:value></con:property><con:property><con:name>QACustomerIdmGroup</con:name><con:value>Idm Admin</con:value></con:property><con:property><con:name>QAPassword</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAPassword2</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAUserName</con:name><con:value>qauser</con:value></con:property><con:property><con:name>QAUserName2</con:name><con:value>qatester1</con:value></con:property><con:property><con:name>QAUserRPN</con:name><con:value>RPN-qauser-000-10001</con:value></con:property><con:property><con:name>soapuiTestUsername</con:name><con:value>soapuiTestUser-4198492</con:value></con:property><con:property><con:name>userToken</con:name><con:value>2cdb49d887ee4945bd04191386275747</con:value></con:property></con:properties><con:reportScript/><con:reportParameters/></con:testSuite>
     <con:testSuite name="TestSuite - sprint13"><con:settings/><con:runType>SEQUENTIAL</con:runType><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Setup (acquire and revoke existing tokens)" searchProperties="true" id="cffb04db-e567-480a-9906-c0666761deea"><con:settings/><con:testStep type="restrequest" name="POST getToken - admin"><con:settings/><con:config service="CustomerIDM API" methodName="POST - getAccessToken" resourcePath="/idm/rest/{versionId}/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - admin" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="${#TestSuite#QAClientId}" client_secret="${#TestSuite#QAClientSecret}" grant_type="PASSWORD" password="${#TestSuite#QAAdminPassword}" refresh_token="" username="${#TestSuite#QAAdminUserName}" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters><entry key="versionId" value="v1.0" xmlns="http://eviware.com/soapui/config"/></con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="POST getToken - customeridm"><con:settings/><con:config service="CustomerIDM API" methodName="POST - getAccessToken" resourcePath="/idm/rest/{versionId}/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - customeridm" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="${#TestSuite#CustomeridmClientId}" client_secret="${#TestSuite#CustomeridmClientSecret}" grant_type="CLIENT_CREDENTIALS" password="" refresh_token="" username="" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters><entry key="versionId" value="v1.0" xmlns="http://eviware.com/soapui/config"/></con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="POST getToken - client"><con:settings/><con:config service="CustomerIDM API" methodName="POST - getAccessToken" resourcePath="/idm/rest/{versionId}/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - client" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="${#TestSuite#QAClientId}" client_secret="${#TestSuite#QAClientSecret}" grant_type="CLIENT_CREDENTIALS" password="" refresh_token="" username="" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters><entry key="versionId" value="v1.0" xmlns="http://eviware.com/soapui/config"/></con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="POST getToken - user"><con:settings/><con:config service="CustomerIDM API" methodName="POST - getAccessToken" resourcePath="/idm/rest/{versionId}/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - user" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="${#TestSuite#QAClientId}" client_secret="${#TestSuite#QAClientSecret}" grant_type="PASSWORD" password="${#TestSuite#QAPassword}" refresh_token="" username="${#TestSuite#QAUserName}" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters><entry key="versionId" value="v1.0" xmlns="http://eviware.com/soapui/config"/></con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="POST getToken - auth service"><con:settings/><con:config service="CustomerIDM API" methodName="POST - getAccessToken" resourcePath="/idm/rest/{versionId}/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - auth service" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="${#TestSuite#AuthServiceClientId}" client_secret="${#TestSuite#AuthServiceClientSecret}" grant_type="CLIENT_CREDENTIALS" password="" refresh_token="" username="" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters><entry key="versionId" value="v1.0" xmlns="http://eviware.com/soapui/config"/></con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="transfer" name="Property Transfer"><con:settings/><con:config xsi:type="con:PropertyTransfersStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="false" ignoreEmpty="false" transferToAll="false" useXQuery="false" entitize="false" transferChildNodes="false"><con:name>adminToken</con:name><con:sourceType>ResponseAsXml</con:sourceType><con:sourceStep>POST getToken - admin</con:sourceStep><con:sourcePath>declare namespace ns1='http://docs.rackspacecloud.com/idm/api/v1.0';
 //ns1:auth[1]/ns1:access_token[1]/@id</con:sourcePath><con:targetType>adminToken</con:targetType><con:targetStep>#TestSuite#</con:targetStep></con:transfers><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="false" disabled="false" entitize="false" ignoreEmpty="false" transferChildNodes="false" transferToAll="false" useXQuery="false"><con:name>customeridmToken</con:name><con:sourceType>ResponseAsXml</con:sourceType><con:sourceStep>POST getToken - customeridm</con:sourceStep><con:sourcePath>declare namespace ns1='http://docs.rackspacecloud.com/idm/api/v1.0';
 //ns1:auth[1]/ns1:access_token[1]/@id</con:sourcePath><con:targetType>customeridmToken</con:targetType><con:targetStep>#TestSuite#</con:targetStep><con:targetPath xsi:nil="true"/></con:transfers><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="false" ignoreEmpty="false" transferToAll="false" useXQuery="false" entitize="false" transferChildNodes="false"><con:name>clientToken</con:name><con:sourceType>ResponseAsXml</con:sourceType><con:sourceStep>POST getToken - client</con:sourceStep><con:sourcePath>declare namespace ns1='http://docs.rackspacecloud.com/idm/api/v1.0';
@@ -17181,26 +17222,26 @@ assert status.contains("HTTP/1.1 404 Not Found")</scriptText></con:configuration
   <con:entry key="versionId" value="v1.0"/>
 </con:parameters></con:restRequest></con:config></con:testStep><con:properties/><con:reportParameters/></con:testCase><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="Cleanup" searchProperties="true" id="7daa6c12-40bd-4911-a4c1-4a33cc655eb3"><con:settings/><con:testStep type="restrequest" name="DELETE deleteClientGroup - customeridm"><con:settings/><con:config service="CustomerIDM API" methodName="DELETE - deleteClientGroup" resourcePath="/idm/rest/{versionId}/customers/{customerId}/clients/{clientId}/groups/{groupName}" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="DELETE deleteClientGroup - customeridm" mediaType="application/xml" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request/><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
   <con:entry key="groupName" value="NewClientGroup1"/>
+  <con:entry key="Authorization" value="OAuth ${#TestSuite#customeridmToken}"/>
   <con:entry key="customerId" value="${#TestSuite#QACustomerId}"/>
-  <con:entry key="Authorization" value="OAuth ${#TestSuite#customeridmDevToken}"/>
   <con:entry key="versionId" value="v1.0"/>
   <con:entry key="clientId" value="${#TestSuite#QAClientId}"/>
 </con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="DELETE deleteClientGroup - customeridm 2"><con:settings/><con:config service="CustomerIDM API" methodName="DELETE - deleteClientGroup" resourcePath="/idm/rest/{versionId}/customers/{customerId}/clients/{clientId}/groups/{groupName}" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="DELETE deleteClientGroup - customeridm 2" mediaType="application/xml" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request/><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
   <con:entry key="groupName" value="NewClientGroup2"/>
-  <con:entry key="Authorization" value="OAuth ${#TestSuite#customeridmDevToken}"/>
   <con:entry key="customerId" value="${#TestSuite#QACustomerId}"/>
+  <con:entry key="Authorization" value="OAuth ${#TestSuite#customeridmToken}"/>
   <con:entry key="versionId" value="v1.0"/>
   <con:entry key="clientId" value="${#TestSuite#QAClientId}"/>
 </con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="DELETE deleteClientGroup - customeridm 3"><con:settings/><con:config service="CustomerIDM API" methodName="DELETE - deleteClientGroup" resourcePath="/idm/rest/{versionId}/customers/{customerId}/clients/{clientId}/groups/{groupName}" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="DELETE deleteClientGroup - customeridm 3" mediaType="application/xml" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request/><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
   <con:entry key="groupName" value="NewClientGroup3"/>
+  <con:entry key="Authorization" value="OAuth ${#TestSuite#customeridmToken}"/>
   <con:entry key="customerId" value="${#TestSuite#QACustomerId}"/>
-  <con:entry key="Authorization" value="OAuth ${#TestSuite#customeridmDevToken}"/>
   <con:entry key="versionId" value="v1.0"/>
   <con:entry key="clientId" value="${#TestSuite#QAClientId}"/>
 </con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="DELETE deleteUser - customeridm"><con:settings/><con:config service="CustomerIDM API" methodName="DELETE - deleteUser" resourcePath="/idm/rest/{versionId}/customers/{customerId}/users/{username}" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="DELETE deleteUser - customeridm" mediaType="application/xml" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request/><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
   <con:entry key="username" value="${#TestSuite#soapuiTestUsername}"/>
-  <con:entry key="Authorization" value="OAuth ${#TestSuite#customeridmDevToken}"/>
   <con:entry key="customerId" value="${#TestSuite#QACustomerId}"/>
+  <con:entry key="Authorization" value="OAuth ${#TestSuite#customeridmToken}"/>
   <con:entry key="versionId" value="v1.0"/>
 </con:parameters></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="DELETE revokeAccessToken - customeridm"><con:settings/><con:config service="CustomerIDM API" methodName="DELETE - revokeAccessToken" resourcePath="/idm/rest/{versionId}/token/{tokenString}" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="DELETE revokeAccessToken - customeridm" mediaType="application/xml" accept="application/xml" postQueryString="false"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters>
   <con:entry key="Authorization" value="OAuth ${#TestSuite#customeridmToken}"/>
@@ -17222,7 +17263,7 @@ assert status.contains("HTTP/1.1 404 Not Found")</scriptText></con:configuration
   <con:entry key="Authorization" value="OAuth ${#TestSuite#clientToken}"/>
   <con:entry key="versionId" value="v1.0"/>
   <con:entry key="tokenString" value="${#TestSuite#clientToken}"/>
-</con:parameters></con:restRequest></con:config></con:testStep><con:properties/><con:reportParameters/></con:testCase><con:properties><con:property><con:name>adminToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">b2aca787f9b34506adfad02506034638</con:value></con:property><con:property><con:name>userToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">88ed271bd55e46109855d6d5f165f80f</con:value></con:property><con:property><con:name>clientToken</con:name><con:value>4ed38d7d33d04f04a261a1133bccda9f</con:value></con:property><con:property><con:name>authserviceToken</con:name><con:value>94f3f32090774a7f93b04b9d7d029f16</con:value></con:property><con:property><con:name>customeridmToken</con:name><con:value>00b73b534cd6466385935e78f6740903</con:value></con:property><con:property><con:name>AuthServiceClientId</con:name><con:value>bde1268ebabeeabb70a0e702a4626977c331d5c4</con:value></con:property><con:property><con:name>AuthServiceClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>CustomeridmClientId</con:name><con:value>18e7a7032733486cd32f472d7bd58f709ac0d221</con:value></con:property><con:property><con:name>CustomeridmClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>QACustomerId</con:name><con:value>RCN-QATestingCustomer</con:value></con:property><con:property><con:name>QAClientId</con:name><con:value>QATESTCLIENT</con:value></con:property><con:property><con:name>QAClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>QAAdminUserName</con:name><con:value>qaadmin</con:value></con:property><con:property><con:name>QAAdminPassword</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAUserName</con:name><con:value>qauser</con:value></con:property><con:property><con:name>QAPassword</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAUserName2</con:name><con:value>qatester1</con:value></con:property><con:property><con:name>QAPassword2</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QACustomerIdmGroup</con:name><con:value>Idm Admin</con:value></con:property><con:property><con:name>soapuiTestUsername</con:name><con:value>soapuiTestUser-468584</con:value></con:property></con:properties><con:reportParameters/></con:testSuite>
+</con:parameters></con:restRequest></con:config></con:testStep><con:properties/><con:reportParameters/></con:testCase><con:properties><con:property><con:name>adminToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">cca32519969f4dd6a82496e1dcf8118a</con:value></con:property><con:property><con:name>userToken</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">2cdb49d887ee4945bd04191386275747</con:value></con:property><con:property><con:name>clientToken</con:name><con:value>99d1b1281102488e8c3dbb35174c2fd2</con:value></con:property><con:property><con:name>authserviceToken</con:name><con:value>2a4537d28e5a428e80f3d36f5033e215</con:value></con:property><con:property><con:name>customeridmToken</con:name><con:value>fb0bc5610b864cc888b9ad8c8f98cd43</con:value></con:property><con:property><con:name>AuthServiceClientId</con:name><con:value>bde1268ebabeeabb70a0e702a4626977c331d5c4</con:value></con:property><con:property><con:name>AuthServiceClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>CustomeridmClientId</con:name><con:value>18e7a7032733486cd32f472d7bd58f709ac0d221</con:value></con:property><con:property><con:name>CustomeridmClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>QACustomerId</con:name><con:value>RCN-QATestingCustomer</con:value></con:property><con:property><con:name>QAClientId</con:name><con:value>QATESTCLIENT</con:value></con:property><con:property><con:name>QAClientSecret</con:name><con:value>password</con:value></con:property><con:property><con:name>QAAdminUserName</con:name><con:value>qaadmin</con:value></con:property><con:property><con:name>QAAdminPassword</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAUserName</con:name><con:value>qauser</con:value></con:property><con:property><con:name>QAPassword</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QAUserName2</con:name><con:value>qatester1</con:value></con:property><con:property><con:name>QAPassword2</con:name><con:value>P@$$w0rd</con:value></con:property><con:property><con:name>QACustomerIdmGroup</con:name><con:value>Idm Admin</con:value></con:property><con:property><con:name>soapuiTestUsername</con:name><con:value>soapuiTestUser-8210975</con:value></con:property></con:properties><con:reportParameters/></con:testSuite>
     <con:testSuite name="TestSuite - sprint12"><con:settings/><con:runType>SEQUENTIAL</con:runType><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="setUp" searchProperties="true" id="d73d9a53-4f78-4e3c-a379-398af68a6549"><con:settings/><con:testStep type="datagen" name="dataGen"><con:settings/><con:config xsi:type="con:DataGeneratorStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:property type="Number"><con:configuration><start>1111</start><end>9999999</end><step/><pattern>soapUiTestUser-</pattern><random>true</random><persist>false</persist></con:configuration><con:name>newUsername1</con:name><con:mode>STEP</con:mode><con:shared>false</con:shared></con:property><con:property type="Number"><con:configuration><start>1111</start><end>9999999</end><step/><pattern>soapUiTestUser-</pattern><random>true</random><persist>false</persist></con:configuration><con:name>newUsername2</con:name><con:mode>STEP</con:mode><con:shared>false</con:shared></con:property><con:property type="Number"><con:configuration><start>1111</start><end>9999999</end><step/><pattern>soapUiTestUser-</pattern><random>true</random><persist>false</persist></con:configuration><con:name>newUsername3</con:name><con:mode>STEP</con:mode><con:shared>false</con:shared></con:property><con:property type="Template"><con:configuration><template>${dataGen#newUsername1}@example.com</template><entitize>false</entitize></con:configuration><con:name>newUserEmail1</con:name><con:mode>STEP</con:mode><con:shared>false</con:shared></con:property><con:property type="Template"><con:configuration><template>${dataGen#newUsername2}@example.com</template><entitize>false</entitize></con:configuration><con:name>newUserEmail2</con:name><con:mode>STEP</con:mode><con:shared>false</con:shared></con:property><con:property type="Template"><con:configuration><template>${dataGen#newUsername3}@example.com</template><entitize>false</entitize></con:configuration><con:name>newUserEmail3</con:name><con:mode>STEP</con:mode><con:shared>false</con:shared></con:property><con:property type="Number"><con:configuration><start>1111</start><end>9999999999</end><step/><pattern>soapUiTestClient-</pattern><random>true</random><persist>false</persist></con:configuration><con:name>newClientName1</con:name><con:mode>STEP</con:mode><con:shared>false</con:shared></con:property></con:config></con:testStep><con:testStep type="restrequest" name="POST getToken - customerIdm"><con:settings/><con:config service="CustomerIDM API-old" methodName="POST - getToken" resourcePath="/idm/rest/v1.0/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - customerIdm" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="18e7a7032733486cd32f472d7bd58f709ac0d221" client_secret="password" grant_type="CLIENT_CREDENTIALS" username="" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="POST getToken - signupService"><con:settings/><con:config service="CustomerIDM API-old" methodName="POST - getToken" resourcePath="/idm/rest/v1.0/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - signupService" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="MNOPQR" client_secret="password" grant_type="CLIENT_CREDENTIALS" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="POST getToken - auth service"><con:settings/><con:config service="CustomerIDM API-old" methodName="POST - getToken" resourcePath="/idm/rest/v1.0/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - auth service" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="bde1268ebabeeabb70a0e702a4626977c331d5c4" client_secret="password" grant_type="CLIENT_CREDENTIALS" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="POST getToken - client"><con:settings/><con:config service="CustomerIDM API-old" methodName="POST - getToken" resourcePath="/idm/rest/v1.0/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - client" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="QATESTCLIENT" client_secret="password" grant_type="CLIENT_CREDENTIALS" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="POST getToken - admin"><con:settings/><con:config service="CustomerIDM API-old" methodName="POST - getToken" resourcePath="/idm/rest/v1.0/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - admin" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="QATESTCLIENT" client_secret="password" grant_type="PASSWORD" password="P@$$w0rd" username="qaadmin" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:restRequest></con:config></con:testStep><con:testStep type="restrequest" name="POST getToken - user"><con:settings/><con:config service="CustomerIDM API-old" methodName="POST - getToken" resourcePath="/idm/rest/v1.0/token" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="POST getToken - user" mediaType="application/xml" postQueryString="false" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting></con:settings><con:encoding>UTF-8</con:encoding><con:endpoint>${#Project#env-apiUrl}</con:endpoint><con:request>&lt;v1:authCredentials client_id="QATESTCLIENT" client_secret="password" grant_type="PASSWORD" password="P@$$w0rd" username="qauser" xmlns:v1="http://docs.rackspacecloud.com/idm/api/v1.0"/></con:request><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:restRequest></con:config></con:testStep><con:testStep type="transfer" name="PropertyTransfer 1"><con:settings/><con:config xsi:type="con:PropertyTransfersStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="true" ignoreEmpty="false" transferToAll="false" useXQuery="false" entitize="false" transferChildNodes="false"><con:name>customerIdm_token</con:name><con:sourceType>ResponseAsXml</con:sourceType><con:sourceStep>POST getToken - customerIdm</con:sourceStep><con:sourcePath>declare namespace ns1='http://docs.rackspacecloud.com/idm/api/v1.0';
 //ns1:auth[1]/ns1:access_token[1]/@id</con:sourcePath><con:targetType>customerIdm_token</con:targetType><con:targetStep>#TestSuite#</con:targetStep><con:targetPath/></con:transfers><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="true" transferToAll="false" entitize="false" ignoreEmpty="false" useXQuery="false" transferChildNodes="false"><con:name>signupService_token</con:name><con:sourceType>ResponseAsXml</con:sourceType><con:sourceStep>POST getToken - signupService</con:sourceStep><con:sourcePath>declare namespace ns1='http://docs.rackspacecloud.com/idm/api/v1.0';
 //ns1:auth[1]/ns1:access_token[1]/@id</con:sourcePath><con:targetType>newUserEmail2</con:targetType><con:targetStep>#TestSuite#</con:targetStep><con:targetPath/></con:transfers><con:transfers setNullOnMissingSource="true" transferTextContent="true" failOnError="true" ignoreEmpty="false" transferToAll="false" useXQuery="false" entitize="false" transferChildNodes="false"><con:name>client_token</con:name><con:sourceType>ResponseAsXml</con:sourceType><con:sourceStep>POST getToken - client</con:sourceStep><con:sourcePath>declare namespace ns1='http://docs.rackspacecloud.com/idm/api/v1.0';
@@ -18205,7 +18246,7 @@ exists( //ns1:unauthorized)</path><content>true</content><allowWildcards>false</
   <con:entry key="username" value="${#TestSuite#newUsername2}"/>
   <con:entry key="customerId" value="${#TestSuite#existingCustomerNumber}"/>
   <con:entry key="Authorization" value="OAuth ${#TestSuite#customerIdm_token}"/>
-</con:parameters></con:restRequest></con:config></con:testStep><con:properties/><con:reportParameters/></con:testCase><con:properties><con:property><con:name>validPassword</con:name><con:value>P@ssw0rd</con:value></con:property><con:property><con:name>user_token</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">753f8039cc534dd2944c30ee18e58db8</con:value></con:property><con:property><con:name>signupService_token</con:name><con:value>soapUiTestClient-2248073135</con:value></con:property><con:property><con:name>rackspace_customer_number</con:name><con:value>RACKSPACE</con:value></con:property><con:property><con:name>newUsername3</con:name><con:value>soapUiTestUser-1312549</con:value></con:property><con:property><con:name>newUsername2</con:name><con:value>soapUiTestUser-3511295</con:value></con:property><con:property><con:name>newUsername1</con:name><con:value>soapUiTestUser-4130887</con:value></con:property><con:property><con:name>newUserEmail3</con:name><con:value>458288719</con:value></con:property><con:property><con:name>newUserEmail2</con:name><con:value>soapUiTestUser-3511295@example.com</con:value></con:property><con:property><con:name>newUserEmail1</con:name><con:value>soapUiTestUser-4130887@example.com</con:value></con:property><con:property><con:name>newClientName1</con:name><con:value>soapUiTestClient-9594855365</con:value></con:property><con:property><con:name>newClientId1</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">641aadb9406bb0ea42a89b9a1ca82335cded8211</con:value></con:property><con:property><con:name>newBaseUrl3</con:name><con:value>3526992148</con:value></con:property><con:property><con:name>newBaseUrl2</con:name><con:value>91473878</con:value></con:property><con:property><con:name>newBaseUrl1</con:name><con:value>88205718</con:value></con:property><con:property><con:name>invalidPassword</con:name><con:value>asdf</con:value></con:property><con:property><con:name>existingUsername</con:name><con:value>qauser</con:value></con:property><con:property><con:name>existingNastId</con:name><con:value>nastid-qauser</con:value></con:property><con:property><con:name>existingMossoId</con:name><con:value>999112358</con:value></con:property><con:property><con:name>existingCustomerNumber</con:name><con:value>RCN-QATestingCustomer</con:value></con:property><con:property><con:name>customerIdm_token</con:name><con:value>15ff44072cba4a7da829e5a49e6a7e44</con:value></con:property><con:property><con:name>client_token</con:name><con:value>92f12afcfbde445aa565358e60e0fbe1</con:value></con:property><con:property><con:name>authService_token</con:name><con:value>b33c8cf2018f4fd4989e737e9507f938</con:value></con:property><con:property><con:name>admin_token</con:name><con:value>5ea0906104144257947300235757bb51</con:value></con:property></con:properties><con:reportParameters/></con:testSuite>
+</con:parameters></con:restRequest></con:config></con:testStep><con:properties/><con:reportParameters/></con:testCase><con:properties><con:property><con:name>validPassword</con:name><con:value>P@ssw0rd</con:value></con:property><con:property><con:name>user_token</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">b01233044f1d4c1a9f86dca71ef524ec</con:value></con:property><con:property><con:name>signupService_token</con:name><con:value>soapUiTestClient-2248073135</con:value></con:property><con:property><con:name>rackspace_customer_number</con:name><con:value>RACKSPACE</con:value></con:property><con:property><con:name>newUsername3</con:name><con:value>soapUiTestUser-1880598</con:value></con:property><con:property><con:name>newUsername2</con:name><con:value>soapUiTestUser-6680151</con:value></con:property><con:property><con:name>newUsername1</con:name><con:value>soapUiTestUser-2098245</con:value></con:property><con:property><con:name>newUserEmail3</con:name><con:value>450551340</con:value></con:property><con:property><con:name>newUserEmail2</con:name><con:value>soapUiTestUser-6680151@example.com</con:value></con:property><con:property><con:name>newUserEmail1</con:name><con:value>soapUiTestUser-2098245@example.com</con:value></con:property><con:property><con:name>newClientName1</con:name><con:value>soapUiTestClient-3320939213</con:value></con:property><con:property><con:name>newClientId1</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">d5b575a6773b88486958ffae1655b53d32ae2aed</con:value></con:property><con:property><con:name>newBaseUrl3</con:name><con:value>3526992148</con:value></con:property><con:property><con:name>newBaseUrl2</con:name><con:value>792594980</con:value></con:property><con:property><con:name>newBaseUrl1</con:name><con:value>744755546</con:value></con:property><con:property><con:name>invalidPassword</con:name><con:value>asdf</con:value></con:property><con:property><con:name>existingUsername</con:name><con:value>qauser</con:value></con:property><con:property><con:name>existingNastId</con:name><con:value>nastid-qauser</con:value></con:property><con:property><con:name>existingMossoId</con:name><con:value>999112358</con:value></con:property><con:property><con:name>existingCustomerNumber</con:name><con:value>RCN-QATestingCustomer</con:value></con:property><con:property><con:name>customerIdm_token</con:name><con:value>69d484ea8f254abdb7005a8bb3dee5ff</con:value></con:property><con:property><con:name>client_token</con:name><con:value>6d965773958b4df381afd430641e510c</con:value></con:property><con:property><con:name>authService_token</con:name><con:value>665cfd47767f464c9b2680f8fce17817</con:value></con:property><con:property><con:name>admin_token</con:name><con:value>1b01536d9f1d4526b4b6b3a918b0eaae</con:value></con:property></con:properties><con:reportParameters/></con:testSuite>
     <con:testSuite name="TestSuite - General">
         <con:settings/>
         <con:runType>SEQUENTIAL</con:runType>
@@ -20384,19 +20425,19 @@ assert status.contains("HTTP/1.1 201 Created")
         <con:properties>
             <con:property>
                 <con:name>admin_token</con:name>
-                <con:value>8dbeecda376a474b83e16ce0f8022ee7</con:value>
+                <con:value>2ccaf27d29d148bd8eb26115b8940222</con:value>
             </con:property>
             <con:property>
                 <con:name>billingApp_token</con:name>
-                <con:value>d391ec6d68b0423da32a1068c9ba5b40</con:value>
+                <con:value>319307fdea98467b9c62ea5022ad5304</con:value>
             </con:property>
             <con:property>
                 <con:name>client_token</con:name>
-                <con:value>d05d75c77c8447a98ba43f031ad9a4cd</con:value>
+                <con:value>7bce05aba6fa424cb79346e617d56f35</con:value>
             </con:property>
             <con:property>
                 <con:name>customerIdm_token</con:name>
-                <con:value>15ff44072cba4a7da829e5a49e6a7e44</con:value>
+                <con:value>69d484ea8f254abdb7005a8bb3dee5ff</con:value>
             </con:property>
             <con:property>
                 <con:name>invalid_password</con:name>
@@ -20404,39 +20445,39 @@ assert status.contains("HTTP/1.1 201 Created")
             </con:property>
             <con:property>
                 <con:name>newCustomerNumber</con:name>
-                <con:value>soapUiTestCustomer-754382</con:value>
+                <con:value>soapUiTestCustomer-4885059</con:value>
             </con:property>
             <con:property>
                 <con:name>newCustomerNumber2</con:name>
-                <con:value>soapUiTestCustomer-498103</con:value>
+                <con:value>soapUiTestCustomer-8112227</con:value>
             </con:property>
             <con:property>
                 <con:name>newCustomerNumber3</con:name>
-                <con:value>soapUiTestCustomer-2601382</con:value>
+                <con:value>soapUiTestCustomer-2628480</con:value>
             </con:property>
             <con:property>
                 <con:name>newUserEmail</con:name>
-                <con:value>soapUiTestUser-5941669@example.com</con:value>
+                <con:value>soapUiTestUser-3928512@example.com</con:value>
             </con:property>
             <con:property>
                 <con:name>newUserEmail2</con:name>
-                <con:value>soapUiTestUser-8890328@example.com</con:value>
+                <con:value>soapUiTestUser-1366500@example.com</con:value>
             </con:property>
             <con:property>
                 <con:name>newUserEmail3</con:name>
-                <con:value>soapUiTestUser-1009903@example.com</con:value>
+                <con:value>soapUiTestUser-5516827@example.com</con:value>
             </con:property>
             <con:property>
                 <con:name>newUsername</con:name>
-                <con:value>soapUiTestUser-5941669</con:value>
+                <con:value>soapUiTestUser-3928512</con:value>
             </con:property>
             <con:property>
                 <con:name>newUsername2</con:name>
-                <con:value>soapUiTestUser-8890328</con:value>
+                <con:value>soapUiTestUser-1366500</con:value>
             </con:property>
             <con:property>
                 <con:name>newUsername3</con:name>
-                <con:value>soapUiTestUser-1009903</con:value>
+                <con:value>soapUiTestUser-5516827</con:value>
             </con:property>
             <con:property>
                 <con:name>QACustomerNumber</con:name>
@@ -20452,7 +20493,7 @@ assert status.contains("HTTP/1.1 201 Created")
             </con:property>
             <con:property>
                 <con:name>user_token</con:name>
-                <con:value>ace34e12113a43b9961432283ac75826</con:value>
+                <con:value>ad12becf94a449ab8901ec924b0d0691</con:value>
             </con:property>
             <con:property>
                 <con:name>valid_password</con:name>
@@ -20460,7 +20501,7 @@ assert status.contains("HTTP/1.1 201 Created")
             </con:property>
             <con:property>
                 <con:name>addNewCustomerNumber</con:name>
-                <con:value>soapUiTestCustomer-4910540</con:value>
+                <con:value>soapUiTestCustomer-153858</con:value>
             </con:property>
         </con:properties>
         <con:reportParameters/>
@@ -21605,15 +21646,15 @@ assert status.contains("HTTP/1.1 201 Created")
         <con:properties>
             <con:property>
                 <con:name>admin_token</con:name>
-                <con:value>8dbeecda376a474b83e16ce0f8022ee7</con:value>
+                <con:value>2ccaf27d29d148bd8eb26115b8940222</con:value>
             </con:property>
             <con:property>
                 <con:name>billingApp_token</con:name>
-                <con:value>d391ec6d68b0423da32a1068c9ba5b40</con:value>
+                <con:value>319307fdea98467b9c62ea5022ad5304</con:value>
             </con:property>
             <con:property>
                 <con:name>client_token</con:name>
-                <con:value>d05d75c77c8447a98ba43f031ad9a4cd</con:value>
+                <con:value>7bce05aba6fa424cb79346e617d56f35</con:value>
             </con:property>
             <con:property>
                 <con:name>customerIdm_clientId</con:name>
@@ -21621,7 +21662,7 @@ assert status.contains("HTTP/1.1 201 Created")
             </con:property>
             <con:property>
                 <con:name>customerIdm_token</con:name>
-                <con:value>15ff44072cba4a7da829e5a49e6a7e44</con:value>
+                <con:value>69d484ea8f254abdb7005a8bb3dee5ff</con:value>
             </con:property>
             <con:property>
                 <con:name>existingClientId</con:name>
@@ -21633,11 +21674,11 @@ assert status.contains("HTTP/1.1 201 Created")
             </con:property>
             <con:property>
                 <con:name>newClientId</con:name>
-                <con:value>bdcf46865a64b23458d55da43412624ee11fc035</con:value>
+                <con:value>27562c467c4347fe01bb30413e1a44915f4ba33c</con:value>
             </con:property>
             <con:property>
                 <con:name>newClientId2</con:name>
-                <con:value>3975f641aad26c44c26c13fadde99c64ef5468e4</con:value>
+                <con:value>d7d12e0a394d61234d4ea1b4742306c32953625c</con:value>
             </con:property>
             <con:property>
                 <con:name>newClientId3</con:name>
@@ -21645,15 +21686,15 @@ assert status.contains("HTTP/1.1 201 Created")
             </con:property>
             <con:property>
                 <con:name>newClientName</con:name>
-                <con:value>soapUiTestClient-1974297</con:value>
+                <con:value>soapUiTestClient-5971689</con:value>
             </con:property>
             <con:property>
                 <con:name>newClientName2</con:name>
-                <con:value>soapUiTestClient-7537959</con:value>
+                <con:value>soapUiTestClient-8610033</con:value>
             </con:property>
             <con:property>
                 <con:name>newClientName3</con:name>
-                <con:value>soapUiTestClient-5532826</con:value>
+                <con:value>soapUiTestClient-5537522</con:value>
             </con:property>
             <con:property>
                 <con:name>rackspace_customer_number</con:name>
@@ -21665,7 +21706,7 @@ assert status.contains("HTTP/1.1 201 Created")
             </con:property>
             <con:property>
                 <con:name>user_token</con:name>
-                <con:value>ace34e12113a43b9961432283ac75826</con:value>
+                <con:value>ad12becf94a449ab8901ec924b0d0691</con:value>
             </con:property>
         </con:properties>
         <con:reportParameters/>
@@ -24285,7 +24326,7 @@ assert status.contains("HTTP/1.1 201 Created")
                     <con:properties>
                         <con:property>
                             <con:name>user_token</con:name>
-                            <con:value>c5ca13b872214b99be5a730f4fa7e8fb</con:value>
+                            <con:value>847a61513122492a9606145a932f8265</con:value>
                         </con:property>
                     </con:properties>
                 </con:config>
@@ -24629,7 +24670,7 @@ assert status.contains("HTTP/1.1 201 Created")
                     <con:properties>
                         <con:property>
                             <con:name>user_token</con:name>
-                            <con:value>8da68c4fe32b4a06b05cee909580a516</con:value>
+                            <con:value>63ce9afeea0f4819ad3ce60cbf7c4bb5</con:value>
                         </con:property>
                     </con:properties>
                 </con:config>
@@ -25757,7 +25798,7 @@ assert status.contains("HTTP/1.1 201 Created")
                     <con:properties>
                         <con:property>
                             <con:name>user_token</con:name>
-                            <con:value>0995a4b26626462db0186c57bf0e43ee</con:value>
+                            <con:value>e3c9e89c8d1f469194c2a1ada760fef1</con:value>
                         </con:property>
                         <con:property>
                             <con:name>old_password</con:name>
@@ -25765,15 +25806,15 @@ assert status.contains("HTTP/1.1 201 Created")
                         </con:property>
                         <con:property>
                             <con:name>new_password</con:name>
-                            <con:value>P@ssw569973569rd1</con:value>
+                            <con:value>P@ssw7440660rd1</con:value>
                         </con:property>
                         <con:property>
                             <con:name>new_pass2</con:name>
-                            <con:value>P@ssw40390956rd2</con:value>
+                            <con:value>P@ssw942162415rd2</con:value>
                         </con:property>
                         <con:property>
                             <con:name>new_pass3</con:name>
-                            <con:value>P@ssw354356724rd3</con:value>
+                            <con:value>P@ssw992817418rd3</con:value>
                         </con:property>
                     </con:properties>
                 </con:config>
@@ -28263,19 +28304,19 @@ assert status.contains("HTTP/1.1 201 Created")
         <con:properties>
             <con:property>
                 <con:name>admin_token</con:name>
-                <con:value>8dbeecda376a474b83e16ce0f8022ee7</con:value>
+                <con:value>2ccaf27d29d148bd8eb26115b8940222</con:value>
             </con:property>
             <con:property>
                 <con:name>billingApp_token</con:name>
-                <con:value>d391ec6d68b0423da32a1068c9ba5b40</con:value>
+                <con:value>319307fdea98467b9c62ea5022ad5304</con:value>
             </con:property>
             <con:property>
                 <con:name>client_token</con:name>
-                <con:value>d05d75c77c8447a98ba43f031ad9a4cd</con:value>
+                <con:value>7bce05aba6fa424cb79346e617d56f35</con:value>
             </con:property>
             <con:property>
                 <con:name>customerIdm_token</con:name>
-                <con:value>15ff44072cba4a7da829e5a49e6a7e44</con:value>
+                <con:value>69d484ea8f254abdb7005a8bb3dee5ff</con:value>
             </con:property>
             <con:property>
                 <con:name>existingCustomerNumber</con:name>
@@ -28295,27 +28336,27 @@ assert status.contains("HTTP/1.1 201 Created")
             </con:property>
             <con:property>
                 <con:name>newUserEmail1</con:name>
-                <con:value>soapUiTestUser-1944230@example.com</con:value>
+                <con:value>soapUiTestUser-6710071@example.com</con:value>
             </con:property>
             <con:property>
                 <con:name>newUserEmail2</con:name>
-                <con:value>soapUiTestUser-7509852@example.com</con:value>
+                <con:value>soapUiTestUser-6591266@example.com</con:value>
             </con:property>
             <con:property>
                 <con:name>newUserEmail3</con:name>
-                <con:value>soapUiTestUser-7275714@example.com</con:value>
+                <con:value>soapUiTestUser-6993503@example.com</con:value>
             </con:property>
             <con:property>
                 <con:name>newUsername1</con:name>
-                <con:value>soapUiTestUser-1944230</con:value>
+                <con:value>soapUiTestUser-6710071</con:value>
             </con:property>
             <con:property>
                 <con:name>newUsername2</con:name>
-                <con:value>soapUiTestUser-7509852</con:value>
+                <con:value>soapUiTestUser-6591266</con:value>
             </con:property>
             <con:property>
                 <con:name>newUsername3</con:name>
-                <con:value>soapUiTestUser-7275714</con:value>
+                <con:value>soapUiTestUser-6993503</con:value>
             </con:property>
             <con:property>
                 <con:name>rackspace_customer_number</con:name>
@@ -28327,7 +28368,7 @@ assert status.contains("HTTP/1.1 201 Created")
             </con:property>
             <con:property>
                 <con:name>user_token</con:name>
-                <con:value>ace34e12113a43b9961432283ac75826</con:value>
+                <con:value>ad12becf94a449ab8901ec924b0d0691</con:value>
             </con:property>
             <con:property>
                 <con:name>validPassword</con:name>
@@ -28335,7 +28376,7 @@ assert status.contains("HTTP/1.1 201 Created")
             </con:property>
             <con:property>
                 <con:name>passwordRecoveryToken</con:name>
-                <con:value>7b4ded7051ce4fbb8f24144a440a4e7c</con:value>
+                <con:value>bcd37c4ce630459fb07cff7d13341730</con:value>
             </con:property>
         </con:properties>
         <con:reportParameters/>
@@ -28736,19 +28777,19 @@ assert status.contains("HTTP/1.1 201 Created")
         <con:properties>
             <con:property>
                 <con:name>admin_token</con:name>
-                <con:value>8dbeecda376a474b83e16ce0f8022ee7</con:value>
+                <con:value>2ccaf27d29d148bd8eb26115b8940222</con:value>
             </con:property>
             <con:property>
                 <con:name>billingApp_token</con:name>
-                <con:value>d391ec6d68b0423da32a1068c9ba5b40</con:value>
+                <con:value>319307fdea98467b9c62ea5022ad5304</con:value>
             </con:property>
             <con:property>
                 <con:name>client_token</con:name>
-                <con:value>d05d75c77c8447a98ba43f031ad9a4cd</con:value>
+                <con:value>7bce05aba6fa424cb79346e617d56f35</con:value>
             </con:property>
             <con:property>
                 <con:name>customerIdm_token</con:name>
-                <con:value>15ff44072cba4a7da829e5a49e6a7e44</con:value>
+                <con:value>69d484ea8f254abdb7005a8bb3dee5ff</con:value>
             </con:property>
             <con:property>
                 <con:name>invalid_password</con:name>
@@ -28760,7 +28801,7 @@ assert status.contains("HTTP/1.1 201 Created")
             </con:property>
             <con:property>
                 <con:name>user_token</con:name>
-                <con:value>1e86fbcfa4f3426884887b9c95558831</con:value>
+                <con:value>ddc97b1e1f014991bdd3b867e35a3456</con:value>
             </con:property>
             <con:property>
                 <con:name>valid_password</con:name>
@@ -29699,7 +29740,7 @@ assert status.contains("HTTP/1.1 201 Created")
         <con:properties>
             <con:property>
                 <con:name>admin_token</con:name>
-                <con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">c5b542468ab049198a4a91ded06b121c</con:value>
+                <con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">b967ded5e2d4476e8fba06f3fd5042d3</con:value>
             </con:property>
             <con:property>
                 <con:name>billingApp_clientId</con:name>
@@ -29707,11 +29748,11 @@ assert status.contains("HTTP/1.1 201 Created")
             </con:property>
             <con:property>
                 <con:name>billingApp_token</con:name>
-                <con:value>d391ec6d68b0423da32a1068c9ba5b40</con:value>
+                <con:value>b78a42930be941be9da18718dcd72bc4</con:value>
             </con:property>
             <con:property>
                 <con:name>client_token</con:name>
-                <con:value>d05d75c77c8447a98ba43f031ad9a4cd</con:value>
+                <con:value>ca6cac8e2a224cbd8647a4aa21ccb248</con:value>
             </con:property>
             <con:property>
                 <con:name>customerIdm_clientId</con:name>
@@ -29719,7 +29760,7 @@ assert status.contains("HTTP/1.1 201 Created")
             </con:property>
             <con:property>
                 <con:name>customerIdm_token</con:name>
-                <con:value>15ff44072cba4a7da829e5a49e6a7e44</con:value>
+                <con:value>7dc8792ca95a4f03aca0751c16feddc7</con:value>
             </con:property>
             <con:property>
                 <con:name>refresh_token</con:name>
@@ -29727,7 +29768,7 @@ assert status.contains("HTTP/1.1 201 Created")
             </con:property>
             <con:property>
                 <con:name>user_token</con:name>
-                <con:value>ace34e12113a43b9961432283ac75826</con:value>
+                <con:value>e730ccb16da548a0a592357e1fe9c206</con:value>
             </con:property>
             <con:property>
                 <con:name>admin_token2</con:name>
