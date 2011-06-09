@@ -1,7 +1,6 @@
 package com.rackspace.idm.services;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -19,6 +18,7 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.Clients;
+import com.rackspace.idm.domain.entity.DefinedPermission;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.GrantedPermission;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
@@ -150,17 +150,21 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         Permission perm = getFakePermission("fakePermissionObjectId");
 
         EasyMock.expect(
-            mockClientDao.getClientByCustomerIdAndClientId(
-                perm.getCustomerId(), perm.getClientId())).andReturn(client);
+            mockClientDao.getClientByClientId(perm.getClientId())).andReturn(client);
         
         GrantedPermission grantedPerm = new GrantedPermission();
         grantedPerm.setClientId(perm.getClientId());
         grantedPerm.setCustomerId(perm.getCustomerId());
         grantedPerm.setPermissionId(perm.getPermissionId());
+        
+        DefinedPermission dp = new DefinedPermission();
+        dp.setClientId(perm.getClientId());
+        dp.setCustomerId(perm.getCustomerId());
+        dp.setPermissionId(perm.getPermissionId());
 
         EasyMock.expect(
             scopeAccessDao.getPermissionByParentAndPermission(
-                client.getUniqueId(), grantedPerm)).andReturn(grantedPerm);
+                client.getUniqueId(), dp)).andReturn(dp);
 
         EasyMock.expect(
             scopeAccessDao.getDirectScopeAccessForParentByClientId(
@@ -197,10 +201,15 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         grantedPerm.setClientId(perm.getClientId());
         grantedPerm.setCustomerId(perm.getCustomerId());
         grantedPerm.setPermissionId(perm.getPermissionId());
+        
+        DefinedPermission dp = new DefinedPermission();
+        dp.setClientId(perm.getClientId());
+        dp.setCustomerId(perm.getCustomerId());
+        dp.setPermissionId(perm.getPermissionId());
 
         EasyMock.expect(
             scopeAccessDao.getPermissionByParentAndPermission(
-                client.getUniqueId(), grantedPerm)).andReturn(grantedPerm);
+                client.getUniqueId(), dp)).andReturn(dp);
 
         EasyMock.expect(
             scopeAccessDao.getDirectScopeAccessForParentByClientId(
