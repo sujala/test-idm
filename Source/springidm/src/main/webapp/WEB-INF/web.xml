@@ -58,6 +58,10 @@
 		<servlet-name>AcceptServlet</servlet-name>
 		<servlet-class>com.rackspace.idm.web.AcceptServlet</servlet-class>
 	</servlet>
+	<servlet>
+        <servlet-name>DisplayCodeServlet</servlet-name>
+        <servlet-class>com.rackspace.idm.web.DisplayCodeServlet</servlet-class>
+    </servlet>
 	<servlet-mapping>
 		<servlet-name>Jersey Spring Web Application</servlet-name>
 		<url-pattern>/rest/*</url-pattern>
@@ -70,4 +74,8 @@
 		<servlet-name>AcceptServlet</servlet-name>
 		<url-pattern>/web/accept</url-pattern>
 	</servlet-mapping>
+	<servlet-mapping>
+        <servlet-name>DisplayCodeServlet</servlet-name>
+        <url-pattern>/web/displaycode</url-pattern>
+    </servlet-mapping>
 </web-app>
