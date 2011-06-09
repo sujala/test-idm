@@ -379,7 +379,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         String parentUniqueID, String clientId) {
         logger.debug("Getting by clientId {}", clientId);
         ScopeAccess sa = this.scopeAccessDao
-            .getDirectScopeAccessForParentByClientId(parentUniqueID, clientId);
+            .getDelegateScopeAccessForParentByClientId(parentUniqueID, clientId);
 
         logger.debug("Got by clientId {}", clientId);
         return sa;
