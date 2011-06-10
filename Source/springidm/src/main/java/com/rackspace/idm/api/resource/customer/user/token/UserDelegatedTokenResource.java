@@ -72,6 +72,16 @@ public class UserDelegatedTokenResource {
     public Response getTokens(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
+        
+        ScopeAccess authToken = this.scopeAccessService
+        .getAccessTokenByAuthHeader(authHeader);
+
+        // Only Rackers and Specific Clients are authorized
+        boolean authorized = authorizationService.authorizeRacker(authToken)
+        || authorizationService.authorizeClient(authToken,
+            request.getMethod(), uriInfo);
+
+        authorizationService.checkAuthAndHandleFailure(authorized, authToken);
 
         User user = userService.checkAndGetUser(customerId, username);
 
@@ -106,9 +116,8 @@ public class UserDelegatedTokenResource {
         ScopeAccess authToken = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
-        // Only Rackers, Rackspace Clients and Specific Clients are authorized
+        // Only Rackers and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(authToken)
-        || authorizationService.authorizeRackspaceClient(authToken)
         || authorizationService.authorizeClient(authToken,
             request.getMethod(), uriInfo);
 
@@ -159,9 +168,8 @@ public class UserDelegatedTokenResource {
         ScopeAccess authToken = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
 
-        // Only Rackers, Rackspace Clients and Specific Clients are authorized
+        // Only Rackers and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(authToken)
-        || authorizationService.authorizeRackspaceClient(authToken)
         || authorizationService.authorizeClient(authToken,
             request.getMethod(), uriInfo);
 
