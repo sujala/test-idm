@@ -90,16 +90,56 @@ public class AuthorizeServlet extends HttpServlet {
         throws ServletException, IOException {
 
         String redirectUri = request.getParameter("redirect_uri");
+        String responseType = request.getParameter("response_type");
         String clientId = request.getParameter("client_id");
         String scopeList = request.getParameter("scope");
 
         String username = request.getParameter("username");
         String password = request.getParameter("password");
 
+        if (StringUtils.isBlank(redirectUri)) {
+            String errMsg = "redirect_uri cannot be blank";
+            logger.warn(errMsg);
+            response.setStatus(400);
+            return;
+        }
+
+        if (StringUtils.isBlank(responseType) || StringUtils.isBlank(clientId)
+            || StringUtils.isBlank(scopeList) || StringUtils.isBlank(username)
+            || StringUtils.isBlank(password)) {
+            URI uri = UriBuilder.fromPath(redirectUri)
+                .queryParam("error", "invalid_request").build();
+            response.setStatus(302);
+            response.setHeader("Location", uri.toString());
+            return;
+        }
+
+        List<Client> clients = new ArrayList<Client>();
+        String[] scopes = scopeList.split(" ");
+        for (String s : scopes) {
+            Client c = getClientService().getClientByScope(s);
+            if (c == null) {
+                URI uri = UriBuilder.fromPath(redirectUri)
+                    .queryParam("error", "invalid_scope").build();
+                response.setStatus(302);
+                response.setHeader("Location", uri.toString());
+                return;
+            }
+            clients.add(c);
+        }
+
+        Client client = getClientService().getById(clientId);
+        if (client == null || client.isDisabled()) {
+            URI uri = UriBuilder.fromPath(redirectUri)
+                .queryParam("error", "unauthorized_client").build();
+            response.setStatus(302);
+            response.setHeader("Location", uri.toString());
+            return;
+        }
+
         UserAuthenticationResult uaResult = null;
         try {
-            uaResult = getUserService().authenticate(
-                username, password);
+            uaResult = getUserService().authenticate(username, password);
         } catch (UserDisabledException ex) {
             URI uri = UriBuilder.fromPath(redirectUri)
                 .queryParam("error", "access_denied").build();
@@ -115,27 +155,10 @@ public class AuthorizeServlet extends HttpServlet {
             return;
         }
 
-        Client client = getClientService().getById(clientId);
-
-        List<Client> clients = new ArrayList<Client>();
-        String[] scopes = scopeList.split(" ");
-
-        for (String s : scopes) {
-            Client c = getClientService().getClientByScope(s);
-            if (c == null) {
-                URI uri = UriBuilder.fromPath(redirectUri)
-                    .queryParam("error", "invalid_scope").build();
-                response.setStatus(302);
-                response.setHeader("Location", uri.toString());
-                return;
-            }
-            clients.add(c);
-        }
-
         for (Client c : clients) {
             ScopeAccess sa = getScopeAccessService()
-                .getDirectScopeAccessForParentByClientId(uaResult.getUser().getUniqueId(),
-                    c.getClientId());
+                .getDirectScopeAccessForParentByClientId(
+                    uaResult.getUser().getUniqueId(), c.getClientId());
             if (sa == null) {
                 URI uri = UriBuilder.fromPath(redirectUri)
                     .queryParam("error", "invalid_scope").build();
@@ -144,7 +167,7 @@ public class AuthorizeServlet extends HttpServlet {
                 return;
             }
         }
-        
+
         User user = getUserService().getUser(username);
         String secureId = generateSecureId();
         user.setSecureId(secureId);
@@ -186,7 +209,7 @@ public class AuthorizeServlet extends HttpServlet {
         }
         return scopeAccessService;
     }
-    
+
     private String generateSecureId() {
         return UUID.randomUUID().toString().replace("-", "");
     }
