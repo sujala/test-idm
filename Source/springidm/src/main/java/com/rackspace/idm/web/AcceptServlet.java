@@ -106,7 +106,10 @@ public class AcceptServlet extends HttpServlet {
 
         if (user == null || !verification.equalsIgnoreCase(user.getSecureId())
             || !username.equals(user.getUsername())) {
-            response.setStatus(400);
+            URI uri = UriBuilder.fromPath(redirectUri)
+                .queryParam("error", "invalid_request").build();
+            response.setStatus(302);
+            response.setHeader("Location", uri.toString());
             return;
         }
 
