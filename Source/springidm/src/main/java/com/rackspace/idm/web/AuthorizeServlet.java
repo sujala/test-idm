@@ -59,6 +59,14 @@ public class AuthorizeServlet extends HttpServlet {
             response.setHeader("Location", uri.toString());
             return;
         }
+        
+        if (!responseType.equals("code")) {
+            URI uri = UriBuilder.fromPath(redirectUri)
+                .queryParam("error", "invalid_request").build();
+            response.setStatus(302);
+            response.setHeader("Location", uri.toString());
+            return;
+        }
 
         String[] scopes = scopeList.split(" ");
         for (String s : scopes) {
@@ -107,6 +115,14 @@ public class AuthorizeServlet extends HttpServlet {
         if (StringUtils.isBlank(responseType) || StringUtils.isBlank(clientId)
             || StringUtils.isBlank(scopeList) || StringUtils.isBlank(username)
             || StringUtils.isBlank(password)) {
+            URI uri = UriBuilder.fromPath(redirectUri)
+                .queryParam("error", "invalid_request").build();
+            response.setStatus(302);
+            response.setHeader("Location", uri.toString());
+            return;
+        }
+        
+        if (!responseType.equals("code")) {
             URI uri = UriBuilder.fromPath(redirectUri)
                 .queryParam("error", "invalid_request").build();
             response.setStatus(302);

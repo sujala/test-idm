@@ -71,6 +71,14 @@ public class AcceptServlet extends HttpServlet {
             return;
         }
 
+        if (!responseType.equals("code")) {
+            URI uri = UriBuilder.fromPath(redirectUri)
+                .queryParam("error", "invalid_request").build();
+            response.setStatus(302);
+            response.setHeader("Location", uri.toString());
+            return;
+        }
+
         if (!accept.equals("Accept")) {
             URI uri = UriBuilder.fromPath(redirectUri)
                 .queryParam("error", "access_denied").build();
