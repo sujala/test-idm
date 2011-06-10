@@ -14,6 +14,8 @@ import javax.ws.rs.core.UriBuilder;
 
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
@@ -29,52 +31,115 @@ import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 
-public class AcceptServlet extends HttpServlet  {
-    
+public class AcceptServlet extends HttpServlet {
+
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+
     private ClientService clientService;
     private UserService userService;
     private ScopeAccessService scopeAccessService;
     private Configuration config;
-    
+
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
-        
+
         String redirectUri = request.getParameter("redirect_uri");
+        String responseType = request.getParameter("response_type");
         String clientId = request.getParameter("client_id");
         String scopeList = request.getParameter("scope");
         String accept = request.getParameter("accept");
         String days = request.getParameter("days");
         String username = request.getParameter("username");
         String verification = request.getParameter("verification");
-        
-        if (StringUtils.isBlank(verification)) {
+
+        if (StringUtils.isBlank(redirectUri)) {
+            String errMsg = "redirect_uri cannot be blank";
+            logger.warn(errMsg);
             response.setStatus(400);
+            return;
+        }
+
+        if (StringUtils.isBlank(responseType) || StringUtils.isBlank(clientId)
+            || StringUtils.isBlank(scopeList) || StringUtils.isBlank(username)
+            || StringUtils.isBlank(accept) || StringUtils.isBlank(verification)
+            || StringUtils.isBlank(days)) {
+            URI uri = UriBuilder.fromPath(redirectUri)
+                .queryParam("error", "invalid_request").build();
+            response.setStatus(302);
+            response.setHeader("Location", uri.toString());
+            return;
+        }
+
+        if (!accept.equals("Accept")) {
+            URI uri = UriBuilder.fromPath(redirectUri)
+                .queryParam("error", "access_denied").build();
+            response.setStatus(302);
+            response.setHeader("Location", uri.toString());
+            return;
+        }
+
+        List<Client> clients = new ArrayList<Client>();
+        String[] scopes = scopeList.split(" ");
+        for (String s : scopes) {
+            Client c = getClientService().getClientByScope(s);
+            if (c == null) {
+                URI uri = UriBuilder.fromPath(redirectUri)
+                    .queryParam("error", "invalid_scope").build();
+                response.setStatus(302);
+                response.setHeader("Location", uri.toString());
+                return;
+            }
+            clients.add(c);
+        }
+
+        Client client = getClientService().getById(clientId);
+        if (client == null || client.isDisabled()) {
+            URI uri = UriBuilder.fromPath(redirectUri)
+                .queryParam("error", "unauthorized_client").build();
+            response.setStatus(302);
+            response.setHeader("Location", uri.toString());
             return;
         }
 
         User user = getUserService().getUserBySecureId(verification);
-        
-        if (user == null || !verification.equalsIgnoreCase(user.getSecureId()) || !username.equals(user.getUsername())) {
+
+        if (user == null || !verification.equalsIgnoreCase(user.getSecureId())
+            || !username.equals(user.getUsername())) {
             response.setStatus(400);
             return;
         }
-        
-        //remove the secureId since its no longer needed
-        user.setSecureId("");
-        getUserService().updateUser(user, false);
-        
-        if (!accept.equals("Accept")) {
-            URI uri = UriBuilder.fromPath(redirectUri)
-            .queryParam("error", "access_denied").build();
-        response.setStatus(302);
-        response.setHeader("Location", uri.toString());
-        return;
+
+        for (Client c : clients) {
+            ScopeAccess sa = getScopeAccessService()
+                .getDirectScopeAccessForParentByClientId(user.getUniqueId(),
+                    c.getClientId());
+            if (sa == null) {
+                URI uri = UriBuilder.fromPath(redirectUri)
+                    .queryParam("error", "invalid_scope").build();
+                response.setStatus(302);
+                response.setHeader("Location", uri.toString());
+                return;
+            }
         }
 
-        String authCode = generateAuthCode();
+        int numberOfDays = 0;
 
-        Client client = getClientService().getById(clientId);
+        try {
+            numberOfDays = Integer.parseInt(days);
+        } catch (NumberFormatException ex) {
+            URI uri = UriBuilder.fromPath(redirectUri)
+                .queryParam("error", "invalid_request").build();
+            response.setStatus(302);
+            response.setHeader("Location", uri.toString());
+            return;
+        }
+
+        // remove the secureId since its no longer needed
+        user.setSecureId("");
+        getUserService().updateUser(user, false);
+
+        String authCode = generateAuthCode();
 
         DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) getScopeAccessService()
             .getDelegateScopeAccessForParentByClientId(user.getUniqueId(),
@@ -89,18 +154,9 @@ public class AcceptServlet extends HttpServlet  {
             dcsa = (DelegatedClientScopeAccess) getScopeAccessService()
                 .addDelegateScopeAccess(user.getUniqueId(), dcsa);
         }
-        
-        int numberOfDays = 0;
-
-        try {
-            numberOfDays = Integer.parseInt(days);
-        } catch (NumberFormatException ex) {
-            response.setStatus(400);
-            return;
-        }
 
         DateTime current = new DateTime();
-        
+
         if (numberOfDays > 0) {
             dcsa.setRefreshTokenExp(current.plusDays(numberOfDays).toDate());
         } else {
@@ -108,18 +164,9 @@ public class AcceptServlet extends HttpServlet  {
         }
 
         dcsa.setAuthCode(authCode);
-        dcsa.setAuthCodeExp(current.plusSeconds(getAuthCodeExpirationSeconds()).toDate());
+        dcsa.setAuthCodeExp(current.plusSeconds(getAuthCodeExpirationSeconds())
+            .toDate());
         getScopeAccessService().updateScopeAccess(dcsa);
-
-        List<Client> clients = new ArrayList<Client>();
-        String[] scopes = scopeList.split(" ");
-
-        for (String s : scopes) {
-            Client c = getClientService().getClientByScope(s);
-            if (c != null) {
-                clients.add(c);
-            }
-        }
 
         for (Client c : clients) {
             ScopeAccess sa = getScopeAccessService()
@@ -185,16 +232,16 @@ public class AcceptServlet extends HttpServlet  {
         }
         return scopeAccessService;
     }
-    
+
     private String generateAuthCode() {
         return UUID.randomUUID().toString().replace("-", "");
     }
-    
+
     private int getAuthCodeExpirationSeconds() {
         if (config == null) {
             WebApplicationContext context = WebApplicationContextUtils
-            .getWebApplicationContext(getServletContext());
-        config = context.getBean(Configuration.class);
+                .getWebApplicationContext(getServletContext());
+            config = context.getBean(Configuration.class);
         }
         return config.getInt("authcode.expiration.seconds", 20);
     }
