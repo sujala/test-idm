@@ -34,6 +34,11 @@ public class AuthorizeServlet extends HttpServlet {
     private ClientService clientService;
     private UserService userService;
     private ScopeAccessService scopeAccessService;
+    
+    private static final String INVALID_REQUEST = "invalid_request";
+    private static final String ACCESS_DENIED = "access_denied";
+    private static final String UNAUTHORIZED_CLIENT = "unauthorized_client";
+    private static final String INVALID_SCOPE = "invalid_scope";
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -53,18 +58,12 @@ public class AuthorizeServlet extends HttpServlet {
 
         if (StringUtils.isBlank(responseType) || StringUtils.isBlank(clientId)
             || StringUtils.isBlank(scopeList)) {
-            URI uri = UriBuilder.fromPath(redirectUri)
-                .queryParam("error", "invalid_request").build();
-            response.setStatus(302);
-            response.setHeader("Location", uri.toString());
+            setErrorResponse(response, redirectUri, INVALID_REQUEST);
             return;
         }
         
         if (!responseType.equals("code")) {
-            URI uri = UriBuilder.fromPath(redirectUri)
-                .queryParam("error", "invalid_request").build();
-            response.setStatus(302);
-            response.setHeader("Location", uri.toString());
+            setErrorResponse(response, redirectUri, INVALID_REQUEST);
             return;
         }
 
@@ -72,20 +71,14 @@ public class AuthorizeServlet extends HttpServlet {
         for (String s : scopes) {
             Client c = getClientService().getClientByScope(s);
             if (c == null) {
-                URI uri = UriBuilder.fromPath(redirectUri)
-                    .queryParam("error", "invalid_scope").build();
-                response.setStatus(302);
-                response.setHeader("Location", uri.toString());
+                setErrorResponse(response, redirectUri, INVALID_SCOPE);
                 return;
             }
         }
 
         Client client = getClientService().getById(clientId);
         if (client == null || client.isDisabled()) {
-            URI uri = UriBuilder.fromPath(redirectUri)
-                .queryParam("error", "unauthorized_client").build();
-            response.setStatus(302);
-            response.setHeader("Location", uri.toString());
+            setErrorResponse(response, redirectUri, UNAUTHORIZED_CLIENT);
             return;
         }
 
@@ -115,18 +108,12 @@ public class AuthorizeServlet extends HttpServlet {
         if (StringUtils.isBlank(responseType) || StringUtils.isBlank(clientId)
             || StringUtils.isBlank(scopeList) || StringUtils.isBlank(username)
             || StringUtils.isBlank(password)) {
-            URI uri = UriBuilder.fromPath(redirectUri)
-                .queryParam("error", "invalid_request").build();
-            response.setStatus(302);
-            response.setHeader("Location", uri.toString());
+            setErrorResponse(response, redirectUri, INVALID_REQUEST);
             return;
         }
         
         if (!responseType.equals("code")) {
-            URI uri = UriBuilder.fromPath(redirectUri)
-                .queryParam("error", "invalid_request").build();
-            response.setStatus(302);
-            response.setHeader("Location", uri.toString());
+            setErrorResponse(response, redirectUri, INVALID_REQUEST);
             return;
         }
 
@@ -135,10 +122,7 @@ public class AuthorizeServlet extends HttpServlet {
         for (String s : scopes) {
             Client c = getClientService().getClientByScope(s);
             if (c == null) {
-                URI uri = UriBuilder.fromPath(redirectUri)
-                    .queryParam("error", "invalid_scope").build();
-                response.setStatus(302);
-                response.setHeader("Location", uri.toString());
+                setErrorResponse(response, redirectUri, INVALID_SCOPE);
                 return;
             }
             clients.add(c);
@@ -146,10 +130,7 @@ public class AuthorizeServlet extends HttpServlet {
 
         Client client = getClientService().getById(clientId);
         if (client == null || client.isDisabled()) {
-            URI uri = UriBuilder.fromPath(redirectUri)
-                .queryParam("error", "unauthorized_client").build();
-            response.setStatus(302);
-            response.setHeader("Location", uri.toString());
+            setErrorResponse(response, redirectUri, UNAUTHORIZED_CLIENT);
             return;
         }
 
@@ -157,10 +138,7 @@ public class AuthorizeServlet extends HttpServlet {
         try {
             uaResult = getUserService().authenticate(username, password);
         } catch (UserDisabledException ex) {
-            URI uri = UriBuilder.fromPath(redirectUri)
-                .queryParam("error", "access_denied").build();
-            response.setStatus(302);
-            response.setHeader("Location", uri.toString());
+            setErrorResponse(response, redirectUri, ACCESS_DENIED);
             return;
         }
 
@@ -176,10 +154,7 @@ public class AuthorizeServlet extends HttpServlet {
                 .getDirectScopeAccessForParentByClientId(
                     uaResult.getUser().getUniqueId(), c.getClientId());
             if (sa == null) {
-                URI uri = UriBuilder.fromPath(redirectUri)
-                    .queryParam("error", "invalid_scope").build();
-                response.setStatus(302);
-                response.setHeader("Location", uri.toString());
+                setErrorResponse(response, redirectUri, INVALID_SCOPE);
                 return;
             }
         }
@@ -228,5 +203,14 @@ public class AuthorizeServlet extends HttpServlet {
 
     private String generateSecureId() {
         return UUID.randomUUID().toString().replace("-", "");
+    }
+    
+    private void setErrorResponse(HttpServletResponse response,
+        String redirectUri, String errMsg) {
+        URI uri = UriBuilder.fromPath(redirectUri)
+            .queryParam("error", errMsg).build();
+        response.setStatus(302);
+        response.setHeader("Location", uri.toString());
+        return;
     }
 }

@@ -39,6 +39,11 @@ public class AcceptServlet extends HttpServlet {
     private UserService userService;
     private ScopeAccessService scopeAccessService;
     private Configuration config;
+    
+    private static final String INVALID_REQUEST = "invalid_request";
+    private static final String ACCESS_DENIED = "access_denied";
+    private static final String UNAUTHORIZED_CLIENT = "unauthorized_client";
+    private static final String INVALID_SCOPE = "invalid_scope";
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -64,26 +69,17 @@ public class AcceptServlet extends HttpServlet {
             || StringUtils.isBlank(scopeList) || StringUtils.isBlank(username)
             || StringUtils.isBlank(accept) || StringUtils.isBlank(verification)
             || StringUtils.isBlank(days)) {
-            URI uri = UriBuilder.fromPath(redirectUri)
-                .queryParam("error", "invalid_request").build();
-            response.setStatus(302);
-            response.setHeader("Location", uri.toString());
+            setErrorResponse(response, redirectUri, INVALID_REQUEST);
             return;
         }
 
         if (!responseType.equals("code")) {
-            URI uri = UriBuilder.fromPath(redirectUri)
-                .queryParam("error", "invalid_request").build();
-            response.setStatus(302);
-            response.setHeader("Location", uri.toString());
+            setErrorResponse(response, redirectUri, INVALID_REQUEST);
             return;
         }
 
         if (!accept.equals("Accept")) {
-            URI uri = UriBuilder.fromPath(redirectUri)
-                .queryParam("error", "access_denied").build();
-            response.setStatus(302);
-            response.setHeader("Location", uri.toString());
+            setErrorResponse(response, redirectUri, ACCESS_DENIED);
             return;
         }
 
@@ -92,10 +88,7 @@ public class AcceptServlet extends HttpServlet {
         for (String s : scopes) {
             Client c = getClientService().getClientByScope(s);
             if (c == null) {
-                URI uri = UriBuilder.fromPath(redirectUri)
-                    .queryParam("error", "invalid_scope").build();
-                response.setStatus(302);
-                response.setHeader("Location", uri.toString());
+                setErrorResponse(response, redirectUri, INVALID_SCOPE);
                 return;
             }
             clients.add(c);
@@ -103,10 +96,7 @@ public class AcceptServlet extends HttpServlet {
 
         Client client = getClientService().getById(clientId);
         if (client == null || client.isDisabled()) {
-            URI uri = UriBuilder.fromPath(redirectUri)
-                .queryParam("error", "unauthorized_client").build();
-            response.setStatus(302);
-            response.setHeader("Location", uri.toString());
+            setErrorResponse(response, redirectUri, UNAUTHORIZED_CLIENT);
             return;
         }
 
@@ -114,10 +104,7 @@ public class AcceptServlet extends HttpServlet {
 
         if (user == null || !verification.equalsIgnoreCase(user.getSecureId())
             || !username.equals(user.getUsername())) {
-            URI uri = UriBuilder.fromPath(redirectUri)
-                .queryParam("error", "invalid_request").build();
-            response.setStatus(302);
-            response.setHeader("Location", uri.toString());
+            setErrorResponse(response, redirectUri, INVALID_REQUEST);
             return;
         }
 
@@ -126,10 +113,7 @@ public class AcceptServlet extends HttpServlet {
                 .getDirectScopeAccessForParentByClientId(user.getUniqueId(),
                     c.getClientId());
             if (sa == null) {
-                URI uri = UriBuilder.fromPath(redirectUri)
-                    .queryParam("error", "invalid_scope").build();
-                response.setStatus(302);
-                response.setHeader("Location", uri.toString());
+                setErrorResponse(response, redirectUri, INVALID_SCOPE);
                 return;
             }
         }
@@ -139,10 +123,7 @@ public class AcceptServlet extends HttpServlet {
         try {
             numberOfDays = Integer.parseInt(days);
         } catch (NumberFormatException ex) {
-            URI uri = UriBuilder.fromPath(redirectUri)
-                .queryParam("error", "invalid_request").build();
-            response.setStatus(302);
-            response.setHeader("Location", uri.toString());
+            setErrorResponse(response, redirectUri, INVALID_REQUEST);
             return;
         }
 
@@ -255,5 +236,14 @@ public class AcceptServlet extends HttpServlet {
             config = context.getBean(Configuration.class);
         }
         return config.getInt("authcode.expiration.seconds", 20);
+    }
+
+    private void setErrorResponse(HttpServletResponse response,
+        String redirectUri, String errMsg) {
+        URI uri = UriBuilder.fromPath(redirectUri)
+            .queryParam("error", errMsg).build();
+        response.setStatus(302);
+        response.setHeader("Location", uri.toString());
+        return;
     }
 }
