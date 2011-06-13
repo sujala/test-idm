@@ -68,6 +68,6 @@ public class ConverterConfiguration {
     @Bean
     AuthConverter authConverter() {
         return new AuthConverter(tokenConverter(), clientConverter(),
-            userConverter(), endpointConverter(), permissionConverter());
+            userConverter(), endpointConverter());
     }
 }
