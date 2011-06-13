@@ -5,7 +5,6 @@ import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -21,10 +20,8 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.api.converter.ClientConverter;
 import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -57,9 +54,7 @@ public class ScopesResource {
      * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
      * 
      * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param customerId RCN
      */
-    @Path("/scopes")
     @GET
     public Response getAvailableScopes(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader) {

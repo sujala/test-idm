@@ -126,6 +126,11 @@ public class VersionResource {
         return baseUrlsResource;
     }
 
+    @Path("scopes")
+    public ScopesResource getScopeAccesses() {
+        return scopeAccessResource;   
+    }
+
     @GET
     @Path("xsd/{fileName}")
     public Response getXSD(@PathParam("fileName") String fileName) {
@@ -153,9 +158,4 @@ public class VersionResource {
         return Response.ok(myString).build();
     }
     
-    @GET
-    @Path("scopeAccess")
-    public ScopesResource getScopeAccesses() {
-        return scopeAccessResource;   
-    }
 }
