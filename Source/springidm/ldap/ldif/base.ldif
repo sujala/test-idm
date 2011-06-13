@@ -868,3 +868,43 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
+
+dn: cn=getAvailableScopes,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: definedPermission
+cn: getAvailableScopes
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: TRUE
+enabled: TRUE
+
+dn: cn=getTokens,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: definedPermission
+cn: getTokens
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=getTokenDetails,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: definedPermission
+cn: getTokenDetails
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
+
+dn: cn=deleteToken,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: definedPermission
+cn: deleteToken
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+grantedByDefault: FALSE
+enabled: TRUE
