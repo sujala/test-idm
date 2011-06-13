@@ -114,8 +114,8 @@ public class TokenResource {
         }
 
         DateTime currentTime = this.getCurrentTime();
-        ScopeAccess scopeAccess = oauthService.getTokens(grantType,
-            trParam, currentTime);
+        ScopeAccess scopeAccess = oauthService.getTokens(grantType, trParam,
+            currentTime);
         return Response.ok(authConverter.toAuthDataJaxb(scopeAccess)).build();
     }
 
@@ -252,7 +252,7 @@ public class TokenResource {
 
         return Response.noContent().build();
     }
-    
+
     /**
      * Check if the given access token has the specifice service.
      *
@@ -275,14 +275,15 @@ public class TokenResource {
         @PathParam("tokenString") String tokenString,
         @PathParam("serviceId") String serviceId) {
 
-        logger.debug("Checking whether token {} has service {}",
-            tokenString, serviceId);
+        logger.debug("Checking whether token {} has service {}", tokenString,
+            serviceId);
 
         ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
-        boolean authorized = token instanceof ClientScopeAccess
-            && serviceId.equals(token.getClientId());
+        boolean authorized = (token instanceof ClientScopeAccess && serviceId
+            .equals(token.getClientId()))
+            || authorizationService.authorizeCustomerIdm(token);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
@@ -305,7 +306,8 @@ public class TokenResource {
             }
         }
 
-        if (this.scopeAccessService.doesAccessTokenHaveService(tokenToCheck, serviceId)) {
+        if (this.scopeAccessService.doesAccessTokenHaveService(tokenToCheck,
+            serviceId)) {
             return Response.ok().build();
         }
 
@@ -342,8 +344,9 @@ public class TokenResource {
         ScopeAccess token = this.scopeAccessService
             .getAccessTokenByAuthHeader(authHeader);
 
-        boolean authorized = token instanceof ClientScopeAccess
-            && serviceId.equals(token.getClientId());
+        boolean authorized = (token instanceof ClientScopeAccess && serviceId
+            .equals(token.getClientId()))
+            || authorizationService.authorizeCustomerIdm(token);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
@@ -371,7 +374,7 @@ public class TokenResource {
         permission.setCustomerId(token.getClientRCN());
         permission.setPermissionId(permissionId);
 
-        DefinedPermission defined = (DefinedPermission)this.scopeAccessService
+        DefinedPermission defined = (DefinedPermission) this.scopeAccessService
             .getPermissionForParent(token.getUniqueId(), permission);
 
         if (defined == null || !defined.getEnabled()) {
@@ -384,7 +387,8 @@ public class TokenResource {
             }
         }
 
-        if (this.scopeAccessService.doesAccessTokenHavePermission(tokenToCheck, permission)) {
+        if (this.scopeAccessService.doesAccessTokenHavePermission(tokenToCheck,
+            permission)) {
             return Response.ok().build();
         }
 
