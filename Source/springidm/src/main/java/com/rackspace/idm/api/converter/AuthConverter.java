@@ -28,18 +28,16 @@ public class AuthConverter {
     private final ClientConverter clientConverter;
     private final TokenConverter tokenConverter;
     private final EndPointConverter endpointConverter;
-    private final PermissionConverter permissionConverter;
 
     private final ObjectFactory of = new ObjectFactory();
 
     public AuthConverter(TokenConverter tokenConverter,
         ClientConverter clientConverter, UserConverter userConverter,
-        EndPointConverter endpointConverter, PermissionConverter permissionConverter) {
+        EndPointConverter endpointConverter) {
         this.tokenConverter = tokenConverter;
         this.clientConverter = clientConverter;
         this.userConverter = userConverter;
         this.endpointConverter = endpointConverter;
-        this.permissionConverter = permissionConverter;
     }
 
     public com.rackspace.idm.jaxb.Auth toAuthDataJaxb(ScopeAccess scopeAccess) {
