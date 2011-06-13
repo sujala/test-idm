@@ -39,10 +39,12 @@ public class UserDelegatedTokenResource {
     private final AuthorizationService authorizationService;
     private final UserService userService;
     private final TokenConverter tokenConverter;
-    final private Logger logger = LoggerFactory.getLogger(UserDelegatedTokenResource.class);
+    final private Logger logger = LoggerFactory
+        .getLogger(UserDelegatedTokenResource.class);
 
     @Autowired
-    public UserDelegatedTokenResource(ScopeAccessService scopeAccessService, UserService userService, AuthorizationService authorizationService,
+    public UserDelegatedTokenResource(ScopeAccessService scopeAccessService,
+        UserService userService, AuthorizationService authorizationService,
         TokenConverter tokenConverter) {
         this.scopeAccessService = scopeAccessService;
         this.userService = userService;
@@ -64,27 +66,33 @@ public class UserDelegatedTokenResource {
      * 
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
+     * @param username username
      */
     @GET
-    public Response getTokens(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
+    public Response getTokens(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
         @PathParam("username") String username) {
-        
-        ScopeAccess authToken = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
 
-        // Only Rackers and Specific Clients are authorized
+        ScopeAccess authToken = this.scopeAccessService
+            .getAccessTokenByAuthHeader(authHeader);
+
+        // Only Rackers, Idm and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(authToken)
-        || authorizationService.authorizeClient(authToken,
-            request.getMethod(), uriInfo);
+            || authorizationService.authorizeClient(authToken,
+                request.getMethod(), uriInfo)
+            || authorizationService.authorizeCustomerIdm(authToken);
 
         authorizationService.checkAuthAndHandleFailure(authorized, authToken);
 
         User user = userService.checkAndGetUser(customerId, username);
 
-        List<DelegatedClientScopeAccess> scopeAccessList = this.scopeAccessService.getDelegatedUserScopeAccessForUsername(user.getUsername());
+        List<DelegatedClientScopeAccess> scopeAccessList = this.scopeAccessService
+            .getDelegatedUserScopeAccessForUsername(user.getUsername());
 
-        return Response.ok(tokenConverter.toDelegateTokensJaxb(scopeAccessList)).build();
+        return Response
+            .ok(tokenConverter.toDelegateTokensJaxb(scopeAccessList)).build();
     }
 
     /**
@@ -101,48 +109,58 @@ public class UserDelegatedTokenResource {
      * 
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
+     * @param username username
+     * @param tokenString token to be deleted
      */
     @GET
     @Path("{tokenString}")
-    public Response getTokenDetails(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("username") String username, @PathParam("tokenId") String tokenString) {
+    public Response getTokenDetails(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("username") String username,
+        @PathParam("tokenString") String tokenString) {
 
         logger.debug("Validating Access Token: {}", tokenString);
 
         ScopeAccess authToken = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Only Rackers and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(authToken)
-        || authorizationService.authorizeClient(authToken,
-            request.getMethod(), uriInfo);
+            || authorizationService.authorizeClient(authToken,
+                request.getMethod(), uriInfo)
+            || authorizationService.authorizeCustomerIdm(authToken);
 
         authorizationService.checkAuthAndHandleFailure(authorized, authToken);
 
         User user = userService.checkAndGetUser(customerId, username);
 
-        DelegatedClientScopeAccess delegatedScopeAccess = this.scopeAccessService.getDelegatedScopeAccessByAccessToken(user, tokenString);
+        DelegatedClientScopeAccess delegatedScopeAccess = this.scopeAccessService
+            .getDelegatedScopeAccessByAccessToken(user, tokenString);
 
         // Validate Token exists and is valid
         if (delegatedScopeAccess == null) {
             String errorMsg = String
-            .format("Token not found : %s", tokenString);
+                .format("Token not found : %s", tokenString);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
 
         logger.debug("Delegated Access Token Found: {}", tokenString);
-        
-        List<Permission> permsForToken = this.scopeAccessService.getPermissionsForParent(delegatedScopeAccess.getUniqueId());
 
-        return Response.ok(tokenConverter.toDelegatedTokenJaxb(delegatedScopeAccess, permsForToken)).build();
+        List<Permission> permsForToken = this.scopeAccessService
+            .getPermissionsForParent(delegatedScopeAccess.getUniqueId());
+
+        return Response.ok(
+            tokenConverter.toDelegatedTokenJaxb(delegatedScopeAccess,
+                permsForToken)).build();
     }
 
     /**
      * Delete the client access token that has been delegated to the user.
      * 
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}token
+     * @response.representation.204.doc Successful request
      * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
      * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
      * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
@@ -153,22 +171,28 @@ public class UserDelegatedTokenResource {
      * 
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId RCN
+     * @param username username
+     * @param tokenString token to be deleted
      */
     @DELETE
     @Path("{tokenString}")
-    public Response deleteToken(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("username") String username, @PathParam("tokenId") String tokenString) {
+    public Response deleteToken(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("customerId") String customerId,
+        @PathParam("username") String username,
+        @PathParam("tokenString") String tokenString) {
 
         logger.debug("Validating Access Token: {}", tokenString);
 
         ScopeAccess authToken = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Only Rackers and Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(authToken)
-        || authorizationService.authorizeClient(authToken,
-            request.getMethod(), uriInfo);
+            || authorizationService.authorizeClient(authToken,
+                request.getMethod(), uriInfo)
+            || authorizationService.authorizeCustomerIdm(authToken);
 
         authorizationService.checkAuthAndHandleFailure(authorized, authToken);
 
@@ -179,5 +203,5 @@ public class UserDelegatedTokenResource {
         logger.debug("Deleted Delegated Access Token Found: {}", tokenString);
 
         return Response.noContent().build();
-    }  
+    }
 }
