@@ -155,8 +155,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public void deleteDelegatedToken(User user, String tokenString) {
         
-        DelegatedClientScopeAccess delegatedScopeAccess = this.getDelegatedScopeAccessByAccessToken(user, tokenString);
-
+        final DelegatedClientScopeAccess delegatedScopeAccess = (DelegatedClientScopeAccess) 
+        this.scopeAccessDao.getScopeAccessByRefreshToken(tokenString);
+        
         // Validate Token exists and is valid
         if (delegatedScopeAccess == null) {
             String errorMsg = String
@@ -175,7 +176,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 throw new NotFoundException(errorMsg);
             }
         }
-
+        
+        logger.debug("Got Delegated ScopeAccess {} by Access Token {}", delegatedScopeAccess, tokenString);
         deleteScopeAccess(delegatedScopeAccess);
     }
 
