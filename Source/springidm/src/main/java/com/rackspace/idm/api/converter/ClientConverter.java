@@ -128,7 +128,7 @@ public class ClientConverter {
         return returnedClient;
     }
     
-    public com.rackspace.idm.jaxb.Scopes toScopeAccessListFromClientList(List<Client> clientList) {
+    public com.rackspace.idm.jaxb.Scopes toScopesFromClientList(List<Client> clientList) {
         com.rackspace.idm.jaxb.Scopes scopeAccessList = of.createScopes();
         
         for(Client c : clientList) {

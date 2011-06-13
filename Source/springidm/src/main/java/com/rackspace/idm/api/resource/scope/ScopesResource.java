@@ -20,14 +20,12 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.api.converter.ClientConverter;
 import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class ScopesResource {
-    private final AuthorizationService authorizationService;
     private final ClientService clientService;
     private final ClientConverter clientConverter;
    
@@ -35,9 +33,8 @@ public class ScopesResource {
 
     @Autowired
     public ScopesResource(AuthConverter authConverter, 
-        AuthorizationService authorizationService, ClientService clientService, ClientConverter clientConverter) {
-       
-        this.authorizationService = authorizationService;
+        ClientService clientService, ClientConverter clientConverter) {
+
         this.clientService = clientService;
         this.clientConverter = clientConverter;
     }
@@ -59,8 +56,12 @@ public class ScopesResource {
     public Response getAvailableScopes(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader) {
         
+        logger.debug("Getting available scopes");
+        
         List<Client> clientList = this.clientService.getAvailableScopes();
         
-        return Response.ok(clientConverter.toScopeAccessListFromClientList(clientList)).build();
+        logger.debug(String.format("Got %s availalbe scopes", clientList.size()));
+        
+        return Response.ok(clientConverter.toScopesFromClientList(clientList)).build();
     }
 }

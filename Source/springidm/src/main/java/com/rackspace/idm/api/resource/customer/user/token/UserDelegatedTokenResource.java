@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.api.converter.TokenConverter;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.Permission;
@@ -40,17 +39,15 @@ public class UserDelegatedTokenResource {
     private final AuthorizationService authorizationService;
     private final UserService userService;
     private final TokenConverter tokenConverter;
-    private final AuthConverter authConverter;
     final private Logger logger = LoggerFactory.getLogger(UserDelegatedTokenResource.class);
 
     @Autowired
     public UserDelegatedTokenResource(ScopeAccessService scopeAccessService, UserService userService, AuthorizationService authorizationService,
-        TokenConverter tokenConverter, AuthConverter authConverter) {
+        TokenConverter tokenConverter) {
         this.scopeAccessService = scopeAccessService;
         this.userService = userService;
         this.authorizationService = authorizationService;
         this.tokenConverter = tokenConverter;
-        this.authConverter = authConverter;
     }
 
     /**
