@@ -710,10 +710,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         delegatedClientScopeAccess.setAccessTokenString(accessToken);
         DateTime tokenExpiryDate = new DateTime().plusDays(15);
         delegatedClientScopeAccess.setAccessTokenExp(tokenExpiryDate.toDate());
-        List<DelegatedClientScopeAccess> list = new ArrayList<DelegatedClientScopeAccess>();
-        list.add(delegatedClientScopeAccess);
-        EasyMock.expect(scopeAccessDao.getDelegatedClientScopeAccessByUsername(user.getUsername())).andReturn(list);
-        EasyMock.expect(scopeAccessDao.getScopeAccessByAccessToken(accessToken)).andReturn(delegatedClientScopeAccess);
+        EasyMock.expect(scopeAccessDao.getScopeAccessByRefreshToken(accessToken)).andReturn(delegatedClientScopeAccess);
         EasyMock.expect(scopeAccessDao.deleteScopeAccess(delegatedClientScopeAccess)).andReturn(true);
         EasyMock.replay(scopeAccessDao);
 
@@ -730,10 +727,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         delegatedClientScopeAccess.setAccessTokenString(accessToken);
         DateTime tokenExpiryDate = new DateTime().minusDays(15);
         delegatedClientScopeAccess.setAccessTokenExp(tokenExpiryDate.toDate());
-        List<DelegatedClientScopeAccess> list = new ArrayList<DelegatedClientScopeAccess>();
-        list.add(delegatedClientScopeAccess);
-        EasyMock.expect(scopeAccessDao.getDelegatedClientScopeAccessByUsername(user.getUsername())).andReturn(list);
-        EasyMock.expect(scopeAccessDao.getScopeAccessByAccessToken(accessToken)).andReturn(delegatedClientScopeAccess);
+        EasyMock.expect(scopeAccessDao.getScopeAccessByRefreshToken(accessToken)).andReturn(delegatedClientScopeAccess);
         EasyMock.expect(scopeAccessDao.deleteScopeAccess(delegatedClientScopeAccess)).andReturn(true);
         EasyMock.replay(scopeAccessDao);
 
@@ -746,10 +740,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         String accessToken = "accessTokenString";
         DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
         delegatedClientScopeAccess.setAccessTokenString(accessToken);
-        List<DelegatedClientScopeAccess> list = new ArrayList<DelegatedClientScopeAccess>();
-        list.add(delegatedClientScopeAccess);
-        EasyMock.expect(scopeAccessDao.getDelegatedClientScopeAccessByUsername(user.getUsername())).andReturn(list);
-        EasyMock.expect(scopeAccessDao.getScopeAccessByAccessToken(accessToken)).andReturn(delegatedClientScopeAccess);
+        EasyMock.expect(scopeAccessDao.getScopeAccessByRefreshToken(accessToken)).andReturn(delegatedClientScopeAccess);
         EasyMock.expect(scopeAccessDao.deleteScopeAccess(delegatedClientScopeAccess)).andReturn(true);
         EasyMock.replay(scopeAccessDao);
 
@@ -764,10 +755,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         delegatedClientScopeAccess.setAccessTokenString(accessToken);
         DateTime tokenExpiryDate = new DateTime().minusDays(15);
         delegatedClientScopeAccess.setAccessTokenExp(tokenExpiryDate.toDate());
-        List<DelegatedClientScopeAccess> list = new ArrayList<DelegatedClientScopeAccess>();
-        list.add(delegatedClientScopeAccess);
-        EasyMock.expect(scopeAccessDao.getDelegatedClientScopeAccessByUsername(user.getUsername())).andReturn(list);
-        EasyMock.expect(scopeAccessDao.getScopeAccessByAccessToken(accessToken)).andReturn(null);
+        EasyMock.expect(scopeAccessDao.getScopeAccessByRefreshToken(accessToken)).andReturn(null);
         EasyMock.expect(scopeAccessDao.deleteScopeAccess(delegatedClientScopeAccess)).andReturn(true);
         EasyMock.replay(scopeAccessDao);
 
