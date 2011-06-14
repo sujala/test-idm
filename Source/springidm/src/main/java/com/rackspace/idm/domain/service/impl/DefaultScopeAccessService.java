@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.configuration.Configuration;
+import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,30 +156,33 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public void deleteDelegatedToken(User user, String tokenString) {
         
-        final DelegatedClientScopeAccess delegatedScopeAccess = (DelegatedClientScopeAccess) 
-        this.scopeAccessDao.getScopeAccessByRefreshToken(tokenString);
+        List<DelegatedClientScopeAccess> scopeAccessList = this.getDelegatedUserScopeAccessForUsername(user.getUsername());
         
+        if (scopeAccessList != null && scopeAccessList.size() == 0) {
+            String errMsg = String.format("No delegated access tokens available for the user %s", user.getUsername());
+            logger.error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
+        DelegatedClientScopeAccess scopeAccessToDelete = null;
+        
+        for (DelegatedClientScopeAccess l: scopeAccessList) {
+            if (l.getRefreshTokenString() != null && l.getRefreshTokenString().equals(tokenString)) {
+                scopeAccessToDelete = l;
+                break;
+            }
+        }
+                
         // Validate Token exists and is valid
-        if (delegatedScopeAccess == null) {
+        if (scopeAccessToDelete == null) {
             String errorMsg = String
             .format("Token not found : %s", tokenString);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
-
-        if (delegatedScopeAccess instanceof hasAccessToken) {
-            boolean expired = ((hasAccessToken) delegatedScopeAccess)
-            .isAccessTokenExpired(new DateTime());
-            if (expired) {
-                String errorMsg = String.format("Token expired : %s",
-                    tokenString);
-                logger.warn(errorMsg);
-                throw new NotFoundException(errorMsg);
-            }
-        }
         
-        logger.debug("Got Delegated ScopeAccess {} by Access Token {}", delegatedScopeAccess, tokenString);
-        deleteScopeAccess(delegatedScopeAccess);
+        logger.debug("Got Delegated ScopeAccess {} by Access Token {}", scopeAccessToDelete, tokenString);
+        deleteScopeAccess(scopeAccessToDelete);
     }
 
     @Override
