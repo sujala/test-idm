@@ -370,8 +370,7 @@ public class TokenResource {
         }
 
         Permission permission = new Permission();
-        permission.setClientId(token.getClientId());
-        permission.setCustomerId(token.getClientRCN());
+        permission.setClientId(serviceId);
         permission.setPermissionId(permissionId);
 
         DefinedPermission defined = (DefinedPermission) this.scopeAccessService

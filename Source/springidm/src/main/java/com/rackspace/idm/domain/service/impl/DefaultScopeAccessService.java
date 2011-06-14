@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.configuration.Configuration;
-import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +59,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         this.config = config;
     }
 
-    
     @Override
     public ScopeAccess addDelegateScopeAccess(String parentUniqueId,
         ScopeAccess scopeAccess) {
@@ -76,7 +74,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return newScopeAccess;
     }
 
-    
     @Override
     public ScopeAccess addDirectScopeAccess(String parentUniqueId,
         ScopeAccess scopeAccess) {
@@ -91,7 +88,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.info("Added scopeAccess {}", scopeAccess);
         return newScopeAccess;
     }
-    
+
     @Override
     public ScopeAccess addScopeAccess(String parentUniqueId,
         ScopeAccess scopeAccess) {
@@ -101,12 +98,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             throw new IllegalArgumentException(errMsg);
         }
         logger.info("Adding scopeAccess {}", scopeAccess);
-        ScopeAccess newScopeAccess = this.scopeAccessDao.addScopeAccess(parentUniqueId, scopeAccess);
+        ScopeAccess newScopeAccess = this.scopeAccessDao.addScopeAccess(
+            parentUniqueId, scopeAccess);
         logger.info("Added scopeAccess {}", scopeAccess);
         return newScopeAccess;
     }
 
-    
     @Override
     public boolean authenticateAccessToken(String accessTokenStr) {
         logger.debug("Authorizing Token: {}", accessTokenStr);
@@ -128,7 +125,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return authenticated;
     }
 
-    
     @Override
     public DelegatedPermission delegatePermission(String scopeAccessUniqueId,
         DelegatedPermission permission) {
@@ -152,36 +148,41 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         this.scopeAccessDao.deleteScopeAccess(scopeAccess);
         logger.info("Deleted ScopeAccess {}", scopeAccess);
     }
-    
+
     @Override
     public void deleteDelegatedToken(User user, String tokenString) {
-        
-        List<DelegatedClientScopeAccess> scopeAccessList = this.getDelegatedUserScopeAccessForUsername(user.getUsername());
-        
+
+        List<DelegatedClientScopeAccess> scopeAccessList = this
+            .getDelegatedUserScopeAccessForUsername(user.getUsername());
+
         if (scopeAccessList != null && scopeAccessList.size() == 0) {
-            String errMsg = String.format("No delegated access tokens available for the user %s", user.getUsername());
+            String errMsg = String.format(
+                "No delegated access tokens available for the user %s",
+                user.getUsername());
             logger.error(errMsg);
             throw new NotFoundException(errMsg);
         }
-        
+
         DelegatedClientScopeAccess scopeAccessToDelete = null;
-        
-        for (DelegatedClientScopeAccess l: scopeAccessList) {
-            if (l.getRefreshTokenString() != null && l.getRefreshTokenString().equals(tokenString)) {
+
+        for (DelegatedClientScopeAccess l : scopeAccessList) {
+            if (l.getRefreshTokenString() != null
+                && l.getRefreshTokenString().equals(tokenString)) {
                 scopeAccessToDelete = l;
                 break;
             }
         }
-                
+
         // Validate Token exists and is valid
         if (scopeAccessToDelete == null) {
             String errorMsg = String
-            .format("Token not found : %s", tokenString);
+                .format("Token not found : %s", tokenString);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
-        
-        logger.debug("Got Delegated ScopeAccess {} by Access Token {}", scopeAccessToDelete, tokenString);
+
+        logger.debug("Got Delegated ScopeAccess {} by Access Token {}",
+            scopeAccessToDelete, tokenString);
         deleteScopeAccess(scopeAccessToDelete);
     }
 
@@ -199,7 +200,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             permission);
     }
 
-    
     @Override
     public boolean doesAccessTokenHaveService(ScopeAccess token, String clientId) {
         logger.debug("Checking whether access token {} has service {}", token,
@@ -227,17 +227,18 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             hasService);
         return hasService;
     }
-    
-    
+
     @Override
-    public boolean doesUserHavePermissionForClient(User user, Permission permission, Client client) {
+    public boolean doesUserHavePermissionForClient(User user,
+        Permission permission, Client client) {
         logger.debug("Checking whether user {} has permission {}", user,
             permission);
         Permission poSearchParam = new Permission();
         poSearchParam.setClientId(client.getClientId());
         poSearchParam.setPermissionId(permission.getPermissionId());
 
-        DefinedPermission definedPermission = (DefinedPermission) getPermissionForParent(client.getUniqueId(), poSearchParam);
+        DefinedPermission definedPermission = (DefinedPermission) getPermissionForParent(
+            client.getUniqueId(), poSearchParam);
 
         if (definedPermission == null || !definedPermission.getEnabled()) {
             // No such permission defined. Not granted.
@@ -247,7 +248,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         if (definedPermission.getGrantedByDefault()) {
             // Granted by default, but has the user been provisioned for this
             // service?
-            ScopeAccess provisionedSa = scopeAccessDao.getDirectScopeAccessForParentByClientId(user.getUniqueId(),
+            ScopeAccess provisionedSa = scopeAccessDao
+                .getDirectScopeAccessForParentByClientId(user.getUniqueId(),
                     client.getClientId());
             if (provisionedSa != null) {
                 // Provisioned, so granted.
@@ -257,8 +259,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             GrantedPermission gpSearchParam = new GrantedPermission();
             gpSearchParam.setClientId(client.getClientId());
             gpSearchParam.setPermissionId(permission.getPermissionId());
-            
-            Permission grantedPermission = scopeAccessDao.getPermissionByParentAndPermission(user.getUniqueId(), gpSearchParam);
+
+            Permission grantedPermission = scopeAccessDao
+                .getPermissionByParentAndPermission(user.getUniqueId(),
+                    gpSearchParam);
             if (grantedPermission != null) {
                 // The permission has not been granted.
                 return true;
@@ -269,7 +273,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return false;
     }
 
-    
     @Override
     public void expireAccessToken(String tokenString) {
         logger.debug("Expiring access token {}", tokenString);
@@ -286,7 +289,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.debug("Done expiring access token {}", tokenString);
     }
 
-    
     @Override
     public void expireAllTokensForClient(String clientId) {
         logger.debug("Expiring all tokens for client {}", clientId);
@@ -306,7 +308,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.debug("Done expiring all tokens for client {}", clientId);
     }
 
-    
     @Override
     public void expireAllTokensForCustomer(String customerId) {
         logger.debug("Expiring all tokens for client {}", customerId);
@@ -321,7 +322,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.debug("Done expiring all tokens for client {}", customerId);
     }
 
-    
     @Override
     public void expireAllTokensForUser(String username) {
         logger.debug("Expiring all tokens for user {}", username);
@@ -342,7 +342,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.debug("Done expiring all tokens for user {}", username);
     }
 
-    
     @Override
     public ScopeAccess getAccessTokenByAuthHeader(String authHeader) {
         logger.debug("Getting access token by auth header {}", authHeader);
@@ -354,7 +353,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
 
-    
     @Override
     public ClientScopeAccess getClientScopeAccessForClientId(
         String clientUniqueId, String clientId) {
@@ -366,7 +364,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
 
-    
     @Override
     public List<ScopeAccess> getDelegateScopeAccessesForParent(
         String parentUniqueId) {
@@ -379,7 +376,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return sa;
     }
 
-    
     @Override
     public ScopeAccess getDelegateScopeAccessForParentByClientId(
         String parentUniqueID, String clientId) {
@@ -391,7 +387,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return sa;
     }
 
-    
     @Override
     public ScopeAccess getDirectScopeAccessForParentByClientId(
         String parentUniqueID, String clientId) {
@@ -403,7 +398,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return sa;
     }
 
-    
     @Override
     public PasswordResetScopeAccess getOrCreatePasswordResetScopeAccessForUser(
         BaseUser user) {
@@ -444,7 +438,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return prsa;
     }
 
-    
     @Override
     public Permission getPermissionForParent(String scopeAccessUniqueId,
         Permission permission) {
@@ -464,7 +457,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return perm;
     }
 
-    
     @Override
     public List<Permission> getPermissionsForParent(String scopeAccessUniqueId,
         Permission permission) {
@@ -484,15 +476,18 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             scopeAccessUniqueId);
         return perms;
     }
-    
+
     @Override
     public List<Permission> getPermissionsForParent(String scopeAccessUniqueId) {
-        logger.debug("Getting Permissions on ScopeAccess {}", scopeAccessUniqueId);
-        List<Permission> perms = this.scopeAccessDao.getPermissionsByParent(scopeAccessUniqueId);
-        logger.debug("Done Getting Permissions on ScopeAccess {}", scopeAccessUniqueId);
+        logger.debug("Getting Permissions on ScopeAccess {}",
+            scopeAccessUniqueId);
+        List<Permission> perms = this.scopeAccessDao
+            .getPermissionsByParent(scopeAccessUniqueId);
+        logger.debug("Done Getting Permissions on ScopeAccess {}",
+            scopeAccessUniqueId);
         return perms;
-    }  
-    
+    }
+
     @Override
     public RackerScopeAccess getRackerScopeAccessForClientId(
         String rackerUniqueId, String clientId) {
@@ -504,7 +499,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
 
-    
     @Override
     public ScopeAccess getScopeAccessByAccessToken(String accessToken) {
         logger.debug("Getting ScopeAccess by Access Token {}", accessToken);
@@ -514,28 +508,33 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             accessToken);
         return scopeAccess;
     }
-    
+
     @Override
-    public DelegatedClientScopeAccess getDelegatedScopeAccessByAccessToken(User user, String accessToken) {
-        logger.debug("Getting Delegated ScopeAccess by Access Token {}", accessToken);
-        
-        List<DelegatedClientScopeAccess> scopeAccessList = this.getDelegatedUserScopeAccessForUsername(user.getUsername());
-        
-        if (scopeAccessList != null && scopeAccessList.size() == 0) {
-            String errMsg = String.format("No delegated access tokens available for the user %s", user.getUsername());
-            logger.error(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-        
-        final DelegatedClientScopeAccess delegatedScopeAccess = (DelegatedClientScopeAccess) 
-        this.scopeAccessDao.getScopeAccessByAccessToken(accessToken);
-        
-        logger.debug("Got Delegated ScopeAccess {} by Access Token {}", delegatedScopeAccess,
+    public DelegatedClientScopeAccess getDelegatedScopeAccessByAccessToken(
+        User user, String accessToken) {
+        logger.debug("Getting Delegated ScopeAccess by Access Token {}",
             accessToken);
-        return delegatedScopeAccess;
+
+
+        ScopeAccess scopeAccess = scopeAccessDao
+            .getScopeAccessByAccessToken(accessToken);
+
+        if (scopeAccess == null
+            || !(scopeAccess instanceof DelegatedClientScopeAccess)) {
+            return null;
+        }
+
+        DelegatedClientScopeAccess returned = null;
+        DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) scopeAccess;
+        if (dcsa.getUsername().equals(user.getUsername())) {
+            returned = dcsa;
+        }
+
+        logger.debug("Got Delegated ScopeAccess {} by Access Token {}",
+            returned, accessToken);
+        return returned;
     }
 
-    
     @Override
     public DelegatedClientScopeAccess getScopeAccessByAuthCode(
         String authorizationCode) {
@@ -548,7 +547,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
 
-    
     @Override
     public ScopeAccess getScopeAccessByRefreshToken(String refreshToken) {
         logger.debug("Getting ScopeAccess by Refresh Token {}", refreshToken);
@@ -559,18 +557,17 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
 
-    
     @Override
     public List<ScopeAccess> getScopeAccessesForParentByClientId(
         String parentUniqueId, String clientId) {
         logger.debug("Getting ScopeAccesses by parent {} and clientId",
             parentUniqueId, clientId);
-        List<ScopeAccess> sa = this.scopeAccessDao.getScopeAccessesByParentAndClientId(parentUniqueId, clientId);
-        logger.debug("Got {} ScopeAccesses for parent",sa);
+        List<ScopeAccess> sa = this.scopeAccessDao
+            .getScopeAccessesByParentAndClientId(parentUniqueId, clientId);
+        logger.debug("Got {} ScopeAccesses for parent", sa);
         return sa;
     }
 
-    
     @Override
     public UserScopeAccess getUserScopeAccessForClientId(String userUniqueId,
         String clientId) {
@@ -581,23 +578,24 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             clientId);
         return scopeAccess;
     }
-    
-    
+
     @Override
-    public List<DelegatedClientScopeAccess> getDelegatedUserScopeAccessForUsername(String username) {
+    public List<DelegatedClientScopeAccess> getDelegatedUserScopeAccessForUsername(
+        String username) {
         logger.debug("Getting User ScopeAccess by username {}", username);
-        final List<DelegatedClientScopeAccess> scopeAccessList = this.scopeAccessDao.getDelegatedClientScopeAccessByUsername(username);
-        if ( scopeAccessList == null) {
-            String errMsg = String.format("Could not find scope accesses for the user {}",username);
+        final List<DelegatedClientScopeAccess> scopeAccessList = this.scopeAccessDao
+            .getDelegatedClientScopeAccessByUsername(username);
+        if (scopeAccessList == null) {
+            String errMsg = String.format(
+                "Could not find scope accesses for the user {}", username);
             logger.error(errMsg);
             throw new NotFoundException(errMsg);
         }
-        logger.debug("Got User ScopeAccesses {} by username {}", scopeAccessList,
-            username);
+        logger.debug("Got User ScopeAccesses {} by username {}",
+            scopeAccessList, username);
         return scopeAccessList;
     }
 
-    
     @Override
     public UserScopeAccess getUserScopeAccessForClientIdByMossoIdAndApiCredentials(
         int mossoId, String apiKey, String clientId) {
@@ -622,7 +620,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
 
-    
     @Override
     public UserScopeAccess getUserScopeAccessForClientIdByNastIdAndApiCredentials(
         String nastId, String apiKey, String clientId) {
@@ -646,7 +643,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
 
-    
     @Override
     public UserScopeAccess getUserScopeAccessForClientIdByUsernameAndApiCredentials(
         String username, String apiKey, String clientId) {
@@ -672,7 +668,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
 
-    
     @Override
     public UserScopeAccess getUserScopeAccessForClientIdByUsernameAndPassword(
         String username, String password, String clientId) {
@@ -702,7 +697,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
 
-    
     @Override
     public GrantedPermission grantPermissionToClient(String parentUniqueId,
         GrantedPermission permission) {
@@ -713,7 +707,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
         logger.info("Granting permission {} to client {}", parentUniqueId,
             permission.getPermissionId());
-        Client dClient = this.clientDao.getClientByClientId(permission.getClientId());
+        Client dClient = this.clientDao.getClientByClientId(permission
+            .getClientId());
 
         if (dClient == null) {
             String errMsg = String.format("Client %s not found",
@@ -721,15 +716,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        
+
         DefinedPermission dp = new DefinedPermission();
         dp.setClientId(dClient.getClientId());
         dp.setCustomerId(dClient.getCustomerId());
         dp.setPermissionId(permission.getPermissionId());
 
         Permission perm = this.scopeAccessDao
-            .getPermissionByParentAndPermission(dClient.getUniqueId(),
-                dp);
+            .getPermissionByParentAndPermission(dClient.getUniqueId(), dp);
         if (perm == null) {
             String errMsg = String.format(
                 "Permission %s not found for client %s",
@@ -761,7 +755,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return grantedPerm;
     }
 
-    
     @Override
     public GrantedPermission grantPermissionToUser(User user,
         GrantedPermission permission) {
@@ -770,10 +763,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
-        
+
         logger.info("Granting permission {} to user {}", user.getUsername(),
             permission.getPermissionId());
-        
+
         Client dClient = this.clientDao.getClientByCustomerIdAndClientId(
             permission.getCustomerId(), permission.getClientId());
         if (dClient == null) {
@@ -782,15 +775,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        
+
         DefinedPermission dp = new DefinedPermission();
         dp.setClientId(permission.getClientId());
         dp.setCustomerId(permission.getCustomerId());
         dp.setPermissionId(permission.getPermissionId());
 
         Permission perm = this.scopeAccessDao
-            .getPermissionByParentAndPermission(dClient.getUniqueId(),
-                dp);
+            .getPermissionByParentAndPermission(dClient.getUniqueId(), dp);
         if (perm == null) {
             String errMsg = String.format(
                 "Permission %s not found for client %s",
@@ -826,7 +818,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return grantedPerm;
     }
 
-    
     @Override
     public void removePermission(Permission permission) {
         if (permission == null) {
@@ -840,7 +831,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.info("Removing Permission {}", permission);
     }
 
-    
     @Override
     public void updatePermission(Permission permission) {
         if (permission == null) {
@@ -855,7 +845,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.info("Updated Permission {}", permission);
     }
 
-    
     @Override
     public void updateScopeAccess(ScopeAccess scopeAccess) {
 
@@ -931,7 +920,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private int getPagingLimit() {
         return config.getInt("ldap.paging.limit.max");
     }
-    
+
     private void handleAuthenticationFailure(String username,
         final UserAuthenticationResult result) {
         if (!result.isAuthenticated()) {

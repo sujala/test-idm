@@ -219,7 +219,6 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
 
         ScopeAccess sa = new ScopeAccess();
         sa.setClientId(scopeAccess.getClientId());
-        sa.setClientRCN(scopeAccess.getClientRCN());
 
         try {
             conn = getAppConnPool().getConnection();
