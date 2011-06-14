@@ -214,7 +214,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             parentUniqueId = token.getUniqueId();
         } else {
             try {
-                token.getLDAPEntry().getParentDNString();
+                parentUniqueId = token.getLDAPEntry().getParentDNString();
             } catch (LDAPException e) {
                 // noop
             }
