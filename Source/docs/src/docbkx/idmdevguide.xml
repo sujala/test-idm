@@ -544,6 +544,29 @@
         </example>
       </section>
       <section>
+        <title>Check if Token has been Provisioned for Service</title>
+        <note>
+          <para> This is a management API function. </para>
+        </note>
+        <informaltable rules="all">
+&LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &GET; </td>
+              <td colspan="4"
+                  >/tokens/<parameter>tokenId</parameter>/services/<parameter>serviceId</parameter></td>
+              <td colspan="3">Check if token has been provisioned for service</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue>
+          <returnvalue>404</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden (<errorcode>403</errorcode>), idmFault
+            (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+      </section>
+      <section>
         <title>Check if Token has Permission for Service</title>
         <note>
           <para> This is a management API function. </para>
@@ -555,7 +578,7 @@
               <td colspan="1"> &GET; </td>
               <td colspan="4"
                   >/tokens/<parameter>tokenId</parameter>/services/<parameter>serviceId</parameter>/permissions/<parameter>permissionId</parameter></td>
-              <td colspan="3">Revoke a user permission for a service</td>
+              <td colspan="3">Checks if token has permission for a service</td>
             </tr>
           </tbody>
         </informaltable>
@@ -1741,6 +1764,97 @@
             (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>)</simpara>
         &NO_REQUEST;
       </section>
+      <section>
+        <title>Get a List of Delegated Refresh Tokens for a User</title>
+        <note>
+          <para> This is a management API function. </para>
+        </note>
+        <informaltable rules="all">
+&LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &GET; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter>/delegatedrefreshtokens</td>
+              <td colspan="3">Get a user's delegated refresh tokens</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden(<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        <example>
+          <title>XML Delegated Tokens Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/delegatedtokens.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Delegated Tokens Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/delegatedtokens.json" parse="text"/>
+</programlisting>
+        </example>
+      </section>
+      <section>
+        <title>Get a Delegated Refresh Token for a User</title>
+        <note>
+          <para> This is a management API function. </para>
+        </note>
+        <informaltable rules="all">
+&LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &GET; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter>/delegatedrefreshtokens/<parameter>tokenId</parameter></td>
+              <td colspan="3">Get a user's delegated refresh token</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden(<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        <example>
+          <title>XML Delegated Token Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/delegatedtoken.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Delegated Token Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/delegatedtoken.json" parse="text"/>
+</programlisting>
+        </example>
+      </section>
+      <section>
+        <title>Delete a Delegated Refresh Token for a User</title>
+        <note>
+          <para> This is a management API function. </para>
+        </note>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &DELETE; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/users/<parameter>userId</parameter>/delegatedrefreshtokens/<parameter>tokenId</parameter></td>
+              <td colspan="3">Deletes a user's delegated refresh tokens</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>204</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden(<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        &NO_REQUEST;
+      </section>
     </section>
     <section>
       <title>Authentication Operations </title>
@@ -1976,6 +2090,54 @@
           <title>JSON Get Clients Response</title>
           <programlisting language="javascript">
 <xi:include href="../../formattedsamples/clients.json" parse="text"/>
+</programlisting>
+        </example>
+      </section>
+      <section>
+        <title>Update an Application</title>
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &PUT; </td>
+              <td colspan="4"
+                  >/customers/<parameter>customerId</parameter>/clients/<parameter>clientId</parameter></td>
+              <td colspan="3">Update a client. </td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden(<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), emailConflict (409), idmFault
+          (<errorcode>500</errorcode>), serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        <example>
+          <title>XML Update Client Request</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/updateclient.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Update Client Request</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/updateclient.json" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>XML Update Client Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/updatedclient.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Update Client Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/updatedclient.json" parse="text"/>
 </programlisting>
         </example>
       </section>
