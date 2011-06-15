@@ -267,7 +267,7 @@ public class UserResource {
         return customerUserServicesResource;
     }
     
-    @Path("tokens")
+    @Path("delegatedrefreshtokens")
     public UserDelegatedTokenResource getUserTokenResource() {
         return userTokenResource;
     }

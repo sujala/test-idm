@@ -186,7 +186,7 @@ public class AcceptServlet extends HttpServlet {
                         perm.setPermissionId(gp.getPermissionId());
                         perm.setResourceGroups(gp.getResourceGroups());
                         getScopeAccessService().delegatePermission(
-                            sa.getUniqueId(), perm);
+                            newSa.getUniqueId(), perm);
                     }
                 }
             }
