@@ -113,7 +113,7 @@ public class AcceptServlet extends HttpServlet {
                 .getDirectScopeAccessForParentByClientId(user.getUniqueId(),
                     c.getClientId());
             if (sa == null) {
-                setErrorResponse(response, redirectUri, INVALID_SCOPE);
+                setErrorResponse(response, redirectUri, ACCESS_DENIED);
                 return;
             }
         }

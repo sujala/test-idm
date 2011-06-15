@@ -154,7 +154,7 @@ public class AuthorizeServlet extends HttpServlet {
                 .getDirectScopeAccessForParentByClientId(
                     uaResult.getUser().getUniqueId(), c.getClientId());
             if (sa == null) {
-                setErrorResponse(response, redirectUri, INVALID_SCOPE);
+                setErrorResponse(response, redirectUri, ACCESS_DENIED);
                 return;
             }
         }
