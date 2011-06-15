@@ -108,14 +108,14 @@ public class TokenConverter {
         return jaxbTokens;
     }
 
-    public com.rackspace.idm.jaxb.DelegateTokens toDelegateTokensJaxb(
+    public com.rackspace.idm.jaxb.DelegatedTokens toDelegatedTokensJaxb(
         List<DelegatedClientScopeAccess> scopeAccessList) {
-        com.rackspace.idm.jaxb.DelegateTokens jaxbTokens = of
-            .createDelegateTokens();
+        com.rackspace.idm.jaxb.DelegatedTokens jaxbTokens = of
+            .createDelegatedTokens();
 
         for (DelegatedClientScopeAccess u : scopeAccessList) {
             com.rackspace.idm.jaxb.DelegatedToken token = toDelegatedTokenJaxb(u, null);
-            jaxbTokens.getDelegateTokens().add(token);
+            jaxbTokens.getDelegatedTokens().add(token);
         }
         return jaxbTokens;
     }

@@ -92,7 +92,7 @@ public class UserDelegatedTokenResource {
             .getDelegatedUserScopeAccessForUsername(user.getUsername());
 
         return Response
-            .ok(tokenConverter.toDelegateTokensJaxb(scopeAccessList)).build();
+            .ok(tokenConverter.toDelegatedTokensJaxb(scopeAccessList)).build();
     }
 
     /**

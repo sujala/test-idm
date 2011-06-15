@@ -128,7 +128,7 @@
 
 	<element name="tokens" type="idm:TokenList"></element>
 	
-	   <element name="delegateTokens" type="idm:DelegatedTokenList"></element>
+	   <element name="delegatedTokens" type="idm:DelegatedTokenList"></element>
 
 	<complexType name="TokenList">
 		<sequence>
@@ -140,7 +140,7 @@
 	
 	   <complexType name="DelegatedTokenList">
         <sequence>
-            <element name="delegateToken" type="idm:DelegatedToken" minOccurs="0"
+            <element name="delegatedToken" type="idm:DelegatedToken" minOccurs="0"
                 maxOccurs="100">
             </element>
         </sequence>
