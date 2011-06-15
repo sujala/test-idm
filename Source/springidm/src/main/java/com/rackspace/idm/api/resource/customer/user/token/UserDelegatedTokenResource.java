@@ -137,7 +137,7 @@ public class UserDelegatedTokenResource {
         User user = userService.checkAndGetUser(customerId, username);
 
         DelegatedClientScopeAccess delegatedScopeAccess = this.scopeAccessService
-            .getDelegatedScopeAccessByAccessToken(user, tokenString);
+            .getDelegatedScopeAccessByRefreshToken(user, tokenString);
 
         // Validate Token exists and is valid
         if (delegatedScopeAccess == null) {

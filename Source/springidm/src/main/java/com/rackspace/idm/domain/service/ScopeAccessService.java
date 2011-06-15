@@ -64,7 +64,7 @@ public interface ScopeAccessService {
 
     UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId);
     
-    DelegatedClientScopeAccess getDelegatedScopeAccessByAccessToken(User user, String accessToken);
+    DelegatedClientScopeAccess getDelegatedScopeAccessByRefreshToken(User user, String accessToken);
     
     List<DelegatedClientScopeAccess> getDelegatedUserScopeAccessForUsername(String userUniqueId);
 

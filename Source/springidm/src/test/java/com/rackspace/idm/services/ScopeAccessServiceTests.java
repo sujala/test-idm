@@ -9,7 +9,6 @@ import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
@@ -655,55 +654,53 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         List<DelegatedClientScopeAccess> retVal = scopeAccessService.getDelegatedUserScopeAccessForUsername(user.getUsername());
     }   
     
-    @Ignore
     @Test
     public void shouldGetDelegatedScopeAccessByAccessToken() {
         User user = getFakeUser();
         String accessToken = "accessTokenString";
-        List<DelegatedClientScopeAccess> list = new ArrayList<DelegatedClientScopeAccess>();
         DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
         delegatedClientScopeAccess.setAccessTokenString(accessToken);
-        list.add(delegatedClientScopeAccess);
-        EasyMock.expect(scopeAccessDao.getDelegatedClientScopeAccessByUsername(user.getUsername())).andReturn(list);
-        EasyMock.expect(scopeAccessDao.getScopeAccessByAccessToken(accessToken)).andReturn(delegatedClientScopeAccess);
+        delegatedClientScopeAccess.setUsername(user.getUsername());
+        EasyMock.expect(scopeAccessDao.getScopeAccessByRefreshToken(accessToken)).andReturn(delegatedClientScopeAccess);
         EasyMock.replay(scopeAccessDao);
         
-        DelegatedClientScopeAccess retVal = scopeAccessService.getDelegatedScopeAccessByAccessToken(user, accessToken);
+        DelegatedClientScopeAccess retVal = scopeAccessService.getDelegatedScopeAccessByRefreshToken(user, accessToken);
         Assert.assertNotNull(retVal);
         Assert.assertEquals(delegatedClientScopeAccess.getAccessTokenString(), retVal.getAccessTokenString());
         
         EasyMock.verify(scopeAccessDao);
     }
     
-    @Ignore
-    @Test(expected = NotFoundException.class)
-    public void shouldNotGetDelegatedScopeAccessByAccessTokenBecauseNoTokenIsPresent() {
+    @Test
+    public void shouldReturnNullForNonExistentTokenGetDelegatedScopeAccessByAccessToken() {
         User user = getFakeUser();
         String accessToken = "accessTokenString";
-        List<DelegatedClientScopeAccess> list = new ArrayList<DelegatedClientScopeAccess>();
         DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
         delegatedClientScopeAccess.setAccessTokenString(accessToken);
-        list.add(delegatedClientScopeAccess);
-        EasyMock.expect(scopeAccessDao.getDelegatedClientScopeAccessByUsername(user.getUsername())).andReturn(null);
-        EasyMock.expect(scopeAccessDao.getScopeAccessByAccessToken(accessToken)).andReturn(delegatedClientScopeAccess);
+        delegatedClientScopeAccess.setUsername(user.getUsername());
+        EasyMock.expect(scopeAccessDao.getScopeAccessByRefreshToken(accessToken)).andReturn(null);
         EasyMock.replay(scopeAccessDao);
         
-        DelegatedClientScopeAccess retVal = scopeAccessService.getDelegatedScopeAccessByAccessToken(user, accessToken);
+        DelegatedClientScopeAccess retVal = scopeAccessService.getDelegatedScopeAccessByRefreshToken(user, accessToken);
+        Assert.assertNull(retVal);
+        
+        EasyMock.verify(scopeAccessDao);
     }
     
-    @Ignore
-    @Test(expected = NotFoundException.class)
-    public void shouldNotGetDelegatedScopeAccessByAccessTokenBecauseTokenListIsEmpty() {
+    @Test
+    public void shouldReturnNullForNonDelegateTokenGetDelegatedScopeAccessByAccessToken() {
         User user = getFakeUser();
         String accessToken = "accessTokenString";
-        List<DelegatedClientScopeAccess> list = new ArrayList<DelegatedClientScopeAccess>();
-        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-        delegatedClientScopeAccess.setAccessTokenString(accessToken);
-        EasyMock.expect(scopeAccessDao.getDelegatedClientScopeAccessByUsername(user.getUsername())).andReturn(list);
-        EasyMock.expect(scopeAccessDao.getScopeAccessByAccessToken(accessToken)).andReturn(delegatedClientScopeAccess);
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenString(accessToken);
+        userScopeAccess.setUsername(user.getUsername());
+        EasyMock.expect(scopeAccessDao.getScopeAccessByRefreshToken(accessToken)).andReturn(userScopeAccess);
         EasyMock.replay(scopeAccessDao);
         
-        DelegatedClientScopeAccess retVal = scopeAccessService.getDelegatedScopeAccessByAccessToken(user, accessToken);
+        DelegatedClientScopeAccess retVal = scopeAccessService.getDelegatedScopeAccessByRefreshToken(user, accessToken);
+        Assert.assertNull(retVal);
+        
+        EasyMock.verify(scopeAccessDao);
     }
     
     @Test

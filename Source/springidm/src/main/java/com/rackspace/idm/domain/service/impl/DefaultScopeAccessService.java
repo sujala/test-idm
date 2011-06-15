@@ -510,14 +510,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public DelegatedClientScopeAccess getDelegatedScopeAccessByAccessToken(
+    public DelegatedClientScopeAccess getDelegatedScopeAccessByRefreshToken(
         User user, String accessToken) {
         logger.debug("Getting Delegated ScopeAccess by Access Token {}",
             accessToken);
 
 
         ScopeAccess scopeAccess = scopeAccessDao
-            .getScopeAccessByAccessToken(accessToken);
+            .getScopeAccessByRefreshToken(accessToken);
 
         if (scopeAccess == null
             || !(scopeAccess instanceof DelegatedClientScopeAccess)) {
