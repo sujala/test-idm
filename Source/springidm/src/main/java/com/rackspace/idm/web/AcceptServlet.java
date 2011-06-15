@@ -175,7 +175,7 @@ public class AcceptServlet extends HttpServlet {
                 Permission filter = new Permission();
                 filter.setClientId(c.getClientId());
                 List<Permission> perms = getScopeAccessService()
-                    .getPermissionsForParent(newSa.getUniqueId(), filter);
+                    .getPermissionsForParent(sa.getUniqueId(), filter);
 
                 for (Permission p : perms) {
                     if (p instanceof GrantedPermission) {
