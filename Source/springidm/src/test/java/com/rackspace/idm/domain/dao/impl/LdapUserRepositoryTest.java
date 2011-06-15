@@ -522,11 +522,13 @@ public class LdapUserRepositoryTest {
     public void shouldSetAllUsersLocked() {
         User newUser = addNewTestUser();
         repo.setUsersLockedFlagByCustomerId(newUser.getCustomerId(), true);
-
-        User changedUser = repo.getUserByUsername(newUser.getUsername());
-        Assert.assertEquals(changedUser.isLocked(), true);
-
+        User changedUser = repo.getUserByUsername(newUser.getUsername());        
+        repo.setUsersLockedFlagByCustomerId(newUser.getCustomerId(), false);
+        User ReChangedUser = repo.getUserByUsername(newUser.getUsername());
         repo.deleteUser(newUser.getUsername());
+        
+        Assert.assertEquals(changedUser.isLocked(), true);
+        Assert.assertEquals(ReChangedUser.isLocked(), false);
     }
 
     @Test
