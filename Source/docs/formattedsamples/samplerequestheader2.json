@@ -1,0 +1,4 @@
+GET /v1.0/users/joeuser HTTP/1.1
+Host: {host name TBD}
+Accept: application/xml
+Authorization: OAuth ab48a9efdfedb23ty3494
