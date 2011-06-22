@@ -198,7 +198,7 @@ public class AcceptServlet extends HttpServlet {
         return;
     }
 
-    private ClientService getClientService() {
+    private synchronized ClientService getClientService() {
         if (clientService == null) {
             WebApplicationContext context = WebApplicationContextUtils
                 .getWebApplicationContext(getServletContext());
@@ -207,7 +207,7 @@ public class AcceptServlet extends HttpServlet {
         return clientService;
     }
 
-    private UserService getUserService() {
+    private synchronized UserService getUserService() {
         if (userService == null) {
             WebApplicationContext context = WebApplicationContextUtils
                 .getWebApplicationContext(getServletContext());
@@ -216,7 +216,7 @@ public class AcceptServlet extends HttpServlet {
         return userService;
     }
 
-    private ScopeAccessService getScopeAccessService() {
+    private synchronized ScopeAccessService getScopeAccessService() {
         if (scopeAccessService == null) {
             WebApplicationContext context = WebApplicationContextUtils
                 .getWebApplicationContext(getServletContext());

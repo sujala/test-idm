@@ -1,3 +1,4 @@
+<%@page import="org.apache.commons.lang.StringEscapeUtils"%>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
 	pageEncoding="ISO-8859-1"%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
@@ -22,7 +23,7 @@
 				class="fieldDot" width="10" height="10"
 				src="../images/field_optional.gif" alt=""
 				name="username"></img><input tabindex="1" type="text" size="40"
-				name="username" id="username" value="<%=request.getParameter("username") == null ? "" : request.getParameter("username") %>"></input><p></p>
+				name="username" id="username" value="<%=request.getParameter("username") == null ? "" : StringEscapeUtils.escapeHtml(request.getParameter("username")) %>"></input><p></p>
 				</div>
 			<div class="field"><label for="password"><strong>Password</strong></label><img
 				class="fieldDot" width="10" height="10"
@@ -37,13 +38,13 @@
 			<button id="submitButton" type="submit" tabindex="3"><span>Login</span></button>
 			</p>
 			<input type='hidden' name='redirect_uri'
-				value='<%=request.getParameter("redirect_uri")%>'> <input
+				value='<%=StringEscapeUtils.escapeHtml(request.getParameter("redirect_uri"))%>'> <input
 				type='hidden' name='client_id'
-				value='<%=request.getParameter("client_id")%>'> <input
+				value='<%=StringEscapeUtils.escapeHtml(request.getParameter("client_id"))%>'> <input
 				type='hidden' name='response_type'
-				value='<%=request.getParameter("response_type")%>'> <input
+				value='<%=StringEscapeUtils.escapeHtml(request.getParameter("response_type"))%>'> <input
 				type='hidden' name='scope'
-				value='<%=request.getParameter("scope")%>'></form>
+				value='<%=StringEscapeUtils.escapeHtml(request.getParameter("scope"))%>'></form>
 			</div>
 			<div id="dialogBottom"></div>
 			</div>
