@@ -1,28 +1,78 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <schema elementFormDefault="qualified" attributeFormDefault="unqualified"
-    xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
-    xmlns:idm="http://docs.rackspacecloud.com/idm/api/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
-    xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" jaxb:version="2.1"
-    xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
-    jaxb:extensionBindingPrefixes="xjc"
-    targetNamespace="http://docs.rackspacecloud.com/idm/api/v1.0">
-    
-    <element name="scopes" type="idm:ScopeList"></element>
-    
-    <element name="scope" type="idm:Scope"></element>
-    
-    <complexType name="Scope">
-    	<attribute name="name" type="xsd:string"></attribute>
-    	<attribute name="url" type="xsd:string"></attribute>
-    </complexType>
-    
-    <complexType name="ScopeList">
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:idm="http://docs.rackspacecloud.com/idm/api/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+	xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" jaxb:version="2.1"
+	xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+	jaxb:extensionBindingPrefixes="xjc"
+	targetNamespace="http://docs.rackspacecloud.com/idm/api/v1.0">
+
+    <!-- Elements -->
+	<element name="scope" type="idm:Scope">
+        <annotation>
+            <xsd:documentation xml:lang="EN"
+                xmlns="http://www.w3.org/1999/xhtml">
+                <p>A scopes.</p>
+            </xsd:documentation>
+            <xsd:appinfo>
+                <xsdxt:samples>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/xml" href="../samples/scope.xml" />
+                    </xsdxt:sample>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/json" href="../samples/scope.json" />
+                    </xsdxt:sample>
+                </xsdxt:samples>
+            </xsd:appinfo>
+        </annotation>   	
+	</element>
+	
+	<element name="scopes" type="idm:ScopeList">
+        <annotation>
+            <xsd:documentation xml:lang="EN"
+                xmlns="http://www.w3.org/1999/xhtml">
+                <p>A list of scopes.</p>
+            </xsd:documentation>
+            <xsd:appinfo>
+                <xsdxt:samples>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/xml" href="../samples/scopes.xml" />
+                    </xsdxt:sample>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/json" href="../samples/scopes.json" />
+                    </xsdxt:sample>
+                </xsdxt:samples>
+            </xsd:appinfo>
+        </annotation>	
+	</element>
+
+	<!-- Complex Types -->
+	<complexType name="Scope">
+		<attribute name="name" type="xsd:string">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>The name of the scope.</p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+		<attribute name="url" type="xsd:string">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>A url that points to API documentation for the scope.</p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+	</complexType>
+
+	<complexType name="ScopeList">
 		<sequence>
 			<element name="scope" type="idm:Scope" minOccurs="0"
 				maxOccurs="100">
 			</element>
 		</sequence>
 	</complexType>
-    
+
 </schema>

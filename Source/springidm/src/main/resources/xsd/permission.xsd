@@ -1,132 +1,148 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="../xslt/schema.xslt"?>
 
-    <!-- (C) 2010 Rackspace Hosting, All Rights Reserved -->
+<!-- (C) 2010 Rackspace Hosting, All Rights Reserved -->
 
 <schema elementFormDefault="qualified" attributeFormDefault="unqualified"
-    xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
-    xmlns:idm="http://docs.rackspacecloud.com/idm/api/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
-    targetNamespace="http://docs.rackspacecloud.com/idm/api/v1.0">
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:idm="http://docs.rackspacecloud.com/idm/api/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+	targetNamespace="http://docs.rackspacecloud.com/idm/api/v1.0">
 
-    <annotation>
-        <xsd:appinfo xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
-            <xsdxt:title>Clients</xsdxt:title>
-            <xsdxt:link rel="index" href="idmapi.xsd" />
-        </xsd:appinfo>
-        <xsd:documentation xml:lang="EN"
-            xmlns="http://www.w3.org/1999/xhtml">
-            <p>
-                This schema file defines entities related to permissions.
+	<annotation>
+		<xsd:appinfo xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+			<xsdxt:title>Clients</xsdxt:title>
+			<xsdxt:link rel="index" href="idmapi.xsd" />
+		</xsd:appinfo>
+		<xsd:documentation xml:lang="EN"
+			xmlns="http://www.w3.org/1999/xhtml">
+			<p>
+				This schema file defines entities related to permissions.
             </p>
-        </xsd:documentation>
-    </annotation>
+		</xsd:documentation>
+	</annotation>
 
-    <!-- Elements -->
-    <element name="permission" type="idm:Permission">
-        <annotation>
-            <xsd:documentation xml:lang="EN"
-                xmlns="http://www.w3.org/1999/xhtml">
-                <p>A permission.</p>
-            </xsd:documentation>
-            <xsd:appinfo>
-                <xsdxt:samples>
-                    <xsdxt:sample>
-                        <xsdxt:code type="application/xml" href="../samples/permission.xml" />
-                    </xsdxt:sample>
-                    <xsdxt:sample>
-                        <xsdxt:code type="application/json" href="../samples/permission.json" />
-                    </xsdxt:sample>
-                </xsdxt:samples>
-            </xsd:appinfo>
-        </annotation>
-    </element>
+	<!-- Elements -->
+	<element name="permission" type="idm:Permission">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>A permission.</p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../samples/permission.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/permission.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
 
-    <element name="permissions" type="idm:PermissionList">
-    	<annotation>
-    		<xsd:documentation xml:lang="EN"
-    			xmlns="http://www.w3.org/1999/xhtml">
-    			<p>A list of permissions.</p>
-    		</xsd:documentation>
-    		<xsd:appinfo>
-    			<xsdxt:samples>
-    				<xsdxt:sample>
-    					<xsdxt:code type="application/xml"
-    						href="../samples/permissions.xml" />
-    				</xsdxt:sample>
-    				<xsdxt:sample>
-    					<xsdxt:code type="application/json"
-    						href="../samples/permissions.json" />
-    				</xsdxt:sample>
-    			</xsdxt:samples>
-    		</xsd:appinfo>
-    	</annotation>
-    </element>
+	<element name="permissions" type="idm:PermissionList">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>A list of permissions.</p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../samples/permissions.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/permissions.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
 
-
-
-
-    <!-- Complex Types -->
-
-
-    <complexType name="Permission">
-    	<simpleContent>
-    		<extension base="xsd:string">
-    			<attribute name="permissionId" type="xsd:string"
-    				use="required">
-    				<annotation>
-    					<xsd:documentation xml:lang="EN"
-    						xmlns="http://www.w3.org/1999/xhtml">
-    						<p>A id of a permission.</p>
-    					</xsd:documentation>
-    				</annotation>
-    			</attribute>
-    			<attribute name="customerId" type="xsd:string"
-    				use="required">
-    				<annotation>
-    					<xsd:documentation xml:lang="EN"
-    						xmlns="http://www.w3.org/1999/xhtml">
-    						<p>
-    							The customerId that owns the clientId.
+	<!-- Complex Types -->
+	<complexType name="Permission">
+		<simpleContent>
+			<extension base="xsd:string">
+				<attribute name="permissionId" type="xsd:string" use="required">
+					<annotation>
+						<xsd:documentation xml:lang="EN"
+							xmlns="http://www.w3.org/1999/xhtml">
+							<p>A id of a permission.</p>
+						</xsd:documentation>
+					</annotation>
+				</attribute>
+				<attribute name="customerId" type="xsd:string" use="required">
+					<annotation>
+						<xsd:documentation xml:lang="EN"
+							xmlns="http://www.w3.org/1999/xhtml">
+							<p>
+								The customerId that owns the clientId.
     						</p>
-    					</xsd:documentation>
-    				</annotation>
-    			</attribute>
-    			<attribute name="clientId" type="xsd:string"
-    				use="required">
-    				<annotation>
-    					<xsd:documentation xml:lang="EN"
-    						xmlns="http://www.w3.org/1999/xhtml">
-    						<p>
-    							The clientId that owns the permission.
+						</xsd:documentation>
+					</annotation>
+				</attribute>
+				<attribute name="clientId" type="xsd:string" use="required">
+					<annotation>
+						<xsd:documentation xml:lang="EN"
+							xmlns="http://www.w3.org/1999/xhtml">
+							<p>
+								The clientId that owns the permission.
     						</p>
-    					</xsd:documentation>
-    				</annotation>
-    			</attribute>
-    			<attribute name="type" type="xsd:string"
-    				use="optional">
-    				<annotation>
-    					<xsd:documentation xml:lang="EN"
-    						xmlns="http://www.w3.org/1999/xhtml">
-    						<p>The mime type of the permission.</p>
-    					</xsd:documentation>
-    				</annotation>
-    			</attribute>
-    			<attribute name="title" type="xsd:string" use="optional"></attribute>
-    			<attribute name="description" type="xsd:string"
-    				use="optional">
-    			</attribute>
-    			<attribute name="grantedByDefault" type="xsd:boolean" use="optional"></attribute>
-    			<attribute name="enabled" type="xsd:boolean" use="optional"></attribute>
-    		</extension>
-    	</simpleContent>
-    </complexType>
+						</xsd:documentation>
+					</annotation>
+				</attribute>
+				<attribute name="type" type="xsd:string" use="optional">
+					<annotation>
+						<xsd:documentation xml:lang="EN"
+							xmlns="http://www.w3.org/1999/xhtml">
+							<p>The mime type of the permission.</p>
+						</xsd:documentation>
+					</annotation>
+				</attribute>
+				<attribute name="title" type="xsd:string" use="optional">
+					<annotation>
+						<xsd:documentation xml:lang="EN"
+							xmlns="http://www.w3.org/1999/xhtml">
+							<p>The title of the permission which will be displayed to users.
+							</p>
+						</xsd:documentation>
+					</annotation>
+				</attribute>
+				<attribute name="description" type="xsd:string" use="optional">
+					<annotation>
+						<xsd:documentation xml:lang="EN"
+							xmlns="http://www.w3.org/1999/xhtml">
+							<p>The description of the permission.</p>
+						</xsd:documentation>
+					</annotation>
+				</attribute>
+				<attribute name="grantedByDefault" type="xsd:boolean" use="optional">
+					<annotation>
+						<xsd:documentation xml:lang="EN"
+							xmlns="http://www.w3.org/1999/xhtml">
+							<p>A boolean indicating if the permission is granted to users by
+								default.</p>
+						</xsd:documentation>
+					</annotation>
+				</attribute>
+				<attribute name="enabled" type="xsd:boolean" use="optional">
+					<annotation>
+						<xsd:documentation xml:lang="EN"
+							xmlns="http://www.w3.org/1999/xhtml">
+							<p>A boolean indicating if the permission is enabled.</p>
+						</xsd:documentation>
+					</annotation>
+				</attribute>
+			</extension>
+		</simpleContent>
+	</complexType>
 
-    <complexType name="PermissionList">
-        <sequence>
-            <element name="permission" type="idm:Permission" minOccurs="0"
-                maxOccurs="1000">
-            </element>
-        </sequence>
-        
-    </complexType>
+	<complexType name="PermissionList">
+		<sequence>
+			<element name="permission" type="idm:Permission" minOccurs="0"
+				maxOccurs="1000">
+			</element>
+		</sequence>
+	</complexType>
 </schema>

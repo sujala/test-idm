@@ -106,45 +106,64 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
-	
-	   <element name="delegatedToken" type="idm:DelegatedToken">
-        <annotation>
-            <xsd:documentation xml:lang="EN"
-                xmlns="http://www.w3.org/1999/xhtml">
-                <p>A delegate Token.</p>
-            </xsd:documentation>
-            <xsd:appinfo>
-                <xsdxt:samples>
-                    <xsdxt:sample>
-                        <xsdxt:code type="application/xml" href="../samples/token.xml" />
-                    </xsdxt:sample>
-                    <xsdxt:sample>
-                        <xsdxt:code type="application/json" href="../samples/token.json" />
-                    </xsdxt:sample>
-                </xsdxt:samples>
-            </xsd:appinfo>
-        </annotation>
-    </element>
 
-	<element name="tokens" type="idm:TokenList"></element>
-	
-	   <element name="delegatedTokens" type="idm:DelegatedTokenList"></element>
+	<element name="delegatedToken" type="idm:DelegatedToken">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>A delegate Token.</p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../samples/delegatedtoken.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/delegatedtoken.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
 
-	<complexType name="TokenList">
-		<sequence>
-			<element name="token" type="idm:Token" minOccurs="0"
-				maxOccurs="100">
-			</element>
-		</sequence>
-	</complexType>
-	
-	   <complexType name="DelegatedTokenList">
-        <sequence>
-            <element name="delegatedToken" type="idm:DelegatedToken" minOccurs="0"
-                maxOccurs="100">
-            </element>
-        </sequence>
-    </complexType>
+	<element name="tokens" type="idm:TokenList">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>A list of tokens.</p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../samples/delegatedtoken.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/delegatedtoken.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="delegatedTokens" type="idm:DelegatedTokenList">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>A list of delegated tokens.</p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../samples/delegatedtoken.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/delegatedtoken.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
 
 	<!-- Complex Types -->
 	<complexType name="Token">
@@ -203,6 +222,22 @@
 		</attribute>
 	</complexType>
 
+	<complexType name="TokenList">
+		<sequence>
+			<element name="token" type="idm:Token" minOccurs="0"
+				maxOccurs="100">
+			</element>
+		</sequence>
+	</complexType>
+
+	<complexType name="DelegatedTokenList">
+		<sequence>
+			<element name="delegatedToken" type="idm:DelegatedToken"
+				minOccurs="0" maxOccurs="100">
+			</element>
+		</sequence>
+	</complexType>
+
 	<complexType name="AuthData">
 		<sequence>
 			<element name="access_token" type="idm:Token" minOccurs="1"
@@ -251,11 +286,33 @@
 			</element>
 		</sequence>
 		<attribute name="isPasswordResetOnlyToken" type="xsd:boolean"
-			use="required"></attribute>
+			use="required">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>A boolean indicating if the token returned for a user is valid
+						for password reset only because his password has expired.</p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
 		<attribute name="passwordExpirationDate" type="xsd:date"
-			use="required"></attribute>
+			use="required">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>The date a users password is set to expire.</p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
 		<attribute name="daysUntilPasswordExpiration" type="xsd:int"
-			use="required"></attribute>
+			use="required">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>The number of days until a users password expires.</p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
 	</complexType>
 
 	<complexType name="AuthCredentials">

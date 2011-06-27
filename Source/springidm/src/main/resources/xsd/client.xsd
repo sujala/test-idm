@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="../xslt/schema.xslt"?>
 
-	<!-- (C) 2010 Rackspace Hosting, All Rights Reserved -->
+<!-- (C) 2010 Rackspace Hosting, All Rights Reserved -->
 
 <schema elementFormDefault="qualified" attributeFormDefault="unqualified"
-    xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
-    xmlns:idm="http://docs.rackspacecloud.com/idm/api/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
-    xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" jaxb:version="2.1"
-    xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
-    jaxb:extensionBindingPrefixes="xjc"
-    targetNamespace="http://docs.rackspacecloud.com/idm/api/v1.0">
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:idm="http://docs.rackspacecloud.com/idm/api/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+	xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" jaxb:version="2.1"
+	xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+	jaxb:extensionBindingPrefixes="xjc"
+	targetNamespace="http://docs.rackspacecloud.com/idm/api/v1.0">
 
 	<include schemaLocation="permission.xsd"></include>
 	<annotation>
@@ -80,6 +80,42 @@
 		</annotation>
 	</element>
 
+	<element name="clientGroup" type="idm:ClientGroup">
+		<annotation>
+			<xsd:documentation>
+				<p>A client group.</p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../samples/clientGroup.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/clientGroup.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="clientGroups" type="idm:ClientGroupList">
+		<annotation>
+			<xsd:documentation>
+				<p>A list of client groups.</p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../samples/clientGroups.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/clientGroups.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
 	<!-- Complex Types -->
 	<complexType name="Client">
 		<sequence>
@@ -89,15 +125,6 @@
 					<documentation>
 						<p>The client's credentials.</p>
 					</documentation>
-				</annotation>
-			</element>
-			<element name="permissions" type="idm:PermissionList"
-				minOccurs="0" maxOccurs="1">
-				<annotation>
-					<xsd:documentation xml:lang="EN"
-						xmlns="http://www.w3.org/1999/xhtml">
-						<p>A list of permissions the client has.</p>
-					</xsd:documentation>
 				</annotation>
 			</element>
 		</sequence>
@@ -118,7 +145,16 @@
 				</documentation>
 			</annotation>
 		</attribute>
-		<attribute name="customerInum" type="xsd:string"></attribute>
+		<attribute name="customerInum" type="xsd:string">
+            <annotation>
+                <documentation>
+                    <p>
+                        The unique inum for the customer the client
+                        belongs to.
+                    </p>
+                </documentation>
+            </annotation>		
+		</attribute>
 		<attribute name="name" type="string" use="required">
 			<annotation>
 				<documentation>
@@ -140,8 +176,7 @@
 				</documentation>
 			</annotation>
 		</attribute>
-		<attribute name="status" type="idm:ClientStatus"
-			use="optional">
+		<attribute name="status" type="idm:ClientStatus" use="optional">
 			<annotation>
 				<documentation>
 					<p>The user's status.</p>
@@ -168,10 +203,42 @@
 				</documentation>
 			</annotation>
 		</attribute>
-		<attribute name="title" type="xsd:string"></attribute>
-		<attribute name="description" type="xsd:string"></attribute>
-		<attribute name="callBackUrl" type="xsd:string"></attribute>
-		<attribute name="scope" type="xsd:string"></attribute>
+		<attribute name="title" type="xsd:string">
+			<annotation>
+				<documentation>
+					<p>
+						The client Title that will be displayed to users.
+                    </p>
+				</documentation>
+			</annotation>
+		</attribute>
+		<attribute name="description" type="xsd:string">
+			<annotation>
+				<documentation>
+					<p>
+						A human readable description of what the client does.
+                    </p>
+				</documentation>
+			</annotation>
+		</attribute>
+		<attribute name="callBackUrl" type="xsd:string">
+			<annotation>
+				<documentation>
+					<p>
+						The OAuth callback url for a client.
+                    </p>
+				</documentation>
+			</annotation>
+		</attribute>
+		<attribute name="scope" type="xsd:string">
+			<annotation>
+				<documentation>
+					<p>
+						A one word description of a client.
+                    </p>
+				</documentation>
+			</annotation>
+		</attribute>
 	</complexType>
 
 	<complexType name="ClientList">
@@ -180,9 +247,33 @@
 				maxOccurs="1000">
 			</element>
 		</sequence>
-		<attribute name="totalRecords" type="xsd:int"></attribute>
-		<attribute name="offset" type="xsd:int"></attribute>
-		<attribute name="limit" type="xsd:int"></attribute>
+		<attribute name="totalRecords" type="xsd:int">
+			<annotation>
+				<documentation>
+					<p>
+						The total number of clients in a search.
+                    </p>
+				</documentation>
+			</annotation>
+		</attribute>
+		<attribute name="offset" type="xsd:int">
+			<annotation>
+				<documentation>
+					<p>
+						A zero based offset to a subset of clients.
+                    </p>
+				</documentation>
+			</annotation>
+		</attribute>
+		<attribute name="limit" type="xsd:int">
+			<annotation>
+				<documentation>
+					<p>
+						The limit of the number of clients returned in a search.
+                    </p>
+				</documentation>
+			</annotation>
+		</attribute>
 	</complexType>
 
 	<complexType name="ClientCredentials">
@@ -195,7 +286,54 @@
 		</attribute>
 	</complexType>
 
-	<!--  Simple Types -->
+	<complexType name="ClientGroup">
+		<attribute name="customerId" type="xsd:string">
+            <annotation>
+                <documentation>
+                    <p>
+                        The unique Id for the customer the client
+                        belongs to.
+                    </p>
+                </documentation>
+            </annotation>		
+		</attribute>
+		<attribute name="clientId" type="xsd:string">
+            <annotation>
+                <documentation>
+                    <p>
+                        The unique Id for the client.
+                    </p>
+                </documentation>
+            </annotation>
+		</attribute>
+		<attribute name="name" type="xsd:string">
+            <annotation>
+                <documentation>
+                    <p>
+                        The name of the client group.
+                    </p>
+                </documentation>
+            </annotation>		
+		</attribute>
+		<attribute name="type" type="xsd:string">
+            <annotation>
+                <documentation>
+                    <p>
+                        The type of client group.
+                    </p>
+                </documentation>
+            </annotation>		
+		</attribute>
+	</complexType>
+
+	<complexType name="ClientGroupList">
+		<sequence>
+			<element name="clientGroup" type="idm:ClientGroup" minOccurs="0"
+				maxOccurs="1000"></element>
+		</sequence>
+	</complexType>
+	
+	<!-- Simple Types -->
 	<simpleType name="ClientStatus">
 		<annotation>
 			<documentation>
@@ -228,22 +366,4 @@
 			</enumeration>
 		</restriction>
 	</simpleType>
-
-
-	<complexType name="ClientGroup">
-		<attribute name="customerId" type="xsd:string"></attribute>
-		<attribute name="clientId" type="xsd:string"></attribute>
-		<attribute name="name" type="xsd:string"></attribute>
-		<attribute name="type" type="xsd:string"></attribute>
-	</complexType>
-
-	<complexType name="ClientGroupList">
-		<sequence>
-			<element name="clientGroup" type="idm:ClientGroup" minOccurs="0" maxOccurs="1000"></element>
-		</sequence>
-	</complexType>
-
-	<element name="clientGroup" type="idm:ClientGroup"></element>
-
-	<element name="clientGroups" type="idm:ClientGroupList"></element>
 </schema>

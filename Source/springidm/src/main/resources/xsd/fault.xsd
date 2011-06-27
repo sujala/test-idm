@@ -72,6 +72,7 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+
 	<element name="userDisabled" type="idm:UserDisabledFault">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -93,6 +94,7 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+
 	<element name="missingUsername" type="idm:UserNotFoundFault">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -113,6 +115,7 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+
 	<element name="badRequest" type="idm:BadRequestFault">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -133,6 +136,7 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+
 	<element name="unauthorized" type="idm:UnauthorizedFault">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -153,6 +157,7 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+
 	<element name="itemNotFound" type="idm:ItemNotFoundFault">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -173,6 +178,7 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+
 	<element name="forbidden" type="idm:ForbiddenFault">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -193,6 +199,7 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+
 	<element name="usernameConflict" type="idm:UsernameConflictFault">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -213,6 +220,7 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+
 	<element name="clientnameConflict" type="idm:ClientnameConflictFault">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -233,6 +241,7 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+
 	<element name="permissionIdConflict" type="idm:PermisionIdConflictFault">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -253,6 +262,7 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+
 	<element name="emailConflict" type="idm:EmailConflictFault">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -273,6 +283,7 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+
 	<element name="customerIdConflict" type="idm:CustomerIdConflictFault">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -293,6 +304,7 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+
 	<element name="baseUrlIdConflict" type="idm:BaseUrlIdConflictFault">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -377,7 +389,6 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
-
 
 	<element name="passwordSelfUpdateTooSoonFault" type="idm:PasswordSelfUpdateTooSoonFault">
 		<annotation>
@@ -465,27 +476,27 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
-	
-	   <element name="notProvisioned" type="idm:NotProvisionedFault">
-        <annotation>
-            <xsd:documentation xml:lang="EN"
-                xmlns="http://www.w3.org/1999/xhtml">
-                <p>
-                    The user has not been provisioned for this service.
+
+	<element name="notProvisioned" type="idm:NotProvisionedFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					The user has not been provisioned for this service.
                 </p>
-            </xsd:documentation>
-            <xsd:appinfo>
-                <xsdxt:samples>
-                    <xsdxt:sample>
-                        <xsdxt:code type="application/xml" href="../samples/not_provisioned.xml" />
-                    </xsdxt:sample>
-                    <xsdxt:sample>
-                        <xsdxt:code type="application/json" href="../samples/not_provisioned.json" />
-                    </xsdxt:sample>
-                </xsdxt:samples>
-            </xsd:appinfo>
-        </annotation>
-    </element>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../samples/not_provisioned.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/not_provisioned.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
 
 	<!-- Complex Types -->
 	<complexType name="IdmFault">
@@ -633,7 +644,7 @@
 			<extension base="idm:IdmFault"></extension>
 		</complexContent>
 	</complexType>
-	
+
 	<complexType name="PasswordSelfUpdateTooSoonFault">
 		<complexContent>
 			<extension base="idm:IdmFault"></extension>
@@ -657,11 +668,11 @@
 			<extension base="idm:IdmFault"></extension>
 		</complexContent>
 	</complexType>
-	
+
 	<complexType name="NotProvisionedFault">
-        <complexContent>
-            <extension base="idm:IdmFault"></extension>
-        </complexContent>
-    </complexType>
+		<complexContent>
+			<extension base="idm:IdmFault"></extension>
+		</complexContent>
+	</complexType>
 
 </schema>

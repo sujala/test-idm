@@ -12,8 +12,8 @@
 	targetNamespace="http://docs.rackspacecloud.com/idm/api/v1.0">
 
 
-    <include schemaLocation="endpoint.xsd"></include>
-    <include schemaLocation="token.xsd"></include>
+	<include schemaLocation="endpoint.xsd"></include>
+	<include schemaLocation="token.xsd"></include>
 	<annotation>
 		<xsd:appinfo xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
 			<xsdxt:title>Credentials</xsdxt:title>
@@ -92,128 +92,118 @@
 		</annotation>
 	</element>
 
+	<element name="cloudAuth" type="idm:CloudAuthData">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					A combination of the token and the service catalog. This
+					is returned when a user authenticates.
+                     </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../samples/auth.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../samples/auth.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
 
 	<!-- Complex Types -->
-	
-	         <complexType name="Credentials" abstract="true">
-             <attribute name="key" type="xsd:string" use="required">
-                 <annotation>
-                     <xsd:documentation
-                             xml:lang="EN"
-                             xmlns="http://www.w3.org/1999/xhtml">
-                         <p>
-                             The API key.
-                         </p>
-                     </xsd:documentation>
-                 </annotation>
-             </attribute>
-         </complexType>
-	
-	         <complexType name="UsernameCredentials">
-             <complexContent>
-                 <extension base="idm:Credentials">
-                     <attribute name="username" type="xsd:string" use="required">
-                         <annotation>
-                             <xsd:documentation
-                                     xml:lang="EN"
-                                     xmlns="http://www.w3.org/1999/xhtml">
-                                 <p>
-                                     The name of the user authenticated.
-                                 </p>
-                             </xsd:documentation>
-                         </annotation>
-                     </attribute>
-                 </extension>
-             </complexContent>
-         </complexType>
-	
-	         <complexType name="NastCredentials">
-             <complexContent>
-                 <extension base="idm:Credentials">
-                     <attribute name="nastId" type="xsd:string" use="required">
-                         <annotation>
-                             <xsd:documentation
-                                     xml:lang="EN"
-                                     xmlns="http://www.w3.org/1999/xhtml">
-                                 <p>
-                                     Nast Id used to identify the user.
-                                 </p>
-                             </xsd:documentation>
-                         </annotation>
-                     </attribute>
-                 </extension>
-             </complexContent>
-         </complexType>
-     
-         <complexType name="MossoCredentials">
-             <complexContent>
-                 <extension base="idm:Credentials">
-                     <attribute name="mossoId" type="xsd:int" use="required">
-                         <annotation>
-                             <xsd:documentation
-                                     xml:lang="EN"
-                                     xmlns="http://www.w3.org/1999/xhtml">
-                                 <p>
-                                     Mosso account used to identify the user.
-                                 </p>
-                             </xsd:documentation>
-                         </annotation>
-                     </attribute>
-                 </extension>
-             </complexContent>
-         </complexType>
-	
-	         <complexType name="CloudAuthData">
-             <sequence>
-                 <element name="token" type="idm:Token">
-                     <annotation>
-                         <xsd:documentation
-                                 xml:lang="EN"
-                                 xmlns="http://www.w3.org/1999/xhtml">
-                             <p>
-                                 An Auth Token.
-                             </p>
-                         </xsd:documentation>
-                     </annotation>
-                 </element>
-                 <element ref="idm:serviceCatalog">
-                     <annotation>
-                         <xsd:documentation
-                                 xml:lang="EN"
-                                 xmlns="http://www.w3.org/1999/xhtml">
-                             <p>
-                                 The service catalog.
-                             </p>
-                         </xsd:documentation>
-                     </annotation>
-                 </element>
-             </sequence>
-         </complexType>
-         
-                  <element name="cloudAuth" type="idm:CloudAuthData">
-             <annotation>
-                 <xsd:documentation
-                         xml:lang="EN"
-                         xmlns="http://www.w3.org/1999/xhtml">
-                     <p>
-                         A combination of the token and the service catalog. This
-                         is returned when a user authenticates.
-                     </p>
-                 </xsd:documentation>
-                 <xsd:appinfo>
-                     <xsdxt:samples>
-                         <xsdxt:sample>
-                             <xsdxt:code type="application/xml" href="../samples/auth.xml"/>
-                         </xsdxt:sample>
-                         <xsdxt:sample>
-                             <xsdxt:code type="application/json" href="../samples/auth.json"/>
-                         </xsdxt:sample>
-                     </xsdxt:samples>
-                 </xsd:appinfo>
-             </annotation>
-         </element>
-         
-	
 
+	<complexType name="Credentials" abstract="true">
+		<attribute name="key" type="xsd:string" use="required">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>
+						The API key.
+                         </p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+	</complexType>
+
+	<complexType name="UsernameCredentials">
+		<complexContent>
+			<extension base="idm:Credentials">
+				<attribute name="username" type="xsd:string" use="required">
+					<annotation>
+						<xsd:documentation xml:lang="EN"
+							xmlns="http://www.w3.org/1999/xhtml">
+							<p>
+								The name of the user authenticated.
+                                 </p>
+						</xsd:documentation>
+					</annotation>
+				</attribute>
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="NastCredentials">
+		<complexContent>
+			<extension base="idm:Credentials">
+				<attribute name="nastId" type="xsd:string" use="required">
+					<annotation>
+						<xsd:documentation xml:lang="EN"
+							xmlns="http://www.w3.org/1999/xhtml">
+							<p>
+								Nast Id used to identify the user.
+                                 </p>
+						</xsd:documentation>
+					</annotation>
+				</attribute>
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="MossoCredentials">
+		<complexContent>
+			<extension base="idm:Credentials">
+				<attribute name="mossoId" type="xsd:int" use="required">
+					<annotation>
+						<xsd:documentation xml:lang="EN"
+							xmlns="http://www.w3.org/1999/xhtml">
+							<p>
+								Mosso account used to identify the user.
+                                 </p>
+						</xsd:documentation>
+					</annotation>
+				</attribute>
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="CloudAuthData">
+		<sequence>
+			<element name="token" type="idm:Token">
+				<annotation>
+					<xsd:documentation xml:lang="EN"
+						xmlns="http://www.w3.org/1999/xhtml">
+						<p>
+							An Auth Token.
+                             </p>
+					</xsd:documentation>
+				</annotation>
+			</element>
+			<element ref="idm:serviceCatalog">
+				<annotation>
+					<xsd:documentation xml:lang="EN"
+						xmlns="http://www.w3.org/1999/xhtml">
+						<p>
+							The service catalog.
+                             </p>
+					</xsd:documentation>
+				</annotation>
+			</element>
+		</sequence>
+	</complexType>
 </schema>
 
