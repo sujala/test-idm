@@ -2,8 +2,6 @@ package com.rackspace.idm.domain.entity;
 
 import java.util.Locale;
 
-import javax.xml.bind.annotation.XmlTransient;
-
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTimeZone;
 
@@ -23,7 +21,6 @@ public class UserLocale {
         this.timeZone = timeZone;
     }
 
-    @XmlTransient
     public Locale getLocale() {
         return preferredLang;
     }

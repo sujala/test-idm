@@ -305,6 +305,9 @@ public class User extends BaseUser implements Auditable {
     }
 
     public String getTimeZone() {
+        if (preference.getTimeZone() == null) {
+            return null;
+        }
         return preference.getTimeZone().toString();
     }
 
