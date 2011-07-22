@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service;
 
+import java.util.List;
+
 import org.joda.time.DateTime;
 
 import com.rackspace.idm.domain.entity.Clients;
@@ -35,6 +37,8 @@ public interface UserService {
     String generateApiKey();
     
     Racker getRackerByRackerId(String rackerId);
+    
+    List<String> getRackerRoles(String rackerId);
 
     User getUser(String username);
     

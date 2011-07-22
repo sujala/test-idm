@@ -1,15 +1,24 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder;
+import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.BindResult;
+import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.LDAPSearchException;
 import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.ldap.sdk.SearchResultEntry;
+import com.unboundid.ldap.sdk.SearchScope;
 
 public class LdapAuthRepository implements AuthDao {
 
@@ -24,6 +33,7 @@ public class LdapAuthRepository implements AuthDao {
     }
 
     
+    @Override
     public boolean authenticate(String userName, String password) {
         logger.debug("Authenticating racker {}", userName);
         BindResult result = null;
@@ -52,6 +62,37 @@ public class LdapAuthRepository implements AuthDao {
 
         audit.succeed();
         return ResultCode.SUCCESS.equals(result.getResultCode());
+    }
+    
+    @Override
+    public List<String> getRackerRoles(String username) {
+        List<String> roles = new ArrayList<String>();
+        
+        Filter searchFilter = new LdapSearchBuilder()
+        .addEqualAttribute(LdapRepository.ATTR_UID, username).build();
+
+        SearchResultEntry entry = null;
+        try {
+            entry = connPool.searchForEntry(BASE_DN, SearchScope.ONE,
+                searchFilter);
+        } catch (LDAPSearchException ldapEx) {
+            throw new IllegalStateException(ldapEx);
+        }
+        
+        if (entry == null) {
+            String errMsg = String.format("Racker %s not found", username);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        String[] groups = entry.getAttributeValues("groupMembership");
+        
+        for (String group : groups) {
+            String[] split1 = group.split(",");
+            roles.add(split1[0].split("=")[1]);
+        }
+        
+        return roles;
     }
 
     private String getBaseDn() {

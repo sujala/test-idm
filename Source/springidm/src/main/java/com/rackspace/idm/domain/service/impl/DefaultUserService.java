@@ -34,6 +34,7 @@ import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.jaxb.UserCredentials;
@@ -276,6 +277,19 @@ public class DefaultUserService implements UserService {
         Racker racker = userDao.getRackerByRackerId(rackerId);
         logger.debug("Got Racker: {}", racker);
         return racker;
+    }
+    
+    @Override
+    public List<String> getRackerRoles(String rackerId) {
+        logger.debug("Getting Roles for Racker: {}", rackerId);
+        
+        if (!isTrustedServer()) {
+            throw new ForbiddenException();
+        }
+        
+        List<String> roles = authDao.getRackerRoles(rackerId);
+        logger.debug("Got Roles for Racker: {}", rackerId);
+        return roles;
     }
 
     

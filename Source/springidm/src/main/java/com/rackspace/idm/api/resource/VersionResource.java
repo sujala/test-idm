@@ -18,6 +18,7 @@ import com.rackspace.idm.api.resource.customer.CustomersResource;
 import com.rackspace.idm.api.resource.mosso.MossoUserResource;
 import com.rackspace.idm.api.resource.nast.NastUserResource;
 import com.rackspace.idm.api.resource.passwordrule.PasswordRulesResource;
+import com.rackspace.idm.api.resource.racker.RackersResource;
 import com.rackspace.idm.api.resource.scope.ScopesResource;
 import com.rackspace.idm.api.resource.token.TokenResource;
 import com.rackspace.idm.api.resource.user.UsersResource;
@@ -41,6 +42,7 @@ public class VersionResource {
     private final TokenResource tokenResource;
     private final BaseUrlsResource baseUrlsResource;
     private final ScopesResource scopeAccessResource;
+    private final RackersResource rackersResource;
     private final ApiDocService apiDocService;
     private final Configuration config;
 
@@ -49,7 +51,7 @@ public class VersionResource {
         CustomersResource customersResource, MossoUserResource mossoUserResource,
         NastUserResource nastUserResource, PasswordRulesResource passwordRulesResource,
         TokenResource tokenResource, BaseUrlsResource baseUrlsResource, ScopesResource scopeAccessResource, ApiDocService apiDocService,
-        Configuration config) {
+        RackersResource rackersResource, Configuration config) {
         this.authResource = authResource;
         this.usersResource = usersResource;
         this.customersResource = customersResource;
@@ -59,6 +61,7 @@ public class VersionResource {
         this.tokenResource = tokenResource;
         this.baseUrlsResource = baseUrlsResource;
         this.scopeAccessResource = scopeAccessResource;
+        this.rackersResource = rackersResource;
         this.apiDocService = apiDocService;
         this.config = config;
     }
@@ -131,6 +134,11 @@ public class VersionResource {
     @Path("scopes")
     public ScopesResource getScopeAccesses() {
         return scopeAccessResource;   
+    }
+    
+    @Path("rackers")
+    public RackersResource getRackersResource() {
+        return rackersResource;   
     }
 
     @GET

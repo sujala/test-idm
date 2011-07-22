@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.converter;
 
+import java.util.List;
+
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 
@@ -9,6 +11,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.jaxb.ObjectFactory;
+import com.rackspace.idm.jaxb.RackerRole;
 
 public class UserConverter {
 
@@ -93,7 +96,21 @@ public class UserConverter {
         returnedRacker.setRackerId(rackerId);
         return returnedRacker;
     }
-    
+
+    public com.rackspace.idm.jaxb.RackerRoles toRackerRolesJaxb(
+        List<String> roles) {
+        com.rackspace.idm.jaxb.RackerRoles returnedRoles = of
+            .createRackerRoles();
+        for (String role : roles) {
+            if (!StringUtils.isEmpty(role)) {
+                RackerRole rackerRole = of.createRackerRole();
+                rackerRole.setName(role);
+                returnedRoles.getRackerRoles().add(rackerRole);
+            }
+        }
+        return returnedRoles;
+    }
+
     public com.rackspace.idm.jaxb.User toUserJaxb(User user) {
         return toUserJaxb(user, true, true);
     }
@@ -111,13 +128,13 @@ public class UserConverter {
         returnedUser.setLocked(user.isLocked());
         return returnedUser;
     }
-    
+
     public com.rackspace.idm.jaxb.User toUserWithOnlyMossoId(User user) {
         com.rackspace.idm.jaxb.User returnedUser = of.createUser();
         returnedUser.setMossoId(user.getMossoId());
         return returnedUser;
     }
-    
+
     public com.rackspace.idm.jaxb.User toUserWithOnlyNastId(User user) {
         com.rackspace.idm.jaxb.User returnedUser = of.createUser();
         returnedUser.setNastId(user.getNastId());
@@ -204,7 +221,8 @@ public class UserConverter {
         return returnedUser;
     }
 
-    public com.rackspace.idm.jaxb.User toUserJaxbFromUser(String username, String customerId) {
+    public com.rackspace.idm.jaxb.User toUserJaxbFromUser(String username,
+        String customerId) {
         com.rackspace.idm.jaxb.User returnedUser = of.createUser();
         returnedUser.setUsername(username);
         returnedUser.setCustomerId(customerId);
