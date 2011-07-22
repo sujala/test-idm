@@ -153,6 +153,44 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+	
+	<element name="rackerRole" type="idm:RackerRole">
+        <annotation>
+            <xsd:documentation xml:lang="EN"
+                xmlns="http://www.w3.org/1999/xhtml">
+                <p>A rackspace employee role</p>
+            </xsd:documentation>
+            <xsd:appinfo>
+                <xsdxt:samples>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/xml" href="../samples/rackerrole.xml" />
+                    </xsdxt:sample>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/json" href="../samples/rackerrole.json" />
+                    </xsdxt:sample>
+                </xsdxt:samples>
+            </xsd:appinfo>
+        </annotation>
+    </element>
+    
+    <element name="rackerRoles" type="idm:RackerRoleList">
+        <annotation>
+            <xsd:documentation xml:lang="EN"
+                xmlns="http://www.w3.org/1999/xhtml">
+                <p>A list of racker roles.</p>
+            </xsd:documentation>
+            <xsd:appinfo>
+                <xsdxt:samples>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/xml" href="../samples/rackerroles.xml" />
+                    </xsdxt:sample>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/json" href="../samples/rackerroles.json" />
+                    </xsdxt:sample>
+                </xsdxt:samples>
+            </xsd:appinfo>
+        </annotation>
+    </element>
 
 	<!-- Complex Types -->
 	<complexType name="UserCredentials">
@@ -497,6 +535,18 @@
 	<complexType name="Racker">
 		<attribute name="rackerId" type="xsd:string"></attribute>
 	</complexType>
+	
+	<complexType name="RackerRole">
+        <attribute name="name" type="xsd:string"></attribute>
+    </complexType>
+    
+    <complexType name="RackerRoleList">
+        <sequence>
+            <element name="rackerRole" type="idm:RackerRole" minOccurs="0"
+                maxOccurs="1000">
+            </element>
+        </sequence>
+    </complexType>
 
 	<!-- Simple Types -->
 	<simpleType name="UserStatus">
