@@ -155,7 +155,7 @@ public class CustomerResource extends AbstractCustomerConsumer {
      * @param customerId RCN
      */
     @PUT
-    @Path("passwordRotationPolicy")
+    @Path("passwordrotationpolicy")
     public Response updatePasswordRotationCustomer(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
         EntityHolder<com.rackspace.idm.jaxb.PasswordRotationPolicy> holder) {

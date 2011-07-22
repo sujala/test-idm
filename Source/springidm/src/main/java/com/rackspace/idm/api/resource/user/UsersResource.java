@@ -400,7 +400,7 @@ public class UsersResource {
      * @param username username
      */
     @PUT
-    @Path("{username}/mossoId")
+    @Path("{username}/mossoid")
     public Response updateUserMossoId(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
         EntityHolder<com.rackspace.idm.jaxb.User> holder) {
@@ -435,7 +435,7 @@ public class UsersResource {
      * @param username username
      */
     @PUT
-    @Path("{username}/nastId")
+    @Path("{username}/nastid")
     public Response updateUserNastId(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
         EntityHolder<com.rackspace.idm.jaxb.User> holder) {
