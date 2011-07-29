@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import java.util.List;
+
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -61,6 +63,13 @@ public class LdapAuthRepositoryTest {
             Assert.assertTrue(authenticateRacker());
             System.out.println("auth count: " + (i + 1));
         }
+    }
+    
+    @Test
+    @Ignore("Still waiting on trusted connection to eDir")
+    public void shouldGetRoles() {
+        List<String> roles = repo.getRackerRoles("matt.kovacs");
+        Assert.assertTrue(roles.size()>0);
     }
 
     @After
