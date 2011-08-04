@@ -21,6 +21,8 @@
     <!ENTITY ERROR_CODES 'Error Response Code(s):'>
     <!ENTITY NO_REQUEST '<para xmlns="http://docbook.org/ns/docbook">
                           This operation does not require a request body.</para>'>
+    <!ENTITY AUTH_HEADER '<para xmlns="http://docbook.org/ns/docbook">
+    This operation requires an authorization header. See <xref linkend="authheadersection"/> for details.</para>'>
     <!ENTITY LONG_URI_REFHEAD '
           <thead xmlns="http://docbook.org/ns/docbook">
             <tr>
@@ -58,9 +60,9 @@
       <year>2011</year>
       <holder>Rackspace Hosting, Inc.</holder>
     </copyright>
-    <releaseinfo>API v1.0.2011.15</releaseinfo>
+    <releaseinfo>API v1.0.2011.16</releaseinfo>
     <productname>Global Auth API</productname>
-    <pubdate>2011-05-04</pubdate>
+    <pubdate>2011-07-08</pubdate>
     <legalnotice role="apache2">
       <annotation>
         <remark>Copyright details are filled in by the template.</remark>
@@ -383,7 +385,7 @@
     </section>
     <section>
       <title>Getting Started</title>
-      <para> The first step to using the Global Auth API is registering your application with Global
+      <para>The first step to using the Global Auth API is registering your application with Global
         Auth. The Global Auth Team will need the following information in order to register your
         application.</para>
       <table rules="all">
@@ -432,6 +434,20 @@
 </programlisting>
         <programlisting language="xml">
 <xi:include href="../../formattedsamples/auth.xml" parse="text"/>
+</programlisting>
+      </example>
+    </section>
+    <section xml:id="authheadersection">
+      <title>Authorization Header</title>
+      <para>Most calls made against the Global Auth API require the addition of an authorization
+        header in the request.</para>
+      <para>The format of the authoriztion header is the word "OAuth" followed by a space followed
+        by the access token id that belongs to the entity making the call. For example, here is an
+        sample request for getting a user's details. </para>
+      <example>
+        <title>Authorization Header Request Format</title>
+        <programlisting language="xml">
+<xi:include href="../../formattedsamples/samplerequestheader2.json" parse="text"/>
 </programlisting>
       </example>
     </section>
@@ -513,6 +529,7 @@
       </section>
       <section>
         <title>Validate Token</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -545,6 +562,7 @@
       </section>
       <section>
         <title>Check if Token has been Provisioned for Service</title>
+        &AUTH_HEADER;
         <note>
           <para> This is a management API function. </para>
         </note>
@@ -568,6 +586,7 @@
       </section>
       <section>
         <title>Check if Token has Permission for Service</title>
+        &AUTH_HEADER;
         <note>
           <para> This is a management API function. </para>
         </note>
@@ -591,6 +610,7 @@
       </section>
       <section>
         <title>Revoke Token</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -614,6 +634,7 @@
       <title>Customer Operations </title>
       <section>
         <title>Get a Customer</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -650,6 +671,7 @@
       </section>
       <section>
         <title>Set Customer Lock Status </title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -697,6 +719,7 @@
        </section>     
       <section>
           <title>Delete a Customer</title>
+        &AUTH_HEADER;
           <informaltable rules="all">
             &LONG_URI_REFHEAD;
             <tbody>
@@ -716,6 +739,7 @@
         </section>
       <section>
         <title>Set Customer Password Rotation Policy</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -764,6 +788,7 @@
       <title>User Operations</title>
       <section>
         <title>Create the First User</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -818,6 +843,7 @@
       </section>
       <section>
         <title>Add a User</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -867,6 +893,7 @@
       </section>
       <section>
         <title>Get a User</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -899,6 +926,7 @@
       </section>
       <section>
         <title>Get a User by Mosso ID</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -936,6 +964,7 @@
       </section>
       <section>
         <title>Get a User by NAST ID</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -973,6 +1002,7 @@
       </section>
       <section>
         <title>Get a User by Username</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -1010,6 +1040,7 @@
       </section>
       <section>
         <title>Update a User</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1053,6 +1084,7 @@
       </section>
       <section>
         <title>Soft Delete a User</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1096,6 +1128,7 @@
       </section>
       <section>
         <title>Delete User</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -1121,6 +1154,7 @@
       </section>
       <section>
         <title>Get User List</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1154,6 +1188,7 @@
       </section>
       <section>
         <title>Add User to Customer IdM Group</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1173,6 +1208,7 @@
       </section>
       <section>
         <title>Remove User from Customer IdM Group</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1192,6 +1228,7 @@
       </section>
       <section>
         <title>Get the Groups That a User is a Member Of</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1224,6 +1261,7 @@
       </section>
       <section>
         <title>Generate/Reset Auth Service Key</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1256,6 +1294,7 @@
       </section>
       <section>
         <title>Set Auth Service Key</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -1304,6 +1343,7 @@
       </section>
       <section>
         <title>Set User Lock</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -1352,6 +1392,7 @@
       </section>
       <section>
         <title>Set User Password</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1401,6 +1442,7 @@
       </section>
       <section>
         <title>Reset User Password</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1433,6 +1475,7 @@
       </section>
       <section>
         <title>Get a User Password</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -1471,6 +1514,7 @@
       
       <section>
         <title>Get Password Recovery Token</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -1508,6 +1552,7 @@
       </section>
       <section>
         <title>Set User Status</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1551,6 +1596,7 @@
       </section>
       <section>
         <title>Set User Secret</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1594,6 +1640,7 @@
       </section>
       <section>
         <title>Get the Services that a User has Provisioned</title>
+        &AUTH_HEADER;
         <note>
           <para> This is a management API function. </para>
         </note>
@@ -1629,6 +1676,7 @@
       </section>
       <section>
         <title>Provision a Service for a User</title>
+        &AUTH_HEADER;
         <note>
           <para> This is a management API function. </para>
         </note>
@@ -1663,6 +1711,7 @@
       </section>
       <section>
         <title>Remove Provision a Service for a User</title>
+        &AUTH_HEADER;
         <note>
           <para> This is a management API function. </para>
         </note>
@@ -1686,6 +1735,7 @@
       </section>
       <section>
         <title>Grant a User Permission for Service</title>
+        &AUTH_HEADER;
         <note>
           <para> This is a management API function. </para>
         </note>
@@ -1720,6 +1770,7 @@
       </section>
       <section>
         <title>Revoke a User Permission for Service</title>
+        &AUTH_HEADER;
         <note>
           <para> This is a management API function. </para>
         </note>
@@ -1743,6 +1794,7 @@
       </section>
       <section>
         <title>Check if User has Permission for Service</title>
+        &AUTH_HEADER;
         <note>
           <para> This is a management API function. </para>
         </note>
@@ -1766,6 +1818,7 @@
       </section>
       <section>
         <title>Get a List of Delegated Refresh Tokens for a User</title>
+        &AUTH_HEADER;
         <note>
           <para> This is a management API function. </para>
         </note>
@@ -1800,6 +1853,7 @@
       </section>
       <section>
         <title>Get a Delegated Refresh Token for a User</title>
+        &AUTH_HEADER;
         <note>
           <para> This is a management API function. </para>
         </note>
@@ -1834,6 +1888,7 @@
       </section>
       <section>
         <title>Delete a Delegated Refresh Token for a User</title>
+        &AUTH_HEADER;
         <note>
           <para> This is a management API function. </para>
         </note>
@@ -1860,6 +1915,7 @@
       <title>Authentication Operations </title>
       <section>
         <title>Authenticate a user by Mosso ID</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1906,6 +1962,7 @@
       
       <section>
         <title>Authenticate a user by NAST ID</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1951,6 +2008,7 @@
       
       <section>
         <title>Authenticate a user by Username</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -1992,6 +2050,7 @@
       <title>Application Operations </title>
       <section>
         <title>Add an Application</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2034,6 +2093,7 @@
       </section>
       <section>
         <title>Get an Application</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2065,6 +2125,7 @@
       </section>
       <section>
         <title>Get All Applications for a Customer</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2095,6 +2156,7 @@
       </section>
       <section>
         <title>Update an Application</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -2143,6 +2205,7 @@
       </section>
       <section>
         <title>Soft Delete an Application</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2186,6 +2249,7 @@
       </section>
       <section>
         <title>Delete an Application</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2206,6 +2270,7 @@
       </section>
       <section>
         <title>Get Permissions defined by an Application</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2239,6 +2304,7 @@
       </section>
       <section>
         <title>Add a Permission defined by an Application</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -2288,6 +2354,7 @@
       </section>
       <section>
         <title>Get a Permission defined by an Application</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -2326,6 +2393,7 @@
       </section>
       <section>
         <title>Update a Permission defined by an Application</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -2375,6 +2443,7 @@
       </section>
       <section>
         <title>Delete a Permission defined by an Application</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -2401,6 +2470,7 @@
       </section>
       <section>
         <title>Reset an Application Secret</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2433,6 +2503,7 @@
       </section>
       <section>
         <title>Add a Group for an Application</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -2482,6 +2553,7 @@
       </section>
       <section>
         <title>Get all Groups for an Application</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -2520,6 +2592,7 @@
       </section>
       <section>
         <title>Update a Group for an Application</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -2569,6 +2642,7 @@
       </section>
       <section>
         <title>Delete a Group for an Application</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -2595,6 +2669,7 @@
       </section>
       <section>
         <title>Add a User to a Group for an Application</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -2621,6 +2696,7 @@
       </section>
       <section>
         <title>Remove a User from a Group for an Application</title>
+        &AUTH_HEADER;
         <note>
           <para>
             This is a management API function.
@@ -2647,6 +2723,7 @@
       </section>
       <section>
         <title>Get the Services that a Client has Provisioned</title>
+        &AUTH_HEADER;
         <note>
           <para> This is a management API function. </para>
         </note>
@@ -2682,6 +2759,7 @@
       </section>
       <section>
         <title>Grant a Client Permission for Service</title>
+        &AUTH_HEADER;
         <note>
           <para> This is a management API function. </para>
         </note>
@@ -2716,6 +2794,7 @@
       </section>
       <section>
         <title>Revoke a Client Permission for Service</title>
+        &AUTH_HEADER;
         <note>
           <para> This is a management API function. </para>
         </note>
@@ -2739,6 +2818,7 @@
       </section>
       <section>
         <title>Check if Client has Permission for Service</title>
+        &AUTH_HEADER;
         <note>
           <para> This is a management API function. </para>
         </note>
@@ -2765,6 +2845,7 @@
       <title>Password Operations </title>
       <section>
         <title>Get Password Rules</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2794,6 +2875,7 @@
       </section>
       <section>
         <title>Password validation check</title>
+        &AUTH_HEADER;
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>
@@ -2838,8 +2920,45 @@
     
     <section>
         <title>Admin Operations </title>
+      <section>
+        <title>Get the Rackspace Roles for a Racker</title>
+        &AUTH_HEADER;
+        <note>
+          <para>
+            This is a management API function.
+          </para>
+        </note>
+        <informaltable rules="all">
+          &LONG_URI_REFHEAD;
+          <tbody>
+            <tr>
+              <td colspan="1"> &GET; </td>
+              <td colspan="4">/rackers/<parameter>rackerId</parameter>/rackerroles</td>
+              <td colspan="3">Get a Racker's roles</td>
+            </tr>
+          </tbody>
+        </informaltable>
+        <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+        <simpara>&ERROR_CODES; unauthorized (<errorcode>401</errorcode>), badRequest
+            (<errorcode>400</errorcode>), forbidden(<errorcode>403</errorcode>), itemNotFound
+            (<errorcode>404</errorcode>), idmFault (<errorcode>500</errorcode>),
+            serviceUnavailable(<errorcode>503</errorcode>)</simpara>
+        <example>
+          <title>XML Racker Roles Response</title>
+          <programlisting language="xml">
+<xi:include href="../../formattedsamples/rackerroles.xml" parse="text"/>
+</programlisting>
+        </example>
+        <example>
+          <title>JSON Racker Roles Response</title>
+          <programlisting language="javascript">
+<xi:include href="../../formattedsamples/rackerroles.json" parse="text"/>
+</programlisting>
+        </example>
+      </section>
         <section>
           <title>Get Base URLs</title>
+          &AUTH_HEADER;
           <note>
             <para>
               This is a management API function.
@@ -2876,6 +2995,7 @@
       
         <section>
           <title>Add Base URL</title>
+          &AUTH_HEADER;
           <note>
             <para>
               This is a management API function.
@@ -2905,6 +3025,7 @@
         </section>
         <section>
           <title>Get a Base URL</title>
+          &AUTH_HEADER;
           <note>
             <para>
               This is a management API function.
@@ -2940,6 +3061,7 @@
         </section>
         <section>
           <title>Delete a Base URL</title>
+          &AUTH_HEADER;
           <note>
             <para>
               This is a management API function.
@@ -2963,6 +3085,7 @@
         </section>
         <section>
           <title>Get Base Url Refs</title>
+          &AUTH_HEADER;
           <note>
             <para>
               This is a management API function.
@@ -2999,6 +3122,7 @@
         
         <section>
           <title>Add Base URL Ref</title>
+          &AUTH_HEADER;
           <note>
             <para>
               This is a management API function.
@@ -3028,6 +3152,7 @@
         </section>
         <section>
           <title>Get Base URL Ref</title>
+          &AUTH_HEADER;
           <note>
             <para>
               This is a management API function.
@@ -3066,6 +3191,7 @@
         
         <section>
           <title>Delete a Base URL Ref</title>
+          &AUTH_HEADER;
           <note>
             <para>
               This is a management API function.
@@ -3090,6 +3216,7 @@
       
         <section>
           <title>Get Service catalog for user</title>
+          &AUTH_HEADER;
           <note>
             <para>
               This is a management API function.
