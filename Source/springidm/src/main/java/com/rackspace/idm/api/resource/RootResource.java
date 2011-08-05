@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.idm.api.resource.cloud.CloudVersionsResource;
 import com.rackspace.idm.exception.NotFoundException;
 
 /**
@@ -26,12 +27,14 @@ import com.rackspace.idm.exception.NotFoundException;
 @Component
 public class RootResource {
 
+    private final CloudVersionsResource cloudVersionsResource;
     private final VersionResource versionResource;
     private final Configuration config;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    public RootResource(VersionResource versionResource, Configuration config) {
+    public RootResource(CloudVersionsResource cloudVersionsResource, VersionResource versionResource, Configuration config) {
+        this.cloudVersionsResource = cloudVersionsResource;
         this.versionResource = versionResource;
         this.config = config;
     }
@@ -60,8 +63,13 @@ public class RootResource {
         versions.getVersions().add(version);
         return Response.ok(versions).build();
     }
+    
+    @Path("cloud")
+    public CloudVersionsResource getCloudVersionsResource() {
+        return cloudVersionsResource;
+    }
 
-    @Path("{versionId}")
+    @Path("{versionId: v[1-9].[0-9]")
     public VersionResource getVersionResource(@PathParam("versionId") String versionId) {
         if (versionId.equalsIgnoreCase("v1.0")) {
             return versionResource;
