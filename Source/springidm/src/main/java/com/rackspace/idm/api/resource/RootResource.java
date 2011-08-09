@@ -69,7 +69,7 @@ public class RootResource {
         return cloudVersionsResource;
     }
 
-    @Path("{versionId: v[1-9].[0-9]")
+    @Path("{versionId: v[1-9].[0-9]}")
     public VersionResource getVersionResource(@PathParam("versionId") String versionId) {
         if (versionId.equalsIgnoreCase("v1.0")) {
             return versionResource;

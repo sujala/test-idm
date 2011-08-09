@@ -357,6 +357,12 @@
 	</profiles>
 
 	<repositories>
+        <repository>
+            <id>maven2-repository.java.net</id>
+            <name>Java.net Repository for Maven</name>
+            <url>http://download.java.net/maven/2/</url>
+            <layout>default</layout>
+        </repository> 
 		<repository>
 			<snapshots>
 				<enabled>false</enabled>
@@ -389,9 +395,26 @@
 			<name>maven repo</name>
 			<url>http://repo1.maven.org/maven2/</url>
 		</repository>
+        <!-- SoapUI pro -->
+        <repository>
+            <id>eviwareRepository</id>
+            <name>eviwareRepository</name>
+            <url>http://www.eviware.com/repository/maven2</url>
+        </repository>
+
 	</repositories>
 	<pluginRepositories>
-		<pluginRepository>
+        <!-- SoapUI -->
+        <pluginRepository>
+            <id>eviwarePluginRepository</id>
+            <url>http://www.eviware.com/repository/maven2</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>maven2-repository.dev.java.net</id>
+            <url>http://download.java.net/maven/2</url>
+            <name>Sun Java Dev Maven2 Repository</name>
+        </pluginRepository>
+   		<pluginRepository>
 			<releases>
 				<updatePolicy>never</updatePolicy>
 			</releases>
@@ -439,7 +462,7 @@
 						<excludeBinding>api.xjb</excludeBinding>
 					</excludeBindings>
 					<generatePackage>com.rackspace.idm.jaxb</generatePackage>
-					<!-- <generateDirectory>src/main/java</generateDirectory> -->
+					<generateDirectory>src/main/java</generateDirectory>
 					<removeOldOutput>true</removeOldOutput>
 					<verbose>false</verbose>
 					<extension>true</extension>
