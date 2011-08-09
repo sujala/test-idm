@@ -1,21 +1,16 @@
 package com.rackspace.idm.api.resource;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
+import com.rackspace.idm.api.resource.cloud.CloudVersionsResource;
+import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.api.resource.cloud.CloudVersionsResource;
-import com.rackspace.idm.exception.NotFoundException;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 /**
  * API Versions
@@ -64,8 +59,11 @@ public class RootResource {
         return Response.ok(versions).build();
     }
     
-    @Path("cloud")
-    public CloudVersionsResource getCloudVersionsResource() {
+    @Path("cloud/")
+    public CloudVersionsResource getCloudVersionsResource(@HeaderParam("X-Auth-User") String  username,
+                        @HeaderParam("X-Auth-Key") String  key                                  ) {
+        System.out.println(username);
+        System.out.println(key);
         return cloudVersionsResource;
     }
 

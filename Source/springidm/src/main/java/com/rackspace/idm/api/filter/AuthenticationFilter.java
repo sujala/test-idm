@@ -1,11 +1,11 @@
 package com.rackspace.idm.api.filter;
 
-import java.util.UUID;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.util.AuthHeaderHelper;
+import com.sun.jersey.spi.container.ContainerRequest;
+import com.sun.jersey.spi.container.ContainerRequestFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -14,12 +14,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.util.AuthHeaderHelper;
-import com.sun.jersey.spi.container.ContainerRequest;
-import com.sun.jersey.spi.container.ContainerRequestFilter;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import java.util.UUID;
 
 /**
  * @author john.eo Apply token-based authentication to all calls except the
@@ -61,6 +59,10 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         int index = path.indexOf("/");
         path = index > 0 ? path.substring(index + 1) : "";
 
+        if (request.getAbsolutePath().getPath().contains("idm/rest/cloud/v") ) {
+            return request;
+        }
+
         if ("GET".equals(method) && "application.wadl".equals(path)) {
             return request;
         }
@@ -84,11 +86,9 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         if ("POST".equals(method) && "token".equals(path)) {
             return request;
         }
-        final String authHeader = request
-            .getHeaderValue(HttpHeaders.AUTHORIZATION);
+        final String authHeader = request.getHeaderValue(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || authHeader.isEmpty()) {
-            throw new NotAuthenticatedException(
-                "The request for the resource must include the Authorization header.");
+            throw new NotAuthenticatedException("The request for the resource must include the Authorization header.");
         }
         final String tokenString = authHeaderHelper
             .getTokenFromAuthHeader(authHeader);
