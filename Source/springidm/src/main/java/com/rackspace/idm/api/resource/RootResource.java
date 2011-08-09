@@ -60,10 +60,7 @@ public class RootResource {
     }
     
     @Path("cloud/")
-    public CloudVersionsResource getCloudVersionsResource(@HeaderParam("X-Auth-User") String  username,
-                        @HeaderParam("X-Auth-Key") String  key                                  ) {
-        System.out.println(username);
-        System.out.println(key);
+    public CloudVersionsResource getCloudVersionsResource() {
         return cloudVersionsResource;
     }
 
