@@ -1,21 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		xmlns:security="http://www.springframework.org/schema/security" xmlns:oauth="http://spring-security-oauth.codehaus.org/3.0"
-		xmlns:p="http://www.springframework.org/schema/p" xmlns:aop="http://www.springframework.org/schema/aop"
-		xmlns:context="http://www.springframework.org/schema/context" xmlns:jee="http://www.springframework.org/schema/jee"
-		
-		xsi:schemaLocation="
-			http://www.springframework.org/schema/security  http://www.springframework.org/schema/security/spring-security-2.0.xsd
+       xmlns:security="http://www.springframework.org/schema/security"
+       xmlns:oauth="http://spring-security-oauth.codehaus.org/3.0"
+       xmlns:p="http://www.springframework.org/schema/p" xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jee="http://www.springframework.org/schema/jee" xmlns:util="http://www.springframework.org/schema/util"
+
+       xsi:schemaLocation="http://www.springframework.org/schema/security  http://www.springframework.org/schema/security/spring-security-2.0.xsd
 			http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
 			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
 			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
-			http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-2.5.xsd">
+			http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-2.5.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 	<!-- 
 	    Configurer that replaces ${...} placeholders with values from a properties file
 	    (in this case, JDBC-related settings for the dataSource definition below)
 	-->
 	<context:property-placeholder location="classpath:jdbc.properties"/>
-	
+    <util:properties id="properties" location="classpath:config.properties"/>
 	<!--
 		Uses Apache Commons DBCP for connection pooling. See Commons DBCP documentation
 		for the required JAR files. See the PetStore sample application also shipped with
