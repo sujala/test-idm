@@ -1,8 +1,7 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.idm.api.service.AuthenticationService;
-import com.rackspace.idm.api.service.AuthenticationServiceSelector;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.Consumes;
@@ -10,6 +9,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 
 /**
  * Cloud Auth 1.1 API Versions
@@ -21,14 +21,13 @@ import javax.ws.rs.core.Response;
 public class Cloud11VersionResource {
 
     @Autowired
-    AuthenticationServiceSelector authenticationServiceSelector;
+    private CloudClient cloudClient;
 
+    @Value("#{properties.cloudAuth11url}")
+    private String url;
 
     @GET
-    public Response getCloud11VersionInfo() {
-        //TODO: Implement Cloud Version Info Call
-        AuthenticationService authenticationService = authenticationServiceSelector.getAuthenticationService();
-        System.out.println(authenticationService);
-        return Response.ok().build();
+    public Response getCloud11VersionInfo() throws IOException {
+        return cloudClient.get(url);
     }
 }
