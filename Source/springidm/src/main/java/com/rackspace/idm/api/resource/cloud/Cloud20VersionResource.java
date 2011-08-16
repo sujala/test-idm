@@ -26,6 +26,6 @@ public class Cloud20VersionResource {
 
     @GET
     public Response getCloud20VersionInfo() throws IOException {
-        return cloudClient.get(url);
+        return cloudClient.get(url,null,null);
     }
 }

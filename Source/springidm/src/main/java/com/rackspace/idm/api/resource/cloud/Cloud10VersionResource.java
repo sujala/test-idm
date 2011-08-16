@@ -6,10 +6,10 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 
 /**
  * Cloud Auth 1.0 API Version
@@ -27,16 +27,10 @@ public class Cloud10VersionResource {
     private String url;
 
     @GET
-    public Response getCloud10VersionInfo() throws IOException {
-        return cloudClient.get(url);
-    }
+    public Response authenticate(
+            @HeaderParam("X-Auth-User") String  username,
+            @HeaderParam("X-Auth-Key") String  key){
 
-//    @GET
-//    public Response authenticate(
-//            @HeaderParam("X-Auth-User") String  username,
-//            @HeaderParam("X-Auth-Key") String  key){
-//
-//        //TODO forward call to Auth 1.0
-//        return Response.ok().build();
-//    }
+        return cloudClient.get(url, username,key);
+    }
 }
