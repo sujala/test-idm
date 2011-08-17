@@ -19,10 +19,12 @@ import java.io.IOException;
  */
 @Component
 public class CloudClient {
-    public Response get(String url) {
+
+    public Response authenticate(String url, String body) {
         HttpClient client = new HttpClient();
-        GetMethod method = new GetMethod(url);
+        PostMethod method = new PostMethod(url);
         // Provide custom retry handler is necessary
+
         method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler(3, false));
 
         byte[] responseBody = null;
@@ -45,9 +47,37 @@ public class CloudClient {
         }
     }
 
-    public Response post(String url, String body) throws IOException {
+    public Response get(String url, String username, String key) {
+        HttpClient client = new HttpClient();
+        GetMethod method = new GetMethod(url);
+        // Provide custom retry handler is necessary
+
+        method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler(3, false));
+
+        byte[] responseBody = null;
+        String exceptionMessage = null;
+        int statusCode = 500;
+        try {
+            statusCode = client.executeMethod(method);
+            responseBody = method.getResponseBody();
+        } catch (HttpException e) {
+            exceptionMessage = e.getMessage();
+        } catch (IOException e) {
+            exceptionMessage = e.getMessage();
+        } finally {
+            method.releaseConnection();
+        }
+        if (exceptionMessage != null) {
+            return Response.status(500).entity(exceptionMessage).build();
+        } else {
+            return Response.status(statusCode).entity(responseBody).build();
+        }
+    }
+
+    public Response post(String url,String contentType, String body) throws IOException {
         HttpClient client = new HttpClient();
         PostMethod method = new PostMethod(url);
+        method.setRequestHeader("Content-type", contentType);
         method.setRequestBody(body);
         // Provide custom retry handler is necessary
         method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler(3, false));
