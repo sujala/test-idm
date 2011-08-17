@@ -1,15 +1,16 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import java.io.IOException;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
+
+import org.apache.commons.configuration.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Cloud Auth 1.0 API Version
@@ -20,15 +21,18 @@ import java.io.IOException;
 @Component
 public class Cloud10VersionResource {
 
+    private final Configuration config;
+    private final CloudClient cloudClient;
+    
     @Autowired
-    private CloudClient cloudClient;
-
-    @Value("#{properties.cloudAuth10url}")
-    private String url;
+    public Cloud10VersionResource(Configuration config, CloudClient cloudClient) {
+        this.config = config;
+        this.cloudClient = cloudClient;
+    }
 
     @GET
     public Response getCloud10VersionInfo() throws IOException {
-        return cloudClient.get(url);
+        return cloudClient.get(getCloudAuthV10Url());
     }
 
 //    @GET
@@ -39,4 +43,8 @@ public class Cloud10VersionResource {
 //        //TODO forward call to Auth 1.0
 //        return Response.ok().build();
 //    }
+    
+    private String getCloudAuthV10Url() {
+        return config.getString("cloudAuth10url");
+    }
 }

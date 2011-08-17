@@ -1,15 +1,16 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import java.io.IOException;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
+
+import org.apache.commons.configuration.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Cloud Auth 2.0 API Versions
@@ -18,14 +19,22 @@ import java.io.IOException;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class Cloud20VersionResource {
+    
+    private final Configuration config;
+    private final CloudClient cloudClient;
+    
     @Autowired
-    private CloudClient cloudClient;
-
-    @Value("#{properties.cloudAuth20url}")
-    private String url;
+    public Cloud20VersionResource(Configuration config, CloudClient cloudClient) {
+        this.config = config;
+        this.cloudClient = cloudClient;
+    }
 
     @GET
     public Response getCloud20VersionInfo() throws IOException {
-        return cloudClient.get(url);
+        return cloudClient.get(getCloudAuthV20Url());
+    }
+    
+    private String getCloudAuthV20Url() {
+        return config.getString("cloudAuth20url");
     }
 }

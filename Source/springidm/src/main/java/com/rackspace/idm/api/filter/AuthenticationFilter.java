@@ -1,11 +1,11 @@
 package com.rackspace.idm.api.filter;
 
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.util.AuthHeaderHelper;
-import com.sun.jersey.spi.container.ContainerRequest;
-import com.sun.jersey.spi.container.ContainerRequestFilter;
+import java.util.UUID;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -14,10 +14,12 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import java.util.UUID;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.util.AuthHeaderHelper;
+import com.sun.jersey.spi.container.ContainerRequest;
+import com.sun.jersey.spi.container.ContainerRequestFilter;
 
 /**
  * @author john.eo Apply token-based authentication to all calls except the
@@ -54,14 +56,15 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             MDC.put(Audit.PATH, path);
             MDC.put(Audit.GUUID, UUID.randomUUID().toString());
         }
-        // Skip authentication for the following 5 calls
-
-        int index = path.indexOf("/");
-        path = index > 0 ? path.substring(index + 1) : "";
-
-        if (request.getAbsolutePath().getPath().contains("idm/rest/cloud/v") ) {
+        
+        // Skip token authentication for cloud resources
+        if (path.startsWith("cloud")) {
             return request;
         }
+        
+        // Skip authentication for the following calls
+        int index = path.indexOf("/");
+        path = index > 0 ? path.substring(index + 1) : "";
 
         if ("GET".equals(method) && "application.wadl".equals(path)) {
             return request;
