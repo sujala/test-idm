@@ -1,14 +1,13 @@
 package com.rackspace.idm.api.filter;
 
-import javax.ws.rs.core.HttpHeaders;
-
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.sun.jersey.spi.container.ContainerRequest;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.sun.jersey.spi.container.ContainerRequest;
+import javax.ws.rs.core.HttpHeaders;
 
 public class AuthenticationFilterTests {
 
@@ -23,10 +22,17 @@ public class AuthenticationFilterTests {
         authFilter = new AuthenticationFilter(oauthService);
         request = EasyMock.createNiceMock(ContainerRequest.class);
     }
+    
+    @Test
+    public void shouldIgnoreCloudResourceRequest() {
+        EasyMock.expect(request.getPath()).andReturn("cloud");
+        EasyMock.expect(request.getMethod()).andReturn("GET");
+        replayAndRunFilter();
+    }
 
     @Test
     public void shouldIgnoreWadlRequest() {
-        EasyMock.expect(request.getPath()).andReturn("application.wadl");
+        EasyMock.expect(request.getPath()).andReturn("v1.0/application.wadl");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         replayAndRunFilter();
     }
@@ -48,7 +54,7 @@ public class AuthenticationFilterTests {
     @Test()
     public void shouldAcceptAnyOtherRequest() {
         EasyMock.expect(request.getPath()).andReturn(
-        "customers/RCN-000-000-000/users/foobar/password");
+        "v1.0/customers/RCN-000-000-000/users/foobar/password");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         final String tokenString = "hiiamatoken";
         final String header = "OAuth " + tokenString;
@@ -61,7 +67,7 @@ public class AuthenticationFilterTests {
 
     @Test
     public void shouldPassAuthenticationWhenTokenIsValid() {
-        EasyMock.expect(request.getPath()).andReturn("foo");
+        EasyMock.expect(request.getPath()).andReturn("v1.0/foo");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         final String tokenString = "hiiamatoken";
         final String header = "OAuth " + tokenString;
@@ -74,7 +80,7 @@ public class AuthenticationFilterTests {
 
     @Test(expected = NotAuthenticatedException.class)
     public void shouldFailAuthenticationWhenTokenIsInvalid() {
-        EasyMock.expect(request.getPath()).andReturn("something/foo");
+        EasyMock.expect(request.getPath()).andReturn("v1.0/something/foo");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         final String tokenString = "hiiamatoken";
         final String header = "OAuth " + tokenString;
@@ -87,7 +93,7 @@ public class AuthenticationFilterTests {
 
     @Test(expected = NotAuthenticatedException.class)
     public void shouldFailAuthenticationWhenTokenIsMissing() {
-        EasyMock.expect(request.getPath()).andReturn("something/foo");
+        EasyMock.expect(request.getPath()).andReturn("v1.0/something/foo");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
         .andReturn(null);

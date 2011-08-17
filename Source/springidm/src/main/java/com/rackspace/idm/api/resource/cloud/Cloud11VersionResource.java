@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.*;
@@ -20,20 +20,27 @@ import java.io.IOException;
 @Component
 public class Cloud11VersionResource {
 
+    private final Configuration config;
+    private final CloudClient cloudClient;
+    
     @Autowired
-    private CloudClient cloudClient;
-
-    @Value("#{properties.cloudAuth11url}")
-    private String url;
+    public Cloud11VersionResource(Configuration config, CloudClient cloudClient) {
+        this.config = config;
+        this.cloudClient = cloudClient;
+    }
 
     @GET
     public Response getCloud11VersionInfo() throws IOException {
-        return cloudClient.get(url,null,null);
+        return cloudClient.get(getCloudAuthV11Url(),null,null);
     }
 
     @POST
     @Path("auth")
     public Response authenticate(@Context HttpHeaders httpHeaders, String body) throws IOException {
-        return cloudClient.post(url.concat("auth"),httpHeaders , body);
+        return cloudClient.post(getCloudAuthV11Url().concat("auth"),httpHeaders , body);
+
+    }
+    private String getCloudAuthV11Url() {
+        return config.getString("cloudAuth11url");
     }
 }

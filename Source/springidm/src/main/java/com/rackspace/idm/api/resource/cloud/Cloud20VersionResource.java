@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.Consumes;
@@ -18,14 +18,22 @@ import java.io.IOException;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class Cloud20VersionResource {
+    
+    private final Configuration config;
+    private final CloudClient cloudClient;
+    
     @Autowired
-    private CloudClient cloudClient;
-
-    @Value("#{properties.cloudAuth20url}")
-    private String url;
+    public Cloud20VersionResource(Configuration config, CloudClient cloudClient) {
+        this.config = config;
+        this.cloudClient = cloudClient;
+    }
 
     @GET
     public Response getCloud20VersionInfo() throws IOException {
-        return cloudClient.get(url,null,null);
+        return cloudClient.get(getCloudAuthV20Url(),null,null);
+    }
+    
+    private String getCloudAuthV20Url() {
+        return config.getString("cloudAuth20url");
     }
 }
