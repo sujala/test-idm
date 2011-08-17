@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -31,9 +33,7 @@ public class Cloud11VersionResource {
 
     @POST
     @Path("auth")
-    public Response authenticate(
-            @HeaderParam("Content-type") String  contentType, String body) throws IOException {
-
-        return cloudClient.post(url.concat("auth"),contentType , body);
+    public Response authenticate(@Context HttpHeaders httpHeaders, String body) throws IOException {
+        return cloudClient.post(url.concat("auth"),httpHeaders , body);
     }
 }

@@ -8,8 +8,10 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.springframework.stereotype.Component;
 
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -74,19 +76,22 @@ public class CloudClient {
         }
     }
 
-    public Response post(String url,String contentType, String body) throws IOException {
+    public Response post(String url, HttpHeaders httpHeaders, String body) throws IOException {
         HttpClient client = new HttpClient();
         PostMethod method = new PostMethod(url);
-        method.setRequestHeader("Content-type", contentType);
+        Set<String> keys = httpHeaders.getRequestHeaders().keySet();
+        for(String key: keys){
+            method.setRequestHeader(key, httpHeaders.getRequestHeaders().getFirst(key));
+        }
         method.setRequestBody(body);
         // Provide custom retry handler is necessary
         method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler(3, false));
 
-        byte[] responseBody = null;
+        String responseBody = null;
         int statusCode = 500;
         try {
             statusCode = client.executeMethod(method);
-            responseBody = method.getResponseBody();
+            responseBody = new String(method.getResponseBody());
         } finally {
             method.releaseConnection();
         }
