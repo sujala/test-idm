@@ -54,14 +54,15 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             MDC.put(Audit.PATH, path);
             MDC.put(Audit.GUUID, UUID.randomUUID().toString());
         }
-        // Skip authentication for the following 5 calls
-
-        int index = path.indexOf("/");
-        path = index > 0 ? path.substring(index + 1) : "";
-
-        if (request.getAbsolutePath().getPath().contains("idm/rest/cloud/v") ) {
+        
+        // Skip token authentication for cloud resources
+        if (path.startsWith("cloud")) {
             return request;
         }
+        
+        // Skip authentication for the following calls
+        int index = path.indexOf("/");
+        path = index > 0 ? path.substring(index + 1) : "";
 
         if ("GET".equals(method) && "application.wadl".equals(path)) {
             return request;

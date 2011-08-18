@@ -16,7 +16,6 @@
 	    (in this case, JDBC-related settings for the dataSource definition below)
 	-->
 	<context:property-placeholder location="classpath:jdbc.properties"/>
-    <util:properties id="properties" location="classpath:config.properties"/>
 	<!--
 		Uses Apache Commons DBCP for connection pooling. See Commons DBCP documentation
 		for the required JAR files. See the PetStore sample application also shipped with
