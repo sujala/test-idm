@@ -6,12 +6,13 @@ import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
-import org.apache.http.*;
-import org.apache.http.client.entity.GzipDecompressingEntity;
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.protocol.RequestAcceptEncoding;
+import org.apache.http.client.protocol.ResponseContentEncoding;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.HttpContext;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -92,33 +93,19 @@ public class CloudClient {
         Set<String> keys = httpHeaders.getRequestHeaders().keySet();
         request.setHeaders(new Header[]{});
         for (String key : keys) {
-            if(!key.equalsIgnoreCase("content-length")){
+            if (!key.equalsIgnoreCase("content-length")) {
                 request.setHeader(key, httpHeaders.getRequestHeaders().getFirst(key));
             }
         }
-        client.addResponseInterceptor(new HttpResponseInterceptor() {
-            public void process(HttpResponse response, HttpContext context) throws HttpException, IOException {
-                HttpEntity entity = response.getEntity();
-                if (entity == null)
-                    return;
-                Header ceHeader = entity.getContentEncoding();
-                if (ceHeader != null) {
-                    for (HeaderElement codec : ceHeader.getElements()) {
-                        if (codec.getName().equalsIgnoreCase("gzip")) {
-                            response.setEntity(new GzipDecompressingEntity(response.getEntity()));
-                            return;
-                        }
-                    }
-                }
-            }
-        });
+        client.addRequestInterceptor(new RequestAcceptEncoding());
+        client.addResponseInterceptor(new ResponseContentEncoding());
         String responseBody = null;
         int statusCode = 500;
         try {
             HttpResponse response = client.execute(request);
             statusCode = response.getStatusLine().getStatusCode();
             responseBody = convertStreamToString(response.getEntity().getContent());
-        } catch (IOException e){
+        } catch (IOException e) {
             responseBody = e.getMessage();
         }
         return Response.status(statusCode).entity(responseBody).build();
@@ -130,7 +117,7 @@ public class CloudClient {
             Writer writer = new StringWriter();
             char[] buffer = new char[1024];
             try {
-                Reader reader = new BufferedReader( new InputStreamReader(is, "UTF-8"));
+                Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
                 int n;
                 while ((n = reader.read(buffer)) != -1) {
                     writer.write(buffer, 0, n);
