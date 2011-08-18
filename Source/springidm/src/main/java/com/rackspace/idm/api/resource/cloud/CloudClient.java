@@ -6,11 +6,17 @@ import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
+import org.apache.http.*;
+import org.apache.http.client.entity.GzipDecompressingEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.BasicHttpEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.HttpContext;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
+import java.io.*;
 import java.util.Set;
 
 /**
@@ -77,25 +83,65 @@ public class CloudClient {
     }
 
     public Response post(String url, HttpHeaders httpHeaders, String body) throws IOException {
-        HttpClient client = new HttpClient();
-        PostMethod method = new PostMethod(url);
+        DefaultHttpClient client = new DefaultHttpClient();
+        HttpPost request = new HttpPost(url);
+        BasicHttpEntity entity = new BasicHttpEntity();
+        ByteArrayInputStream bs = new ByteArrayInputStream(body.getBytes());
+        entity.setContent(bs);
+        request.setEntity(entity);
         Set<String> keys = httpHeaders.getRequestHeaders().keySet();
-        for(String key: keys){
-            method.setRequestHeader(key, httpHeaders.getRequestHeaders().getFirst(key));
+        request.setHeaders(new Header[]{});
+        for (String key : keys) {
+            if(!key.equalsIgnoreCase("content-length")){
+                request.setHeader(key, httpHeaders.getRequestHeaders().getFirst(key));
+            }
         }
-        method.setRequestBody(body);
-        // Provide custom retry handler is necessary
-        method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler(3, false));
-
+        client.addResponseInterceptor(new HttpResponseInterceptor() {
+            public void process(HttpResponse response, HttpContext context) throws HttpException, IOException {
+                HttpEntity entity = response.getEntity();
+                if (entity == null)
+                    return;
+                Header ceHeader = entity.getContentEncoding();
+                if (ceHeader != null) {
+                    for (HeaderElement codec : ceHeader.getElements()) {
+                        if (codec.getName().equalsIgnoreCase("gzip")) {
+                            response.setEntity(new GzipDecompressingEntity(response.getEntity()));
+                            return;
+                        }
+                    }
+                }
+            }
+        });
         String responseBody = null;
         int statusCode = 500;
         try {
-            statusCode = client.executeMethod(method);
-            responseBody = new String(method.getResponseBody());
-        } finally {
-            method.releaseConnection();
+            HttpResponse response = client.execute(request);
+            statusCode = response.getStatusLine().getStatusCode();
+            responseBody = convertStreamToString(response.getEntity().getContent());
+        } catch (IOException e){
+            responseBody = e.getMessage();
         }
         return Response.status(statusCode).entity(responseBody).build();
+    }
+
+    private String convertStreamToString(InputStream is)
+            throws IOException {
+        if (is != null) {
+            Writer writer = new StringWriter();
+            char[] buffer = new char[1024];
+            try {
+                Reader reader = new BufferedReader( new InputStreamReader(is, "UTF-8"));
+                int n;
+                while ((n = reader.read(buffer)) != -1) {
+                    writer.write(buffer, 0, n);
+                }
+            } finally {
+                is.close();
+            }
+            return writer.toString();
+        } else {
+            return "";
+        }
     }
 
 }
