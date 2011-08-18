@@ -1,14 +1,13 @@
 package com.rackspace.idm.api.filter;
 
-import javax.ws.rs.core.HttpHeaders;
-
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.sun.jersey.spi.container.ContainerRequest;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.sun.jersey.spi.container.ContainerRequest;
+import javax.ws.rs.core.HttpHeaders;
 
 public class AuthenticationFilterTests {
 

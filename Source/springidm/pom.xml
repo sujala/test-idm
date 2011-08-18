@@ -256,7 +256,12 @@
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.1.1</version>
+        </dependency>
+    </dependencies>
 
 	<profiles>
 		<profile>
@@ -473,31 +478,31 @@
 					<extension>true</extension>
 				</configuration>
 			</plugin>
-			<plugin>
-                <groupId>com.sun.tools.xjc.maven2</groupId>
-                <artifactId>maven-jaxb-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <schemaDirectory>src/main/resources/cloud</schemaDirectory>
-                    <includeSchemas>
-                        <includeSchema>admin-api.xsd</includeSchema>
-                    </includeSchemas>
-                    <excludeBindings>
-                        <excludeBinding>api.xjb</excludeBinding>
-                    </excludeBindings>
-                    <generatePackage>com.rackspace.idm.cloud.jaxb</generatePackage>
-                    <!-- <generateDirectory>src/main/java</generateDirectory> -->
-                    <removeOldOutput>true</removeOldOutput>
-                    <verbose>false</verbose>
-                    <extension>true</extension>
-                </configuration>
-            </plugin>
+			<!--<plugin>-->
+                <!--<groupId>com.sun.tools.xjc.maven2</groupId>-->
+                <!--<artifactId>maven-jaxb-plugin</artifactId>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<goals>-->
+                            <!--<goal>generate</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+                <!--<configuration>-->
+                    <!--<schemaDirectory>src/main/resources/cloud</schemaDirectory>-->
+                    <!--<includeSchemas>-->
+                        <!--<includeSchema>admin-api.xsd</includeSchema>-->
+                    <!--</includeSchemas>-->
+                    <!--<excludeBindings>-->
+                        <!--<excludeBinding>api.xjb</excludeBinding>-->
+                    <!--</excludeBindings>-->
+                    <!--<generatePackage>com.rackspace.idm.cloud.jaxb</generatePackage>-->
+                    <!--&lt;!&ndash; <generateDirectory>src/main/java</generateDirectory> &ndash;&gt;-->
+                    <!--<removeOldOutput>true</removeOldOutput>-->
+                    <!--<verbose>false</verbose>-->
+                    <!--<extension>true</extension>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
