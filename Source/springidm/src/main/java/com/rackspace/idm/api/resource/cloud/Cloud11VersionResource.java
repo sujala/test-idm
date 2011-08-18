@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import javax.ws.rs.PathParam;
+
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -35,11 +37,20 @@ public class Cloud11VersionResource {
     }
 
     @POST
-    @Path("auth")
-    public Response authenticate(@Context HttpHeaders httpHeaders, String body) throws IOException {
-        return cloudClient.post(getCloudAuthV11Url().concat("auth"),httpHeaders , body);
-
+    @Path("auth{contentType:(\\.(xml|json))?}")
+    public Response authenticate(
+        @PathParam ("contentType") String contentType, @Context HttpHeaders httpHeaders, String body
+    ) throws IOException {
+        return cloudClient.post(getCloudAuthV11Url().concat(getPath("auth", contentType)), httpHeaders , body);
     }
+
+    private String getPath(String path, String contentType) {
+        if(contentType != null) {
+            return path + contentType;
+        }
+        return path;
+    }
+
     private String getCloudAuthV11Url() {
         return config.getString("cloudAuth11url");
     }
