@@ -23,75 +23,85 @@ import java.util.Set;
 @Component
 public class CloudClient {
 
-	//Todo: create a property
-	boolean ignoreSSLCert = true;
-	
-    public Response get(String url, HttpHeaders httpHeaders) throws IOException {             
+    //Todo: create a property
+    boolean ignoreSSLCert = true;
+
+    public Response get(String url, HttpHeaders httpHeaders) throws IOException {
         HttpGet request = new HttpGet(url);
-        return exetureRequest(request, httpHeaders);
+        return executeRequest(request, httpHeaders);
     }
-    
-    public Response delete(String url, HttpHeaders httpHeaders) throws IOException {             
+
+    public Response delete(String url, HttpHeaders httpHeaders) throws IOException {
         HttpDelete request = new HttpDelete(url);
-        return exetureRequest(request, httpHeaders);
+        return executeRequest(request, httpHeaders);
     }
-    
-    public Response put(String url, HttpHeaders httpHeaders, String body) throws IOException {              
+
+    public Response put(String url, HttpHeaders httpHeaders, String body) throws IOException {
         HttpPut request = new HttpPut(url);
         request.setEntity(getHttpEntity(body));
-        return exetureRequest(request, httpHeaders);
+        return executeRequest(request, httpHeaders);
     }
-    
-    public Response post(String url, HttpHeaders httpHeaders, String body) throws IOException {               
-        HttpPost request = new HttpPost(url);        
+
+    public Response post(String url, HttpHeaders httpHeaders, String body) throws IOException {
+        HttpPost request = new HttpPost(url);
         request.setEntity(getHttpEntity(body));
-        return exetureRequest(request, httpHeaders);
+        return executeRequest(request, httpHeaders);
     }
-    
-	private Response exetureRequest(HttpRequestBase request, HttpHeaders httpHeaders) {		
-		DefaultHttpClient client = getHttpClient();
-		setHttpHeaders(httpHeaders, request);
-		
-		String responseBody = null;
+
+    private Response executeRequest(HttpRequestBase request, HttpHeaders httpHeaders) {
+        DefaultHttpClient client = getHttpClient();
+        setHttpHeaders(httpHeaders, request);
+
+        String responseBody = null;
         int statusCode = 500;
+        HttpResponse response = null;
         try {
-            HttpResponse response = client.execute(request);
+            response = client.execute(request);
             statusCode = response.getStatusLine().getStatusCode();
-            responseBody = convertStreamToString(response.getEntity().getContent());
+            if (response.getEntity() != null) {
+                responseBody = convertStreamToString(response.getEntity().getContent());
+            }
         } catch (IOException e) {
             responseBody = e.getMessage();
         }
-        return Response.status(statusCode).entity(responseBody).build();
-	}
+        Response.ResponseBuilder responseBuilder = Response.status(statusCode);
+        for (Header header : response.getAllHeaders()) {
+            String key = header.getName();
+            if (!key.equalsIgnoreCase("content-encoding")) {
+                responseBuilder = responseBuilder.header(key, header.getValue());
+            }
+        }
+        return responseBuilder.entity(responseBody).build();
+    }
 
-	private BasicHttpEntity getHttpEntity(String body) {
-		BasicHttpEntity entity = new BasicHttpEntity();
+    private BasicHttpEntity getHttpEntity(String body) {
+        BasicHttpEntity entity = new BasicHttpEntity();
         ByteArrayInputStream bs = new ByteArrayInputStream(body.getBytes());
         entity.setContent(bs);
-		return entity;
-	}
+        return entity;
+    }
 
-	private DefaultHttpClient getHttpClient() {
-		DefaultHttpClient client = new DefaultHttpClient();
+    private DefaultHttpClient getHttpClient() {
+        DefaultHttpClient client = new DefaultHttpClient();
         client.addRequestInterceptor(new RequestAcceptEncoding());
         client.addResponseInterceptor(new ResponseContentEncoding());
-        
-        if(ignoreSSLCert) {
-        	client = WebClientDevWrapper.wrapClient(client);
+
+        if (ignoreSSLCert) {
+            client = WebClientDevWrapper.wrapClient(client);
         }
-        
-		return client;
-	}
-	
-	private void setHttpHeaders(HttpHeaders httpHeaders, HttpRequestBase request) {
-		Set<String> keys = httpHeaders.getRequestHeaders().keySet();
+
+        return client;
+    }
+
+    private void setHttpHeaders(HttpHeaders httpHeaders, HttpRequestBase request) {
+        Set<String> keys = httpHeaders.getRequestHeaders().keySet();
         request.setHeaders(new Header[]{});
         for (String key : keys) {
             if (!key.equalsIgnoreCase("content-length")) {
                 request.setHeader(key, httpHeaders.getRequestHeaders().getFirst(key));
             }
         }
-	}
+    }
 
     private String convertStreamToString(InputStream is)
             throws IOException {
