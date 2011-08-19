@@ -32,8 +32,10 @@ public class Cloud11VersionResource {
     }
 
     @GET
-    public Response getCloud11VersionInfo() throws IOException {
-        return cloudClient.get(getCloudAuthV11Url(),null,null);
+    public Response getCloud11VersionInfo(
+    	@Context HttpHeaders httpHeaders		
+    ) throws IOException {
+        return cloudClient.get(getCloudAuthV11Url(), httpHeaders);
     }
 
     @POST
