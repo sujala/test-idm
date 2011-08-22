@@ -1,28 +1,11 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.List;
-import javax.ws.rs.PathParam;
-
-import org.apache.commons.configuration.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-
+import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.cloud.jaxb.*;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.UserService;
 import org.apache.commons.configuration.Configuration;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -33,25 +16,13 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.cloud.jaxb.AuthFault;
-import com.rackspace.idm.cloud.jaxb.Credentials;
-import com.rackspace.idm.cloud.jaxb.ItemNotFoundFault;
-import com.rackspace.idm.cloud.jaxb.UnauthorizedFault;
-import com.rackspace.idm.cloud.jaxb.UserCredentials;
-import com.rackspace.idm.cloud.jaxb.UserDisabledFault;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.UserDisabledException;
-import com.sun.jersey.api.json.JSONConfiguration;
-import com.sun.jersey.api.json.JSONJAXBContext;
-import com.sun.jersey.api.json.JSONUnmarshaller;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
 
 /**
  * Cloud Auth 1.1 API Versions
@@ -229,7 +200,7 @@ public class Cloud11VersionResource {
         fault.setDetails(MDC.get(Audit.GUUID));
 
         return Response.status(HttpServletResponse.SC_NOT_FOUND)
-            .entity(OBJ_FACTORY.createItemNotFound((ItemNotFoundFault) fault))
+            .entity(OBJ_FACTORY.createItemNotFound((com.rackspace.idm.cloud.jaxb.ItemNotFoundFault) fault))
             .build();
     }
 
