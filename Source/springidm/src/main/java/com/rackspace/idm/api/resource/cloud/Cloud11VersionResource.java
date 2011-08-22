@@ -2,14 +2,18 @@ package com.rackspace.idm.api.resource.cloud;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -175,6 +179,113 @@ public class Cloud11VersionResource {
             return serviceExceptionResponse();
         }
     }
+
+    @GET
+    @Path("token{contentType:(\\.(xml|json))?}")
+    public Response validateToken(
+        @PathParam ("contentType") String contentType,
+        @QueryParam ("belongsTo") String belongsTo,
+        @QueryParam ("type") String type,
+        @Context HttpHeaders httpHeaders
+    ) throws IOException {
+
+        if(type == null) {
+            type = "CLOUD";
+        }
+
+        HashMap<String, String> queryParams = new HashMap<String, String>();
+        queryParams.put("belongsTo", belongsTo);
+        queryParams.put("type", type);
+        return cloudClient.get(getCloudAuthV11Url().concat(getPath("token", contentType, queryParams)), httpHeaders);
+    }
+
+    @DELETE
+    @Path("token")
+    public Response revokeToken(
+        @PathParam ("contentType") String contentType, @Context HttpHeaders httpHeaders, String body
+    ) throws IOException {
+        //Todo: Jorge implement this method.
+        return null;
+    }
+
+    private String getPath(String path, String contentType) {
+        return getPath(path, contentType, null);
+    }
+
+    private String getPath(String path, String contentType, HashMap<String, String> queryParams) {
+        String result = path;
+        String queryString = "";
+
+        if(contentType != null) {
+            result = path + contentType;
+        }
+
+        if(queryParams != null ) {
+            for(String key : queryParams.keySet()) {
+                if(queryParams.get(key) != null) {
+                    queryString += key + "=" + queryParams.get(key) + "&";
+                }
+            }
+
+            if(queryString.length() > 0) {
+                result += "?" + queryString.substring(0, queryString.length() - 1);
+            }
+        }
+
+        return result;
+    }
+
+
+//    @POST
+//    @Path("auth")
+//    @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+//    public Response authenticate(@Context HttpHeaders httpHeaders,
+//        @Context HttpServletRequest request,
+//        @Context HttpServletResponse response,
+//        JAXBElement<? extends Credentials> cred) throws IOException {
+//
+//        if (!(cred.getValue() instanceof UserCredentials)) {
+//            handleRedirect(response, "auth-admin");
+//        }
+//
+//        UserCredentials userCreds = (UserCredentials) cred.getValue();
+//
+//        String username = userCreds.getUsername();
+//        String apiKey = userCreds.getKey();
+//
+//        User user = this.userService.getUser(username);
+//
+//        if (user == null) {
+//
+//            if (useCloudAuth()) {
+//                return cloudClient.post(getCloudAuthV11Url().concat("auth"),
+//                    httpHeaders,
+//                    IOUtils.toString(request.getInputStream(), "UTF-8"));
+//
+//            } else {
+//                return notFoundExceptionResponse(username);
+//            }
+//        }
+//
+//        UserScopeAccess usa = null;
+//
+//        try {
+//            usa = this.scopeAccessService
+//                .getUserScopeAccessForClientIdByUsernameAndApiCredentials(
+//                    username, apiKey, getCloudAuthClientId());
+//        } catch (NotAuthenticatedException nae) {
+//            return notAuthenticatedExceptionResponse(username);
+//        } catch (UserDisabledException ude) {
+//            return userDisabledExceptionResponse(username);
+//        }
+//
+//        List<CloudEndpoint> endpoints = this.endpointService
+//            .getEndpointsForUser(username);
+//
+//        return Response.ok(
+//            OBJ_FACTORY.createAuth(this.authConverter.toCloudv11AuthDataJaxb(
+//                usa, endpoints))).build();
+//    }
 
     // @POST
     // @Path("auth-admin")
