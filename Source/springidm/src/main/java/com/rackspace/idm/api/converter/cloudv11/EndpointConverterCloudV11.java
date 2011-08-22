@@ -4,13 +4,13 @@ import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 
-import com.rackspace.idm.cloud.jaxb.BaseURL;
-import com.rackspace.idm.cloud.jaxb.BaseURLList;
-import com.rackspace.idm.cloud.jaxb.BaseURLRef;
-import com.rackspace.idm.cloud.jaxb.BaseURLRefList;
-import com.rackspace.idm.cloud.jaxb.ObjectFactory;
-import com.rackspace.idm.cloud.jaxb.ServiceCatalog;
-import com.rackspace.idm.cloud.jaxb.UserType;
+import com.rackspace.idm.cloudv11.jaxb.BaseURL;
+import com.rackspace.idm.cloudv11.jaxb.BaseURLList;
+import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
+import com.rackspace.idm.cloudv11.jaxb.BaseURLRefList;
+import com.rackspace.idm.cloudv11.jaxb.ObjectFactory;
+import com.rackspace.idm.cloudv11.jaxb.ServiceCatalog;
+import com.rackspace.idm.cloudv11.jaxb.UserType;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.util.CloudAuthServiceCatalogFactory;

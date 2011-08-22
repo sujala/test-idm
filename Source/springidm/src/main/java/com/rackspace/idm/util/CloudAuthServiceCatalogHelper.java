@@ -1,7 +1,7 @@
 package com.rackspace.idm.util;
 
-import com.rackspace.idm.cloud.jaxb.Service;
-import com.rackspace.idm.cloud.jaxb.ServiceCatalog;
+import com.rackspace.idm.cloudv11.jaxb.Service;
+import com.rackspace.idm.cloudv11.jaxb.ServiceCatalog;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 
 public class CloudAuthServiceCatalogHelper {

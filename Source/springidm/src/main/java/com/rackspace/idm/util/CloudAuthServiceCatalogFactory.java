@@ -4,10 +4,10 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.rackspace.idm.cloud.jaxb.Endpoint;
-import com.rackspace.idm.cloud.jaxb.Service;
-import com.rackspace.idm.cloud.jaxb.ServiceCatalog;
-import com.rackspace.idm.cloud.jaxb.UserType;
+import com.rackspace.idm.cloudv11.jaxb.Endpoint;
+import com.rackspace.idm.cloudv11.jaxb.Service;
+import com.rackspace.idm.cloudv11.jaxb.ServiceCatalog;
+import com.rackspace.idm.cloudv11.jaxb.UserType;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 
 public class CloudAuthServiceCatalogFactory {

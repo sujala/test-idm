@@ -479,28 +479,28 @@
                             </excludeBindings>
                             <generatePackage>com.rackspace.idm.jaxb</generatePackage>
                             <!-- <generateDirectory>src/main/java</generateDirectory> -->
-                            <removeOldOutput>false</removeOldOutput>
+                            <removeOldOutput>true</removeOldOutput>
                             <verbose>false</verbose>
                             <extension>true</extension>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>cloud</id>
+                        <id>cloudv11</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <phase>generate-resources</phase>
                         <configuration>
-                            <schemaDirectory>src/main/resources/cloud</schemaDirectory>
+                            <schemaDirectory>src/main/resources/cloudv11</schemaDirectory>
                             <includeSchemas>
                                 <includeSchema>admin-api.xsd</includeSchema>
                             </includeSchemas>
                             <excludeBindings>
                                 <excludeBinding>api.xjb</excludeBinding>
                             </excludeBindings>
-                            <generatePackage>com.rackspace.idm.cloud.jaxb</generatePackage>
+                            <generatePackage>com.rackspace.idm.cloudv11.jaxb</generatePackage>
                             <!--<generateDirectory>src/main/java</generateDirectory>-->
-                            <removeOldOutput>false</removeOldOutput>
+                            <removeOldOutput>true</removeOldOutput>
                             <verbose>false</verbose>
                             <extension>true</extension>
                         </configuration>

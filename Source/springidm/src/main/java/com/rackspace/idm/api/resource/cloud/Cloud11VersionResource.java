@@ -35,16 +35,16 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.cloud.jaxb.AuthFault;
-import com.rackspace.idm.cloud.jaxb.BadRequestFault;
-import com.rackspace.idm.cloud.jaxb.Credentials;
-import com.rackspace.idm.cloud.jaxb.ItemNotFoundFault;
-import com.rackspace.idm.cloud.jaxb.MossoCredentials;
-import com.rackspace.idm.cloud.jaxb.NastCredentials;
-import com.rackspace.idm.cloud.jaxb.PasswordCredentials;
-import com.rackspace.idm.cloud.jaxb.UnauthorizedFault;
-import com.rackspace.idm.cloud.jaxb.UserCredentials;
-import com.rackspace.idm.cloud.jaxb.UserDisabledFault;
+import com.rackspace.idm.cloudv11.jaxb.AuthFault;
+import com.rackspace.idm.cloudv11.jaxb.BadRequestFault;
+import com.rackspace.idm.cloudv11.jaxb.Credentials;
+import com.rackspace.idm.cloudv11.jaxb.ItemNotFoundFault;
+import com.rackspace.idm.cloudv11.jaxb.MossoCredentials;
+import com.rackspace.idm.cloudv11.jaxb.NastCredentials;
+import com.rackspace.idm.cloudv11.jaxb.PasswordCredentials;
+import com.rackspace.idm.cloudv11.jaxb.UnauthorizedFault;
+import com.rackspace.idm.cloudv11.jaxb.UserCredentials;
+import com.rackspace.idm.cloudv11.jaxb.UserDisabledFault;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
@@ -73,7 +73,7 @@ public class Cloud11VersionResource {
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private static final com.rackspace.idm.cloud.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloud.jaxb.ObjectFactory();
+    private static final com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
 
     @Autowired
     public Cloud11VersionResource(Configuration config,
@@ -104,7 +104,7 @@ public class Cloud11VersionResource {
         JAXBElement<? extends Credentials> cred = null;
 
         try {
-            JAXBContext context = JAXBContext.newInstance("com.rackspace.idm.cloud.jaxb");
+            JAXBContext context = JAXBContext.newInstance("com.rackspace.idm.cloudv11.jaxb");
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends Credentials>) unmarshaller
                 .unmarshal(new StringReader(body));
