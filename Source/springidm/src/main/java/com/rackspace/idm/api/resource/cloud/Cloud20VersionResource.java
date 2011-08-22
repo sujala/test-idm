@@ -34,7 +34,7 @@ public class Cloud20VersionResource {
     public Response getCloud20VersionInfo(
     	@Context HttpHeaders httpHeaders
     ) throws IOException {
-        return cloudClient.get(getCloudAuthV20Url(), httpHeaders);
+        return cloudClient.get(getCloudAuthV20Url(), httpHeaders).build();
     }
     
     private String getCloudAuthV20Url() {

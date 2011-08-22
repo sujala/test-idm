@@ -1,28 +1,17 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.HashMap;
-import java.util.List;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-
+import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.cloudv11.jaxb.*;
+import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.UserDisabledException;
 import org.apache.commons.configuration.Configuration;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -33,31 +22,23 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.cloudv11.jaxb.AuthFault;
-import com.rackspace.idm.cloudv11.jaxb.BadRequestFault;
-import com.rackspace.idm.cloudv11.jaxb.Credentials;
-import com.rackspace.idm.cloudv11.jaxb.ItemNotFoundFault;
-import com.rackspace.idm.cloudv11.jaxb.MossoCredentials;
-import com.rackspace.idm.cloudv11.jaxb.NastCredentials;
-import com.rackspace.idm.cloudv11.jaxb.PasswordCredentials;
-import com.rackspace.idm.cloudv11.jaxb.UnauthorizedFault;
-import com.rackspace.idm.cloudv11.jaxb.UserCredentials;
-import com.rackspace.idm.cloudv11.jaxb.UserDisabledFault;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.UserDisabledException;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Cloud Auth 1.1 API Versions
- * 
  */
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -77,9 +58,9 @@ public class Cloud11VersionResource {
 
     @Autowired
     public Cloud11VersionResource(Configuration config,
-        CloudClient cloudClient, UserService userService,
-        ScopeAccessService scopeAccessService, EndpointService endpointService,
-        AuthConverterCloudV11 authConverter) {
+                                  CloudClient cloudClient, UserService userService,
+                                  ScopeAccessService scopeAccessService, EndpointService endpointService,
+                                  AuthConverterCloudV11 authConverter) {
         this.config = config;
         this.cloudClient = cloudClient;
         this.userService = userService;
@@ -90,8 +71,8 @@ public class Cloud11VersionResource {
 
     @GET
     public Response getCloud11VersionInfo(@Context HttpHeaders httpHeaders)
-        throws IOException {
-        return cloudClient.get(getCloudAuthV11Url(), httpHeaders);
+            throws IOException {
+        return cloudClient.get(getCloudAuthV11Url(), httpHeaders).build();
     }
 
     @SuppressWarnings("unchecked")
@@ -99,7 +80,7 @@ public class Cloud11VersionResource {
     @Path("auth")
     @Consumes(MediaType.APPLICATION_XML)
     public Response authenticate(@Context HttpServletResponse response,
-        @Context HttpHeaders httpHeaders, String body) throws IOException {
+                                 @Context HttpHeaders httpHeaders, String body) throws IOException {
 
         JAXBElement<? extends Credentials> cred = null;
 
@@ -107,20 +88,20 @@ public class Cloud11VersionResource {
             JAXBContext context = JAXBContext.newInstance("com.rackspace.idm.cloudv11.jaxb");
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends Credentials>) unmarshaller
-                .unmarshal(new StringReader(body));
+                    .unmarshal(new StringReader(body));
         } catch (JAXBException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
-        return authenticateResponse(cred, httpHeaders, response, body);
+        return authenticateResponse(cred, httpHeaders, response, body).build();
     }
 
     @POST
     @Path("auth")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response authenticateJSON(@Context HttpServletResponse response,
-        @Context HttpHeaders httpHeaders, String body) throws IOException {
+                                     @Context HttpHeaders httpHeaders, String body) throws IOException {
 
         JAXBElement<? extends Credentials> cred = null;
 
@@ -130,12 +111,12 @@ public class Cloud11VersionResource {
             return badRequestExceptionResponse(bre.getMessage());
         }
 
-        return authenticateResponse(cred, httpHeaders, response, body);
+        return authenticateResponse(cred, httpHeaders, response, body).build();
     }
 
-    private Response authenticateResponse(
-        JAXBElement<? extends Credentials> cred, HttpHeaders httpHeaders,
-        HttpServletResponse response, String body) throws IOException {
+    private Response.ResponseBuilder authenticateResponse(
+            JAXBElement<? extends Credentials> cred, HttpHeaders httpHeaders,
+            HttpServletResponse response, String body) throws IOException {
 
         if (!(cred.getValue() instanceof UserCredentials)) {
             handleRedirect(response, "cloud/auth-admin");
@@ -152,7 +133,7 @@ public class Cloud11VersionResource {
 
             if (useCloudAuth()) {
                 return cloudClient.post(getCloudAuthV11Url().concat("auth"),
-                    httpHeaders, body);
+                        httpHeaders, body);
             } else {
                 return notFoundExceptionResponse(username);
             }
@@ -162,14 +143,14 @@ public class Cloud11VersionResource {
 
         try {
             usa = this.scopeAccessService
-                .getUserScopeAccessForClientIdByUsernameAndApiCredentials(
-                    username, apiKey, getCloudAuthClientId());
+                    .getUserScopeAccessForClientIdByUsernameAndApiCredentials(
+                            username, apiKey, getCloudAuthClientId());
             List<CloudEndpoint> endpoints = this.endpointService
-                .getEndpointsForUser(username);
+                    .getEndpointsForUser(username);
 
             return Response.ok(
-                OBJ_FACTORY.createAuth(this.authConverter
-                    .toCloudv11AuthDataJaxb(usa, endpoints))).build();
+                    OBJ_FACTORY.createAuth(this.authConverter
+                            .toCloudv11AuthDataJaxb(usa, endpoints)));
 
         } catch (NotAuthenticatedException nae) {
             return notAuthenticatedExceptionResponse(username);
@@ -183,26 +164,26 @@ public class Cloud11VersionResource {
     @GET
     @Path("token{contentType:(\\.(xml|json))?}")
     public Response validateToken(
-        @PathParam ("contentType") String contentType,
-        @QueryParam ("belongsTo") String belongsTo,
-        @QueryParam ("type") String type,
-        @Context HttpHeaders httpHeaders
+            @PathParam("contentType") String contentType,
+            @QueryParam("belongsTo") String belongsTo,
+            @QueryParam("type") String type,
+            @Context HttpHeaders httpHeaders
     ) throws IOException {
 
-        if(type == null) {
+        if (type == null) {
             type = "CLOUD";
         }
 
         HashMap<String, String> queryParams = new HashMap<String, String>();
         queryParams.put("belongsTo", belongsTo);
         queryParams.put("type", type);
-        return cloudClient.get(getCloudAuthV11Url().concat(getPath("token", contentType, queryParams)), httpHeaders);
+        return cloudClient.get(getCloudAuthV11Url().concat(getPath("token", contentType, queryParams)), httpHeaders).build();
     }
 
     @DELETE
     @Path("token")
     public Response revokeToken(
-        @PathParam ("contentType") String contentType, @Context HttpHeaders httpHeaders, String body
+            @PathParam("contentType") String contentType, @Context HttpHeaders httpHeaders, String body
     ) throws IOException {
         //Todo: Jorge implement this method.
         return null;
@@ -216,18 +197,18 @@ public class Cloud11VersionResource {
         String result = path;
         String queryString = "";
 
-        if(contentType != null) {
+        if (contentType != null) {
             result = path + contentType;
         }
 
-        if(queryParams != null ) {
-            for(String key : queryParams.keySet()) {
-                if(queryParams.get(key) != null) {
+        if (queryParams != null) {
+            for (String key : queryParams.keySet()) {
+                if (queryParams.get(key) != null) {
                     queryString += key + "=" + queryParams.get(key) + "&";
                 }
             }
 
-            if(queryString.length() > 0) {
+            if (queryString.length() > 0) {
                 result += "?" + queryString.substring(0, queryString.length() - 1);
             }
         }
@@ -356,11 +337,11 @@ public class Cloud11VersionResource {
         fault.setDetails(MDC.get(Audit.GUUID));
 
         return Response.status(HttpServletResponse.SC_BAD_REQUEST)
-            .entity(OBJ_FACTORY.createBadRequest(fault))
-            .build();
+                .entity(OBJ_FACTORY.createBadRequest(fault))
+                .build();
     }
 
-    private Response notFoundExceptionResponse(String username) {
+    private Response.ResponseBuilder notFoundExceptionResponse(String username) {
         String errMsg = String.format("User %s not found", username);
 
         ItemNotFoundFault fault = OBJ_FACTORY.createItemNotFoundFault();
@@ -369,11 +350,11 @@ public class Cloud11VersionResource {
         fault.setDetails(MDC.get(Audit.GUUID));
 
         return Response.status(HttpServletResponse.SC_NOT_FOUND)
-            .entity(OBJ_FACTORY.createItemNotFound(fault))
-            .build();
+                .entity(OBJ_FACTORY.createItemNotFound(fault))
+                ;
     }
 
-    private Response notAuthenticatedExceptionResponse(String username) {
+    private Response.ResponseBuilder notAuthenticatedExceptionResponse(String username) {
         String errMsg = String.format("User %s not authenticated", username);
 
         UnauthorizedFault fault = OBJ_FACTORY.createUnauthorizedFault();
@@ -382,21 +363,21 @@ public class Cloud11VersionResource {
         fault.setDetails(MDC.get(Audit.GUUID));
 
         return Response.status(HttpServletResponse.SC_UNAUTHORIZED)
-            .entity(OBJ_FACTORY.createUnauthorized(fault))
-            .build();
+                .entity(OBJ_FACTORY.createUnauthorized(fault))
+                ;
     }
 
-    private Response serviceExceptionResponse() {
+    private Response.ResponseBuilder serviceExceptionResponse() {
 
         AuthFault fault = OBJ_FACTORY.createAuthFault();
         fault.setCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         fault.setDetails(MDC.get(Audit.GUUID));
 
         return Response.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
-            .entity(OBJ_FACTORY.createAuthFault(fault)).build();
+                .entity(OBJ_FACTORY.createAuthFault(fault));
     }
 
-    private Response userDisabledExceptionResponse(String username) {
+    private Response.ResponseBuilder userDisabledExceptionResponse(String username) {
         String errMsg = String.format("User %s is disabled", username);
 
         UserDisabledFault fault = OBJ_FACTORY.createUserDisabledFault();
@@ -405,8 +386,8 @@ public class Cloud11VersionResource {
         fault.setDetails(MDC.get(Audit.GUUID));
 
         return Response.status(HttpServletResponse.SC_FORBIDDEN)
-            .entity(OBJ_FACTORY.createUserDisabled(fault))
-            .build();
+                .entity(OBJ_FACTORY.createUserDisabled(fault))
+                ;
     }
 
     private void handleRedirect(HttpServletResponse response, String path) {
@@ -430,7 +411,7 @@ public class Cloud11VersionResource {
     }
 
     private JAXBElement<? extends Credentials> unmarshallCredentialsFromJSON(
-        String jsonBody) {
+            String jsonBody) {
 
         JSONParser parser = new JSONParser();
         JAXBElement<? extends Credentials> creds = null;
@@ -440,7 +421,7 @@ public class Cloud11VersionResource {
 
             if (obj.containsKey("credentials")) {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                    "credentials").toString());
+                        "credentials").toString());
                 UserCredentials userCreds = new UserCredentials();
                 userCreds.setKey(obj3.get("key").toString());
                 userCreds.setUsername(obj3.get("username").toString());
@@ -448,16 +429,16 @@ public class Cloud11VersionResource {
 
             } else if (obj.containsKey("mossoCredentials")) {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                    "mossoCredentials").toString());
+                        "mossoCredentials").toString());
                 MossoCredentials mossoCreds = new MossoCredentials();
                 mossoCreds.setKey(obj3.get("key").toString());
                 mossoCreds.setMossoId(Integer.parseInt(obj3.get("mossoId")
-                    .toString()));
+                        .toString()));
                 creds = OBJ_FACTORY.createMossoCredentials(mossoCreds);
 
             } else if (obj.containsKey("nastCredentials")) {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                    "nastCredentials").toString());
+                        "nastCredentials").toString());
                 NastCredentials nastCreds = new NastCredentials();
                 nastCreds.setKey(obj3.get("key").toString());
                 nastCreds.setNastId(obj3.get("nastId").toString());
@@ -465,7 +446,7 @@ public class Cloud11VersionResource {
 
             } else if (obj.containsKey("passwordCredentials")) {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                    "passwordCredentials").toString());
+                        "passwordCredentials").toString());
                 PasswordCredentials passwordCreds = new PasswordCredentials();
                 passwordCreds.setUsername(obj3.get("username").toString());
                 passwordCreds.setPassword(obj3.get("username").toString());

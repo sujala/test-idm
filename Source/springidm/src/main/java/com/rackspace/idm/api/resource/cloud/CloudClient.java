@@ -26,29 +26,29 @@ public class CloudClient {
     //Todo: create a property
     boolean ignoreSSLCert = true;
 
-    public Response get(String url, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder get(String url, HttpHeaders httpHeaders) throws IOException {
         HttpGet request = new HttpGet(url);
         return executeRequest(request, httpHeaders);
     }
 
-    public Response delete(String url, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder delete(String url, HttpHeaders httpHeaders) throws IOException {
         HttpDelete request = new HttpDelete(url);
         return executeRequest(request, httpHeaders);
     }
 
-    public Response put(String url, HttpHeaders httpHeaders, String body) throws IOException {
+    public Response.ResponseBuilder put(String url, HttpHeaders httpHeaders, String body) throws IOException {
         HttpPut request = new HttpPut(url);
         request.setEntity(getHttpEntity(body));
         return executeRequest(request, httpHeaders);
     }
 
-    public Response post(String url, HttpHeaders httpHeaders, String body) throws IOException {
+    public Response.ResponseBuilder post(String url, HttpHeaders httpHeaders, String body) throws IOException {
         HttpPost request = new HttpPost(url);
         request.setEntity(getHttpEntity(body));
         return executeRequest(request, httpHeaders);
     }
 
-    private Response executeRequest(HttpRequestBase request, HttpHeaders httpHeaders) {
+    private Response.ResponseBuilder executeRequest(HttpRequestBase request, HttpHeaders httpHeaders) {
         DefaultHttpClient client = getHttpClient();
         setHttpHeaders(httpHeaders, request);
 
@@ -64,14 +64,14 @@ public class CloudClient {
         } catch (IOException e) {
             responseBody = e.getMessage();
         }
-        Response.ResponseBuilder responseBuilder = Response.status(statusCode);
-        for (Header header : response.getAllHeaders()) {
+        Response.ResponseBuilder responseBuilder = Response.status(statusCode).entity(responseBody);
+        /*for (Header header : response.getAllHeaders()) {
             String key = header.getName();
             if (!key.equalsIgnoreCase("content-encoding")) {
                 responseBuilder = responseBuilder.header(key, header.getValue());
             }
-        }
-        return responseBuilder.entity(responseBody).build();
+        }*/
+        return responseBuilder;
     }
 
     private BasicHttpEntity getHttpEntity(String body) {
@@ -103,24 +103,37 @@ public class CloudClient {
         }
     }
 
-    private String convertStreamToString(InputStream is)
-            throws IOException {
-        if (is != null) {
-            Writer writer = new StringWriter();
-            char[] buffer = new char[1024];
-            try {
-                Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-                int n;
-                while ((n = reader.read(buffer)) != -1) {
-                    writer.write(buffer, 0, n);
-                }
-            } finally {
-                is.close();
-            }
-            return writer.toString();
-        } else {
-            return "";
+    public static String convertStreamToString(InputStream is) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        StringBuilder sb = new StringBuilder();
+        String line = null;
+        while ((line = reader.readLine()) != null) {
+            sb.append(line + "\n");
         }
+        is.close();
+        return sb.toString();
     }
 
 }
+
+//    private String convertStreamToString(InputStream is)
+//            throws IOException {
+//        if (is != null) {
+//            Writer writer = new StringWriter();
+//            char[] buffer = new char[6144];
+//            try {
+//                Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+//                int n;
+//                while ((n = reader.read(buffer)) != -1) {
+//                    writer.write(buffer, 0, n);
+//                }
+//            } finally {
+//                is.close();
+//            }
+//            return writer.toString();
+//        } else {
+//            return "";
+//        }
+//    }
+
+//}

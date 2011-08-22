@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
@@ -36,7 +35,7 @@ public class Cloud10VersionResource {
     public Response getCloud10VersionInfo(
     	@Context HttpHeaders httpHeaders		
     ) throws IOException {
-        return cloudClient.get(getCloudAuthV10Url(), httpHeaders);
+        return cloudClient.get(getCloudAuthV10Url(), httpHeaders).build();
     }
 
 //    @GET
