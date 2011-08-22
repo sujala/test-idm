@@ -2,32 +2,10 @@ package com.rackspace.idm.api.resource.cloud;
 
 import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.audit.Audit;
-import java.util.HashMap;
 import com.rackspace.idm.cloud.jaxb.*;
-import java.util.List;
+import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
-import javax.ws.rs.DELETE;
 import com.rackspace.idm.domain.service.UserService;
-import javax.ws.rs.QueryParam;
-
-import org.apache.commons.configuration.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-
 import org.apache.commons.configuration.Configuration;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -45,6 +23,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.HashMap;
 
 /**
  * Cloud Auth 1.1 API Versions
