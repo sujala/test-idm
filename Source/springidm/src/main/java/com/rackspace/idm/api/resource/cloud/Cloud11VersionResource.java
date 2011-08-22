@@ -2,8 +2,11 @@ package com.rackspace.idm.api.resource.cloud;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.List;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,12 +104,61 @@ public class Cloud11VersionResource {
         return cloudClient.post(getCloudAuthV11Url().concat(getPath("auth", contentType)), httpHeaders , body);
     }
 
-    private String getPath(String path, String contentType) {
-        if(contentType != null) {
-            return path + contentType;
+    @GET
+    @Path("token{contentType:(\\.(xml|json))?}")
+    public Response validateToken(
+        @PathParam ("contentType") String contentType,
+        @QueryParam ("belongsTo") String belongsTo,
+        @QueryParam ("type") String type,
+        @Context HttpHeaders httpHeaders
+    ) throws IOException {
+
+        if(type == null) {
+            type = "CLOUD";
         }
-        return path;
+
+        HashMap<String, String> queryParams = new HashMap<String, String>();
+        queryParams.put("belongsTo", belongsTo);
+        queryParams.put("type", type);
+        return cloudClient.get(getCloudAuthV11Url().concat(getPath("token", contentType, queryParams)), httpHeaders);
     }
+
+    @DELETE
+    @Path("token")
+    public Response revokeToken(
+        @PathParam ("contentType") String contentType, @Context HttpHeaders httpHeaders, String body
+    ) throws IOException {
+        //Todo: Jorge implement this method.
+        return null;
+    }
+
+    private String getPath(String path, String contentType) {
+        return getPath(path, contentType, null);
+    }
+
+    private String getPath(String path, String contentType, HashMap<String, String> queryParams) {
+        String result = path;
+        String queryString = "";
+
+        if(contentType != null) {
+            result = path + contentType;
+        }
+
+        if(queryParams != null ) {
+            for(String key : queryParams.keySet()) {
+                if(queryParams.get(key) != null) {
+                    queryString += key + "=" + queryParams.get(key) + "&";
+                }
+            }
+
+            if(queryString.length() > 0) {
+                result += "?" + queryString.substring(0, queryString.length() - 1);
+            }
+        }
+
+        return result;
+    }
+
 
 //    @POST
 //    @Path("auth")
