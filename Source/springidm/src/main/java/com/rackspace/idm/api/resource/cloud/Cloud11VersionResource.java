@@ -3,6 +3,11 @@ package com.rackspace.idm.api.resource.cloud;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
+import javax.ws.rs.PathParam;
+
+import org.apache.commons.configuration.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -82,86 +87,25 @@ public class Cloud11VersionResource {
     }
 
     @GET
-    public Response getCloud11VersionInfo() throws IOException {
-        return cloudClient.get(getCloudAuthV11Url(), null, null);
+    public Response getCloud11VersionInfo(
+    	@Context HttpHeaders httpHeaders		
+    ) throws IOException {
+        return cloudClient.get(getCloudAuthV11Url(), httpHeaders);
     }
-    
-//    @POST
-//    @Path("auth{contentType:(\\.(xml|json))?}")
-//    public Response authenticate(
-//        @PathParam ("contentType") String contentType, @Context HttpHeaders httpHeaders, String body) {
-//        try {
-//            return cloudClient.post(getCloudAuthV11Url().concat("auth"),
-//              httpHeaders, body);
-//        } catch (IOException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
-//        
-//        return null;
-//    }
 
     @POST
-    @Path("auth")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response authenticateJSON(@Context HttpHeaders httpHeaders,
-        @Context HttpServletRequest request,
-        @Context HttpServletResponse response, String body) throws IOException {
-        
-        unmarshallCredentialsFromJSON(body);
+    @Path("auth{contentType:(\\.(xml|json))?}")
+    public Response authenticate(
+        @PathParam ("contentType") String contentType, @Context HttpHeaders httpHeaders, String body
+    ) throws IOException {
+        return cloudClient.post(getCloudAuthV11Url().concat(getPath("auth", contentType)), httpHeaders , body);
+    }
 
-        JAXBElement<? extends Credentials> cred = null;
-        try {
-            JSONJAXBContext context = new JSONJAXBContext(JSONConfiguration
-                .natural().rootUnwrapping(false).build(),
-                "com.rackspace.idm.cloud.jaxb");
-            JSONUnmarshaller unmarshaller = context.createJSONUnmarshaller();
-            cred = unmarshaller.unmarshalJAXBElementFromJSON(new StringReader(body), UserCredentials.class);        
-            } catch (JAXBException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+    private String getPath(String path, String contentType) {
+        if(contentType != null) {
+            return path + contentType;
         }
-
-        if (!(cred.getValue() instanceof UserCredentials)) {
-            handleRedirect(response, "cloud/auth-admin");
-        }
-
-        UserCredentials userCreds = (UserCredentials) cred.getValue();
-
-        String username = userCreds.getUsername();
-        String apiKey = userCreds.getKey();
-
-        User user = this.userService.getUser(username);
-
-        if (user == null) {
-
-            if (useCloudAuth()) {
-                return cloudClient.post(getCloudAuthV11Url().concat("auth"),
-                    httpHeaders, body);
-
-            } else {
-                return notFoundExceptionResponse(username);
-            }
-        }
-
-        UserScopeAccess usa = null;
-
-        try {
-            usa = this.scopeAccessService
-                .getUserScopeAccessForClientIdByUsernameAndApiCredentials(
-                    username, apiKey, getCloudAuthClientId());
-        } catch (NotAuthenticatedException nae) {
-            return notAuthenticatedExceptionResponse(username);
-        } catch (UserDisabledException ude) {
-            return userDisabledExceptionResponse(username);
-        }
-
-        List<CloudEndpoint> endpoints = this.endpointService
-            .getEndpointsForUser(username);
-
-        return Response.ok(
-            OBJ_FACTORY.createAuth(this.authConverter.toCloudv11AuthDataJaxb(
-                usa, endpoints))).build();
+        return path;
     }
 
 //    @POST

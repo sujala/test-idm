@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -29,8 +31,10 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    public Response getCloud20VersionInfo() throws IOException {
-        return cloudClient.get(getCloudAuthV20Url(),null,null);
+    public Response getCloud20VersionInfo(
+    	@Context HttpHeaders httpHeaders
+    ) throws IOException {
+        return cloudClient.get(getCloudAuthV20Url(), httpHeaders);
     }
     
     private String getCloudAuthV20Url() {

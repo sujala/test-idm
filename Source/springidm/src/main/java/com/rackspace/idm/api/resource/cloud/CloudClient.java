@@ -1,17 +1,12 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.params.HttpMethodParams;
-import org.apache.http.*;
-import org.apache.http.client.entity.GzipDecompressingEntity;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.*;
+import org.apache.http.client.protocol.RequestAcceptEncoding;
+import org.apache.http.client.protocol.ResponseContentEncoding;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.HttpContext;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -28,100 +23,84 @@ import java.util.Set;
 @Component
 public class CloudClient {
 
-    public Response authenticate(String url, String body) {
-        HttpClient client = new HttpClient();
-        PostMethod method = new PostMethod(url);
-        // Provide custom retry handler is necessary
+    //Todo: create a property
+    boolean ignoreSSLCert = true;
 
-        method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler(3, false));
-
-        byte[] responseBody = null;
-        String exceptionMessage = null;
-        int statusCode = 500;
-        try {
-            statusCode = client.executeMethod(method);
-            responseBody = method.getResponseBody();
-        } catch (HttpException e) {
-            exceptionMessage = e.getMessage();
-        } catch (IOException e) {
-            exceptionMessage = e.getMessage();
-        } finally {
-            method.releaseConnection();
-        }
-        if (exceptionMessage != null) {
-            return Response.status(500).entity(exceptionMessage).build();
-        } else {
-            return Response.status(statusCode).entity(responseBody).build();
-        }
+    public Response get(String url, HttpHeaders httpHeaders) throws IOException {
+        HttpGet request = new HttpGet(url);
+        return executeRequest(request, httpHeaders);
     }
 
-    public Response get(String url, String username, String key) {
-        HttpClient client = new HttpClient();
-        GetMethod method = new GetMethod(url);
-        // Provide custom retry handler is necessary
+    public Response delete(String url, HttpHeaders httpHeaders) throws IOException {
+        HttpDelete request = new HttpDelete(url);
+        return executeRequest(request, httpHeaders);
+    }
 
-        method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler(3, false));
-
-        byte[] responseBody = null;
-        String exceptionMessage = null;
-        int statusCode = 500;
-        try {
-            statusCode = client.executeMethod(method);
-            responseBody = method.getResponseBody();
-        } catch (HttpException e) {
-            exceptionMessage = e.getMessage();
-        } catch (IOException e) {
-            exceptionMessage = e.getMessage();
-        } finally {
-            method.releaseConnection();
-        }
-        if (exceptionMessage != null) {
-            return Response.status(500).entity(exceptionMessage).build();
-        } else {
-            return Response.status(statusCode).entity(responseBody).build();
-        }
+    public Response put(String url, HttpHeaders httpHeaders, String body) throws IOException {
+        HttpPut request = new HttpPut(url);
+        request.setEntity(getHttpEntity(body));
+        return executeRequest(request, httpHeaders);
     }
 
     public Response post(String url, HttpHeaders httpHeaders, String body) throws IOException {
-        DefaultHttpClient client = new DefaultHttpClient();
         HttpPost request = new HttpPost(url);
+        request.setEntity(getHttpEntity(body));
+        return executeRequest(request, httpHeaders);
+    }
+
+    private Response executeRequest(HttpRequestBase request, HttpHeaders httpHeaders) {
+        DefaultHttpClient client = getHttpClient();
+        setHttpHeaders(httpHeaders, request);
+
+        String responseBody = null;
+        int statusCode = 500;
+        HttpResponse response = null;
+        try {
+            response = client.execute(request);
+            statusCode = response.getStatusLine().getStatusCode();
+            if (response.getEntity() != null) {
+                responseBody = convertStreamToString(response.getEntity().getContent());
+            }
+        } catch (IOException e) {
+            responseBody = e.getMessage();
+        }
+        Response.ResponseBuilder responseBuilder = Response.status(statusCode);
+        for (Header header : response.getAllHeaders()) {
+            String key = header.getName();
+            if (!key.equalsIgnoreCase("content-encoding")) {
+                responseBuilder = responseBuilder.header(key, header.getValue());
+            }
+        }
+        return responseBuilder.entity(responseBody).build();
+    }
+
+    private BasicHttpEntity getHttpEntity(String body) {
         BasicHttpEntity entity = new BasicHttpEntity();
         ByteArrayInputStream bs = new ByteArrayInputStream(body.getBytes());
         entity.setContent(bs);
-        request.setEntity(entity);
+        return entity;
+    }
+
+    private DefaultHttpClient getHttpClient() {
+        DefaultHttpClient client = new DefaultHttpClient();
+        client.addRequestInterceptor(new RequestAcceptEncoding());
+        client.addResponseInterceptor(new ResponseContentEncoding());
+
+        if (ignoreSSLCert) {
+            client = WebClientDevWrapper.wrapClient(client);
+        }
+
+        return client;
+    }
+
+    private void setHttpHeaders(HttpHeaders httpHeaders, HttpRequestBase request) {
         Set<String> keys = httpHeaders.getRequestHeaders().keySet();
         request.setHeaders(new Header[]{});
         for (String key : keys) {
-            if(!key.equalsIgnoreCase("content-length")){
+            if (!key.equalsIgnoreCase("content-length")) {
                 request.setHeader(key, httpHeaders.getRequestHeaders().getFirst(key));
             }
         }
-        client.addResponseInterceptor(new HttpResponseInterceptor() {
-            public void process(HttpResponse response, HttpContext context) throws HttpException, IOException {
-                HttpEntity entity = response.getEntity();
-                if (entity == null)
-                    return;
-                Header ceHeader = entity.getContentEncoding();
-                if (ceHeader != null) {
-                    for (HeaderElement codec : ceHeader.getElements()) {
-                        if (codec.getName().equalsIgnoreCase("gzip")) {
-                            response.setEntity(new GzipDecompressingEntity(response.getEntity()));
-                            return;
-                        }
-                    }
-                }
-            }
-        });
-        String responseBody = null;
-        int statusCode = 500;
-        try {
-            HttpResponse response = client.execute(request);
-            statusCode = response.getStatusLine().getStatusCode();
-            responseBody = convertStreamToString(response.getEntity().getContent());
-        } catch (IOException e){
-            responseBody = e.getMessage();
-        }
-        return Response.status(statusCode).entity(responseBody).build();
     }
 
     private String convertStreamToString(InputStream is)
@@ -130,7 +109,7 @@ public class CloudClient {
             Writer writer = new StringWriter();
             char[] buffer = new char[1024];
             try {
-                Reader reader = new BufferedReader( new InputStreamReader(is, "UTF-8"));
+                Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
                 int n;
                 while ((n = reader.read(buffer)) != -1) {
                     writer.write(buffer, 0, n);
