@@ -5,7 +5,6 @@ import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import com.rackspace.idm.api.resource.VersionResource;
-import com.rackspace.idm.api.resource.auth.AuthResource;
 import com.rackspace.idm.api.resource.baseurl.BaseUrlsResource;
 import com.rackspace.idm.api.resource.customer.CustomerLockResource;
 import com.rackspace.idm.api.resource.customer.CustomerResource;
@@ -44,9 +43,6 @@ public class SpringConfigurationTest {
         
         ApiKeyResource apiKeyResource = ctx.getBean(ApiKeyResource.class);
         Assert.assertNotNull(apiKeyResource);
-        
-        AuthResource authResource = ctx.getBean(AuthResource.class);
-        Assert.assertNotNull(authResource);
         
         BaseUrlsResource baseUrlsResource = ctx.getBean(BaseUrlsResource.class);
         Assert.assertNotNull(baseUrlsResource);
