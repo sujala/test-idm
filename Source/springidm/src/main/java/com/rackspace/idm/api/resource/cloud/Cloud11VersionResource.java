@@ -57,6 +57,13 @@ public class Cloud11VersionResource {
     private static final com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
 
     @Autowired
+    DefaultCloud11Service defaultCloud11Service;
+
+    @Autowired
+    DelegateCloud11Service delegateCloud11Service;
+
+
+    @Autowired
     public Cloud11VersionResource(Configuration config,
                                   CloudClient cloudClient, UserService userService,
                                   ScopeAccessService scopeAccessService, EndpointService endpointService,
@@ -162,22 +169,13 @@ public class Cloud11VersionResource {
     }
 
     @GET
-    @Path("token{contentType:(\\.(xml|json))?}")
+    @Path("token")
     public Response validateToken(
-            @PathParam("contentType") String contentType,
             @QueryParam("belongsTo") String belongsTo,
             @QueryParam("type") String type,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
-
-        if (type == null) {
-            type = "CLOUD";
-        }
-
-        HashMap<String, String> queryParams = new HashMap<String, String>();
-        queryParams.put("belongsTo", belongsTo);
-        queryParams.put("type", type);
-        return cloudClient.get(getCloudAuthV11Url().concat(getPath("token", contentType, queryParams)), httpHeaders).build();
+        return getCloud11Service().validateToken(belongsTo, type, httpHeaders).build();
     }
 
     @DELETE
@@ -189,33 +187,13 @@ public class Cloud11VersionResource {
         return null;
     }
 
-    private String getPath(String path, String contentType) {
-        return getPath(path, contentType, null);
-    }
-
-    private String getPath(String path, String contentType, HashMap<String, String> queryParams) {
-        String result = path;
-        String queryString = "";
-
-        if (contentType != null) {
-            result = path + contentType;
+    private Cloud11Service getCloud11Service() {
+        if(true) {
+            return delegateCloud11Service;
+        } else {
+            return defaultCloud11Service;
         }
-
-        if (queryParams != null) {
-            for (String key : queryParams.keySet()) {
-                if (queryParams.get(key) != null) {
-                    queryString += key + "=" + queryParams.get(key) + "&";
-                }
-            }
-
-            if (queryString.length() > 0) {
-                result += "?" + queryString.substring(0, queryString.length() - 1);
-            }
-        }
-
-        return result;
     }
-
 
 //    @POST
 //    @Path("auth")
