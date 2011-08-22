@@ -15,8 +15,8 @@ public class JAXBContextResolver implements ContextResolver<JAXBContext> {
     
     public JAXBContextResolver() throws Exception {
         this.context = new JSONJAXBContext(
-                JSONConfiguration.natural().build(),
-                "com.rackspace.idm.jaxb:com.rackspace.idm.cloud.jaxb:");
+                JSONConfiguration.natural().rootUnwrapping(false).build(),
+                "com.rackspace.idm.jaxb:com.rackspace.idm.cloud.jaxb");
     }
 
     @Override

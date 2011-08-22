@@ -3,13 +3,7 @@ package com.rackspace.idm.api.resource.cloud;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
-import javax.ws.rs.PathParam;
 
-import org.apache.commons.configuration.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -20,8 +14,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 
 import org.apache.commons.configuration.Configuration;
 import org.json.simple.JSONObject;
@@ -36,8 +32,12 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.cloud.jaxb.AuthFault;
+import com.rackspace.idm.cloud.jaxb.BadRequestFault;
 import com.rackspace.idm.cloud.jaxb.Credentials;
 import com.rackspace.idm.cloud.jaxb.ItemNotFoundFault;
+import com.rackspace.idm.cloud.jaxb.MossoCredentials;
+import com.rackspace.idm.cloud.jaxb.NastCredentials;
+import com.rackspace.idm.cloud.jaxb.PasswordCredentials;
 import com.rackspace.idm.cloud.jaxb.UnauthorizedFault;
 import com.rackspace.idm.cloud.jaxb.UserCredentials;
 import com.rackspace.idm.cloud.jaxb.UserDisabledFault;
@@ -47,18 +47,16 @@ import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.UserDisabledException;
-import com.sun.jersey.api.json.JSONConfiguration;
-import com.sun.jersey.api.json.JSONJAXBContext;
-import com.sun.jersey.api.json.JSONUnmarshaller;
 
 /**
  * Cloud Auth 1.1 API Versions
  * 
  */
- @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
- @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+@Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+@Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class Cloud11VersionResource {
 
@@ -87,77 +85,96 @@ public class Cloud11VersionResource {
     }
 
     @GET
-    public Response getCloud11VersionInfo(
-    	@Context HttpHeaders httpHeaders		
-    ) throws IOException {
+    public Response getCloud11VersionInfo(@Context HttpHeaders httpHeaders)
+        throws IOException {
         return cloudClient.get(getCloudAuthV11Url(), httpHeaders);
     }
 
+    @SuppressWarnings("unchecked")
     @POST
-    @Path("auth{contentType:(\\.(xml|json))?}")
-    public Response authenticate(
-        @PathParam ("contentType") String contentType, @Context HttpHeaders httpHeaders, String body
-    ) throws IOException {
-        return cloudClient.post(getCloudAuthV11Url().concat(getPath("auth", contentType)), httpHeaders , body);
-    }
+    @Path("auth")
+    @Consumes(MediaType.APPLICATION_XML)
+    public Response authenticate(@Context HttpServletResponse response,
+        @Context HttpHeaders httpHeaders, String body) throws IOException {
 
-    private String getPath(String path, String contentType) {
-        if(contentType != null) {
-            return path + contentType;
+        JAXBElement<? extends Credentials> cred = null;
+
+        try {
+            JAXBContext context = JAXBContext.newInstance("com.rackspace.idm.cloud.jaxb");
+            Unmarshaller unmarshaller = context.createUnmarshaller();
+            cred = (JAXBElement<? extends Credentials>) unmarshaller
+                .unmarshal(new StringReader(body));
+        } catch (JAXBException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
-        return path;
+
+        return authenticateResponse(cred, httpHeaders, response, body);
     }
 
-//    @POST
-//    @Path("auth")
-//    @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-//    public Response authenticate(@Context HttpHeaders httpHeaders,
-//        @Context HttpServletRequest request,
-//        @Context HttpServletResponse response,
-//        JAXBElement<? extends Credentials> cred) throws IOException {
-//
-//        if (!(cred.getValue() instanceof UserCredentials)) {
-//            handleRedirect(response, "auth-admin");
-//        }
-//
-//        UserCredentials userCreds = (UserCredentials) cred.getValue();
-//
-//        String username = userCreds.getUsername();
-//        String apiKey = userCreds.getKey();
-//
-//        User user = this.userService.getUser(username);
-//
-//        if (user == null) {
-//
-//            if (useCloudAuth()) {
-//                return cloudClient.post(getCloudAuthV11Url().concat("auth"),
-//                    httpHeaders,
-//                    IOUtils.toString(request.getInputStream(), "UTF-8"));
-//
-//            } else {
-//                return notFoundExceptionResponse(username);
-//            }
-//        }
-//
-//        UserScopeAccess usa = null;
-//
-//        try {
-//            usa = this.scopeAccessService
-//                .getUserScopeAccessForClientIdByUsernameAndApiCredentials(
-//                    username, apiKey, getCloudAuthClientId());
-//        } catch (NotAuthenticatedException nae) {
-//            return notAuthenticatedExceptionResponse(username);
-//        } catch (UserDisabledException ude) {
-//            return userDisabledExceptionResponse(username);
-//        }
-//
-//        List<CloudEndpoint> endpoints = this.endpointService
-//            .getEndpointsForUser(username);
-//
-//        return Response.ok(
-//            OBJ_FACTORY.createAuth(this.authConverter.toCloudv11AuthDataJaxb(
-//                usa, endpoints))).build();
-//    }
+    @POST
+    @Path("auth")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response authenticateJSON(@Context HttpServletResponse response,
+        @Context HttpHeaders httpHeaders, String body) throws IOException {
+
+        JAXBElement<? extends Credentials> cred = null;
+
+        try {
+            cred = unmarshallCredentialsFromJSON(body);
+        } catch (BadRequestException bre) {
+            return badRequestExceptionResponse(bre.getMessage());
+        }
+
+        return authenticateResponse(cred, httpHeaders, response, body);
+    }
+
+    private Response authenticateResponse(
+        JAXBElement<? extends Credentials> cred, HttpHeaders httpHeaders,
+        HttpServletResponse response, String body) throws IOException {
+
+        if (!(cred.getValue() instanceof UserCredentials)) {
+            handleRedirect(response, "cloud/auth-admin");
+        }
+
+        UserCredentials userCreds = (UserCredentials) cred.getValue();
+
+        String username = userCreds.getUsername();
+        String apiKey = userCreds.getKey();
+
+        User user = this.userService.getUser(username);
+
+        if (user == null) {
+
+            if (useCloudAuth()) {
+                return cloudClient.post(getCloudAuthV11Url().concat("auth"),
+                    httpHeaders, body);
+            } else {
+                return notFoundExceptionResponse(username);
+            }
+        }
+
+        UserScopeAccess usa = null;
+
+        try {
+            usa = this.scopeAccessService
+                .getUserScopeAccessForClientIdByUsernameAndApiCredentials(
+                    username, apiKey, getCloudAuthClientId());
+            List<CloudEndpoint> endpoints = this.endpointService
+                .getEndpointsForUser(username);
+
+            return Response.ok(
+                OBJ_FACTORY.createAuth(this.authConverter
+                    .toCloudv11AuthDataJaxb(usa, endpoints))).build();
+
+        } catch (NotAuthenticatedException nae) {
+            return notAuthenticatedExceptionResponse(username);
+        } catch (UserDisabledException ude) {
+            return userDisabledExceptionResponse(username);
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
 
     // @POST
     // @Path("auth-admin")
@@ -220,42 +237,64 @@ public class Cloud11VersionResource {
     // this.authConverter.toCloudv11AuthDataJaxb(usa, endpoints)).build();
     // }
 
+    private Response badRequestExceptionResponse(String message) {
+
+        BadRequestFault fault = OBJ_FACTORY.createBadRequestFault();
+        fault.setCode(HttpServletResponse.SC_BAD_REQUEST);
+        fault.setMessage(message);
+        fault.setDetails(MDC.get(Audit.GUUID));
+
+        return Response.status(HttpServletResponse.SC_BAD_REQUEST)
+            .entity(OBJ_FACTORY.createBadRequest(fault))
+            .build();
+    }
+
     private Response notFoundExceptionResponse(String username) {
         String errMsg = String.format("User %s not found", username);
 
-        AuthFault fault = OBJ_FACTORY.createAuthFault();
+        ItemNotFoundFault fault = OBJ_FACTORY.createItemNotFoundFault();
         fault.setCode(HttpServletResponse.SC_NOT_FOUND);
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
 
         return Response.status(HttpServletResponse.SC_NOT_FOUND)
-            .entity(OBJ_FACTORY.createItemNotFound((ItemNotFoundFault) fault))
+            .entity(OBJ_FACTORY.createItemNotFound(fault))
             .build();
     }
 
     private Response notAuthenticatedExceptionResponse(String username) {
         String errMsg = String.format("User %s not authenticated", username);
 
-        AuthFault fault = OBJ_FACTORY.createAuthFault();
+        UnauthorizedFault fault = OBJ_FACTORY.createUnauthorizedFault();
         fault.setCode(HttpServletResponse.SC_UNAUTHORIZED);
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
 
         return Response.status(HttpServletResponse.SC_UNAUTHORIZED)
-            .entity(OBJ_FACTORY.createUnauthorized((UnauthorizedFault) fault))
+            .entity(OBJ_FACTORY.createUnauthorized(fault))
             .build();
+    }
+
+    private Response serviceExceptionResponse() {
+
+        AuthFault fault = OBJ_FACTORY.createAuthFault();
+        fault.setCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        fault.setDetails(MDC.get(Audit.GUUID));
+
+        return Response.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
+            .entity(OBJ_FACTORY.createAuthFault(fault)).build();
     }
 
     private Response userDisabledExceptionResponse(String username) {
         String errMsg = String.format("User %s is disabled", username);
 
-        AuthFault fault = OBJ_FACTORY.createAuthFault();
+        UserDisabledFault fault = OBJ_FACTORY.createUserDisabledFault();
         fault.setCode(HttpServletResponse.SC_FORBIDDEN);
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
 
         return Response.status(HttpServletResponse.SC_FORBIDDEN)
-            .entity(OBJ_FACTORY.createUserDisabled((UserDisabledFault) fault))
+            .entity(OBJ_FACTORY.createUserDisabled(fault))
             .build();
     }
 
@@ -278,41 +317,54 @@ public class Cloud11VersionResource {
     private String getCloudAuthClientId() {
         return config.getString("cloudAuth.clientId");
     }
-    
-    private Credentials unmarshallCredentialsFromJSON(String jsonBody) {
-        
-        JSONParser parser=new JSONParser();
-        Credentials creds = null;
-        
-        Object obj;
+
+    private JAXBElement<? extends Credentials> unmarshallCredentialsFromJSON(
+        String jsonBody) {
+
+        JSONParser parser = new JSONParser();
+        JAXBElement<? extends Credentials> creds = null;
+
         try {
-            obj = parser.parse(jsonBody);
-//            JSONArray array=(JSONArray)obj;
-            JSONObject obj2=(JSONObject)obj;
-            
-            if (obj2.containsKey("credentials")) {
-                JSONObject obj3 = (JSONObject)parser.parse(obj2.get("credentials").toString());
+            JSONObject obj = (JSONObject) parser.parse(jsonBody);
+
+            if (obj.containsKey("credentials")) {
+                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
+                    "credentials").toString());
                 UserCredentials userCreds = new UserCredentials();
-                userCreds.setKey(obj3.get("username").toString());
-                userCreds.setUsername(obj3.get("key").toString());
-                creds = userCreds;
-            }
-            else if (obj2.containsKey("mossoCredentials")) {
-                
-            }
-            else if (obj2.containsKey("nastCredentials")) {
-                
-            } else if (obj2.containsKey("passwordCredentials")) {
-                
+                userCreds.setKey(obj3.get("key").toString());
+                userCreds.setUsername(obj3.get("username").toString());
+                creds = OBJ_FACTORY.createCredentials(userCreds);
+
+            } else if (obj.containsKey("mossoCredentials")) {
+                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
+                    "mossoCredentials").toString());
+                MossoCredentials mossoCreds = new MossoCredentials();
+                mossoCreds.setKey(obj3.get("key").toString());
+                mossoCreds.setMossoId(Integer.parseInt(obj3.get("mossoId")
+                    .toString()));
+                creds = OBJ_FACTORY.createMossoCredentials(mossoCreds);
+
+            } else if (obj.containsKey("nastCredentials")) {
+                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
+                    "nastCredentials").toString());
+                NastCredentials nastCreds = new NastCredentials();
+                nastCreds.setKey(obj3.get("key").toString());
+                nastCreds.setNastId(obj3.get("nastId").toString());
+                creds = OBJ_FACTORY.createNastCredentials(nastCreds);
+
+            } else if (obj.containsKey("passwordCredentials")) {
+                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
+                    "passwordCredentials").toString());
+                PasswordCredentials passwordCreds = new PasswordCredentials();
+                passwordCreds.setUsername(obj3.get("username").toString());
+                passwordCreds.setPassword(obj3.get("username").toString());
+                creds = OBJ_FACTORY.createPasswordCredentials(passwordCreds);
+
             }
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new BadRequestException("malformed JSON");
         }
-        
 
-        
-        
         return creds;
     }
 }
