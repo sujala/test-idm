@@ -7,11 +7,11 @@ import java.io.IOException;
 
 public interface Cloud11Service {
 
-    Response.ResponseBuilder validateToken(String belongsTo, String type, HttpHeaders httpHeaders) throws IOException;
+    Response.ResponseBuilder validateToken(String tokenId, String belongsTo, String type, HttpHeaders httpHeaders) throws IOException;
 
     Response.ResponseBuilder authenticate(HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException;
 
-    Response.ResponseBuilder revokeToken(HttpHeaders httpHeaders) throws IOException;
+    Response.ResponseBuilder revokeToken(String tokenId, HttpHeaders httpHeaders) throws IOException;
 
     <T> Response.ResponseBuilder userRedirect(T nastId, HttpHeaders httpHeaders) throws IOException;
 
@@ -20,4 +20,10 @@ public interface Cloud11Service {
     Response.ResponseBuilder getBaseURLId(int baseURLId, String serviceName, HttpHeaders httpHeaders) throws IOException;
 
     Response.ResponseBuilder getEnabledBaseURL(String serviceName, HttpHeaders httpHeaders) throws IOException;
+
+    Response.ResponseBuilder migrate(String user, HttpHeaders httpHeaders, String body) throws IOException;
+
+    Response.ResponseBuilder unmigrate(String user, HttpHeaders httpHeaders, String body) throws IOException;
+
+    Response.ResponseBuilder all(HttpHeaders httpHeaders, String body) throws IOException;
 }
