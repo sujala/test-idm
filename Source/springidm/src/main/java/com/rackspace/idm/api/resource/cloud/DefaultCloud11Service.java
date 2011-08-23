@@ -68,7 +68,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     public Response.ResponseBuilder authenticate(HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException {
-        if(httpHeaders.getRequestHeader("Content-Type").get(0).equalsIgnoreCase("application/xml")){
+        if(httpHeaders.getRequestHeader("Content-Type").get(0).contains("application/xml")){
             return authenticateXML(response,httpHeaders,body);
         }else {
             return authenticateJSON(response,httpHeaders,body);

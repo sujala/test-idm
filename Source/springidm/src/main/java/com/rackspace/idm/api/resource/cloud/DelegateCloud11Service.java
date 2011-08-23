@@ -1,14 +1,15 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import org.apache.commons.configuration.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import java.io.IOException;
+import java.util.HashMap;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.HashMap;
+
+import org.apache.commons.configuration.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 @Component
 public class DelegateCloud11Service implements Cloud11Service {
