@@ -2486,13 +2486,13 @@
         <example>
           <title>XML Racker Roles Response</title>
           <programlisting language="xml">
-<xi:include href="../../formattedsamples/rackerroles.xml" parse="text"/>
+<xi:include href="../../formattedsamples/roles.xml" parse="text"/>
 </programlisting>
         </example>
         <example>
           <title>JSON Racker Roles Response</title>
           <programlisting language="javascript">
-<xi:include href="../../formattedsamples/rackerroles.json" parse="text"/>
+<xi:include href="../../formattedsamples/roles.json" parse="text"/>
 </programlisting>
         </example>
       </section>
