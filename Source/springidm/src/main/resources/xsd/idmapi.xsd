@@ -15,7 +15,6 @@
 			<xsdxt:title>Idm API Schema Types</xsdxt:title>
 			<xsdxt:link rev="index" href="client.xsd" />
 			<xsdxt:link rev="index" href="customer.xsd" />
-			<xsdxt:link rev="index" href="endpoint.xsd" />
 			<xsdxt:link rev="index" href="fault.xsd" />
 			<xsdxt:link rev="index" href="password.xsd" />
 			<xsdxt:link rev="index" href="token.xsd" />
@@ -42,14 +41,6 @@
 		</xsd:documentation>
 	</annotation>
 
-        <include schemaLocation="endpoint.xsd">
-        <annotation>
-            <xsd:documentation xml:lang="EN"
-                xmlns="http://www.w3.org/1999/xhtml">
-                <p>Entities related to backwards compatible auth endpoints.</p>
-            </xsd:documentation>
-        </annotation>
-    </include>
 	<include schemaLocation="permission.xsd">
 		<annotation>
 			<xsd:documentation xml:lang="EN"

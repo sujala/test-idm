@@ -1,6 +1,17 @@
 package com.rackspace.idm.api.resource;
 
-import com.rackspace.idm.api.resource.baseurl.BaseUrlsResource;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.apache.commons.configuration.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.api.resource.cloud.CloudVersionsResource;
 import com.rackspace.idm.api.resource.customer.CustomersResource;
 import com.rackspace.idm.api.resource.mosso.MossoUserResource;
@@ -11,13 +22,6 @@ import com.rackspace.idm.api.resource.scope.ScopesResource;
 import com.rackspace.idm.api.resource.token.TokenResource;
 import com.rackspace.idm.api.resource.user.UsersResource;
 import com.rackspace.idm.domain.service.ApiDocService;
-import org.apache.commons.configuration.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 /**
  * API Version
@@ -34,7 +38,6 @@ public class VersionResource {
     private final NastUserResource nastUserResource;
     private final PasswordRulesResource passwordRulesResource;
     private final TokenResource tokenResource;
-    private final BaseUrlsResource baseUrlsResource;
     private final ScopesResource scopeAccessResource;
     private final RackersResource rackersResource;
     private final CloudVersionsResource cloudVersionsResource;
@@ -45,7 +48,7 @@ public class VersionResource {
     public VersionResource(UsersResource usersResource,
         CustomersResource customersResource, MossoUserResource mossoUserResource,
         NastUserResource nastUserResource, PasswordRulesResource passwordRulesResource,
-        TokenResource tokenResource, BaseUrlsResource baseUrlsResource, ScopesResource scopeAccessResource,
+        TokenResource tokenResource, ScopesResource scopeAccessResource,
         CloudVersionsResource cloudVersionsResource, ApiDocService apiDocService,
         RackersResource rackersResource, Configuration config) {
         this.usersResource = usersResource;
@@ -54,7 +57,6 @@ public class VersionResource {
         this.nastUserResource = nastUserResource;
         this.passwordRulesResource = passwordRulesResource;
         this.tokenResource = tokenResource;
-        this.baseUrlsResource = baseUrlsResource;
         this.scopeAccessResource = scopeAccessResource;
         this.rackersResource = rackersResource;
         this.cloudVersionsResource = cloudVersionsResource;
@@ -115,11 +117,6 @@ public class VersionResource {
     @Path("token")
     public TokenResource getTokenResource() {
         return tokenResource;
-    }
-
-    @Path("baseurls")
-    public BaseUrlsResource getBaseUrlsResource() {
-        return baseUrlsResource;
     }
 
     @Path("scopes")
