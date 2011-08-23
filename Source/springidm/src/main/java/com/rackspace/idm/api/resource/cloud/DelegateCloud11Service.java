@@ -42,7 +42,9 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder authenticate(HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException {
         Response.ResponseBuilder serviceResponse = defaultCloud11Service.authenticate(response, httpHeaders, body);
-        if (serviceResponse.build().getStatus() == 404) {
+        // We have to clone the ResponseBuilder from above because once we build it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
+        if (clonedServiceResponse.build().getStatus() == 404) {
             return cloudClient.post(getCloudAuthV11Url().concat("auth"), httpHeaders, body);
         }else{
             return serviceResponse;
