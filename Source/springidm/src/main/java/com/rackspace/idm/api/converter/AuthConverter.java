@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.converter;
 
 import java.util.GregorianCalendar;
-import java.util.List;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -10,7 +9,6 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.joda.time.DateTime;
 
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
@@ -18,9 +16,7 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.entity.hasRefreshToken;
-import com.rackspace.idm.jaxb.CloudAuth;
 import com.rackspace.idm.jaxb.ObjectFactory;
-import com.rackspace.idm.jaxb.ServiceCatalog;
 
 public class AuthConverter {
 
@@ -117,22 +113,5 @@ public class AuthConverter {
         }
         
         return authJaxb;
-    }
-
-    public CloudAuth toCloudAuthJaxb(UserScopeAccess usa, List<CloudEndpoint> endpoints) {
-        CloudAuth auth = of.createCloudAuth();
-        
-        if (usa.getAccessTokenString() != null) {
-            com.rackspace.idm.jaxb.Token token = this.tokenConverter.toTokenJaxb(
-                    usa.getAccessTokenString(), usa.getAccessTokenExp());
-            auth.setToken(token);
-        }
-        
-        if (endpoints != null && endpoints.size() > 0) {
-            ServiceCatalog catalog = this.endpointConverter.toServiceCatalog(endpoints);
-            auth.setServiceCatalog(catalog);
-        }
-        
-        return auth;
     }
 }

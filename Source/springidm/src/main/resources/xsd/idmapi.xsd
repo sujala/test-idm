@@ -13,7 +13,6 @@
 	<annotation>
 		<xsd:appinfo xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
 			<xsdxt:title>Idm API Schema Types</xsdxt:title>
-			<xsdxt:link rev="index" href="auth.xsd" />
 			<xsdxt:link rev="index" href="client.xsd" />
 			<xsdxt:link rev="index" href="customer.xsd" />
 			<xsdxt:link rev="index" href="endpoint.xsd" />
@@ -43,14 +42,6 @@
 		</xsd:documentation>
 	</annotation>
 
-    <include schemaLocation="auth.xsd">
-        <annotation>
-            <xsd:documentation xml:lang="EN"
-                xmlns="http://www.w3.org/1999/xhtml">
-                <p>Entities related to backwards compatible auth.</p>
-            </xsd:documentation>
-        </annotation>
-    </include>
         <include schemaLocation="endpoint.xsd">
         <annotation>
             <xsd:documentation xml:lang="EN"

@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource;
 
-import com.rackspace.idm.api.resource.auth.AuthResource;
 import com.rackspace.idm.api.resource.baseurl.BaseUrlsResource;
 import com.rackspace.idm.api.resource.cloud.CloudVersionsResource;
 import com.rackspace.idm.api.resource.customer.CustomersResource;
@@ -29,7 +28,6 @@ import javax.ws.rs.core.Response;
 @Component
 public class VersionResource {
 
-    private final AuthResource authResource;
     private final UsersResource usersResource;
     private final CustomersResource customersResource;
     private final MossoUserResource mossoUserResource;
@@ -44,13 +42,12 @@ public class VersionResource {
     private final Configuration config;
 
     @Autowired
-    public VersionResource(AuthResource authResource, UsersResource usersResource,
+    public VersionResource(UsersResource usersResource,
         CustomersResource customersResource, MossoUserResource mossoUserResource,
         NastUserResource nastUserResource, PasswordRulesResource passwordRulesResource,
         TokenResource tokenResource, BaseUrlsResource baseUrlsResource, ScopesResource scopeAccessResource,
         CloudVersionsResource cloudVersionsResource, ApiDocService apiDocService,
         RackersResource rackersResource, Configuration config) {
-        this.authResource = authResource;
         this.usersResource = usersResource;
         this.customersResource = customersResource;
         this.mossoUserResource = mossoUserResource;
@@ -113,11 +110,6 @@ public class VersionResource {
     @Path("passwordrules")
     public PasswordRulesResource getPasswordRulesResource() {
         return passwordRulesResource;
-    }
-
-    @Path("auth")
-    public AuthResource getAuthResource() {
-        return authResource;
     }
 
     @Path("token")
