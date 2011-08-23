@@ -56,12 +56,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.authConverter = authConverter;
     }
 
-    @Override
-    public Response.ResponseBuilder validateToken(String belongsTo, String type, HttpHeaders httpHeaders) throws IOException {
-        // TODO Auto-generated method stub
-        throw new IOException("Not Implemented");
-    }
-
     public Response.ResponseBuilder authenticate(HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException {
         if(httpHeaders.getRequestHeader("Content-Type").get(0).equalsIgnoreCase("application/xml")){
             return authenticateXML(response,httpHeaders,body);
@@ -228,5 +222,35 @@ public class DefaultCloud11Service implements Cloud11Service {
             throw new BadRequestException("malformed JSON");
         }
         return creds;
+    }
+	@Override
+	public Response.ResponseBuilder validateToken(String belongsTo, String type,
+			HttpHeaders httpHeaders) throws IOException {
+		throw new IOException("Not Implemented");
+	}
+
+    @Override
+    public Response.ResponseBuilder revokeToken(HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public <T> Response.ResponseBuilder userRedirect(T nastId, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder getBaseURLs(String serviceName, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder getBaseURLId(int baseURLId, String serviceName, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder getEnabledBaseURL(String serviceName, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
     }
 }

@@ -48,6 +48,66 @@ public class DelegateCloud11Service implements Cloud11Service {
         }
     }
 
+    @Override
+    public Response.ResponseBuilder revokeToken(HttpHeaders httpHeaders) throws IOException {
+        try {
+            return defaultCloud11Service.revokeToken(httpHeaders);
+        } catch (Exception e) {
+        }
+
+        return cloudClient.delete(getCloudAuthV11Url().concat("token"),httpHeaders);
+    }
+
+    @Override
+    public <T> Response.ResponseBuilder userRedirect(T nastId, HttpHeaders httpHeaders) throws IOException {
+        try {
+            return defaultCloud11Service.userRedirect(nastId, httpHeaders);
+        } catch (Exception e) {
+        }
+        return cloudClient.get(getCloudAuthV11Url().concat("nast/"+nastId),httpHeaders);
+    }
+
+    @Override
+    public Response.ResponseBuilder getBaseURLs(String serviceName, HttpHeaders httpHeaders) throws IOException {
+        try {
+            return defaultCloud11Service.getBaseURLs(serviceName, httpHeaders);
+        } catch (Exception e) {
+        }
+
+        HashMap<String, String> queryParams = new HashMap<String, String>();
+        queryParams.put("serviceName", serviceName);
+        String path = getCloudAuthV11Url().concat(getPath("baseURLs",queryParams));
+        return cloudClient.get(path,httpHeaders);
+    }
+
+    @Override
+    public Response.ResponseBuilder getBaseURLId(int baseURLId, String serviceName, HttpHeaders httpHeaders) throws IOException {
+        try {
+            return defaultCloud11Service.getBaseURLId(baseURLId, serviceName, httpHeaders);
+        } catch (Exception e) {
+        }
+
+        HashMap<String, String> queryParams = new HashMap<String, String>();
+        queryParams.put("serviceName", serviceName);
+        String path = getCloudAuthV11Url().concat(getPath("baseURLs/"+baseURLId, queryParams));
+        return cloudClient.get(path,httpHeaders);
+    }
+
+    @Override
+    public Response.ResponseBuilder getEnabledBaseURL(String serviceName, HttpHeaders httpHeaders) throws IOException {
+        try {
+            return defaultCloud11Service.getEnabledBaseURL(serviceName, httpHeaders);
+        } catch (Exception e) {
+        }
+
+        HashMap<String, String> queryParams = new HashMap<String, String>();
+        queryParams.put("serviceName", serviceName);
+        String path = getCloudAuthV11Url().concat(getPath("baseURLs/enabled",queryParams));
+        return cloudClient.get(path,httpHeaders);
+    }
+
+
+
     private String getPath(String path, HashMap<String, String> queryParams) {
         String result = path;
         String queryString = "";

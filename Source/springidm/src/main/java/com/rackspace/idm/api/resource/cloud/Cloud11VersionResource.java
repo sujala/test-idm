@@ -63,10 +63,55 @@ public class Cloud11VersionResource {
     @DELETE
     @Path("token")
     public Response revokeToken(
-            @PathParam("contentType") String contentType, @Context HttpHeaders httpHeaders, String body
+            @Context HttpHeaders httpHeaders
     ) throws IOException {
-        //Todo: Jorge implement this method.
-        return null;
+        return getCloud11Service().revokeToken(httpHeaders).build();
+    }
+
+    @GET
+    @Path("nast/{nastId}")
+    public Response userRedirect(
+            @PathParam("nastId") String nastId,
+            @Context HttpHeaders httpHeaders
+    )  throws IOException {
+        return getCloud11Service().userRedirect(nastId, httpHeaders).build();
+    }
+
+    @GET
+    @Path("mosso/{mossoId}")
+    public Response userRedirect(
+            @PathParam("mossoId") int mossoId,
+            @Context HttpHeaders httpHeaders
+    )  throws IOException {
+        return getCloud11Service().userRedirect(mossoId, httpHeaders).build();
+    }
+
+    @GET
+    @Path("baseURLs")
+    public Response getBaseURLs(
+            @QueryParam("serviceName") String serviceName,
+            @Context HttpHeaders httpHeaders
+    )  throws IOException {
+        return getCloud11Service().getBaseURLs(serviceName, httpHeaders).build();
+    }
+
+    @GET
+    @Path("baseURLs/{baseURLId}")
+    public Response getBaseURLId(
+            @PathParam("baseURLId") int baseURLId,
+            @QueryParam("serviceName") String serviceName,
+            @Context HttpHeaders httpHeaders
+    )  throws IOException {
+        return getCloud11Service().getBaseURLId(baseURLId, serviceName, httpHeaders).build();
+    }
+
+    @GET
+    @Path("baseURLs/enabled")
+    public Response getEnabledBaseURLs(
+            @QueryParam("serviceName") String serviceName,
+            @Context HttpHeaders httpHeaders
+    )  throws IOException {
+        return getCloud11Service().getEnabledBaseURL(serviceName, httpHeaders).build();
     }
 
     private Cloud11Service getCloud11Service() {
