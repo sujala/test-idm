@@ -269,12 +269,82 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
+    public Response.ResponseBuilder createUser(HttpHeaders httpHeaders, String body) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
     public Response.ResponseBuilder unmigrate(String user, HttpHeaders httpHeaders, String body) throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
+    public Response.ResponseBuilder getUser(String userId, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
     public Response.ResponseBuilder all(HttpHeaders httpHeaders, String body) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder deleteUser(String userId, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder updateUser(String userId, HttpHeaders httpHeaders, String body) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder getUserEnabled(String userId, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder setUserEnabled(String userId, HttpHeaders httpHeaders, String body) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder getUserKey(String userId, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder setUserKey(String userId, HttpHeaders httpHeaders, String body) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder getServiceCatalog(String userId, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder getBaseURLRefs(String userId, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder addBaseURLRef(String userId, HttpHeaders httpHeaders, String body) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder getBaseURLRef(String userId, String baseURLId, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder deleteBaseURLRef(String userId, String baseURLId, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder getUserGroups(HttpHeaders httpHeaders) throws IOException {
         throw new IOException("Not Implemented");
     }
 }

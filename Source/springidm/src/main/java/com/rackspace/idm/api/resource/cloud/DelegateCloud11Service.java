@@ -2,8 +2,13 @@ package com.rackspace.idm.api.resource.cloud;
 
 import java.io.IOException;
 import java.util.HashMap;
+import org.apache.commons.configuration.Configuration;
+import org.apache.http.client.methods.HttpHead;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
@@ -137,6 +142,140 @@ public class DelegateCloud11Service implements Cloud11Service {
         }
         String path =  "migration/all";
         return cloudClient.post(getCloudAuthV11Url().concat(path),httpHeaders,body);
+    }
+
+    public Response.ResponseBuilder createUser(HttpHeaders httpHeaders, String body) throws IOException {
+        try {
+            return defaultCloud11Service.createUser(httpHeaders, body);
+        } catch (Exception e) {
+        }
+        return cloudClient.post(getCloudAuthV11Url().concat("users"), httpHeaders, body);
+    }
+
+    @Override
+    public Response.ResponseBuilder getUser(String userId, HttpHeaders httpHeaders) throws IOException {
+        try {
+            return defaultCloud11Service.getUser(userId, httpHeaders);
+        } catch (Exception e) {
+        }
+        return cloudClient.get(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
+    }
+
+    @Override
+    public Response.ResponseBuilder deleteUser(String userId, HttpHeaders httpHeaders) throws IOException {
+        try {
+            return defaultCloud11Service.deleteUser(userId, httpHeaders);
+        } catch (Exception e) {
+        }
+        return cloudClient.delete(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
+    }
+
+    @Override
+    public Response.ResponseBuilder updateUser(String userId, HttpHeaders httpHeaders, String body) throws IOException {
+        try {
+            return defaultCloud11Service.updateUser(userId, httpHeaders, body);
+        } catch (Exception e) {
+        }
+        return cloudClient.put(getCloudAuthV11Url().concat("users/" + userId), httpHeaders, body);
+    }
+
+    @Override
+    public Response.ResponseBuilder getUserEnabled(String userId, HttpHeaders httpHeaders) throws IOException {
+        try {
+            return defaultCloud11Service.getUserEnabled(userId, httpHeaders);
+        } catch (Exception e) {
+        }
+        String path = "users/" + userId + "/enabled";
+        return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
+    }
+
+    @Override
+    public Response.ResponseBuilder setUserEnabled(String userId, HttpHeaders httpHeaders, String body) throws IOException {
+        try {
+            return defaultCloud11Service.setUserEnabled(userId, httpHeaders, body);
+        } catch (Exception e) {
+        }
+        String path = "users/" + userId + "/enabled";
+        return cloudClient.put(getCloudAuthV11Url().concat(path), httpHeaders, body);
+    }
+
+    @Override
+    public Response.ResponseBuilder getUserKey(String userId, HttpHeaders httpHeaders) throws IOException {
+        try {
+            return defaultCloud11Service.getUserKey(userId, httpHeaders);
+        } catch (Exception e) {
+        }
+        String path = "users/" + userId + "/key";
+        return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
+    }
+
+    @Override
+    public Response.ResponseBuilder setUserKey(String userId, HttpHeaders httpHeaders, String body) throws IOException {
+        try {
+            return defaultCloud11Service.setUserKey(userId, httpHeaders, body);
+        } catch (Exception e) {
+        }
+        String path = "users/" + userId + "/key";
+        return cloudClient.put(getCloudAuthV11Url().concat(path), httpHeaders, body);
+    }
+
+    @Override
+    public Response.ResponseBuilder getServiceCatalog(String userId, HttpHeaders httpHeaders) throws IOException {
+        try {
+            return defaultCloud11Service.getServiceCatalog(userId, httpHeaders);
+        } catch (Exception e) {
+        }
+        String path = "users/" + userId + "/serviceCatalog";
+        return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
+    }
+
+    @Override
+    public Response.ResponseBuilder getBaseURLRefs(String userId, HttpHeaders httpHeaders) throws IOException {
+        try {
+            return defaultCloud11Service.getBaseURLRefs(userId, httpHeaders);
+        } catch (Exception e) {
+        }
+        String path = "users/" + userId + "/baseURLRefs";
+        return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
+    }
+
+    @Override
+    public Response.ResponseBuilder addBaseURLRef(String userId, HttpHeaders httpHeaders, String body) throws IOException {
+        try {
+            return defaultCloud11Service.addBaseURLRef(userId, httpHeaders, body);
+        } catch (Exception e) {
+        }
+        String path = "users/" + userId + "/baseURLRefs";
+        return cloudClient.post(getCloudAuthV11Url().concat(path), httpHeaders, body);
+    }
+
+    @Override
+    public Response.ResponseBuilder getBaseURLRef(String userId, String baseURLId, HttpHeaders httpHeaders) throws IOException {
+        try {
+            return defaultCloud11Service.getBaseURLRef(userId, baseURLId, httpHeaders);
+        } catch (Exception e) {
+        }
+        String path = "users/" + userId + "/baseURLRefs/" + baseURLId;
+        return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
+    }
+
+    @Override
+    public Response.ResponseBuilder deleteBaseURLRef(String userId, String baseURLId, HttpHeaders httpHeaders) throws IOException {
+        try {
+            return defaultCloud11Service.deleteBaseURLRef(userId, baseURLId, httpHeaders);
+        } catch (Exception e) {
+        }
+        String path = "users/" + userId + "/baseURLRefs/" + baseURLId;
+        return cloudClient.delete(getCloudAuthV11Url().concat(path), httpHeaders);
+    }
+
+    @Override
+    public Response.ResponseBuilder getUserGroups(HttpHeaders httpHeaders) throws IOException {
+        try {
+            return defaultCloud11Service.getUserGroups(httpHeaders);
+        } catch (Exception e) {
+        }
+        return cloudClient.get(getCloudAuthV11Url().concat("users/groups"), httpHeaders);
     }
 
     private String getPath(String path, HashMap<String, String> queryParams) {
