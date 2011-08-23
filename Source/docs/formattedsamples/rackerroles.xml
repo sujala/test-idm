@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<rackerRoles xmlns="http://docs.rackspacecloud.com/idm/api/v1.0">
-    <rackerRole name="dl_foundation" />
-    <rackerRole name="dl_cloud" />
-</rackerRoles>
+<roles xmlns="http://idm.api.rackspace.com/v1.0">
+    <role name="dl_foundation" />
+    <role name="dl_cloud" />
+</roles>

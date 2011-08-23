@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<serviceCatalog xmlns="http://docs.rackspacecloud.com/idm/api/v1.0">
+<serviceCatalog xmlns="http://idm.api.rackspace.com/v1.0">
     <service name="cloudFiles">
         <endpoint region="DFW" 
             v1Default="true" 

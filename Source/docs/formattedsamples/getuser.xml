@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <user 
-    xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
+    xmlns="http://idm.api.rackspace.com/v1.0"
     softDeleted="false" locked="false" 
     status="ACTIVE" region="America/Chicago"
     inum="@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111"
@@ -12,11 +12,4 @@
     customerInum="@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE" 
     customerId="RCN-000-000-000"
     username="jqsmith">
-    <groups>
-        <clientGroup 
-            customerId="RCN-000-000-000",
-            clientId="ab4820dhcb39347",
-            type="Role" 
-            name="Admin" />
-    </groups>
 </user>

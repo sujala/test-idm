@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
-<customer xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
+<customer xmlns="http://idm.api.rackspace.com/v1.0"
     locked="true"  />
     

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
-<permissions xmlns="http://docs.rackspacecloud.com/idm/api/v1.0">
+<permissions xmlns="http://idm.api.rackspace.com/v1.0">
    <permission 
        clientId="IDM" 
        customerId="RCN-000-000-000" 

@@ -1,26 +1,9 @@
 {
-  "secret": {
-    "secretQuestion": "What is the middle name of your best fried, spelled backward?",
-    "secretAnswer": "sicnarF"
-  },
-  "password": {
-    "password": "C@n+f001me!"
-  },
-  "apiKey": {
-    "apiKey": "10388a8497547f8w77e"
-  },
   "roles": [
       {
         "name": "Admin",
         "type": "RackspaceDefined"
       }
-    ],
-  "permissions": [
-      {
-        "description": "POST /users",
-        "name": "AddUser"
-      },
-      {}
     ],
   "username": "jqsmith",
   "customerId": "RCN-000-000-000",

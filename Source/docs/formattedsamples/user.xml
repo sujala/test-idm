@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<user xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
+<user xmlns="http://idm.api.rackspace.com/v1.0"
     softDeleted="false" locked="false" 
     status="ACTIVE" timeZone="America/Chicago"
     region="SAT" iname="@Example.Smith*John" 

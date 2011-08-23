@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
-<permissions xmlns="http://docs.rackspacecloud.com/idm/api/v1.0">
+<permissions xmlns="http://api.rackspace.com/idm/v1.0">
 	<defined>
         <permission 
           type="application/text" 
