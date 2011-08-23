@@ -70,7 +70,7 @@ public class Cloud11VersionResource {
     }
 
     private Cloud11Service getCloud11Service() {
-        if (true) {
+        if (config.getBoolean("useCloudAuth")) {
             return delegateCloud11Service;
         } else {
             return defaultCloud11Service;
