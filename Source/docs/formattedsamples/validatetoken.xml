@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<auth xmlns="http://docs.rackspacecloud.com/idm/api/v1.0">
+<auth xmlns="http://idm.api.rackspace.com/v1.0">
 	<access_token 
 	   expires_in="3600" 
 	   id="ab48a9efdfedb23ty3494" />
 	<user 
 	    customerId="RCN-000-000-000"
-	    username="jqsmith" />
+	    username="jqsmith">
+		<roles xmlns="http://idm.api.rackspace.com/v1.0">
+    			<role name="network_admin" applicationId="compute"/>
+    			<role name="technical_reviewer" tenantId="57884" applicationId="swift"/>
+    			<role name="admin" tenantId="cf_89983" applicationId="billing"/>
+		</roles>
+	</user>
 </auth>

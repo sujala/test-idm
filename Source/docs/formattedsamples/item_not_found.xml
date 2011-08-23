@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
-<itemNotFound xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
+<itemNotFound xmlns="http://idm.api.rackspace.com/v1.0"
     code="404">
     <message>Item not found.</message>
     <details>Error Details...</details>

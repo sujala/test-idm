@@ -2,11 +2,9 @@ package com.rackspace.idm.api.resource.user;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -27,17 +25,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.idm.api.converter.EndPointConverter;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
@@ -47,7 +42,6 @@ import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.PasswordValidationException;
-import com.rackspace.idm.jaxb.BaseURLRef;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
 
@@ -67,19 +61,18 @@ public class UsersResource {
     private final UserConverter userConverter;
     private final PasswordComplexityService passwordComplexityService;
     private final AuthorizationService authorizationService;
-    private final EndpointService endpointService;
-    private final EndPointConverter endpointConverter;
     private final ClientService clientService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
     private final Configuration config;
 
     @Autowired
-    public UsersResource(ScopeAccessService scopeAccessService, CustomerService customerService,
-        UserService userService, InputValidator inputValidator, UserConverter userConverter,
-        PasswordComplexityService passwordComplexityService, AuthorizationService authorizationService,
-        EndpointService endpointService, EndPointConverter endpointConverter, ClientService clientService,
+    public UsersResource(ScopeAccessService scopeAccessService,
+        CustomerService customerService, UserService userService,
+        InputValidator inputValidator, UserConverter userConverter,
+        PasswordComplexityService passwordComplexityService,
+        AuthorizationService authorizationService, ClientService clientService,
         Configuration config) {
-        
+
         this.scopeAccessService = scopeAccessService;
         this.customerService = customerService;
         this.userService = userService;
@@ -87,8 +80,6 @@ public class UsersResource {
         this.userConverter = userConverter;
         this.passwordComplexityService = passwordComplexityService;
         this.authorizationService = authorizationService;
-        this.endpointService = endpointService;
-        this.endpointConverter = endpointConverter;
         this.clientService = clientService;
         this.config = config;
     }
@@ -111,9 +102,11 @@ public class UsersResource {
      * @param user New User
      */
     @POST
-    public Response addFirstUser(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, EntityHolder<com.rackspace.idm.jaxb.User> holder) {
-        
+    public Response addFirstUser(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+
         authorizeRequest(request, uriInfo, authHeader, holder);
 
         com.rackspace.idm.jaxb.User user = holder.getEntity();
@@ -126,16 +119,21 @@ public class UsersResource {
         }
 
         if (!this.userService.isUsernameUnique(userDO.getUsername())) {
-            String errorMsg = String
-                .format("A user with username '%s' already exists.", userDO.getUsername());
+            String errorMsg = String.format(
+                "A user with username '%s' already exists.",
+                userDO.getUsername());
             logger.warn(errorMsg);
             throw new DuplicateUsernameException(errorMsg);
         }
 
-        if (userDO.getPasswordObj() != null && !StringUtils.isBlank(userDO.getPasswordObj().getValue())) {
+        if (userDO.getPasswordObj() != null
+            && !StringUtils.isBlank(userDO.getPasswordObj().getValue())) {
             String password = userDO.getPasswordObj().getValue();
-            if (isPasswordRulesEnforced() && !passwordComplexityService.checkPassword(password).isValidPassword()) {
-                String errorMsg = String.format("Invalid password %s", password);
+            if (isPasswordRulesEnforced()
+                && !passwordComplexityService.checkPassword(password)
+                    .isValidPassword()) {
+                String errorMsg = String
+                    .format("Invalid password %s", password);
                 logger.warn(errorMsg);
                 throw new PasswordValidationException(errorMsg);
             }
@@ -148,7 +146,8 @@ public class UsersResource {
         try {
             this.customerService.addCustomer(customer);
         } catch (DuplicateException ex) {
-            String errorMsg = String.format("A customer with customerId '%s' already exists.",
+            String errorMsg = String.format(
+                "A customer with customerId '%s' already exists.",
                 customer.getCustomerId());
             logger.warn(errorMsg);
             throw new CustomerConflictException(errorMsg);
@@ -160,19 +159,20 @@ public class UsersResource {
             // Roll Back the Add Customer call
             this.customerService.deleteCustomer(customer.getCustomerId());
             // Then throw the error
-            String errorMsg = String
-                .format("A user with username '%s' already exists.", userDO.getUsername());
+            String errorMsg = String.format(
+                "A user with username '%s' already exists.",
+                userDO.getUsername());
             logger.warn(errorMsg);
             throw new DuplicateUsernameException(errorMsg);
         }
 
-        this.clientService.addUserToClientGroup(userDO.getUsername(), 
+        this.clientService.addUserToClientGroup(userDO.getUsername(),
             getRackspaceCustomerId(), getIdmClientId(), getIdmAdminGroupName());
 
         logger.debug("Added User: {}", userDO);
 
-        String locationUri = String.format("/customers/%s/users/%s", customer.getCustomerId(),
-            user.getUsername());
+        String locationUri = String.format("/customers/%s/users/%s",
+            customer.getCustomerId(), user.getUsername());
 
         user = userConverter.toUserJaxb(userDO);
 
@@ -183,167 +183,8 @@ public class UsersResource {
             logger.warn("Customer Location URI error");
         }
 
-        return Response.ok(user).location(uri).status(HttpServletResponse.SC_CREATED).build();
-    }
-
-    /**
-     * Gets a list of serviceCatalog for a user.
-     * 
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceCatalog
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param username username
-     */
-    @GET
-    @Path("{username}/servicecatalog")
-    public Response getServiceCatalog(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username) {
-
-        List<CloudEndpoint> endpoints = checkAndGetEndPoints(request, uriInfo,
-            authHeader, username);
-
-        return Response.ok(this.endpointConverter.toServiceCatalog(endpoints)).build();
-    }
-
-    /**
-     * Gets a list of baseUrlRefs for a user.
-     * 
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}baseURLRefs
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param username username
-     */
-    @GET
-    @Path("{username}/baseurlrefs")
-    public Response getBaseUrlRefs(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username) {
-
-        List<CloudEndpoint> endpoints = checkAndGetEndPoints(request, uriInfo,
-            authHeader, username);
-
-        return Response.ok(this.endpointConverter.toBaseUrlRefs(endpoints)).build();
-    }
-
-    /**
-     * Adds a baseUrl to a user.
-     * 
-     * @request.representation.qname {http://docs.rackspacecloud.com/idm/api/v1.0}baseUrlRef
-     * @response.representation.201.doc Successful request
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param username username
-     * @param baseUrlRef baseUrlRef
-     */
-    @PUT
-    @Path("{username}/baseurlrefs")
-    public Response addBaseUrlRef(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
-        EntityHolder<BaseURLRef> holder) {
-        if (!holder.hasEntity()) {
-            throw new BadRequestException("Request body missing.");
-        }
-        ScopeAccess token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
-
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo);
-
-        authorizationService.checkAuthAndHandleFailure(authorized, token);
-
-        BaseURLRef baseUrlRef = holder.getEntity();
-        this.endpointService.addBaseUrlToUser(baseUrlRef.getId(), baseUrlRef.isV1Default(), username);
-
-        return Response.ok().status(HttpServletResponse.SC_CREATED).build();
-    }
-
-    /**
-     * Gets a baseUrlRef for a user.
-     * 
-     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}baseURLRef
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param username username
-     * @param baseUrlId baseUrlId
-     */
-    @GET
-    @Path("{username}/baseurlrefs/{baseUrlId}")
-    public Response getBaseUrlRef(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
-        @PathParam("baseUrlId") int baseUrlId) {
-
-        ScopeAccess token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
-
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo);
-
-        authorizationService.checkAuthAndHandleFailure(authorized, token);
-
-        CloudEndpoint endpoint = this.endpointService.getEndpointForUser(username, baseUrlId);
-
-        if (endpoint == null) {
-            String errMsg = String.format("BaseUrlId %s not found for user %s", baseUrlId, username);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-
-        return Response.ok(this.endpointConverter.toBaseUrlRef(endpoint)).build();
-    }
-
-    /**
-     * Removes a baseUrl from a user.
-     * 
-     * @response.representation.204.doc Successful request
-     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
-     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
-     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
-     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
-     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
-     * 
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param username username
-     * @param baseUrlId baseUrlId
-     */
-    @DELETE
-    @Path("{username}/baseurlrefs/{baseUrlId}")
-    public Response deleteBaseUrlRef(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
-        @PathParam("baseUrlId") int baseUrlId) {
-
-        ScopeAccess token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
-
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo);
-
-        authorizationService.checkAuthAndHandleFailure(authorized, token);
-       
-        this.endpointService.removeBaseUrlFromUser(baseUrlId, username);
-
-        return Response.noContent().build();
+        return Response.ok(user).location(uri)
+            .status(HttpServletResponse.SC_CREATED).build();
     }
 
     /**
@@ -362,16 +203,19 @@ public class UsersResource {
      */
     @GET
     @Path("{username}")
-    public Response getUserByUsername(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username) {
+    public Response getUserByUsername(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("username") String username) {
 
         ScopeAccess token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Rackers, Rackspace Clients, Specific Clients are authorized
         boolean authorized = authorizationService.authorizeRacker(token)
             || authorizationService.authorizeRackspaceClient(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo);
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
@@ -380,7 +224,8 @@ public class UsersResource {
         User user = checkAndGetUser(username);
 
         logger.debug("Got User :{}", user);
-        return Response.ok(userConverter.toUserJaxbWithoutAnyAdditionalElements(user)).build();
+        return Response.ok(
+            userConverter.toUserJaxbWithoutAnyAdditionalElements(user)).build();
 
     }
 
@@ -401,10 +246,12 @@ public class UsersResource {
      */
     @PUT
     @Path("{username}/mossoid")
-    public Response updateUserMossoId(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
+    public Response updateUserMossoId(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("username") String username,
         EntityHolder<com.rackspace.idm.jaxb.User> holder) {
-        
+
         authorizeRequest(request, uriInfo, authHeader, holder);
 
         User user = checkAndGetUser(username);
@@ -418,7 +265,6 @@ public class UsersResource {
         return Response.ok(userConverter.toUserWithOnlyMossoId(user)).build();
     }
 
-    
     /**
      * Updates nastId of an user.
      * 
@@ -436,10 +282,12 @@ public class UsersResource {
      */
     @PUT
     @Path("{username}/nastid")
-    public Response updateUserNastId(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
+    public Response updateUserNastId(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("username") String username,
         EntityHolder<com.rackspace.idm.jaxb.User> holder) {
-        
+
         authorizeRequest(request, uriInfo, authHeader, holder);
 
         User user = checkAndGetUser(username);
@@ -470,19 +318,22 @@ public class UsersResource {
      */
     @PUT
     @Path("{username}/rpn")
-    public Response updateUserRPN(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, @PathParam("username") String username,
-        @PathParam("customerId") String customerId, EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+    public Response updateUserRPN(@Context Request request,
+        @Context UriInfo uriInfo,
+        @HeaderParam("Authorization") String authHeader,
+        @PathParam("username") String username,
+        @PathParam("customerId") String customerId,
+        EntityHolder<com.rackspace.idm.jaxb.User> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
         ScopeAccess token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
-
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Specific clients are authorized
         boolean authorized = authorizationService.authorizeCustomerIdm(token)
-            || authorizationService.authorizeClient(token, request.getMethod(), uriInfo);
+            || authorizationService.authorizeClient(token, request.getMethod(),
+                uriInfo);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
@@ -508,36 +359,22 @@ public class UsersResource {
 
         return user;
     }
-    
+
     private void authorizeRequest(Request request, UriInfo uriInfo,
         String authHeader, EntityHolder<com.rackspace.idm.jaxb.User> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
         ScopeAccess token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
+            .getAccessTokenByAuthHeader(authHeader);
 
         // Specific clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo);
+        boolean authorized = authorizationService.authorizeClient(token,
+            request.getMethod(), uriInfo);
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
     }
-    
-    private List<CloudEndpoint> checkAndGetEndPoints(Request request,
-        UriInfo uriInfo, String authHeader, String username) {
-        ScopeAccess token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
 
-        // Only Specific Clients are authorized
-        boolean authorized = authorizationService.authorizeClient(token, request.getMethod(),
-            uriInfo);
-
-        authorizationService.checkAuthAndHandleFailure(authorized, token);
-
-        return this.endpointService.getEndpointsForUser(username);
-    }   
-   
     private String getIdmAdminGroupName() {
         return config.getString("idm.AdminGroupName");
     }
@@ -549,7 +386,7 @@ public class UsersResource {
     private String getRackspaceCustomerId() {
         return config.getString("rackspace.customerId");
     }
-    
+
     private boolean isPasswordRulesEnforced() {
         return config.getBoolean("password.rules.enforced", true);
     }

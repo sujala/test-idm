@@ -1,0 +1,601 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<application xmlns="http://wadl.dev.java.net/2009/02"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    
+    <grammars>
+        <include href="xsd/api.xsd"/>
+        <include href="xsd/api-common.xsd"/>
+    </grammars>
+    
+    <!--*******************************************************-->
+    <!--             All Resources                             -->
+    <!--*******************************************************-->
+    
+    <resources base="http://localhost:9998">
+        <resource path="/">
+            <method name="GET" id="getVersionInfo">
+                <response>
+                    <representation mediaType="application/json"/>
+                    <representation mediaType="application/xml"/>
+                </response>
+            </method>
+            <resource path="customers">
+                <method name="POST" id="addCustomer">
+                    <request>
+                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                               name="Authorization"/>
+                        <representation mediaType="application/json"/>
+                        <representation mediaType="application/xml"/>
+                    </request>
+                    <response>
+                        <representation mediaType="application/json"/>
+                        <representation mediaType="application/xml"/>
+                    </response>
+                </method>
+                <resource path="{customerId}">
+                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                           name="customerId"/>
+                    <method name="DELETE" id="deleteCustomer">
+                        <request>
+                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                                   name="Authorization"/>
+                        </request>
+                        <response>
+                            <representation mediaType="application/json"/>
+                            <representation mediaType="application/xml"/>
+                        </response>
+                    </method>
+                    <method name="GET" id="getCustomer">
+                        <request>
+                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                                   name="Authorization"/>
+                        </request>
+                        <response>
+                            <representation mediaType="application/json"/>
+                            <representation mediaType="application/xml"/>
+                        </response>
+                    </method>
+                    <resource path="actions/lock">
+                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                               name="customerId"/>
+                        <method name="PUT" id="setCustomerLockStatus">
+                            <request>
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                                       name="Authorization"/>
+                                <representation mediaType="application/json"/>
+                                <representation mediaType="application/xml"/>
+                            </request>
+                            <response>
+                                <representation mediaType="application/json"/>
+                                <representation mediaType="application/xml"/>
+                            </response>
+                        </method>
+                    </resource>
+                    <resource path="clients">
+                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                               name="customerId"/>
+                        <method name="GET" id="getClients">
+                            <request>
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                                       name="Authorization"/>
+                            </request>
+                            <response>
+                                <representation mediaType="application/json"/>
+                                <representation mediaType="application/xml"/>
+                            </response>
+                        </method>
+                        <method name="POST" id="addClient">
+                            <request>
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                                       name="Authorization"/>
+                                <representation mediaType="application/json"/>
+                                <representation mediaType="application/xml"/>
+                            </request>
+                            <response>
+                                <representation mediaType="application/json"/>
+                                <representation mediaType="application/xml"/>
+                            </response>
+                        </method>
+                        <resource path="{clientId}">
+                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                   name="customerId"/>
+                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                   name="clientId"/>
+                            <method name="GET" id="getClient">
+                                <request>
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                                           name="Authorization"/>
+                                </request>
+                                <response>
+                                    <representation mediaType="application/json"/>
+                                    <representation mediaType="application/xml"/>
+                                </response>
+                            </method>
+                            <resource path="permissions">
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                       name="customerId"/>
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                       name="clientId"/>
+                                <method name="GET" id="getClientPermissions">
+                                    <request>
+                                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                               style="header" name="Authorization"/>
+                                    </request>
+                                    <response>
+                                        <representation mediaType="application/json"/>
+                                        <representation mediaType="application/xml"/>
+                                    </response>
+                                </method>
+                                <resource path="defined">
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                           name="customerId"/>
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                           name="clientId"/>
+                                    <method name="GET" id="getClientDefinedPermissions">
+                                        <request>
+                                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                                   style="header" name="Authorization"/>
+                                        </request>
+                                        <response>
+                                            <representation mediaType="application/json"/>
+                                            <representation mediaType="application/xml"/>
+                                        </response>
+                                    </method>
+                                    <method name="POST" id="addClientPermission">
+                                        <request>
+                                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                                   style="header" name="Authorization"/>
+                                            <representation mediaType="application/json"/>
+                                            <representation mediaType="application/xml"/>
+                                        </request>
+                                        <response>
+                                            <representation mediaType="application/json"/>
+                                            <representation mediaType="application/xml"/>
+                                        </response>
+                                    </method>
+                                    <resource path="{permissionId}">
+                                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                               style="template" name="customerId"/>
+                                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                               style="template" name="permissionId"/>
+                                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                               style="template" name="clientId"/>
+                                        <method name="PUT" id="updateClientPermission">
+                                            <request>
+                                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                                       style="header" name="Authorization"/>
+                                                <representation mediaType="application/json"/>
+                                                <representation mediaType="application/xml"/>
+                                            </request>
+                                            <response>
+                                                <representation mediaType="application/json"/>
+                                                <representation mediaType="application/xml"/>
+                                            </response>
+                                        </method>
+                                        <method name="DELETE" id="deleteClientPermission">
+                                            <request>
+                                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                                       style="header" name="Authorization"/>
+                                            </request>
+                                            <response>
+                                                <representation mediaType="application/json"/>
+                                                <representation mediaType="application/xml"/>
+                                            </response>
+                                        </method>
+                                        <method name="GET" id="getClientPermission">
+                                            <request>
+                                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                                       style="header" name="Authorization"/>
+                                            </request>
+                                            <response>
+                                                <representation mediaType="application/json"/>
+                                                <representation mediaType="application/xml"/>
+                                            </response>
+                                        </method>
+                                    </resource>
+                                </resource>
+                                <resource path="granted">
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                           name="customerId"/>
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                           name="clientId"/>
+                                    <method name="GET" id="getClientGrantedPermissions">
+                                        <request>
+                                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                                   style="header" name="Authorization"/>
+                                        </request>
+                                        <response>
+                                            <representation mediaType="application/json"/>
+                                            <representation mediaType="application/xml"/>
+                                        </response>
+                                    </method>
+                                </resource>
+                            </resource>
+                        </resource>
+                    </resource>
+                    <resource path="roles">
+                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                               name="customerId"/>
+                        <method name="GET" id="getRoles">
+                            <request>
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                                       name="Authorization"/>
+                            </request>
+                            <response>
+                                <representation mediaType="application/json"/>
+                                <representation mediaType="application/xml"/>
+                            </response>
+                        </method>
+                    </resource>
+                    <resource path="users">
+                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                               name="customerId"/>
+                        <method name="POST" id="addUser">
+                            <request>
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                                       name="Authorization"/>
+                                <representation mediaType="application/json"/>
+                                <representation mediaType="application/xml"/>
+                            </request>
+                            <response>
+                                <representation mediaType="application/json"/>
+                                <representation mediaType="application/xml"/>
+                            </response>
+                        </method>
+                        <method name="GET" id="getUsers">
+                            <request>
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                                       name="Authorization"/>
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:int" style="query"
+                                       name="offset"/>
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:int" style="query"
+                                       name="limit"/>
+                            </request>
+                            <response>
+                                <representation mediaType="application/json"/>
+                                <representation mediaType="application/xml"/>
+                            </response>
+                        </method>
+                        <resource path="{username}">
+                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                   name="username"/>
+                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                   name="customerId"/>
+                            <method name="GET" id="getUser">
+                                <request>
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                                           name="Authorization"/>
+                                </request>
+                                <response>
+                                    <representation mediaType="application/json"/>
+                                    <representation mediaType="application/xml"/>
+                                </response>
+                            </method>
+                            <method name="PUT" id="updateUser">
+                                <request>
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                                           name="Authorization"/>
+                                    <representation mediaType="application/json"/>
+                                    <representation mediaType="application/xml"/>
+                                </request>
+                                <response>
+                                    <representation mediaType="application/json"/>
+                                    <representation mediaType="application/xml"/>
+                                </response>
+                            </method>
+                            <method name="DELETE" id="deleteUser">
+                                <request>
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                                           name="Authorization"/>
+                                </request>
+                                <response>
+                                    <representation mediaType="application/json"/>
+                                    <representation mediaType="application/xml"/>
+                                </response>
+                            </method>
+                            <resource path="key">
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                       name="username"/>
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                       name="customerId"/>
+                                <method name="GET" id="getApiKey">
+                                    <request>
+                                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                               style="header" name="Authorization"/>
+                                    </request>
+                                    <response>
+                                        <representation mediaType="application/json"/>
+                                        <representation mediaType="application/xml"/>
+                                    </response>
+                                </method>
+                                <method name="POST" id="resetApiKey">
+                                    <request>
+                                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                               style="header" name="Authorization"/>
+                                    </request>
+                                    <response>
+                                        <representation mediaType="application/json"/>
+                                        <representation mediaType="application/xml"/>
+                                    </response>
+                                </method>
+                            </resource>
+                            <resource path="lock">
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                       name="username"/>
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                       name="customerId"/>
+                                <method name="PUT" id="setUserLock">
+                                    <request>
+                                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                               style="header" name="Authorization"/>
+                                        <representation mediaType="application/json"/>
+                                        <representation mediaType="application/xml"/>
+                                    </request>
+                                    <response>
+                                        <representation mediaType="application/json"/>
+                                        <representation mediaType="application/xml"/>
+                                    </response>
+                                </method>
+                            </resource>
+                            <resource path="password">
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                       name="username"/>
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                       name="customerId"/>
+                                <method name="GET" id="getUserPassword">
+                                    <request>
+                                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                               style="header" name="Authorization"/>
+                                    </request>
+                                    <response>
+                                        <representation mediaType="application/json"/>
+                                        <representation mediaType="application/xml"/>
+                                    </response>
+                                </method>
+                                <method name="POST" id="resetUserPassword">
+                                    <request>
+                                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                               style="header" name="Authorization"/>
+                                    </request>
+                                    <response>
+                                        <representation mediaType="application/json"/>
+                                        <representation mediaType="application/xml"/>
+                                    </response>
+                                </method>
+                                <method name="PUT" id="setUserPassword">
+                                    <request>
+                                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                               style="header" name="Authorization"/>
+                                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:boolean"
+                                               style="query" name="recovery"/>
+                                        <representation mediaType="application/json"/>
+                                        <representation mediaType="application/xml"/>
+                                    </request>
+                                    <response>
+                                        <representation mediaType="application/json"/>
+                                        <representation mediaType="application/xml"/>
+                                    </response>
+                                </method>
+                                <resource path="recoveryemail">
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                           name="username"/>
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                           name="customerId"/>
+                                    <method name="POST" id="sendRecoveryEmail">
+                                        <request>
+                                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                                   style="header" name="Authorization"/>
+                                            <representation mediaType="application/json"/>
+                                            <representation mediaType="application/xml"/>
+                                        </request>
+                                        <response>
+                                            <representation mediaType="application/json"/>
+                                            <representation mediaType="application/xml"/>
+                                        </response>
+                                    </method>
+                                </resource>
+                                <resource path="recoverytoken">
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                           name="username"/>
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                           name="customerId"/>
+                                    <method name="POST" id="getPasswordResetToken">
+                                        <request>
+                                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                                   style="header" name="Authorization"/>
+                                        </request>
+                                        <response>
+                                            <representation mediaType="application/json"/>
+                                            <representation mediaType="application/xml"/>
+                                        </response>
+                                    </method>
+                                </resource>
+                            </resource>
+                            <resource path="roles">
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                       name="username"/>
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                       name="customerId"/>
+                                <method name="GET" id="getRoles">
+                                    <request>
+                                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                               style="header" name="Authorization"/>
+                                    </request>
+                                    <response>
+                                        <representation mediaType="application/json"/>
+                                        <representation mediaType="application/xml"/>
+                                    </response>
+                                </method>
+                                <resource path="{roleName}">
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                           name="username"/>
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                           name="customerId"/>
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                           name="roleName"/>
+                                    <method name="PUT" id="setRole">
+                                        <request>
+                                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                                   style="header" name="Authorization"/>
+                                        </request>
+                                        <response>
+                                            <representation mediaType="application/json"/>
+                                            <representation mediaType="application/xml"/>
+                                        </response>
+                                    </method>
+                                    <method name="DELETE" id="deleteRole">
+                                        <request>
+                                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                                   style="header" name="Authorization"/>
+                                        </request>
+                                        <response>
+                                            <representation mediaType="application/json"/>
+                                            <representation mediaType="application/xml"/>
+                                        </response>
+                                    </method>
+                                </resource>
+                            </resource>
+                            <resource path="secret">
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                       name="username"/>
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                       name="customerId"/>
+                                <method name="GET" id="getUserSecret">
+                                    <request>
+                                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                               style="header" name="Authorization"/>
+                                    </request>
+                                    <response>
+                                        <representation mediaType="application/json"/>
+                                        <representation mediaType="application/xml"/>
+                                    </response>
+                                </method>
+                                <method name="PUT" id="setUserSecret">
+                                    <request>
+                                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                               style="header" name="Authorization"/>
+                                        <representation mediaType="application/json"/>
+                                        <representation mediaType="application/xml"/>
+                                    </request>
+                                    <response>
+                                        <representation mediaType="application/json"/>
+                                        <representation mediaType="application/xml"/>
+                                    </response>
+                                </method>
+                            </resource>
+                            <resource path="softdelete">
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                       name="username"/>
+                                <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                       name="customerId"/>
+                                <method name="PUT" id="setUserSoftDelete">
+                                    <request>
+                                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                               style="header" name="Authorization"/>
+                                        <representation mediaType="application/json"/>
+                                        <representation mediaType="application/xml"/>
+                                    </request>
+                                    <response>
+                                        <representation mediaType="application/json"/>
+                                        <representation mediaType="application/xml"/>
+                                    </response>
+                                </method>
+                            </resource>
+                            <resource path="status">
+                                <resource path="{username}/status">
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                           name="username"/>
+                                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                                           name="customerId"/>
+                                    <method name="PUT" id="setUserStatus">
+                                        <request>
+                                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string"
+                                                   style="header" name="Authorization"/>
+                                            <representation mediaType="application/json"/>
+                                            <representation mediaType="application/xml"/>
+                                        </request>
+                                        <response>
+                                            <representation mediaType="application/json"/>
+                                            <representation mediaType="application/xml"/>
+                                        </response>
+                                    </method>
+                                </resource>
+                            </resource>
+                        </resource>
+                    </resource>
+                </resource>
+            </resource>
+            <resource path="users">
+                <method name="POST" id="addFirstUser">
+                    <request>
+                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                               name="Authorization"/>
+                        <representation mediaType="application/json"/>
+                        <representation mediaType="application/xml"/>
+                    </request>
+                    <response>
+                        <representation mediaType="application/json"/>
+                        <representation mediaType="application/xml"/>
+                    </response>
+                </method>
+            </resource>
+            <resource path="passwordrules">
+                <method name="GET" id="getRules">
+                    <response>
+                        <representation mediaType="application/json"/>
+                        <representation mediaType="application/xml"/>
+                    </response>
+                </method>
+                <resource path="/validation/{password}">
+                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                           name="password"/>
+                    <method name="GET" id="checkPassword">
+                        <response>
+                            <representation mediaType="application/json"/>
+                            <representation mediaType="application/xml"/>
+                        </response>
+                    </method>
+                </resource>
+            </resource>
+            <resource path="token">
+                <method name="POST" id="getAccessToken">
+                    <request>
+                        <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                               name="Authorization"/>
+                        <representation mediaType="application/json"/>
+                        <representation mediaType="application/xml"/>
+                    </request>
+                    <response>
+                        <representation mediaType="application/json"/>
+                        <representation mediaType="application/xml"/>
+                    </response>
+                </method>
+                <resource path="{tokenString}">
+                    <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="template"
+                           name="tokenString"/>
+                    <method name="GET" id="validateAccessToken">
+                        <request>
+                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                                   name="Authorization"/>
+                        </request>
+                        <response>
+                            <representation mediaType="application/json"/>
+                            <representation mediaType="application/xml"/>
+                        </response>
+                    </method>
+                    <method name="DELETE" id="revokeAccessToken">
+                        <request>
+                            <param xmlns:xs="http://www.w3.org/2001/XMLSchema" type="xs:string" style="header"
+                                   name="Authorization"/>
+                        </request>
+                        <response>
+                            <representation mediaType="application/json"/>
+                            <representation mediaType="application/xml"/>
+                        </response>
+                    </method>
+                </resource>
+            </resource>
+        </resource>
+    </resources>
+</application>

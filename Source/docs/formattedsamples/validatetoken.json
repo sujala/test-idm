@@ -6,5 +6,14 @@
     "user" : {
           "username": "jqsmith",
           "customerId": "RCN-000-000-000",
-     }
+     },
+    "roles": [{ "name": "network_admin",
+                "applicationId": "compute"},
+              { "name": "technical_reviewer",
+                "tenantId": "57884",
+                "applicationId": "swift"},
+              { "name": "admin",
+                "tenantId": "cf_89983",
+                "applicationId": "billing"}]
+
 }

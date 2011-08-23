@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
-<delegatedTokens  xmlns="http://docs.rackspacecloud.com/idm/api/v1.0">
+<delegatedTokens  xmlns="http://idm.api.rackspace.com/v1.0">
     <delegatedToken
         expires="2010-11-02T03:32:15-05:00" 
         id="309487987f0892397a9439875900b"

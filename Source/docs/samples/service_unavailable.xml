@@ -1,1 +1,1 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?><serviceUnavailable xmlns="http://docs.rackspacecloud.com/idm/api/v1.0" code="503"><message>The IdM Service is Unavailable at the moment.</message><details>Error Details...</details></serviceUnavailable>
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?><serviceUnavailable xmlns="http://api.rackspace.com/idm/v1.0" code="503"><message>The IdM Service is Unavailable at the moment.</message><details>Error Details...</details></serviceUnavailable>

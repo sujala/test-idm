@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<version xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
-    wadl="http://docs.rackspacecloud.com/idm/api/v1.0/application.wadl"
-    docURL="http://docs.rackspacecloud.com/idm/api/v1.0/idm-devguide.pdf"
+<version xmlns="http://idm.api.rackspace.com/v1.0"
+    wadl="http://idm.api.rackspace.com/v1.0/application.wadl"
+    docURL="http://idm.api.rackspace.com/v1.0/idm-devguide.pdf"
     status="CURRENT" 
     id="v1.0" />
     

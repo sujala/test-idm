@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xslt/schema.xslt"?>
+
+<!-- (C) 2010 Rackspace Hosting, All Rights Reserved -->
+
+<schema elementFormDefault="qualified" attributeFormDefault="unqualified"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:idm="http://idm.api.rackspace.com/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+	targetNamespace="http://idm.api.rackspace.com/v1.0">
+
+	<annotation>
+		<xsd:appinfo xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+			<xsdxt:title>Roles</xsdxt:title>
+			<xsdxt:link rel="index" href="idmapi.xsd" />
+		</xsd:appinfo>
+		<xsd:documentation xml:lang="EN"
+			xmlns="http://www.w3.org/1999/xhtml">
+			<p>This schema file defines entities related to a role.</p>
+		</xsd:documentation>
+	</annotation>
+	
+	<element name="role" type="idm:Role">
+        <annotation>
+            <xsd:documentation xml:lang="EN"
+                xmlns="http://www.w3.org/1999/xhtml">
+                <p>A rackspace employee role</p>
+            </xsd:documentation>
+            <xsd:appinfo>
+                <xsdxt:samples>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/xml" href="../formattedsamples/role.xml" />
+                    </xsdxt:sample>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/json" href="../formattedsamples/role.json" />
+                    </xsdxt:sample>
+                </xsdxt:samples>
+            </xsd:appinfo>
+        </annotation>
+    </element>
+    
+    <element name="roles" type="idm:RoleList">
+        <annotation>
+            <xsd:documentation xml:lang="EN"
+                xmlns="http://www.w3.org/1999/xhtml">
+                <p>A list of racker roles.</p>
+            </xsd:documentation>
+            <xsd:appinfo>
+                <xsdxt:samples>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/xml" href="../formattedsamples/roles.xml" />
+                    </xsdxt:sample>
+                    <xsdxt:sample>
+                        <xsdxt:code type="application/json" href="../formattedsamples/roles.json" />
+                    </xsdxt:sample>
+                </xsdxt:samples>
+            </xsd:appinfo>
+        </annotation>
+    </element>
+
+	<complexType name="Role">
+        <attribute name="name" type="xsd:string"/>
+		<attribute name="tenantId" type="xsd:string"/>
+		<attribute name="description" type="xsd:string"/>
+	    <attribute name="applicationId" type="xsd:string"/>
+    </complexType>
+    
+    <complexType name="RoleList">
+        <sequence>
+            <element name="role" type="idm:Role" minOccurs="0" maxOccurs="1000">
+            </element>
+        </sequence>
+    </complexType>
+</schema>
