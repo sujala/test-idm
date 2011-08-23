@@ -1,0 +1,17 @@
+{"identityprofiles": [
+    {
+      "customerId": "RCN-123-549-034",
+      "inum": "@FFFF.FFFF.FFFF.FFFF!0ABE.34EC",
+      "iname": "@Rackspace*Customer",
+      "locked": false,
+      "softDeleted": false
+    },
+    {
+      "customerId": "RCN-123-549-034",
+      "inum": "@FFFF.FFFF.FFFF.FFFF!428B.0A49",
+      "iname": "@Rackspace*AnotherCustomer",
+      "locked": false,
+      "softDeleted": false
+    }
+  ]
+}

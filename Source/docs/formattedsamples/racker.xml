@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<racker xmlns="http://idm.api.rackspace.com/v1.0"
+    rackerId="joe.racker" />  
+    <roles>
+        <role name="Admin" />
+    </roles>
+</user>
