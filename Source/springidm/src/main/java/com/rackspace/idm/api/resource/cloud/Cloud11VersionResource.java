@@ -115,7 +115,7 @@ public class Cloud11VersionResource {
     }
 
     private Cloud11Service getCloud11Service() {
-        if (config.getBoolean("useCloudAuth")) {
+        if (true) {
             return delegateCloud11Service;
         } else {
             return defaultCloud11Service;
@@ -123,6 +123,8 @@ public class Cloud11VersionResource {
     }
 
     private String getCloudAuthV11Url() {
-        return config.getString("cloudAuth11url");
+        String cloudAuth11url = config.getString("cloudAuth11url");
+        return cloudAuth11url;
+//        return "https://auth.staging.us.ccp.rackspace.net/v1.1/";
     }
 }

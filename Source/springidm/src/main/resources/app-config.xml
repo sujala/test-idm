@@ -11,51 +11,54 @@
 			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
 			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
 			http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-2.5.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
-	<!-- 
-	    Configurer that replaces ${...} placeholders with values from a properties file
-	    (in this case, JDBC-related settings for the dataSource definition below)
-	-->
-	<context:property-placeholder location="classpath:jdbc.properties"/>
-	<!--
-		Uses Apache Commons DBCP for connection pooling. See Commons DBCP documentation
-		for the required JAR files. See the PetStore sample application also shipped with
-		Spring, for an example of Commons DBCP usage and the necessary build script.
-		Alternatively you can use another connection pool such as C3P0, similarly configured
-		using Spring.
-		A standalone connection pool such as Commons DBCP is a good choice for use outside an
-		application server environment, including web applications running in a web container without
-		JTA, or integration testing using the org.springframework.test package.
-	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close"
-			p:driverClassName="${jdbc.driverClassName}" p:url="${jdbc.url}" p:username="${jdbc.username}"
-			p:password="${jdbc.password}"/>
+    <!--
+         Configurer that replaces ${...} placeholders with values from a properties file
+         (in this case, JDBC-related settings for the dataSource definition below)
+     -->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+    <!--<bean class="org.apache.commons.configuration.PropertiesConfiguration">-->
+        <!--<constructor-arg value="config.properties"/>-->
+    <!--</bean>-->
+    <!--
+         Uses Apache Commons DBCP for connection pooling. See Commons DBCP documentation
+         for the required JAR files. See the PetStore sample application also shipped with
+         Spring, for an example of Commons DBCP usage and the necessary build script.
+         Alternatively you can use another connection pool such as C3P0, similarly configured
+         using Spring.
+         A standalone connection pool such as Commons DBCP is a good choice for use outside an
+         application server environment, including web applications running in a web container without
+         JTA, or integration testing using the org.springframework.test package.
+     <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close"
+             p:driverClassName="${jdbc.driverClassName}" p:url="${jdbc.url}" p:username="${jdbc.username}"
+             p:password="${jdbc.password}"/>
 
-	-->
-	<!-- Transaction manager for a single JDBC DataSource (alternative to JTA)
-	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
-			p:dataSource-ref="dataSource"/>
-			
--->
+     -->
+    <!-- Transaction manager for a single JDBC DataSource (alternative to JTA)
+        <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+                p:dataSource-ref="dataSource"/>
 
-	<!-- ========================= COMPONENT DEFINITIONS =========================
--->
+    -->
 
-	<!--
-		Activates various annotations to be detected in bean classes: Spring's
-		@Required and @Autowired, as well as JSR 250's @PostConstruct,
-		@PreDestroy and @Resource (if available) and JPA's @PersistenceContext
-		and @PersistenceUnit (if available).
-	-->
-	<context:annotation-config/>
-	
-	<!-- Scans within the base package of the application for @Components to configure as beans-->
-	<context:component-scan base-package="com.rackspace.idm" />
+    <!-- ========================= COMPONENT DEFINITIONS =========================
+    -->
 
-	<!--
-		Instruct Spring to perform automatic transaction management on annotated classes.
-		The SpringJdbcIntro class uses @Transactional annotations.
-	<tx:annotation-driven/>
-	-->
-	
-	<aop:aspectj-autoproxy/>
-	
+    <!--
+         Activates various annotations to be detected in bean classes: Spring's
+         @Required and @Autowired, as well as JSR 250's @PostConstruct,
+         @PreDestroy and @Resource (if available) and JPA's @PersistenceContext
+         and @PersistenceUnit (if available).
+     -->
+    <context:annotation-config/>
+
+    <!-- Scans within the base package of the application for @Components to configure as beans-->
+    <context:component-scan base-package="com.rackspace.idm"/>
+
+    <!--
+         Instruct Spring to perform automatic transaction management on annotated classes.
+         The SpringJdbcIntro class uses @Transactional annotations.
+     <tx:annotation-driven/>
+     -->
+
+    <aop:aspectj-autoproxy/>
+
 </beans>

@@ -1,19 +1,12 @@
 package com.rackspace.idm.api.converter.cloudv11;
 
-import java.util.List;
-
-import org.apache.commons.configuration.Configuration;
-
-import com.rackspace.idm.cloudv11.jaxb.BaseURL;
-import com.rackspace.idm.cloudv11.jaxb.BaseURLList;
-import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
-import com.rackspace.idm.cloudv11.jaxb.BaseURLRefList;
-import com.rackspace.idm.cloudv11.jaxb.ObjectFactory;
-import com.rackspace.idm.cloudv11.jaxb.ServiceCatalog;
-import com.rackspace.idm.cloudv11.jaxb.UserType;
+import com.rackspace.idm.cloudv11.jaxb.*;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.util.CloudAuthServiceCatalogFactory;
+import org.apache.commons.configuration.Configuration;
+
+import java.util.List;
 
 public class EndpointConverterCloudV11 {
     private final Configuration config;

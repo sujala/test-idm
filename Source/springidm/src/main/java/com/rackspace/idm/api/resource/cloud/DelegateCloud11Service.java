@@ -23,8 +23,8 @@ public class DelegateCloud11Service implements Cloud11Service {
     private DefaultCloud11Service defaultCloud11Service;
 
     @Override
-    public Response.ResponseBuilder validateToken(String belongsTo, String type,
-                                                  HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder validateToken(String belongsTo, String type, HttpHeaders httpHeaders)
+            throws IOException {
 
         try {
             return defaultCloud11Service.validateToken(belongsTo, type, httpHeaders);
@@ -43,7 +43,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder serviceResponse = defaultCloud11Service.authenticate(response, httpHeaders, body);
         if (serviceResponse.build().getStatus() == 404) {
             return cloudClient.post(getCloudAuthV11Url().concat("auth"), httpHeaders, body);
-        }else{
+        } else {
             return serviceResponse;
         }
     }
@@ -55,7 +55,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         } catch (Exception e) {
         }
 
-        return cloudClient.delete(getCloudAuthV11Url().concat("token"),httpHeaders);
+        return cloudClient.delete(getCloudAuthV11Url().concat("token"), httpHeaders);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class DelegateCloud11Service implements Cloud11Service {
             return defaultCloud11Service.userRedirect(nastId, httpHeaders);
         } catch (Exception e) {
         }
-        return cloudClient.get(getCloudAuthV11Url().concat("nast/"+nastId),httpHeaders);
+        return cloudClient.get(getCloudAuthV11Url().concat("nast/" + nastId), httpHeaders);
     }
 
     @Override
@@ -76,8 +76,8 @@ public class DelegateCloud11Service implements Cloud11Service {
 
         HashMap<String, String> queryParams = new HashMap<String, String>();
         queryParams.put("serviceName", serviceName);
-        String path = getCloudAuthV11Url().concat(getPath("baseURLs",queryParams));
-        return cloudClient.get(path,httpHeaders);
+        String path = getCloudAuthV11Url().concat(getPath("baseURLs", queryParams));
+        return cloudClient.get(path, httpHeaders);
     }
 
     @Override
@@ -89,8 +89,8 @@ public class DelegateCloud11Service implements Cloud11Service {
 
         HashMap<String, String> queryParams = new HashMap<String, String>();
         queryParams.put("serviceName", serviceName);
-        String path = getCloudAuthV11Url().concat(getPath("baseURLs/"+baseURLId, queryParams));
-        return cloudClient.get(path,httpHeaders);
+        String path = getCloudAuthV11Url().concat(getPath("baseURLs/" + baseURLId, queryParams));
+        return cloudClient.get(path, httpHeaders);
     }
 
     @Override
@@ -102,10 +102,9 @@ public class DelegateCloud11Service implements Cloud11Service {
 
         HashMap<String, String> queryParams = new HashMap<String, String>();
         queryParams.put("serviceName", serviceName);
-        String path = getCloudAuthV11Url().concat(getPath("baseURLs/enabled",queryParams));
-        return cloudClient.get(path,httpHeaders);
+        String path = getCloudAuthV11Url().concat(getPath("baseURLs/enabled", queryParams));
+        return cloudClient.get(path, httpHeaders);
     }
-
 
 
     private String getPath(String path, HashMap<String, String> queryParams) {
@@ -128,6 +127,8 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     private String getCloudAuthV11Url() {
-        return config.getString("cloudAuth11url");
+        String cloudAuth11url = config.getString("cloudAuth11url");
+        System.out.println(cloudAuth11url);
+        return "https://auth.staging.us.ccp.rackspace.net/v1.1/";
     }
 }

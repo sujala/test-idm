@@ -1,17 +1,17 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.List;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-
+import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.cloudv11.jaxb.*;
+import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.UserDisabledException;
 import org.apache.commons.configuration.Configuration;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -22,27 +22,16 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.cloudv11.jaxb.AuthFault;
-import com.rackspace.idm.cloudv11.jaxb.BadRequestFault;
-import com.rackspace.idm.cloudv11.jaxb.Credentials;
-import com.rackspace.idm.cloudv11.jaxb.ItemNotFoundFault;
-import com.rackspace.idm.cloudv11.jaxb.MossoCredentials;
-import com.rackspace.idm.cloudv11.jaxb.NastCredentials;
-import com.rackspace.idm.cloudv11.jaxb.PasswordCredentials;
-import com.rackspace.idm.cloudv11.jaxb.UnauthorizedFault;
-import com.rackspace.idm.cloudv11.jaxb.UserCredentials;
-import com.rackspace.idm.cloudv11.jaxb.UserDisabledFault;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.UserDisabledException;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.List;
 
 @Component
 public class DefaultCloud11Service implements Cloud11Service {
