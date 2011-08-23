@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -143,6 +144,137 @@ public class Cloud11VersionResource {
             String body
     )  throws IOException {
         return getCloud11Service().all(httpHeaders, body).build();
+    }
+
+
+    @Path("users")
+    public Response createUser(
+            @Context HttpHeaders httpHeaders,
+            String body
+    ) throws IOException {
+        return getCloud11Service().createUser(httpHeaders, body).build();
+    }
+
+    @GET
+    @Path("users/{userId}")
+    public Response getUser(
+            @PathParam("userId") String userId,
+            @Context HttpHeaders httpHeaders
+    ) throws IOException {
+        return getCloud11Service().getUser(userId, httpHeaders).build();
+    }
+
+    @DELETE
+    @Path("users/{userId}")
+    public Response deleteUser(
+            @PathParam("userId") String userId,
+            @Context HttpHeaders httpHeaders
+    ) throws IOException {
+        return getCloud11Service().deleteUser(userId, httpHeaders).build();
+    }
+
+    @PUT
+    @Path("users/{userId}")
+    public Response updateUser(
+            @PathParam("userId") String userId,
+            @Context HttpHeaders httpHeaders,
+            String body
+    ) throws IOException {
+        return getCloud11Service().updateUser(userId, httpHeaders, body).build();
+    }
+
+    @GET
+    @Path("users/{userId}/enabled")
+    public Response getUserEnabled(
+            @PathParam("userId") String userId,
+            @Context HttpHeaders httpHeaders
+    ) throws IOException {
+        return getCloud11Service().getUserEnabled(userId, httpHeaders).build();
+    }
+
+    @PUT
+    @Path("users/{userId}/enabled")
+    public Response setUserEnabled(
+            @PathParam("userId") String userId,
+            @Context HttpHeaders httpHeaders,
+            String body
+    ) throws IOException {
+         return getCloud11Service().setUserEnabled(userId, httpHeaders, body).build();
+    }
+
+    @GET
+    @Path("users/{userId}/key")
+    public Response getUserKey(
+            @PathParam("userId") String userId,
+            @Context HttpHeaders httpHeaders
+    ) throws IOException {
+         return getCloud11Service().getUserKey(userId, httpHeaders).build();
+    }
+
+    @PUT
+    @Path("users/{userId}/enabled")
+    public Response setUserKey(
+            @PathParam("userId") String userId,
+            @Context HttpHeaders httpHeaders,
+            String body
+    ) throws IOException {
+         return getCloud11Service().setUserKey(userId, httpHeaders, body).build();
+    }
+
+    @GET
+    @Path("users/{userId}/serviceCatalog")
+    public Response getServiceCatalog(
+            @PathParam("userId") String userId,
+            @Context HttpHeaders httpHeaders
+    ) throws IOException {
+         return getCloud11Service().getServiceCatalog(userId, httpHeaders).build();
+    }
+
+    @GET
+    @Path("users/{userId}/baseURLRefs")
+    public Response getBaseURLRefs(
+            @PathParam("userId") String userId,
+            @Context HttpHeaders httpHeaders
+    ) throws IOException {
+         return getCloud11Service().getBaseURLRefs(userId, httpHeaders).build();
+    }
+
+    @POST
+    @Path("users/{userId}/baseURLRefs")
+    public Response addBaseURLRef(
+            @PathParam("userId") String userId,
+            @Context HttpHeaders httpHeaders,
+            String body
+    ) throws IOException {
+        return getCloud11Service().addBaseURLRef(userId, httpHeaders, body).build();
+    }
+
+    @GET
+    @Path("users/{userId}/baseURLRefs/{baseURLId}")
+    public Response getBaseURLRef(
+            @PathParam("userId") String userId,
+            @PathParam("baseURLId") String baseURLId,
+            @Context HttpHeaders httpHeaders
+    ) throws IOException {
+         return getCloud11Service().getBaseURLRef(userId, baseURLId, httpHeaders).build();
+    }
+
+    @DELETE
+    @Path("users/{userId}/baseURLRefs/{baseURLId}")
+    public Response deleteBaseURLRef(
+            @PathParam("userId") String userId,
+            @PathParam("baseURLId") String baseURLId,
+            @Context HttpHeaders httpHeaders
+    ) throws IOException {
+        return getCloud11Service().deleteBaseURLRef(userId, baseURLId, httpHeaders).build();
+    }
+
+    @GET
+    @Path("users/groups")
+    public Response getUserGroups(
+            @Context HttpHeaders httpHeaders
+    ) throws IOException {
+         return getCloud11Service().getUserGroups(httpHeaders).build();
     }
 
     private Cloud11Service getCloud11Service() {
