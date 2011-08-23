@@ -233,13 +233,13 @@ public class DefaultCloud11Service implements Cloud11Service {
         return creds;
     }
 	@Override
-	public Response.ResponseBuilder validateToken(String belongsTo, String type,
+	public Response.ResponseBuilder validateToken(String tokeId, String belongsTo, String type,
 			HttpHeaders httpHeaders) throws IOException {
 		throw new IOException("Not Implemented");
 	}
 
     @Override
-    public Response.ResponseBuilder revokeToken(HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder revokeToken(String tokenId, HttpHeaders httpHeaders) throws IOException {
         throw new IOException("Not Implemented");
     }
 
@@ -260,6 +260,21 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder getEnabledBaseURL(String serviceName, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder migrate(String user, HttpHeaders httpHeaders, String body) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder unmigrate(String user, HttpHeaders httpHeaders, String body) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder all(HttpHeaders httpHeaders, String body) throws IOException {
         throw new IOException("Not Implemented");
     }
 }

@@ -51,21 +51,23 @@ public class Cloud11VersionResource {
     }
 
     @GET
-    @Path("token")
+    @Path("token/{tokenId}")
     public Response validateToken(
+            @PathParam("tokenId") String tokenId,
             @QueryParam("belongsTo") String belongsTo,
             @QueryParam("type") String type,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
-        return getCloud11Service().validateToken(belongsTo, type, httpHeaders).build();
+        return getCloud11Service().validateToken(tokenId, belongsTo, type, httpHeaders).build();
     }
 
     @DELETE
-    @Path("token")
+    @Path("token/{tokenId}")
     public Response revokeToken(
+            @PathParam("tokenId") String tokenId,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
-        return getCloud11Service().revokeToken(httpHeaders).build();
+        return getCloud11Service().revokeToken(tokenId,httpHeaders).build();
     }
 
     @GET
@@ -112,6 +114,35 @@ public class Cloud11VersionResource {
             @Context HttpHeaders httpHeaders
     )  throws IOException {
         return getCloud11Service().getEnabledBaseURL(serviceName, httpHeaders).build();
+    }
+
+    @POST
+    @Path("migration/{userId}/migrate")
+    public Response migrate(
+            @PathParam("userId") String user,
+            @Context HttpHeaders httpHeaders,
+            String body
+    )  throws IOException {
+        return getCloud11Service().migrate(user, httpHeaders, body).build();
+    }
+
+    @POST
+    @Path("migration/{userId}/unmigrate")
+    public Response unmigrate(
+            @PathParam("userId") String user,
+            @Context HttpHeaders httpHeaders,
+            String body
+    )  throws IOException {
+        return getCloud11Service().unmigrate(user, httpHeaders, body).build();
+    }
+
+    @POST
+    @Path("migration/all")
+    public Response all(
+            @Context HttpHeaders httpHeaders,
+            String body
+    )  throws IOException {
+        return getCloud11Service().all(httpHeaders, body).build();
     }
 
     private Cloud11Service getCloud11Service() {

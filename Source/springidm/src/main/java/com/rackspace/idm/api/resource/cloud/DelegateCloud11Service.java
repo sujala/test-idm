@@ -23,18 +23,18 @@ public class DelegateCloud11Service implements Cloud11Service {
     private DefaultCloud11Service defaultCloud11Service;
 
     @Override
-    public Response.ResponseBuilder validateToken(String belongsTo, String type,
+    public Response.ResponseBuilder validateToken(String tokenId, String belongsTo, String type,
                                                   HttpHeaders httpHeaders) throws IOException {
 
         try {
-            return defaultCloud11Service.validateToken(belongsTo, type, httpHeaders);
+            return defaultCloud11Service.validateToken(tokenId, belongsTo, type, httpHeaders);
         } catch (Exception e) {
         }
 
         HashMap<String, String> queryParams = new HashMap<String, String>();
         queryParams.put("belongsTo", belongsTo);
         queryParams.put("type", type);
-        String path = getCloudAuthV11Url().concat(getPath("token", queryParams));
+        String path = getCloudAuthV11Url().concat(getPath("token/"+tokenId, queryParams));
         return cloudClient.get(path, httpHeaders);
     }
 
@@ -49,13 +49,13 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder revokeToken(HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder revokeToken(String tokenId, HttpHeaders httpHeaders) throws IOException {
         try {
-            return defaultCloud11Service.revokeToken(httpHeaders);
+            return defaultCloud11Service.revokeToken(tokenId, httpHeaders);
         } catch (Exception e) {
         }
 
-        return cloudClient.delete(getCloudAuthV11Url().concat("token"),httpHeaders);
+        return cloudClient.delete(getCloudAuthV11Url().concat("token/"+tokenId),httpHeaders);
     }
 
     @Override
@@ -106,7 +106,35 @@ public class DelegateCloud11Service implements Cloud11Service {
         return cloudClient.get(path,httpHeaders);
     }
 
+    @Override
+    public Response.ResponseBuilder migrate(String user, HttpHeaders httpHeaders, String body) throws IOException {
+        try {
+            return defaultCloud11Service.migrate(user, httpHeaders, body);
+        } catch (Exception e) {
+        }
+        String path =  "migration/"+user+"/migrate";
+        return cloudClient.post(getCloudAuthV11Url().concat(path),httpHeaders,body);
+    }
 
+    @Override
+    public Response.ResponseBuilder unmigrate(String user, HttpHeaders httpHeaders, String body) throws IOException {
+        try {
+            return defaultCloud11Service.unmigrate(user, httpHeaders, body);
+        } catch (Exception e) {
+        }
+        String path =  "migration/"+user+"/unmigrate";
+        return cloudClient.post(getCloudAuthV11Url().concat(path),httpHeaders,body);
+    }
+
+    @Override
+    public Response.ResponseBuilder all(HttpHeaders httpHeaders, String body) throws IOException {
+        try {
+            return defaultCloud11Service.all(httpHeaders, body);
+        } catch (Exception e) {
+        }
+        String path =  "migration/all";
+        return cloudClient.post(getCloudAuthV11Url().concat(path),httpHeaders,body);
+    }
 
     private String getPath(String path, HashMap<String, String> queryParams) {
         String result = path;
