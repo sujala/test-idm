@@ -146,15 +146,6 @@ public class Cloud11VersionResource {
         return getCloud11Service().all(httpHeaders, body).build();
     }
 
-
-    @Path("users")
-    public Response createUser(
-            @Context HttpHeaders httpHeaders,
-            String body
-    ) throws IOException {
-        return getCloud11Service().createUser(httpHeaders, body).build();
-    }
-
     @GET
     @Path("users/{userId}")
     public Response getUser(
@@ -192,16 +183,6 @@ public class Cloud11VersionResource {
         return getCloud11Service().getUserEnabled(userId, httpHeaders).build();
     }
 
-    @PUT
-    @Path("users/{userId}/enabled")
-    public Response setUserEnabled(
-            @PathParam("userId") String userId,
-            @Context HttpHeaders httpHeaders,
-            String body
-    ) throws IOException {
-         return getCloud11Service().setUserEnabled(userId, httpHeaders, body).build();
-    }
-
     @GET
     @Path("users/{userId}/key")
     public Response getUserKey(
@@ -212,7 +193,7 @@ public class Cloud11VersionResource {
     }
 
     @PUT
-    @Path("users/{userId}/enabled")
+    @Path("users/{userId}/key")
     public Response setUserKey(
             @PathParam("userId") String userId,
             @Context HttpHeaders httpHeaders,
