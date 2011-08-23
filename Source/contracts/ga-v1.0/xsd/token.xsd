@@ -392,6 +392,14 @@
 					</xsd:documentation>
 				</annotation>
 			</enumeration>
+			<enumeration value="RACKER">
+				<annotation>
+					<xsd:documentation xml:lang="EN"
+						xmlns="http://www.w3.org/1999/xhtml">
+						<p>This is an extended grant type. Enables us know if a racker is authenticating.</p>
+					</xsd:documentation>
+				</annotation>
+			</enumeration>
 		</restriction>
 	</simpleType>
 
