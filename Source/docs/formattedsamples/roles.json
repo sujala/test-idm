@@ -1,12 +1,18 @@
 {
   "role": [
     {
-      "name": "Admin",
-      "type": "RackspaceDefined"
+      "name": "network_admin",
+      "applicationId": "compute"
     },
     {
-      "name": "HR",
-      "type": "CustomerDefined"
+      "name": "technical_reviewer",
+      "tenantId": "57884",
+      "applicationid": "swift"
+    }
+    {
+      "name": "admin",
+      "tenantId": "cf_89983",
+      "applicationId": "billing"
     }
   ]
 }

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<cloudAuth xmlns="http://docs.rackspacecloud.com/idm/api/v1.0">
+<cloudAuth xmlns="http://idm.api.rackspace.com/v1.0">
     <token id="DFW-c6dfc4456f6545f8b8265ff5b6bda775" 
         expires_in="16640"/>
-	<serviceCatalog xmlns="http://docs.rackspacecloud.com/idm/api/v1.0">
+	<serviceCatalog xmlns="http://idm.api.rackspace.com/v1.0">
 	    <service name="cloudFiles">
 	        <endpoint region="DFW" 
 	            v1Default="true" 

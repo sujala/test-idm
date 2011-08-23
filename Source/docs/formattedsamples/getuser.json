@@ -1,13 +1,4 @@
 {
-  "groups": {
-    "clientGroup": [
-      {
-        "customerId" : "RCN-000-000-000",
-        "clientId" : "ab4820dhcb39347",
-        "name": "Admin",
-        "type": "Role"
-      }
-    ]},
   "username": "jqsmith",
   "customerId": "RCN-000-000-000",
   "customerInum": "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE",

@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<auth xmlns="http://docs.rackspacecloud.com/idm/api/v1.0">
+<auth xmlns="http://idm.api.rackspace.com/v1.0">
 	<access_token 
 	   expires_in="3600" 
 	   id="ab48a9efdfedb23ty3494" />
 	<refresh_token 
 	   id="8792gdfskjbadf98y234r" />
 	<user 
-	    xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
 	    customerId="RCN-000-000-000"
 	    username="jqsmith" />
 </auth>

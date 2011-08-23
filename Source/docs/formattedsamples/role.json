@@ -1,4 +1,4 @@
 {
-      "name": "Admin",
-      "type": "RackspaceDefined"
+      "name": "admin",
+      "tenantId": "cf_78373"
 }

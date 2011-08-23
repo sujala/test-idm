@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<roles xmlns="http://docs.rackspacecloud.com/idm/api/v1.0">
+<roles xmlns="http://api.rackspace.com/idm/v1.0">
 	<role type="RackspaceDefined" customerInum="@FFFF.FFFF.FFFF.FFFF!2398.1FCB"
 		customerId="RCN-234-592-018" name="Admin">
 		<permissions>

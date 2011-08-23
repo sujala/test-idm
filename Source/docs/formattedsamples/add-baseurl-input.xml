@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<baseURL xmlns="http://docs.rackspacecloud.com/idm/api/v1.0"
+<baseURL xmlns="http://idm.api.rackspace.com/v1.0"
     id="111114"
     userType="NAST"
     serviceName="cloudFiles"
