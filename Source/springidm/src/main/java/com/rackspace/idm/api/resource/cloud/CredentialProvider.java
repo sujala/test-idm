@@ -29,7 +29,7 @@ public class CredentialProvider implements MessageBodyReader<JAXBElement<? exten
 
     static {
         try {
-            jaxbContext = JAXBContext.newInstance("com.rackspace.idm.cloud.jaxb");
+            jaxbContext = JAXBContext.newInstance("com.rackspace.idm.cloudv11.jaxb");
         } catch (Exception e) {
             LOG.error("Couldn't create jaxbContext...");
         }
@@ -60,7 +60,7 @@ public class CredentialProvider implements MessageBodyReader<JAXBElement<? exten
         Type[] upperBounds = ((WildcardType) args[0]).getUpperBounds();
         
         return upperBounds.length == 1 && upperBounds[0] instanceof Class
-                && ((Class<?>) upperBounds[0]).getCanonicalName().equals("com.rackspace.idm.cloud.jaxb.Credentials");
+                && ((Class<?>) upperBounds[0]).getCanonicalName().equals("com.rackspace.idm.cloudv11.jaxb.Credentials");
 
     }
 
