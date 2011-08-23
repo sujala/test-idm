@@ -8,5 +8,16 @@ import java.io.IOException;
 public interface Cloud11Service {
 
     Response.ResponseBuilder validateToken(String belongsTo, String type, HttpHeaders httpHeaders) throws IOException;
+
     Response.ResponseBuilder authenticate(HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException;
+
+    Response.ResponseBuilder revokeToken(HttpHeaders httpHeaders) throws IOException;
+
+    <T> Response.ResponseBuilder userRedirect(T nastId, HttpHeaders httpHeaders) throws IOException;
+
+    Response.ResponseBuilder getBaseURLs(String serviceName, HttpHeaders httpHeaders) throws IOException;
+
+    Response.ResponseBuilder getBaseURLId(int baseURLId, String serviceName, HttpHeaders httpHeaders) throws IOException;
+
+    Response.ResponseBuilder getEnabledBaseURL(String serviceName, HttpHeaders httpHeaders) throws IOException;
 }

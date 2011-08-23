@@ -1,17 +1,17 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.cloudv11.jaxb.*;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.UserDisabledException;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.List;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+
 import org.apache.commons.configuration.Configuration;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -22,25 +22,36 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.List;
+import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.cloudv11.jaxb.AuthFault;
+import com.rackspace.idm.cloudv11.jaxb.BadRequestFault;
+import com.rackspace.idm.cloudv11.jaxb.Credentials;
+import com.rackspace.idm.cloudv11.jaxb.ItemNotFoundFault;
+import com.rackspace.idm.cloudv11.jaxb.MossoCredentials;
+import com.rackspace.idm.cloudv11.jaxb.NastCredentials;
+import com.rackspace.idm.cloudv11.jaxb.PasswordCredentials;
+import com.rackspace.idm.cloudv11.jaxb.UnauthorizedFault;
+import com.rackspace.idm.cloudv11.jaxb.UserCredentials;
+import com.rackspace.idm.cloudv11.jaxb.UserDisabledFault;
+import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.UserDisabledException;
 
 @Component
 public class DefaultCloud11Service implements Cloud11Service {
 
-    private Configuration config;
-    private ScopeAccessService scopeAccessService;
-    private EndpointService endpointService;
-    private UserService userService;
-    private AuthConverterCloudV11 authConverter;
+    private final Configuration config;
+    private final ScopeAccessService scopeAccessService;
+    private final EndpointService endpointService;
+    private final UserService userService;
+    private final AuthConverterCloudV11 authConverter;
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
     private static final com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
@@ -54,12 +65,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.endpointService = endpointService;
         this.userService = userService;
         this.authConverter = authConverter;
-    }
-
-    @Override
-    public Response.ResponseBuilder validateToken(String belongsTo, String type, HttpHeaders httpHeaders) throws IOException {
-        // TODO Auto-generated method stub
-        throw new IOException("Not Implemented");
     }
 
     public Response.ResponseBuilder authenticate(HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException {
@@ -162,10 +167,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             return notFoundExceptionResponse(username);
         }
 
-        UserScopeAccess usa = null;
-
         try {
-            usa = this.scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(
+            UserScopeAccess usa = this.scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(
                     username, apiKey, getCloudAuthClientId());
             List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(username);
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverter.toCloudv11AuthDataJaxb(usa, endpoints)));
@@ -228,5 +231,35 @@ public class DefaultCloud11Service implements Cloud11Service {
             throw new BadRequestException("malformed JSON");
         }
         return creds;
+    }
+	@Override
+	public Response.ResponseBuilder validateToken(String belongsTo, String type,
+			HttpHeaders httpHeaders) throws IOException {
+		throw new IOException("Not Implemented");
+	}
+
+    @Override
+    public Response.ResponseBuilder revokeToken(HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public <T> Response.ResponseBuilder userRedirect(T nastId, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder getBaseURLs(String serviceName, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder getBaseURLId(int baseURLId, String serviceName, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public Response.ResponseBuilder getEnabledBaseURL(String serviceName, HttpHeaders httpHeaders) throws IOException {
+        throw new IOException("Not Implemented");
     }
 }
