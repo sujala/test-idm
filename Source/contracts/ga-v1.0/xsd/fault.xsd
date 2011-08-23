@@ -1,0 +1,678 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xslt/schema.xslt"?>
+
+<!-- (C) 2010 Rackspace Hosting, All Rights Reserved -->
+
+<schema elementFormDefault="qualified" attributeFormDefault="unqualified"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:idm="http://idm.api.rackspace.com/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+	xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" jaxb:version="2.1"
+	xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+	jaxb:extensionBindingPrefixes="xjc"
+	targetNamespace="http://idm.api.rackspace.com/v1.0">
+
+	<annotation>
+		<xsd:appinfo xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+			<xsdxt:title>Faults</xsdxt:title>
+			<xsdxt:link rel="index" href="idmapi.xsd" />
+		</xsd:appinfo>
+		<xsd:documentation xml:lang="EN"
+			xmlns="http://www.w3.org/1999/xhtml">
+			<p>
+				This schema file defines faults that may be raised by the IdM
+				API.
+				These faults are derived from the
+				<a href="#type_IdmFault" title="See definition of
+             IdmFault">IdmFault</a>
+			</p>
+			<p>
+				Faults are associated with a default HTTP status code that
+				corresponds to the particular fault type. For example an
+				<a href="#element_itemNotFound" title="see definition of
+             itemNotFound">&lt;itemNotFound&gt;</a>
+				element is associated
+				with the HTTP status code 404. Some elements,
+				the
+				<a href="#element_authFault" title="see definition of
+             idmFault">&lt;idmFault&gt;</a>
+				element for example, may be
+				associated with multiple status codes. It
+				is also possible
+				for multiple fault elements to be associated with
+				the same
+				default code. The examples below showcase the default status
+				codes for each element type. Note that these default codes are
+				not
+				part of the formal schema. In practice, however, an
+				element type will
+				likely be associated with its corresponding
+				default status code.
+			</p>
+		</xsd:documentation>
+	</annotation>
+
+	<!-- Elements -->
+	<element name="idmFault" type="idm:IdmFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					A generic Idm Fault.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/idm_fault.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/idm_fault.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="userDisabled" type="idm:UserDisabledFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					The user has been disabled and is not permitted to
+					authenticate.
+				</p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/user_disabled.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/user_disabled.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="missingUsername" type="idm:UserNotFoundFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					An authentication request requires a username.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/missing_username.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/missing_username.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="badRequest" type="idm:BadRequestFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					The request is malformed.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/bad_request.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/bad_request.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="unauthorized" type="idm:UnauthorizedFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					Authorization failed. Bad API Key? Username?
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/unauthorized.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/unauthorized.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="itemNotFound" type="idm:ItemNotFoundFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					The item or resource could not be found.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/item_not_found.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/item_not_found.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="forbidden" type="idm:ForbiddenFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					Authentication succeeded but you lack sufficient privileges.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/forbidden.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/forbidden.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="usernameConflict" type="idm:UsernameConflictFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					A user with that username already exists.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/username_conflict.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/username_conflict.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="clientnameConflict" type="idm:ClientnameConflictFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					A client with that clientname already exists.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/clientname_conflict.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/clientname_conflict.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="permissionIdConflict" type="idm:PermisionIdConflictFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					A permisssion with that Id already exists.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/resourceId_conflict.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/resourceId_conflict.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="emailConflict" type="idm:EmailConflictFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					A user with that email address already exists.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/email_conflict.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/email_conflict.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="customerIdConflict" type="idm:CustomerIdConflictFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					A customer with that customerId already exists.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/customer_conflict.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/customer_conflict.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="baseUrlIdConflict" type="idm:BaseUrlIdConflictFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					A baseUrl with that id already exists.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/baseurl_conflict.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/baseurl_conflict.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="clientGroupConflict" type="idm:ClientGroupConflictFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					A client group with that name already exists.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/clientgroup_conflict.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/clientgroup_conflict.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="serviceUnavailable" type="idm:ServiceUnavailableFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					The API is currently unavailable.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/unavailable.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/unavailable.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="passwordValidationFault" type="idm:PasswordValidationFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					The password failed validation.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml"
+							href="../formattedsamples/passwordvalidationfault.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/passwordvalidationfault.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="passwordSelfUpdateTooSoonFault" type="idm:PasswordSelfUpdateTooSoonFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					User or admin attempted to update his/her own password more than
+					once in the 24-hour period since the last self-update.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml"
+							href="../formattedsamples/passwordselfupdatetoosoonfault.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/passwordselfupdatetoosoonfault.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="stalePasswordFault" type="idm:StalePasswordFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					The password failed validation.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/statlepasswordfault.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/stalepasswordfault.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="methodNotAllowed" type="idm:MethodNotAllowedFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					The method is not allowed on the resource.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/methodnotallowedfault.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json"
+							href="../formattedsamples/methodnotallowedfault.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="serverError" type="idm:ServerErrorFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					An erorr occured on the server.
+             </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/servererror.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/servererror.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="notProvisioned" type="idm:NotProvisionedFault">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>
+					The user has not been provisioned for this service.
+                </p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/not_provisioned.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/not_provisioned.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<!-- Complex Types -->
+	<complexType name="IdmFault">
+		<sequence>
+			<element name="message" type="xsd:string">
+				<annotation>
+					<xsd:documentation xml:lang="EN"
+						xmlns="http://www.w3.org/1999/xhtml">
+						<p>
+							A human readable message that is appropriate for display
+							to the
+							end user.
+                 </p>
+					</xsd:documentation>
+				</annotation>
+			</element>
+			<element name="details" type="xsd:string" minOccurs="0">
+				<annotation>
+					<xsd:documentation xml:lang="EN"
+						xmlns="http://www.w3.org/1999/xhtml">
+						<p>
+							The optional &lt;details&gt; element may contain useful
+							information for tracking down errors (e.g a stack
+							trace). This
+							information may or may not be appropriate
+							for display to an end
+							user.
+                 </p>
+					</xsd:documentation>
+				</annotation>
+			</element>
+		</sequence>
+		<attribute name="code" type="xsd:int" use="required">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>
+						The HTTP status code associated with the current fault.
+               </p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+	</complexType>
+
+	<complexType name="UserDisabledFault">
+		<complexContent>
+			<extension base="idm:IdmFault">
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="UserNotFoundFault">
+		<complexContent>
+			<extension base="idm:IdmFault">
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="BadRequestFault">
+		<complexContent>
+			<extension base="idm:IdmFault">
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="UnauthorizedFault">
+		<complexContent>
+			<extension base="idm:IdmFault">
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="ItemNotFoundFault">
+		<complexContent>
+			<extension base="idm:IdmFault">
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="ForbiddenFault">
+		<complexContent>
+			<extension base="idm:IdmFault">
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="UsernameConflictFault">
+		<complexContent>
+			<extension base="idm:IdmFault">
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="EmailConflictFault">
+		<complexContent>
+			<extension base="idm:IdmFault">
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="CustomerIdConflictFault">
+		<complexContent>
+			<extension base="idm:IdmFault">
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="PermisionIdConflictFault">
+		<complexContent>
+			<extension base="idm:IdmFault">
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="BaseUrlIdConflictFault">
+		<complexContent>
+			<extension base="idm:IdmFault">
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="ClientnameConflictFault">
+		<complexContent>
+			<extension base="idm:IdmFault">
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="ClientGroupConflictFault">
+		<complexContent>
+			<extension base="idm:IdmFault">
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="ServiceUnavailableFault">
+		<complexContent>
+			<extension base="idm:IdmFault">
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="PasswordValidationFault">
+		<complexContent>
+			<extension base="idm:IdmFault"></extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="PasswordSelfUpdateTooSoonFault">
+		<complexContent>
+			<extension base="idm:IdmFault"></extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="StalePasswordFault">
+		<complexContent>
+			<extension base="idm:IdmFault"></extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="MethodNotAllowedFault">
+		<complexContent>
+			<extension base="idm:IdmFault"></extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="ServerErrorFault">
+		<complexContent>
+			<extension base="idm:IdmFault"></extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="NotProvisionedFault">
+		<complexContent>
+			<extension base="idm:IdmFault"></extension>
+		</complexContent>
+	</complexType>
+
+</schema>

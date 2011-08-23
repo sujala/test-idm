@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xslt/schema.xslt"?>
+
+	<!-- (C) 2010 Rackspace Hosting, All Rights Reserved -->
+
+<schema elementFormDefault="qualified" attributeFormDefault="unqualified"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
+    xmlns:idm="http://idm.api.rackspace.com/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+    xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" jaxb:version="2.1"
+    xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+    jaxb:extensionBindingPrefixes="xjc"
+    targetNamespace="http://idm.api.rackspace.com/v1.0">
+
+    <annotation>
+        <xsd:appinfo xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+            <xsdxt:title>Identity Profile</xsdxt:title>
+            <xsdxt:link rel="index" href="idmapi.xsd" />
+        </xsd:appinfo>
+        <xsd:documentation xml:lang="EN"
+            xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+                This schema file defines entities related to an Identity Profile.
+            </p>
+        </xsd:documentation>
+    </annotation>
+
+	<!-- Elements -->
+	<element name="identityprofile" type="idm:IdentityProfile">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>A rackspace customer's identity profile.</p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/identityprofile.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/identityprofile.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<element name="identityprofiles" type="idm:IdentityProfileList">
+		<annotation>
+			<xsd:documentation xml:lang="EN"
+				xmlns="http://www.w3.org/1999/xhtml">
+				<p>A list of rackspace customer identity profiles.</p>
+			</xsd:documentation>
+			<xsd:appinfo>
+				<xsdxt:samples>
+					<xsdxt:sample>
+						<xsdxt:code type="application/xml" href="../formattedsamples/identityprofiles.xml" />
+					</xsdxt:sample>
+					<xsdxt:sample>
+						<xsdxt:code type="application/json" href="../formattedsamples/identityprofiles.json" />
+					</xsdxt:sample>
+				</xsdxt:samples>
+			</xsd:appinfo>
+		</annotation>
+	</element>
+
+	<!-- Complex Types -->
+	<complexType name="IdentityProfile">
+		<attribute name="customerId" type="string" use="optional">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>
+						A unique customer Id. This is also known as the customer number.
+					</p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+		<attribute name="inum" type="string" use="optional">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>
+						A unique inum associated with the customer.
+                    </p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+        <attribute name="iname" type="xsd:string" use="optional">
+			<annotation>
+				<xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+					<p>
+						A unique iname associated with the customer inum.
+                    </p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+        <attribute name="locked" type="boolean" use="optional">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>
+						A boolean indicating if the customer is locked.
+                    </p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+		<attribute name="softDeleted" type="boolean" use="optional">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>
+						A boolean indicating if the customer has been soft deleted.
+                    </p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+	</complexType>
+
+	<complexType name="IdentityProfileList">
+		<sequence>
+			<element name="identityProfile" type="idm:IdentityProfile" minOccurs="0" maxOccurs="1000"></element>
+		</sequence>
+	</complexType>
+
+</schema>
