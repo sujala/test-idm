@@ -67,7 +67,7 @@ public class CloudClient {
         Response.ResponseBuilder responseBuilder = Response.status(statusCode).entity(responseBody);
         for (Header header : response.getAllHeaders()) {
             String key = header.getName();
-            if (!key.equalsIgnoreCase("content-encoding")) {
+            if (!key.equalsIgnoreCase("content-length")) {
                 responseBuilder = responseBuilder.header(key, header.getValue());
             }
         }
