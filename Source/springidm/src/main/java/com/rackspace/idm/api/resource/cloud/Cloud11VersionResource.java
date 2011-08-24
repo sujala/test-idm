@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -144,6 +143,15 @@ public class Cloud11VersionResource {
             String body
     )  throws IOException {
         return getCloud11Service().all(httpHeaders, body).build();
+    }
+
+    @POST
+    @Path("users")
+    public Response createUser(
+            @Context HttpHeaders httpHeaders,
+            String body
+    ) throws IOException {
+        return getCloud11Service().createUser(httpHeaders, body).build();
     }
 
     @GET
