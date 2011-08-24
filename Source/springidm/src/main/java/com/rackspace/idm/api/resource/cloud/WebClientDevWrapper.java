@@ -17,7 +17,7 @@ import java.security.cert.X509Certificate;
 
 public class WebClientDevWrapper {
 
-    public static DefaultHttpClient wrapClient(HttpClient base) {
+    public static DefaultHttpClient wrapClient(DefaultHttpClient base) {
         try {
             SSLContext ctx = SSLContext.getInstance("TLS");
             X509TrustManager tm = new X509TrustManager() {
@@ -41,12 +41,11 @@ public class WebClientDevWrapper {
             SSLSocketFactory ssf = new SSLSocketFactory(ctx);
             ssf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
             ClientConnectionManager ccm = base.getConnectionManager();
-            SchemeRegistry sr = ccm.getSchemeRegistry();
-            sr.register(new Scheme("https", ssf, 443));
-            DefaultHttpClient defaultHttpClient = new DefaultHttpClient(ccm, base.getParams());
-            defaultHttpClient.addRequestInterceptor(new RequestAcceptEncoding());
-            defaultHttpClient.addResponseInterceptor(new ResponseContentEncoding());
-            return defaultHttpClient;
+            ccm.getSchemeRegistry().register(new Scheme("https", ssf, 443));
+            //DefaultHttpClient defaultHttpClient = new DefaultHttpClient(ccm, base.getParams());
+            //defaultHttpClient.addRequestInterceptor(new RequestAcceptEncoding());
+            //defaultHttpClient.addResponseInterceptor(new ResponseContentEncoding());
+            return base;
         } catch (Exception ex) {
             ex.printStackTrace();
             return null;

@@ -83,8 +83,8 @@ public class CloudClient {
 
     private DefaultHttpClient getHttpClient() {
         DefaultHttpClient client = new DefaultHttpClient();
-        client.addRequestInterceptor(new RequestAcceptEncoding());
-        client.addResponseInterceptor(new ResponseContentEncoding());
+        //client.addRequestInterceptor(new RequestAcceptEncoding());
+        //client.addResponseInterceptor(new ResponseContentEncoding());
 
         if (ignoreSSLCert) {
             client = WebClientDevWrapper.wrapClient(client);
