@@ -443,6 +443,14 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.58) = {
     description = "A private id for a user"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.59) = {
+    name = tenantId
+    ldap-names = tenantId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "An id for a tenant"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 	name = rsPerson
 	ldap-names = rsPerson
@@ -756,4 +764,41 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.20) = {
     kind = structural
     must-contain
         cn
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.21) = {
+    name = tenant
+    ldap-names = tenant
+    subclass-of top
+    kind = structural
+    must-contain
+        tenantId,
+        enabled
+    may-contain
+    	description,
+    	cn
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.22) = {
+    name = tenantRole
+    ldap-names = tenantRole
+    subclass-of top
+    kind = structural
+    must-contain
+    	clientId,
+        cn
+    may-contain
+    	tenantId
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.23) = {
+	name = clientRole
+	ldap-names = clientRole
+	subclass-of top
+    kind = structural
+    must-contain
+        cn,
+        clientId
+    may-contain
+        description
 };
