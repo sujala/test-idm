@@ -3,18 +3,12 @@ package com.rackspace.idm.api.resource.cloud;
 import java.io.IOException;
 import java.util.HashMap;
 import org.apache.commons.configuration.Configuration;
-import org.apache.http.client.methods.HttpHead;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-
-import org.apache.commons.configuration.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 @Component
 public class DelegateCloud11Service implements Cloud11Service {
@@ -297,8 +291,6 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     private String getCloudAuthV11Url() {
-        String cloudAuth11url = config.getString("cloudAuth11url");
-        System.out.println(cloudAuth11url);
-        return "https://auth.staging.us.ccp.rackspace.net/v1.1/";
+        return config.getString("cloudAuth11url");
     }
 }
