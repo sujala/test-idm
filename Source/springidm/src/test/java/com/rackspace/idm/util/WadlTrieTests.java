@@ -52,7 +52,7 @@ public class WadlTrieTests {
         public List<PathSegment> getPathSegments() {
             final List<PathSegment> psegs = new ArrayList<PathSegment>();
 
-            final String[] paths = new String[] { "v1.0", "users", "mkovacs", "baseurlrefs", "wildcard" };
+            final String[] paths = new String[] { "v1.0", "customers", "wildcard", "users", "mkovacs" };
 
             for (final String string : paths) {
                 psegs.add(
@@ -168,8 +168,8 @@ public class WadlTrieTests {
 
     @Test
     public void shouldFindPermissionForMultipleWildcards() {
-        final Object permissionFor = trie.getPermissionFor("root" , "/", "v1.0", "users", "mkovacs", "baseurlrefs", "wildcard", "GET");
-        Assert.assertEquals(permissionFor, "getBaseUrlRef");
+        final Object permissionFor = trie.getPermissionFor("root" , "/", "v1.0", "customers", "wildcard", "users", "wildcard", "GET");
+        Assert.assertEquals(permissionFor, "getUser");
     }
 
     @Test
@@ -177,7 +177,7 @@ public class WadlTrieTests {
         final UriInfo uriInfo = new MyUriInfo();
 
         final Object permissionFor = trie.getPermissionFor("GET", uriInfo);
-        Assert.assertEquals(permissionFor, "getBaseUrlRef");
+        Assert.assertEquals(permissionFor, "getUser");
     }
     
     @Test
