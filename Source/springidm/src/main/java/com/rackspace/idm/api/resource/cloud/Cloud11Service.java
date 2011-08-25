@@ -17,11 +17,8 @@ public interface Cloud11Service {
     Response.ResponseBuilder getBaseURLs(String serviceName, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder getBaseURLId(int baseURLId, String serviceName, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder getEnabledBaseURL(String serviceName, HttpHeaders httpHeaders) throws IOException;
-
     Response.ResponseBuilder migrate(String user, HttpHeaders httpHeaders, String body) throws IOException;
-
     Response.ResponseBuilder unmigrate(String user, HttpHeaders httpHeaders, String body) throws IOException;
-
     Response.ResponseBuilder all(HttpHeaders httpHeaders, String body) throws IOException;
     Response.ResponseBuilder createUser(HttpHeaders httpHeaders, String body) throws IOException;
     Response.ResponseBuilder getUser(String userId, HttpHeaders httpHeaders) throws IOException;
@@ -36,5 +33,5 @@ public interface Cloud11Service {
     Response.ResponseBuilder addBaseURLRef(String userId, HttpHeaders httpHeaders, String body) throws IOException;
     Response.ResponseBuilder getBaseURLRef(String userId, String baseURLId, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder deleteBaseURLRef(String userId, String baseURLId, HttpHeaders httpHeaders) throws IOException;
-    Response.ResponseBuilder getUserGroups(HttpHeaders httpHeaders) throws IOException;
+    Response.ResponseBuilder getUserGroups(String userId, HttpHeaders httpHeaders) throws IOException;
 }

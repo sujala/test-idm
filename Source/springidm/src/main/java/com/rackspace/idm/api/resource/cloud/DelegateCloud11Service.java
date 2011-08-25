@@ -264,12 +264,13 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder getUserGroups(HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder getUserGroups(String userId, HttpHeaders httpHeaders) throws IOException {
         try {
-            return defaultCloud11Service.getUserGroups(httpHeaders);
+            return defaultCloud11Service.getUserGroups(userId, httpHeaders);
         } catch (Exception e) {
         }
-        return cloudClient.get(getCloudAuthV11Url().concat("users/groups"), httpHeaders);
+        String path = "user/" + userId + "/groups";
+        return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
     }
     private String getPath(String path, HashMap<String, String> queryParams) {
         String result = path;

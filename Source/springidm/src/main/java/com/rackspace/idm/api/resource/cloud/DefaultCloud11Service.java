@@ -356,7 +356,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder getUserGroups(HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder getUserGroups(String userID, HttpHeaders httpHeaders) throws IOException {
         throw new IOException("Not Implemented");
     }
 }
