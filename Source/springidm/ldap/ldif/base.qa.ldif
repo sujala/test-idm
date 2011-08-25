@@ -563,7 +563,7 @@ objectClass: top
 objectClass: rsPerson
 inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!A725
 clearPassword:: u4ulicmrLfboYsh1KryLww==
-endpoint: +7
+endpoint: +3
 endpoint: +11
 endpoint: +15
 endpoint: +17

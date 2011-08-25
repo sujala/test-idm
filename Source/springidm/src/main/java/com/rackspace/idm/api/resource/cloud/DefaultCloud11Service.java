@@ -1,17 +1,17 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.cloudv11.jaxb.*;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.UserDisabledException;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.List;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+
 import org.apache.commons.configuration.Configuration;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -22,16 +22,28 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.List;
+import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
+import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.cloudv11.jaxb.AuthFault;
+import com.rackspace.idm.cloudv11.jaxb.BadRequestFault;
+import com.rackspace.idm.cloudv11.jaxb.Credentials;
+import com.rackspace.idm.cloudv11.jaxb.ItemNotFoundFault;
+import com.rackspace.idm.cloudv11.jaxb.MossoCredentials;
+import com.rackspace.idm.cloudv11.jaxb.NastCredentials;
+import com.rackspace.idm.cloudv11.jaxb.PasswordCredentials;
+import com.rackspace.idm.cloudv11.jaxb.UnauthorizedFault;
+import com.rackspace.idm.cloudv11.jaxb.UserCredentials;
+import com.rackspace.idm.cloudv11.jaxb.UserDisabledFault;
+import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.UserDisabledException;
 
 @Component
 public class DefaultCloud11Service implements Cloud11Service {
@@ -40,7 +52,8 @@ public class DefaultCloud11Service implements Cloud11Service {
     private final ScopeAccessService scopeAccessService;
     private final EndpointService endpointService;
     private final UserService userService;
-    private final AuthConverterCloudV11 authConverter;
+    private final AuthConverterCloudV11 authConverterCloudV11;
+    private final UserConverterCloudV11 userConverterCloudV11;
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
     private static final com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
@@ -48,14 +61,16 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Autowired
     public DefaultCloud11Service(Configuration config, ScopeAccessService scopeAccessService,
                                  EndpointService endpointService, UserService userService,
-                                 AuthConverterCloudV11 authConverter) {
+                                 AuthConverterCloudV11 authConverterCloudV11, UserConverterCloudV11 userConverterCloudV11) {
         this.config = config;
         this.scopeAccessService = scopeAccessService;
         this.endpointService = endpointService;
         this.userService = userService;
-        this.authConverter = authConverter;
+        this.authConverterCloudV11 = authConverterCloudV11;
+        this.userConverterCloudV11 = userConverterCloudV11;
     }
 
+    @Override
     public Response.ResponseBuilder authenticate(HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException {
         if(httpHeaders.getRequestHeader("Content-Type").get(0).contains("application/xml")){
             return authenticateXML(response,httpHeaders,body);
@@ -160,7 +175,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             UserScopeAccess usa = this.scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(
                     username, apiKey, getCloudAuthClientId());
             List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(username);
-            return Response.ok(OBJ_FACTORY.createAuth(this.authConverter.toCloudv11AuthDataJaxb(usa, endpoints)));
+            return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)));
         } catch (NotAuthenticatedException nae) {
             return notAuthenticatedExceptionResponse(username);
         } catch (UserDisabledException ude) {
@@ -269,7 +284,15 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder getUser(String userId, HttpHeaders httpHeaders) throws IOException {
-        throw new IOException("Not Implemented");
+        User user = userService.getUser(userId);
+        
+        if (user == null) {
+            return notFoundExceptionResponse(userId);
+        }
+        
+        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
+        
+        return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11User(user, endpoints)));
     }
 
     @Override

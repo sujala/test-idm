@@ -32,6 +32,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         super(connPools, config);
     }
 
+    @Override
     public void addBaseUrl(CloudBaseUrl baseUrl) {
         
         if (baseUrl == null) {
@@ -105,6 +106,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         getLogger().debug("Added baseUrl {}", baseUrl);
     }
 
+    @Override
     public void addBaseUrlToUser(int baseUrlId, boolean def, String username) {
         getLogger().debug("Adding baseUlr {} to user {}", baseUrlId, username);
         CloudBaseUrl baseUrl = this.getBaseUrlById(baseUrlId);
@@ -157,6 +159,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         getLogger().debug("Adding baseUlr {} to user {}", baseUrlId, username);
     }
 
+    @Override
     public void deleteBaseUrl(int baseUrlId) {
         getLogger().debug("Deleting baseUrl - {}", baseUrlId);
 
@@ -186,6 +189,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         getLogger().debug("Deleted baseUrl - {}", baseUrlId);
     }
 
+    @Override
     public CloudBaseUrl getBaseUrlById(int baseUrlId) {
         getLogger().debug("Get baseurl by Id {}", baseUrlId);
         CloudBaseUrl baseUrl = null;
@@ -218,6 +222,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         return baseUrl;
     }
 
+    @Override
     public List<CloudBaseUrl> getBaseUrls() {
         
         getLogger().debug("Getting baseurls");
@@ -247,6 +252,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         return baseUrls;
     }
 
+    @Override
     public List<CloudEndpoint> getEndpointsForUser(String username) {
         
         getLogger().debug("Getting Endpoints for User {}",username);
@@ -278,6 +284,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         return endpoints;
     }
 
+    @Override
     public void removeBaseUrlFromUser(int baseUrlId, String username) {
         
         getLogger().debug("Removing baseurl {} from user {}", baseUrlId, username);

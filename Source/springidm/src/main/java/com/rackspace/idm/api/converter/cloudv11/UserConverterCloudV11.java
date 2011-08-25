@@ -1,15 +1,24 @@
 package com.rackspace.idm.api.converter.cloudv11;
 
+import java.util.List;
+
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 
+import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.User;
 
 public class UserConverterCloudV11 {
     
+    private final EndpointConverterCloudV11 enpointConverterCloudV11;
+    
     private final com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
 
-    public com.rackspace.idm.cloudv11.jaxb.User toCloudV11User(User user) {
+    public UserConverterCloudV11(EndpointConverterCloudV11 enpointConverterCloudV11) {
+        this.enpointConverterCloudV11 = enpointConverterCloudV11;
+    }
+    
+    public com.rackspace.idm.cloudv11.jaxb.User toCloudV11User(User user, List<CloudEndpoint> endpoints) {
         
         com.rackspace.idm.cloudv11.jaxb.User jaxbUser = OBJ_FACTORY.createUser();
         jaxbUser.setId(user.getUsername());
@@ -37,6 +46,9 @@ public class UserConverterCloudV11 {
             e.printStackTrace();
         }
         
+        if (endpoints != null && endpoints.size() > 0) {
+            jaxbUser.setBaseURLRefs(this.enpointConverterCloudV11.toBaseUrlRefs(endpoints));
+        }
         
         return jaxbUser;
     }

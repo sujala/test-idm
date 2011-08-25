@@ -152,7 +152,7 @@ public abstract class LdapRepository {
 
     // Definitions for LDAP DNs
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
-    protected static final String BASEURL_BASE_DN = "out=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+    protected static final String BASEURL_BASE_DN = "ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com";
 
     // Definitions for OU names
     protected static final String OU_GROUPS_NAME = "groups";
