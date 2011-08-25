@@ -355,7 +355,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         String serviceName, HttpHeaders httpHeaders) throws IOException {
         CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseURLId);
 
-        if (baseUrl == null) {
+        if (baseUrl == null || !serviceName.equals(baseUrl.getService())) {
             return notFoundExceptionResponse(String.format(
                 "BaseUrlId %s not found", baseURLId));
         }
@@ -367,7 +367,18 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder getEnabledBaseURL(String serviceName,
         HttpHeaders httpHeaders) throws IOException {
-        throw new IOException("Not Implemented");
+        List<CloudBaseUrl> baseUrls = this.endpointService.getBaseUrls();
+
+        List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
+        for (CloudBaseUrl url : baseUrls) {
+            if (url.getEnabled()) {
+                filteredBaseUrls.add(url);
+            }
+        }
+
+        return Response.ok(OBJ_FACTORY
+            .createBaseURLs(this.endpointConverterCloudV11
+                .toBaseUrls(filteredBaseUrls)));
     }
 
     @Override
