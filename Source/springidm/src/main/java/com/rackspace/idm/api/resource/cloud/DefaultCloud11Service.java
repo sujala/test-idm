@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
@@ -13,6 +14,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -23,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
+import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.cloudv11.jaxb.AuthFault;
@@ -35,6 +38,7 @@ import com.rackspace.idm.cloudv11.jaxb.PasswordCredentials;
 import com.rackspace.idm.cloudv11.jaxb.UnauthorizedFault;
 import com.rackspace.idm.cloudv11.jaxb.UserCredentials;
 import com.rackspace.idm.cloudv11.jaxb.UserDisabledFault;
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
@@ -54,32 +58,40 @@ public class DefaultCloud11Service implements Cloud11Service {
     private final UserService userService;
     private final AuthConverterCloudV11 authConverterCloudV11;
     private final UserConverterCloudV11 userConverterCloudV11;
+    private final EndpointConverterCloudV11 endpointConverterCloudV11;
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
     private static final com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
 
     @Autowired
-    public DefaultCloud11Service(Configuration config, ScopeAccessService scopeAccessService,
-                                 EndpointService endpointService, UserService userService,
-                                 AuthConverterCloudV11 authConverterCloudV11, UserConverterCloudV11 userConverterCloudV11) {
+    public DefaultCloud11Service(Configuration config,
+        ScopeAccessService scopeAccessService, EndpointService endpointService,
+        UserService userService, AuthConverterCloudV11 authConverterCloudV11,
+        UserConverterCloudV11 userConverterCloudV11,
+        EndpointConverterCloudV11 endpointConverterCloudV11) {
         this.config = config;
         this.scopeAccessService = scopeAccessService;
         this.endpointService = endpointService;
         this.userService = userService;
         this.authConverterCloudV11 = authConverterCloudV11;
         this.userConverterCloudV11 = userConverterCloudV11;
+        this.endpointConverterCloudV11 = endpointConverterCloudV11;
     }
 
     @Override
-    public Response.ResponseBuilder authenticate(HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException {
-        if(httpHeaders.getRequestHeader("Content-Type").get(0).contains("application/xml")){
-            return authenticateXML(response,httpHeaders,body);
-        }else {
-            return authenticateJSON(response,httpHeaders,body);
+    public Response.ResponseBuilder authenticate(HttpServletResponse response,
+        HttpHeaders httpHeaders, String body) throws IOException {
+        if (httpHeaders.getRequestHeader("Content-Type").get(0)
+            .contains("application/xml")) {
+            return authenticateXML(response, httpHeaders, body);
+        } else {
+            return authenticateJSON(response, httpHeaders, body);
         }
     }
 
-    public Response.ResponseBuilder authenticateJSON(HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException {
+    public Response.ResponseBuilder authenticateJSON(
+        HttpServletResponse response, HttpHeaders httpHeaders, String body)
+        throws IOException {
         JAXBElement<? extends Credentials> cred = null;
         try {
             cred = unmarshallCredentialsFromJSON(body);
@@ -89,12 +101,16 @@ public class DefaultCloud11Service implements Cloud11Service {
         return authenticateResponse(cred, httpHeaders, response, body);
     }
 
-    public Response.ResponseBuilder authenticateXML(HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException {
+    public Response.ResponseBuilder authenticateXML(
+        HttpServletResponse response, HttpHeaders httpHeaders, String body)
+        throws IOException {
         JAXBElement<? extends Credentials> cred = null;
         try {
-            JAXBContext context = JAXBContext.newInstance("com.rackspace.idm.cloudv11.jaxb");
+            JAXBContext context = JAXBContext
+                .newInstance("com.rackspace.idm.cloudv11.jaxb");
             Unmarshaller unmarshaller = context.createUnmarshaller();
-            cred = (JAXBElement<? extends Credentials>) unmarshaller.unmarshal(new StringReader(body));
+            cred = (JAXBElement<? extends Credentials>) unmarshaller
+                .unmarshal(new StringReader(body));
         } catch (JAXBException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -107,41 +123,58 @@ public class DefaultCloud11Service implements Cloud11Service {
         fault.setCode(HttpServletResponse.SC_BAD_REQUEST);
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_BAD_REQUEST).entity(OBJ_FACTORY.createBadRequest(fault));
+        return Response.status(HttpServletResponse.SC_BAD_REQUEST).entity(
+            OBJ_FACTORY.createBadRequest(fault));
     }
 
-    private Response.ResponseBuilder notFoundExceptionResponse(String username) {
+    private Response.ResponseBuilder userNotFoundExceptionResponse(
+        String username) {
         String errMsg = String.format("User %s not found", username);
         ItemNotFoundFault fault = OBJ_FACTORY.createItemNotFoundFault();
         fault.setCode(HttpServletResponse.SC_NOT_FOUND);
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(OBJ_FACTORY.createItemNotFound(fault));
+        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
+            OBJ_FACTORY.createItemNotFound(fault));
     }
 
-    private Response.ResponseBuilder notAuthenticatedExceptionResponse(String username) {
+    private Response.ResponseBuilder notFoundExceptionResponse(String message) {
+        ItemNotFoundFault fault = OBJ_FACTORY.createItemNotFoundFault();
+        fault.setCode(HttpServletResponse.SC_NOT_FOUND);
+        fault.setMessage(message);
+        fault.setDetails(MDC.get(Audit.GUUID));
+        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
+            OBJ_FACTORY.createItemNotFound(fault));
+    }
+
+    private Response.ResponseBuilder notAuthenticatedExceptionResponse(
+        String username) {
         String errMsg = String.format("User %s not authenticated", username);
         UnauthorizedFault fault = OBJ_FACTORY.createUnauthorizedFault();
         fault.setCode(HttpServletResponse.SC_UNAUTHORIZED);
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(OBJ_FACTORY.createUnauthorized(fault));
+        return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(
+            OBJ_FACTORY.createUnauthorized(fault));
     }
 
     private Response.ResponseBuilder serviceExceptionResponse() {
         AuthFault fault = OBJ_FACTORY.createAuthFault();
         fault.setCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).entity(OBJ_FACTORY.createAuthFault(fault));
+        return Response.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
+            .entity(OBJ_FACTORY.createAuthFault(fault));
     }
 
-    private Response.ResponseBuilder userDisabledExceptionResponse(String username) {
+    private Response.ResponseBuilder userDisabledExceptionResponse(
+        String username) {
         String errMsg = String.format("User %s is disabled", username);
         UserDisabledFault fault = OBJ_FACTORY.createUserDisabledFault();
         fault.setCode(HttpServletResponse.SC_FORBIDDEN);
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(OBJ_FACTORY.createUserDisabled(fault));
+        return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(
+            OBJ_FACTORY.createUserDisabled(fault));
     }
 
     private void handleRedirect(HttpServletResponse response, String path) {
@@ -152,9 +185,9 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    private Response.ResponseBuilder authenticateResponse(JAXBElement<? extends Credentials> cred,
-                                                          HttpHeaders httpHeaders, HttpServletResponse response,
-                                                          String body) throws IOException {
+    private Response.ResponseBuilder authenticateResponse(
+        JAXBElement<? extends Credentials> cred, HttpHeaders httpHeaders,
+        HttpServletResponse response, String body) throws IOException {
 
         if (!(cred.getValue() instanceof UserCredentials)) {
             handleRedirect(response, "cloud/auth-admin");
@@ -168,14 +201,18 @@ public class DefaultCloud11Service implements Cloud11Service {
         User user = this.userService.getUser(username);
 
         if (user == null) {
-            return notFoundExceptionResponse(username);
+            return userNotFoundExceptionResponse(username);
         }
 
         try {
-            UserScopeAccess usa = this.scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(
+            UserScopeAccess usa = this.scopeAccessService
+                .getUserScopeAccessForClientIdByUsernameAndApiCredentials(
                     username, apiKey, getCloudAuthClientId());
-            List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(username);
-            return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)));
+            List<CloudEndpoint> endpoints = this.endpointService
+                .getEndpointsForUser(username);
+            return Response.ok(OBJ_FACTORY
+                .createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(
+                    usa, endpoints)));
         } catch (NotAuthenticatedException nae) {
             return notAuthenticatedExceptionResponse(username);
         } catch (UserDisabledException ude) {
@@ -189,7 +226,8 @@ public class DefaultCloud11Service implements Cloud11Service {
         return config.getString("cloudAuth.clientId");
     }
 
-    private JAXBElement<? extends Credentials> unmarshallCredentialsFromJSON(String jsonBody) {
+    private JAXBElement<? extends Credentials> unmarshallCredentialsFromJSON(
+        String jsonBody) {
 
         JSONParser parser = new JSONParser();
         JAXBElement<? extends Credentials> creds = null;
@@ -199,7 +237,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             if (obj.containsKey("credentials")) {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                        "credentials").toString());
+                    "credentials").toString());
                 UserCredentials userCreds = new UserCredentials();
                 userCreds.setKey(obj3.get("key").toString());
                 userCreds.setUsername(obj3.get("username").toString());
@@ -207,16 +245,16 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             } else if (obj.containsKey("mossoCredentials")) {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                        "mossoCredentials").toString());
+                    "mossoCredentials").toString());
                 MossoCredentials mossoCreds = new MossoCredentials();
                 mossoCreds.setKey(obj3.get("key").toString());
                 mossoCreds.setMossoId(Integer.parseInt(obj3.get("mossoId")
-                        .toString()));
+                    .toString()));
                 creds = OBJ_FACTORY.createMossoCredentials(mossoCreds);
 
             } else if (obj.containsKey("nastCredentials")) {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                        "nastCredentials").toString());
+                    "nastCredentials").toString());
                 NastCredentials nastCreds = new NastCredentials();
                 nastCreds.setKey(obj3.get("key").toString());
                 nastCreds.setNastId(obj3.get("nastId").toString());
@@ -224,7 +262,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             } else if (obj.containsKey("passwordCredentials")) {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                        "passwordCredentials").toString());
+                    "passwordCredentials").toString());
                 PasswordCredentials passwordCreds = new PasswordCredentials();
                 passwordCreds.setUsername(obj3.get("username").toString());
                 passwordCreds.setPassword(obj3.get("username").toString());
@@ -236,127 +274,250 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
         return creds;
     }
-	@Override
-	public Response.ResponseBuilder validateToken(String tokeId, String belongsTo, String type,
-			HttpHeaders httpHeaders) throws IOException {
-		throw new IOException("Not Implemented");
-	}
 
     @Override
-    public Response.ResponseBuilder revokeToken(String tokenId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder validateToken(String tokeId,
+        String belongsTo, String type, HttpHeaders httpHeaders)
+        throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public <T> Response.ResponseBuilder userRedirect(T nastId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder revokeToken(String tokenId,
+        HttpHeaders httpHeaders) throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public Response.ResponseBuilder getBaseURLs(String serviceName, HttpHeaders httpHeaders) throws IOException {
+    public <T> Response.ResponseBuilder userRedirect(T nastId,
+        HttpHeaders httpHeaders) throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public Response.ResponseBuilder getBaseURLId(int baseURLId, String serviceName, HttpHeaders httpHeaders) throws IOException {
-        throw new IOException("Not Implemented");
-    }
+    public Response.ResponseBuilder getBaseURLs(String serviceName,
+        HttpHeaders httpHeaders) throws IOException {
+        List<CloudBaseUrl> baseUrls = this.endpointService.getBaseUrls();
 
-    @Override
-    public Response.ResponseBuilder getEnabledBaseURL(String serviceName, HttpHeaders httpHeaders) throws IOException {
-        throw new IOException("Not Implemented");
-    }
-
-    @Override
-    public Response.ResponseBuilder migrate(String user, HttpHeaders httpHeaders, String body) throws IOException {
-        throw new IOException("Not Implemented");
-    }
-
-    @Override
-    public Response.ResponseBuilder createUser(HttpHeaders httpHeaders, String body) throws IOException {
-        throw new IOException("Not Implemented");
-    }
-
-    @Override
-    public Response.ResponseBuilder unmigrate(String user, HttpHeaders httpHeaders, String body) throws IOException {
-        throw new IOException("Not Implemented");
-    }
-
-    @Override
-    public Response.ResponseBuilder getUser(String userId, HttpHeaders httpHeaders) throws IOException {
-        User user = userService.getUser(userId);
-        
-        if (user == null) {
-            return notFoundExceptionResponse(userId);
+        if (StringUtils.isEmpty(serviceName)) {
+            return Response.ok(OBJ_FACTORY
+                .createBaseURLs(this.endpointConverterCloudV11
+                    .toBaseUrls(baseUrls)));
         }
-        
-        List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
-        
-        return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11User(user, endpoints)));
+
+        List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
+        for (CloudBaseUrl url : baseUrls) {
+            if (url.getService().equals(serviceName)) {
+                filteredBaseUrls.add(url);
+            }
+        }
+
+        return Response.ok(OBJ_FACTORY
+            .createBaseURLs(this.endpointConverterCloudV11
+                .toBaseUrls(filteredBaseUrls)));
     }
 
     @Override
-    public Response.ResponseBuilder all(HttpHeaders httpHeaders, String body) throws IOException {
+    public Response.ResponseBuilder getBaseURLId(int baseURLId,
+        String serviceName, HttpHeaders httpHeaders) throws IOException {
+        CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseURLId);
+
+        if (baseUrl == null) {
+            return notFoundExceptionResponse(String.format(
+                "BaseUrlId %s not found", baseURLId));
+        }
+
+        return Response.ok(OBJ_FACTORY
+            .createBaseURL(this.endpointConverterCloudV11.toBaseUrl(baseUrl)));
+    }
+
+    @Override
+    public Response.ResponseBuilder getEnabledBaseURL(String serviceName,
+        HttpHeaders httpHeaders) throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public Response.ResponseBuilder deleteUser(String userId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder migrate(String user,
+        HttpHeaders httpHeaders, String body) throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public Response.ResponseBuilder updateUser(String userId, HttpHeaders httpHeaders, String body) throws IOException {
+    public Response.ResponseBuilder createUser(HttpHeaders httpHeaders,
+        String body) throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public Response.ResponseBuilder getUserEnabled(String userId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder unmigrate(String user,
+        HttpHeaders httpHeaders, String body) throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public Response.ResponseBuilder setUserEnabled(String userId, HttpHeaders httpHeaders, String body) throws IOException {
+    public Response.ResponseBuilder getUser(String userId,
+        HttpHeaders httpHeaders) throws IOException {
+        User user = userService.getUser(userId);
+
+        if (user == null) {
+            return userNotFoundExceptionResponse(userId);
+        }
+
+        List<CloudEndpoint> endpoints = this.endpointService
+            .getEndpointsForUser(userId);
+
+        return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11
+            .toCloudV11User(user, endpoints)));
+    }
+
+    @Override
+    public Response.ResponseBuilder all(HttpHeaders httpHeaders, String body)
+        throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public Response.ResponseBuilder getUserKey(String userId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder deleteUser(String userId,
+        HttpHeaders httpHeaders) throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public Response.ResponseBuilder setUserKey(String userId, HttpHeaders httpHeaders, String body) throws IOException {
+    public Response.ResponseBuilder updateUser(String userId,
+        HttpHeaders httpHeaders, String body) throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public Response.ResponseBuilder getServiceCatalog(String userId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder getUserEnabled(String userId,
+        HttpHeaders httpHeaders) throws IOException {
+        User user = userService.getUser(userId);
+
+        if (user == null) {
+            return userNotFoundExceptionResponse(userId);
+        }
+
+        return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11
+            .toCloudV11UserWithOnlyEnabled(user)));
+    }
+
+    @Override
+    public Response.ResponseBuilder setUserEnabled(String userId,
+        HttpHeaders httpHeaders, String body) throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public Response.ResponseBuilder getBaseURLRefs(String userId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder getUserKey(String userId,
+        HttpHeaders httpHeaders) throws IOException {
+        User user = userService.getUser(userId);
+
+        if (user == null) {
+            return userNotFoundExceptionResponse(userId);
+        }
+
+        return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11
+            .toCloudV11UserWithOnlyKey(user)));
+    }
+
+    @Override
+    public Response.ResponseBuilder setUserKey(String userId,
+        HttpHeaders httpHeaders, String body) throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public Response.ResponseBuilder addBaseURLRef(String userId, HttpHeaders httpHeaders, String body) throws IOException {
+    public Response.ResponseBuilder getServiceCatalog(String userId,
+        HttpHeaders httpHeaders) throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public Response.ResponseBuilder getBaseURLRef(String userId, String baseURLId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder getBaseURLRefs(String userId,
+        HttpHeaders httpHeaders) throws IOException {
+        User user = userService.getUser(userId);
+
+        if (user == null) {
+            return userNotFoundExceptionResponse(userId);
+        }
+
+        List<CloudEndpoint> endpoints = this.endpointService
+            .getEndpointsForUser(userId);
+
+        return Response.ok(OBJ_FACTORY
+            .createBaseURLRefs(this.endpointConverterCloudV11
+                .toBaseUrlRefs(endpoints)));
+    }
+
+    @Override
+    public Response.ResponseBuilder addBaseURLRef(String userId,
+        HttpHeaders httpHeaders, String body) throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public Response.ResponseBuilder deleteBaseURLRef(String userId, String baseURLId, HttpHeaders httpHeaders) throws IOException {
-        throw new IOException("Not Implemented");
+    public Response.ResponseBuilder getBaseURLRef(String userId,
+        String baseURLId, HttpHeaders httpHeaders) throws IOException {
+        User user = userService.getUser(userId);
+
+        if (user == null) {
+            return userNotFoundExceptionResponse(userId);
+        }
+
+        int id = 0;
+
+        try {
+            id = Integer.parseInt(baseURLId);
+        } catch (NumberFormatException nfe) {
+            return badRequestExceptionResponse("baseURLId not an integer");
+        }
+
+        CloudEndpoint endpoint = this.endpointService.getEndpointForUser(
+            userId, id);
+
+        if (endpoint == null) {
+            return notFoundExceptionResponse(String.format(
+                "BaseUrlId %s not found for user %s", id, userId));
+        }
+
+        return Response.ok(OBJ_FACTORY
+            .createBaseURLRef(this.endpointConverterCloudV11
+                .toBaseUrlRef(endpoint)));
     }
 
     @Override
-    public Response.ResponseBuilder getUserGroups(String userID, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder deleteBaseURLRef(String userId,
+        String baseURLId, HttpHeaders httpHeaders) throws IOException {
+        User user = userService.getUser(userId);
+
+        if (user == null) {
+            return userNotFoundExceptionResponse(userId);
+        }
+
+        int id = 0;
+
+        try {
+            id = Integer.parseInt(baseURLId);
+        } catch (NumberFormatException nfe) {
+            return badRequestExceptionResponse("baseURLId not an integer");
+        }
+
+        CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(id);
+
+        if (baseUrl == null) {
+            return notFoundExceptionResponse(String.format(
+                "BaseUrlId %s not found for user %s", id, userId));
+        }
+
+        this.endpointService.removeBaseUrlFromUser(id, userId);
+
+        return Response.noContent();
+    }
+
+    @Override
+    public Response.ResponseBuilder getUserGroups(String userID,
+        HttpHeaders httpHeaders) throws IOException {
         throw new IOException("Not Implemented");
     }
 }
