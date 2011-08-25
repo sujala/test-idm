@@ -15,6 +15,8 @@ import javax.ws.rs.core.Response;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.Seconds;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -59,6 +61,8 @@ public class Cloud10VersionResource {
     public static final String SERVICENAME_CLOUD_FILES_CDN = "cloudFilesCDN";
     public static final String SERVICENAME_CLOUD_SERVERS = "cloudServers";
 
+    public static final String CACHE_CONTROL = "Cache-Control";
+
     private final Configuration config;
     private final CloudClient cloudClient;
     private final ScopeAccessService scopeAccessService;
@@ -84,9 +88,12 @@ public class Cloud10VersionResource {
     public Response getCloud10VersionInfo(@Context HttpHeaders httpHeaders,
         @HeaderParam(HEADER_AUTH_USER) String username,
         @HeaderParam(HEADER_AUTH_KEY) String key) throws IOException {
-        
+
         Response.ResponseBuilder builder = Response.noContent();
-        builder.header("Vary", "Accept, Accept-Encoding, X-Auth-Token, X-Auth-Key, X-Storage-User, X-Storage-Pass");
+        builder
+            .header(
+                "Vary",
+                "Accept, Accept-Encoding, X-Auth-Token, X-Auth-Key, X-Storage-User, X-Storage-Pass");
 
         User user = this.userService.getUser(username);
 
@@ -96,7 +103,8 @@ public class Cloud10VersionResource {
                     .build();
             } else {
                 String errMsg = "Bad username or password";
-                return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(errMsg).build();
+                return builder.status(HttpServletResponse.SC_UNAUTHORIZED)
+                    .entity(errMsg).build();
             }
         }
 
@@ -156,17 +164,26 @@ public class Cloud10VersionResource {
                 }
 
             }
-            
+
+            builder.header(
+                CACHE_CONTROL,
+                "s-maxage="
+                    + Seconds.secondsBetween(
+                        new DateTime(usa.getAccessTokenExp()), new DateTime()));
+
             return builder.build();
 
         } catch (NotAuthenticatedException nae) {
             String errMsg = "Bad username or password";
-            return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(errMsg).build();
+            return builder.status(HttpServletResponse.SC_UNAUTHORIZED)
+                .entity(errMsg).build();
         } catch (UserDisabledException ude) {
             String errMsg = "Bad username or password";
-            return builder.status(HttpServletResponse.SC_FORBIDDEN).entity(errMsg).build();
+            return builder.status(HttpServletResponse.SC_FORBIDDEN)
+                .entity(errMsg).build();
         } catch (Exception ex) {
-            return builder.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).build();
+            return builder.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
+                .build();
         }
 
     }
