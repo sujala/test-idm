@@ -15,6 +15,7 @@ import javax.xml.bind.Unmarshaller;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -40,6 +41,7 @@ import com.rackspace.idm.cloudv11.jaxb.UserCredentials;
 import com.rackspace.idm.cloudv11.jaxb.UserDisabledFault;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.EndpointService;
@@ -101,6 +103,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         return authenticateResponse(cred, httpHeaders, response, body);
     }
 
+    @SuppressWarnings("unchecked")
     public Response.ResponseBuilder authenticateXML(
         HttpServletResponse response, HttpHeaders httpHeaders, String body)
         throws IOException {
@@ -279,13 +282,43 @@ public class DefaultCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder validateToken(String tokeId,
         String belongsTo, String type, HttpHeaders httpHeaders)
         throws IOException {
-        throw new IOException("Not Implemented");
+        ScopeAccess sa = this.scopeAccessService
+            .getScopeAccessByAccessToken(tokeId);
+
+        if (sa == null || !(sa instanceof UserScopeAccess)
+            || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
+            return notFoundExceptionResponse(String.format(
+                "token %s not found", tokeId));
+        }
+
+        UserScopeAccess usa = (UserScopeAccess) sa;
+
+        if (!StringUtils.isBlank(belongsTo) && !belongsTo.equals(usa.getUsername())) {
+            return notFoundExceptionResponse(String.format(
+                "token %s not found", tokeId));
+        }
+
+        return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11
+            .toCloudV11TokenJaxb((UserScopeAccess) sa)));
     }
 
     @Override
     public Response.ResponseBuilder revokeToken(String tokenId,
         HttpHeaders httpHeaders) throws IOException {
-        throw new IOException("Not Implemented");
+        ScopeAccess sa = this.scopeAccessService
+            .getScopeAccessByAccessToken(tokenId);
+
+        if (sa == null || !(sa instanceof UserScopeAccess)
+            || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
+            return notFoundExceptionResponse(String.format(
+                "token %s not found", tokenId));
+        }
+
+        UserScopeAccess usa = (UserScopeAccess)sa;
+        usa.setAccessTokenExpired();
+        this.scopeAccessService.updateScopeAccess(usa);
+        
+        return Response.noContent();
     }
 
     @Override

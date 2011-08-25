@@ -71,7 +71,7 @@ public class ConverterConfiguration {
 
     @Bean
     AuthConverterCloudV11 authConverterCloudV11() {
-        return new AuthConverterCloudV11(tokenConverterCloudV11(),
+        return new AuthConverterCloudV11(config, tokenConverterCloudV11(),
             endpointConverterCloudV11());
     }
 

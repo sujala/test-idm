@@ -1,12 +1,19 @@
 package com.rackspace.idm.api.converter.cloudv11;
 
-import com.rackspace.idm.cloudv11.jaxb.*;
+import java.util.List;
+
+import org.apache.commons.configuration.Configuration;
+
+import com.rackspace.idm.cloudv11.jaxb.BaseURL;
+import com.rackspace.idm.cloudv11.jaxb.BaseURLList;
+import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
+import com.rackspace.idm.cloudv11.jaxb.BaseURLRefList;
+import com.rackspace.idm.cloudv11.jaxb.ObjectFactory;
+import com.rackspace.idm.cloudv11.jaxb.ServiceCatalog;
+import com.rackspace.idm.cloudv11.jaxb.UserType;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.util.CloudAuthServiceCatalogFactory;
-import org.apache.commons.configuration.Configuration;
-
-import java.util.List;
 
 public class EndpointConverterCloudV11 {
     private final Configuration config;
@@ -63,7 +70,7 @@ public class EndpointConverterCloudV11 {
         baseUrlRef.setId(endpoint.getBaseUrl().getBaseUrlId());
         baseUrlRef.setV1Default(endpoint.isV1preferred());
         baseUrlRef.setHref(String.format(getBaseUrlReferenceString(),
-            getAppVersion(), endpoint.getBaseUrl().getBaseUrlId()));
+            endpoint.getBaseUrl().getBaseUrlId()));
         return baseUrlRef;
     }
 
@@ -101,10 +108,6 @@ public class EndpointConverterCloudV11 {
         catalog = sf.createNew(endpoints);
 
         return catalog;
-    }
-
-    private String getAppVersion() {
-        return config.getString("app.version");
     }
 
     private String getBaseUrlReferenceString() {
