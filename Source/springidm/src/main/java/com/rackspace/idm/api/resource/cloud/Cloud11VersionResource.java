@@ -259,11 +259,12 @@ public class Cloud11VersionResource {
     }
 
     @GET
-    @Path("users/groups")
+    @Path("users/{userId}/groups")
     public Response getUserGroups(
+            @PathParam("userId") String userId,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
-         return getCloud11Service().getUserGroups(httpHeaders).build();
+         return getCloud11Service().getUserGroups(userId, httpHeaders).build();
     }
 
     private Cloud11Service getCloud11Service() {
