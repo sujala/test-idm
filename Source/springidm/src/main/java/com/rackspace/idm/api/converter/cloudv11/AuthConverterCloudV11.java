@@ -34,7 +34,7 @@ public class AuthConverterCloudV11 {
 
         AuthData auth = OBJ_FACTORY.createAuthData();
 
-        auth.setToken(this.tokenConverter.toCloudv10TokenJaxb(usa));
+        auth.setToken(this.tokenConverter.toCloudv11TokenJaxb(usa));
 
         if (endpoints != null && endpoints.size() > 0) {
             ServiceCatalog catalog = this.endpointConverter

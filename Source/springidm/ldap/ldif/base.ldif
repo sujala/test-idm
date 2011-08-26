@@ -15,11 +15,6 @@ objectClass:top
 objectClass:organizationalUnit
 ou:internal
 
-dn: ou=BaseUrls,dc=rackspace,dc=com
-objectClass: top
-objectClass: organizationalUnit
-ou: BaseUrls
-
 ######################################## Cloud Objects #######################################
 
 dn: ou=cloud,o=rackspace,dc=rackspace,dc=com

@@ -81,6 +81,10 @@ public class LdapEndpointRepository extends LdapRepository implements
         if (baseUrl.getDef() != null) {
             atts.add(new Attribute(ATTR_DEF, baseUrl.getDef().toString()));
         }
+        
+        if (baseUrl.getEnabled() != null) {
+            atts.add(new Attribute(ATTR_ENABLED, baseUrl.getEnabled().toString()));
+        }
 
         String baseUrlDN = new LdapDnBuilder(BASEURL_BASE_DN).addAttribute(
             ATTR_BASEURL_ID, String.valueOf(baseUrl.getBaseUrlId())).build();
@@ -359,6 +363,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         baseUrl.setPublicUrl(resultEntry.getAttributeValue(ATTR_PUBLIC_URL));
         baseUrl.setRegion(resultEntry.getAttributeValue(ATTR_REGION));
         baseUrl.setService(resultEntry.getAttributeValue(ATTR_SERVICE));
+        baseUrl.setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
         getLogger().debug("Exiting getBaseUrl");
         return baseUrl;
     }

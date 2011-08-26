@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -83,8 +84,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder authenticate(HttpServletResponse response,
         HttpHeaders httpHeaders, String body) throws IOException {
-        if (httpHeaders.getRequestHeader("Content-Type").get(0)
-            .contains("application/xml")) {
+        if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
             return authenticateXML(response, httpHeaders, body);
         } else {
             return authenticateJSON(response, httpHeaders, body);
