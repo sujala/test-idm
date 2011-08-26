@@ -28,18 +28,21 @@ public class DelegateCloud11Service implements Cloud11Service {
         String belongsTo, String type, HttpHeaders httpHeaders)
         throws IOException {
 
-        try {
-            return defaultCloud11Service.validateToken(tokenId, belongsTo,
-                type, httpHeaders);
-        } catch (Exception e) {
+        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+            .validateToken(tokenId, belongsTo, type, httpHeaders);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            HashMap<String, String> queryParams = new HashMap<String, String>();
+            queryParams.put("belongsTo", belongsTo);
+            queryParams.put("type", type);
+            String path = getCloudAuthV11Url().concat(
+                getPath("token/" + tokenId, queryParams));
+            return cloudClient.get(path, httpHeaders);
         }
-
-        HashMap<String, String> queryParams = new HashMap<String, String>();
-        queryParams.put("belongsTo", belongsTo);
-        queryParams.put("type", type);
-        String path = getCloudAuthV11Url().concat(
-            getPath("token/" + tokenId, queryParams));
-        return cloudClient.get(path, httpHeaders);
+        return serviceResponse;
     }
 
     @Override
@@ -61,13 +64,18 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder revokeToken(String tokenId,
         HttpHeaders httpHeaders) throws IOException {
-        try {
-            return defaultCloud11Service.revokeToken(tokenId, httpHeaders);
-        } catch (Exception e) {
-        }
 
-        return cloudClient.delete(
-            getCloudAuthV11Url().concat("token/" + tokenId), httpHeaders);
+        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+            .revokeToken(tokenId, httpHeaders);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            return cloudClient.delete(
+                getCloudAuthV11Url().concat("token/" + tokenId), httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
