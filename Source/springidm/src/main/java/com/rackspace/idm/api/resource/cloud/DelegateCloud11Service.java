@@ -7,6 +7,7 @@ import java.util.HashMap;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -15,7 +16,9 @@ import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
 import com.rackspace.idm.cloudv11.jaxb.User;
+import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyKey;
 
 @Component
 public class DelegateCloud11Service implements Cloud11Service {
@@ -28,7 +31,7 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Autowired
     private DefaultCloud11Service defaultCloud11Service;
-    
+
     private static final com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
 
     Marshaller marshaller;
@@ -196,13 +199,21 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder createUser(HttpHeaders httpHeaders,
-        String body) throws IOException {
-        try {
-            return defaultCloud11Service.createUser(httpHeaders, body);
-        } catch (Exception e) {
+        User user) throws IOException {
+        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+            .createUser(httpHeaders, user);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String body = this.marshallObjectToString(OBJ_FACTORY
+                .createUser(user));
+            return cloudClient.post(getCloudAuthV11Url().concat("users"),
+                httpHeaders, body);
         }
-        return cloudClient.post(getCloudAuthV11Url().concat("users"),
-            httpHeaders, body);
+        return serviceResponse;
     }
 
     @Override
@@ -244,9 +255,11 @@ public class DelegateCloud11Service implements Cloud11Service {
             .clone();
 
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
-            String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
+            String body = this.marshallObjectToString(OBJ_FACTORY
+                .createUser(user));
             return cloudClient.put(
-                getCloudAuthV11Url().concat("users/" + userId), httpHeaders, body);
+                getCloudAuthV11Url().concat("users/" + userId), httpHeaders,
+                body);
         }
         return serviceResponse;
     }
@@ -303,14 +316,21 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder setUserKey(String userId,
-        HttpHeaders httpHeaders, String body) throws IOException {
-        try {
-            return defaultCloud11Service.setUserKey(userId, httpHeaders, body);
-        } catch (Exception e) {
+        HttpHeaders httpHeaders, UserWithOnlyKey user) throws IOException {
+        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+            .setUserKey(userId, httpHeaders, user);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String body = this.marshallObjectToString(user);
+            String path = "users/" + userId + "/key";
+            return cloudClient.put(getCloudAuthV11Url().concat(path),
+                httpHeaders, body);
         }
-        String path = "users/" + userId + "/key";
-        return cloudClient.put(getCloudAuthV11Url().concat(path), httpHeaders,
-            body);
+        return serviceResponse;
     }
 
     @Override
@@ -344,15 +364,22 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder addBaseURLRef(String userId,
-        HttpHeaders httpHeaders, String body) throws IOException {
-        try {
-            return defaultCloud11Service.addBaseURLRef(userId, httpHeaders,
-                body);
-        } catch (Exception e) {
+        HttpHeaders httpHeaders, UriInfo uriInfo, BaseURLRef baseUrlRef) throws IOException {
+        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+            .addBaseURLRef(userId, httpHeaders, uriInfo, baseUrlRef);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String body = this.marshallObjectToString(OBJ_FACTORY
+                .createBaseURLRef(baseUrlRef));
+            String path = "users/" + userId + "/baseURLRefs";
+            return cloudClient.post(getCloudAuthV11Url().concat(path),
+                httpHeaders, body);
         }
-        String path = "users/" + userId + "/baseURLRefs";
-        return cloudClient.post(getCloudAuthV11Url().concat(path), httpHeaders,
-            body);
+        return serviceResponse;
     }
 
     @Override

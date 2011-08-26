@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -41,6 +42,7 @@ import com.rackspace.idm.cloudv11.jaxb.PasswordCredentials;
 import com.rackspace.idm.cloudv11.jaxb.UnauthorizedFault;
 import com.rackspace.idm.cloudv11.jaxb.UserCredentials;
 import com.rackspace.idm.cloudv11.jaxb.UserDisabledFault;
+import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyKey;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -392,8 +394,57 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder createUser(HttpHeaders httpHeaders,
-        String body) throws IOException {
-        throw new IOException("Not Implemented");
+        com.rackspace.idm.cloudv11.jaxb.User user) throws IOException {
+
+        String userId = user.getId();
+
+        User gaUser = userService.getUser(user.getId());
+
+        if (gaUser == null) {
+            return userNotFoundExceptionResponse(userId);
+        }
+
+        if (!StringUtils.isBlank(user.getNastId())) {
+            gaUser.setNastId(user.getNastId());
+        }
+
+        if (user.getMossoId() != null) {
+            gaUser.setMossoId(user.getMossoId());
+        }
+
+        if (!StringUtils.isBlank(user.getKey())) {
+            gaUser.setApiKey(user.getKey());
+        }
+
+        gaUser.setLocked(!user.isEnabled());
+
+        this.userService.updateUser(gaUser, false);
+
+        if (user.getBaseURLRefs() != null
+            && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
+            // If BaseUrlRefs were sent in then we're going to clear out the old
+            // endpoints and then re-add the new list
+
+            // Delete all old baseUrls
+            List<CloudEndpoint> current = this.endpointService
+                .getEndpointsForUser(userId);
+            for (CloudEndpoint point : current) {
+                this.endpointService.removeBaseUrlFromUser(point.getBaseUrl()
+                    .getBaseUrlId(), userId);
+            }
+
+            // Add new list of baseUrls
+            for (BaseURLRef ref : user.getBaseURLRefs().getBaseURLRef()) {
+                this.endpointService.addBaseUrlToUser(ref.getId(),
+                    ref.isV1Default(), userId);
+            }
+        }
+
+        List<CloudEndpoint> endpoints = this.endpointService
+            .getEndpointsForUser(userId);
+
+        return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11
+            .toCloudV11User(gaUser, endpoints)));
     }
 
     @Override
@@ -513,7 +564,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder setUserKey(String userId,
-        HttpHeaders httpHeaders, String body) throws IOException {
+        HttpHeaders httpHeaders, UserWithOnlyKey user) throws IOException {
         throw new IOException("Not Implemented");
     }
 
@@ -542,8 +593,30 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder addBaseURLRef(String userId,
-        HttpHeaders httpHeaders, String body) throws IOException {
-        throw new IOException("Not Implemented");
+        HttpHeaders httpHeaders, UriInfo uriInfo, BaseURLRef baseUrlRef)
+        throws IOException {
+        User user = userService.getUser(userId);
+
+        if (user == null) {
+            return userNotFoundExceptionResponse(userId);
+        }
+
+        CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseUrlRef
+            .getId());
+
+        if (baseUrl == null) {
+            return notFoundExceptionResponse(String.format(
+                "BaseUrl %s not found", baseUrlRef.getId()));
+        }
+
+        this.endpointService.addBaseUrlToUser(baseUrl.getBaseUrlId(),
+            baseUrlRef.isV1Default(), userId);
+
+        return Response
+            .status(Response.Status.CREATED)
+            .header("Location",
+                uriInfo.getRequestUriBuilder().path(userId).build().toString())
+            .entity(OBJ_FACTORY.createBaseURLRef(baseUrlRef));
     }
 
     @Override

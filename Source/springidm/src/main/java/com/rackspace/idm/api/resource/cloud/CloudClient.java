@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.util.Set;
 
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.http.Header;
@@ -30,32 +31,37 @@ import org.springframework.stereotype.Component;
 @Component
 public class CloudClient {
 
-    //Todo: create a property
+    // Todo: create a property
     boolean ignoreSSLCert = true;
 
-    public Response.ResponseBuilder get(String url, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder get(String url, HttpHeaders httpHeaders)
+        throws IOException {
         HttpGet request = new HttpGet(url);
         return executeRequest(request, httpHeaders);
     }
 
-    public Response.ResponseBuilder delete(String url, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder delete(String url, HttpHeaders httpHeaders)
+        throws IOException {
         HttpDelete request = new HttpDelete(url);
         return executeRequest(request, httpHeaders);
     }
 
-    public Response.ResponseBuilder put(String url, HttpHeaders httpHeaders, String body) throws IOException {
+    public Response.ResponseBuilder put(String url, HttpHeaders httpHeaders,
+        String body) throws IOException {
         HttpPut request = new HttpPut(url);
         request.setEntity(getHttpEntity(body));
         return executeRequest(request, httpHeaders);
     }
 
-    public Response.ResponseBuilder post(String url, HttpHeaders httpHeaders, String body) throws IOException {
+    public Response.ResponseBuilder post(String url, HttpHeaders httpHeaders,
+        String body) throws IOException {
         HttpPost request = new HttpPost(url);
         request.setEntity(getHttpEntity(body));
         return executeRequest(request, httpHeaders);
     }
 
-    private Response.ResponseBuilder executeRequest(HttpRequestBase request, HttpHeaders httpHeaders) {
+    private Response.ResponseBuilder executeRequest(HttpRequestBase request,
+        HttpHeaders httpHeaders) {
         DefaultHttpClient client = getHttpClient();
         setHttpHeaders(httpHeaders, request);
 
@@ -66,16 +72,20 @@ public class CloudClient {
             response = client.execute(request);
             statusCode = response.getStatusLine().getStatusCode();
             if (response.getEntity() != null) {
-                responseBody = convertStreamToString(response.getEntity().getContent());
+                responseBody = convertStreamToString(response.getEntity()
+                    .getContent());
             }
         } catch (IOException e) {
             responseBody = e.getMessage();
         }
-        Response.ResponseBuilder responseBuilder = Response.status(statusCode).entity(responseBody);
+        Response.ResponseBuilder responseBuilder = Response.status(statusCode)
+            .entity(responseBody);
         for (Header header : response.getAllHeaders()) {
             String key = header.getName();
-            if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length")) {
-                responseBuilder = responseBuilder.header(key, header.getValue());
+            if (!key.equalsIgnoreCase("content-encoding")
+                && !key.equalsIgnoreCase("content-length")) {
+                responseBuilder = responseBuilder
+                    .header(key, header.getValue());
             }
         }
         return responseBuilder;
@@ -90,8 +100,8 @@ public class CloudClient {
 
     private DefaultHttpClient getHttpClient() {
         DefaultHttpClient client = new DefaultHttpClient();
-        //client.addRequestInterceptor(new RequestAcceptEncoding());
-        //client.addResponseInterceptor(new ResponseContentEncoding());
+        // client.addRequestInterceptor(new RequestAcceptEncoding());
+        // client.addResponseInterceptor(new ResponseContentEncoding());
 
         if (ignoreSSLCert) {
             client = WebClientDevWrapper.wrapClient(client);
@@ -104,13 +114,20 @@ public class CloudClient {
         Set<String> keys = httpHeaders.getRequestHeaders().keySet();
         request.setHeaders(new Header[]{});
         for (String key : keys) {
-            if (!key.equalsIgnoreCase("content-length")) {
-                request.setHeader(key, httpHeaders.getRequestHeaders().getFirst(key));
+            if (!key.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH)) {
+                if (key.equalsIgnoreCase(HttpHeaders.CONTENT_TYPE)) {
+                    request.setHeader(HttpHeaders.CONTENT_TYPE,
+                        MediaType.APPLICATION_XML);
+                } else {
+                    request.setHeader(key, httpHeaders.getRequestHeaders()
+                        .getFirst(key));
+                }
             }
         }
     }
 
-    public static String convertStreamToString(InputStream is) throws IOException {
+    public static String convertStreamToString(InputStream is)
+        throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();
         String line = null;
@@ -123,24 +140,24 @@ public class CloudClient {
 
 }
 
-//    private String convertStreamToString(InputStream is)
-//            throws IOException {
-//        if (is != null) {
-//            Writer writer = new StringWriter();
-//            char[] buffer = new char[6144];
-//            try {
-//                Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-//                int n;
-//                while ((n = reader.read(buffer)) != -1) {
-//                    writer.write(buffer, 0, n);
-//                }
-//            } finally {
-//                is.close();
-//            }
-//            return writer.toString();
-//        } else {
-//            return "";
-//        }
-//    }
+// private String convertStreamToString(InputStream is)
+// throws IOException {
+// if (is != null) {
+// Writer writer = new StringWriter();
+// char[] buffer = new char[6144];
+// try {
+// Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+// int n;
+// while ((n = reader.read(buffer)) != -1) {
+// writer.write(buffer, 0, n);
+// }
+// } finally {
+// is.close();
+// }
+// return writer.toString();
+// } else {
+// return "";
+// }
+// }
 
-//}
+// }

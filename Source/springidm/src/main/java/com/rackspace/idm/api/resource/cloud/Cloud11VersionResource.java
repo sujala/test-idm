@@ -16,12 +16,15 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
 import com.rackspace.idm.cloudv11.jaxb.User;
+import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyKey;
 
 /**
  * Cloud Auth 1.1 API Versions
@@ -159,9 +162,9 @@ public class Cloud11VersionResource {
     @Path("users")
     public Response createUser(
             @Context HttpHeaders httpHeaders,
-            String body
+            User user
     ) throws IOException {
-        return getCloud11Service().createUser(httpHeaders, body).build();
+        return getCloud11Service().createUser(httpHeaders, user).build();
     }
 
     @GET
@@ -214,9 +217,9 @@ public class Cloud11VersionResource {
     public Response setUserKey(
             @PathParam("userId") String userId,
             @Context HttpHeaders httpHeaders,
-            String body
+            UserWithOnlyKey user
     ) throws IOException {
-         return getCloud11Service().setUserKey(userId, httpHeaders, body).build();
+         return getCloud11Service().setUserKey(userId, httpHeaders, user).build();
     }
 
     @GET
@@ -242,9 +245,10 @@ public class Cloud11VersionResource {
     public Response addBaseURLRef(
             @PathParam("userId") String userId,
             @Context HttpHeaders httpHeaders,
-            String body
+            @Context UriInfo uriInfo,
+            BaseURLRef baseUrlRef
     ) throws IOException {
-        return getCloud11Service().addBaseURLRef(userId, httpHeaders, body).build();
+        return getCloud11Service().addBaseURLRef(userId, httpHeaders, uriInfo, baseUrlRef).build();
     }
 
     @GET
