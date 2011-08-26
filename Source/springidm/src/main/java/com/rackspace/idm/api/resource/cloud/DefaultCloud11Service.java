@@ -32,6 +32,7 @@ import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.cloudv11.jaxb.AuthFault;
 import com.rackspace.idm.cloudv11.jaxb.BadRequestFault;
+import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
 import com.rackspace.idm.cloudv11.jaxb.Credentials;
 import com.rackspace.idm.cloudv11.jaxb.ItemNotFoundFault;
 import com.rackspace.idm.cloudv11.jaxb.MossoCredentials;
@@ -84,7 +85,8 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder authenticate(HttpServletResponse response,
         HttpHeaders httpHeaders, String body) throws IOException {
-        if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
+        if (httpHeaders.getMediaType().isCompatible(
+            MediaType.APPLICATION_XML_TYPE)) {
             return authenticateXML(response, httpHeaders, body);
         } else {
             return authenticateJSON(response, httpHeaders, body);
@@ -293,7 +295,8 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         UserScopeAccess usa = (UserScopeAccess) sa;
 
-        if (!StringUtils.isBlank(belongsTo) && !belongsTo.equals(usa.getUsername())) {
+        if (!StringUtils.isBlank(belongsTo)
+            && !belongsTo.equals(usa.getUsername())) {
             return notFoundExceptionResponse(String.format(
                 "token %s not found", tokeId));
         }
@@ -314,10 +317,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                 "token %s not found", tokenId));
         }
 
-        UserScopeAccess usa = (UserScopeAccess)sa;
+        UserScopeAccess usa = (UserScopeAccess) sa;
         usa.setAccessTokenExpired();
         this.scopeAccessService.updateScopeAccess(usa);
-        
+
         return Response.noContent();
     }
 
@@ -429,8 +432,51 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder updateUser(String userId,
-        HttpHeaders httpHeaders, String body) throws IOException {
-        throw new IOException("Not Implemented");
+        HttpHeaders httpHeaders, com.rackspace.idm.cloudv11.jaxb.User user)
+        throws IOException {
+
+        User gaUser = userService.getUser(userId);
+
+        if (gaUser == null) {
+            return userNotFoundExceptionResponse(userId);
+        }
+
+        if (!StringUtils.isBlank(user.getNastId())) {
+
+        }
+        gaUser.setMossoId(user.getMossoId());
+        gaUser.setNastId(user.getNastId());
+        gaUser.setLocked(!user.isEnabled());
+
+        this.userService.updateUser(gaUser, false);
+
+        if (user.getBaseURLRefs() != null
+            && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
+            // If BaseUrlRefs were sent in then we're going to clear out the old
+            // endpoints
+            // and then re-add the new list
+
+            // Delete all old baseUrls
+            List<CloudEndpoint> current = this.endpointService
+                .getEndpointsForUser(userId);
+            for (CloudEndpoint point : current) {
+                this.endpointService.removeBaseUrlFromUser(point.getBaseUrl()
+                    .getBaseUrlId(), userId);
+            }
+
+            // Add new list of baseUrls
+            for (BaseURLRef ref : user.getBaseURLRefs().getBaseURLRef()) {
+                this.endpointService.addBaseUrlToUser(ref.getId(),
+                    ref.isV1Default(), userId);
+            }
+        }
+
+        List<CloudEndpoint> endpoints = this.endpointService
+            .getEndpointsForUser(userId);
+
+        return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11
+            .toCloudV11User(gaUser, endpoints)));
+
     }
 
     @Override

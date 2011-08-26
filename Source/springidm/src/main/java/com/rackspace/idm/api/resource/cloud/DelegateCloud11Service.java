@@ -1,15 +1,21 @@
 package com.rackspace.idm.api.resource.cloud;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.HashMap;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.rackspace.idm.cloudv11.jaxb.User;
 
 @Component
 public class DelegateCloud11Service implements Cloud11Service {
@@ -22,6 +28,17 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Autowired
     private DefaultCloud11Service defaultCloud11Service;
+    
+    private static final com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
+
+    Marshaller marshaller;
+
+    public DelegateCloud11Service() throws JAXBException {
+        JAXBContext jaxbContext = JAXBContext
+            .newInstance("com.rackspace.idm.cloudv11.jaxb");
+        marshaller = jaxbContext.createMarshaller();
+        marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
+    }
 
     @Override
     public Response.ResponseBuilder validateToken(String tokenId,
@@ -199,7 +216,7 @@ public class DelegateCloud11Service implements Cloud11Service {
             .clone();
 
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
-            return cloudClient.get(
+            serviceResponse = cloudClient.get(
                 getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
         }
         return serviceResponse;
@@ -218,13 +235,20 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder updateUser(String userId,
-        HttpHeaders httpHeaders, String body) throws IOException {
-        try {
-            return defaultCloud11Service.updateUser(userId, httpHeaders, body);
-        } catch (Exception e) {
+        HttpHeaders httpHeaders, User user) throws IOException {
+        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+            .updateUser(userId, httpHeaders, user);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
+            return cloudClient.put(
+                getCloudAuthV11Url().concat("users/" + userId), httpHeaders, body);
         }
-        return cloudClient.put(getCloudAuthV11Url().concat("users/" + userId),
-            httpHeaders, body);
+        return serviceResponse;
     }
 
     @Override
@@ -400,5 +424,20 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     private String getCloudAuthV11Url() {
         return config.getString("cloudAuth11url");
+    }
+
+    private String marshallObjectToString(Object jaxbObject) {
+
+        StringWriter sw = new StringWriter();
+
+        try {
+            marshaller.marshal(jaxbObject, sw);
+        } catch (JAXBException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        return sw.toString();
+
     }
 }

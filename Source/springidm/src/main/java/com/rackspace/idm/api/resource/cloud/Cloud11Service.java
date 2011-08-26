@@ -6,6 +6,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
+import com.rackspace.idm.cloudv11.jaxb.User;
+
 public interface Cloud11Service {
 
     Response.ResponseBuilder validateToken(String tokenId, String belongsTo, String type, HttpHeaders httpHeaders) throws IOException;
@@ -24,7 +26,7 @@ public interface Cloud11Service {
     Response.ResponseBuilder createUser(HttpHeaders httpHeaders, String body) throws IOException;
     Response.ResponseBuilder getUser(String userId, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder deleteUser(String userId, HttpHeaders httpHeaders) throws IOException;
-    Response.ResponseBuilder updateUser(String userId, HttpHeaders httpHeaders, String body) throws IOException;
+    Response.ResponseBuilder updateUser(String userId, HttpHeaders httpHeaders, User user) throws IOException;
     Response.ResponseBuilder getUserEnabled(String userId, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder setUserEnabled(String user, HttpHeaders httpHeaders, String body) throws IOException;
     Response.ResponseBuilder getUserKey(String userId, HttpHeaders httpHeaders) throws IOException;
