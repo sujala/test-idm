@@ -40,13 +40,12 @@ public class Cloud11VersionResourceTest extends AbstractAroundClassJerseyTest{
                 .post(ClientResponse.class, "<credentials xmlns=\"http://docs.rackspacecloud.com/auth/api/v1.1\" username=\"authuser1\" key=\"the_key\" />");
         String entity = clientResponse.getEntity(String.class);
         assertThat("token xml", entity, StringContains.containsString("<token"));
-        assertThat("cloudFilesCDN xml",entity, StringContains.containsString("<service name=\"cloudFilesCDN\"><endpoint publicURL=\"https://cdn2.stg.clouddrive.com/v1/MossoCloudFS_80835ac7-9d58-4b0c-b34a-13e7b814f738\" v1Default=\"true\" region=\"ORD\"/></service>"));
-        assertThat("cloudFiles xml", entity, StringContains.containsString("<service name=\"cloudFiles\"><endpoint internalURL=\"https://snet-storage.stg.swift.racklabs.com/v1/MossoCloudFS_80835ac7-9d58-4b0c-b34a-13e7b814f738\" publicURL=\"https://storage.stg.swift.racklabs.com/v1/MossoCloudFS_80835ac7-9d58-4b0c-b34a-13e7b814f738\" v1Default=\"true\" region=\"ORD\"/></service>"));
-        assertThat("cloudDNS xml", entity, StringContains.containsString("<service name=\"cloudDNS\"><endpoint publicURL=\"https://staging.dnsaas.rackspace.net/v1.0/30000001\" v1Default=\"true\"/></service>"));
-        assertThat("cloudServers xml", entity, StringContains.containsString("<service name=\"cloudServers\"><endpoint publicURL=\"https://servers.api.staging.us.ccp.rackspace.net/v1.0/30000001\" v1Default=\"true\"/></service>"));
+        assertThat("cloudFilesCDN xml",entity, StringContains.containsString("<service name=\"cloudFilesCDN\"><endpoint"));
+        assertThat("cloudFiles xml", entity, StringContains.containsString("<service name=\"cloudFiles\"><endpoint"));
+        assertThat("cloudDNS xml", entity, StringContains.containsString("<service name=\"cloudDNS\"><endpoint"));
+        assertThat("cloudServers xml", entity, StringContains.containsString("<service name=\"cloudServers\"><endpoint"));
+        assertThat("auth ending tag",entity,StringContains.containsString("</auth>"));
     }
-
-
 
     @Ignore
     @Test
