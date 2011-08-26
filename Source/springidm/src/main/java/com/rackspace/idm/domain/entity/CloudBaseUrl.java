@@ -6,7 +6,8 @@ import javax.validation.constraints.Pattern;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 
-public class CloudBaseUrl {
+public class CloudBaseUrl implements Auditable {
+    private String uniqueId = null;
     private Integer baseUrlId = null;
     
     @NotNull
@@ -25,6 +26,14 @@ public class CloudBaseUrl {
     private String adminUrl = null;
     private Boolean def = null;
     private Boolean enabled = null;
+    
+    public String getUniqueId() {
+        return uniqueId;
+    }
+    
+    public void setUniqueId(String uniqueId) {
+        this.uniqueId = uniqueId;
+    }
     
     public Integer getBaseUrlId() {
         return baseUrlId;
@@ -204,5 +213,11 @@ public class CloudBaseUrl {
             + ", publicUrl=" + publicUrl + ", internalUrl=" + internalUrl
             + ", adminUrl=" + adminUrl + ", def=" + def + ", enabled="
             + enabled + "]";
+    }
+    
+    @Override
+    public String getAuditContext() {
+        String format = "baseUrl=%s";
+        return String.format(format, getBaseUrlId());
     }
 }

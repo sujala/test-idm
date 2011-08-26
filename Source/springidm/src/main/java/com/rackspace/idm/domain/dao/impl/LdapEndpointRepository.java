@@ -7,6 +7,7 @@ import java.util.List;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
@@ -34,13 +35,13 @@ public class LdapEndpointRepository extends LdapRepository implements
 
     @Override
     public void addBaseUrl(CloudBaseUrl baseUrl) {
-        
+
         if (baseUrl == null) {
             getLogger().error("Null instance of baseUrl was passed");
             throw new IllegalArgumentException(
                 "Null instance of baseUrl was passed.");
         }
-        
+
         getLogger().debug("Adding baseUlr {}", baseUrl);
 
         List<Attribute> atts = new ArrayList<Attribute>();
@@ -81,9 +82,10 @@ public class LdapEndpointRepository extends LdapRepository implements
         if (baseUrl.getDef() != null) {
             atts.add(new Attribute(ATTR_DEF, baseUrl.getDef().toString()));
         }
-        
+
         if (baseUrl.getEnabled() != null) {
-            atts.add(new Attribute(ATTR_ENABLED, baseUrl.getEnabled().toString()));
+            atts.add(new Attribute(ATTR_ENABLED, baseUrl.getEnabled()
+                .toString()));
         }
 
         String baseUrlDN = new LdapDnBuilder(BASEURL_BASE_DN).addAttribute(
@@ -146,7 +148,8 @@ public class LdapEndpointRepository extends LdapRepository implements
         LDAPResult result = null;
         try {
             result = getAppConnPool().modify(oldEndpoints.getUserDN(), mods);
-            getLogger().info("Added baseUlr {} to user {}", baseUrlId, username);
+            getLogger()
+                .info("Added baseUlr {} to user {}", baseUrlId, username);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating user {} endpoints - {}",
                 username, ldapEx);
@@ -228,7 +231,7 @@ public class LdapEndpointRepository extends LdapRepository implements
 
     @Override
     public List<CloudBaseUrl> getBaseUrls() {
-        
+
         getLogger().debug("Getting baseurls");
 
         List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
@@ -251,16 +254,16 @@ public class LdapEndpointRepository extends LdapRepository implements
                 baseUrls.add(getBaseUrl(entry));
             }
         }
-        
+
         getLogger().debug("Got baseurls");
         return baseUrls;
     }
 
     @Override
     public List<CloudEndpoint> getEndpointsForUser(String username) {
-        
-        getLogger().debug("Getting Endpoints for User {}",username);
-        
+
+        getLogger().debug("Getting Endpoints for User {}", username);
+
         EndPoints points = this.getRawEndpointsForUser(username);
 
         if (points == null || points.getEndpoints().size() < 1) {
@@ -281,18 +284,19 @@ public class LdapEndpointRepository extends LdapRepository implements
                 point.setNastId(points.getNastId());
                 point.setV1preferred(def);
                 endpoints.add(point);
-                getLogger().info("Got Endpoints for User {}",username);
+                getLogger().info("Got Endpoints for User {}", username);
             }
         }
-        getLogger().info("Got Endpoints for User {}",username);
+        getLogger().info("Got Endpoints for User {}", username);
         return endpoints;
     }
 
     @Override
     public void removeBaseUrlFromUser(int baseUrlId, String username) {
-        
-        getLogger().debug("Removing baseurl {} from user {}", baseUrlId, username);
-        
+
+        getLogger().debug("Removing baseurl {} from user {}", baseUrlId,
+            username);
+
         CloudBaseUrl baseUrl = this.getBaseUrlById(baseUrlId);
         if (baseUrl == null) {
             String errMsg = String.format("BaseUrlId %s not found", baseUrlId);
@@ -332,7 +336,8 @@ public class LdapEndpointRepository extends LdapRepository implements
         LDAPResult result = null;
         try {
             result = getAppConnPool().modify(endpoints.getUserDN(), mods);
-            getLogger().info("Removed baseurl {} from user {}", baseUrlId, username);
+            getLogger().info("Removed baseurl {} from user {}", baseUrlId,
+                username);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating user {} endpoints - {}",
                 username, ldapEx);
@@ -346,12 +351,38 @@ public class LdapEndpointRepository extends LdapRepository implements
                 "LDAP error encountered when updating user %s endpoints - %s",
                 username, result.getResultCode().toString()));
         }
-        getLogger().debug("Removed baseurl {} from user {}", baseUrlId, username);
+        getLogger().debug("Removed baseurl {} from user {}", baseUrlId,
+            username);
+    }
+
+    @Override
+    public void setBaseUrlEnabled(int baseUrlId, boolean enabled) {
+        getLogger().debug("Setting baseurl {} enabled {}", baseUrlId, enabled);
+
+        CloudBaseUrl baseUrl = this.getBaseUrlById(baseUrlId);
+        if (baseUrl == null) {
+            String errMsg = String.format("BaseUrlId %s not found", baseUrlId);
+            getLogger().error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        List<Modification> mods = new ArrayList<Modification>();
+        mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED,
+            String.valueOf(enabled)));
+        
+        Audit audit = Audit.log(baseUrl).modify(mods);
+        
+        this.updateEntry(baseUrl.getUniqueId(), mods, audit);
+        
+        audit.succeed();
+
+        getLogger().debug("Set baseurl {} enabled {}", baseUrlId, enabled);
     }
 
     private CloudBaseUrl getBaseUrl(SearchResultEntry resultEntry) {
         getLogger().debug("Inside getBaseUrl");
         CloudBaseUrl baseUrl = new CloudBaseUrl();
+        baseUrl.setUniqueId(resultEntry.getDN());
         baseUrl.setAdminUrl(resultEntry.getAttributeValue(ATTR_ADMIN_URL));
         baseUrl.setBaseUrlId(resultEntry
             .getAttributeValueAsInteger(ATTR_BASEURL_ID));
@@ -363,7 +394,8 @@ public class LdapEndpointRepository extends LdapRepository implements
         baseUrl.setPublicUrl(resultEntry.getAttributeValue(ATTR_PUBLIC_URL));
         baseUrl.setRegion(resultEntry.getAttributeValue(ATTR_REGION));
         baseUrl.setService(resultEntry.getAttributeValue(ATTR_SERVICE));
-        baseUrl.setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
+        baseUrl
+            .setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
         getLogger().debug("Exiting getBaseUrl");
         return baseUrl;
     }
@@ -419,7 +451,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         points.setNastId(nastId);
         points.setEndpoints(userEndpoints);
         points.setUserDN(userDN);
-        
+
         getLogger().debug("Exiting getRawEndpointsForUser {}", username);
         return points;
     }
