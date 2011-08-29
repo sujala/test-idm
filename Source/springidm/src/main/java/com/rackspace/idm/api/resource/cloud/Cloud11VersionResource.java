@@ -23,6 +23,7 @@ import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.idm.cloudv11.jaxb.BaseURL;
 import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
 import com.rackspace.idm.cloudv11.jaxb.User;
 import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyKey;
@@ -116,6 +117,16 @@ public class Cloud11VersionResource {
             @Context HttpHeaders httpHeaders
     )  throws IOException {
         return getCloud11Service().getBaseURLs(serviceName, httpHeaders).build();
+    }
+    
+    @POST
+    @Path("baseURLs")
+    public Response addBaseURL(
+        @Context HttpServletRequest request,
+            @Context HttpHeaders httpHeaders,
+            BaseURL baseUrl
+    )  throws IOException {
+        return getCloud11Service().addBaseURL(request, httpHeaders, baseUrl).build();
     }
 
     @GET

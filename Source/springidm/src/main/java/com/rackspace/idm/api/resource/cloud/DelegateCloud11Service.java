@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -17,6 +18,7 @@ import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.idm.cloudv11.jaxb.BaseURL;
 import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
 import com.rackspace.idm.cloudv11.jaxb.User;
 import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyKey;
@@ -400,6 +402,14 @@ public class DelegateCloud11Service implements Cloud11Service {
             return cloudClient.get(getCloudAuthV11Url().concat(path),
                 httpHeaders);
         }
+        return serviceResponse;
+    }
+
+    @Override
+    public ResponseBuilder addBaseURL(HttpServletRequest request,
+        HttpHeaders httpHeaders, BaseURL baseUrl) {
+        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+            .addBaseURL(request, httpHeaders, baseUrl);
         return serviceResponse;
     }
 

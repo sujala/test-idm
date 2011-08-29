@@ -9,6 +9,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.rackspace.idm.cloudv11.jaxb.BaseURL;
 import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
 import com.rackspace.idm.cloudv11.jaxb.User;
 import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyKey;
@@ -46,4 +47,7 @@ public interface Cloud11Service {
 
     ResponseBuilder adminAuthenticate(HttpServletResponse response,
         HttpHeaders httpHeaders, String body) throws IOException;
+
+    ResponseBuilder addBaseURL(HttpServletRequest request,
+        HttpHeaders httpHeaders, BaseURL baseUrl);
 }

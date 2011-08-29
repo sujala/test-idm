@@ -35,6 +35,7 @@ import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.cloudv11.jaxb.AuthFault;
 import com.rackspace.idm.cloudv11.jaxb.BadRequestFault;
+import com.rackspace.idm.cloudv11.jaxb.BaseURL;
 import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
 import com.rackspace.idm.cloudv11.jaxb.Credentials;
 import com.rackspace.idm.cloudv11.jaxb.ItemNotFoundFault;
@@ -54,6 +55,7 @@ import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.UserDisabledException;
 
@@ -410,30 +412,37 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         return Response.noContent();
     }
-    
+
     @Override
-    public Response.ResponseBuilder getUserFromMossoId(HttpServletRequest request, int mossoId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder getUserFromMossoId(
+        HttpServletRequest request, int mossoId, HttpHeaders httpHeaders)
+        throws IOException {
         User user = this.userService.getUserByMossoId(mossoId);
         if (user == null) {
-            return notFoundExceptionResponse(String.format("User with MossoId %s not found", mossoId));
+            return notFoundExceptionResponse(String.format(
+                "User with MossoId %s not found", mossoId));
         }
         return redirect(request, user.getUsername());
     }
-    
+
     @Override
-    public Response.ResponseBuilder getUserFromNastId(HttpServletRequest request, String nastId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder getUserFromNastId(
+        HttpServletRequest request, String nastId, HttpHeaders httpHeaders)
+        throws IOException {
         User user = this.userService.getUserByNastId(nastId);
         if (user == null) {
-            return notFoundExceptionResponse(String.format("User with NastId %s not found", nastId));
+            return notFoundExceptionResponse(String.format(
+                "User with NastId %s not found", nastId));
         }
         return redirect(request, user.getUsername());
     }
-    
-    private Response.ResponseBuilder redirect(HttpServletRequest request, String id) {
 
-return Response.status(Response.Status.MOVED_PERMANENTLY).
-        header("Location", request.getContextPath() + "/users/" + id);
-}
+    private Response.ResponseBuilder redirect(HttpServletRequest request,
+        String id) {
+
+        return Response.status(Response.Status.MOVED_PERMANENTLY).header(
+            "Location", request.getContextPath() + "/users/" + id);
+    }
 
     @Override
     public Response.ResponseBuilder getBaseURLs(String serviceName,
@@ -785,5 +794,23 @@ return Response.status(Response.Status.MOVED_PERMANENTLY).
     public Response.ResponseBuilder getUserGroups(String userID,
         HttpHeaders httpHeaders) throws IOException {
         throw new IOException("Not Implemented");
+    }
+
+    @Override
+    public ResponseBuilder addBaseURL(HttpServletRequest request,
+        HttpHeaders httpHeaders, BaseURL baseUrl) {
+        try {
+            this.endpointService.addBaseUrl(this.endpointConverterCloudV11
+                .toBaseUrlDO(baseUrl));
+
+            return Response.status(HttpServletResponse.SC_CREATED).header(
+                "Location",
+                request.getContextPath() + "/baseUrls/" + baseUrl.getId());
+        } catch (BaseUrlConflictException bce) {
+            return badRequestExceptionResponse(String.format(
+                "BaseUrl with id %s already exists", baseUrl.getId()));
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
     }
 }
