@@ -223,7 +223,7 @@ public class Cloud11VersionResource {
         return getCloud11Service().getUserEnabled(userId, httpHeaders).build();
     }
     
-    @GET
+    @PUT
     @Path("users/{userId}/enabled")
     public Response setUserEnabled(
             @PathParam("userId") String userId,
