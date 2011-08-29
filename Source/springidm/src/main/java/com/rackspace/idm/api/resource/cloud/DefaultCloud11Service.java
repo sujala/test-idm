@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -89,28 +90,42 @@ public class DefaultCloud11Service implements Cloud11Service {
         HttpHeaders httpHeaders, String body) throws IOException {
         if (httpHeaders.getMediaType().isCompatible(
             MediaType.APPLICATION_XML_TYPE)) {
-            return authenticateXML(response, httpHeaders, body);
+            return authenticateXML(response, httpHeaders, body, false);
         } else {
-            return authenticateJSON(response, httpHeaders, body);
+            return authenticateJSON(response, httpHeaders, body, false);
         }
     }
 
-    public Response.ResponseBuilder authenticateJSON(
-        HttpServletResponse response, HttpHeaders httpHeaders, String body)
-        throws IOException {
+    @Override
+    public ResponseBuilder adminAuthenticate(HttpServletResponse response,
+        HttpHeaders httpHeaders, String body) throws IOException {
+        if (httpHeaders.getMediaType().isCompatible(
+            MediaType.APPLICATION_XML_TYPE)) {
+            return authenticateXML(response, httpHeaders, body, true);
+        } else {
+            return authenticateJSON(response, httpHeaders, body, true);
+        }
+    }
+
+    private Response.ResponseBuilder authenticateJSON(
+        HttpServletResponse response, HttpHeaders httpHeaders, String body,
+        boolean isAdmin) throws IOException {
         JAXBElement<? extends Credentials> cred = null;
         try {
             cred = unmarshallCredentialsFromJSON(body);
         } catch (BadRequestException bre) {
             return badRequestExceptionResponse(bre.getMessage());
         }
+        if (isAdmin) {
+            adminAuthenticateResponse(cred, httpHeaders, response, body);
+        }
         return authenticateResponse(cred, httpHeaders, response, body);
     }
 
     @SuppressWarnings("unchecked")
-    public Response.ResponseBuilder authenticateXML(
-        HttpServletResponse response, HttpHeaders httpHeaders, String body)
-        throws IOException {
+    private Response.ResponseBuilder authenticateXML(
+        HttpServletResponse response, HttpHeaders httpHeaders, String body,
+        boolean isAdmin) throws IOException {
         JAXBElement<? extends Credentials> cred = null;
         try {
             JAXBContext context = JAXBContext
@@ -121,6 +136,9 @@ public class DefaultCloud11Service implements Cloud11Service {
         } catch (JAXBException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+        }
+        if (isAdmin) {
+            adminAuthenticateResponse(cred, httpHeaders, response, body);
         }
         return authenticateResponse(cred, httpHeaders, response, body);
     }
@@ -224,6 +242,72 @@ public class DefaultCloud11Service implements Cloud11Service {
             return notAuthenticatedExceptionResponse(username);
         } catch (UserDisabledException ude) {
             return userDisabledExceptionResponse(username);
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    private Response.ResponseBuilder adminAuthenticateResponse(
+        JAXBElement<? extends Credentials> cred, HttpHeaders httpHeaders,
+        HttpServletResponse response, String body) throws IOException {
+
+        if (cred.getValue() instanceof UserCredentials) {
+            handleRedirect(response, "cloud/auth");
+        }
+
+        User user = null;
+        UserScopeAccess usa = null;
+
+        try {
+
+            if (cred.getValue() instanceof MossoCredentials) {
+                MossoCredentials mossoCreds = (MossoCredentials) cred
+                    .getValue();
+                int mossoId = mossoCreds.getMossoId();
+                String apiKey = mossoCreds.getKey();
+                user = this.userService.getUserByMossoId(mossoId);
+                if (user == null) {
+                    return notFoundExceptionResponse(String.format(
+                        "User with MossoId %s not found", mossoId));
+                }
+                usa = this.scopeAccessService
+                    .getUserScopeAccessForClientIdByMossoIdAndApiCredentials(
+                        mossoId, apiKey, getCloudAuthClientId());
+            } else if (cred.getValue() instanceof NastCredentials) {
+                NastCredentials nastCreds = (NastCredentials) cred.getValue();
+                String nastId = nastCreds.getNastId();
+                String apiKey = nastCreds.getKey();
+                user = this.userService.getUserByNastId(nastId);
+                if (user == null) {
+                    return notFoundExceptionResponse(String.format(
+                        "User with NastId %s not found", nastId));
+                }
+                usa = this.scopeAccessService
+                    .getUserScopeAccessForClientIdByNastIdAndApiCredentials(
+                        nastId, apiKey, getCloudAuthClientId());
+            } else {
+                PasswordCredentials passCreds = (PasswordCredentials) cred
+                    .getValue();
+                String username = passCreds.getUsername();
+                String password = passCreds.getPassword();
+                user = this.userService.getUser(username);
+                if (user == null) {
+                    return userNotFoundExceptionResponse(username);
+                }
+                usa = this.scopeAccessService
+                    .getUserScopeAccessForClientIdByUsernameAndPassword(
+                        username, password, getCloudAuthClientId());
+            }
+
+            List<CloudEndpoint> endpoints = this.endpointService
+                .getEndpointsForUser(user.getUsername());
+            return Response.ok(OBJ_FACTORY
+                .createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(
+                    usa, endpoints)));
+        } catch (NotAuthenticatedException nae) {
+            return notAuthenticatedExceptionResponse(user.getUsername());
+        } catch (UserDisabledException ude) {
+            return userDisabledExceptionResponse(user.getUsername());
         } catch (Exception ex) {
             return serviceExceptionResponse();
         }

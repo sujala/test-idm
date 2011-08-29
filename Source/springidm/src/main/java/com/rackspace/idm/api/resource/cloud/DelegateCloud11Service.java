@@ -80,6 +80,22 @@ public class DelegateCloud11Service implements Cloud11Service {
         }
         return serviceResponse;
     }
+    
+    @Override
+    public Response.ResponseBuilder adminAuthenticate(HttpServletResponse response,
+        HttpHeaders httpHeaders, String body) throws IOException {
+        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+            .adminAuthenticate(response, httpHeaders, body);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            return cloudClient.post(getCloudAuthV11Url().concat("auth-admin"),
+                httpHeaders, body);
+        }
+        return serviceResponse;
+    }
 
     @Override
     public Response.ResponseBuilder revokeToken(String tokenId,

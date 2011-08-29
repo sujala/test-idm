@@ -5,6 +5,7 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
@@ -40,4 +41,7 @@ public interface Cloud11Service {
     Response.ResponseBuilder getBaseURLRef(String userId, String baseURLId, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder deleteBaseURLRef(String userId, String baseURLId, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder getUserGroups(String userId, HttpHeaders httpHeaders) throws IOException;
+
+    ResponseBuilder adminAuthenticate(HttpServletResponse response,
+        HttpHeaders httpHeaders, String body) throws IOException;
 }

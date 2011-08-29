@@ -62,6 +62,13 @@ public class Cloud11VersionResource {
             throws IOException {
         return getCloud11Service().authenticate(response,httpHeaders, body).build();
     }
+    
+    @POST
+    @Path("auth-admin")
+    public Response adminAuthenticate(@Context HttpServletResponse response, @Context HttpHeaders httpHeaders, String body)
+            throws IOException {
+        return getCloud11Service().adminAuthenticate(response,httpHeaders, body).build();
+    }
 
     @GET
     @Path("token/{tokenId}")
