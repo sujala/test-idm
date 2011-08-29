@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -80,10 +81,11 @@ public class DelegateCloud11Service implements Cloud11Service {
         }
         return serviceResponse;
     }
-    
+
     @Override
-    public Response.ResponseBuilder adminAuthenticate(HttpServletResponse response,
-        HttpHeaders httpHeaders, String body) throws IOException {
+    public Response.ResponseBuilder adminAuthenticate(
+        HttpServletResponse response, HttpHeaders httpHeaders, String body)
+        throws IOException {
         Response.ResponseBuilder serviceResponse = defaultCloud11Service
             .adminAuthenticate(response, httpHeaders, body);
         // We have to clone the ResponseBuilder from above because once we build
@@ -115,14 +117,37 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public <T> Response.ResponseBuilder userRedirect(T nastId,
-        HttpHeaders httpHeaders) throws IOException {
-        try {
-            return defaultCloud11Service.userRedirect(nastId, httpHeaders);
-        } catch (Exception e) {
+    public Response.ResponseBuilder getUserFromMossoId(
+        HttpServletRequest request, int mossoId, HttpHeaders httpHeaders)
+        throws IOException {
+        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+            .getUserFromMossoId(request, mossoId, httpHeaders);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            return cloudClient.get(
+                getCloudAuthV11Url().concat("mosso/" + mossoId), httpHeaders);
         }
-        return cloudClient.get(getCloudAuthV11Url().concat("nast/" + nastId),
-            httpHeaders);
+        return serviceResponse;
+    }
+
+    @Override
+    public Response.ResponseBuilder getUserFromNastId(
+        HttpServletRequest request, String nastId, HttpHeaders httpHeaders)
+        throws IOException {
+        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+            .getUserFromNastId(request, nastId, httpHeaders);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            return cloudClient.get(getCloudAuthV11Url()
+                .concat("nast/" + nastId), httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
@@ -380,7 +405,8 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder addBaseURLRef(String userId,
-        HttpHeaders httpHeaders, UriInfo uriInfo, BaseURLRef baseUrlRef) throws IOException {
+        HttpHeaders httpHeaders, UriInfo uriInfo, BaseURLRef baseUrlRef)
+        throws IOException {
         Response.ResponseBuilder serviceResponse = defaultCloud11Service
             .addBaseURLRef(userId, httpHeaders, uriInfo, baseUrlRef);
         // We have to clone the ResponseBuilder from above because once we build

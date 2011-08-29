@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud;
 
 import java.io.IOException;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -20,7 +21,8 @@ public interface Cloud11Service {
 
     Response.ResponseBuilder revokeToken(String tokenId, HttpHeaders httpHeaders) throws IOException;
 
-    <T> Response.ResponseBuilder userRedirect(T nastId, HttpHeaders httpHeaders) throws IOException;
+    Response.ResponseBuilder getUserFromMossoId(HttpServletRequest request, int mossoId, HttpHeaders httpHeaders) throws IOException;
+    Response.ResponseBuilder getUserFromNastId(HttpServletRequest request, String nastId, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder getBaseURLs(String serviceName, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder getBaseURLId(int baseURLId, String serviceName, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder getEnabledBaseURL(String serviceName, HttpHeaders httpHeaders) throws IOException;

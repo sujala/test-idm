@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud;
 
 import java.io.IOException;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -92,20 +93,20 @@ public class Cloud11VersionResource {
 
     @GET
     @Path("nast/{nastId}")
-    public Response userRedirect(
+    public Response getUserFromNastId(@Context HttpServletRequest request,
             @PathParam("nastId") String nastId,
             @Context HttpHeaders httpHeaders
     )  throws IOException {
-        return getCloud11Service().userRedirect(nastId, httpHeaders).build();
+        return getCloud11Service().getUserFromNastId(request, nastId, httpHeaders).build();
     }
 
     @GET
     @Path("mosso/{mossoId}")
-    public Response userRedirect(
+    public Response getUserFromMossoId(@Context HttpServletRequest request, 
             @PathParam("mossoId") int mossoId,
             @Context HttpHeaders httpHeaders
     )  throws IOException {
-        return getCloud11Service().userRedirect(mossoId, httpHeaders).build();
+        return getCloud11Service().getUserFromMossoId(request, mossoId, httpHeaders).build();
     }
 
     @GET

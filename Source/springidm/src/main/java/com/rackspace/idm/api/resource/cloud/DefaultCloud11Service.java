@@ -5,6 +5,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -409,12 +410,30 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         return Response.noContent();
     }
-
+    
     @Override
-    public <T> Response.ResponseBuilder userRedirect(T nastId,
-        HttpHeaders httpHeaders) throws IOException {
-        throw new IOException("Not Implemented");
+    public Response.ResponseBuilder getUserFromMossoId(HttpServletRequest request, int mossoId, HttpHeaders httpHeaders) throws IOException {
+        User user = this.userService.getUserByMossoId(mossoId);
+        if (user == null) {
+            return notFoundExceptionResponse(String.format("User with MossoId %s not found", mossoId));
+        }
+        return redirect(request, user.getUsername());
     }
+    
+    @Override
+    public Response.ResponseBuilder getUserFromNastId(HttpServletRequest request, String nastId, HttpHeaders httpHeaders) throws IOException {
+        User user = this.userService.getUserByNastId(nastId);
+        if (user == null) {
+            return notFoundExceptionResponse(String.format("User with NastId %s not found", nastId));
+        }
+        return redirect(request, user.getUsername());
+    }
+    
+    private Response.ResponseBuilder redirect(HttpServletRequest request, String id) {
+
+return Response.status(Response.Status.MOVED_PERMANENTLY).
+        header("Location", request.getContextPath() + "/users/" + id);
+}
 
     @Override
     public Response.ResponseBuilder getBaseURLs(String serviceName,
