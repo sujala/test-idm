@@ -45,6 +45,7 @@ import com.rackspace.idm.cloudv11.jaxb.PasswordCredentials;
 import com.rackspace.idm.cloudv11.jaxb.UnauthorizedFault;
 import com.rackspace.idm.cloudv11.jaxb.UserCredentials;
 import com.rackspace.idm.cloudv11.jaxb.UserDisabledFault;
+import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyEnabled;
 import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyKey;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
@@ -507,56 +508,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder createUser(HttpHeaders httpHeaders,
         com.rackspace.idm.cloudv11.jaxb.User user) throws IOException {
-
-        String userId = user.getId();
-
-        User gaUser = userService.getUser(user.getId());
-
-        if (gaUser == null) {
-            return userNotFoundExceptionResponse(userId);
-        }
-
-        if (!StringUtils.isBlank(user.getNastId())) {
-            gaUser.setNastId(user.getNastId());
-        }
-
-        if (user.getMossoId() != null) {
-            gaUser.setMossoId(user.getMossoId());
-        }
-
-        if (!StringUtils.isBlank(user.getKey())) {
-            gaUser.setApiKey(user.getKey());
-        }
-
-        gaUser.setLocked(!user.isEnabled());
-
-        this.userService.updateUser(gaUser, false);
-
-        if (user.getBaseURLRefs() != null
-            && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
-            // If BaseUrlRefs were sent in then we're going to clear out the old
-            // endpoints and then re-add the new list
-
-            // Delete all old baseUrls
-            List<CloudEndpoint> current = this.endpointService
-                .getEndpointsForUser(userId);
-            for (CloudEndpoint point : current) {
-                this.endpointService.removeBaseUrlFromUser(point.getBaseUrl()
-                    .getBaseUrlId(), userId);
-            }
-
-            // Add new list of baseUrls
-            for (BaseURLRef ref : user.getBaseURLRefs().getBaseURLRef()) {
-                this.endpointService.addBaseUrlToUser(ref.getId(),
-                    ref.isV1Default(), userId);
-            }
-        }
-
-        List<CloudEndpoint> endpoints = this.endpointService
-            .getEndpointsForUser(userId);
-
-        return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11
-            .toCloudV11User(gaUser, endpoints)));
+        throw new IOException("Not Implemented");
     }
 
     @Override
@@ -590,7 +542,16 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder deleteUser(String userId,
         HttpHeaders httpHeaders) throws IOException {
-        throw new IOException("Not Implemented");
+        User gaUser = userService.getUser(userId);
+
+        if (gaUser == null) {
+            return userNotFoundExceptionResponse(userId);
+        }
+        
+        gaUser.setSoftDeleted(true);
+        this.userService.updateUser(gaUser, false);
+        
+        return Response.noContent();
     }
 
     @Override
@@ -657,8 +618,19 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder setUserEnabled(String userId,
-        HttpHeaders httpHeaders, String body) throws IOException {
-        throw new IOException("Not Implemented");
+        UserWithOnlyEnabled user, HttpHeaders httpHeaders) throws IOException {
+        User gaUser = userService.getUser(userId);
+
+        if (gaUser == null) {
+            return userNotFoundExceptionResponse(userId);
+        }
+
+        gaUser.setLocked(!user.isEnabled());
+
+        this.userService.updateUser(gaUser, false);
+
+        return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11
+            .toCloudV11UserWithOnlyEnabled(gaUser)));
     }
 
     @Override
@@ -677,13 +649,34 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder setUserKey(String userId,
         HttpHeaders httpHeaders, UserWithOnlyKey user) throws IOException {
-        throw new IOException("Not Implemented");
+        User gaUser = userService.getUser(userId);
+
+        if (gaUser == null) {
+            return userNotFoundExceptionResponse(userId);
+        }
+
+        gaUser.setApiKey(user.getKey());
+        this.userService.updateUser(gaUser, false);
+
+        return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11
+            .toCloudV11UserWithOnlyKey(gaUser)));
     }
 
     @Override
     public Response.ResponseBuilder getServiceCatalog(String userId,
         HttpHeaders httpHeaders) throws IOException {
-        throw new IOException("Not Implemented");
+        User gaUser = userService.getUser(userId);
+
+        if (gaUser == null) {
+            return userNotFoundExceptionResponse(userId);
+        }
+
+        List<CloudEndpoint> endpoints = this.endpointService
+            .getEndpointsForUser(userId);
+
+        return Response.ok(OBJ_FACTORY
+            .createServiceCatalog(this.endpointConverterCloudV11
+                .toServiceCatalog(endpoints)));
     }
 
     @Override

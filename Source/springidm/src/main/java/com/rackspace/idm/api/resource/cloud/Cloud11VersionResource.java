@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.cloudv11.jaxb.BaseURL;
 import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
 import com.rackspace.idm.cloudv11.jaxb.User;
+import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyEnabled;
 import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyKey;
 
 /**
@@ -220,6 +221,16 @@ public class Cloud11VersionResource {
             @Context HttpHeaders httpHeaders
     ) throws IOException {
         return getCloud11Service().getUserEnabled(userId, httpHeaders).build();
+    }
+    
+    @GET
+    @Path("users/{userId}/enabled")
+    public Response setUserEnabled(
+            @PathParam("userId") String userId,
+            @Context HttpHeaders httpHeaders,
+            UserWithOnlyEnabled user
+    ) throws IOException {
+        return getCloud11Service().setUserEnabled(userId, user, httpHeaders).build();
     }
 
     @GET

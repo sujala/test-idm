@@ -12,6 +12,7 @@ import javax.ws.rs.core.UriInfo;
 import com.rackspace.idm.cloudv11.jaxb.BaseURL;
 import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
 import com.rackspace.idm.cloudv11.jaxb.User;
+import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyEnabled;
 import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyKey;
 
 public interface Cloud11Service {
@@ -35,7 +36,7 @@ public interface Cloud11Service {
     Response.ResponseBuilder deleteUser(String userId, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder updateUser(String userId, HttpHeaders httpHeaders, User user) throws IOException;
     Response.ResponseBuilder getUserEnabled(String userId, HttpHeaders httpHeaders) throws IOException;
-    Response.ResponseBuilder setUserEnabled(String user, HttpHeaders httpHeaders, String body) throws IOException;
+    Response.ResponseBuilder setUserEnabled(String userId, UserWithOnlyEnabled user, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder getUserKey(String userId, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder setUserKey(String userId, HttpHeaders httpHeaders, UserWithOnlyKey user) throws IOException;
     Response.ResponseBuilder getServiceCatalog(String userId, HttpHeaders httpHeaders) throws IOException;
