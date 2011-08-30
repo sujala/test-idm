@@ -68,4 +68,6 @@ public interface UserService {
     void updateUserStatus(User user, String statusStr);
 
     DateTime getUserPasswordExpirationDate(String userName);
+
+    UserAuthenticationResult authenticateRacker(String username, String password);
 }

@@ -45,6 +45,7 @@ import com.rackspace.idm.cloudv11.jaxb.PasswordCredentials;
 import com.rackspace.idm.cloudv11.jaxb.UnauthorizedFault;
 import com.rackspace.idm.cloudv11.jaxb.UserCredentials;
 import com.rackspace.idm.cloudv11.jaxb.UserDisabledFault;
+import com.rackspace.idm.cloudv11.jaxb.UserType;
 import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyEnabled;
 import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyKey;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
@@ -90,7 +91,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     // Token Methods
-    
+
     @Override
     public Response.ResponseBuilder revokeToken(String tokenId,
         HttpHeaders httpHeaders) throws IOException {
@@ -109,13 +110,26 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         return Response.noContent();
     }
-    
+
     @Override
     public Response.ResponseBuilder validateToken(String tokeId,
         String belongsTo, String type, HttpHeaders httpHeaders)
         throws IOException {
+
+        UserType userType = null;
+
+        if (type != null) {
+            try {
+                userType = UserType.fromValue(type.trim().toUpperCase());
+            } catch (IllegalArgumentException iae) {
+                return badRequestExceptionResponse("Bad type parameter");
+            }
+        } else {
+            userType = UserType.CLOUD;
+        }
+
         ScopeAccess sa = this.scopeAccessService
-            .getScopeAccessByAccessToken(tokeId);
+        .getScopeAccessByAccessToken(tokeId);
 
         if (sa == null || !(sa instanceof UserScopeAccess)
             || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
@@ -131,11 +145,40 @@ public class DefaultCloud11Service implements Cloud11Service {
                 "token %s not found", tokeId));
         }
 
+        User user = null;
+
+        if (!StringUtils.isBlank(belongsTo)) {
+            switch (userType) {
+                case CLOUD:
+                    user = this.userService.getUser(belongsTo);
+                    break;
+                case MOSSO:
+                    user = this.userService.getUserByMossoId(Integer
+                        .parseInt(belongsTo));
+                    break;
+                case NAST:
+                    user = this.userService.getUserByNastId(belongsTo);
+                    break;
+            }
+            
+            if (user == null) {
+                return notAuthenticatedExceptionResponse("Username or api key invalid");
+            }
+
+            if (user.isDisabled()) {
+                return userDisabledExceptionResponse(user.getUsername());
+            }
+            
+            if (!user.getUsername().equals(usa.getUsername())) {
+                return notAuthenticatedExceptionResponse("Username or api key invalid");
+            }
+        }
+
         return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11
-            .toCloudV11TokenJaxb((UserScopeAccess) sa)));
+            .toCloudV11TokenJaxb(usa)));
     }
-    
-    //Authenticate Methods
+
+    // Authenticate Methods
     @Override
     public ResponseBuilder adminAuthenticate(HttpServletResponse response,
         HttpHeaders httpHeaders, String body) throws IOException {
@@ -146,7 +189,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             return authenticateJSON(response, httpHeaders, body, true);
         }
     }
-    
+
     @Override
     public Response.ResponseBuilder authenticate(HttpServletResponse response,
         HttpHeaders httpHeaders, String body) throws IOException {
@@ -157,8 +200,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             return authenticateJSON(response, httpHeaders, body, false);
         }
     }
-    
-    //User Methods
+
+    // User Methods
     @Override
     public Response.ResponseBuilder addBaseURLRef(String userId,
         HttpHeaders httpHeaders, UriInfo uriInfo, BaseURLRef baseUrlRef)
@@ -230,10 +273,10 @@ public class DefaultCloud11Service implements Cloud11Service {
         if (gaUser == null) {
             return userNotFoundExceptionResponse(userId);
         }
-        
+
         gaUser.setSoftDeleted(true);
         this.userService.updateUser(gaUser, false);
-        
+
         return Response.noContent();
     }
 
@@ -454,7 +497,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             .toCloudV11User(gaUser, endpoints)));
 
     }
-    
+
     // BaseURL Methods
     @Override
     public Response.ResponseBuilder getBaseURLId(int baseURLId,
@@ -469,7 +512,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         return Response.ok(OBJ_FACTORY
             .createBaseURL(this.endpointConverterCloudV11.toBaseUrl(baseUrl)));
     }
-    
+
     @Override
     public Response.ResponseBuilder getBaseURLs(String serviceName,
         HttpHeaders httpHeaders) throws IOException {
@@ -492,7 +535,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             .createBaseURLs(this.endpointConverterCloudV11
                 .toBaseUrls(filteredBaseUrls)));
     }
-    
+
     @Override
     public Response.ResponseBuilder getEnabledBaseURL(String serviceName,
         HttpHeaders httpHeaders) throws IOException {
@@ -509,7 +552,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             .createBaseURLs(this.endpointConverterCloudV11
                 .toBaseUrls(filteredBaseUrls)));
     }
-    
+
     @Override
     public ResponseBuilder addBaseURL(HttpServletRequest request,
         HttpHeaders httpHeaders, BaseURL baseUrl) {
@@ -528,10 +571,10 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    //Migration Methods
+    // Migration Methods
     @Override
     public Response.ResponseBuilder all(HttpHeaders httpHeaders, String body)
-    throws IOException {
+        throws IOException {
         throw new IOException("Not Implemented");
     }
 
@@ -540,13 +583,12 @@ public class DefaultCloud11Service implements Cloud11Service {
         HttpHeaders httpHeaders, String body) throws IOException {
         throw new IOException("Not Implemented");
     }
-    
+
     @Override
     public Response.ResponseBuilder unmigrate(String user,
         HttpHeaders httpHeaders, String body) throws IOException {
         throw new IOException("Not Implemented");
     }
-
 
     // Private Methods
     private Response.ResponseBuilder adminAuthenticateResponse(
