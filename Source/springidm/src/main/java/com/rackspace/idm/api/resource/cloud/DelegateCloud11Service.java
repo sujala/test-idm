@@ -1,8 +1,9 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.HashMap;
+import com.rackspace.idm.cloudv11.jaxb.*;
+import org.apache.commons.configuration.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -13,32 +14,45 @@ import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-
-import org.apache.commons.configuration.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import com.rackspace.idm.cloudv11.jaxb.BaseURL;
-import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
-import com.rackspace.idm.cloudv11.jaxb.User;
-import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyEnabled;
-import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyKey;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.HashMap;
 
 @Component
 public class DelegateCloud11Service implements Cloud11Service {
 
+    public void setCloudClient(CloudClient cloudClient) {
+        this.cloudClient = cloudClient;
+    }
+
     @Autowired
     private CloudClient cloudClient;
+
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
 
     @Autowired
     private Configuration config;
 
+    public void setDefaultCloud11Service(DefaultCloud11Service defaultCloud11Service) {
+        this.defaultCloud11Service = defaultCloud11Service;
+    }
+
     @Autowired
     private DefaultCloud11Service defaultCloud11Service;
 
-    private static final com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
+    public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
+        DelegateCloud11Service.OBJ_FACTORY = OBJ_FACTORY;
+    }
 
-    Marshaller marshaller;
+    private static com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
+
+    public void setMarshaller(Marshaller marshaller) {
+        this.marshaller = marshaller;
+    }
+
+    private Marshaller marshaller;
 
     public DelegateCloud11Service() throws JAXBException {
         JAXBContext jaxbContext = JAXBContext
@@ -95,7 +109,8 @@ public class DelegateCloud11Service implements Cloud11Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND) {
             return cloudClient.post(getCloudAuthV11Url().concat("auth-admin"),
                 httpHeaders, body);
         }
@@ -131,7 +146,7 @@ public class DelegateCloud11Service implements Cloud11Service {
             .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             return cloudClient.get(
-                getCloudAuthV11Url().concat("mosso/" + mossoId), httpHeaders);
+                    getCloudAuthV11Url().concat("mosso/" + mossoId), httpHeaders);
         }
         return serviceResponse;
     }
@@ -148,7 +163,7 @@ public class DelegateCloud11Service implements Cloud11Service {
             .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             return cloudClient.get(getCloudAuthV11Url()
-                .concat("nast/" + nastId), httpHeaders);
+                    .concat("nast/" + nastId), httpHeaders);
         }
         return serviceResponse;
     }
@@ -157,7 +172,8 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder getBaseURLs(String serviceName,
         HttpHeaders httpHeaders) throws IOException {
         try {
-            return defaultCloud11Service.getBaseURLs(serviceName, httpHeaders);
+            //TODO
+//            return defaultCloud11Service.getBaseURLs(serviceName, httpHeaders);
         } catch (Exception e) {
         }
 
@@ -193,15 +209,15 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder getEnabledBaseURL(String serviceName,
         HttpHeaders httpHeaders) throws IOException {
         try {
-            return defaultCloud11Service.getEnabledBaseURL(serviceName,
-                httpHeaders);
+            //TODO
+//            return defaultCloud11Service.getEnabledBaseURL(serviceName,httpHeaders);
         } catch (Exception e) {
         }
 
         HashMap<String, String> queryParams = new HashMap<String, String>();
         queryParams.put("serviceName", serviceName);
         String path = getCloudAuthV11Url().concat(
-            getPath("baseURLs/enabled", queryParams));
+                getPath("baseURLs/enabled", queryParams));
         return cloudClient.get(path, httpHeaders);
     }
 
@@ -214,7 +230,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         }
         String path = "migration/" + user + "/migrate";
         return cloudClient.post(getCloudAuthV11Url().concat(path), httpHeaders,
-            body);
+                body);
     }
 
     @Override
@@ -238,7 +254,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         }
         String path = "migration/all";
         return cloudClient.post(getCloudAuthV11Url().concat(path), httpHeaders,
-            body);
+                body);
     }
 
     @Override
@@ -252,7 +268,7 @@ public class DelegateCloud11Service implements Cloud11Service {
 
         String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
         return cloudClient.post(getCloudAuthV11Url().concat("users"),
-            httpHeaders, body);
+                httpHeaders, body);
 
     }
 
@@ -324,7 +340,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String path = "users/" + userId + "/enabled";
             return cloudClient.get(getCloudAuthV11Url().concat(path),
-                httpHeaders);
+                    httpHeaders);
         }
         return serviceResponse;
     }
@@ -341,9 +357,9 @@ public class DelegateCloud11Service implements Cloud11Service {
 
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String path = "users/" + userId + "/enabled";
-            String body = this.marshallObjectToString(user);
+            String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
             return cloudClient.put(getCloudAuthV11Url().concat(path),
-                httpHeaders, body);
+                    httpHeaders, body);
         }
         return serviceResponse;
     }
@@ -377,10 +393,10 @@ public class DelegateCloud11Service implements Cloud11Service {
             .clone();
 
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
-            String body = this.marshallObjectToString(user);
+            String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
             String path = "users/" + userId + "/key";
             return cloudClient.put(getCloudAuthV11Url().concat(path),
-                httpHeaders, body);
+                    httpHeaders, body);
         }
         return serviceResponse;
     }
