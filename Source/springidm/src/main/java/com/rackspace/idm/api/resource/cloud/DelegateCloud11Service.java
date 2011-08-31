@@ -173,7 +173,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         HttpHeaders httpHeaders) throws IOException {
         try {
             //TODO
-//            return defaultCloud11Service.getBaseURLs(serviceName, httpHeaders);
+            return defaultCloud11Service.getBaseURLs(serviceName, httpHeaders);
         } catch (Exception e) {
         }
 
@@ -210,7 +210,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         HttpHeaders httpHeaders) throws IOException {
         try {
             //TODO
-//            return defaultCloud11Service.getEnabledBaseURL(serviceName,httpHeaders);
+            return defaultCloud11Service.getEnabledBaseURL(serviceName,httpHeaders);
         } catch (Exception e) {
         }
 

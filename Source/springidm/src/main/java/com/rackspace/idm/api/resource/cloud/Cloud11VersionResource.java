@@ -1,33 +1,16 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import java.io.IOException;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
+import com.rackspace.idm.api.resource.Encoder;
+import com.rackspace.idm.cloudv11.jaxb.*;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.cloudv11.jaxb.BaseURL;
-import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
-import com.rackspace.idm.cloudv11.jaxb.User;
-import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyEnabled;
-import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyKey;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
+import java.io.IOException;
 
 /**
  * Cloud Auth 1.1 API Versions
@@ -90,6 +73,7 @@ public class Cloud11VersionResource {
             @PathParam("tokenId") String tokenId,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
+        tokenId = Encoder.encode(tokenId);
         return getCloud11Service().revokeToken(tokenId,httpHeaders).build();
     }
 
