@@ -46,14 +46,14 @@ public class Cloud11VersionResource {
     @Path("auth")
     public Response authenticate(@Context HttpServletResponse response, @Context HttpHeaders httpHeaders, String body)
             throws IOException {
-        return getCloud11Service().authenticate(response,httpHeaders, body).build();
+        return getCloud11Service().authenticate(response, httpHeaders, body).build();
     }
-    
+
     @POST
     @Path("auth-admin")
     public Response adminAuthenticate(@Context HttpServletResponse response, @Context HttpHeaders httpHeaders, String body)
             throws IOException {
-        return getCloud11Service().adminAuthenticate(response,httpHeaders, body).build();
+        return getCloud11Service().adminAuthenticate(response, httpHeaders, body).build();
     }
 
     @GET
@@ -64,6 +64,9 @@ public class Cloud11VersionResource {
             @QueryParam("type") String type,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
+        tokenId = Encoder.encode(tokenId);
+        belongsTo = Encoder.encode(belongsTo);
+        type = Encoder.encode(type);
         return getCloud11Service().validateToken(tokenId, belongsTo, type, httpHeaders).build();
     }
 
@@ -74,24 +77,25 @@ public class Cloud11VersionResource {
             @Context HttpHeaders httpHeaders
     ) throws IOException {
         tokenId = Encoder.encode(tokenId);
-        return getCloud11Service().revokeToken(tokenId,httpHeaders).build();
+        return getCloud11Service().revokeToken(tokenId, httpHeaders).build();
     }
 
     @GET
     @Path("nast/{nastId}")
     public Response getUserFromNastId(@Context HttpServletRequest request,
-            @PathParam("nastId") String nastId,
-            @Context HttpHeaders httpHeaders
-    )  throws IOException {
+                                      @PathParam("nastId") String nastId,
+                                      @Context HttpHeaders httpHeaders
+    ) throws IOException {
+        nastId = Encoder.encode(nastId);
         return getCloud11Service().getUserFromNastId(request, nastId, httpHeaders).build();
     }
 
     @GET
     @Path("mosso/{mossoId}")
-    public Response getUserFromMossoId(@Context HttpServletRequest request, 
-            @PathParam("mossoId") int mossoId,
-            @Context HttpHeaders httpHeaders
-    )  throws IOException {
+    public Response getUserFromMossoId(@Context HttpServletRequest request,
+                                       @PathParam("mossoId") int mossoId,
+                                       @Context HttpHeaders httpHeaders
+    ) throws IOException {
         return getCloud11Service().getUserFromMossoId(request, mossoId, httpHeaders).build();
     }
 
@@ -100,17 +104,18 @@ public class Cloud11VersionResource {
     public Response getBaseURLs(
             @QueryParam("serviceName") String serviceName,
             @Context HttpHeaders httpHeaders
-    )  throws IOException {
+    ) throws IOException {
+        serviceName = Encoder.encode(serviceName);
         return getCloud11Service().getBaseURLs(serviceName, httpHeaders).build();
     }
-    
+
     @POST
     @Path("baseURLs")
     public Response addBaseURL(
-        @Context HttpServletRequest request,
+            @Context HttpServletRequest request,
             @Context HttpHeaders httpHeaders,
             BaseURL baseUrl
-    )  throws IOException {
+    ) throws IOException {
         return getCloud11Service().addBaseURL(request, httpHeaders, baseUrl).build();
     }
 
@@ -120,7 +125,8 @@ public class Cloud11VersionResource {
             @PathParam("baseURLId") int baseURLId,
             @QueryParam("serviceName") String serviceName,
             @Context HttpHeaders httpHeaders
-    )  throws IOException {
+    ) throws IOException {
+        serviceName = Encoder.encode(serviceName);
         return getCloud11Service().getBaseURLId(baseURLId, serviceName, httpHeaders).build();
     }
 
@@ -129,7 +135,8 @@ public class Cloud11VersionResource {
     public Response getEnabledBaseURLs(
             @QueryParam("serviceName") String serviceName,
             @Context HttpHeaders httpHeaders
-    )  throws IOException {
+    ) throws IOException {
+        serviceName = Encoder.encode(serviceName);
         return getCloud11Service().getEnabledBaseURL(serviceName, httpHeaders).build();
     }
 
@@ -139,7 +146,8 @@ public class Cloud11VersionResource {
             @PathParam("userId") String user,
             @Context HttpHeaders httpHeaders,
             String body
-    )  throws IOException {
+    ) throws IOException {
+        user = Encoder.encode(user);
         return getCloud11Service().migrate(user, httpHeaders, body).build();
     }
 
@@ -149,7 +157,8 @@ public class Cloud11VersionResource {
             @PathParam("userId") String user,
             @Context HttpHeaders httpHeaders,
             String body
-    )  throws IOException {
+    ) throws IOException {
+        user = Encoder.encode(user);
         return getCloud11Service().unmigrate(user, httpHeaders, body).build();
     }
 
@@ -158,7 +167,7 @@ public class Cloud11VersionResource {
     public Response all(
             @Context HttpHeaders httpHeaders,
             String body
-    )  throws IOException {
+    ) throws IOException {
         return getCloud11Service().all(httpHeaders, body).build();
     }
 
@@ -177,6 +186,7 @@ public class Cloud11VersionResource {
             @PathParam("userId") String userId,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
+        userId = Encoder.encode(userId);
         return getCloud11Service().getUser(userId, httpHeaders).build();
     }
 
@@ -186,6 +196,7 @@ public class Cloud11VersionResource {
             @PathParam("userId") String userId,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
+        userId = Encoder.encode(userId);
         return getCloud11Service().deleteUser(userId, httpHeaders).build();
     }
 
@@ -195,6 +206,7 @@ public class Cloud11VersionResource {
             @PathParam("userId") String userId,
             @Context HttpHeaders httpHeaders,
             User user) throws IOException {
+        userId = Encoder.encode(userId);
         return getCloud11Service().updateUser(userId, httpHeaders, user).build();
     }
 
@@ -204,9 +216,10 @@ public class Cloud11VersionResource {
             @PathParam("userId") String userId,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
+        userId = Encoder.encode(userId);
         return getCloud11Service().getUserEnabled(userId, httpHeaders).build();
     }
-    
+
     @PUT
     @Path("users/{userId}/enabled")
     public Response setUserEnabled(
@@ -214,6 +227,7 @@ public class Cloud11VersionResource {
             @Context HttpHeaders httpHeaders,
             UserWithOnlyEnabled user
     ) throws IOException {
+        userId = Encoder.encode(userId);
         return getCloud11Service().setUserEnabled(userId, user, httpHeaders).build();
     }
 
@@ -223,7 +237,8 @@ public class Cloud11VersionResource {
             @PathParam("userId") String userId,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
-         return getCloud11Service().getUserKey(userId, httpHeaders).build();
+        userId = Encoder.encode(userId);
+        return getCloud11Service().getUserKey(userId, httpHeaders).build();
     }
 
     @PUT
@@ -233,7 +248,8 @@ public class Cloud11VersionResource {
             @Context HttpHeaders httpHeaders,
             UserWithOnlyKey user
     ) throws IOException {
-         return getCloud11Service().setUserKey(userId, httpHeaders, user).build();
+        userId = Encoder.encode(userId);
+        return getCloud11Service().setUserKey(userId, httpHeaders, user).build();
     }
 
     @GET
@@ -242,7 +258,8 @@ public class Cloud11VersionResource {
             @PathParam("userId") String userId,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
-         return getCloud11Service().getServiceCatalog(userId, httpHeaders).build();
+        userId = Encoder.encode(userId);
+        return getCloud11Service().getServiceCatalog(userId, httpHeaders).build();
     }
 
     @GET
@@ -251,7 +268,8 @@ public class Cloud11VersionResource {
             @PathParam("userId") String userId,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
-         return getCloud11Service().getBaseURLRefs(userId, httpHeaders).build();
+        userId = Encoder.encode(userId);
+        return getCloud11Service().getBaseURLRefs(userId, httpHeaders).build();
     }
 
     @POST
@@ -262,6 +280,7 @@ public class Cloud11VersionResource {
             @Context UriInfo uriInfo,
             BaseURLRef baseUrlRef
     ) throws IOException {
+        userId = Encoder.encode(userId);
         return getCloud11Service().addBaseURLRef(userId, httpHeaders, uriInfo, baseUrlRef).build();
     }
 
@@ -272,7 +291,9 @@ public class Cloud11VersionResource {
             @PathParam("baseURLId") String baseURLId,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
-         return getCloud11Service().getBaseURLRef(userId, baseURLId, httpHeaders).build();
+        userId = Encoder.encode(userId);
+        baseURLId = Encoder.encode(baseURLId);
+        return getCloud11Service().getBaseURLRef(userId, baseURLId, httpHeaders).build();
     }
 
     @DELETE
@@ -282,6 +303,8 @@ public class Cloud11VersionResource {
             @PathParam("baseURLId") String baseURLId,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
+        userId = Encoder.encode(userId);
+        baseURLId = Encoder.encode(baseURLId);
         return getCloud11Service().deleteBaseURLRef(userId, baseURLId, httpHeaders).build();
     }
 
@@ -291,7 +314,8 @@ public class Cloud11VersionResource {
             @PathParam("userId") String userId,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
-         return getCloud11Service().getUserGroups(userId, httpHeaders).build();
+        userId = Encoder.encode(userId);
+        return getCloud11Service().getUserGroups(userId, httpHeaders).build();
     }
 
     private Cloud11Service getCloud11Service() {
