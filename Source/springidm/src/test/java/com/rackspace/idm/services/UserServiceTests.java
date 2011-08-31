@@ -345,7 +345,7 @@ public class UserServiceTests {
         EasyMock.replay(mockUserDao);
 
 
-        final UserAuthenticationResult uaResult = trustedUserService.authenticate(rackerId, password);
+        final UserAuthenticationResult uaResult = trustedUserService.authenticateRacker(rackerId, password);
         Assert.assertTrue(uaResult.isAuthenticated());
         EasyMock.verify(mockRackerDao, mockUserDao);
     }
