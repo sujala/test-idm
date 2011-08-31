@@ -30,6 +30,7 @@ public class EndpointConverterCloudV11 {
             return null;
         }
         BaseURL baseUrl = of.createBaseURL();
+        baseUrl.setEnabled(url.getEnabled());
         baseUrl.setAdminURL(url.getAdminUrl());
         baseUrl.setDefault(url.getDef());
         baseUrl.setId(url.getBaseUrlId());
@@ -71,6 +72,7 @@ public class EndpointConverterCloudV11 {
         baseUrlRef.setV1Default(endpoint.isV1preferred());
         baseUrlRef.setHref(String.format(getBaseUrlReferenceString(),
             endpoint.getBaseUrl().getBaseUrlId()));
+        
         return baseUrlRef;
     }
 
