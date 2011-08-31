@@ -60,6 +60,7 @@ public class EndpointConverterCloudV11 {
         url.setPublicUrl(baseURL.getPublicURL());
         url.setRegion(baseURL.getRegion());
         url.setService(baseURL.getServiceName());
+        url.setEnabled(baseURL.isEnabled());
         return url;
     }
 
