@@ -441,9 +441,6 @@ public class DefaultCloud11Service implements Cloud11Service {
             return userNotFoundExceptionResponse(userId);
         }
 
-        if (!StringUtils.isBlank(user.getNastId())) {
-
-        }
         gaUser.setMossoId(user.getMossoId());
         gaUser.setNastId(user.getNastId());
         gaUser.setLocked(!user.isEnabled());
