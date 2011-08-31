@@ -404,12 +404,19 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder getServiceCatalog(String userId,
         HttpHeaders httpHeaders) throws IOException {
-        try {
-            return defaultCloud11Service.getServiceCatalog(userId, httpHeaders);
-        } catch (Exception e) {
+
+        Response.ResponseBuilder serviceResponse = defaultCloud11Service.getServiceCatalog(userId, httpHeaders);
+
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
+
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String path = "users/" + userId + "/serviceCatalog";
+            return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
         }
-        String path = "users/" + userId + "/serviceCatalog";
-        return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
+
+        return serviceResponse;
     }
 
     @Override
