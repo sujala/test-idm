@@ -79,14 +79,16 @@ public class VersionResource {
      */
     @GET
     public Response getVersionInfo(@PathParam("versionId") String versionId) {
-        com.rackspace.idm.jaxb.Version version = new com.rackspace.idm.jaxb.Version();
+        /*com.rackspace.idm.jaxb.Version version = new com.rackspace.idm.jaxb.Version();
         version.setDocURL(config.getString("app.version.doc.url"));
         version.setId(config.getString("app.version"));
         version.setStatus(Enum.valueOf(com.rackspace.idm.jaxb.VersionStatus.class,
             config.getString("app.version.status").toUpperCase()));
-        version.setWadl(config.getString("app.version.wadl.url"));
+        version.setWadl(config.getString("app.version.wadl.url"));*/
+    	
+    	//TODO: Display the wadl in this case
 
-        return Response.ok(version).build();
+        return Response.ok("This is the wadl").build();
     }
 
     @Path("customers")
