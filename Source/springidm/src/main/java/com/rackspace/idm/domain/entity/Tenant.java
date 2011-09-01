@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.entity;
 
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
+
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
@@ -17,7 +19,7 @@ public class Tenant implements Auditable{
     private String tenantId;
     
     @LDAPField(attribute=LdapRepository.ATTR_ENABLED, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
-    private boolean enabled;
+    private Boolean enabled;
     
     @LDAPField(attribute=LdapRepository.ATTR_DESCRIPTION, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String description;
@@ -46,11 +48,11 @@ public class Tenant implements Auditable{
         this.tenantId = tenantId;
     }
 
-    public boolean isEnabled() {
+    public Boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
     }
 
@@ -69,11 +71,38 @@ public class Tenant implements Auditable{
     public void setName(String name) {
         this.name = name;
     }
+    
+    public void copyChanges(Tenant modifiedTenant) {
+        
+        if (modifiedTenant.getDescription() != null) {
+            if (StringUtils.isBlank(modifiedTenant.getDescription())) {
+                setDescription(null);
+            } else {
+                setDescription(modifiedTenant.getDescription());
+            }
+        }
+        
+        if (modifiedTenant.getName() != null) {
+            if (StringUtils.isBlank(modifiedTenant.getName())) {
+                setDescription(null);
+            } else {
+                setDescription(modifiedTenant.getName());
+            }
+        }
+        
+        if (modifiedTenant.isEnabled() != null) {
+            setEnabled(modifiedTenant.isEnabled());
+        }
+    }
 
     @Override
     public String getAuditContext() {
-        // TODO Auto-generated method stub
-        return null;
+        String format = "tenantId=%s";
+        return String.format(format, getTenantId());
     }
 
+    @Override
+    public String toString() {
+        return getAuditContext();
+    }
 }
