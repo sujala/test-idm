@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.dao.impl.FileSystemApiDocRepository;
 import com.rackspace.idm.domain.dao.impl.LdapAuthRepository;
@@ -18,6 +19,7 @@ import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
 import com.rackspace.idm.domain.dao.impl.LdapCustomerRepository;
 import com.rackspace.idm.domain.dao.impl.LdapEndpointRepository;
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessPeristenceRepository;
+import com.rackspace.idm.domain.dao.impl.LdapTenantRepository;
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
@@ -73,4 +75,8 @@ public class RepositoryConfiguration {
         return new LdapScopeAccessPeristenceRepository(connPools, appConfig);
     }
 
+    @Bean
+    public TenantDao ldapTenantRepository() {
+        return new LdapTenantRepository(connPools, appConfig);
+    }
 }

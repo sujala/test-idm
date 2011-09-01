@@ -417,6 +417,14 @@
 					</xsd:documentation>
 				</annotation>
 			</enumeration>
+			<enumeration value="RACKER">
+                <annotation>
+                    <xsd:documentation xml:lang="EN"
+                        xmlns="http://www.w3.org/1999/xhtml">
+                        <p>The Rackspace grant type racker.</p>
+                    </xsd:documentation>
+                </annotation>
+            </enumeration>
 			<enumeration value="REFRESH_TOKEN">
 				<annotation>
 					<xsd:documentation xml:lang="EN"

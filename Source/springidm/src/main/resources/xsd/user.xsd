@@ -533,9 +533,12 @@
 	</complexType>
 
 	<complexType name="Racker">
+		<sequence>
+			<element name="rackerRoles" type="idm:RackerRoleList" minOccurs="0" maxOccurs="1"></element>
+		</sequence>
 		<attribute name="rackerId" type="xsd:string"></attribute>
 	</complexType>
-	
+
 	<complexType name="RackerRole">
         <attribute name="name" type="xsd:string"></attribute>
     </complexType>
