@@ -49,6 +49,8 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_PASSWORDRESETSCOPEACCESS = "passwordResetScopeAccess";
     public static final String OBJECTCLASS_RACKERSCOPEACCESS = "rackerScopeAccess";
     public static final String OBJECTCLASS_SCOPEACCESS_CONTAINER = "saContainer";
+    public static final String OBJECTCLASS_TENANT = "tenant";
+    public static final String OBJECTCLASS_TENANT_ROLE = "tenantRole";
 
     protected static final String OBJECTCLASS_TOP = "top";
 
@@ -138,6 +140,7 @@ public abstract class LdapRepository {
     public static final String ATTR_PASSWORD_ROTATION_ENABLED = "passwordRotationEnabled";
     public static final String ATTR_PASSWORD_ROTATION_DURATION = "passwordRotationDuration";
     public static final String ATTR_STATUS = "status";
+    public static final String ATTR_TENANT_ID = "tenantId";
     public static final String ATTR_TIME_ZONE = "timeZone";
     public static final String ATTR_TITLE = "title";
     public static final String ATTR_TOKEN_SCOPE = "tokenScope";
@@ -152,7 +155,8 @@ public abstract class LdapRepository {
 
     // Definitions for LDAP DNs
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
-    protected static final String BASEURL_BASE_DN = "out=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+    protected static final String BASEURL_BASE_DN = "ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+    protected static final String TENANT_BASE_DN = "ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com";
 
     // Definitions for OU names
     protected static final String OU_GROUPS_NAME = "groups";

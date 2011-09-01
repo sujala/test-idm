@@ -145,7 +145,22 @@ public class DefaultUserService implements UserService {
         String password) {
         logger.debug("Authenticating User: {}", username);
 
-        if (isTrustedServer()) {
+        UserAuthenticationResult result = userDao.authenticate(username,
+            password);
+
+        logger.debug("Authenticated User: {} : {}", username, result);
+        return result;
+    }
+    
+    @Override
+    public UserAuthenticationResult authenticateRacker(String username,
+        String password) {
+        logger.debug("Authenticating Racker: {}", username);
+        
+        if (!isTrustedServer()) {
+            throw new ForbiddenException();
+        }
+
             boolean authenticated = authDao.authenticate(username, password);
             logger.debug("Authenticated Racker {} : {}", username,
                 authenticated);
@@ -160,13 +175,6 @@ public class DefaultUserService implements UserService {
             BaseUser user = new BaseUser(username);
             user.setUniqueId(racker.getUniqueId());
             return new UserAuthenticationResult(user, authenticated);
-        }
-
-        UserAuthenticationResult result = userDao.authenticate(username,
-            password);
-
-        logger.debug("Authenticated User: {} : {}", username, result);
-        return result;
     }
 
     

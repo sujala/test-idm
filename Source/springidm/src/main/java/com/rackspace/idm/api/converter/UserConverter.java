@@ -7,6 +7,7 @@ import javax.xml.datatype.DatatypeFactory;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
@@ -94,6 +95,15 @@ public class UserConverter {
     public com.rackspace.idm.jaxb.Racker toRackerJaxb(String rackerId) {
         com.rackspace.idm.jaxb.Racker returnedRacker = of.createRacker();
         returnedRacker.setRackerId(rackerId);
+        return returnedRacker;
+    }
+    
+    public com.rackspace.idm.jaxb.Racker toRackerJaxb(Racker racker) {
+        com.rackspace.idm.jaxb.Racker returnedRacker = of.createRacker();
+        returnedRacker.setRackerId(racker.getRackerId());
+        if (racker.getRackerRoles() != null && racker.getRackerRoles().size() > 0) {
+            returnedRacker.setRackerRoles(toRackerRolesJaxb(racker.getRackerRoles()));
+        }
         return returnedRacker;
     }
 

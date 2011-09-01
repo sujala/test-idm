@@ -16,6 +16,7 @@ import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.TokenConverterCloudV11;
+import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 
 @org.springframework.context.annotation.Configuration
 public class ConverterConfiguration {
@@ -70,7 +71,7 @@ public class ConverterConfiguration {
 
     @Bean
     AuthConverterCloudV11 authConverterCloudV11() {
-        return new AuthConverterCloudV11(tokenConverterCloudV11(),
+        return new AuthConverterCloudV11(config, tokenConverterCloudV11(),
             endpointConverterCloudV11());
     }
 
@@ -82,5 +83,10 @@ public class ConverterConfiguration {
     @Bean
     TokenConverterCloudV11 tokenConverterCloudV11() {
         return new TokenConverterCloudV11();
+    }
+    
+    @Bean
+    UserConverterCloudV11 userConverterCloudC11() {
+        return new UserConverterCloudV11(endpointConverterCloudV11());
     }
 }

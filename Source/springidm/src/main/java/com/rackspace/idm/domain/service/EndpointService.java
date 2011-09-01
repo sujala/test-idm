@@ -21,4 +21,6 @@ public interface EndpointService {
     List<CloudEndpoint> getEndpointsForUser(String username);
 
     void removeBaseUrlFromUser(int baseUrlId, String username);
+    
+    void setBaseUrlEnabled(int baseUrlId, boolean enabled);
 }

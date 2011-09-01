@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service.impl;
 import static com.rackspace.idm.domain.entity.OAuthGrantType.AUTHORIZATION_CODE;
 import static com.rackspace.idm.domain.entity.OAuthGrantType.CLIENT_CREDENTIALS;
 import static com.rackspace.idm.domain.entity.OAuthGrantType.PASSWORD;
+import static com.rackspace.idm.domain.entity.OAuthGrantType.RACKER;
 import static com.rackspace.idm.domain.entity.OAuthGrantType.REFRESH_TOKEN;
 
 import java.util.ArrayList;
@@ -115,6 +116,38 @@ public class DefaultOAuthService implements OAuthService {
             logger.warn(message);
             throw new NotAuthenticatedException(message);
         }
+        
+        if (RACKER == grantType) {
+            if (!isTrustedServer()) {
+                String msg = "Racker grantType forbidden on this server";
+                logger.warn(msg);
+                throw new ForbiddenException(msg);
+            }
+            
+            if (StringUtils.isBlank(trParam.getUsername())) {
+                String msg = "username cannot be blank";
+                logger.warn(msg);
+                throw new BadRequestException(msg);
+            }
+            
+            final UserAuthenticationResult uaResult = userService.authenticateRacker(
+                trParam.getUsername(), trParam.getPassword());
+            if (!uaResult.isAuthenticated()) {
+                final String message = "Bad User credentials for "
+                    + trParam.getUsername();
+                logger.warn(message);
+                throw new NotAuthenticatedException(message);
+            }
+            
+            Racker racker = new Racker();
+            racker.setRackerId(uaResult.getUser().getUsername());
+            racker.setUniqueId(uaResult.getUser().getUniqueId());
+
+            RackerScopeAccess scopeAccess = this
+                .getAndUpdateRackerScopeAccessForClientId(racker,
+                    caResult.getClient());
+            return scopeAccess;
+        }
 
         if (PASSWORD == grantType) {
 
@@ -131,17 +164,6 @@ public class DefaultOAuthService implements OAuthService {
                     + trParam.getUsername();
                 logger.warn(message);
                 throw new NotAuthenticatedException(message);
-            }
-
-            if (isTrustedServer()) {
-                Racker racker = new Racker();
-                racker.setRackerId(uaResult.getUser().getUsername());
-                racker.setUniqueId(uaResult.getUser().getUniqueId());
-
-                RackerScopeAccess scopeAccess = this
-                    .getAndUpdateRackerScopeAccessForClientId(racker,
-                        caResult.getClient());
-                return scopeAccess;
             }
 
             DateTime rotationDate = this.userService

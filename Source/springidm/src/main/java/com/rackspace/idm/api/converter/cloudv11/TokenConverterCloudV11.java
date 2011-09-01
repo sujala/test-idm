@@ -12,7 +12,7 @@ public class TokenConverterCloudV11 {
     
     private final com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
     
-    public Token toCloudv10TokenJaxb(UserScopeAccess usa) {
+    public Token toCloudv11TokenJaxb(UserScopeAccess usa) {
         
         com.rackspace.idm.cloudv11.jaxb.Token token = OBJ_FACTORY.createToken();
     

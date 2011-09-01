@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud;
 
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import org.hamcrest.text.StringContains;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -35,8 +36,15 @@ public class Cloud11VersionResourceTest extends AbstractAroundClassJerseyTest{
     public void authenticate_withValidUser_returns200(){
         WebResource resource = resource().path("cloud/v1.1/auth");
         ClientResponse clientResponse = resource
-                .type(MediaType.APPLICATION_XML_TYPE)
-                .post(ClientResponse.class, "<credentials xmlns=\"http://docs.rackspacecloud.com/auth/api/v1.1\" username=\"cmarin1\" key=\"70b67400a497d8148987d083b35caf9d\" />");
+                .type(MediaType.APPLICATION_XML_TYPE).accept(MediaType.APPLICATION_XML_TYPE)
+                .post(ClientResponse.class, "<credentials xmlns=\"http://docs.rackspacecloud.com/auth/api/v1.1\" username=\"authuser1\" key=\"the_key\" />");
+        String entity = clientResponse.getEntity(String.class);
+        assertThat("token xml", entity, StringContains.containsString("<token"));
+        assertThat("cloudFilesCDN xml",entity, StringContains.containsString("<service name=\"cloudFilesCDN\"><endpoint"));
+        assertThat("cloudFiles xml", entity, StringContains.containsString("<service name=\"cloudFiles\"><endpoint"));
+        assertThat("cloudDNS xml", entity, StringContains.containsString("<service name=\"cloudDNS\"><endpoint"));
+        assertThat("cloudServers xml", entity, StringContains.containsString("<service name=\"cloudServers\"><endpoint"));
+        assertThat("auth ending tag",entity,StringContains.containsString("</auth>"));
     }
 
     @Ignore

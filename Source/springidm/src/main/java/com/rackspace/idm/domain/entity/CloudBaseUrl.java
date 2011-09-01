@@ -6,7 +6,8 @@ import javax.validation.constraints.Pattern;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 
-public class CloudBaseUrl {
+public class CloudBaseUrl implements Auditable {
+    private String uniqueId = null;
     private Integer baseUrlId = null;
     
     @NotNull
@@ -24,6 +25,15 @@ public class CloudBaseUrl {
     private String internalUrl = null;
     private String adminUrl = null;
     private Boolean def = null;
+    private Boolean enabled = null;
+    
+    public String getUniqueId() {
+        return uniqueId;
+    }
+    
+    public void setUniqueId(String uniqueId) {
+        this.uniqueId = uniqueId;
+    }
     
     public Integer getBaseUrlId() {
         return baseUrlId;
@@ -88,6 +98,14 @@ public class CloudBaseUrl {
     public void setDef(Boolean def) {
         this.def = def;
     }
+    
+    public Boolean getEnabled() {
+        return enabled;
+    }
+    
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
+    }
 
     @Override
     public int hashCode() {
@@ -95,10 +113,12 @@ public class CloudBaseUrl {
         int result = 1;
         result = prime * result
             + ((adminUrl == null) ? 0 : adminUrl.hashCode());
-        result = prime * result + baseUrlId;
+        result = prime * result
+            + ((baseUrlId == null) ? 0 : baseUrlId.hashCode());
         result = prime * result
             + ((baseUrlType == null) ? 0 : baseUrlType.hashCode());
         result = prime * result + ((def == null) ? 0 : def.hashCode());
+        result = prime * result + ((enabled == null) ? 0 : enabled.hashCode());
         result = prime * result
             + ((internalUrl == null) ? 0 : internalUrl.hashCode());
         result = prime * result
@@ -127,7 +147,11 @@ public class CloudBaseUrl {
         } else if (!adminUrl.equals(other.adminUrl)) {
             return false;
         }
-        if (baseUrlId != other.baseUrlId) {
+        if (baseUrlId == null) {
+            if (other.baseUrlId != null) {
+                return false;
+            }
+        } else if (!baseUrlId.equals(other.baseUrlId)) {
             return false;
         }
         if (baseUrlType == null) {
@@ -142,6 +166,13 @@ public class CloudBaseUrl {
                 return false;
             }
         } else if (!def.equals(other.def)) {
+            return false;
+        }
+        if (enabled == null) {
+            if (other.enabled != null) {
+                return false;
+            }
+        } else if (!enabled.equals(other.enabled)) {
             return false;
         }
         if (internalUrl == null) {
@@ -180,6 +211,13 @@ public class CloudBaseUrl {
         return "CloudBaseUrl [baseUrlId=" + baseUrlId + ", baseUrlType="
             + baseUrlType + ", region=" + region + ", service=" + service
             + ", publicUrl=" + publicUrl + ", internalUrl=" + internalUrl
-            + ", adminUrl=" + adminUrl + ", def=" + def + "]";
+            + ", adminUrl=" + adminUrl + ", def=" + def + ", enabled="
+            + enabled + "]";
+    }
+    
+    @Override
+    public String getAuditContext() {
+        String format = "baseUrl=%s";
+        return String.format(format, getBaseUrlId());
     }
 }
