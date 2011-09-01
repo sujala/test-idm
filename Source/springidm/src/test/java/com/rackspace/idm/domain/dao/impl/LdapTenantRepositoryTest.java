@@ -11,6 +11,7 @@ import org.junit.Test;
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 
@@ -18,10 +19,13 @@ public class LdapTenantRepositoryTest {
     private LdapTenantRepository repo;
     private LdapConnectionPools connPools;
     
+    private final String clientId = "YYYY";
     private final String tenantId = "XXXX";
     private final String description = "Description";
     private final boolean enabled = true;
     private final String name = "Tenant";
+    private final String roleName = "Role";
+    private final String dn = LdapRepository.BASE_DN;
     
     private static LdapTenantRepository getRepo(LdapConnectionPools connPools) {
         Configuration appConfig = new PropertyFileConfiguration()
@@ -106,6 +110,36 @@ public class LdapTenantRepositoryTest {
         Assert.assertEquals(tenant.isEnabled(), check.isEnabled());
     }
     
+    @Test 
+    public void shouldAddGetDeleteTenantRole() {
+        this.repo.addTenantRoleToParent(dn, getTestTenantRole());
+        TenantRole role = this.repo.getTenantRoleForParentByRoleName(dn, roleName);
+        TenantRole role2 = this.repo.getTenantRoleForParentByRoleNameAndClientId(dn, roleName, clientId);
+        List<TenantRole> roles = this.repo.getTenantRolesByParent(dn);
+        this.repo.deleteTenantRole(role);
+        TenantRole notThere = this.repo.getTenantRoleForParentByRoleName(dn, roleName);
+        Assert.assertNotNull(role);
+        Assert.assertEquals(tenantId, role.getTenantIds()[0]);
+        Assert.assertEquals(roleName, role.getName());
+        Assert.assertEquals(clientId, role.getClientId());
+        Assert.assertNotNull(role2);
+        Assert.assertEquals(tenantId, role2.getTenantIds()[0]);
+        Assert.assertEquals(roleName, role2.getName());
+        Assert.assertEquals(clientId, role2.getClientId());
+        Assert.assertTrue(roles.size() > 0);
+        Assert.assertNull(notThere);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotAddNullTenantRole() {
+        this.repo.addTenantRoleToParent(dn, null);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotAddTenantRoleWithBlankParent() {
+        this.repo.addTenantRoleToParent(null, getTestTenantRole());
+    }
+    
     private Tenant getTestTenant() {
         Tenant tenant = new Tenant();
         tenant.setDescription(description);
@@ -113,5 +147,13 @@ public class LdapTenantRepositoryTest {
         tenant.setName(name);
         tenant.setTenantId(tenantId);
         return tenant;
+    }
+    
+    private TenantRole getTestTenantRole() {
+        TenantRole role = new TenantRole();
+        role.setClientId(clientId);
+        role.setName(roleName);
+        role.setTenantIds(new String[] {tenantId});
+        return role;
     }
 }

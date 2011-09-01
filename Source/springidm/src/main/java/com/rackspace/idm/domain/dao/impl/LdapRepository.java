@@ -50,6 +50,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_RACKERSCOPEACCESS = "rackerScopeAccess";
     public static final String OBJECTCLASS_SCOPEACCESS_CONTAINER = "saContainer";
     public static final String OBJECTCLASS_TENANT = "tenant";
+    public static final String OBJECTCLASS_TENANT_ROLE = "tenantRole";
 
     protected static final String OBJECTCLASS_TOP = "top";
 

@@ -9,6 +9,7 @@ import org.apache.commons.lang.StringUtils;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.Filter;
@@ -85,7 +86,8 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         getLogger().debug("Doing search for tenantId " + tenantId);
         if (StringUtils.isBlank(tenantId)) {
             getLogger().error("Null or Empty tenantId parameter");
-            throw new IllegalArgumentException("Null or Empty inum parameter.");
+            throw new IllegalArgumentException(
+                "Null or Empty tenantId parameter.");
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -180,5 +182,240 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         Tenant tenant = null;
         tenant = LDAPPersister.getInstance(Tenant.class).decode(entry);
         return tenant;
+    }
+
+    @Override
+    public void addTenantRoleToParent(String parentUniqueId, TenantRole role) {
+        if (StringUtils.isBlank(parentUniqueId)) {
+            String errmsg = "ParentUniqueId cannot be blank";
+            getLogger().error(errmsg);
+            throw new IllegalArgumentException(errmsg);
+        }
+
+        if (role == null) {
+            String errmsg = "Null instance of TenantRole was passed";
+            getLogger().error(errmsg);
+            throw new IllegalArgumentException(errmsg);
+        }
+
+        getLogger().info("Adding TenantRole: {}", role);
+        Audit audit = Audit.log(role).add();
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            final LDAPPersister<TenantRole> persister = LDAPPersister
+                .getInstance(TenantRole.class);
+            persister.add(role, conn, parentUniqueId);
+            audit.succeed();
+            getLogger().info("Added TenantRole: {}", role);
+        } catch (final LDAPException e) {
+            getLogger().error("Error adding tenant role object", e);
+            audit.fail(e.getMessage());
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+    }
+
+    @Override
+    public void deleteTenantRole(TenantRole role) {
+        if (role == null || StringUtils.isBlank(role.getUniqueId())) {
+            String errMsg = "Null tenant role was passed";
+            getLogger().warn(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
+        getLogger().debug("Deleting TenantRole: {}", role);
+        final String dn = role.getUniqueId();
+        final Audit audit = Audit.log(role).delete();
+        deleteEntryAndSubtree(dn, audit);
+        audit.succeed();
+        getLogger().debug("Deleted TenantRole: {}", role);
+    }
+
+    @Override
+    public TenantRole getTenantRoleForParentByRoleName(String parentUniqueId,
+        String roleName) {
+        if (StringUtils.isBlank(parentUniqueId)) {
+            String errmsg = "ParentUniqueId cannot be blank";
+            getLogger().error(errmsg);
+            throw new IllegalArgumentException(errmsg);
+        }
+        if (StringUtils.isBlank(roleName)) {
+            getLogger().error("Null or Empty roleName parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty roleName parameter.");
+        }
+        getLogger().debug("Doing search for TenantRole " + roleName);
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_NAME, roleName)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
+            .build();
+
+        TenantRole role = null;
+
+        try {
+            role = getSingleTenantRole(parentUniqueId, searchFilter);
+        } catch (LDAPPersistException e) {
+            getLogger().error("Error getting role object", e);
+            throw new IllegalStateException(e);
+        }
+        getLogger().debug("Found Tenant Role - {}", role);
+
+        return role;
+    }
+
+    @Override
+    public TenantRole getTenantRoleForParentByRoleNameAndClientId(
+        String parentUniqueId, String roleName, String clientId) {
+        if (StringUtils.isBlank(parentUniqueId)) {
+            String errmsg = "ParentUniqueId cannot be blank";
+            getLogger().error(errmsg);
+            throw new IllegalArgumentException(errmsg);
+        }
+        if (StringUtils.isBlank(roleName)) {
+            getLogger().error("Null or Empty roleName parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty roleName parameter.");
+        }
+        if (StringUtils.isBlank(clientId)) {
+            getLogger().error("Null or Empty clientId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty clientId parameter.");
+        }
+        getLogger().debug("Doing search for TenantRole " + roleName);
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_NAME, roleName)
+            .addEqualAttribute(ATTR_CLIENT_ID, clientId)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
+            .build();
+
+        TenantRole role = null;
+
+        try {
+            role = getSingleTenantRole(parentUniqueId, searchFilter);
+        } catch (LDAPPersistException e) {
+            getLogger().error("Error getting role object", e);
+            throw new IllegalStateException(e);
+        }
+        getLogger().debug("Found Tenant Role - {}", role);
+
+        return role;
+    }
+
+    @Override
+    public List<TenantRole> getTenantRolesByParent(String parentUniqueId) {
+        if (StringUtils.isBlank(parentUniqueId)) {
+            String errmsg = "ParentUniqueId cannot be blank";
+            getLogger().error(errmsg);
+            throw new IllegalArgumentException(errmsg);
+        }
+
+        getLogger().debug("Getting tenantRoles");
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
+            ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE).build();
+
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        try {
+            roles = getMultipleTenantRoles(parentUniqueId, searchFilter);
+        } catch (LDAPPersistException e) {
+            getLogger().error("Error getting tenant object", e);
+            throw new IllegalStateException(e);
+        }
+        getLogger().debug("Got {} Tenant Roles", roles.size());
+
+        return roles;
+    }
+
+    @Override
+    public List<TenantRole> getTenantRolesByParentAndClientId(
+        String parentUniqueId, String clientId) {
+        if (StringUtils.isBlank(parentUniqueId)) {
+            String errmsg = "ParentUniqueId cannot be blank";
+            getLogger().error(errmsg);
+            throw new IllegalArgumentException(errmsg);
+        }
+        
+        if (StringUtils.isBlank(clientId)) {
+            getLogger().error("Null or Empty clientId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty clientId parameter.");
+        }
+
+        getLogger().debug("Getting tenantRoles by clientId");
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
+            .addEqualAttribute(ATTR_CLIENT_ID, clientId).build();
+
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        try {
+            roles = getMultipleTenantRoles(parentUniqueId, searchFilter);
+        } catch (LDAPPersistException e) {
+            getLogger().error("Error getting tenant object", e);
+            throw new IllegalStateException(e);
+        }
+        getLogger().debug("Got {} Tenant Roles", roles.size());
+
+        return roles;
+    }
+
+    private List<TenantRole> getMultipleTenantRoles(String parentUniqueId,
+        Filter searchFilter) throws LDAPPersistException {
+        List<SearchResultEntry> entries = this.getMultipleEntries(
+            parentUniqueId, SearchScope.SUB, searchFilter, ATTR_TENANT_ID);
+
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        for (SearchResultEntry entry : entries) {
+            roles.add(getTenantRole(entry));
+        }
+        return roles;
+    }
+
+    private TenantRole getSingleTenantRole(String parentUniqueId,
+        Filter searchFilter) throws LDAPPersistException {
+        SearchResultEntry entry = this.getSingleEntry(parentUniqueId,
+            SearchScope.SUB, searchFilter);
+        TenantRole role = getTenantRole(entry);
+        return role;
+    }
+
+    private TenantRole getTenantRole(SearchResultEntry entry)
+        throws LDAPPersistException {
+        if (entry == null) {
+            return null;
+        }
+        TenantRole role = LDAPPersister.getInstance(TenantRole.class).decode(
+            entry);
+        return role;
+    }
+
+    @Override
+    public void updateTenantRole(TenantRole role) {
+        if (role == null || StringUtils.isBlank(role.getUniqueId())) {
+            String errmsg = "Null instance of Tenant was passed";
+            getLogger().error(errmsg);
+            throw new IllegalArgumentException(errmsg);
+        }
+        getLogger().debug("Updating Tenant Role: {}", role);
+        LDAPConnection conn = null;
+        Audit audit = Audit.log(role);
+        try {
+            conn = getAppConnPool().getConnection();
+            final LDAPPersister<TenantRole> persister = LDAPPersister
+                .getInstance(TenantRole.class);
+            List<Modification> modifications = persister.getModifications(
+                role, true);
+            audit.modify(modifications);
+            persister.modify(role, conn, null, true);
+            getLogger().debug("Updated Tenant Role: {}", role);
+            audit.succeed();
+        } catch (final LDAPException e) {
+            getLogger().error("Error updating Tenant Role", e);
+            audit.fail();
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
     }
 }
