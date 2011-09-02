@@ -55,6 +55,13 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             MDC.put(Audit.GUUID, UUID.randomUUID().toString());
         }
         
+        // skip token authentication for any url that ends with public.
+        // convention for public documentation is /*/*/public
+        // TODO: double check that this is an efficient check and will not cause collisions
+        if (path.endsWith("public")) {
+        	return request;
+        }
+        
         // Skip token authentication for cloud resources
         if (path.startsWith("cloud")) {
             return request;

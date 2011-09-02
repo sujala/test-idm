@@ -5,8 +5,10 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +23,11 @@ import com.rackspace.idm.api.resource.racker.RackersResource;
 import com.rackspace.idm.api.resource.scope.ScopesResource;
 import com.rackspace.idm.api.resource.token.TokenResource;
 import com.rackspace.idm.api.resource.user.UsersResource;
+import com.rackspace.idm.api.serviceprofile.InternalContractInfo;
+import com.rackspace.idm.api.serviceprofile.ServiceProfileConfig;
+import com.rackspace.idm.api.serviceprofile.ServiceProfileUtil;
 import com.rackspace.idm.domain.service.ApiDocService;
+import com.rackspace.idm.jaxb.Version;
 
 /**
  * API Version
@@ -43,7 +49,12 @@ public class VersionResource {
     private final CloudVersionsResource cloudVersionsResource;
     private final ApiDocService apiDocService;
     private final Configuration config;
+    private ServiceProfileConfig serviceProfileConfig;
+    private InternalContractInfo internalContractInfo;
 
+    @Context
+    private UriInfo uriInfo;
+    
     @Autowired
     public VersionResource(UsersResource usersResource,
         CustomersResource customersResource, MossoUserResource mossoUserResource,
@@ -79,16 +90,10 @@ public class VersionResource {
      */
     @GET
     public Response getVersionInfo(@PathParam("versionId") String versionId) {
-        /*com.rackspace.idm.jaxb.Version version = new com.rackspace.idm.jaxb.Version();
-        version.setDocURL(config.getString("app.version.doc.url"));
-        version.setId(config.getString("app.version"));
-        version.setStatus(Enum.valueOf(com.rackspace.idm.jaxb.VersionStatus.class,
-            config.getString("app.version.status").toUpperCase()));
-        version.setWadl(config.getString("app.version.wadl.url"));*/
+    	InternalContractInfo internalContractInfo = createInternalContractInfo();
+    	Version version = internalContractInfo.createContractVersion(versionId);
     	
-    	//TODO: Display the wadl in this case
-
-        return Response.ok("This is the wadl").build();
+        return Response.ok(version).build();
     }
 
     @Path("customers")
@@ -158,4 +163,10 @@ public class VersionResource {
         return Response.ok(myString).build();
     }
     
+    private InternalContractInfo createInternalContractInfo() {
+        ServiceProfileConfig serviceProfileConfig = new ServiceProfileConfig(config, uriInfo);
+        InternalContractInfo internalContractInfo = new InternalContractInfo(new ServiceProfileUtil(), serviceProfileConfig);
+        
+        return internalContractInfo;
+    }
 }

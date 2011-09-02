@@ -28,6 +28,9 @@ public class CloudVersionsResource {
     private final Configuration config;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @UriInfo
+    private UriInfo uriInfo;
+    
     @Autowired
     public CloudVersionsResource(Cloud10VersionResource cloud10VersionResource,
     Cloud11VersionResource cloud11VersionResource,
