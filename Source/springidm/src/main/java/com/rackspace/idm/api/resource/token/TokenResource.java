@@ -180,44 +180,6 @@ public class TokenResource {
         return Response.ok(authConverter.toAuthDataJaxb(scopeAccess)).build();
     }
 
-    // /**
-    // * !!! ONLY OTHER IDM INSTANCES CAN CALL THIS !!!
-    // * For cross-data-center token replication.
-    // */
-    // @GET
-    // @Path("{tokenString}")
-    // @Produces({MediaType.APPLICATION_OCTET_STREAM})
-    // public Response getAccessTokenObj(@Context Request request,
-    // @Context UriInfo uriInfo,
-    // @HeaderParam("Authorization") String authHeader,
-    // @PathParam("tokenString") String tokenString) {
-    // logger.debug("Retrieving XDC Access Token: {}", tokenString);
-    //
-    // AccessToken callingToken = this.tokenService
-    // .getAccessTokenByAuthHeader(authHeader);
-    //
-    // // Only Another IDM instance is authorized.
-    // boolean authorized = authorizationService
-    // .authorizeCustomerIdm(callingToken);
-    //
-    // if (!authorized) {
-    // String errMsg = String.format("Token %s Forbidden from this call",
-    // callingToken.getTokenString());
-    // logger.warn(errMsg);
-    // return Response.status(Status.FORBIDDEN).build();
-    // }
-    //
-    // // Validate Token exists and is valid
-    // AccessToken token = tokenService.validateToken(tokenString);
-    // if (token == null) {
-    // logger.warn("Token not found : {}", tokenString);
-    // return Response.status(Status.NOT_FOUND).build();
-    // }
-    //
-    // logger.debug("Retrieved XDC Access Token: {}", tokenString);
-    // return Response.ok(SerializationUtils.serialize(token)).build();
-    // }
-
     /**
      * Removes the token from IDM, across all DCs.
      *

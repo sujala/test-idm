@@ -17,6 +17,7 @@ import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.service.ApiDocService;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -26,6 +27,7 @@ import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultApiDocService;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
@@ -35,6 +37,7 @@ import com.rackspace.idm.domain.service.impl.DefaultEndpointService;
 import com.rackspace.idm.domain.service.impl.DefaultOAuthService;
 import com.rackspace.idm.domain.service.impl.DefaultPasswordComplexityService;
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
+import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.util.LdapRouterMBean;
@@ -67,6 +70,8 @@ public class ServiceConfiguration {
     private ApiDocDao apiDocDao;
     @Autowired
     private InputValidator inputValidator;
+    @Autowired
+    private TenantDao tenantDao;
 
     @Autowired
     private Configuration config;
@@ -159,6 +164,11 @@ public class ServiceConfiguration {
     @Bean
     public ApiDocService apiDocService() {
         return new DefaultApiDocService(apiDocDao);
+    }
+    
+    @Bean
+    public TenantService tenantService() {
+        return new DefaultTenantService(tenantDao);
     }
 
     @Bean
