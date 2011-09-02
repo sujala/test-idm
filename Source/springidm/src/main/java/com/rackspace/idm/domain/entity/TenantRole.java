@@ -11,30 +11,29 @@ import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 
-@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_TENANT_ROLE)
+@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_TENANT_ROLE)
 public class TenantRole implements Auditable {
-    
+
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
-    
-    @LDAPField(attribute=LdapRepository.ATTR_NAME, objectClass=LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+
+    @LDAPField(attribute = LdapRepository.ATTR_NAME, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String name;
-    
-    @LDAPField(attribute=LdapRepository.ATTR_TENANT_ID, objectClass=LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+
+    @LDAPField(attribute = LdapRepository.ATTR_TENANT_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String[] tenantIds;
-    
-    @LDAPField(attribute=LdapRepository.ATTR_CLIENT_ID, objectClass=LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+
+    @LDAPField(attribute = LdapRepository.ATTR_CLIENT_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String clientId;
-    
+
     public ReadOnlyEntry getLDAPEntry() {
         return ldapEntry;
     }
-    
+
     public String getUniqueId() {
         if (ldapEntry == null) {
             return null;
-        }
-        else {
+        } else {
             return ldapEntry.getDN();
         }
     }
@@ -62,28 +61,36 @@ public class TenantRole implements Auditable {
     public void setTenantIds(String[] tenantIds) {
         this.tenantIds = tenantIds;
     }
-    
+
     public void addTenantId(String tenantId) {
         List<String> tenants = new ArrayList<String>();
-        Collections.addAll(tenants, tenantIds); 
+        if (tenantIds != null || tenantIds.length > 0) {
+            Collections.addAll(tenants, tenantIds);
+        }
         if (!tenants.contains(tenantId)) {
             tenants.add(tenantId);
         }
         tenantIds = tenants.toArray(new String[tenants.size()]);
     }
-    
+
     public void removeTenantId(String tenantId) {
+        if (tenantIds == null || tenantIds.length == 0) {
+            return;
+        }
         List<String> tenants = new ArrayList<String>();
-        Collections.addAll(tenants, tenantIds); 
+        Collections.addAll(tenants, tenantIds);
         if (tenants.contains(tenantId)) {
             tenants.remove(tenantId);
         }
         tenantIds = tenants.toArray(new String[tenants.size()]);
     }
-    
+
     public boolean containsTenantId(String tenantId) {
+        if (tenantIds == null || tenantIds.length == 0) {
+            return false;
+        }
         List<String> tenants = new ArrayList<String>();
-        Collections.addAll(tenants, tenantIds); 
+        Collections.addAll(tenants, tenantIds);
         return tenants.contains(tenantId);
     }
 
