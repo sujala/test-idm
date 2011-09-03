@@ -1,21 +1,10 @@
 package com.rackspace.idm.util;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 
-import freemarker.template.Configuration;
-import freemarker.template.DefaultObjectWrapper;
-
 public class TemplateProcessor {
-	
-	public TemplateProcessor() throws IOException {
-		Configuration cfg = new Configuration();
-		cfg.setDirectoryForTemplateLoading(new File("/docs"));
-		cfg.setObjectWrapper(new DefaultObjectWrapper());
-	}
 	
     public String getSubstituedOutput(String templateLine,
         Map<String, String> params) {
