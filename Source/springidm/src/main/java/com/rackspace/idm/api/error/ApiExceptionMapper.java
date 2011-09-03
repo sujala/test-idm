@@ -1,17 +1,9 @@
 package com.rackspace.idm.api.error;
 
-import java.util.List;
-import java.util.ResourceBundle;
-
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
-
+import com.rackspace.idm.ErrorMsg;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.exception.*;
+import com.rackspace.idm.jaxb.*;
 import org.apache.commons.lang.StringUtils;
 import org.omg.CORBA.portable.ApplicationException;
 import org.slf4j.Logger;
@@ -20,45 +12,15 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.ErrorMsg;
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.BaseUrlConflictException;
-import com.rackspace.idm.exception.ClientConflictException;
-import com.rackspace.idm.exception.CustomerConflictException;
-import com.rackspace.idm.exception.DuplicateClientException;
-import com.rackspace.idm.exception.DuplicateClientGroupException;
-import com.rackspace.idm.exception.DuplicateUsernameException;
-import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.IdmException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.NotAuthorizedException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.NotProvisionedException;
-import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
-import com.rackspace.idm.exception.PasswordValidationException;
-import com.rackspace.idm.exception.PermissionConflictException;
-import com.rackspace.idm.exception.StalePasswordException;
-import com.rackspace.idm.exception.UserDisabledException;
-import com.rackspace.idm.jaxb.BadRequest;
-import com.rackspace.idm.jaxb.BaseUrlIdConflict;
-import com.rackspace.idm.jaxb.ClientGroupConflict;
-import com.rackspace.idm.jaxb.ClientnameConflict;
-import com.rackspace.idm.jaxb.CustomerIdConflict;
-import com.rackspace.idm.jaxb.Forbidden;
-import com.rackspace.idm.jaxb.IdmFault;
-import com.rackspace.idm.jaxb.ItemNotFound;
-import com.rackspace.idm.jaxb.MethodNotAllowed;
-import com.rackspace.idm.jaxb.NotProvisioned;
-import com.rackspace.idm.jaxb.PasswordSelfUpdateTooSoonFault;
-import com.rackspace.idm.jaxb.PasswordValidationFault;
-import com.rackspace.idm.jaxb.PermissionIdConflict;
-import com.rackspace.idm.jaxb.ServerError;
-import com.rackspace.idm.jaxb.ServiceUnavailable;
-import com.rackspace.idm.jaxb.StalePasswordFault;
-import com.rackspace.idm.jaxb.Unauthorized;
-import com.rackspace.idm.jaxb.UserDisabled;
-import com.rackspace.idm.jaxb.UsernameConflict;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.*;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 @Component
 @Provider
@@ -73,7 +35,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
     public ApiExceptionMapper(ResourceBundle faultMessageConfig) {
         this.faultMessageConfig = faultMessageConfig;
     }
-    
+
     @Override
     public Response toResponse(Throwable thrown) {
         Throwable e = thrown;
@@ -81,7 +43,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         if (thrown instanceof ApplicationException) {
             e = thrown.getCause();
         }
-        
+
         if (e instanceof NotProvisionedException) {
             return toResponse(new NotProvisioned(), e, 403);
         }
@@ -165,6 +127,11 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
                 case 405:
                     Exception exp = new Exception("Method Not Allowed");
                     return toResponse(new MethodNotAllowed(), exp, 405);
+                case 406:
+                    List<Variant> variants = new ArrayList<Variant>();
+                    variants.add(new Variant(MediaType.APPLICATION_XML_TYPE, Locale.getDefault(), "UTF-8"));
+                    variants.add(new Variant(MediaType.APPLICATION_JSON_TYPE, Locale.getDefault(), "UTF-8"));
+                    return Response.notAcceptable(variants).build();
                 case 500:
                     return toResponse(new ServerError(), e.getCause(), 500);
                 case 503:
@@ -209,16 +176,16 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
 
         ResponseBuilder builder = Response.status(code).entity(fault);
         List<String> acceptHeaderVals = headers.getRequestHeader(HttpHeaders.ACCEPT);
-        if(acceptHeaderVals != null && acceptHeaderVals.size() > 0) {
-	        boolean isOctetStreamResponse = acceptHeaderVals.get(0).equals(MediaType.APPLICATION_OCTET_STREAM);
-	        if (isOctetStreamResponse) {
-	            // Convert to a different response
-	            MediaType respType = MediaType.APPLICATION_JSON_TYPE;
-	            if (acceptHeaderVals.size() > 1) {
-	                respType = MediaType.valueOf(acceptHeaderVals.get(1));
-	            }
-	            return builder.type(respType).build();
-	        }
+        if (acceptHeaderVals != null && acceptHeaderVals.size() > 0) {
+            boolean isOctetStreamResponse = acceptHeaderVals.get(0).equals(MediaType.APPLICATION_OCTET_STREAM);
+            if (isOctetStreamResponse) {
+                // Convert to a different response
+                MediaType respType = MediaType.APPLICATION_JSON_TYPE;
+                if (acceptHeaderVals.size() > 1) {
+                    respType = MediaType.valueOf(acceptHeaderVals.get(1));
+                }
+                return builder.type(respType).build();
+            }
         }
 
         return builder.build();
