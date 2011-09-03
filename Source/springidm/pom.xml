@@ -710,10 +710,6 @@
                     <!-- <webXml>src/main/webapp/WEB-INF/web.xml</webXml> -->
                     <webResources>
                             <resource>
-                                    <directory>src/main/docs</directory>
-                                    <targetPath>docs</targetPath>
-                            </resource>
-                            <resource>
                                     <directory>src/main/resources/xsd</directory>
                                     <targetPath>docs/xsd</targetPath>
                             </resource>
