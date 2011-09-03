@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<version xmlns="http://service-registry.api.rackspace.com/versioning"
+	xmlns:atom="http://www.w3.org/2005/Atom" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="https://service-registry.api.rackspace.com/service-profile ./../resources/xsd/versioning-v1.0-xs1.0.xsd"
+	id="v2.0" status="BETA">
+	<media-types>
+		<media-type base="application/xml"
+			type="application/vnd.rackspace.cloudauth-v2.0+xml">
+			<atom:link rel="describedby" type="application/xml"
+				href="http://docs.rackspacecloud.com/auth/api/v2.0/xsd/" />
+		</media-type>
+	</media-types>
+
+	<atom:link rel="self" href="${baseUrl}/cloud/v2.0/public" />
+	<atom:link rel="describedby" type="application/vnd.sun.wadl+xml"
+		href="http://docs.rackspacecloud.com/auth/api/v2.0/auth.wadl" />
+	<atom:link rel="documentation" type="text/html"
+		href="http://docs-beta.rackspace.com/auth/api/v2.0/auth-client-devguide/content/index.html"
+		title="Service Developer Guide" />
+</version>
+
+

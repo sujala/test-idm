@@ -23,11 +23,9 @@ import com.rackspace.idm.api.resource.racker.RackersResource;
 import com.rackspace.idm.api.resource.scope.ScopesResource;
 import com.rackspace.idm.api.resource.token.TokenResource;
 import com.rackspace.idm.api.resource.user.UsersResource;
-import com.rackspace.idm.api.serviceprofile.InternalContractInfo;
-import com.rackspace.idm.api.serviceprofile.ServiceProfileConfig;
-import com.rackspace.idm.api.serviceprofile.ServiceProfileUtil;
+import com.rackspace.idm.api.serviceprofile.CanonicalContractDescriptionBuilder;
+import com.rackspace.idm.api.serviceprofile.ServiceProfileDescriptionBuilder;
 import com.rackspace.idm.domain.service.ApiDocService;
-import com.rackspace.idm.jaxb.Version;
 
 /**
  * API Version
@@ -49,8 +47,7 @@ public class VersionResource {
     private final CloudVersionsResource cloudVersionsResource;
     private final ApiDocService apiDocService;
     private final Configuration config;
-    private ServiceProfileConfig serviceProfileConfig;
-    private InternalContractInfo internalContractInfo;
+    private final CanonicalContractDescriptionBuilder canonicalContractDescriptionBuilder;
 
     @Context
     private UriInfo uriInfo;
@@ -61,7 +58,8 @@ public class VersionResource {
         NastUserResource nastUserResource, PasswordRulesResource passwordRulesResource,
         TokenResource tokenResource, ScopesResource scopeAccessResource,
         CloudVersionsResource cloudVersionsResource, ApiDocService apiDocService,
-        RackersResource rackersResource, Configuration config) {
+        RackersResource rackersResource, Configuration config,
+        CanonicalContractDescriptionBuilder canonicalContractDescriptionBuilder) {
         this.usersResource = usersResource;
         this.customersResource = customersResource;
         this.mossoUserResource = mossoUserResource;
@@ -73,6 +71,7 @@ public class VersionResource {
         this.cloudVersionsResource = cloudVersionsResource;
         this.apiDocService = apiDocService;
         this.config = config;
+        this.canonicalContractDescriptionBuilder = canonicalContractDescriptionBuilder;
     }
 
     /**
@@ -89,13 +88,31 @@ public class VersionResource {
      * @param versionId Version Number
      */
     @GET
-    public Response getVersionInfo(@PathParam("versionId") String versionId) {
-    	InternalContractInfo internalContractInfo = createInternalContractInfo();
-    	Version version = internalContractInfo.createContractVersion(versionId);
-    	
-        return Response.ok(version).build();
+    public Response getInternalVersionInfo(@PathParam("versionId") String versionId) {
+      	final String responseXml = canonicalContractDescriptionBuilder.buildInternalVersionPage(versionId, uriInfo);
+    	return Response.ok(responseXml).build();
     }
 
+    /**
+     * Gets the API Version info for public consumers.
+     *
+     * @response.representation.200.qname {http://docs.rackspacecloud.com/idm/api/v1.0}version
+     * @response.representation.400.qname {http://docs.rackspacecloud.com/idm/api/v1.0}badRequest
+     * @response.representation.401.qname {http://docs.rackspacecloud.com/idm/api/v1.0}unauthorized
+     * @response.representation.403.qname {http://docs.rackspacecloud.com/idm/api/v1.0}forbidden
+     * @response.representation.404.qname {http://docs.rackspacecloud.com/idm/api/v1.0}itemNotFound
+     * @response.representation.500.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serverError
+     * @response.representation.503.qname {http://docs.rackspacecloud.com/idm/api/v1.0}serviceUnavailable
+     * 
+     * @param versionId Version Number
+     */
+    @GET
+    @Path("public")
+    public Response getPublicVersionInfo(@PathParam("versionId") String versionId) {
+      	final String responseXml = canonicalContractDescriptionBuilder.buildPublicVersionPage(versionId, uriInfo);
+    	return Response.ok(responseXml).build();
+    }
+    
     @Path("customers")
     public CustomersResource getCustomersResource() {
         return customersResource;
@@ -161,12 +178,5 @@ public class VersionResource {
     public Response getWadl() {
         String myString = apiDocService.getWadl();
         return Response.ok(myString).build();
-    }
-    
-    private InternalContractInfo createInternalContractInfo() {
-        ServiceProfileConfig serviceProfileConfig = new ServiceProfileConfig(config, uriInfo);
-        InternalContractInfo internalContractInfo = new InternalContractInfo(new ServiceProfileUtil(), serviceProfileConfig);
-        
-        return internalContractInfo;
     }
 }

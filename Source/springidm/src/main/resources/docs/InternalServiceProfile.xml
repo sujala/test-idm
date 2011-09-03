@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<service-profile
+	xmlns="http://service-registry.api.rackspace.com/service-profile"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:v="http://service-registry.api.rackspace.com/versioning"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="https://service-registry.api.rackspace.com/service-profile ./../resources/xsd/service-profile-v1.0-xs1.0.xsd"
+
+  name="Customer Idm"
+  canonical-name="idm"
+  dns-zone="idm.api.rackspace.com"
+  service-model="utility">
+  
+    <atom:link rel="self" href="https://idm.api.rackspace.com" />
+    <atom:link rel="describedby" type="text/html" href="http://serviceregistry.rackspace.com/services/idm" />
+    
+    <short-description>Allows users access Rackspace resources and systems.</short-description>
+    
+    <detailed-description>
+		The customer idm api allows Rackspace clients to obtain tokens that can be used to access resources in Rackspace.
+		It also allows clients manage identities and delegate access to resources.
+    </detailed-description>
+
+    <contract name="canonical">
+	    <v:versions>
+	      <v:version id="v1.0" status="BETA">        
+	        <v:media-types>
+	          <v:media-type base="application/xml" type="application/vnd.rackspace.idm-v1.0+xml">
+	            <atom:link rel="describedby" type="application/xml" href="${baseUrl}v1.0/docs/xsd/idmapi.xsd" />
+	          </v:media-type>
+	        </v:media-types>
+	        
+	        <atom:link rel="self" href="${baseUrl}v1.0"/>
+	        <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="${baseUrl}v1.0/application.wadl" />
+			<atom:link rel="documentation" href="${baseUrl}docs/v1.0/developerguide.pdf"/>	
+	      </v:version>
+	    </v:versions>
+    </contract>
+    
+   	<contract name="cloud auth">
+	    <v:versions>
+	      <v:version id="v1.0" status="CURRENT">        
+	        <atom:link rel="self" href="${baseUrl}cloud/v1.0"/>
+	       	<atom:link rel="documentation" href="http://docs.rackspace.com/servers/api/v1.0/cs-devguide/content/Authentication-d1e506.html#d6e202"/>
+	      </v:version>
+	      
+	      <v:version id="v1.1" status="BETA">        
+	        <v:media-types>
+	        	<v:media-type base="application/xml" type="application/vnd.rackspace.cloudauth-v1.1+xml">
+	            <atom:link rel="describedby" type="application/xml" href="http://docs.rackspacecloud.com/auth/api/v1.1/xsd/" />
+	          </v:media-type>
+	        </v:media-types>
+	        
+	        <atom:link rel="self" href="${baseUrl}cloud/v1.1"/>
+	        <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="http://docs.rackspacecloud.com/auth/api/v1.1/admin.wadl" />
+	        <atom:link rel="documentation" type="text/html" href="http://docs-beta.rackspace.com/auth/api/v1.1/auth-admin-devguide/content/index.html" title="Admin Developer Guide" />
+	      </v:version>
+	      
+	      <v:version id="v2.0" status="CURRENT">        
+	        <v:media-types>
+	          <v:media-type base="application/xml" type="application/vnd.rackspace.cloudauth-v1.1+xml">
+	            <atom:link rel="describedby" type="application/xml" href="http://docs.rackspacecloud.com/auth/api/v2.0/xsd/" />
+	          </v:media-type>
+	        </v:media-types>
+	        
+	        <atom:link rel="self" href="${baseUrl}cloud/v2.0"/>
+	        <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="http://docs.rackspacecloud.com/auth/api/v2.0/admin.wadl" />
+	        <atom:link rel="documentation" type="text/html" href="http://docs-beta.rackspace.com/auth/api/v2.0/auth-admin-devguide/content/index.html" title="Admin Developer Guide" />
+	      </v:version>
+	    </v:versions>
+    </contract>
+
+</service-profile>
+

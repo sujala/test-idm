@@ -4,14 +4,18 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 
 /**
  * Cloud Auth API Versions
@@ -26,27 +30,38 @@ public class CloudVersionsResource {
     private final Cloud11VersionResource cloud11VersionResource;
     private final Cloud20VersionResource cloud20VersionResource;
     private final Configuration config;
+    private final CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
+
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @UriInfo
+    @Context
     private UriInfo uriInfo;
     
     @Autowired
     public CloudVersionsResource(Cloud10VersionResource cloud10VersionResource,
     Cloud11VersionResource cloud11VersionResource,
-    Cloud20VersionResource cloud20VersionResource, Configuration config) {
+    Cloud20VersionResource cloud20VersionResource, Configuration config,
+    CloudContractDescriptionBuilder cloudContractDescriptionBuilder) {
         this.cloud10VersionResource = cloud10VersionResource;
         this.cloud11VersionResource = cloud11VersionResource;
         this.cloud20VersionResource = cloud20VersionResource;
         this.config = config;
+        this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
     }
     
     @GET
-    public Response getCloudVersionsInfo() {
-        //TODO: Implement Cloud Version Info Call
-        return Response.ok().build();
+    public Response getInternalCloudVersionsInfo() {
+    	final String responseXml = cloudContractDescriptionBuilder.buildInternalRootPage(uriInfo);
+    	return Response.ok(responseXml).build();
     }
 
+    @GET
+    @Path("public")
+    public Response getPublicCloudVersionsInfo() {
+    	final String responseXml = cloudContractDescriptionBuilder.buildPublicRootPage(uriInfo);
+    	return Response.ok(responseXml).build();
+    }
+    
     @Path("v1.0")
     public Cloud10VersionResource getCloud10VersionResource() {
             return cloud10VersionResource;

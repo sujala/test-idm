@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource;
 
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -17,10 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.resource.cloud.CloudVersionsResource;
-import com.rackspace.idm.api.serviceprofile.ServiceProfileConfig;
-import com.rackspace.idm.api.serviceprofile.ServiceProfileInfo;
+import com.rackspace.idm.api.serviceprofile.ServiceProfileDescriptionBuilder;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.jaxb.ServiceProfile;
 
 /**
  * API Versions
@@ -34,17 +33,18 @@ public class RootResource {
 
     private final CloudVersionsResource cloudVersionsResource;
     private final VersionResource versionResource;
-    private Configuration config;
+    private final ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Context
     private UriInfo uriInfo;
     
     @Autowired
-    public RootResource(CloudVersionsResource cloudVersionsResource, VersionResource versionResource, Configuration config) {
+    public RootResource(CloudVersionsResource cloudVersionsResource, VersionResource versionResource, 
+    		Configuration config, ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder ) {
         this.cloudVersionsResource = cloudVersionsResource;
         this.versionResource = versionResource;
-        this.config = config;
+        this.serviceProfileDescriptionBuilder = serviceProfileDescriptionBuilder;
     }
 
     /**
@@ -60,11 +60,8 @@ public class RootResource {
      */
     @GET
     public Response getInternalServiceProfile() {
-        ServiceProfileInfo serviceProfileInfo = createServiceProfileInfo();
-        
-    	ServiceProfile serviceProfile = serviceProfileInfo.createInternalServiceProfile();
-    	
-    	return Response.ok(serviceProfile).build();
+    	final String responseXml = serviceProfileDescriptionBuilder.buildInternalServiceProfile(uriInfo);
+    	return Response.ok(responseXml).build();
     }
     
     /**
@@ -81,11 +78,8 @@ public class RootResource {
     @GET
     @Path("public")
     public Response getPublicServiceProfile() {
-    	ServiceProfileInfo serviceProfileInfo = createServiceProfileInfo();
-        
-    	ServiceProfile serviceProfile = serviceProfileInfo.createExternalServiceProfile();
-    	
-    	return Response.ok(serviceProfile).build();
+       	final String responseXml = serviceProfileDescriptionBuilder.buildPublicServiceProfile(uriInfo);
+    	return Response.ok(responseXml).build();
     }
     
     @Path("cloud/")
@@ -102,12 +96,5 @@ public class RootResource {
         String errMsg = String.format("Version %s does not exist", versionId);
         logger.warn(errMsg);
         throw new NotFoundException(errMsg);
-    }
-    
-    private ServiceProfileInfo createServiceProfileInfo() {
-        ServiceProfileConfig serviceProfileConfig = new ServiceProfileConfig(config, uriInfo);
-        ServiceProfileInfo serviceProfileInfo = new ServiceProfileInfo(serviceProfileConfig);
-        
-        return serviceProfileInfo;
     }
 }

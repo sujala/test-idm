@@ -285,6 +285,14 @@
             <artifactId>hamcrest-all</artifactId>
             <version>1.1</version>
         </dependency>
+        
+        <!-- Freemarker template library -->
+        <dependency>
+		  <groupId>org.freemarker</groupId>
+		  <artifactId>freemarker</artifactId>
+		  <!-- Latest 2.3.x (not 2.4.x), at least 2.3.18 -->
+		  <version>2.3.18</version>
+		</dependency>
     </dependencies>
 
     <profiles>

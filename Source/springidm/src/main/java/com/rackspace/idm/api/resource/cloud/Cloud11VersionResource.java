@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud;
 
 import com.rackspace.idm.api.resource.Encoder;
+import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.cloudv11.jaxb.*;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+
 import java.io.IOException;
 
 /**
@@ -22,24 +24,38 @@ public class Cloud11VersionResource {
 
     private final Configuration config;
     private final CloudClient cloudClient;
-
+    private final CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
+    
     @Autowired
     private DefaultCloud11Service defaultCloud11Service;
 
     @Autowired
     private DelegateCloud11Service delegateCloud11Service;
 
-
+    @Context
+    private UriInfo uriInfo;
+    
     @Autowired
-    public Cloud11VersionResource(Configuration config, CloudClient cloudClient) {
+    public Cloud11VersionResource(Configuration config, CloudClient cloudClient, 
+    		CloudContractDescriptionBuilder cloudContractDescriptionBuilder) {
         this.config = config;
         this.cloudClient = cloudClient;
+        this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
     }
 
     @GET
-    public Response getCloud11VersionInfo(@Context HttpHeaders httpHeaders)
+    @Path("public")
+    public Response getPublicCloud11VersionInfo(@Context HttpHeaders httpHeaders)
             throws IOException {
+    	//For the pubic profile, we're just forwarding to what cloud has. Once we become the
+    	//source of truth, we should use the CloudContractDescriptorBuilder to render this.
         return cloudClient.get(getCloudAuthV11Url(), httpHeaders).build();
+    }
+    
+    @GET
+    public Response getInternalCloud11VersionInfo() {
+       	final String responseXml = cloudContractDescriptionBuilder.buildInternalVersionPage(CloudContractDescriptionBuilder.VERSION_1_1, uriInfo);
+    	return Response.ok(responseXml).build();
     }
 
     @POST
