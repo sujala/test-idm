@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://service-registry.api.rackspace.com/service-profile"
+    xmlns="http://service-registry.api.rackspace.com/service-profile"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+    xmlns:atom="http://www.w3.org/2005/Atom"
+    xmlns:v="http://service-registry.api.rackspace.com/versioning"
+    elementFormDefault="qualified" >
+    
+    <!-- Import ATOM specific schema definitions -->
+    <xs:import namespace="http://www.w3.org/2005/Atom" schemaLocation="./atom/atom-v1.0.xsd" />
+    <xs:import namespace="http://service-registry.api.rackspace.com/versioning" schemaLocation="versioning-v1.0-xs1.0.xsd" />
+    
+    <!-- ROOT ELEMENT -->
+    <xs:element name="service-profile" type="ServiceProfile"/>
+    <xs:element name="contract" type="Contract"/>
+       
+    <xs:complexType name="ServiceProfile">
+        <xs:sequence>
+            <xs:element ref="atom:link" minOccurs="2" maxOccurs="unbounded" />
+            <xs:element name="short-description" type="xs:string" />
+            <xs:element name="detailed-description" type="xs:string" />
+            <xs:element name="contract" type="Contract" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:string" />
+        <xs:attribute name="name" type="xs:string" />
+        <xs:attribute name="canonical-name" type="xs:string" />
+        <xs:attribute name="dns-zone" type="xs:string" />
+        <xs:attribute name="service-model" type="ServiceModel" />
+        <xs:attribute name="created" type="xs:date" />
+        <xs:attribute name="updated" type="xs:date" />
+        <xs:attribute name="environment" type="Environment" />
+    </xs:complexType>
+
+    <xs:simpleType name="ServiceModel">        
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="entity"/>
+            <xs:enumeration value="task"/>
+            <xs:enumeration value="utility"/>
+        </xs:restriction>       
+    </xs:simpleType>           
+    
+    <xs:simpleType name="Environment">        
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="dev"/>
+            <xs:enumeration value="qa"/>
+            <xs:enumeration value="uat"/>
+            <xs:enumeration value="staging"/>
+            <xs:enumeration value="production"/>
+        </xs:restriction>       
+    </xs:simpleType>   
+    
+   	<xs:complexType name="Contract">
+		<xs:sequence>
+			<xs:element ref="v:versions" minOccurs="1" maxOccurs="1"/>
+		</xs:sequence>
+		<xs:attribute name="name" type="xs:string" />
+	</xs:complexType>  
+    
+</xs:schema>

@@ -285,6 +285,14 @@
             <artifactId>hamcrest-all</artifactId>
             <version>1.1</version>
         </dependency>
+        
+        <!-- Freemarker template library -->
+        <dependency>
+		  <groupId>org.freemarker</groupId>
+		  <artifactId>freemarker</artifactId>
+		  <!-- Latest 2.3.x (not 2.4.x), at least 2.3.18 -->
+		  <version>2.3.18</version>
+		</dependency>
     </dependencies>
 
     <profiles>
@@ -491,6 +499,7 @@
                             <schemaDirectory>src/main/resources/xsd</schemaDirectory>
                             <includeSchemas>
                                 <includeSchema>idmapi.xsd</includeSchema>
+                                <includeSchema>service-profile-v1.0-xs1.0.xsd</includeSchema>
                             </includeSchemas>
                             <excludeBindings>
                                 <excludeBinding>api.xjb</excludeBinding>
@@ -500,6 +509,7 @@
                             <removeOldOutput>true</removeOldOutput>
                             <verbose>false</verbose>
                             <extension>true</extension>
+                            <strict>false</strict>
                         </configuration>
                     </execution>
                     <execution>
@@ -693,6 +703,24 @@
                     <outputFolder>soapui/test-results</outputFolder>
                 </configuration>
             </plugin>
+            <plugin>
+                <artifactId>maven-war-plugin</artifactId>
+                <!--  <version>2.1-alpha-1</version> -->
+                <configuration>
+                    <!-- <webXml>src/main/webapp/WEB-INF/web.xml</webXml> -->
+                    <webResources>
+                            <resource>
+                                    <directory>src/main/resources/xsd</directory>
+                                    <targetPath>docs/xsd</targetPath>
+                            </resource>
+                            <resource>
+                                    <directory>src/main/resources/xslt</directory>
+                                    <targetPath>docs/xslt</targetPath>
+                            </resource>
+                    </webResources>
+                    <warName>${project.artifactId}</warName>
+                </configuration>
+        	</plugin>
         </plugins>
         <resources>
             <resource>

@@ -5,6 +5,7 @@ import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 
 public class TemplateProcessor {
+	
     public String getSubstituedOutput(String templateLine,
         Map<String, String> params) {
         if (templateLine == null || params == null) {

@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.error;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 import javax.ws.rs.WebApplicationException;
@@ -8,6 +10,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Variant;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -73,7 +76,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
     public ApiExceptionMapper(ResourceBundle faultMessageConfig) {
         this.faultMessageConfig = faultMessageConfig;
     }
-    
+
     @Override
     public Response toResponse(Throwable thrown) {
         Throwable e = thrown;
@@ -81,7 +84,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         if (thrown instanceof ApplicationException) {
             e = thrown.getCause();
         }
-        
+
         if (e instanceof NotProvisionedException) {
             return toResponse(new NotProvisioned(), e, 403);
         }
@@ -165,6 +168,11 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
                 case 405:
                     Exception exp = new Exception("Method Not Allowed");
                     return toResponse(new MethodNotAllowed(), exp, 405);
+                case 406:
+                    List<Variant> variants = new ArrayList<Variant>();
+                    variants.add(new Variant(MediaType.APPLICATION_XML_TYPE, Locale.getDefault(), "UTF-8"));
+                    variants.add(new Variant(MediaType.APPLICATION_JSON_TYPE, Locale.getDefault(), "UTF-8"));
+                    return Response.notAcceptable(variants).build();
                 case 500:
                     return toResponse(new ServerError(), e.getCause(), 500);
                 case 503:
@@ -209,16 +217,16 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
 
         ResponseBuilder builder = Response.status(code).entity(fault);
         List<String> acceptHeaderVals = headers.getRequestHeader(HttpHeaders.ACCEPT);
-        if(acceptHeaderVals != null && acceptHeaderVals.size() > 0) {
-	        boolean isOctetStreamResponse = acceptHeaderVals.get(0).equals(MediaType.APPLICATION_OCTET_STREAM);
-	        if (isOctetStreamResponse) {
-	            // Convert to a different response
-	            MediaType respType = MediaType.APPLICATION_JSON_TYPE;
-	            if (acceptHeaderVals.size() > 1) {
-	                respType = MediaType.valueOf(acceptHeaderVals.get(1));
-	            }
-	            return builder.type(respType).build();
-	        }
+        if (acceptHeaderVals != null && acceptHeaderVals.size() > 0) {
+            boolean isOctetStreamResponse = acceptHeaderVals.get(0).equals(MediaType.APPLICATION_OCTET_STREAM);
+            if (isOctetStreamResponse) {
+                // Convert to a different response
+                MediaType respType = MediaType.APPLICATION_JSON_TYPE;
+                if (acceptHeaderVals.size() > 1) {
+                    respType = MediaType.valueOf(acceptHeaderVals.get(1));
+                }
+                return builder.type(respType).build();
+            }
         }
 
         return builder.build();

@@ -31,7 +31,7 @@ public class PropertyFileConfiguration {
      *         classpath for the config file during test will be
      *         src/test/resources, rather than src/main/resources.
      */
-    @Bean
+    @Bean(name="properties")
     @Scope(value = "singleton")
     public Configuration getConfig() {
         File configFile = new File(EXTERNAL_CONFIG_FILE_PATH);

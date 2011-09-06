@@ -25,7 +25,7 @@ import java.util.Set;
 public class CloudClient {
 
     // Todo: create a property
-    boolean ignoreSSLCert = true;
+    private boolean ignoreSSLCert = true;
 
     public Response.ResponseBuilder get(String url, HttpHeaders httpHeaders)
         throws IOException {

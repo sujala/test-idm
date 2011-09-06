@@ -171,17 +171,19 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder getBaseURLs(String serviceName,
         HttpHeaders httpHeaders) throws IOException {
-        try {
-            //TODO
-            return defaultCloud11Service.getBaseURLs(serviceName, httpHeaders);
-        } catch (Exception e) {
+        Response.ResponseBuilder serviceResponse = defaultCloud11Service.getBaseURLs(serviceName, httpHeaders);
+
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
+
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            HashMap<String, String> queryParams = new HashMap<String, String>();
+            queryParams.put("serviceName", serviceName);
+            String path = getCloudAuthV11Url().concat(
+                getPath("baseURLs", queryParams));
+            return cloudClient.get(path, httpHeaders);
         }
 
-        HashMap<String, String> queryParams = new HashMap<String, String>();
-        queryParams.put("serviceName", serviceName);
-        String path = getCloudAuthV11Url().concat(
-            getPath("baseURLs", queryParams));
-        return cloudClient.get(path, httpHeaders);
+        return serviceResponse;
     }
 
     @Override
