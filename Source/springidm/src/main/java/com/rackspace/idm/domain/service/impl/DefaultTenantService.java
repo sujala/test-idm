@@ -85,7 +85,9 @@ public class DefaultTenantService implements TenantService {
             throw new NotFoundException("Tenant Role not found");
         }
 
-        if (existingRole.containsTenantId(role.getTenantIds()[0])) {
+        if (role.getTenantIds() == null || role.getTenantIds().length == 0) {
+            this.tenantDao.deleteTenantRole(role);
+        } else if (existingRole.containsTenantId(role.getTenantIds()[0])) {
             if (existingRole.getTenantIds().length == 1) {
                 this.tenantDao.deleteTenantRole(role);
             } else {
@@ -107,7 +109,8 @@ public class DefaultTenantService implements TenantService {
     public TenantRole getTenantRoleForParentByRoleName(String parentUniqueId,
         String roleName) {
         logger.debug("Getting Tenant Role {}", roleName);
-        TenantRole role = this.tenantDao.getTenantRoleForParentByRoleName(parentUniqueId, roleName);
+        TenantRole role = this.tenantDao.getTenantRoleForParentByRoleName(
+            parentUniqueId, roleName);
         logger.debug("Got Tenant Role {}", roleName);
         return role;
     }
@@ -116,7 +119,9 @@ public class DefaultTenantService implements TenantService {
     public TenantRole getTenantRoleForParentByRoleNameAndClientId(
         String parentUniqueId, String roleName, String clientId) {
         logger.debug("Getting Tenant Role {}", roleName);
-        TenantRole role = this.tenantDao.getTenantRoleForParentByRoleNameAndClientId(parentUniqueId, roleName, clientId);
+        TenantRole role = this.tenantDao
+            .getTenantRoleForParentByRoleNameAndClientId(parentUniqueId,
+                roleName, clientId);
         logger.debug("Got Tenant Role {}", roleName);
         return role;
     }
@@ -124,7 +129,8 @@ public class DefaultTenantService implements TenantService {
     @Override
     public List<TenantRole> getTenantRolesByParent(String parentUniqueId) {
         logger.debug("Getting Tenant Roles");
-        List<TenantRole> roles = this.tenantDao.getTenantRolesByParent(parentUniqueId);
+        List<TenantRole> roles = this.tenantDao
+            .getTenantRolesByParent(parentUniqueId);
         logger.debug("Got {} Tenant Roles", roles.size());
         return roles;
     }
@@ -133,7 +139,8 @@ public class DefaultTenantService implements TenantService {
     public List<TenantRole> getTenantRolesByParentAndClientId(
         String parentUniqueId, String clientId) {
         logger.debug("Getting Tenant Roles by ClientId: {}", clientId);
-        List<TenantRole> roles = this.tenantDao.getTenantRolesByParentAndClientId(parentUniqueId, clientId);
+        List<TenantRole> roles = this.tenantDao
+            .getTenantRolesByParentAndClientId(parentUniqueId, clientId);
         logger.debug("Got {} Tenant Roles", roles.size());
         return roles;
     }
