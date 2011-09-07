@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.entity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -92,6 +93,49 @@ public class TenantRole implements Auditable {
         List<String> tenants = new ArrayList<String>();
         Collections.addAll(tenants, tenantIds);
         return tenants.contains(tenantId);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+            + ((clientId == null) ? 0 : clientId.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + Arrays.hashCode(tenantIds);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        TenantRole other = (TenantRole) obj;
+        if (clientId == null) {
+            if (other.clientId != null) {
+                return false;
+            }
+        } else if (!clientId.equals(other.clientId)) {
+            return false;
+        }
+        if (name == null) {
+            if (other.name != null) {
+                return false;
+            }
+        } else if (!name.equals(other.name)) {
+            return false;
+        }
+        if (!Arrays.equals(tenantIds, other.tenantIds)) {
+            return false;
+        }
+        return true;
     }
 
     @Override

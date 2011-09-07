@@ -22,6 +22,11 @@ objectClass: top
 objectClass: organizationalUnit
 ou: cloud
 
+dn: ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: tenants
+
 dn: ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit
@@ -31,6 +36,14 @@ dn: ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit
 ou: tenants
+
+dn: cn=auth,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: auth
+sn: auth
+uid: auth
+userPassword: auth123
 
 ######################################## Admin User #######################################
 

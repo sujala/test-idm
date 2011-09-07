@@ -15,7 +15,6 @@ public interface TenantService {
     
     void addTenantRole(String parentUniqueId, TenantRole role);
     void deleteTenantRole(String parentUniqueId, TenantRole role);
-    void updateTenantRole(TenantRole role);
     TenantRole getTenantRoleForParentByRoleName(String parentUniqueId, String roleName);
     TenantRole getTenantRoleForParentByRoleNameAndClientId(String parentUniqueId, String roleName, String clientId);
     List<TenantRole> getTenantRolesByParent(String parentUniqueId);

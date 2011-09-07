@@ -59,15 +59,28 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public void addTenantRole(String parentUniqueId, TenantRole role) {
+        // Adding a tenantRole has multiple paths depending on whether
+        // the user already has that role on not.
         logger.info("Adding Tenant Role {}", role);
         TenantRole existingRole = this.tenantDao
             .getTenantRoleForParentByRoleNameAndClientId(parentUniqueId,
                 role.getName(), role.getClientId());
         if (existingRole == null) {
+            // if the user does not have the role then just add the
+            // tenant role normally.
             this.tenantDao.addTenantRoleToParent(parentUniqueId, role);
+        } else if (existingRole.getTenantIds() == null
+            || existingRole.getTenantIds().length == 0) {
+            // If the user already has the global role then do nothing
         } else {
-            for (String tenantId : existingRole.getTenantIds()) {
-                role.addTenantId(tenantId);
+            // If the new role is not global then add the new tenant
+            // to the role and update the role, otherwise just update
+            // the role and it will delete the existing tenants and
+            // make it a global role.
+            if (role.getTenantIds() != null && role.getTenantIds().length > 0) {
+                for (String tenantId : existingRole.getTenantIds()) {
+                    role.addTenantId(tenantId);
+                }
             }
             this.tenantDao.updateTenantRole(role);
         }
@@ -96,13 +109,6 @@ public class DefaultTenantService implements TenantService {
             }
         }
         logger.info("Deleted Tenant Role {}", role);
-    }
-
-    @Override
-    public void updateTenantRole(TenantRole role) {
-        logger.info("Updating Tenant Role {}", role);
-        this.tenantDao.updateTenantRole(role);
-        logger.info("Updated Tenant {}", role);
     }
 
     @Override
