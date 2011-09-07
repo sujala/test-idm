@@ -65,7 +65,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     public void deleteTenant(String tenantId) {
         if (StringUtils.isBlank(tenantId)) {
             getLogger().error("Null or Empty tenantId parameter");
-            throw new IllegalArgumentException("Null or Empty inum parameter.");
+            throw new IllegalArgumentException("Null or Empty tenantId parameter.");
         }
         Tenant tenant = getTenant(tenantId);
         if (tenant == null) {

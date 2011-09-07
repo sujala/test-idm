@@ -5,6 +5,7 @@ import java.util.List;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.Clients;
 
 public interface ClientDao {
@@ -55,4 +56,14 @@ public interface ClientDao {
     void updateClientGroup(ClientGroup group);
     
     List<Client> getAvailableScopes();
+    
+    void addClientRole(String clientUniqueId, ClientRole role);
+    
+    void deleteClientRole(ClientRole role);
+    
+    ClientRole getClientRoleByClientIdAndRoleName(String clientId, String roleName);
+    
+    List<ClientRole> getClientRolesByClientId(String clientId);
+    
+    void updateClientRole(ClientRole role);
 }

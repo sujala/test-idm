@@ -116,6 +116,7 @@ public class LdapTenantRepositoryTest {
         TenantRole role = this.repo.getTenantRoleForParentByRoleName(dn, roleName);
         TenantRole role2 = this.repo.getTenantRoleForParentByRoleNameAndClientId(dn, roleName, clientId);
         List<TenantRole> roles = this.repo.getTenantRolesByParent(dn);
+        List<TenantRole> roles2 = this.repo.getTenantRolesByParentAndClientId(dn, clientId);
         this.repo.deleteTenantRole(role);
         TenantRole notThere = this.repo.getTenantRoleForParentByRoleName(dn, roleName);
         Assert.assertNotNull(role);
@@ -127,6 +128,7 @@ public class LdapTenantRepositoryTest {
         Assert.assertEquals(roleName, role2.getName());
         Assert.assertEquals(clientId, role2.getClientId());
         Assert.assertTrue(roles.size() > 0);
+        Assert.assertTrue(roles2.size() > 0);
         Assert.assertNull(notThere);
     }
     
@@ -138,6 +140,51 @@ public class LdapTenantRepositoryTest {
     @Test(expected = IllegalArgumentException.class)
     public void shouldNotAddTenantRoleWithBlankParent() {
         this.repo.addTenantRoleToParent(null, getTestTenantRole());
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotDeleteNullTenantRole() {
+        this.repo.deleteTenantRole(null);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotGetTenantRoleWithBlankParent() {
+        this.repo.getTenantRoleForParentByRoleName(null, roleName);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotGetTenantRoleWithBlankRoleName() {
+        this.repo.getTenantRoleForParentByRoleName(dn, null);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotGetTenantRoleByClientIdWithBlankParent() {
+        this.repo.getTenantRoleForParentByRoleNameAndClientId(null, roleName, clientId);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotGetTenantRoleByClientIdWithBlankRoleName() {
+        this.repo.getTenantRoleForParentByRoleNameAndClientId(dn, null, clientId);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotGetTenantRoleByClientIdWithBlankClientId() {
+        this.repo.getTenantRoleForParentByRoleNameAndClientId(dn, roleName, null);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotGetTenantRolesWithBlankParent() {
+        this.repo.getTenantRolesByParent(null);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotGetTenantRolesByClientIdWithBlankParent() {
+        this.repo.getTenantRolesByParentAndClientId(null, clientId);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotGetTenantRolesByClientIdWithBlankClientId() {
+        this.repo.getTenantRolesByParentAndClientId(dn, null);
     }
     
     private Tenant getTestTenant() {

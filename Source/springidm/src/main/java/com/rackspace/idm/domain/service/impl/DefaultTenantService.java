@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -56,18 +57,53 @@ public class DefaultTenantService implements TenantService {
         this.tenantDao.updateTenant(tenant);
         logger.info("Updated Tenant {}", tenant);
     }
+    
+    @Override
+    public List<Tenant> getTenantsForParentByTenantRoles(String parentUniqueId) {
+        logger.info("Getting Tenants for Parent");
+        List<Tenant> tenants = new ArrayList<Tenant>();
+        List<String> tenantIds = new ArrayList<String>();
+        List<TenantRole> tenantRoles = this.tenantDao.getTenantRolesByParent(parentUniqueId);
+        for (TenantRole role : tenantRoles) {
+            if (role.getTenantIds() != null && role.getTenantIds().length > 0) {
+                for (String tenantId : role.getTenantIds()) {
+                    if (!tenantIds.contains(tenantId)) {
+                        tenantIds.add(tenantId);
+                    }
+                }
+            }
+        }
+        for (String tenantId : tenantIds) {
+            tenants.add(this.getTenant(tenantId));
+        }
+        logger.info("Got {} tenants", tenants.size());
+        return tenants;
+    }
 
     @Override
     public void addTenantRole(String parentUniqueId, TenantRole role) {
+        // Adding a tenantRole has multiple paths depending on whether
+        // the user already has that role on not.
         logger.info("Adding Tenant Role {}", role);
         TenantRole existingRole = this.tenantDao
             .getTenantRoleForParentByRoleNameAndClientId(parentUniqueId,
                 role.getName(), role.getClientId());
         if (existingRole == null) {
+            // if the user does not have the role then just add the
+            // tenant role normally.
             this.tenantDao.addTenantRoleToParent(parentUniqueId, role);
+        } else if (existingRole.getTenantIds() == null
+            || existingRole.getTenantIds().length == 0) {
+            // If the user already has the global role then do nothing
         } else {
-            for (String tenantId : existingRole.getTenantIds()) {
-                role.addTenantId(tenantId);
+            // If the new role is not global then add the new tenant
+            // to the role and update the role, otherwise just update
+            // the role and it will delete the existing tenants and
+            // make it a global role.
+            if (role.getTenantIds() != null && role.getTenantIds().length > 0) {
+                for (String tenantId : existingRole.getTenantIds()) {
+                    role.addTenantId(tenantId);
+                }
             }
             this.tenantDao.updateTenantRole(role);
         }
@@ -85,7 +121,9 @@ public class DefaultTenantService implements TenantService {
             throw new NotFoundException("Tenant Role not found");
         }
 
-        if (existingRole.containsTenantId(role.getTenantIds()[0])) {
+        if (role.getTenantIds() == null || role.getTenantIds().length == 0) {
+            this.tenantDao.deleteTenantRole(role);
+        } else if (existingRole.containsTenantId(role.getTenantIds()[0])) {
             if (existingRole.getTenantIds().length == 1) {
                 this.tenantDao.deleteTenantRole(role);
             } else {
@@ -97,17 +135,11 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public void updateTenantRole(TenantRole role) {
-        logger.info("Updating Tenant Role {}", role);
-        this.tenantDao.updateTenantRole(role);
-        logger.info("Updated Tenant {}", role);
-    }
-
-    @Override
     public TenantRole getTenantRoleForParentByRoleName(String parentUniqueId,
         String roleName) {
         logger.debug("Getting Tenant Role {}", roleName);
-        TenantRole role = this.tenantDao.getTenantRoleForParentByRoleName(parentUniqueId, roleName);
+        TenantRole role = this.tenantDao.getTenantRoleForParentByRoleName(
+            parentUniqueId, roleName);
         logger.debug("Got Tenant Role {}", roleName);
         return role;
     }
@@ -116,7 +148,9 @@ public class DefaultTenantService implements TenantService {
     public TenantRole getTenantRoleForParentByRoleNameAndClientId(
         String parentUniqueId, String roleName, String clientId) {
         logger.debug("Getting Tenant Role {}", roleName);
-        TenantRole role = this.tenantDao.getTenantRoleForParentByRoleNameAndClientId(parentUniqueId, roleName, clientId);
+        TenantRole role = this.tenantDao
+            .getTenantRoleForParentByRoleNameAndClientId(parentUniqueId,
+                roleName, clientId);
         logger.debug("Got Tenant Role {}", roleName);
         return role;
     }
@@ -124,7 +158,8 @@ public class DefaultTenantService implements TenantService {
     @Override
     public List<TenantRole> getTenantRolesByParent(String parentUniqueId) {
         logger.debug("Getting Tenant Roles");
-        List<TenantRole> roles = this.tenantDao.getTenantRolesByParent(parentUniqueId);
+        List<TenantRole> roles = this.tenantDao
+            .getTenantRolesByParent(parentUniqueId);
         logger.debug("Got {} Tenant Roles", roles.size());
         return roles;
     }
@@ -133,7 +168,8 @@ public class DefaultTenantService implements TenantService {
     public List<TenantRole> getTenantRolesByParentAndClientId(
         String parentUniqueId, String clientId) {
         logger.debug("Getting Tenant Roles by ClientId: {}", clientId);
-        List<TenantRole> roles = this.tenantDao.getTenantRolesByParentAndClientId(parentUniqueId, clientId);
+        List<TenantRole> roles = this.tenantDao
+            .getTenantRolesByParentAndClientId(parentUniqueId, clientId);
         logger.debug("Got {} Tenant Roles", roles.size());
         return roles;
     }

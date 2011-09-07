@@ -13,9 +13,10 @@ public interface TenantService {
     List<Tenant> getTenants();
     void updateTenant(Tenant tenant);
     
+    List<Tenant> getTenantsForParentByTenantRoles(String parentUniqueId);
+    
     void addTenantRole(String parentUniqueId, TenantRole role);
     void deleteTenantRole(String parentUniqueId, TenantRole role);
-    void updateTenantRole(TenantRole role);
     TenantRole getTenantRoleForParentByRoleName(String parentUniqueId, String roleName);
     TenantRole getTenantRoleForParentByRoleNameAndClientId(String parentUniqueId, String roleName, String clientId);
     List<TenantRole> getTenantRolesByParent(String parentUniqueId);

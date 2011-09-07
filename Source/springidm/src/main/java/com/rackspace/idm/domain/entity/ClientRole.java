@@ -1,0 +1,85 @@
+package com.rackspace.idm.domain.entity;
+
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
+
+import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.unboundid.ldap.sdk.ReadOnlyEntry;
+import com.unboundid.ldap.sdk.persist.FilterUsage;
+import com.unboundid.ldap.sdk.persist.LDAPEntryField;
+import com.unboundid.ldap.sdk.persist.LDAPField;
+import com.unboundid.ldap.sdk.persist.LDAPObject;
+
+@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_TENANT)
+public class ClientRole implements Auditable {
+    
+    @LDAPEntryField()
+    private ReadOnlyEntry ldapEntry;
+    
+    @LDAPField(attribute=LdapRepository.ATTR_NAME, objectClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+    private String name;
+    
+    @LDAPField(attribute=LdapRepository.ATTR_CLIENT_ID, objectClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+    private String clientId;
+    
+    @LDAPField(attribute=LdapRepository.ATTR_DESCRIPTION, objectClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    private String description;
+    
+    public ReadOnlyEntry getLDAPEntry() {
+        return ldapEntry;
+    }
+    
+    public String getUniqueId() {
+        if (ldapEntry == null) {
+            return null;
+        }
+        else {
+            return ldapEntry.getDN();
+        }
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
+    public void copyChanges(ClientRole modifiedClient) {
+        
+        if (modifiedClient.getDescription() != null) {
+            if (StringUtils.isBlank(modifiedClient.getDescription())) {
+                setDescription(null);
+            } else {
+                setDescription(modifiedClient.getDescription());
+            }
+        }
+    }
+
+    @Override
+    public String getAuditContext() {
+        String format = "role=%s,clientId=%s";
+        return String.format(format, getName(), getClientId());
+    }
+
+    @Override
+    public String toString() {
+        return getAuditContext();
+    }
+}
