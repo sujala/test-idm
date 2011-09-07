@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -55,6 +56,28 @@ public class DefaultTenantService implements TenantService {
         logger.info("Updating Tenant {}", tenant);
         this.tenantDao.updateTenant(tenant);
         logger.info("Updated Tenant {}", tenant);
+    }
+    
+    @Override
+    public List<Tenant> getTenantsForParentByTenantRoles(String parentUniqueId) {
+        logger.info("Getting Tenants for Parent");
+        List<Tenant> tenants = new ArrayList<Tenant>();
+        List<String> tenantIds = new ArrayList<String>();
+        List<TenantRole> tenantRoles = this.tenantDao.getTenantRolesByParent(parentUniqueId);
+        for (TenantRole role : tenantRoles) {
+            if (role.getTenantIds() != null && role.getTenantIds().length > 0) {
+                for (String tenantId : role.getTenantIds()) {
+                    if (!tenantIds.contains(tenantId)) {
+                        tenantIds.add(tenantId);
+                    }
+                }
+            }
+        }
+        for (String tenantId : tenantIds) {
+            tenants.add(this.getTenant(tenantId));
+        }
+        logger.info("Got {} tenants", tenants.size());
+        return tenants;
     }
 
     @Override

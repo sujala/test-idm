@@ -214,6 +214,20 @@ public class TenantServiceTests {
         Assert.assertTrue(returned.size() == 1);
         EasyMock.verify(mockTenantDao);
     }
+    
+    @Test
+    public void shouldGetTenantsForParentByTenantRoles() {
+        Tenant tenant = getTestTenant();
+        TenantRole role = getTestSingleTenantRole();
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(role);
+        EasyMock.expect(mockTenantDao.getTenantRolesByParent(null)).andReturn(roles);
+        EasyMock.expect(mockTenantDao.getTenant(tenantId1)).andReturn(tenant);
+        EasyMock.replay(mockTenantDao);
+        List<Tenant> tenants = tenantService.getTenantsForParentByTenantRoles(null);
+        Assert.assertTrue(tenants.size() == 1);
+        EasyMock.verify(mockTenantDao);
+    }
 
     private Tenant getTestTenant() {
         Tenant tenant = new Tenant();
