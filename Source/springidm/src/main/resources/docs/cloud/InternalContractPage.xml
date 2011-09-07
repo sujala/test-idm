@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<?xml-stylesheet type="text/xsl" href="/docs/xslt/contract-page.xsl"?>
+
 <contract
 	xmlns="http://service-registry.api.rackspace.com/service-profile"
 	xmlns:atom="http://www.w3.org/2005/Atom"
 	xmlns:v="http://service-registry.api.rackspace.com/versioning"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="https://service-registry.api.rackspace.com/service-profile ./../resources/xsd/service-profile-v1.0-xs1.0.xsd"
-
   	name="cloud auth"> 
     
     <v:versions>
