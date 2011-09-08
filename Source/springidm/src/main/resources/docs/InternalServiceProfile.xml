@@ -24,7 +24,7 @@
 		It also allows clients manage identities and delegate access to resources
     </detailed-description>
 
-    <contract name="canonical">
+    <contract name="">
 	    <v:versions>
 	      <v:version id="v1.0" status="BETA">        
 	        <v:media-types>
