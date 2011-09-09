@@ -8,11 +8,11 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import com.rackspace.idm.cloudv11.jaxb.BaseURL;
-import com.rackspace.idm.cloudv11.jaxb.BaseURLRef;
-import com.rackspace.idm.cloudv11.jaxb.User;
-import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyEnabled;
-import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyKey;
+import com.rackspacecloud.docs.auth.api.v1.BaseURL;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
+import com.rackspacecloud.docs.auth.api.v1.User;
+import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled;
+import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey;
 
 public interface Cloud11Service {
 

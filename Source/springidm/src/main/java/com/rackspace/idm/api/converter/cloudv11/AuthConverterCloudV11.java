@@ -8,11 +8,11 @@ import javax.xml.datatype.DatatypeFactory;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 
-import com.rackspace.idm.cloudv11.jaxb.AuthData;
-import com.rackspace.idm.cloudv11.jaxb.FullToken;
-import com.rackspace.idm.cloudv11.jaxb.ServiceCatalog;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspacecloud.docs.auth.api.v1.AuthData;
+import com.rackspacecloud.docs.auth.api.v1.FullToken;
+import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
 
 public class AuthConverterCloudV11 {
     private final Configuration config;
@@ -27,7 +27,7 @@ public class AuthConverterCloudV11 {
         this.endpointConverter = endpointConverter;
     }
 
-    private final com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
+    private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
 
     public AuthData toCloudv11AuthDataJaxb(UserScopeAccess usa,
         List<CloudEndpoint> endpoints) {

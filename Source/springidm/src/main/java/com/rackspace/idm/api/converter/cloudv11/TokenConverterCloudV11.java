@@ -5,16 +5,16 @@ import javax.xml.datatype.DatatypeFactory;
 
 import org.joda.time.DateTime;
 
-import com.rackspace.idm.cloudv11.jaxb.Token;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspacecloud.docs.auth.api.v1.Token;
 
 public class TokenConverterCloudV11 {
     
-    private final com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
+    private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
     
     public Token toCloudv11TokenJaxb(UserScopeAccess usa) {
         
-        com.rackspace.idm.cloudv11.jaxb.Token token = OBJ_FACTORY.createToken();
+        com.rackspacecloud.docs.auth.api.v1.Token token = OBJ_FACTORY.createToken();
     
         if (usa.getAccessTokenString() != null) {
             

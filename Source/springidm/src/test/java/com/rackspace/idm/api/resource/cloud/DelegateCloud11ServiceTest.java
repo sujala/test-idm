@@ -1,19 +1,20 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.idm.cloudv11.jaxb.User;
-import com.rackspace.idm.cloudv11.jaxb.UserWithOnlyEnabled;
-import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
+import com.rackspacecloud.docs.auth.api.v1.User;
+import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled;
+import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,7 +25,7 @@ import static org.mockito.Mockito.verify;
 public class DelegateCloud11ServiceTest {
     DelegateCloud11Service delegateCloud11Service;
     DefaultCloud11Service defaultCloud11Service;
-    com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY;
+    com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY;
     Configuration config;
     CloudClient cloudClient;
     Marshaller marshaller;
@@ -34,7 +35,7 @@ public class DelegateCloud11ServiceTest {
         delegateCloud11Service = new DelegateCloud11Service();
         defaultCloud11Service = mock(DefaultCloud11Service.class);
         delegateCloud11Service.setDefaultCloud11Service(defaultCloud11Service);
-        OBJ_FACTORY = mock(com.rackspace.idm.cloudv11.jaxb.ObjectFactory.class);
+        OBJ_FACTORY = mock(com.rackspacecloud.docs.auth.api.v1.ObjectFactory.class);
         DelegateCloud11Service.setOBJ_FACTORY(OBJ_FACTORY);
         config = mock(Configuration.class);
         delegateCloud11Service.setConfig(config);

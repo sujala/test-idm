@@ -4,11 +4,11 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.rackspace.idm.cloudv11.jaxb.Endpoint;
-import com.rackspace.idm.cloudv11.jaxb.Service;
-import com.rackspace.idm.cloudv11.jaxb.ServiceCatalog;
-import com.rackspace.idm.cloudv11.jaxb.UserType;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspacecloud.docs.auth.api.v1.Endpoint;
+import com.rackspacecloud.docs.auth.api.v1.Service;
+import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
+import com.rackspacecloud.docs.auth.api.v1.UserType;
 
 public class CloudAuthServiceCatalogFactory {
     public ServiceCatalog createNew(List<CloudEndpoint> endPoints) {

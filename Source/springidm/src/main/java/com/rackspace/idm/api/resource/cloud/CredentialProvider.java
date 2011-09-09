@@ -19,7 +19,7 @@ import javax.xml.bind.Unmarshaller;
 
 import org.apache.log4j.Logger;
 
-import com.rackspace.idm.cloudv11.jaxb.Credentials;
+import com.rackspacecloud.docs.auth.api.v1.Credentials;
 
 @Provider
 @Consumes("application/xml")

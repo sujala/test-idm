@@ -1,18 +1,35 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.idm.api.resource.Encoder;
-import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
-import com.rackspace.idm.cloudv11.jaxb.*;
+import java.io.IOException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-
-import java.io.IOException;
+import com.rackspace.idm.api.resource.Encoder;
+import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
+import com.rackspacecloud.docs.auth.api.v1.BaseURL;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
+import com.rackspacecloud.docs.auth.api.v1.User;
+import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled;
+import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey;
 
 /**
  * Cloud Auth 1.1 API Versions

@@ -21,9 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
-import com.rackspace.idm.cloudv11.jaxb.Endpoint;
-import com.rackspace.idm.cloudv11.jaxb.Service;
-import com.rackspace.idm.cloudv11.jaxb.ServiceCatalog;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
@@ -32,6 +29,9 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.UserDisabledException;
+import com.rackspacecloud.docs.auth.api.v1.Endpoint;
+import com.rackspacecloud.docs.auth.api.v1.Service;
+import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
 
 /**
  * Cloud Auth 1.0 API Version
