@@ -12,6 +12,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rackspace.api.idm.v1.UserCredentials;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
@@ -37,7 +38,6 @@ import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.jaxb.UserCredentials;
 import com.rackspace.idm.util.HashHelper;
 
 public class DefaultUserService implements UserService {

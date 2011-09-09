@@ -15,6 +15,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.idm.api.resource.cloud.v10.Cloud10VersionResource;
+import com.rackspace.idm.api.resource.cloud.v11.Cloud11VersionResource;
+import com.rackspace.idm.api.resource.cloud.v20.Cloud20VersionResource;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 
 /**

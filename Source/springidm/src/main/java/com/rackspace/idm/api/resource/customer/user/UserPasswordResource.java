@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.api.idm.v1.UserCredentials;
 import com.rackspace.idm.api.converter.PasswordConverter;
 import com.rackspace.idm.api.converter.TokenConverter;
 import com.rackspace.idm.domain.entity.Password;
@@ -37,7 +38,6 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.exception.UserDisabledException;
-import com.rackspace.idm.jaxb.UserCredentials;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -179,7 +179,7 @@ public class UserPasswordResource {
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username,
-        EntityHolder<com.rackspace.idm.jaxb.UserCredentials> holder,
+        EntityHolder<com.rackspace.api.idm.v1.UserCredentials> holder,
         @QueryParam("recovery") boolean isRecovery) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");

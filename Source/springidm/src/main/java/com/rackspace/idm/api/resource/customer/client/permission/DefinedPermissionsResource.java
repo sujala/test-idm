@@ -129,7 +129,7 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
     @POST
     public Response addClientDefinedPermission(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId, EntityHolder<com.rackspace.idm.jaxb.Permission> holder) {
+        @PathParam("clientId") String clientId, EntityHolder<com.rackspace.api.idm.v1.Permission> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
@@ -145,7 +145,7 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
+        com.rackspace.api.idm.v1.Permission permission = holder.getEntity();
         validatePermissionRequest(customerId, clientId, permission);
 
         DefinedPermission permissionDO = permissionConverter.toDefinedPermissionDO(permission);
@@ -190,7 +190,7 @@ public class DefinedPermissionsResource extends AbstractClientConsumer {
     }
 
     private void validatePermissionRequest(String customerId, String clientId,
-        com.rackspace.idm.jaxb.Permission permission) throws BadRequestException {
+        com.rackspace.api.idm.v1.Permission permission) throws BadRequestException {
         
         if (!customerId.equalsIgnoreCase(permission.getCustomerId())) {
             String errMsg = "CustomerId mismatch";

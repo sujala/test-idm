@@ -81,12 +81,12 @@ public class TokenResource {
     @POST
     public Response getAccessToken(
         @HeaderParam("Authorization") String authHeader,
-        EntityHolder<com.rackspace.idm.jaxb.AuthCredentials> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.AuthCredentials> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
 
-        com.rackspace.idm.jaxb.AuthCredentials creds = holder.getEntity();
+        com.rackspace.api.idm.v1.AuthCredentials creds = holder.getEntity();
         AuthCredentials trParam = new AuthCredentials();
         trParam.setClientId(creds.getClientId());
         trParam.setClientSecret(creds.getClientSecret());

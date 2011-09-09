@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.api.idm.v1.PasswordRotationPolicy;
 import com.rackspace.idm.api.converter.CustomerConverter;
 import com.rackspace.idm.api.resource.customer.client.CustomerClientsResource;
 import com.rackspace.idm.api.resource.customer.user.CustomerUsersResource;
@@ -28,7 +29,6 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.jaxb.PasswordRotationPolicy;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -97,7 +97,7 @@ public class CustomerResource extends AbstractCustomerConsumer {
 
         Customer customer = checkAndGetCustomer(customerId);
 
-        com.rackspace.idm.jaxb.Customer outputCustomer = customerConverter.toJaxbCustomer(customer);
+        com.rackspace.api.idm.v1.Customer outputCustomer = customerConverter.toJaxbCustomer(customer);
 
         logger.debug("Got Customer :{}", customer);
         return Response.ok(outputCustomer).build();
@@ -158,7 +158,7 @@ public class CustomerResource extends AbstractCustomerConsumer {
     @Path("passwordrotationpolicy")
     public Response updatePasswordRotationCustomer(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        EntityHolder<com.rackspace.idm.jaxb.PasswordRotationPolicy> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.PasswordRotationPolicy> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }

@@ -548,7 +548,7 @@
                     </execution>
 				</executions>
 			</plugin>
-			<plugin>
+	<!-- 		<plugin>
 				<groupId>com.sun.tools.xjc.maven2</groupId>
 				<artifactId>maven-jaxb-plugin</artifactId>
 				<executions>
@@ -568,7 +568,6 @@
 								<excludeBinding>api.xjb</excludeBinding>
 							</excludeBindings>
 							<generatePackage>com.rackspace.idm.jaxb</generatePackage>
-							<!-- <generateDirectory>src/main/java</generateDirectory> -->
 							<removeOldOutput>true</removeOldOutput>
 							<verbose>false</verbose>
 							<extension>true</extension>
@@ -576,7 +575,7 @@
 						</configuration>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin> -->
 			<plugin>
 				<groupId>org.jvnet.jaxb2.maven2</groupId>
 				<artifactId>maven-jaxb2-plugin</artifactId>
@@ -584,6 +583,18 @@
 					<extension>true</extension>
 				</configuration>
 				<executions>
+				    <execution>
+                        <id>global-auth-generate</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <schemaDirectory>src/main/resources/xsd</schemaDirectory>
+                            <bindingDirectory>src/main/resources/xsd</bindingDirectory>
+                            <generateDirectory>target/generated-sources/xjc</generateDirectory>
+                            <forceRegenerate>true</forceRegenerate>
+                        </configuration>
+                    </execution>
 					<execution>
 						<id>keystone-generate</id>
 						<goals>

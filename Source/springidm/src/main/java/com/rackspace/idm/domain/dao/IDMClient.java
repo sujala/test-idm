@@ -14,7 +14,7 @@ public interface IDMClient {
     @POST
     @Consumes({"application/xml", "application/json"})
     @Path("/token")
-    com.rackspace.idm.jaxb.Auth getAccessToken(
+    com.rackspace.api.idm.v1.Auth getAccessToken(
         @HeaderParam("Content-Type") String contentType,
         @HeaderParam("Accept") String accept,
         @HeaderParam("Authorization") String authHeader, AuthCredentials trParam);
@@ -22,7 +22,7 @@ public interface IDMClient {
     @GET
     @Produces({"application/xml", "application/json"})
     @Path("/token/{tokenString}")
-    com.rackspace.idm.jaxb.Auth validateAccessToken(
+    com.rackspace.api.idm.v1.Auth validateAccessToken(
         @HeaderParam("Authorization") String authHeader);
 
 }

@@ -12,6 +12,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 
+import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service;
+import com.rackspace.idm.api.resource.cloud.v11.DelegateCloud11Service;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;

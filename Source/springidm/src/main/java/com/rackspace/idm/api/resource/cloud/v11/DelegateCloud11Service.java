@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource.cloud;
+package com.rackspace.idm.api.resource.cloud.v11;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -18,6 +18,7 @@ import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspacecloud.docs.auth.api.v1.BaseURL;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
 import com.rackspacecloud.docs.auth.api.v1.ObjectFactory;

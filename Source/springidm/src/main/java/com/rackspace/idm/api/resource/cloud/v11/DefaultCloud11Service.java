@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource.cloud;
+package com.rackspace.idm.api.resource.cloud.v11;
 
 import java.io.IOException;
 import java.io.StringReader;

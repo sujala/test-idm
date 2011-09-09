@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.api.idm.v1.UserApiKey;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -26,7 +27,6 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.jaxb.UserApiKey;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -170,7 +170,7 @@ public class ApiKeyResource {
     @PUT
     public Response setApiKey(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("username") String username, EntityHolder<com.rackspace.idm.jaxb.UserApiKey> holder) {
+        @PathParam("username") String username, EntityHolder<com.rackspace.api.idm.v1.UserApiKey> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }

@@ -4,10 +4,10 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.rackspace.api.idm.v1.Clients;
+import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientStatus;
-import com.rackspace.idm.jaxb.Clients;
-import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class ClientConverter {
 
@@ -16,7 +16,7 @@ public class ClientConverter {
     public ClientConverter() {
     }
 
-    public Client toClientDO(com.rackspace.idm.jaxb.Client jaxbClient) {
+    public Client toClientDO(com.rackspace.api.idm.v1.Client jaxbClient) {
         Client client = new Client();
 
         client.setClientId(jaxbClient.getClientId());
@@ -52,12 +52,12 @@ public class ClientConverter {
         return client;
     }
 
-    public com.rackspace.idm.jaxb.Client toClientJaxbWithoutPermissionsOrCredentials(
+    public com.rackspace.api.idm.v1.Client toClientJaxbWithoutPermissionsOrCredentials(
         Client client) {
         return toClientJaxb(client, false);
     }
 
-    public com.rackspace.idm.jaxb.Client toClientJaxbWithPermissionsAndCredentials(
+    public com.rackspace.api.idm.v1.Client toClientJaxbWithPermissionsAndCredentials(
         Client client) {
         return toClientJaxb(client, true);
     }
@@ -82,9 +82,9 @@ public class ClientConverter {
         return returnedClients;
     }
 
-    private com.rackspace.idm.jaxb.Client toClientJaxb(Client client,
+    private com.rackspace.api.idm.v1.Client toClientJaxb(Client client,
         boolean includeCredentials) {
-        com.rackspace.idm.jaxb.Client returnedClient = of.createClient();
+        com.rackspace.api.idm.v1.Client returnedClient = of.createClient();
 
         returnedClient.setClientId(client.getClientId());
         returnedClient.setCustomerId(client.getCustomerId());
@@ -101,14 +101,14 @@ public class ClientConverter {
 
         if (client.getStatus() != null) {
             returnedClient.setStatus(Enum.valueOf(
-                com.rackspace.idm.jaxb.ClientStatus.class, client.getStatus()
+                com.rackspace.api.idm.v1.ClientStatus.class, client.getStatus()
                     .toString().toUpperCase()));
         }
 
         if (includeCredentials && client.getClientSecretObj() != null
             && !StringUtils.isBlank(client.getClientSecret())) {
 
-            com.rackspace.idm.jaxb.ClientCredentials creds = of
+            com.rackspace.api.idm.v1.ClientCredentials creds = of
                 .createClientCredentials();
 
             creds.setClientSecret(client.getClientSecret());
@@ -118,9 +118,9 @@ public class ClientConverter {
         return returnedClient;
     }
 
-    public com.rackspace.idm.jaxb.Client toClientJaxbFromClient(
+    public com.rackspace.api.idm.v1.Client toClientJaxbFromClient(
         String clientId, String customerId) {
-        com.rackspace.idm.jaxb.Client returnedClient = of.createClient();
+        com.rackspace.api.idm.v1.Client returnedClient = of.createClient();
 
         returnedClient.setClientId(clientId);
         returnedClient.setCustomerId(customerId);
@@ -128,11 +128,11 @@ public class ClientConverter {
         return returnedClient;
     }
     
-    public com.rackspace.idm.jaxb.Scopes toScopesFromClientList(List<Client> clientList) {
-        com.rackspace.idm.jaxb.Scopes scopeAccessList = of.createScopes();
+    public com.rackspace.api.idm.v1.Scopes toScopesFromClientList(List<Client> clientList) {
+        com.rackspace.api.idm.v1.Scopes scopeAccessList = of.createScopes();
         
         for(Client c : clientList) {
-            com.rackspace.idm.jaxb.Scope scopeAccess = of.createScope();
+            com.rackspace.api.idm.v1.Scope scopeAccess = of.createScope();
             if ( c.getScope() != null) {
                 scopeAccess.setName(c.getScope());
             }

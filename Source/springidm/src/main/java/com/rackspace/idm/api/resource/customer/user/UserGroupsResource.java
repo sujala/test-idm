@@ -108,7 +108,7 @@ public class UserGroupsResource extends AbstractClientConsumer {
             clientId, type);
         logger.debug("Got groups for User: {} - {}", user, groups);
 
-        com.rackspace.idm.jaxb.ClientGroups outputGroups = groupConverter.toClientGroupsJaxb(groups);
+        com.rackspace.api.idm.v1.ClientGroups outputGroups = groupConverter.toClientGroupsJaxb(groups);
 
         return Response.ok(outputGroups).build();
     }

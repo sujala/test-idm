@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource.cloud;
+package com.rackspace.idm.api.resource.cloud.v10;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
+import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
