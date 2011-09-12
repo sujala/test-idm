@@ -18,13 +18,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.api.idm.v1.UserSecret;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.jaxb.UserSecret;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -84,7 +84,7 @@ public class UserSecretResource {
         // get user to update
         User user = this.userService.checkAndGetUser(customerId, username);
 
-        com.rackspace.idm.jaxb.UserSecret secret = new com.rackspace.idm.jaxb.UserSecret();
+        com.rackspace.api.idm.v1.UserSecret secret = new com.rackspace.api.idm.v1.UserSecret();
         secret.setSecretAnswer(user.getSecretAnswer());
         secret.setSecretQuestion(user.getSecretQuestion());
 
@@ -112,7 +112,7 @@ public class UserSecretResource {
     @PUT
     public Response setUserSecret(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("username") String username, EntityHolder<com.rackspace.idm.jaxb.UserSecret> holder) {
+        @PathParam("username") String username, EntityHolder<com.rackspace.api.idm.v1.UserSecret> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }

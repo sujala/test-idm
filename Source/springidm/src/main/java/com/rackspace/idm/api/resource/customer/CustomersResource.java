@@ -80,7 +80,7 @@ public class CustomersResource {
      */
     @POST
     public Response addCustomer(@Context UriInfo uriInfo, @Context Request request,
-        @HeaderParam("Authorization") String authHeader, EntityHolder<com.rackspace.idm.jaxb.Customer> holder) {
+        @HeaderParam("Authorization") String authHeader, EntityHolder<com.rackspace.api.idm.v1.Customer> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
@@ -93,7 +93,7 @@ public class CustomersResource {
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        com.rackspace.idm.jaxb.Customer inputCustomer = holder.getEntity();
+        com.rackspace.api.idm.v1.Customer inputCustomer = holder.getEntity();
         Customer customer = customerConverter.toCustomerDO(inputCustomer);
         customer.setDefaults();
 

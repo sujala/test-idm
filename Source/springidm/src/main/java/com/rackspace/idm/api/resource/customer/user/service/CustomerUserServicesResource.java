@@ -87,13 +87,13 @@ public class CustomerUserServicesResource {
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("username") String username,
-        EntityHolder<com.rackspace.idm.jaxb.Client> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.Client> holder) {
 
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
 
-        com.rackspace.idm.jaxb.Client inputClient = holder.getEntity();
+        com.rackspace.api.idm.v1.Client inputClient = holder.getEntity();
 
         if (inputClient.getClientId() == null) {
             throw new BadRequestException("Client must contain a clientId");

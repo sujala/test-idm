@@ -3,13 +3,13 @@ package com.rackspace.idm.api.converter;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class GroupConverter {
-    private ObjectFactory of = new ObjectFactory();
+    private final ObjectFactory of = new ObjectFactory();
     
-    public ClientGroup toClientGroupDO(com.rackspace.idm.jaxb.ClientGroup jaxbGroup) {
+    public ClientGroup toClientGroupDO(com.rackspace.api.idm.v1.ClientGroup jaxbGroup) {
         ClientGroup group = new ClientGroup();
         group.setName(jaxbGroup.getName());
         group.setClientId(jaxbGroup.getClientId());
@@ -18,18 +18,18 @@ public class GroupConverter {
         return group;
     }
     
-    public List<ClientGroup> toClientGroupListDO(com.rackspace.idm.jaxb.ClientGroups jaxbGroups) {
+    public List<ClientGroup> toClientGroupListDO(com.rackspace.api.idm.v1.ClientGroups jaxbGroups) {
         List<ClientGroup> groups = new ArrayList<ClientGroup>();
 
-        for (com.rackspace.idm.jaxb.ClientGroup jaxbGroup : jaxbGroups.getClientGroups()) {
+        for (com.rackspace.api.idm.v1.ClientGroup jaxbGroup : jaxbGroups.getClientGroups()) {
             groups.add(toClientGroupDO(jaxbGroup));
         }
 
         return groups;
     }
 
-    public com.rackspace.idm.jaxb.ClientGroup toClientGroupJaxb(ClientGroup group) {
-        com.rackspace.idm.jaxb.ClientGroup jaxbGroup = of.createClientGroup();
+    public com.rackspace.api.idm.v1.ClientGroup toClientGroupJaxb(ClientGroup group) {
+        com.rackspace.api.idm.v1.ClientGroup jaxbGroup = of.createClientGroup();
         
         if (group == null) {
             return null;
@@ -42,8 +42,8 @@ public class GroupConverter {
         return jaxbGroup;
     }
     
-    public com.rackspace.idm.jaxb.ClientGroups toClientGroupsJaxb(List<ClientGroup> groups) {
-        com.rackspace.idm.jaxb.ClientGroups jaxbGroups = of.createClientGroups();
+    public com.rackspace.api.idm.v1.ClientGroups toClientGroupsJaxb(List<ClientGroup> groups) {
+        com.rackspace.api.idm.v1.ClientGroups jaxbGroups = of.createClientGroups();
         
         if (groups == null || groups.size() == 0) {
             return jaxbGroups;

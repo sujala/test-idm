@@ -17,7 +17,6 @@ import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
@@ -47,10 +46,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         LDAPConnection conn = null;
         try {
             conn = getAppConnPool().getConnection();
-            SearchResultEntry entry = getScopeAccessContainer(conn, parentUniqueId, CONTAINER_DELEGATE);
+            SearchResultEntry entry = getContainer(conn, parentUniqueId, CONTAINER_DELEGATE);
             if (entry == null) {
-                addScopeAccessContianer(conn, parentUniqueId, CONTAINER_DELEGATE);
-                entry = getScopeAccessContainer(conn, parentUniqueId, CONTAINER_DELEGATE);
+                addContianer(conn, parentUniqueId, CONTAINER_DELEGATE);
+                entry = getContainer(conn, parentUniqueId, CONTAINER_DELEGATE);
             }
             audit.succeed();
             getLogger().info("Added Delegate ScopeAccess: {}", scopeAccess);
@@ -72,11 +71,11 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         LDAPConnection conn = null;
         try {
             conn = getAppConnPool().getConnection();
-            SearchResultEntry entry = getScopeAccessContainer(conn,
+            SearchResultEntry entry = getContainer(conn,
                 parentUniqueId, CONTAINER_DIRECT);
             if (entry == null) {
-                addScopeAccessContianer(conn, parentUniqueId, CONTAINER_DIRECT);
-                entry = getScopeAccessContainer(conn,
+                addContianer(conn, parentUniqueId, CONTAINER_DIRECT);
+                entry = getContainer(conn,
                     parentUniqueId, CONTAINER_DIRECT);
             }
             audit.succeed();
@@ -777,20 +776,6 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         }
     }
 
-    private void addScopeAccessContianer(LDAPConnection conn,
-        String parentUniqueId, String name) {
-        Audit audit = Audit.log("Adding ScopeAccess_Container").add();
-        List<Attribute> atts = new ArrayList<Attribute>();
-        atts.add(new Attribute(ATTR_OBJECT_CLASS,
-            OBJECTCLASS_SCOPEACCESS_CONTAINER));
-        atts.add(new Attribute(ATTR_NAME, name));
-        Attribute[] attributes = atts.toArray(new Attribute[0]);
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME,
-            name).build();
-        this.addEntry(conn, dn, attributes, audit);
-        audit.succeed();
-    }
-
     private Permission decodePermission(
         final SearchResultEntry searchResultEntry) throws LDAPPersistException {
         Permission object = null;
@@ -858,18 +843,4 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         }
 
     }
-
-    private SearchResultEntry getScopeAccessContainer(LDAPConnection conn,
-        String parentUniqueId, String name) {
-        Filter filter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_SCOPEACCESS_CONTAINER)
-            .addEqualAttribute(ATTR_NAME, name).build();
-
-        SearchResultEntry entry = this.getSingleEntry(conn, parentUniqueId,
-            SearchScope.ONE, filter);
-
-        return entry;
-    }
-
 }

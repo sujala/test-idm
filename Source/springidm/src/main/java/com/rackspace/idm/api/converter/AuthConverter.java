@@ -8,6 +8,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.joda.time.DateTime;
 
+import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
@@ -16,7 +17,6 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.entity.hasAccessToken;
 import com.rackspace.idm.domain.entity.hasRefreshToken;
-import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class AuthConverter {
 
@@ -33,8 +33,8 @@ public class AuthConverter {
         this.userConverter = userConverter;
     }
 
-    public com.rackspace.idm.jaxb.Auth toAuthDataJaxb(ScopeAccess scopeAccess) {
-        com.rackspace.idm.jaxb.Auth authJaxb = of.createAuth();
+    public com.rackspace.api.idm.v1.Auth toAuthDataJaxb(ScopeAccess scopeAccess) {
+        com.rackspace.api.idm.v1.Auth authJaxb = of.createAuth();
 
         DateTime passwordExpirationDate = null;
 

@@ -1,16 +1,16 @@
 package com.rackspace.idm.api.converter;
 
+import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class CustomerConverter {
 
-    private ObjectFactory of = new ObjectFactory();
+    private final ObjectFactory of = new ObjectFactory();
 
     public CustomerConverter() {
     }
 
-    public Customer toCustomerDO(com.rackspace.idm.jaxb.Customer jaxbCustomer) {
+    public Customer toCustomerDO(com.rackspace.api.idm.v1.Customer jaxbCustomer) {
 
         Customer customer = new Customer();
 
@@ -28,9 +28,9 @@ public class CustomerConverter {
         return customer;
     }
 
-    public com.rackspace.idm.jaxb.Customer toJaxbCustomer(Customer customer) {
+    public com.rackspace.api.idm.v1.Customer toJaxbCustomer(Customer customer) {
 
-        com.rackspace.idm.jaxb.Customer jaxbCustomer = of.createCustomer();
+        com.rackspace.api.idm.v1.Customer jaxbCustomer = of.createCustomer();
         jaxbCustomer.setCustomerId(customer.getCustomerId());
         jaxbCustomer.setIname(customer.getIname());
         jaxbCustomer.setInum(customer.getInum());

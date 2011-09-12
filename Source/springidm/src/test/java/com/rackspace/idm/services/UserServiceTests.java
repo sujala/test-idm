@@ -13,6 +13,8 @@ import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.rackspace.api.idm.v1.UserCredentials;
+import com.rackspace.api.idm.v1.UserPassword;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ClientDao;
@@ -40,8 +42,6 @@ import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.jaxb.UserCredentials;
-import com.rackspace.idm.jaxb.UserPassword;
 
 public class UserServiceTests {
 

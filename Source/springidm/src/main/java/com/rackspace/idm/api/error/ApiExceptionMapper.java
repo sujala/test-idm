@@ -1,11 +1,10 @@
 package com.rackspace.idm.api.error;
 
+import com.rackspace.api.idm.v1.*;
 import com.rackspace.idm.ErrorMsg;
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.cloudv11.jaxb.*;
-import com.rackspace.idm.cloudv11.jaxb.ObjectFactory;
 import com.rackspace.idm.exception.*;
-import com.rackspace.idm.jaxb.*;
+import com.rackspacecloud.docs.auth.api.v1.*;
 import org.apache.commons.lang.StringUtils;
 import org.omg.CORBA.portable.ApplicationException;
 import org.slf4j.Logger;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.*;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -30,7 +28,7 @@ import java.util.ResourceBundle;
 public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
     private final ResourceBundle faultMessageConfig;
     private final Logger logger = LoggerFactory.getLogger(ApiExceptionMapper.class);
-    private com.rackspace.idm.cloudv11.jaxb.ObjectFactory objectFactory = new ObjectFactory();
+    private com.rackspacecloud.docs.auth.api.v1.ObjectFactory objectFactory = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
 
     @Context
     private HttpHeaders headers;
@@ -84,8 +82,8 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         if (e instanceof NotAuthenticatedException || e instanceof NotAuthorizedException) {
             return toResponse(new Unauthorized(), e, 401);
         }
-        if(e instanceof CloudAdminAuthorizationException){
-            return toResponse(new AuthFault(),e, 405);
+        if (e instanceof CloudAdminAuthorizationException) {
+            return toResponse(new AuthFault(), e, 405);
         }
         if (e instanceof ForbiddenException) {
             return toResponse(new Forbidden(), e, 403);
@@ -185,7 +183,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         return builder.build();
     }
 
-        private Response toResponse(AuthFault fault, Throwable t, int code) {
+    private Response toResponse(AuthFault fault, Throwable t, int code) {
         fault.setCode(code);
 
         String msg = null;

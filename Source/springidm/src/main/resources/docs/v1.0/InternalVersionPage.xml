@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<?xml-stylesheet type="text/xsl" href="/docs/xslt/version-page.xsl"?>
+
 <version xmlns="http://service-registry.api.rackspace.com/versioning"
 	xmlns:atom="http://www.w3.org/2005/Atom" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="https://service-registry.api.rackspace.com/versioning ./../resources/xsd/versioning-v1.0-xs1.0.xsd"

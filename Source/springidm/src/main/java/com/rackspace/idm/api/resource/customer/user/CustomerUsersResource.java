@@ -148,7 +148,7 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
     public Response addUser(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
-        EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.User> holder) {
 
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
@@ -164,7 +164,7 @@ public class CustomerUsersResource extends AbstractCustomerConsumer {
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        com.rackspace.idm.jaxb.User user = holder.getEntity();
+        com.rackspace.api.idm.v1.User user = holder.getEntity();
         if (user.getApiKey() != null
             && !StringUtils.isEmpty(user.getApiKey().getApiKey())) {
             String errMsg = String.format(

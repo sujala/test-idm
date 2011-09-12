@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<?xml-stylesheet type="text/xsl" href="/docs/xslt/service-profile.xsl"?>
+
 <service-profile
 	xmlns="http://service-registry.api.rackspace.com/service-profile"
 	xmlns:atom="http://www.w3.org/2005/Atom"
@@ -11,7 +14,7 @@
   dns-zone="idm.api.rackspace.com"
   service-model="utility">
   
-    <atom:link rel="self" href="https://idm.api.rackspace.com/public" />
+    <atom:link rel="self" href="https://idm.api.rackspace.com" />
     
     <short-description>Allows users access Rackspace resources and systems.</short-description>
     
@@ -35,7 +38,7 @@
 	        </v:media-types>
 	        
 	        <atom:link rel="self" href="cloud/v1.1/public"/>
-	        <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="http://docs.rackspacecloud.com/auth/api/v1.1/auth.wadl" />
+	        <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="http://docs.rackspacecloud.com/auth/api/v1.1/auth.wadl" title="Wadl" />
 	        <atom:link rel="documentation" type="text/html" href="http://docs-beta.rackspace.com/auth/api/v1.1/auth-client-devguide/content/index.html" title="Service Developer Guide" />
 	      </v:version>
 	      
@@ -47,7 +50,7 @@
 	        </v:media-types>
 	        
 	        <atom:link rel="self" href="cloud/v2.0"/>
-	        <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="http://docs.rackspacecloud.com/auth/api/v2.0/auth.wadl" />
+	        <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="http://docs.rackspacecloud.com/auth/api/v2.0/auth.wadl" title="Wadl" />
 	        <atom:link rel="documentation" type="text/html" href="http://docs-beta.rackspace.com/auth/api/v2.0/auth-client-devguide/content/index.html" title="Service Developer Guide" />
 	      </v:version>
 	    </v:versions>

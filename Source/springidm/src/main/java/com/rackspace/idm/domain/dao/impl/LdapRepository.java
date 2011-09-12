@@ -17,6 +17,7 @@ public abstract class LdapRepository {
     // Definitions for LDAP Objectclasses
     public static final String OBJECTCLASS_BASEURL = "baseUrl";
     public static final String OBJECTCLASS_CLIENTGROUP = "clientGroup";
+    public static final String OBJECTCLASS_CLIENT_ROLE = "clientRole";
     public static final String OBJECTCLASS_CLIENTPERMISSION = "clientPermission";
     public static final String OBJECTCLASS_DEFINEDPERMISSION = "definedPermission";
     public static final String OBJECTCLASS_DELEGATEDPERMISSION = "delegatedPermission";
@@ -156,6 +157,7 @@ public abstract class LdapRepository {
     // Definitions for ScopeAccess Contatiner Names
     protected static final String CONTAINER_DIRECT = "DIRECT";
     protected static final String CONTAINER_DELEGATE = "DELEGATE";
+    protected static final String CONTAINER_ROLES = "ROLES";
     
     //Search Attributes
     protected static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {
@@ -333,6 +335,33 @@ public abstract class LdapRepository {
             getLogger().error("LDAP Search error - {}", e.getMessage());
             throw new IllegalStateException(e);
         }
+    }
+    
+    protected void addContianer(LDAPConnection conn, String parentUniqueId,
+        String name) {
+        Audit audit = Audit.log("Adding ScopeAccess_Container").add();
+        List<Attribute> atts = new ArrayList<Attribute>();
+        atts.add(new Attribute(ATTR_OBJECT_CLASS,
+            OBJECTCLASS_SCOPEACCESS_CONTAINER));
+        atts.add(new Attribute(ATTR_NAME, name));
+        Attribute[] attributes = atts.toArray(new Attribute[0]);
+        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME,
+            name).build();
+        this.addEntry(conn, dn, attributes, audit);
+        audit.succeed();
+    }
+
+    protected SearchResultEntry getContainer(LDAPConnection conn,
+        String parentUniqueId, String name) {
+        Filter filter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_SCOPEACCESS_CONTAINER)
+            .addEqualAttribute(ATTR_NAME, name).build();
+
+        SearchResultEntry entry = this.getSingleEntry(conn, parentUniqueId,
+            SearchScope.ONE, filter);
+
+        return entry;
     }
 
     private static class QueryPair {

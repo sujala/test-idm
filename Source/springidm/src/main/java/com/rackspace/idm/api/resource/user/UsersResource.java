@@ -105,11 +105,11 @@ public class UsersResource {
     public Response addFirstUser(@Context Request request,
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
-        EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.User> holder) {
 
         authorizeRequest(request, uriInfo, authHeader, holder);
 
-        com.rackspace.idm.jaxb.User user = holder.getEntity();
+        com.rackspace.api.idm.v1.User user = holder.getEntity();
         User userDO = userConverter.toUserDO(user);
         userDO.setDefaults();
 
@@ -250,12 +250,12 @@ public class UsersResource {
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("username") String username,
-        EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.User> holder) {
 
         authorizeRequest(request, uriInfo, authHeader, holder);
 
         User user = checkAndGetUser(username);
-        com.rackspace.idm.jaxb.User jaxbUser = holder.getEntity();
+        com.rackspace.api.idm.v1.User jaxbUser = holder.getEntity();
         user.setMossoId(jaxbUser.getMossoId());
 
         this.userService.updateUser(user, false);
@@ -286,12 +286,12 @@ public class UsersResource {
         @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader,
         @PathParam("username") String username,
-        EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.User> holder) {
 
         authorizeRequest(request, uriInfo, authHeader, holder);
 
         User user = checkAndGetUser(username);
-        com.rackspace.idm.jaxb.User jaxbUser = holder.getEntity();
+        com.rackspace.api.idm.v1.User jaxbUser = holder.getEntity();
         user.setNastId(jaxbUser.getNastId());
 
         this.userService.updateUser(user, false);
@@ -323,7 +323,7 @@ public class UsersResource {
         @HeaderParam("Authorization") String authHeader,
         @PathParam("username") String username,
         @PathParam("customerId") String customerId,
-        EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.User> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
@@ -338,7 +338,7 @@ public class UsersResource {
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
         User user = checkAndGetUser(username);
-        com.rackspace.idm.jaxb.User jaxbUser = holder.getEntity();
+        com.rackspace.api.idm.v1.User jaxbUser = holder.getEntity();
         user.setPersonId(jaxbUser.getPersonId());
 
         this.userService.updateUser(user, false);
@@ -361,7 +361,7 @@ public class UsersResource {
     }
 
     private void authorizeRequest(Request request, UriInfo uriInfo,
-        String authHeader, EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        String authHeader, EntityHolder<com.rackspace.api.idm.v1.User> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }

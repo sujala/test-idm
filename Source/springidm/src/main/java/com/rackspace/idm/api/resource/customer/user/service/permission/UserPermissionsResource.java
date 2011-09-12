@@ -150,7 +150,7 @@ public class UserPermissionsResource {
         @PathParam("customerId") String customerId,
         @PathParam("username") String username,
         @PathParam("serviceId") String serviceId,
-        EntityHolder<com.rackspace.idm.jaxb.Permission> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.Permission> holder) {
 
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
@@ -173,7 +173,7 @@ public class UserPermissionsResource {
             throw new NotFoundException(errMsg);
         }
         
-        com.rackspace.idm.jaxb.Permission permission = holder.getEntity();
+        com.rackspace.api.idm.v1.Permission permission = holder.getEntity();
         GrantedPermission filter = new GrantedPermission();
         filter.setClientId(serviceId);
         filter.setCustomerId(client.getCustomerId());

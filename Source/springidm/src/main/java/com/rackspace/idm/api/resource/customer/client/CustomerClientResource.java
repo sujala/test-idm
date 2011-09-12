@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.api.idm.v1.ClientCredentials;
 import com.rackspace.idm.api.converter.ClientConverter;
 import com.rackspace.idm.api.resource.customer.client.group.ClientGroupsResource;
 import com.rackspace.idm.api.resource.customer.client.permission.DefinedPermissionsResource;
@@ -33,7 +34,6 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.jaxb.ClientCredentials;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -110,7 +110,7 @@ public class CustomerClientResource extends AbstractClientConsumer {
 
         logger.debug("Got Client: {}", client);
 
-        com.rackspace.idm.jaxb.Client returnedClient = clientConverter
+        com.rackspace.api.idm.v1.Client returnedClient = clientConverter
             .toClientJaxbWithoutPermissionsOrCredentials(client);
 
         return Response.ok(returnedClient).build();
@@ -181,7 +181,7 @@ public class CustomerClientResource extends AbstractClientConsumer {
         @HeaderParam("Authorization") String authHeader,
         @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId,
-        EntityHolder<com.rackspace.idm.jaxb.Client> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.Client> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
@@ -201,7 +201,7 @@ public class CustomerClientResource extends AbstractClientConsumer {
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
         
-        com.rackspace.idm.jaxb.Client inputClient = holder.getEntity();
+        com.rackspace.api.idm.v1.Client inputClient = holder.getEntity();
         Client updatedClient = clientConverter.toClientDO(inputClient);
 
         Client client = checkAndGetClient(customerId, clientId);

@@ -2,10 +2,10 @@ package com.rackspace.idm.api.converter;
 
 import java.util.List;
 
+import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.PasswordComplexityResult;
 import com.rackspace.idm.domain.entity.PasswordRule;
 import com.rackspace.idm.domain.entity.PasswordRuleResult;
-import com.rackspace.idm.jaxb.ObjectFactory;
 
 public class PasswordRulesConverter {
 
@@ -14,14 +14,14 @@ public class PasswordRulesConverter {
     public PasswordRulesConverter() {
     }
 
-    public com.rackspace.idm.jaxb.PasswordRules toPaswordRulesJaxb(
+    public com.rackspace.api.idm.v1.PasswordRules toPaswordRulesJaxb(
         List<PasswordRule> rules) {
         
         if (rules == null || rules.size() < 1) {
             return null;
         }
         
-        com.rackspace.idm.jaxb.PasswordRules jaxbRules = of
+        com.rackspace.api.idm.v1.PasswordRules jaxbRules = of
             .createPasswordRules();
 
         for (PasswordRule rule : rules) {
@@ -31,9 +31,9 @@ public class PasswordRulesConverter {
         return jaxbRules;
     }
 
-    public com.rackspace.idm.jaxb.PasswordRule toPasswordRuleJaxb(
+    public com.rackspace.api.idm.v1.PasswordRule toPasswordRuleJaxb(
         PasswordRule rule) {
-        com.rackspace.idm.jaxb.PasswordRule jaxbRule = of.createPasswordRule();
+        com.rackspace.api.idm.v1.PasswordRule jaxbRule = of.createPasswordRule();
 
         jaxbRule.setId(rule.getRuleId());
         jaxbRule.setMessage(rule.getMessage());
@@ -42,13 +42,13 @@ public class PasswordRulesConverter {
         return jaxbRule;
     }
 
-    public com.rackspace.idm.jaxb.PasswordValidation toPasswordValidationJaxb(
+    public com.rackspace.api.idm.v1.PasswordValidation toPasswordValidationJaxb(
         PasswordComplexityResult passwordComplexityResult) {
 
-        com.rackspace.idm.jaxb.PasswordValidation jaxbpasswordValidation = of
+        com.rackspace.api.idm.v1.PasswordValidation jaxbpasswordValidation = of
             .createPasswordValidation();
 
-        com.rackspace.idm.jaxb.PasswordRuleResults jaxbRulesResult = of
+        com.rackspace.api.idm.v1.PasswordRuleResults jaxbRulesResult = of
             .createPasswordRuleResults();
 
         List<PasswordRuleResult> ruleResults = passwordComplexityResult
@@ -66,9 +66,9 @@ public class PasswordRulesConverter {
         return jaxbpasswordValidation;
     }
 
-    public com.rackspace.idm.jaxb.PasswordRuleResult toPasswordRuleResult(
+    public com.rackspace.api.idm.v1.PasswordRuleResult toPasswordRuleResult(
         PasswordRuleResult result) {
-        com.rackspace.idm.jaxb.PasswordRuleResult jaxbRuleResult = of
+        com.rackspace.api.idm.v1.PasswordRuleResult jaxbRuleResult = of
             .createPasswordRuleResult();
         jaxbRuleResult.setRuleId(result.getRuleId());
         jaxbRuleResult.setRuleName(result.getRuleName());

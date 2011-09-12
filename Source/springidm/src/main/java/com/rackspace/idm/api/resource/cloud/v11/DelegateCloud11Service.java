@@ -1,9 +1,8 @@
-package com.rackspace.idm.api.resource.cloud;
+package com.rackspace.idm.api.resource.cloud.v11;
 
-import com.rackspace.idm.cloudv11.jaxb.*;
-import org.apache.commons.configuration.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.HashMap;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -14,9 +13,18 @@ import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.HashMap;
+
+import org.apache.commons.configuration.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.rackspace.idm.api.resource.cloud.CloudClient;
+import com.rackspacecloud.docs.auth.api.v1.BaseURL;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
+import com.rackspacecloud.docs.auth.api.v1.ObjectFactory;
+import com.rackspacecloud.docs.auth.api.v1.User;
+import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled;
+import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey;
 
 @Component
 public class DelegateCloud11Service implements Cloud11Service {
@@ -46,7 +54,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         DelegateCloud11Service.OBJ_FACTORY = OBJ_FACTORY;
     }
 
-    private static com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
+    private static com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
 
     public void setMarshaller(Marshaller marshaller) {
         this.marshaller = marshaller;
@@ -56,7 +64,7 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     public DelegateCloud11Service() throws JAXBException {
         JAXBContext jaxbContext = JAXBContext
-            .newInstance("com.rackspace.idm.cloudv11.jaxb");
+            .newInstance("com.rackspacecloud.docs.auth.api.v1");
         marshaller = jaxbContext.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
     }

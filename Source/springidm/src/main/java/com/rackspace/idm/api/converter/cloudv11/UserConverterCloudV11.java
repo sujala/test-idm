@@ -12,15 +12,15 @@ public class UserConverterCloudV11 {
     
     private final EndpointConverterCloudV11 enpointConverterCloudV11;
     
-    private final com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
+    private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
 
     public UserConverterCloudV11(EndpointConverterCloudV11 enpointConverterCloudV11) {
         this.enpointConverterCloudV11 = enpointConverterCloudV11;
     }
     
-    public com.rackspace.idm.cloudv11.jaxb.User toCloudV11User(User user, List<CloudEndpoint> endpoints) {
+    public com.rackspacecloud.docs.auth.api.v1.User toCloudV11User(User user, List<CloudEndpoint> endpoints) {
         
-        com.rackspace.idm.cloudv11.jaxb.User jaxbUser = OBJ_FACTORY.createUser();
+        com.rackspacecloud.docs.auth.api.v1.User jaxbUser = OBJ_FACTORY.createUser();
         jaxbUser.setId(user.getUsername());
         jaxbUser.setKey(user.getApiKey());
         jaxbUser.setMossoId(user.getMossoId());
@@ -53,26 +53,26 @@ public class UserConverterCloudV11 {
         return jaxbUser;
     }
     
-    public com.rackspace.idm.cloudv11.jaxb.UserWithOnlyEnabled toCloudV11UserWithOnlyEnabled(User user) {
+    public com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled toCloudV11UserWithOnlyEnabled(User user) {
         
-        com.rackspace.idm.cloudv11.jaxb.UserWithOnlyEnabled jaxbUser = OBJ_FACTORY.createUserWithOnlyEnabled();
+        com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled jaxbUser = OBJ_FACTORY.createUserWithOnlyEnabled();
         jaxbUser.setId(user.getUsername());
         jaxbUser.setEnabled(!user.isLocked());
         
         return jaxbUser;
     }
     
-    public com.rackspace.idm.cloudv11.jaxb.UserWithId toCloudV11UserWithId(User user) {
+    public com.rackspacecloud.docs.auth.api.v1.UserWithId toCloudV11UserWithId(User user) {
         
-        com.rackspace.idm.cloudv11.jaxb.UserWithId jaxbUser = OBJ_FACTORY.createUserWithId();
+        com.rackspacecloud.docs.auth.api.v1.UserWithId jaxbUser = OBJ_FACTORY.createUserWithId();
         jaxbUser.setId(user.getUsername());
         
         return jaxbUser;
     }
     
-    public com.rackspace.idm.cloudv11.jaxb.UserWithOnlyKey toCloudV11UserWithOnlyKey(User user) {
+    public com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey toCloudV11UserWithOnlyKey(User user) {
         
-        com.rackspace.idm.cloudv11.jaxb.UserWithOnlyKey jaxbUser = OBJ_FACTORY.createUserWithOnlyKey();
+        com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey jaxbUser = OBJ_FACTORY.createUserWithOnlyKey();
         jaxbUser.setKey(user.getApiKey());
         return jaxbUser;
     }

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.joda.time.DateTime;
 
+import com.rackspace.api.idm.v1.UserCredentials;
 import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.Racker;
@@ -12,7 +13,6 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.jaxb.UserCredentials;
 
 public interface UserService {
 

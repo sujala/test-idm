@@ -1,30 +1,9 @@
-package com.rackspace.idm.api.resource.cloud;
+package com.rackspace.idm.api.resource.cloud.v11;
 
-import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
-import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
-import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.cloudv11.jaxb.*;
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.BaseUrlConflictException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.UserDisabledException;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -37,15 +16,55 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
+
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
+import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
+import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.BaseUrlConflictException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.UserDisabledException;
+import com.rackspacecloud.docs.auth.api.v1.AuthFault;
+import com.rackspacecloud.docs.auth.api.v1.BadRequestFault;
+import com.rackspacecloud.docs.auth.api.v1.BaseURL;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
+import com.rackspacecloud.docs.auth.api.v1.Credentials;
+import com.rackspacecloud.docs.auth.api.v1.ItemNotFoundFault;
+import com.rackspacecloud.docs.auth.api.v1.MossoCredentials;
+import com.rackspacecloud.docs.auth.api.v1.NastCredentials;
+import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
+import com.rackspacecloud.docs.auth.api.v1.UnauthorizedFault;
+import com.rackspacecloud.docs.auth.api.v1.UserCredentials;
+import com.rackspacecloud.docs.auth.api.v1.UserDisabledFault;
+import com.rackspacecloud.docs.auth.api.v1.UserType;
+import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled;
+import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey;
 
 @Component
 public class DefaultCloud11Service implements Cloud11Service {
 
-    private static final com.rackspace.idm.cloudv11.jaxb.ObjectFactory OBJ_FACTORY = new com.rackspace.idm.cloudv11.jaxb.ObjectFactory();
+    private static final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
     private final AuthConverterCloudV11 authConverterCloudV11;
     private final Configuration config;
     private final EndpointConverterCloudV11 endpointConverterCloudV11;
@@ -212,7 +231,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder createUser(HttpHeaders httpHeaders,
-        com.rackspace.idm.cloudv11.jaxb.User user) throws IOException {
+        com.rackspacecloud.docs.auth.api.v1.User user) throws IOException {
         throw new IOException("Not Implemented");
     }
 
@@ -431,7 +450,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder updateUser(String userId,
-        HttpHeaders httpHeaders, com.rackspace.idm.cloudv11.jaxb.User user)
+        HttpHeaders httpHeaders, com.rackspacecloud.docs.auth.api.v1.User user)
         throws IOException {
 
         User gaUser = userService.getUser(userId);
@@ -707,7 +726,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         JAXBElement<? extends Credentials> cred = null;
         try {
             JAXBContext context = JAXBContext
-                .newInstance("com.rackspace.idm.cloudv11.jaxb");
+                .newInstance("com.rackspacecloud.docs.auth.api.v1");
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends Credentials>) unmarshaller
                 .unmarshal(new StringReader(body));

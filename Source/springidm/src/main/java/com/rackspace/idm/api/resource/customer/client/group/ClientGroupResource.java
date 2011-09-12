@@ -164,7 +164,7 @@ public class ClientGroupResource extends AbstractClientConsumer {
         @PathParam("customerId") String customerId,
         @PathParam("clientId") String clientId,
         @PathParam("groupName") String groupName,
-        EntityHolder<com.rackspace.idm.jaxb.ClientGroup> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.ClientGroup> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
@@ -179,7 +179,7 @@ public class ClientGroupResource extends AbstractClientConsumer {
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        com.rackspace.idm.jaxb.ClientGroup clientGroup = holder.getEntity();
+        com.rackspace.api.idm.v1.ClientGroup clientGroup = holder.getEntity();
         ClientGroup group = checkAndGetClientGroup(clientGroup.getCustomerId(),
             clientGroup.getClientId(), clientGroup.getName());
 

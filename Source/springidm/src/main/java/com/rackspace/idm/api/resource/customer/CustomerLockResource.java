@@ -66,12 +66,12 @@ public class CustomerLockResource extends AbstractCustomerConsumer {
     @PUT
     public Response setCustomerLockStatus(@Context Request request, @Context UriInfo uriInfo,
         @PathParam("customerId") String customerId, @HeaderParam("Authorization") String authHeader,
-        EntityHolder<com.rackspace.idm.jaxb.Customer> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.Customer> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
 
-        com.rackspace.idm.jaxb.Customer inputCustomer = holder.getEntity();
+        com.rackspace.api.idm.v1.Customer inputCustomer = holder.getEntity();
         logger.debug("Getting Customer: {}", customerId);
 
         ScopeAccess token = this.scopeAccessService

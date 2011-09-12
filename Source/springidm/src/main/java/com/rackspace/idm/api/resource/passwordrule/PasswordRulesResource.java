@@ -83,7 +83,7 @@ public class PasswordRulesResource {
     @POST
     @Path("/validation")
     public Response checkPassword(@HeaderParam("Authorization") String authHeader,
-        com.rackspace.idm.jaxb.UserPassword password) {
+        com.rackspace.api.idm.v1.UserPassword password) {
         
         if (password == null) {
             throw new BadRequestException("Password cannot be blank");
@@ -95,7 +95,7 @@ public class PasswordRulesResource {
         PasswordComplexityResult result = passwordComplexityService
             .checkPassword(password.getPassword());
 
-        com.rackspace.idm.jaxb.PasswordValidation jaxbValidation = passwordRulesConverter
+        com.rackspace.api.idm.v1.PasswordValidation jaxbValidation = passwordRulesConverter
             .toPasswordValidationJaxb(result);
 
         logger

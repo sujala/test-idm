@@ -72,7 +72,7 @@ public class UserLockResource {
     @PUT
     public Response setUserLock(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("username") String username, EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        @PathParam("username") String username, EntityHolder<com.rackspace.api.idm.v1.User> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
@@ -87,7 +87,7 @@ public class UserLockResource {
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        com.rackspace.idm.jaxb.User inputUser = holder.getEntity();
+        com.rackspace.api.idm.v1.User inputUser = holder.getEntity();
         if (inputUser.isLocked() == null) {
             String errMsg = "Invalid value for locked sent in.";
             logger.warn(errMsg);

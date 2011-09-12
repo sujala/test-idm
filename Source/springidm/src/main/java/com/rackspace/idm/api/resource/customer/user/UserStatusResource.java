@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.api.idm.v1.UserStatus;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
@@ -24,7 +25,6 @@ import com.rackspace.idm.domain.service.OAuthService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.jaxb.UserStatus;
 import com.sun.jersey.core.provider.EntityHolder;
 
 /**
@@ -37,7 +37,7 @@ import com.sun.jersey.core.provider.EntityHolder;
 
 public class UserStatusResource {
 
-    private ScopeAccessService scopeAccessService;
+    private final ScopeAccessService scopeAccessService;
     private final OAuthService oauthService;
     private final UserService userService;
     private final UserConverter userConverter;
@@ -74,7 +74,7 @@ public class UserStatusResource {
     @PUT
     public Response setUserStatus(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("username") String username, EntityHolder<com.rackspace.idm.jaxb.User> holder) {
+        @PathParam("username") String username, EntityHolder<com.rackspace.api.idm.v1.User> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
@@ -92,7 +92,7 @@ public class UserStatusResource {
 
         // get user to update
         User user = this.userService.checkAndGetUser(customerId, username);
-        com.rackspace.idm.jaxb.User inputUser = holder.getEntity();
+        com.rackspace.api.idm.v1.User inputUser = holder.getEntity();
         String statusStr;
         try {
             statusStr = inputUser.getStatus().value();

@@ -19,7 +19,7 @@ import javax.xml.bind.Unmarshaller;
 
 import org.apache.log4j.Logger;
 
-import com.rackspace.idm.cloudv11.jaxb.Credentials;
+import com.rackspacecloud.docs.auth.api.v1.Credentials;
 
 @Provider
 @Consumes("application/xml")
@@ -29,7 +29,7 @@ public class CredentialProvider implements MessageBodyReader<JAXBElement<? exten
 
     static {
         try {
-            jaxbContext = JAXBContext.newInstance("com.rackspace.idm.cloudv11.jaxb");
+            jaxbContext = JAXBContext.newInstance("com.rackspacecloud.docs.auth.api.v1");
         } catch (Exception e) {
             LOG.error("Couldn't create jaxbContext...");
         }

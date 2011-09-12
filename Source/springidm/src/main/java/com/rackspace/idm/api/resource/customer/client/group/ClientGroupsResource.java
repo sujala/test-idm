@@ -119,7 +119,7 @@ public class ClientGroupsResource extends AbstractClientConsumer {
     @POST
     public Response addClientGroup(@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("Authorization") String authHeader, @PathParam("customerId") String customerId,
-        @PathParam("clientId") String clientId, EntityHolder<com.rackspace.idm.jaxb.ClientGroup> holder) {
+        @PathParam("clientId") String clientId, EntityHolder<com.rackspace.api.idm.v1.ClientGroup> holder) {
         if (!holder.hasEntity()) {
             throw new BadRequestException("Request body missing.");
         }
@@ -134,7 +134,7 @@ public class ClientGroupsResource extends AbstractClientConsumer {
 
         authorizationService.checkAuthAndHandleFailure(authorized, token);
 
-        com.rackspace.idm.jaxb.ClientGroup clientGroup = holder.getEntity();
+        com.rackspace.api.idm.v1.ClientGroup clientGroup = holder.getEntity();
         if (!clientGroup.getCustomerId().toLowerCase().equals(customerId.toLowerCase())) {
             throw new BadRequestException("CustomerId in clientGroup does not match CustomerId in url");
         }

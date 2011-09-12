@@ -7,18 +7,18 @@ import javax.xml.datatype.DatatypeFactory;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.rackspace.api.idm.v1.ObjectFactory;
+import com.rackspace.api.idm.v1.RackerRole;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.jaxb.ObjectFactory;
-import com.rackspace.idm.jaxb.RackerRole;
 
 public class UserConverter {
 
     private final ObjectFactory of = new ObjectFactory();
 
-    public User toUserDO(com.rackspace.idm.jaxb.User jaxbUser) {
+    public User toUserDO(com.rackspace.api.idm.v1.User jaxbUser) {
         User user = new User();
 
         user.setCountry(jaxbUser.getCountry());
@@ -71,14 +71,14 @@ public class UserConverter {
         return user;
     }
 
-    public com.rackspace.idm.jaxb.Users toUserListJaxb(Users users) {
+    public com.rackspace.api.idm.v1.Users toUserListJaxb(Users users) {
 
         if (users == null || users.getUsers() == null
             || users.getUsers().size() < 1) {
             return null;
         }
 
-        com.rackspace.idm.jaxb.Users userlist = of.createUsers();
+        com.rackspace.api.idm.v1.Users userlist = of.createUsers();
 
         for (User user : users.getUsers()) {
             userlist.getUsers().add(
@@ -92,14 +92,14 @@ public class UserConverter {
         return userlist;
     }
 
-    public com.rackspace.idm.jaxb.Racker toRackerJaxb(String rackerId) {
-        com.rackspace.idm.jaxb.Racker returnedRacker = of.createRacker();
+    public com.rackspace.api.idm.v1.Racker toRackerJaxb(String rackerId) {
+        com.rackspace.api.idm.v1.Racker returnedRacker = of.createRacker();
         returnedRacker.setRackerId(rackerId);
         return returnedRacker;
     }
     
-    public com.rackspace.idm.jaxb.Racker toRackerJaxb(Racker racker) {
-        com.rackspace.idm.jaxb.Racker returnedRacker = of.createRacker();
+    public com.rackspace.api.idm.v1.Racker toRackerJaxb(Racker racker) {
+        com.rackspace.api.idm.v1.Racker returnedRacker = of.createRacker();
         returnedRacker.setRackerId(racker.getRackerId());
         if (racker.getRackerRoles() != null && racker.getRackerRoles().size() > 0) {
             returnedRacker.setRackerRoles(toRackerRolesJaxb(racker.getRackerRoles()));
@@ -107,9 +107,9 @@ public class UserConverter {
         return returnedRacker;
     }
 
-    public com.rackspace.idm.jaxb.RackerRoles toRackerRolesJaxb(
+    public com.rackspace.api.idm.v1.RackerRoles toRackerRolesJaxb(
         List<String> roles) {
-        com.rackspace.idm.jaxb.RackerRoles returnedRoles = of
+        com.rackspace.api.idm.v1.RackerRoles returnedRoles = of
             .createRackerRoles();
         for (String role : roles) {
             if (!StringUtils.isEmpty(role)) {
@@ -121,50 +121,50 @@ public class UserConverter {
         return returnedRoles;
     }
 
-    public com.rackspace.idm.jaxb.User toUserJaxb(User user) {
+    public com.rackspace.api.idm.v1.User toUserJaxb(User user) {
         return toUserJaxb(user, true, true);
     }
 
-    public com.rackspace.idm.jaxb.User toUserWithOnlyStatusJaxb(User user) {
-        com.rackspace.idm.jaxb.User returnedUser = of.createUser();
+    public com.rackspace.api.idm.v1.User toUserWithOnlyStatusJaxb(User user) {
+        com.rackspace.api.idm.v1.User returnedUser = of.createUser();
         String status = user.getStatus().toString().toUpperCase();
         returnedUser.setStatus(Enum.valueOf(
-            com.rackspace.idm.jaxb.UserStatus.class, status));
+            com.rackspace.api.idm.v1.UserStatus.class, status));
         return returnedUser;
     }
 
-    public com.rackspace.idm.jaxb.User toUserWithOnlyLockJaxb(User user) {
-        com.rackspace.idm.jaxb.User returnedUser = of.createUser();
+    public com.rackspace.api.idm.v1.User toUserWithOnlyLockJaxb(User user) {
+        com.rackspace.api.idm.v1.User returnedUser = of.createUser();
         returnedUser.setLocked(user.isLocked());
         return returnedUser;
     }
 
-    public com.rackspace.idm.jaxb.User toUserWithOnlyMossoId(User user) {
-        com.rackspace.idm.jaxb.User returnedUser = of.createUser();
+    public com.rackspace.api.idm.v1.User toUserWithOnlyMossoId(User user) {
+        com.rackspace.api.idm.v1.User returnedUser = of.createUser();
         returnedUser.setMossoId(user.getMossoId());
         return returnedUser;
     }
 
-    public com.rackspace.idm.jaxb.User toUserWithOnlyNastId(User user) {
-        com.rackspace.idm.jaxb.User returnedUser = of.createUser();
+    public com.rackspace.api.idm.v1.User toUserWithOnlyNastId(User user) {
+        com.rackspace.api.idm.v1.User returnedUser = of.createUser();
         returnedUser.setNastId(user.getNastId());
         return returnedUser;
     }
 
-    public com.rackspace.idm.jaxb.User toUserWithOnlySoftDeletedJaxb(User user) {
-        com.rackspace.idm.jaxb.User returnedUser = of.createUser();
+    public com.rackspace.api.idm.v1.User toUserWithOnlySoftDeletedJaxb(User user) {
+        com.rackspace.api.idm.v1.User returnedUser = of.createUser();
         returnedUser.setSoftDeleted(user.isSoftDeleted());
         return returnedUser;
     }
 
-    public com.rackspace.idm.jaxb.User toUserJaxbWithoutAnyAdditionalElements(
+    public com.rackspace.api.idm.v1.User toUserJaxbWithoutAnyAdditionalElements(
         User user) {
         return toUserJaxb(user, false, false);
     }
 
-    private com.rackspace.idm.jaxb.User toUserJaxb(User user,
+    private com.rackspace.api.idm.v1.User toUserJaxb(User user,
         boolean includePassword, boolean includeSecret) {
-        com.rackspace.idm.jaxb.User returnedUser = of.createUser();
+        com.rackspace.api.idm.v1.User returnedUser = of.createUser();
         returnedUser.setCountry(user.getCountry());
         returnedUser.setTimeZone(user.getTimeZone());
         returnedUser.setCustomerId(user.getCustomerId());
@@ -182,7 +182,7 @@ public class UserConverter {
         returnedUser.setRegion(user.getRegion());
         String status = user.getStatus().toString().toUpperCase();
         returnedUser.setStatus(Enum.valueOf(
-            com.rackspace.idm.jaxb.UserStatus.class, status));
+            com.rackspace.api.idm.v1.UserStatus.class, status));
         returnedUser.setUsername(user.getUsername());
         returnedUser.setSoftDeleted(user.isSoftDeleted());
         returnedUser.setMossoId(user.getMossoId());
@@ -211,7 +211,7 @@ public class UserConverter {
 
         if (includePassword && user.getPasswordObj() != null
             && !StringUtils.isBlank(user.getPasswordObj().getValue())) {
-            com.rackspace.idm.jaxb.UserPassword password = of
+            com.rackspace.api.idm.v1.UserPassword password = of
                 .createUserPassword();
 
             password.setPassword(user.getPasswordObj().getValue());
@@ -221,7 +221,7 @@ public class UserConverter {
         if (includeSecret && !StringUtils.isBlank(user.getSecretAnswer())
             && !StringUtils.isBlank(user.getSecretQuestion())) {
 
-            com.rackspace.idm.jaxb.UserSecret secret = of.createUserSecret();
+            com.rackspace.api.idm.v1.UserSecret secret = of.createUserSecret();
 
             secret.setSecretAnswer(user.getSecretAnswer());
             secret.setSecretQuestion(user.getSecretQuestion());
@@ -231,9 +231,9 @@ public class UserConverter {
         return returnedUser;
     }
 
-    public com.rackspace.idm.jaxb.User toUserJaxbFromUser(String username,
+    public com.rackspace.api.idm.v1.User toUserJaxbFromUser(String username,
         String customerId) {
-        com.rackspace.idm.jaxb.User returnedUser = of.createUser();
+        com.rackspace.api.idm.v1.User returnedUser = of.createUser();
         returnedUser.setUsername(username);
         returnedUser.setCustomerId(customerId);
 
