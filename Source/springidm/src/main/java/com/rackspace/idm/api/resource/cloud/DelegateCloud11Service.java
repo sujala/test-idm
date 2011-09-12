@@ -86,15 +86,12 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder authenticate(HttpServletResponse response,
         HttpHeaders httpHeaders, String body) throws IOException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
-            .authenticate(response, httpHeaders, body);
+        Response.ResponseBuilder serviceResponse = defaultCloud11Service.authenticate(response, httpHeaders, body);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
-            return cloudClient.post(getCloudAuthV11Url().concat("auth"),
-                httpHeaders, body);
+            return cloudClient.post(getCloudAuthV11Url().concat("auth"), httpHeaders, body);
         }
         return serviceResponse;
     }
@@ -103,8 +100,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder adminAuthenticate(
         HttpServletResponse response, HttpHeaders httpHeaders, String body)
         throws IOException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
-            .adminAuthenticate(response, httpHeaders, body);
+        Response.ResponseBuilder serviceResponse = defaultCloud11Service.adminAuthenticate(response, httpHeaders, body);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse

@@ -2,12 +2,16 @@ package com.rackspace.idm.api.filter;
 
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.NotAuthorizedException;
 import com.sun.jersey.spi.container.ContainerRequest;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.core.HttpHeaders;
+
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertThat;
 
 public class AuthenticationFilterTests {
 
@@ -25,7 +29,7 @@ public class AuthenticationFilterTests {
     
     @Test
     public void shouldIgnoreCloudResourceRequest() {
-        EasyMock.expect(request.getPath()).andReturn("cloud");
+        EasyMock.expect(request.getPath()).andReturn("cloud/v1.1/auth");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         replayAndRunFilter();
     }
@@ -105,4 +109,35 @@ public class AuthenticationFilterTests {
         authFilter.filter(request);
     }
 
+    @Test
+    public void filter_matchesV10Path_returnsRequest() throws Exception {
+        EasyMock.expect(request.getPath()).andReturn("cloud/v1.0/auth");
+        EasyMock.replay(request, oauthService);
+        ContainerRequest containerRequest = authFilter.filter(request);
+        assertThat("request", containerRequest, notNullValue());
+    }
+
+    @Test
+    public void filter_matchesV11Path_returnsRequest() throws Exception {
+        EasyMock.expect(request.getPath()).andReturn("cloud/v1.1/auth");
+        EasyMock.replay(request, oauthService);
+        ContainerRequest containerRequest = authFilter.filter(request);
+        assertThat("request", containerRequest, notNullValue());
+    }
+
+    @Test
+    public void filter_matchesV20Path_returnsRequest() throws Exception {
+        EasyMock.expect(request.getPath()).andReturn("cloud/v2.0/auth");
+        EasyMock.replay(request, oauthService);
+        ContainerRequest containerRequest = authFilter.filter(request);
+        assertThat("request", containerRequest, notNullValue());
+    }
+
+    @Test(expected = NotAuthorizedException.class)
+    public void filter_matchesAdminPath_throwsNotAuthorizedException() throws Exception {
+        EasyMock.expect(request.getPath()).andReturn("cloud/v1.1/users");
+        EasyMock.replay(request, oauthService);
+        ContainerRequest containerRequest = authFilter.filter(request);
+        assertThat("request", containerRequest, notNullValue());
+    }
 }
