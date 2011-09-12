@@ -579,6 +579,10 @@
 			<plugin>
 				<groupId>org.jvnet.jaxb2.maven2</groupId>
 				<artifactId>maven-jaxb2-plugin</artifactId>
+				<configuration>
+					<extension>true</extension>
+					<strict>false</strict>
+				</configuration>
 				<executions>
 				    <execution>
                         <id>global-auth-generate</id>
@@ -590,7 +594,6 @@
                             <bindingDirectory>src/main/resources/xsd</bindingDirectory>
                             <generateDirectory>target/generated-sources/xjc</generateDirectory>
                             <forceRegenerate>true</forceRegenerate>
-                            <extension>true</extension>
                         </configuration>
                     </execution>
 					<execution>
@@ -603,7 +606,6 @@
 							<bindingDirectory>target/generated-resources/keystone/xml/xslt</bindingDirectory>
 							<generateDirectory>target/generated-sources/xjc</generateDirectory>
 							<forceRegenerate>true</forceRegenerate>
-							<extension>true</extension>
 						</configuration>
 					</execution>
 					<execution>
@@ -616,7 +618,6 @@
                             <bindingDirectory>target/generated-resources/cloud11/xml/xslt</bindingDirectory>
                             <generateDirectory>target/generated-sources/xjc</generateDirectory>
                             <forceRegenerate>true</forceRegenerate>
-                            <extension>true</extension>
                         </configuration>
                     </execution>
 				</executions>
