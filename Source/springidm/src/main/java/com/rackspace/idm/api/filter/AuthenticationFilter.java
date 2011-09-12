@@ -45,9 +45,8 @@ public class AuthenticationFilter implements ContainerRequestFilter,
     public AuthenticationFilter() {
     }
 
-    AuthenticationFilter(ScopeAccessService scopeAccessService, LdapCloudAdminRepository ldapCloudAdminRepository) {
+    AuthenticationFilter(ScopeAccessService scopeAccessService) {
         this.scopeAccessService = scopeAccessService;
-        this.ldapCloudAdminRepository = ldapCloudAdminRepository;
     }
 
     @Override

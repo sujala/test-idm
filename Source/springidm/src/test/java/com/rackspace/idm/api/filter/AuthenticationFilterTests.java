@@ -1,8 +1,8 @@
 package com.rackspace.idm.api.filter;
 
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.exception.CloudAdminAuthorizationException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.NotAuthorizedException;
 import com.sun.jersey.spi.container.ContainerRequest;
 import org.easymock.EasyMock;
 import org.junit.Before;
@@ -133,8 +133,8 @@ public class AuthenticationFilterTests {
         assertThat("request", containerRequest, notNullValue());
     }
 
-    @Test(expected = NotAuthorizedException.class)
-    public void filter_matchesAdminPath_throwsNotAuthorizedException() throws Exception {
+    @Test(expected = CloudAdminAuthorizationException.class)
+    public void filter_matchesAdminPath_throwsCloudAdminAuthorizationException() throws Exception {
         EasyMock.expect(request.getPath()).andReturn("cloud/v1.1/users");
         EasyMock.replay(request, oauthService);
         ContainerRequest containerRequest = authFilter.filter(request);
