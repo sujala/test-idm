@@ -118,6 +118,22 @@ public class AuthenticationFilterTests {
     }
 
     @Test
+    public void filter_matchesV10VersionPath_returnsRequest() throws Exception {
+        EasyMock.expect(request.getPath()).andReturn("cloud/v1.0/");
+        EasyMock.replay(request, oauthService);
+        ContainerRequest containerRequest = authFilter.filter(request);
+        assertThat("request", containerRequest, notNullValue());
+    }
+
+    @Test
+    public void filter_matchesV10VersionPathWithoutSlash_returnsRequest() throws Exception {
+        EasyMock.expect(request.getPath()).andReturn("cloud/v1.0");
+        EasyMock.replay(request, oauthService);
+        ContainerRequest containerRequest = authFilter.filter(request);
+        assertThat("request", containerRequest, notNullValue());
+    }
+
+    @Test
     public void filter_matchesV11Path_returnsRequest() throws Exception {
         EasyMock.expect(request.getPath()).andReturn("cloud/v1.1/auth");
         EasyMock.replay(request, oauthService);

@@ -71,7 +71,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         // Skip token authentication for cloud resources
 
         if (path.startsWith("cloud")) {
-            if (path.matches("cloud/v\\d\\.\\d$") || path.matches("cloud/v\\d\\.\\d/auth")) {
+            if (path.matches("cloud/v\\d\\.\\d/{0,1}$") || path.matches("cloud/v\\d\\.\\d/auth")) {
                 return request;
             }
             //hack until auth changes behavior for  unauthorized users for get requests
