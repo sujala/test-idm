@@ -142,6 +142,7 @@ public abstract class LdapRepository {
     public static final String ATTR_PASSWORD_ROTATION_DURATION = "passwordRotationDuration";
     public static final String ATTR_STATUS = "status";
     public static final String ATTR_TENANT_ID = "tenantId";
+    public static final String ATTR_TENANT_DISPLAY_NAME = "tenantDisplayName";
     public static final String ATTR_TIME_ZONE = "timeZone";
     public static final String ATTR_TITLE = "title";
     public static final String ATTR_TOKEN_SCOPE = "tokenScope";
@@ -176,6 +177,8 @@ public abstract class LdapRepository {
         ATTR_NAME };
     protected static final String[] ATTR_USER_SEARCH_ATTRIBUTES = {"*",
         ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
+    protected static final String[] ATTR_TENANT_SEARCH_ATTRIBUTES = {"*",
+        ATTR_CREATED_DATE, ATTR_UPDATED_DATE};
 
     
     private final LdapConnectionPools connPools;

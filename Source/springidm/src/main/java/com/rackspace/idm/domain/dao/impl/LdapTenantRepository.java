@@ -157,7 +157,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     private List<Tenant> getMultipleTenants(Filter searchFilter)
         throws LDAPPersistException {
         List<SearchResultEntry> entries = this.getMultipleEntries(
-            TENANT_BASE_DN, SearchScope.SUB, searchFilter, ATTR_TENANT_ID);
+            TENANT_BASE_DN, SearchScope.SUB, searchFilter, ATTR_TENANT_ID, ATTR_TENANT_SEARCH_ATTRIBUTES);
 
         List<Tenant> tenants = new ArrayList<Tenant>();
         for (SearchResultEntry entry : entries) {
@@ -169,7 +169,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     private Tenant getSingleTenant(Filter searchFilter)
         throws LDAPPersistException {
         SearchResultEntry entry = this.getSingleEntry(TENANT_BASE_DN,
-            SearchScope.SUB, searchFilter);
+            SearchScope.SUB, searchFilter, ATTR_TENANT_SEARCH_ATTRIBUTES);
         Tenant tenant = getTenant(entry);
         return tenant;
     }
