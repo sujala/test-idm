@@ -13,8 +13,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 
 /**
- * @author john.eo Tries to load the config file from /etc/idm/, and if that
- *         fails, loads from from the classpath.
+ * @author john.eo Tries to load the config file from system defined location, and if that
+ *         fails, loads from the classpath.
  */
 @org.springframework.context.annotation.Configuration
 public class PropertyFileConfiguration {
