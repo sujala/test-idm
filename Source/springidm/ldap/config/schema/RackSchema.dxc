@@ -636,17 +636,22 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.7) = {
 	ldap-names = baseUrl
 	subclass-of top
 	kind = structural
-	must-contain
-		baseUrlId,
-		baseUrlType,
-		service,
-		def,
-		publicUrl
-	may-contain
-		rsRegion,
-		internalUrl,
-		rsAdminUrl,
-        enabled
+    must-contain
+        baseUrlId,
+        publicUrl
+    may-contain
+        baseUrlType,
+        cn,
+        def,
+        rsGlobal,
+        service,
+        rsRegion,
+        internalUrl,
+        rsAdminUrl,
+        enabled,
+        versionId,
+        versionInfo,
+        versionList 
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.8) = {
@@ -844,24 +849,3 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.23) = {
         description
 };
 
-schema set object-class (1.3.6.1.4.1.20988.2.2.24) = {
-    name = enpointTemplate
-    ldap-names = enpointTemplate
-    subclass-of top
-    kind = structural
-    must-contain
-        baseUrlId,
-        baseUrlType,
-        publicUrl,
-        rsGlobal,
-        enabled
-    may-contain
-        cn,
-        region,
-        internalUrl,
-        rsAdminUrl,
-        versionId,
-        versionInfo,
-        versionList
-        
-};
