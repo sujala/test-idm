@@ -12,7 +12,7 @@
 	</appender>
 
 	<appender name="file" class="org.apache.log4j.RollingFileAppender">
-		<param name="File" value="/tmp/logs/idm.log" />
+		<param name="File" value="/var/log/idm/idm.log" />
 		<param name="Append" value="true" />
 		<param name="MaxFileSize" value="20MB" />
 		<param name="MaxBackupIndex" value="1" />
@@ -22,7 +22,7 @@
 	</appender>
 	
 	<appender name="audit" class="org.apache.log4j.RollingFileAppender">
-		<param name="File" value="/tmp/logs/audit.log" />
+		<param name="File" value="/var/log/idm/audit.log" />
 		<param name="Append" value="true" />
 		<param name="MaxFileSize" value="20MB" />
 		<param name="MaxBackupIndex" value="9999" />
