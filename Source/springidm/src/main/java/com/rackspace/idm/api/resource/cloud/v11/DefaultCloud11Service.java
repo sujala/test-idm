@@ -182,8 +182,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Override
     public ResponseBuilder adminAuthenticate(HttpServletResponse response,
         HttpHeaders httpHeaders, String body) throws IOException {
-        if (httpHeaders.getMediaType().isCompatible(
-            MediaType.APPLICATION_XML_TYPE)) {
+        if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
             return authenticateXML(response, httpHeaders, body, true);
         } else {
             return authenticateJSON(response, httpHeaders, body, true);
@@ -501,7 +500,12 @@ public class DefaultCloud11Service implements Cloud11Service {
         String serviceName, HttpHeaders httpHeaders) throws IOException {
         CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseURLId);
 
-        if (baseUrl == null || !serviceName.equals(baseUrl.getService())) {
+        if (baseUrl == null ) {
+            return notFoundExceptionResponse(String.format(
+                "BaseUrlId %s not found", baseURLId));
+        }
+
+        if (serviceName!=null && !serviceName.equals(baseUrl.getService())) {
             return notFoundExceptionResponse(String.format(
                 "BaseUrlId %s not found", baseURLId));
         }
@@ -528,6 +532,9 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
         }
 
+        if(filteredBaseUrls.size()==0){
+            return notFoundExceptionResponse("No matching Urls found");
+        }
         return Response.ok(OBJ_FACTORY
             .createBaseURLs(this.endpointConverterCloudV11
                 .toBaseUrls(filteredBaseUrls)));
@@ -631,6 +638,12 @@ public class DefaultCloud11Service implements Cloud11Service {
                     .getValue();
                 String username = passCreds.getUsername();
                 String password = passCreds.getPassword();
+                if(StringUtils.isBlank(username)){
+                    return badRequestExceptionResponse("Expecting username");
+                }
+                if(StringUtils.isBlank(password)){
+                    return badRequestExceptionResponse("Expecting password");
+                }
                 user = this.userService.getUser(username);
                 if (user == null) {
                     return userNotFoundExceptionResponse(username);

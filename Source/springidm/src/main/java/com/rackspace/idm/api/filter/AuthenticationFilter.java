@@ -1,8 +1,11 @@
 package com.rackspace.idm.api.filter;
 
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.exception.CloudAdminAuthorizationException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
@@ -17,6 +20,7 @@ import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -25,16 +29,18 @@ import java.util.UUID;
  */
 @Component
 public class AuthenticationFilter implements ContainerRequestFilter,
-    ApplicationContextAware {
+        ApplicationContextAware {
     private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private final Logger logger = LoggerFactory
-        .getLogger(AuthenticationFilter.class);
+            .getLogger(AuthenticationFilter.class);
 
     @Context
     HttpServletRequest req;
 
     private ApplicationContext springCtx;
     private ScopeAccessService scopeAccessService;
+
+    private LdapCloudAdminRepository ldapCloudAdminRepository;
 
     public AuthenticationFilter() {
     }
@@ -54,19 +60,29 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             MDC.put(Audit.PATH, path);
             MDC.put(Audit.GUUID, UUID.randomUUID().toString());
         }
-        
+
         // skip token authentication for any url that ends with public.
         // convention for public documentation is /*/*/public
         // TODO: double check that this is an efficient check and will not cause collisions
         if (path.endsWith("public")) {
-        	return request;
-        }
-        
-        // Skip token authentication for cloud resources
-        if (path.startsWith("cloud")) {
             return request;
         }
-        
+
+        // Skip token authentication for cloud resources
+
+        if (path.startsWith("cloud")) {
+            if (path.matches("cloud/v\\d\\.\\d/{0,1}$") || path.matches("cloud/v\\d\\.\\d/auth")) {
+                return request;
+            }
+            //hack until auth changes behavior for  unauthorized users for get requests
+            else if ("GET".equals(method)) {
+                authenticateCloudAdminUserForGetRequests(request);
+            } else {
+                authenticateCloudAdminUser(request);
+            }
+            return request;
+        }
+
         // Skip authentication for the following calls
         int index = path.indexOf("/");
         path = index > 0 ? path.substring(index + 1) : "";
@@ -98,10 +114,9 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         if (authHeader == null || authHeader.isEmpty()) {
             throw new NotAuthenticatedException("The request for the resource must include the Authorization header.");
         }
-        final String tokenString = authHeaderHelper
-            .getTokenFromAuthHeader(authHeader);
-        final boolean authResult = getScopeAccessService()
-            .authenticateAccessToken(tokenString);
+
+        final String tokenString = authHeaderHelper.getTokenFromAuthHeader(authHeader);
+        final boolean authResult = getScopeAccessService().authenticateAccessToken(tokenString);
 
         if (authResult) {
             // Authenticated
@@ -113,9 +128,40 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         throw new NotAuthenticatedException("Authentication Failed.");
     }
 
+    private void authenticateCloudAdminUser(ContainerRequest request) {
+        String authHeader = request.getHeaderValue(HttpHeaders.AUTHORIZATION);
+        Map<String, String> stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
+        if (stringStringMap == null) {
+            throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
+        } else {
+            boolean authenticated = getLdapCloudAdminRepository().authenticate(stringStringMap.get("username"), stringStringMap.get("password"));
+            if (!authenticated) {
+                throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
+            }
+        }
+    }
+
+    private void authenticateCloudAdminUserForGetRequests(ContainerRequest request) {
+        String authHeader = request.getHeaderValue(HttpHeaders.AUTHORIZATION);
+        Map<String, String> stringStringMap = null;
+        try {
+            stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
+        } catch (CloudAdminAuthorizationException e) {
+            throw new NotAuthorizedException("Cloud admin user authorization Failed.");
+        }
+        if (stringStringMap == null) {
+            throw new NotAuthorizedException("Cloud admin user authorization Failed.");
+        } else {
+            boolean authenticated = getLdapCloudAdminRepository().authenticate(stringStringMap.get("username"), stringStringMap.get("password"));
+            if (!authenticated) {
+                throw new NotAuthorizedException("Cloud admin user authorization Failed.");
+            }
+        }
+    }
+
     @Override
     public void setApplicationContext(ApplicationContext applicationContext)
-        throws BeansException {
+            throws BeansException {
         springCtx = applicationContext;
     }
 
@@ -125,5 +171,13 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         }
 
         return scopeAccessService;
+    }
+
+    private LdapCloudAdminRepository getLdapCloudAdminRepository() {
+        if (ldapCloudAdminRepository == null) {
+            ldapCloudAdminRepository = springCtx.getBean(LdapCloudAdminRepository.class);
+        }
+
+        return ldapCloudAdminRepository;
     }
 }

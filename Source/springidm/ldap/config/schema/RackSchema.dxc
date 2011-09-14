@@ -451,6 +451,45 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.59) = {
     description = "An id for a tenant"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.60) = {
+    name = tenantDisplayName
+    ldap-names = tenantDisplayName
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "A Tenant Display Name"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.61) = {
+    name = versionInfo
+    ldap-names = versionInfo
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "Version Info URL"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.62) = {
+    name = versionList
+    ldap-names = versionList
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "Version Info URL"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.63) = {
+    name = versionId
+    ldap-names = versionId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "Version Info URL"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.64) = {
+        name = rsGlobal
+        ldap-names = rsGlobal
+        syntax = boolean
+        description = "Is this object global?"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 	name = rsPerson
 	ldap-names = rsPerson
@@ -597,17 +636,22 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.7) = {
 	ldap-names = baseUrl
 	subclass-of top
 	kind = structural
-	must-contain
-		baseUrlId,
-		baseUrlType,
-		service,
-		def,
-		publicUrl
-	may-contain
-		rsRegion,
-		internalUrl,
-		rsAdminUrl,
-        enabled
+    must-contain
+        baseUrlId,
+        publicUrl
+    may-contain
+        baseUrlType,
+        cn,
+        def,
+        rsGlobal,
+        service,
+        rsRegion,
+        internalUrl,
+        rsAdminUrl,
+        enabled,
+        versionId,
+        versionInfo,
+        versionList 
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.8) = {
@@ -773,11 +817,12 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.21) = {
     subclass-of top
     kind = structural
     must-contain
-        tenantId,
+        cn,
         enabled
     may-contain
     	description,
-    	cn
+        tenantId,
+        tenantDisplayName
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.22) = {
@@ -803,3 +848,4 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.23) = {
     may-contain
         description
 };
+

@@ -1,12 +1,15 @@
 package com.rackspace.idm.util;
 
-import java.util.Map;
-
+import com.rackspace.idm.exception.CloudAdminAuthorizationException;
+import com.rackspace.idm.exception.NotAuthorizedException;
+import com.unboundid.util.Base64;
 import org.junit.Test;
 import org.springframework.util.Assert;
 
-import com.rackspace.idm.exception.NotAuthorizedException;
-import com.unboundid.util.Base64;
+import java.util.Map;
+
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThat;
 
 public class AuthHeaderHelperTests {
     private AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
@@ -60,5 +63,26 @@ public class AuthHeaderHelperTests {
     @Test(expected = NotAuthorizedException.class)
     public void ShouldThrowErrorForInvalidAuthHeaderWithBlankToken() {
         authHeaderHelper.getTokenFromAuthHeader(blankTokenHeader);
+    }
+
+    @Test(expected = CloudAdminAuthorizationException.class)
+    public void getBase64EncodedString_withEmptyHeader_throwsCloudAdminAuthorizationException() throws Exception {
+        authHeaderHelper.getBase64EncodedString("");
+    }
+
+    @Test(expected = CloudAdminAuthorizationException.class)
+    public void getBase64EncodedString_withNullHeader_throwsCloudAdminAuthorizationException() throws Exception {
+        authHeaderHelper.getBase64EncodedString(null);
+    }
+
+    @Test
+    public void getBase64EncodedString_withValidHeader_returnsKeyValue() throws Exception {
+        String basicAuthKey = authHeaderHelper.getBase64EncodedString("Basic abc");
+        assertThat("key", basicAuthKey, equalTo("abc"));
+    }
+
+    @Test(expected = CloudAdminAuthorizationException.class)
+    public void getBase64EncodedString_withInvalidHeader_returnsKeyValue() throws Exception {
+        authHeaderHelper.getBase64EncodedString("Basic ");
     }
 }
