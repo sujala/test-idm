@@ -515,7 +515,7 @@ public class DelegateCloud11Service implements Cloud11Service {
             return defaultCloud11Service.getUserGroups(userId, httpHeaders);
         } catch (Exception e) {
         }
-        String path = "user/" + userId + "/groups";
+        String path = "users/" + userId + "/groups";
         return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
     }
 
