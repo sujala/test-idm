@@ -727,9 +727,9 @@
 				<artifactId>tomcat-maven-plugin</artifactId>
 				<configuration>
 					<path>/${project.context}</path>
-					<systemPropertyVariables>
+					<systemProperties>
 						<idm.properties.location>${idm.properties.location}</idm.properties.location>
-					</systemPropertyVariables>
+					</systemProperties>
 				</configuration>
 			</plugin>
 
