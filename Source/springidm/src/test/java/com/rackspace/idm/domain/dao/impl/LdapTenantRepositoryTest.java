@@ -28,14 +28,13 @@ public class LdapTenantRepositoryTest {
     private final String dn = LdapRepository.BASE_DN;
     
     private static LdapTenantRepository getRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = new PropertyFileConfiguration()
-            .getConfigFromClasspath();
+        Configuration appConfig = new PropertyFileConfiguration().getConfig();
         return new LdapTenantRepository(connPools, appConfig);
     }
 
     private static LdapConnectionPools getConnPools() {
         LdapConfiguration config = new LdapConfiguration(
-            new PropertyFileConfiguration().getConfigFromClasspath());
+            new PropertyFileConfiguration().getConfig());
         return config.connectionPools();
     }
     

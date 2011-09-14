@@ -11,14 +11,7 @@
 			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
 			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
 			http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-2.5.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
-    <!--
-         Configurer that replaces ${...} placeholders with values from a properties file
-         (in this case, JDBC-related settings for the dataSource definition below)
-     -->
-    <context:property-placeholder location="classpath:jdbc.properties"/>
-    <!--<bean class="org.apache.commons.configuration.PropertiesConfiguration">-->
-        <!--<constructor-arg value="config.properties"/>-->
-    <!--</bean>-->
+
     <!--
          Uses Apache Commons DBCP for connection pooling. See Commons DBCP documentation
          for the required JAR files. See the PetStore sample application also shipped with

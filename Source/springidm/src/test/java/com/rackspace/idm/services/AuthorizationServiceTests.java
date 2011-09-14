@@ -96,8 +96,7 @@ public class AuthorizationServiceTests {
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
         mockWadlTrie = EasyMock.createMock(WadlTrie.class);
         mockUriInfo = EasyMock.createMock(UriInfo.class);
-        Configuration appConfig = new PropertyFileConfiguration()
-            .getConfigFromClasspath();
+        Configuration appConfig = new PropertyFileConfiguration().getConfig();
         service = new DefaultAuthorizationService(mockScopeAccessDao,
             mockClientDao, mockWadlTrie, appConfig);
         setUpObjects();

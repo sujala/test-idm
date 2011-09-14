@@ -43,13 +43,13 @@ public class LdapCustomerRepositoryTest {
     }
 
     private static LdapCustomerRepository getRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        Configuration appConfig = new PropertyFileConfiguration().getConfig();
         return new LdapCustomerRepository(connPools, appConfig);
     }
 
     private static LdapConnectionPools getConnPools() {
         return new LdapConfiguration(new PropertyFileConfiguration()
-            .getConfigFromClasspath()).connectionPools();
+            .getConfig()).connectionPools();
     }
 
     @Before

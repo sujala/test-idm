@@ -16,33 +16,29 @@ import org.springframework.context.annotation.Scope;
  * @author john.eo Tries to load the config file from /etc/idm/, and if that
  *         fails, loads from from the classpath.
  */
-
 @org.springframework.context.annotation.Configuration
 public class PropertyFileConfiguration {
-    private static final String CONFIG_FILE_NAME = "config.properties";
-    private static final String EXTERNAL_CONFIG_FILE_PATH = "/etc/idm/"
-        + CONFIG_FILE_NAME;
+    private static final String CONFIG_FILE_NAME = "idm.properties";
+    
     private Logger logger = LoggerFactory
         .getLogger(PropertyFileConfiguration.class);
 
     /**
-     * @return Configuration instance that is loaded from /etc/idm if it exists.
-     *         If the file isn't there, loads from the classpath. Note that the
-     *         classpath for the config file during test will be
-     *         src/test/resources, rather than src/main/resources.
+     * @return Configuration instance that is loaded from system defined location it exists.
+     *         If the file isn't there, loads from the classpath. 
      */
     @Bean(name="properties")
     @Scope(value = "singleton")
     public Configuration getConfig() {
-        File configFile = new File(EXTERNAL_CONFIG_FILE_PATH);
+    	final String externalConfigFile = System.getProperty("idm.properties.location") + "/" + CONFIG_FILE_NAME;
+        File configFile = new File(externalConfigFile);
         if (configFile.exists()) {
-            return readConfigFile(EXTERNAL_CONFIG_FILE_PATH);
+            return getConfigFromClasspath(externalConfigFile);
         }
 
-        logger.debug(String.format(
-            "No config file found at %s. Loding from the classpath",
-            EXTERNAL_CONFIG_FILE_PATH));
-        return readConfigFile(CONFIG_FILE_NAME);
+        logger.debug(String.format("No config file found at %s. Loding from the classpath", externalConfigFile));
+        
+        return getConfigFromClasspath(CONFIG_FILE_NAME);
     }
 
 
@@ -51,17 +47,7 @@ public class PropertyFileConfiguration {
         return ResourceBundle.getBundle("fault_messages", Locale.ENGLISH);
     }
 
-    /**
-     * Configuration instance from the classpath. Use this for unit tests, so
-     * that the config file from /etc/idm won't be read instead.
-     * 
-     * @return
-     */
-    public Configuration getConfigFromClasspath() {
-        return readConfigFile(CONFIG_FILE_NAME);
-    }
-
-    private Configuration readConfigFile(String filePath) {
+    private Configuration getConfigFromClasspath(String filePath) {
         try {
             logger.debug(String.format("Attempting to open file %s", filePath));
             return new PropertiesConfiguration(filePath);

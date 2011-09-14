@@ -51,18 +51,18 @@ public class LdapClientRepositoryTest {
     }
 
     private static LdapClientRepository getRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        Configuration appConfig = new PropertyFileConfiguration().getConfig();
         return new LdapClientRepository(connPools, appConfig);
     }
     
     private static LdapUserRepository getUserRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        Configuration appConfig = new PropertyFileConfiguration().getConfig();
         return new LdapUserRepository(connPools, appConfig);
     }
 
     private static LdapConnectionPools getConnPools() {
         return new LdapConfiguration(new PropertyFileConfiguration()
-            .getConfigFromClasspath()).connectionPools();
+            .getConfig()).connectionPools();
     }
 
     @Before

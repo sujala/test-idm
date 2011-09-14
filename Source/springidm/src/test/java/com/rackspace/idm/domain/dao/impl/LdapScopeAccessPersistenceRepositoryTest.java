@@ -577,22 +577,22 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     }
 
     private static LdapClientRepository getClientRepo(LdapConnectionPools connPools) {
-        final Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        final Configuration appConfig = new PropertyFileConfiguration().getConfig();
         return new LdapClientRepository(connPools, appConfig);
     }
 
     private static ScopeAccessDao getSaRepo(LdapConnectionPools connPools) {
-        final Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        final Configuration appConfig = new PropertyFileConfiguration().getConfig();
         return new LdapScopeAccessPeristenceRepository(connPools, appConfig);
     }
 
     private static LdapCustomerRepository getCustomerRepo(LdapConnectionPools connPools) {
-        final Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        final Configuration appConfig = new PropertyFileConfiguration().getConfig();
         return new LdapCustomerRepository(connPools, appConfig);
     }
 
     private static LdapConnectionPools getConnPools() {
-        return new LdapConfiguration(new PropertyFileConfiguration().getConfigFromClasspath()).connectionPools();
+        return new LdapConfiguration(new PropertyFileConfiguration().getConfig()).connectionPools();
     }
 
     private Customer addNewTestCustomer(String customerId, String name, String inum, String iname,

@@ -1,0 +1,52 @@
+#################################################################################
+#
+# Configuration for IDM server that authenticates Rackers on the trusted network.
+# 
+#################################################################################
+
+
+
+#################################################################################
+#
+# CUSTOMER LDAP SERVER 
+#
+#################################################################################
+
+# comma or space delimited list of server addresses in host:port format, port default is 636
+ldap.serverList=10.127.7.167:636
+ldap.server.trusted=true
+
+
+
+#################################################################################
+#
+# RACKER AUTHENTICATION LDAP SERVER
+#
+#################################################################################
+
+# Rackspace eDir
+auth.ldap.server.pool.size.init=2
+auth.ldap.server.pool.size.max=10
+auth.ldap.server=cert-edir.dfw1.corp.rackspace.com
+auth.ldap.server.port=636
+auth.ldap.base.dn=ou=users\,o=rackspace
+
+
+
+#################################################################################
+#
+# MISCELLANEOUS SETTINGS
+#
+#################################################################################
+password.rules.enforced=false
+
+
+
+#################################################################################
+#
+# INCLUDE PROPERTIES FROM BASE FILES. NOTE!! THE EXTERNAL INCLUDES MUST 
+# APPEAR AT THE BOTTOM OF THE FILE. THIS ENSURES PROPERTIES SPECIFIED
+# ABOVE OVERRIDE THE PROPERTIES IN THE BASE FILES.
+#
+#################################################################################
+include = base.idm.properties

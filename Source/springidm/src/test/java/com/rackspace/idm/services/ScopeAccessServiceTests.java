@@ -43,8 +43,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
     @Before
     public void setUp() throws Exception {
-        Configuration appConfig = new PropertyFileConfiguration()
-            .getConfigFromClasspath();
+        Configuration appConfig = new PropertyFileConfiguration().getConfig();
         authHeaderHelper = new AuthHeaderHelper();
 
         mockUserDao = EasyMock.createMock(UserDao.class);

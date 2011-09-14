@@ -102,14 +102,14 @@ public class UserServiceTests {
         mockScopeAccessObjectDao = EasyMock.createMock(ScopeAccessDao.class);
         mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
         
-        Configuration appConfig = new PropertyFileConfiguration().getConfigFromClasspath();
+        Configuration appConfig = new PropertyFileConfiguration().getConfig();
         appConfig.setProperty("ldap.server.trusted", false);
 
         userService = new DefaultUserService(mockUserDao, mockRackerDao,
                 mockCustomerDao,mockScopeAccessObjectDao,
                 mockClientService, appConfig);
         
-        Configuration appConfig2 = new PropertyFileConfiguration().getConfigFromClasspath();
+        Configuration appConfig2 = new PropertyFileConfiguration().getConfig();
         
         appConfig2.setProperty("ldap.server.trusted", true);
         trustedUserService = new DefaultUserService(mockUserDao, mockRackerDao,
