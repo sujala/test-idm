@@ -1,17 +1,17 @@
 package com.rackspace.idm.util;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import com.rackspace.idm.exception.CloudAdminAuthorizationException;
+import com.rackspace.idm.exception.NotAuthorizedException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 
-import com.rackspace.idm.exception.NotAuthorizedException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AuthHeaderHelper {
 
     public Map<String, String> parseBasicParams(String authHeader) {
-        String encoded = authHeader.substring(authHeader.indexOf(' '));
+        String encoded = this.getBase64EncodedString(authHeader);
         Map<String, String> authParams = new HashMap<String, String>();
 
         String decoded = new String(Base64.decodeBase64(encoded));
@@ -32,13 +32,13 @@ public class AuthHeaderHelper {
         if (StringUtils.isBlank(authHeader)) {
             return authParams;
         }
-        
+
         String[] headerparm = authHeader.split(" ");
-        
+
         if (headerparm.length > 1 && headerparm[0].toLowerCase().trim().equals("oauth")) {
             authParams.put("token", headerparm[1].trim());
         }
-        
+
         return authParams;
     }
 
@@ -62,5 +62,22 @@ public class AuthHeaderHelper {
         }
 
         return tokenString;
+    }
+
+    public String getBase64EncodedString(String authHeader) {
+        if (authHeader == null) {
+            throw new CloudAdminAuthorizationException("Invalid Auth Header");
+        }
+        if (authHeader.isEmpty()) {
+            throw new CloudAdminAuthorizationException("Invalid Auth Header");
+        }
+        String[] strings = authHeader.split(" ");
+        if(strings.length!=2){
+            throw new CloudAdminAuthorizationException("Invalid Auth Header");
+        }
+        if(!strings[0].equals("Basic")){
+            throw new CloudAdminAuthorizationException("Invalid Auth Header");
+        }
+        return strings[1];
     }
 }

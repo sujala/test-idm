@@ -1,20 +1,10 @@
 package com.rackspace.idm.api.error;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
-
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
-import javax.ws.rs.core.Variant;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
-
+import com.rackspace.api.idm.v1.*;
+import com.rackspace.idm.ErrorMsg;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.exception.*;
+import com.rackspacecloud.docs.auth.api.v1.*;
 import org.apache.commons.lang.StringUtils;
 import org.omg.CORBA.portable.ApplicationException;
 import org.slf4j.Logger;
@@ -23,51 +13,22 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.api.idm.v1.BadRequest;
-import com.rackspace.api.idm.v1.BaseUrlIdConflict;
-import com.rackspace.api.idm.v1.ClientGroupConflict;
-import com.rackspace.api.idm.v1.ClientnameConflict;
-import com.rackspace.api.idm.v1.CustomerIdConflict;
-import com.rackspace.api.idm.v1.Forbidden;
-import com.rackspace.api.idm.v1.IdmFault;
-import com.rackspace.api.idm.v1.ItemNotFound;
-import com.rackspace.api.idm.v1.MethodNotAllowed;
-import com.rackspace.api.idm.v1.NotProvisioned;
-import com.rackspace.api.idm.v1.PasswordSelfUpdateTooSoonFault;
-import com.rackspace.api.idm.v1.PasswordValidationFault;
-import com.rackspace.api.idm.v1.PermissionIdConflict;
-import com.rackspace.api.idm.v1.ServerError;
-import com.rackspace.api.idm.v1.ServiceUnavailable;
-import com.rackspace.api.idm.v1.StalePasswordFault;
-import com.rackspace.api.idm.v1.Unauthorized;
-import com.rackspace.api.idm.v1.UserDisabled;
-import com.rackspace.api.idm.v1.UsernameConflict;
-import com.rackspace.idm.ErrorMsg;
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.BaseUrlConflictException;
-import com.rackspace.idm.exception.ClientConflictException;
-import com.rackspace.idm.exception.CustomerConflictException;
-import com.rackspace.idm.exception.DuplicateClientException;
-import com.rackspace.idm.exception.DuplicateClientGroupException;
-import com.rackspace.idm.exception.DuplicateUsernameException;
-import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.IdmException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.NotAuthorizedException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.NotProvisionedException;
-import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
-import com.rackspace.idm.exception.PasswordValidationException;
-import com.rackspace.idm.exception.PermissionConflictException;
-import com.rackspace.idm.exception.StalePasswordException;
-import com.rackspace.idm.exception.UserDisabledException;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.*;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 @Component
 @Provider
 public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
     private final ResourceBundle faultMessageConfig;
     private final Logger logger = LoggerFactory.getLogger(ApiExceptionMapper.class);
+    private com.rackspacecloud.docs.auth.api.v1.ObjectFactory objectFactory = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
 
     @Context
     private HttpHeaders headers;
@@ -120,6 +81,9 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         }
         if (e instanceof NotAuthenticatedException || e instanceof NotAuthorizedException) {
             return toResponse(new Unauthorized(), e, 401);
+        }
+        if (e instanceof CloudAdminAuthorizationException) {
+            return toResponse(new AuthFault(), e, 405);
         }
         if (e instanceof ForbiddenException) {
             return toResponse(new Forbidden(), e, 403);
@@ -216,19 +180,39 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         fault.setDetails(dtl);
 
         ResponseBuilder builder = Response.status(code).entity(fault);
-        List<String> acceptHeaderVals = headers.getRequestHeader(HttpHeaders.ACCEPT);
-        if (acceptHeaderVals != null && acceptHeaderVals.size() > 0) {
-            boolean isOctetStreamResponse = acceptHeaderVals.get(0).equals(MediaType.APPLICATION_OCTET_STREAM);
-            if (isOctetStreamResponse) {
-                // Convert to a different response
-                MediaType respType = MediaType.APPLICATION_JSON_TYPE;
-                if (acceptHeaderVals.size() > 1) {
-                    respType = MediaType.valueOf(acceptHeaderVals.get(1));
-                }
-                return builder.type(respType).build();
+        return builder.build();
+    }
+
+    private Response toResponse(AuthFault fault, Throwable t, int code) {
+        fault.setCode(code);
+
+        String msg = null;
+        String dtl = null;
+        String faultClassName = fault.getClass().getSimpleName();
+        try {
+            msg = faultMessageConfig.getString(faultClassName + ".msg");
+        } catch (Exception e) {
+            // Unable to load the message or details! Most likey no entry has
+            // been made
+            logger.error("Could not load fault message resource for {}:\n{}", faultClassName, e);
+        }
+
+        if (StringUtils.isBlank(msg)) {
+            if (t == null) {
+                msg = ErrorMsg.SERVER_ERROR;
+            } else if (StringUtils.isBlank(t.getMessage())) {
+                msg = faultClassName;
+            } else {
+                msg = t.getMessage();
             }
         }
 
+        dtl = MDC.get(Audit.GUUID);
+
+        fault.setMessage(msg);
+        fault.setDetails(dtl);
+
+        ResponseBuilder builder = Response.status(code).entity(objectFactory.createAuthFault(fault));
         return builder.build();
     }
 }

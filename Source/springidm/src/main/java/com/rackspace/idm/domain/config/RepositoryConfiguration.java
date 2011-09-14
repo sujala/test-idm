@@ -1,27 +1,11 @@
 package com.rackspace.idm.domain.config;
 
+import com.rackspace.idm.domain.dao.*;
+import com.rackspace.idm.domain.dao.impl.*;
+import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-
-import com.rackspace.idm.domain.dao.ApiDocDao;
-import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.ClientDao;
-import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.EndpointDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.TenantDao;
-import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.dao.impl.FileSystemApiDocRepository;
-import com.rackspace.idm.domain.dao.impl.LdapAuthRepository;
-import com.rackspace.idm.domain.dao.impl.LdapClientRepository;
-import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
-import com.rackspace.idm.domain.dao.impl.LdapCustomerRepository;
-import com.rackspace.idm.domain.dao.impl.LdapEndpointRepository;
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessPeristenceRepository;
-import com.rackspace.idm.domain.dao.impl.LdapTenantRepository;
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
-import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
 /**
  * @author john.eo <br/>
@@ -58,6 +42,11 @@ public class RepositoryConfiguration {
    @Bean
     public AuthDao authenticationRepository() {
         return new LdapAuthRepository(authReposConnPool, appConfig);
+    }
+
+    @Bean
+    public LdapCloudAdminRepository cloudAdminRepository() {
+        return new LdapCloudAdminRepository(connPools, appConfig);
     }
 
     @Bean

@@ -62,7 +62,6 @@ public class Cloud11VersionResource {
     }
 
     @GET
-    @Path("public")
     public Response getPublicCloud11VersionInfo(@Context HttpHeaders httpHeaders)
             throws IOException {
     	//For the pubic profile, we're just forwarding to what cloud has. Once we become the
@@ -71,6 +70,7 @@ public class Cloud11VersionResource {
     }
     
     @GET
+    @Path("internal")
     public Response getInternalCloud11VersionInfo() {
        	final String responseXml = cloudContractDescriptionBuilder.buildInternalVersionPage(CloudContractDescriptionBuilder.VERSION_1_1, uriInfo);
     	return Response.ok(responseXml).build();
@@ -81,6 +81,12 @@ public class Cloud11VersionResource {
     public Response authenticate(@Context HttpServletResponse response, @Context HttpHeaders httpHeaders, String body)
             throws IOException {
         return getCloud11Service().authenticate(response, httpHeaders, body).build();
+    }
+    // this is not my fault, I promise
+    @GET
+    @Path("cloud/auth")
+    public Response hack() throws IOException {
+        return Response.status(400).build();
     }
 
     @POST

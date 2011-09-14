@@ -1,17 +1,16 @@
 package com.rackspace.idm.audit;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
+import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.rackspace.idm.domain.entity.Auditable;
+import com.unboundid.ldap.sdk.Modification;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.rackspace.idm.domain.entity.Auditable;
-import com.unboundid.ldap.sdk.Modification;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class Audit {
 	public static final String REMOTE_IP = "REMOTE_IP";
@@ -21,7 +20,7 @@ public class Audit {
 	public static final String GUUID = "GUUID";
 
 	private enum ACTION {
-		USERAUTH, CLIENTAUTH, RACKERAUTH, ADD, DELETE, MODIFY;
+		USERAUTH, CLIENTAUTH, RACKERAUTH, ADD, DELETE, MODIFY, CLOUDADMINAUTH
 	}
 
 	private enum RESULT {
@@ -63,6 +62,10 @@ public class Audit {
 	
 	public static Audit authUser(String o) {
 		return new Audit(o).addEvent(ACTION.USERAUTH);
+	}
+
+    public static Audit authCloudAdmin(String o) {
+		return new Audit(o).addEvent(ACTION.CLOUDADMINAUTH);
 	}
 	
 	public static Audit authRacker(String o) {
