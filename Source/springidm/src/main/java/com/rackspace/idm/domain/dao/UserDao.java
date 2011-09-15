@@ -8,7 +8,7 @@ import com.rackspace.idm.domain.entity.Users;
 
 public interface UserDao {
 
-    void addUser(User user, String customerUniqueId);
+    void addUser(User user);
 
     void addRacker(Racker racker);
 

@@ -3,13 +3,14 @@ package com.rackspace.idm.domain.dao.impl;
 import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.exception.DuplicateException;
@@ -28,13 +29,25 @@ public class LdapTenantRepositoryTest {
     private final String dn = LdapRepository.BASE_DN;
     
     private static LdapTenantRepository getRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = new PropertyFileConfiguration().getConfig();
+        Configuration appConfig = null;
+        try {
+            appConfig = new PropertiesConfiguration("config.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
         return new LdapTenantRepository(connPools, appConfig);
     }
 
     private static LdapConnectionPools getConnPools() {
-        LdapConfiguration config = new LdapConfiguration(
-            new PropertyFileConfiguration().getConfig());
+        Configuration appConfig = null;
+        try {
+            appConfig = new PropertiesConfiguration("config.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
+        LdapConfiguration config = new LdapConfiguration(appConfig);
         return config.connectionPools();
     }
     

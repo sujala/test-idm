@@ -6,12 +6,13 @@ import java.util.List;
 import junit.framework.Assert;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
@@ -43,7 +44,13 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
     @Before
     public void setUp() throws Exception {
-        Configuration appConfig = new PropertyFileConfiguration().getConfig();
+        Configuration appConfig = null;
+        try {
+            appConfig = new PropertiesConfiguration("config.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
         authHeaderHelper = new AuthHeaderHelper();
 
         mockUserDao = EasyMock.createMock(UserDao.class);

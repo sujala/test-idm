@@ -912,7 +912,6 @@
                             <targetPath>docs/xslt</targetPath>
                         </resource>
                     </webResources>
-                    <warName>${project.artifactId}</warName>
                 </configuration>
             </plugin>
 

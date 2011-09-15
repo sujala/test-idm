@@ -45,7 +45,7 @@ public class LdapAuthRepositoryTest {
     }
 
     @Test
-    @Ignore("Still waiting on trusted connection to eDir")
+    @Ignore("Still waiting on correct credentials")
     public void shouldNotAuthBadCred() {
         Assert.assertFalse(repo.authenticate("john.eo", "badpassword"));
     }

@@ -61,18 +61,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalArgumentException(errmsg);
         }
 
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER,
-                getRackspaceCustomerId())
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEORGANIZATION).build();
-
-        SearchResultEntry rackspace = this.getSingleEntry(BASE_DN,
-            SearchScope.ONE, searchFilter, ATTR_NO_ATTRIBUTES);
-
-        String userDN = new LdapDnBuilder(rackspace.getDN())
-            .addAttribute(ATTR_RACKER_ID, racker.getRackerId())
-            .addAttribute(ATTR_OU, OU_PEOPLE_NAME).build();
+        String userDN = new LdapDnBuilder(RACKERS_BASE_DN)
+            .addAttribute(ATTR_RACKER_ID, racker.getRackerId()).build();
 
         racker.setUniqueId(userDN);
 
@@ -88,7 +78,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public void addUser(User user, String customerUniqueId) {
+    public void addUser(User user) {
         getLogger().info("Adding user - {}", user);
         if (user == null) {
             String errmsg = "Null instance of User was passed";
@@ -96,9 +86,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalArgumentException(errmsg);
         }
 
-        String userDN = new LdapDnBuilder(customerUniqueId)
-            .addAttribute(ATTR_INUM, user.getInum())
-            .addAttribute(ATTR_OU, OU_PEOPLE_NAME).build();
+        String userDN = new LdapDnBuilder(USERS_BASE_DN)
+            .addAttribute(ATTR_INUM, user.getInum()).build();
 
         user.setUniqueId(userDN);
 
@@ -263,7 +252,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.SUB,
+        SearchResultEntry entry = this.getSingleEntry(USERS_BASE_DN, SearchScope.SUB,
             searchFilter, ATTR_MEMBER_OF);
 
         if (entry != null) {
@@ -290,7 +279,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Racker racker = null;
 
-        SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.SUB,
+        SearchResultEntry entry = this.getSingleEntry(RACKERS_BASE_DN, SearchScope.ONE,
             searchFilter);
         if (entry != null) {
             racker = new Racker();
@@ -606,7 +595,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         List<User> userList = new ArrayList<User>();
         SearchResult searchResult = null;
         try {
-            SearchRequest request = new SearchRequest(BASE_DN, SearchScope.SUB,
+            SearchRequest request = new SearchRequest(USERS_BASE_DN, SearchScope.SUB,
                 searchFilter);
             searchResult = getAppConnPool().search(request);
 
@@ -923,7 +912,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         try {
 
-            List<SearchResultEntry> entries = this.getMultipleEntries(BASE_DN,
+            List<SearchResultEntry> entries = this.getMultipleEntries(USERS_BASE_DN,
                 SearchScope.SUB, searchFilter, ATTR_UID, searchAttributes);
 
             contentCount = entries.size();
@@ -976,7 +965,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         User user = null;
         try {
 
-            SearchResultEntry entry = this.getSingleEntry(BASE_DN,
+            SearchResultEntry entry = this.getSingleEntry(USERS_BASE_DN,
                 SearchScope.SUB, searchFilter, searchAttributes);
 
             if (entry != null) {

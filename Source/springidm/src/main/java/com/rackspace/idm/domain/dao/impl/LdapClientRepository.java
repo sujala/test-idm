@@ -41,7 +41,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     @Override
-    public void addClient(Client client, String customerUniqueId) {
+    public void addClient(Client client) {
         getLogger().info("Adding client {}", client);
 
         if (client == null) {
@@ -54,9 +54,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         Attribute[] attributes = getAddAttributesForClient(client);
 
-        String clientDN = new LdapDnBuilder(customerUniqueId)
-            .addAttribute(ATTR_INUM, client.getInum())
-            .addAttribute(ATTR_OU, OU_APPLICATIONS_NAME).build();
+        String clientDN = new LdapDnBuilder(APPLICATIONS_BASE_DN)
+            .addAttribute(ATTR_INUM, client.getInum()).build();
 
         client.setUniqueId(clientDN);
 
@@ -213,7 +212,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         List<Client> clients = new ArrayList<Client>();
 
-        List<SearchResultEntry> entries = this.getMultipleEntries(BASE_DN,
+        List<SearchResultEntry> entries = this.getMultipleEntries(APPLICATIONS_BASE_DN,
             SearchScope.SUB, searchFilter, ATTR_NAME);
 
         for (SearchResultEntry entry : entries) {
@@ -351,7 +350,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP)
             .build();
 
-        SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.SUB,
+        SearchResultEntry entry = this.getSingleEntry(APPLICATIONS_BASE_DN, SearchScope.SUB,
             searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
 
         if (entry != null) {
@@ -459,7 +458,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .addEqualAttribute(ATTR_MEMBER_OF, groupDN).build();
 
-        SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.SUB,
+        SearchResultEntry entry = this.getSingleEntry(USERS_BASE_DN, SearchScope.ONE,
             searchFilter, ATTR_NO_ATTRIBUTES);
 
         return entry != null;
@@ -611,7 +610,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         try {
             conn = getAppConnPool().getConnection();
-            final SearchResult searchResult = conn.search(BASE_DN,
+            final SearchResult searchResult = conn.search(APPLICATIONS_BASE_DN,
                 SearchScope.SUB, filter);
 
             final List<SearchResultEntry> entries = searchResult
@@ -816,7 +815,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         List<Client> clientList = new ArrayList<Client>();
 
-        List<SearchResultEntry> entries = this.getMultipleEntries(BASE_DN,
+        List<SearchResultEntry> entries = this.getMultipleEntries(APPLICATIONS_BASE_DN,
             SearchScope.SUB, searchFilter, ATTR_NAME);
 
         contentCount = entries.size();
@@ -849,7 +848,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
     private Client getSingleClient(Filter searchFilter) {
         Client client = null;
-        SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.SUB,
+        SearchResultEntry entry = this.getSingleEntry(APPLICATIONS_BASE_DN, SearchScope.SUB,
             searchFilter);
 
         if (entry != null) {
@@ -1032,7 +1031,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         ClientRole role = null;
 
         try {
-            role = getSingleClientRole(BASE_DN, searchFilter);
+            role = getSingleClientRole(APPLICATIONS_BASE_DN, searchFilter);
         } catch (LDAPPersistException e) {
             getLogger().error("Error getting role object", e);
             throw new IllegalStateException(e);
@@ -1058,7 +1057,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         List<ClientRole> roles = new ArrayList<ClientRole>();
         try {
-            roles = getMultipleClientRoles(BASE_DN, searchFilter);
+            roles = getMultipleClientRoles(APPLICATIONS_BASE_DN, searchFilter);
         } catch (LDAPPersistException e) {
             getLogger().error("Error getting client roles object", e);
             throw new IllegalStateException(e);

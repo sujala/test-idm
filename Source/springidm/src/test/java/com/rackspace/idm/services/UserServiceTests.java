@@ -7,6 +7,8 @@ import java.util.Locale;
 import junit.framework.Assert;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -15,7 +17,6 @@ import org.junit.Test;
 
 import com.rackspace.api.idm.v1.UserCredentials;
 import com.rackspace.api.idm.v1.UserPassword;
-import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
@@ -102,14 +103,26 @@ public class UserServiceTests {
         mockScopeAccessObjectDao = EasyMock.createMock(ScopeAccessDao.class);
         mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
         
-        Configuration appConfig = new PropertyFileConfiguration().getConfig();
+        Configuration appConfig = null;
+        try {
+            appConfig = new PropertiesConfiguration("config.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
         appConfig.setProperty("ldap.server.trusted", false);
 
         userService = new DefaultUserService(mockUserDao, mockRackerDao,
                 mockCustomerDao,mockScopeAccessObjectDao,
                 mockClientService, appConfig);
         
-        Configuration appConfig2 = new PropertyFileConfiguration().getConfig();
+        Configuration appConfig2 = null;
+        try {
+            appConfig2 = new PropertiesConfiguration("config.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
         
         appConfig2.setProperty("ldap.server.trusted", true);
         trustedUserService = new DefaultUserService(mockUserDao, mockRackerDao,
@@ -168,7 +181,7 @@ public class UserServiceTests {
                 .andReturn("@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA!3333.3333");
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername()))
         .andReturn(true);
-        mockUserDao.addUser((User) EasyMock.anyObject(), EasyMock.eq(customerDN));
+        mockUserDao.addUser((User) EasyMock.anyObject());
         EasyMock.replay(mockUserDao);
         userService.addUser(user);
     }

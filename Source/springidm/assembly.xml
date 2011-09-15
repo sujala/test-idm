@@ -9,6 +9,10 @@
         <fileSets>
                 <fileSet>
                         <directory>${basedir}/src/main/config</directory>
+                        
+                        <!-- This is added because if you don't specify, the contents of the zip file will have the
+                             full path. We don't want that. -->
+                         <outputDirectory></outputDirectory>
                 </fileSet>
         </fileSets>
 </assembly>
