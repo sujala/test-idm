@@ -5,6 +5,8 @@ import java.util.Locale;
 import java.util.Random;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.joda.time.DateTimeZone;
 import org.junit.After;
 import org.junit.Assert;
@@ -13,7 +15,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;
@@ -36,8 +37,8 @@ public class LdapClientRepositoryTest {
     private LdapClientRepository repo;
     private LdapConnectionPools connPools;
     
-    String userDN = "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111,ou=people,o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com";
-    String testCustomerDN = "o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com";
+    String userDN = "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111,ou=users,o=rackspace,dc=rackspace,dc=com";
+    String testCustomerDN = "o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,ou=customers,o=rackspace,dc=rackspace,dc=com";
     
     @BeforeClass
     public static void cleanUpData() {
@@ -51,18 +52,36 @@ public class LdapClientRepositoryTest {
     }
 
     private static LdapClientRepository getRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = new PropertyFileConfiguration().getConfig();
+        Configuration appConfig = null;
+        try {
+            appConfig = new PropertiesConfiguration("config.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
         return new LdapClientRepository(connPools, appConfig);
     }
     
     private static LdapUserRepository getUserRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = new PropertyFileConfiguration().getConfig();
+        Configuration appConfig = null;
+        try {
+            appConfig = new PropertiesConfiguration("config.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
         return new LdapUserRepository(connPools, appConfig);
     }
 
     private static LdapConnectionPools getConnPools() {
-        return new LdapConfiguration(new PropertyFileConfiguration()
-            .getConfig()).connectionPools();
+        Configuration appConfig = null;
+        try {
+            appConfig = new PropertiesConfiguration("config.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
+        return new LdapConfiguration(appConfig).connectionPools();
     }
 
     @Before
@@ -89,7 +108,7 @@ public class LdapClientRepositoryTest {
         }
 
         try {
-            repo.addClient(null, testCustomerDN);
+            repo.addClient(null);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
@@ -528,7 +547,7 @@ public class LdapClientRepositoryTest {
 
     private Client addNewTestClient() {
         Client newClient = createTestClientInstance();
-        repo.addClient(newClient, testCustomerDN);
+        repo.addClient(newClient);
         return newClient;
     }
     
@@ -555,7 +574,7 @@ public class LdapClientRepositoryTest {
     
     private User addNewTestUser() {
         User newUser = createTestUserInstance();
-        userRepo.addUser(newUser, testCustomerDN);
+        userRepo.addUser(newUser);
         return newUser;
     }
 

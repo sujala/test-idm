@@ -28,6 +28,7 @@ public class LdapCustomerRepository extends LdapRepository implements
     }
 
     
+    @Override
     public void addCustomer(Customer customer) {
         getLogger().info("Adding customer {}", customer);
         if (customer == null) {
@@ -38,7 +39,7 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         Attribute[] attributes = getAddAttributes(customer);
 
-        String customerDN = new LdapDnBuilder(BASE_DN).addAttribute(ATTR_O,
+        String customerDN = new LdapDnBuilder(CUSTOMERS_BASE_DN).addAttribute(ATTR_O,
             customer.getInum()).build();
 
         customer.setUniqueId(customerDN);
@@ -46,34 +47,6 @@ public class LdapCustomerRepository extends LdapRepository implements
         Audit audit = Audit.log(customer).add();
         LDAPConnection conn = getAppPoolConnection(audit);
         this.addEntry(conn, customerDN, attributes, audit);
-
-        // Add ou=groups under new customer entry
-        String customerGroupsDN = new LdapDnBuilder(customerDN).addAttribute(
-            ATTR_OU, OU_GROUPS_NAME).build();
-        Attribute[] groupAttributes = {
-            new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
-            new Attribute(ATTR_OU, OU_GROUPS_NAME)};
-
-        this.addEntry(conn, customerGroupsDN, groupAttributes, audit);
-
-        // Add ou=people under new customer entry
-        String customerPeopleDN = new LdapDnBuilder(customerDN).addAttribute(
-            ATTR_OU, OU_PEOPLE_NAME).build();
-        Attribute[] peopleAttributes = {
-            new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
-            new Attribute(ATTR_OU, OU_PEOPLE_NAME)};
-
-        this.addEntry(conn, customerPeopleDN, peopleAttributes, audit);
-
-        // Add ou=applications under new customer entry
-        String customerApplicationsDN = new LdapDnBuilder(customerDN)
-            .addAttribute(ATTR_OU, OU_APPLICATIONS_NAME).build();
-        Attribute[] applicationAttributes = {
-            new Attribute(ATTR_OBJECT_CLASS, ATTR_OBJECT_CLASS_OU_VALUES),
-            new Attribute(ATTR_OU, "applications")};
-
-        this.addEntry(conn, customerApplicationsDN, applicationAttributes,
-            audit);
 
         audit.succeed();
 
@@ -83,6 +56,7 @@ public class LdapCustomerRepository extends LdapRepository implements
     }
 
     
+    @Override
     public void deleteCustomer(String customerId) {
         getLogger().info("Deleting customer {}", customerId);
         if (StringUtils.isBlank(customerId)) {
@@ -105,6 +79,7 @@ public class LdapCustomerRepository extends LdapRepository implements
     }
 
     
+    @Override
     public List<Customer> getAllCustomers() {
         getLogger().debug("Getting all customers");
 
@@ -113,7 +88,7 @@ public class LdapCustomerRepository extends LdapRepository implements
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEORGANIZATION).build();
 
-        List<SearchResultEntry> entries = this.getMultipleEntries(BASE_DN,
+        List<SearchResultEntry> entries = this.getMultipleEntries(CUSTOMERS_BASE_DN,
             SearchScope.ONE, searchFilter, ATTR_RACKSPACE_CUSTOMER_NUMBER);
 
         List<Customer> customers = new ArrayList<Customer>();
@@ -128,6 +103,7 @@ public class LdapCustomerRepository extends LdapRepository implements
     }
 
     
+    @Override
     public Customer getCustomerByCustomerId(String customerId) {
         getLogger().debug("Doing search for customerId {}", customerId);
 
@@ -145,7 +121,7 @@ public class LdapCustomerRepository extends LdapRepository implements
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEORGANIZATION).build();
 
-        SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.ONE,
+        SearchResultEntry entry = this.getSingleEntry(CUSTOMERS_BASE_DN, SearchScope.ONE,
             searchFilter);
 
         if (entry != null) {
@@ -158,6 +134,7 @@ public class LdapCustomerRepository extends LdapRepository implements
     }
 
     
+    @Override
     public Customer getCustomerByInum(String customerInum) {
         getLogger().debug("Doing search for customerInum {}", customerInum);
 
@@ -174,7 +151,7 @@ public class LdapCustomerRepository extends LdapRepository implements
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEORGANIZATION).build();
 
-        SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.ONE,
+        SearchResultEntry entry = this.getSingleEntry(CUSTOMERS_BASE_DN, SearchScope.ONE,
             searchFilter, ATTR_RACKSPACE_CUSTOMER_NUMBER);
 
         if (entry != null) {
@@ -187,6 +164,7 @@ public class LdapCustomerRepository extends LdapRepository implements
     }
 
     
+    @Override
     public String getUnusedCustomerInum() {
         getLogger().debug("Getting Unused Customer Inum");
         Customer customer = null;
@@ -200,6 +178,7 @@ public class LdapCustomerRepository extends LdapRepository implements
     }
 
     
+    @Override
     public void updateCustomer(Customer customer) {
         getLogger().info("Updating customer {}", customer);
 

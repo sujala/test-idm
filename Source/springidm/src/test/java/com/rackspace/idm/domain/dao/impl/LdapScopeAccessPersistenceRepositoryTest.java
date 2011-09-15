@@ -8,6 +8,8 @@ import java.util.List;
 import junit.framework.Assert;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -15,7 +17,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
@@ -48,6 +49,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     boolean                        softDeleted  = false;
 
     String                         clientId     = "XXX";
+    String                         clientId2    = "YYY";
     String                         RCN          = "RACKSPACE";
 
     String                         permissionId = "PermissionName";
@@ -56,6 +58,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     String                         refreshToken = "ZZZZZZZ";
 
     Client                         client       = null;
+    Client                         client2      = null;
     Customer                       customer     = null;
 
     @BeforeClass
@@ -81,12 +84,15 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         clientRepo = getClientRepo(connPools);
 
         customer = addNewTestCustomer(customerId, customerName, inum, iname, status, seeAlso, owner, country);
-        client = addNewTestClient(customer);
+        client = addNewTestClient(clientId);
+        client2 = addNewTestClient(clientId2);
     }
 
     @After
     public void tearDown() throws Exception {
         customerRepo.deleteCustomer(customer.getCustomerId());
+        clientRepo.deleteClient(client);
+        clientRepo.deleteClient(client2);
         connPools.close();
     }
 
@@ -429,11 +435,6 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa1 = (DelegatedClientScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa1);
         
-        String suffix = "4";
-        Customer customer2 = addNewTestCustomer(customerId + suffix, customerName + suffix, inum + suffix, iname + suffix, 
-            status, seeAlso, owner, country);
-        Client client2 = addNewTestClient(customer2);
-        
         DelegatedClientScopeAccess sa2 = new DelegatedClientScopeAccess();
         sa2.setClientId(client2.getClientId());
         sa2.setClientRCN(client2.getName());
@@ -446,9 +447,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         
         sa2 = (DelegatedClientScopeAccess) repo.addDirectScopeAccess(client2.getUniqueId(), sa2);
        
-        final List<DelegatedClientScopeAccess> scopeAccessList = repo.getDelegatedClientScopeAccessByUsername("username");
-        
-        customerRepo.deleteCustomer(customer2.getCustomerId());    
+        final List<DelegatedClientScopeAccess> scopeAccessList = repo.getDelegatedClientScopeAccessByUsername("username");  
         
         Assert.assertNotNull(scopeAccessList);
         Assert.assertEquals(2, scopeAccessList.size());
@@ -577,22 +576,47 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     }
 
     private static LdapClientRepository getClientRepo(LdapConnectionPools connPools) {
-        final Configuration appConfig = new PropertyFileConfiguration().getConfig();
+        Configuration appConfig = null;
+        try {
+            appConfig = new PropertiesConfiguration("config.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
         return new LdapClientRepository(connPools, appConfig);
     }
 
     private static ScopeAccessDao getSaRepo(LdapConnectionPools connPools) {
-        final Configuration appConfig = new PropertyFileConfiguration().getConfig();
+        Configuration appConfig = null;
+        try {
+            appConfig = new PropertiesConfiguration("config.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
         return new LdapScopeAccessPeristenceRepository(connPools, appConfig);
     }
 
     private static LdapCustomerRepository getCustomerRepo(LdapConnectionPools connPools) {
-        final Configuration appConfig = new PropertyFileConfiguration().getConfig();
+        Configuration appConfig = null;
+        try {
+            appConfig = new PropertiesConfiguration("config.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
         return new LdapCustomerRepository(connPools, appConfig);
     }
 
     private static LdapConnectionPools getConnPools() {
-        return new LdapConfiguration(new PropertyFileConfiguration().getConfig()).connectionPools();
+        Configuration appConfig = null;
+        try {
+            appConfig = new PropertiesConfiguration("config.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
+        return new LdapConfiguration(appConfig).connectionPools();
     }
 
     private Customer addNewTestCustomer(String customerId, String name, String inum, String iname,
@@ -612,9 +636,11 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         return newCustomer;
     }
 
-    private Client addNewTestClient(Customer customer) {
+    private Client addNewTestClient(String clientId) {
         final Client newClient = createTestClientInstance();
-        clientRepo.addClient(newClient, customer.getUniqueId());
+        newClient.setClientId(clientId);
+        newClient.setInum(clientId);
+        clientRepo.addClient(newClient);
         return newClient;
     }
 

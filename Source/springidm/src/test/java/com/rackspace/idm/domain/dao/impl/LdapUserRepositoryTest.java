@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Locale;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -16,7 +18,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
@@ -37,7 +38,7 @@ public class LdapUserRepositoryTest {
     
     String rackerId = "racker";
 
-    private final String testCustomerDN = "o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,o=rackspace,dc=rackspace,dc=com";
+    private final String testCustomerDN = "o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,ou=customers,o=rackspace,dc=rackspace,dc=com";
 
     @BeforeClass
     public static void cleanUpData() {
@@ -59,13 +60,25 @@ public class LdapUserRepositoryTest {
     }
 
     private static LdapUserRepository getRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = new PropertyFileConfiguration().getConfig();
+        Configuration appConfig = null;
+        try {
+            appConfig = new PropertiesConfiguration("config.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
         return new LdapUserRepository(connPools, appConfig);
     }
 
     private static LdapConnectionPools getConnPools() {
-        LdapConfiguration config = new LdapConfiguration(
-            new PropertyFileConfiguration().getConfig());
+        Configuration appConfig = null;
+        try {
+            appConfig = new PropertiesConfiguration("config.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
+        LdapConfiguration config = new LdapConfiguration(appConfig);
         return config.connectionPools();
     }
 
@@ -141,7 +154,7 @@ public class LdapUserRepositoryTest {
         }
 
         try {
-            repo.addUser(null, "");
+            repo.addUser(null);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
@@ -502,7 +515,7 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldAddNewUserWithPeriod() {
         User newUser = createTestUserInstanceWithPeriod();
-        repo.addUser(newUser, testCustomerDN);
+        repo.addUser(newUser);
         User checkuser = repo.getUserByUsername(newUser.getUsername());
         Assert.assertNotNull(checkuser);
         repo.deleteUser(newUser.getUsername());
@@ -511,7 +524,7 @@ public class LdapUserRepositoryTest {
     @Test
     public void shouldAddNewUserWithComma() {
         User newUser = createTestUserInstanceWithComma();
-        repo.addUser(newUser, testCustomerDN);
+        repo.addUser(newUser);
         User checkuser = repo.getUserByUsername(newUser.getUsername());
         Assert.assertNotNull(checkuser);
         repo.deleteUser(newUser.getUsername());
@@ -585,7 +598,7 @@ public class LdapUserRepositoryTest {
 
     private User addNewTestUser() {
         User newUser = createTestUserInstance();
-        repo.addUser(newUser, testCustomerDN);
+        repo.addUser(newUser);
         return newUser;
     }
 

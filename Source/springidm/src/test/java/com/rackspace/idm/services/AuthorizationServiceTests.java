@@ -9,12 +9,13 @@ import javax.ws.rs.core.UriInfo;
 import junit.framework.Assert;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.BaseClient;
@@ -96,7 +97,13 @@ public class AuthorizationServiceTests {
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
         mockWadlTrie = EasyMock.createMock(WadlTrie.class);
         mockUriInfo = EasyMock.createMock(UriInfo.class);
-        Configuration appConfig = new PropertyFileConfiguration().getConfig();
+        Configuration appConfig = null;
+        try {
+            appConfig = new PropertiesConfiguration("config.properties");
+
+        } catch (ConfigurationException e) {
+            System.out.println(e);
+        }
         service = new DefaultAuthorizationService(mockScopeAccessDao,
             mockClientDao, mockWadlTrie, appConfig);
         setUpObjects();

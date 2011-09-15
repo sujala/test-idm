@@ -10,7 +10,7 @@ import com.rackspace.idm.domain.entity.Clients;
 
 public interface ClientDao {
 
-    void addClient(Client client, String customerUniqueId);
+    void addClient(Client client);
 
     void addClientGroup(ClientGroup clientGroup, String clientUniqueId);
 

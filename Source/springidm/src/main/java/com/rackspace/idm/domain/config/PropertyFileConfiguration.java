@@ -20,25 +20,25 @@ import org.springframework.context.annotation.Scope;
 public class PropertyFileConfiguration {
     private static final String CONFIG_FILE_NAME = "idm.properties";
     
-    private Logger logger = LoggerFactory
+    private final Logger logger = LoggerFactory
         .getLogger(PropertyFileConfiguration.class);
 
     /**
      * @return Configuration instance that is loaded from system defined location it exists.
      *         If the file isn't there, loads from the classpath. 
      */
-    @Bean(name="properties")
+    @Bean
     @Scope(value = "singleton")
     public Configuration getConfig() {
     	final String externalConfigFile = System.getProperty("idm.properties.location") + "/" + CONFIG_FILE_NAME;
         File configFile = new File(externalConfigFile);
         if (configFile.exists()) {
-            return getConfigFromClasspath(externalConfigFile);
+            return readConfigFile(externalConfigFile);
         }
 
         logger.debug(String.format("No config file found at %s. Loding from the classpath", externalConfigFile));
         
-        return getConfigFromClasspath(CONFIG_FILE_NAME);
+        return readConfigFile(CONFIG_FILE_NAME);
     }
 
 
@@ -47,7 +47,17 @@ public class PropertyFileConfiguration {
         return ResourceBundle.getBundle("fault_messages", Locale.ENGLISH);
     }
 
-    private Configuration getConfigFromClasspath(String filePath) {
+    /**
+     * Configuration instance from the classpath. Use this for unit tests, so
+     * that the config file from /etc/idm won't be read instead.
+     * 
+     * @return
+     */
+    public Configuration getConfigFromClasspath() {
+        return readConfigFile(CONFIG_FILE_NAME);
+    }
+
+    private Configuration readConfigFile(String filePath) {
         try {
             logger.debug(String.format("Attempting to open file %s", filePath));
             return new PropertiesConfiguration(filePath);

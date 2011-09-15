@@ -125,7 +125,7 @@ public class DefaultUserService implements UserService {
                 "The password appears to be an existing instance. It must be a new instance!");
         }
 
-        userDao.addUser(user, customerDN);
+        userDao.addUser(user);
         logger.info("Added User: {}", user);
         
         logger.info("Adding User Scope Access for Idm to user {}", user);
