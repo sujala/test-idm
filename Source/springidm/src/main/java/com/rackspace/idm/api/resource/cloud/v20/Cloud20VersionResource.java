@@ -62,10 +62,106 @@ public class Cloud20VersionResource {
     @POST
     @Path("tokens")
     public Response authenticate(@Context HttpHeaders httpHeaders, String body) throws IOException {
-        return getCloud11Service().authenticate(httpHeaders,body).build();
+        return getCloud20Service().authenticate(httpHeaders,body).build();
     }
 
-    private Cloud20Service getCloud11Service() {
+    @GET
+    @Path("tokens/{tokenId}")
+    public Response validateToken(@Context HttpHeaders httpHeaders, @PathParam("tokenId") String tokenId,
+        @QueryParam("belongsTo") String belongsTo) throws IOException {
+        return Response.ok().build(); 
+    }
+
+    @GET
+    @Path("tokens/{tokenId}/endpoints")
+    public Response listEndpointsForToken(@Context HttpHeaders httpHeaders, @PathParam("tokenId") String tokenId) throws IOException {
+        return Response.ok().build(); 
+    }
+
+    @GET
+    @Path("extensions")
+    public Response listExtensions(@Context HttpHeaders httpHeaders) throws IOException {
+        return Response.ok().build(); 
+    }
+
+    @GET
+    @Path("extensions/{alias}")
+    public Response getExtension(@Context HttpHeaders httpHeaders, @PathParam("alias") String alias) throws IOException {
+        return Response.ok().build(); 
+    }
+
+    @GET
+    @Path("users")
+    public Response getUserByName(@Context HttpHeaders httpHeaders, @QueryParam("name") String name) throws IOException {
+        return Response.ok().build(); 
+    }
+
+    @GET
+    @Path("users/{userId}")
+    public Response getUserById(@Context HttpHeaders httpHeaders, @PathParam("userId") String userId) throws IOException {
+        return Response.ok().build(); 
+    }
+
+    @GET
+    @Path("users/{userId}/roles")
+    public Response listUserGlobalRoles(@Context HttpHeaders httpHeaders, @PathParam("userId") String userId) throws IOException {
+        return Response.ok().build(); 
+    }
+
+    @GET
+    @Path("tenants")
+    public Response listTenants_getTenantByName(
+        @Context HttpHeaders httpHeaders, @QueryParam("name") String name, @QueryParam("marker") String marker,
+        @QueryParam("limit") int limit) throws IOException {
+        //Note: getTenantByName only available to admin
+        return Response.ok().build(); 
+    }
+
+    @GET
+    @Path("tenants/{tenantId}")
+    public Response getTenantById(@Context HttpHeaders httpHeaders, @PathParam("tenantId") String tenantsId) throws IOException {
+        return Response.ok().build(); 
+    }
+
+    @POST
+    @Path("users/credentials")
+    public Response addUserCredential(@Context HttpHeaders httpHeaders, String body) throws IOException {
+        return Response.ok().build(); 
+    }
+
+    @GET
+    @Path("users/credentials")
+    public Response listCredentials(@Context HttpHeaders httpHeaders, @QueryParam("marker") String marker,
+        @QueryParam("limit") int limit) throws IOException {
+        return Response.ok().build(); 
+    }
+
+    @POST
+    @Path("users/credentials/RAX-KSKEY:apikeyCredentials")
+    public Response updateUserCredential(@Context HttpHeaders httpHeaders, String body) throws IOException {
+        return Response.ok().build(); 
+    }
+
+    @GET
+    @Path("users/credentials/RAX-KSKEY:apikeyCredentials")
+    public Response getUserCredential(@Context HttpHeaders httpHeaders) throws IOException {
+        return Response.ok().build(); 
+    }
+
+    @DELETE
+    @Path("users/credentials/RAX-KSKEY:apikeyCredentials")
+    public Response deleteUserCredential(@Context HttpHeaders httpHeaders) throws IOException {
+        return Response.ok().build(); 
+    }
+
+    @GET
+    @Path("tenants/{tenantsId}/users/{userId}")
+    public Response listRolesForUserOnTenant(@Context HttpHeaders httpHeaders, @PathParam("tenantsId") String tenantsId,
+        @PathParam("userId") String userId) throws IOException {
+        return Response.ok().build(); 
+    }
+
+    private Cloud20Service getCloud20Service() {
         if (config.getBoolean("useCloudAuth")) {
             return delegateCloud20Service;
         } else {
