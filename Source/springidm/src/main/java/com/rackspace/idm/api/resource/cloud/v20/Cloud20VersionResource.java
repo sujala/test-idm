@@ -3,11 +3,13 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import org.apache.commons.configuration.Configuration;
+import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import javax.xml.bind.JAXBElement;
 import java.io.IOException;
 
 /**
@@ -61,8 +63,8 @@ public class Cloud20VersionResource {
 
     @POST
     @Path("tokens")
-    public Response authenticate(@Context HttpHeaders httpHeaders, String body) throws IOException {
-        return getCloud20Service().authenticate(httpHeaders,body).build();
+    public Response authenticate(@Context HttpHeaders httpHeaders, JAXBElement<AuthenticationRequest> authenticationRequest) throws IOException {
+        return getCloud20Service().authenticate(httpHeaders,authenticationRequest).build();
     }
 
     @GET
