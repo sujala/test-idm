@@ -1,9 +1,5 @@
 package com.rackspace.idm.domain.config;
 
-import java.io.File;
-import java.util.Locale;
-import java.util.ResourceBundle;
-
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -11,6 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
+
+import java.io.File;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 /**
  * @author john.eo Tries to load the config file from system defined location, and if that
