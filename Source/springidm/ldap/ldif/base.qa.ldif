@@ -5,7 +5,7 @@ objectClass: top
 objectClass: organization
 o: rackspace
 
-dn: ou=internal,dc=rackspace,dc=com
+dn: ou=internal,o=rackspace,dc=rackspace,dc=com
 objectClass:top
 objectClass:organizationalUnit
 ou: internal
@@ -255,7 +255,7 @@ ou: tenants
 
 ######################################## Admin User #######################################
 
-dn: cn=admin,ou=internal,dc=rackspace,dc=com
+dn: cn=admin,ou=internal,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: inetOrgPerson
 cn: admin
@@ -580,6 +580,39 @@ uid: mkovacs
 userPassword:: e1NIQX1heWc3c0dEQ2FVTXRDS3d6dEhvemZBcEFBMTA9
 rsGroupDN: cn=Idm Admin,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace,dc=rackspace,dc=com
 
+dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!B725,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!A725
+clearPassword:: u4ulicmrLfboYsh1KryLww==
+endpoint: +3
+endpoint: +11
+endpoint: +15
+endpoint: +17
+locked: FALSE
+o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20110428013526.504Z
+preferredLanguage: en-us
+RCN: RACKSPACE
+RPN: RPN-111-111-111
+rsApiKey:: Is2/L0NNUM3svnnjOcEqVg==
+rsDisplayName:: UFJsww2bOetqwKfdrYFd+Q==
+rsGivenName:: xGvFK9QyVhwJYN4MD3feYQ==
+rsMail:: si9sZ2IBfvz2WPZuaLVP+EHf5WYvJWyArc6DOI819lE=
+rsMossoId: 30000001
+rsNastId: xxx
+rsRegion: USA
+rsSn:: PZi9PwWFO7mMKNmAchN9ag==
+secretAnswer:: CRowCw8F9Q4gQM6FIP2uQQ==
+secretQuestion:: OzUFmUirlxImx3pl0nHftqtvOZ0b/k1woae07wz4fU7wWFPq4eQU33302CCFluyN
+softDeleted: FALSE
+status: ACTIVE
+timeZone: America/Chicago
+uid: authuser1
+userPassword:: e1NIQX1heWc3c0dEQ2FVTXRDS3d6dEhvemZBcEFBMTA9
+rsGroupDN: cn=Idm Admin,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace,dc=rackspace,dc=com
+
 dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8553,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
@@ -697,6 +730,11 @@ objectClass: top
 objectClass: saContainer
 cn: DIRECT
 
+dn: cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!B725,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: saContainer
+cn: DIRECT
+
 dn: cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8553,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: saContainer
@@ -753,6 +791,24 @@ objectClass: userScopeAccess
 clientRCN: RCN-QATestingCustomer
 clientId: QATESTCLIENT
 uid: mkovacs
+userRCN: RACKSPACE
+
+dn: clientId=QATESTCLIENT,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!B725,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RCN-QATestingCustomer
+clientId: QATESTCLIENT
+uid: authuser1
+userRCN: RACKSPACE
+
+dn: clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!B725,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+uid: authuser1
 userRCN: RACKSPACE
 
 dn: clientId=QATESTCLIENT,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8553,ou=users,o=rackspace,dc=rackspace,dc=com
