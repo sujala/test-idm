@@ -222,7 +222,7 @@
         </example>
       </section>
       <section>
-        <title>Get Version Wadl </title>
+        <title>Get Version </title>
         <informaltable rules="all">
           &LONG_URI_REFHEAD;
           <tbody>

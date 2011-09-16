@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
-<?xml-stylesheet type="text/xsl" href="/docs/xslt/version-page.xsl"?>
+<?xml-stylesheet type="text/xsl" href="/docs/xslt/contract-page.xsl"?>
 
-<version xmlns="http://service-registry.api.rackspace.com/versioning"
+<contract xmlns="http://service-registry.api.rackspace.com/service-profile"
 	xmlns:atom="http://www.w3.org/2005/Atom" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="https://service-registry.api.rackspace.com/service-profile ./../resources/xsd/versioning-v1.0-xs1.0.xsd"
-	id="v1.0" status="CURRENT">
+	xsi:schemaLocation="https://service-registry.api.rackspace.com/service-profile ./../resources/xsd/service-profile-v2.0.xsd"
+	version="v1.0" status="CURRENT">
+	
 	<atom:link rel="self" href="${baseUrl}/cloud/v1.0" />
-	<atom:link rel="documentation"
-		href="http://docs.rackspace.com/servers/api/v1.0/cs-devguide/content/Authentication-d1e506.html#d6e202" />
-</version>
+	<atom:link rel="documentation" href="http://docs.rackspace.com/servers/api/v1.0/cs-devguide/content/Authentication-d1e506.html#d6e202" />
+</contract>
 
