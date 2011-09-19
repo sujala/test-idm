@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.IOException;
@@ -55,6 +55,144 @@ public class DelegateCloud20Service implements Cloud20Service {
         String body = marshallObjectToString(OBJ_FACTORY.createAuth(authenticationRequest));
         return cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
     }
+
+
+	@Override
+	public ResponseBuilder validateToken(HttpHeaders httpHeaders,
+			String tokenId, String belongsTo) throws IOException {
+        String request = getCloudAuthV20Url() + "tokens/" + tokenId;
+        if (belongsTo != null) {
+            request += "?belongsTo=" + belongsTo;
+        }
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders,
+			String tokenId) throws IOException {
+        String request = getCloudAuthV20Url() + "tokens/" + tokenId + "/endpoints";
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder listExtensions(HttpHeaders httpHeaders)
+			throws IOException {
+        String request = getCloudAuthV20Url() + "extensions";
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias)
+			throws IOException {
+        String request = getCloudAuthV20Url() + "extensions/" + alias;
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String name)
+			throws IOException {
+        String request = getCloudAuthV20Url() + "users";
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder getUserById(HttpHeaders httpHeaders, String userId)
+			throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId;
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders,
+			String userId) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId + "/roles";
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder listTenants(HttpHeaders httpHeaders, String marker,
+			Integer limit) throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String name)
+			throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder getTenantById(HttpHeaders httpHeaders,
+			String tenantsId) throws IOException {
+        String request = getCloudAuthV20Url() + "tenants/" + tenantsId;
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder addUserCredential(HttpHeaders httpHeaders,
+			String body) throws IOException {
+        String request = getCloudAuthV20Url() + "users/credentials";
+        return cloudClient.post(request, httpHeaders, body);
+	}
+
+
+	@Override
+	public ResponseBuilder listCredentials(HttpHeaders httpHeaders,
+			String marker, Integer limit) throws IOException {
+        String request = getCloudAuthV20Url() + "users/credentials";
+        if(marker != null && limit != null) {
+            request += "?limit=" + limit + "&marker=" + marker;
+        } else if (marker != null ) {
+            request += "?marker=" + marker;
+        } else if (limit != null) {
+            request += "?limit=" + limit;
+        }
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder updateUserCredential(HttpHeaders httpHeaders,
+			String body) throws IOException {
+        String request = getCloudAuthV20Url() + "users/credentials/RAX-KSKEY:apikeyCredentials";
+        return cloudClient.post(request, httpHeaders, body);
+	}
+
+
+	@Override
+	public ResponseBuilder getUserCredential(HttpHeaders httpHeaders)
+			throws IOException {
+        String request = getCloudAuthV20Url() + "users/credentials/RAX-KSKEY:apikeyCredentials";
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders)
+			throws IOException {
+        String request = getCloudAuthV20Url() + "users/credentials/RAX-KSKEY:apikeyCredentials";
+        return cloudClient.delete(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders,
+			String tenantId, String userId) throws IOException {
+        String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users/" + userId;
+        return cloudClient.get(request, httpHeaders);
+	}
 
     public void setCloudClient(CloudClient cloudClient) {
         this.cloudClient = cloudClient;
