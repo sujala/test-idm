@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -55,6 +56,134 @@ public class DelegateCloud20Service implements Cloud20Service {
         String body = marshallObjectToString(OBJ_FACTORY.createAuth(authenticationRequest));
         return cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
     }
+
+
+	@Override
+	public ResponseBuilder validateToken(HttpHeaders httpHeaders,
+			String tokenId, String belongsTo) throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders,
+			String tokenId) throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder listExtensions(HttpHeaders httpHeaders)
+			throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias)
+			throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String name)
+			throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder getUserById(HttpHeaders httpHeaders, String userId)
+			throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders,
+			String userId) throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder listTenants(HttpHeaders httpHeaders, String marker,
+			int limit) throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String name)
+			throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder getTenantById(HttpHeaders httpHeaders,
+			String tenantsId) throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder addUserCredential(HttpHeaders httpHeaders,
+			String body) throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder listCredentials(HttpHeaders httpHeaders,
+			String marker, int limit) throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder updateUserCredential(HttpHeaders httpHeaders,
+			String body) throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder getUserCredential(HttpHeaders httpHeaders)
+			throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders)
+			throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders,
+			String tenantsId, String userId) throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
     public void setCloudClient(CloudClient cloudClient) {
         this.cloudClient = cloudClient;
