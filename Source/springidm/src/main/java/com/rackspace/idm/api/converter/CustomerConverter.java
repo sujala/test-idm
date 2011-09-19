@@ -14,9 +14,8 @@ public class CustomerConverter {
 
         Customer customer = new Customer();
 
-        customer.setIname(jaxbCustomer.getIname());
-        customer.setCustomerId(jaxbCustomer.getCustomerId());
-        customer.setInum(jaxbCustomer.getInum());
+        customer.setId(jaxbCustomer.getId());
+        customer.setRCN(jaxbCustomer.getRCN());
         if (jaxbCustomer.isLocked() != null) {
             customer.setLocked(jaxbCustomer.isLocked());
         }
@@ -31,9 +30,8 @@ public class CustomerConverter {
     public com.rackspace.api.idm.v1.Customer toJaxbCustomer(Customer customer) {
 
         com.rackspace.api.idm.v1.Customer jaxbCustomer = of.createCustomer();
-        jaxbCustomer.setCustomerId(customer.getCustomerId());
-        jaxbCustomer.setIname(customer.getIname());
-        jaxbCustomer.setInum(customer.getInum());
+        jaxbCustomer.setId(customer.getId());
+        jaxbCustomer.setRCN(customer.getRCN());
         jaxbCustomer.setLocked(customer.isLocked());
         jaxbCustomer.setSoftDeleted(customer.getSoftDeleted());
 

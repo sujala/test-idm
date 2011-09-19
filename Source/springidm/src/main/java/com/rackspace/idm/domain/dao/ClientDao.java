@@ -30,7 +30,7 @@ public interface ClientDao {
 
     Client getClientByCustomerIdAndClientId(String customerId, String clientId);
 
-    Client getClientByInum(String inum);
+    Client getClientById(String inum);
     
     Client getClientByScope(String scope);
 
@@ -42,8 +42,6 @@ public interface ClientDao {
     List<ClientGroup> getClientGroupsByClientId(String clientId);
 
     Clients getClientsByCustomerId(String customerId, int offset, int limit);
-
-    String getUnusedClientInum(String customerInum);
     
     boolean isUserInClientGroup(String username, String groupDN);
     
@@ -66,4 +64,6 @@ public interface ClientDao {
     List<ClientRole> getClientRolesByClientId(String clientId);
     
     void updateClientRole(ClientRole role);
+    
+    String getNextClientId();
 }

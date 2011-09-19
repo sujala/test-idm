@@ -176,7 +176,7 @@ public class UserPermissionsResource {
         com.rackspace.api.idm.v1.Permission permission = holder.getEntity();
         GrantedPermission filter = new GrantedPermission();
         filter.setClientId(serviceId);
-        filter.setCustomerId(client.getCustomerId());
+        filter.setCustomerId(client.getRCN());
         filter.setPermissionId(permission.getPermissionId());
 
         this.scopeAccessService.grantPermissionToUser(user, filter);

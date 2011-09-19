@@ -2,17 +2,35 @@ package com.rackspace.idm.domain.entity;
 
 import java.util.Locale;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
 import org.apache.commons.lang.StringUtils;
+import org.hibernate.validator.constraints.Length;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
 
-public class User extends BaseUser implements Auditable {
+public class User implements Auditable {
     private static final long serialVersionUID = 1347677880811855274L;
+    
+    private String uniqueId = null;
+    
+    private String id = null;
+
+    @NotNull
+    @Length(min = 1, max = 32)
+    @Pattern(regexp = RegexPatterns.USERNAME, message = MessageTexts.USERNAME)
+    private String username = null;
+
+    @NotNull
+    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
+    private String customerId = null;
 
     private String email = null;
-
 
     private UserCredential credential = new UserCredential();
     private String personId = null;
@@ -21,10 +39,7 @@ public class User extends BaseUser implements Auditable {
     private UserLocale preference = new UserLocale();
     private String country = null;
     private String displayName = null;
-    private String inum = null;
-    private String iname = null;
     private Boolean locked = null;
-    private String orgInum = null;
     private String apiKey = null;
     private UserStatus status = null;
 
@@ -51,13 +66,14 @@ public class User extends BaseUser implements Auditable {
 
     @Deprecated
     public User(String username) {
-        super(username);
+        this.username = username;
     }
 
     @Deprecated
     public User(String username, String customerId, String email,
         UserHumanName name, UserLocale pref, UserCredential cred) {
-        super(username, customerId);
+        this.username = username;
+        this.customerId = customerId;
         this.email = email;
         this.name = name;
         this.preference = pref;
@@ -70,32 +86,51 @@ public class User extends BaseUser implements Auditable {
         String country, String displayName, String inum, String iname,
         String orgInum, String apiKey, UserStatus status,
         String personId) {
-        super.setUsername(username);
-        super.setCustomerId(customerId);
+        this.username = username;
+        this.customerId = customerId;
         this.email = email;
         this.name = name;
         this.preference = preference;
         this.credential = credential;
         this.country = country;
         this.displayName = displayName;
-        this.inum = inum;
-        this.iname = iname;
-        this.orgInum = orgInum;
         this.apiKey = apiKey;
         this.status = status;
         this.personId = personId;
     }
-
-    @Override
+    
     public String getUniqueId() {
-        return super.getUniqueId();
+        return uniqueId;
     }
 
-    @Override
     public void setUniqueId(String uniqueId) {
         if (uniqueId != null) {
-            super.setUniqueId(uniqueId);
+            this.uniqueId = uniqueId;
         }
+    }
+    
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
     }
     
     public String getSecureId() {
@@ -147,16 +182,6 @@ public class User extends BaseUser implements Auditable {
         }
     }
 
-    public String getIname() {
-        return iname;
-    }
-
-    public void setIname(String iname) {
-        if (iname != null) {
-            this.iname = iname;
-        }
-    }
-
     public Boolean isLocked() {
         return locked;
     }
@@ -171,16 +196,6 @@ public class User extends BaseUser implements Auditable {
     
     public void setMaxLoginFailuresExceded(Boolean maxLoginFailuresExceded) {
         this.maxLoginFailuresExceded = maxLoginFailuresExceded;
-    }
-
-    public String getOrgInum() {
-        return orgInum;
-    }
-
-    public void setOrgInum(String orgInum) {
-        if (orgInum != null) {
-            this.orgInum = orgInum;
-        }
     }
 
     public String getApiKey() {
@@ -201,16 +216,6 @@ public class User extends BaseUser implements Auditable {
         if (status != null) {
             this.status = status;
         }
-    }
-
-    @Override
-    public String getUsername() {
-        return super.getUsername();
-    }
-
-    @Override
-    public void setUsername(String username) {
-        super.setUsername(username);
     }
 
     public void setPasswordObj(Password password) {
@@ -318,7 +323,6 @@ public class User extends BaseUser implements Auditable {
         preference.setTimeZone(DateTimeZone.forID(timeZone));
     }
 
-    // TODO jeo check all places where these are used!
     public String getSecretQuestion() {
         return credential.getSecretQuestion();
     }
@@ -336,16 +340,6 @@ public class User extends BaseUser implements Auditable {
     public void setSecretAnswer(String secretAnswer) {
         if (secretAnswer != null) {
             this.credential.setSecretAnswer(secretAnswer);
-        }
-    }
-
-    public String getInum() {
-        return inum;
-    }
-
-    public void setInum(String inum) {
-        if (inum != null) {
-            this.inum = inum;
         }
     }
 
@@ -408,11 +402,6 @@ public class User extends BaseUser implements Auditable {
         return disabled;
     }
 
-    @Override
-    public void setCustomerId(String customerId) {
-        super.setCustomerId(customerId);
-    }
-
     public void setDefaults() {
         if (this.preference.getLocale() == null) {
             this.setPreferredLang(GlobalConstants.USER_PREFERRED_LANG_DEFAULT);
@@ -425,13 +414,6 @@ public class User extends BaseUser implements Auditable {
         this.setLocked(false);
         this.setSoftDeleted(false);
         this.setStatus(UserStatus.ACTIVE);
-    }
-
-    public BaseUser getBaseUser() {
-        BaseUser baseUser = new BaseUser();
-        baseUser.setCustomerId(getCustomerId());
-        baseUser.setUsername(getUsername());
-        return baseUser;
     }
 
     public void copyChanges(User modifiedUser) {
@@ -489,8 +471,6 @@ public class User extends BaseUser implements Auditable {
         result = prime * result
             + ((displayName == null) ? 0 : displayName.hashCode());
         result = prime * result + ((email == null) ? 0 : email.hashCode());
-        result = prime * result + ((iname == null) ? 0 : iname.hashCode());
-        result = prime * result + ((inum == null) ? 0 : inum.hashCode());
         result = prime * result + ((locked == null) ? 0 : locked.hashCode());
         result = prime
             * result
@@ -499,7 +479,6 @@ public class User extends BaseUser implements Auditable {
         result = prime * result + ((mossoId == null) ? 0 : mossoId.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((nastId == null) ? 0 : nastId.hashCode());
-        result = prime * result + ((orgInum == null) ? 0 : orgInum.hashCode());
         result = prime * result
             + ((personId == null) ? 0 : personId.hashCode());
         result = prime * result
@@ -570,20 +549,6 @@ public class User extends BaseUser implements Auditable {
         } else if (!email.equals(other.email)) {
             return false;
         }
-        if (iname == null) {
-            if (other.iname != null) {
-                return false;
-            }
-        } else if (!iname.equals(other.iname)) {
-            return false;
-        }
-        if (inum == null) {
-            if (other.inum != null) {
-                return false;
-            }
-        } else if (!inum.equals(other.inum)) {
-            return false;
-        }
         if (locked == null) {
             if (other.locked != null) {
                 return false;
@@ -618,13 +583,6 @@ public class User extends BaseUser implements Auditable {
                 return false;
             }
         } else if (!nastId.equals(other.nastId)) {
-            return false;
-        }
-        if (orgInum == null) {
-            if (other.orgInum != null) {
-                return false;
-            }
-        } else if (!orgInum.equals(other.orgInum)) {
             return false;
         }
         if (personId == null) {
@@ -677,16 +635,7 @@ public class User extends BaseUser implements Auditable {
 
     @Override
     public String toString() {
-        return "User [email=" + email + ", credential=" + credential
-            + ", personId=" + personId + ", name=" + name + ", preference="
-            + preference + ", country=" + country + ", displayName="
-            + displayName + ", inum=" + inum + ", iname=" + iname + ", locked="
-            + locked + ", orgInum=" + orgInum + ", apiKey=" + apiKey
-            + ", status=" + status + ", softDeleted=" + softDeleted
-            + ", region=" + region + ", nastId=" + nastId + ", mossoId="
-            + mossoId + ", created=" + created + ", updated=" + updated
-            + ", softDeletedTimestamp=" + softDeletedTimestamp
-            + ", maxLoginFailuresExceded=" + maxLoginFailuresExceded + "]";
+        return getAuditContext();
     }
 
     public static class Builder {
@@ -704,8 +653,6 @@ public class User extends BaseUser implements Auditable {
         public Builder setUniqueIds(String userName, String inum, String iname,
             String uniqueId) {
             user.setUsername(userName);
-            user.inum = inum;
-            user.iname = iname;
             user.setUniqueId(uniqueId);
 
             return this;
@@ -739,12 +686,6 @@ public class User extends BaseUser implements Auditable {
             user.setPreferredLang(preferredLanguage);
             user.setTimeZone(timeZone);
             user.setCountry(country);
-
-            return this;
-        }
-
-        public Builder setOrgInum(String orgInum) {
-            user.orgInum = orgInum;
 
             return this;
         }

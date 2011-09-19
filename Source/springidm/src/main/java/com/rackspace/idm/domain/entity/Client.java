@@ -6,10 +6,17 @@ import javax.validation.constraints.Pattern;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 
-public class Client extends BaseClient implements Auditable {
+public class Client implements Auditable {
     private static final long serialVersionUID = -3160754818606772239L;
 
     private ClientSecret clientSecret;
+    
+    private String uniqueId = null;
+    
+    private String clientId = null;
+    @NotNull
+    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
+    private String rcn = null;
 
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
@@ -17,9 +24,9 @@ public class Client extends BaseClient implements Auditable {
 
     @NotNull
     private ClientStatus status = null;
+    
+    private String id = null;
 
-    private String inum = null;
-    private String iname = null;
     private String orgInum = null;
     private Boolean locked = null;
     private Boolean softDeleted = null;
@@ -33,25 +40,46 @@ public class Client extends BaseClient implements Auditable {
     }
 
     public Client(String clientId, ClientSecret clientSecret, String name,
-        String inum, String iname, String customerId, ClientStatus status) {
-        super(clientId, customerId);
+        String rcn, ClientStatus status) {
+        this.clientId = clientId;
+        this.rcn = rcn;
         this.clientSecret = clientSecret;
         this.name = name;
-        this.inum = inum;
-        this.iname = iname;
         this.status = status;
     }
 
-    @Override
     public void setUniqueId(String uniqueId) {
         if (uniqueId != null) {
-            super.setUniqueId(uniqueId);
+            this.uniqueId = uniqueId;
         }
     }
 
-    @Override
     public String getUniqueId() {
-        return super.getUniqueId();
+        return uniqueId;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+    
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+    
+    public String getRCN() {
+        return rcn;
+    }
+    
+    public void setRCN(String rcn) {
+        this.rcn = rcn;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public void setClientSecretObj(ClientSecret clientSecret) {
@@ -94,16 +122,6 @@ public class Client extends BaseClient implements Auditable {
         return name;
     }
 
-    public String getIname() {
-        return iname;
-    }
-
-    public void setIname(String iname) {
-        if (iname != null) {
-            this.iname = iname;
-        }
-    }
-
     public ClientStatus getStatus() {
         return status;
     }
@@ -128,16 +146,6 @@ public class Client extends BaseClient implements Auditable {
 
     public void setLocked(Boolean isLocked) {
         this.locked = isLocked;
-    }
-
-    public void setInum(String inum) {
-        if (inum != null) {
-            this.inum = inum;
-        }
-    }
-
-    public String getInum() {
-        return inum;
     }
     
     public String getScope() {
@@ -171,21 +179,6 @@ public class Client extends BaseClient implements Auditable {
     public void setDescription(String description) {
         this.description = description;
     }
-
-    // The following overrides allow for a more permissive mutators in the child
-    // (Client)
-    // while maintaining a more strict, immutable-ish characteristics in the
-    // parent (BaseClient).
-
-    @Override
-    public void setClientId(String clientId) {
-        super.setClientId(clientId);
-    }
-
-    @Override
-    public void setCustomerId(String customerId) {
-        super.setCustomerId(customerId);
-    }
     
     public void setDefaults() {
         this.setLocked(false);
@@ -199,14 +192,6 @@ public class Client extends BaseClient implements Auditable {
         disabled = this.isSoftDeleted() == null ? disabled : disabled || this.isSoftDeleted().booleanValue();
         disabled = this.getStatus() == null ? disabled : disabled || this.getStatus().equals(ClientStatus.INACTIVE);
         return disabled;
-    }
-
-    public BaseClient getBaseClient() {
-        return getBaseClientWithoutClientPerms();
-    }
-
-    public BaseClient getBaseClientWithoutClientPerms() {
-        return new BaseClient(getClientId(),getCustomerId());
     }
     
     public void copyChanges(Client modifiedClient) {
@@ -238,8 +223,7 @@ public class Client extends BaseClient implements Auditable {
             + ((clientSecret == null) ? 0 : clientSecret.hashCode());
         result = prime * result
             + ((description == null) ? 0 : description.hashCode());
-        result = prime * result + ((iname == null) ? 0 : iname.hashCode());
-        result = prime * result + ((inum == null) ? 0 : inum.hashCode());
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
         result = prime * result + ((locked == null) ? 0 : locked.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((orgInum == null) ? 0 : orgInum.hashCode());
@@ -284,18 +268,11 @@ public class Client extends BaseClient implements Auditable {
         } else if (!description.equals(other.description)) {
             return false;
         }
-        if (iname == null) {
-            if (other.iname != null) {
+        if (id == null) {
+            if (other.id != null) {
                 return false;
             }
-        } else if (!iname.equals(other.iname)) {
-            return false;
-        }
-        if (inum == null) {
-            if (other.inum != null) {
-                return false;
-            }
-        } else if (!inum.equals(other.inum)) {
+        } else if (!id.equals(other.id)) {
             return false;
         }
         if (locked == null) {
@@ -345,21 +322,15 @@ public class Client extends BaseClient implements Auditable {
         }
         return true;
     }
-
+    
     @Override
     public String toString() {
-        return "Client [clientSecret=" + clientSecret + ", name=" + name
-            + ", status=" + status + ", inum=" + inum + ", iname=" + iname
-            + ", orgInum=" + orgInum + ", locked=" + locked + ", softDeleted="
-            + softDeleted + ", scope=" + scope + ", callBackUrl=" + callBackUrl
-            + ", title=" + title + ", description=" + description
-            + ", getClientId()=" + getClientId() + ", getCustomerId()="
-            + getCustomerId() + "]";
+        return getAuditContext();
     }
 
     @Override
     public String getAuditContext() {
-        String format = "clientId=%s,customerId=%s";
-        return String.format(format, getClientId(), getCustomerId());
+        String format = "ID=%s,clientId=%s,customerId=%s";
+        return String.format(format, getId(), getClientId(), getRCN());
     }
 }

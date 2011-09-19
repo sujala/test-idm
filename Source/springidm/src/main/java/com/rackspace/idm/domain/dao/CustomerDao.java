@@ -9,13 +9,11 @@ public interface CustomerDao {
 
     Customer getCustomerByCustomerId(String customerId);
 
-    Customer getCustomerByInum(String inum);
-
     List<Customer> getAllCustomers();
 
     void updateCustomer(Customer customer);
 
     void deleteCustomer(String customerId);
-
-    String getUnusedCustomerInum();
+    
+    String getNextCustomerId();
 }

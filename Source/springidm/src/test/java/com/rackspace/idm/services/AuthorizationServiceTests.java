@@ -18,12 +18,12 @@ import org.junit.Test;
 
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.entity.BaseClient;
-import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
@@ -63,16 +63,16 @@ public class AuthorizationServiceTests {
     String permissionId = "Permission";
     String permissionValue = verb + " " + uri;
 
-    BaseClient authorizedClient;
-    BaseClient notAuthorizedClient;
-    BaseClient nonRackspaceClient;
-    BaseClient idmClient;
+    Client authorizedClient;
+    Client notAuthorizedClient;
+    Client nonRackspaceClient;
+    Client idmClient;
 
-    BaseUser authorizedUser;
-    BaseUser otherCompanyUser;
+    User authorizedUser;
+    User otherCompanyUser;
 
-    BaseUser authorizedAdmin;
-    BaseUser otherCompanyAdmin;
+    User authorizedAdmin;
+    User otherCompanyAdmin;
 
     Permission perm;
     List<Permission> permissions;

@@ -490,22 +490,28 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.64) = {
         description = "Is this object global?"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.65) = {
+    name = rsId
+    ldap-names = rsId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "Version Info URL"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 	name = rsPerson
 	ldap-names = rsPerson
 	subclass-of top
 	kind = structural
 	must-contain
-		inum
+		rsId
 	may-contain
 		c,
 		rsDisplayName,
 		rsGivenName,
-		iname,
 		locked,
 		rsMail,
 		middleName,
-		o,
 		permission,
 		preferredLanguage,
 		RCN,
@@ -517,7 +523,6 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 		secretAnswer,
 		clearPassword,
 		status,
-		seeAlso,
 		rsSn,
 		timeZone,
 		uid,
@@ -538,15 +543,11 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {
 	subclass-of top
 	kind = structural
 	must-contain
-		inum
+		rsId
 	may-contain
-		iname,
 		locked,
-		o,
-		owner,
 		RCN,
 		status,
-		seeAlso,
 		softDeleted,
 		passwordRotationEnabled,
         passwordRotationDuration
@@ -559,57 +560,19 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.3) = {
 	kind = structural
 	must-contain
 		cn,
-		inum,
 		clientId,
+		rsId,
 		userPassword
 	may-contain
 	    callbackUrl,
 	    description,
-		iname,
 		locked,
-		owner,
-		o,
 		permission,
 		RCN,
 		status,
-		seeAlso,
 		softDeleted,
 		title,
 		tokenScope
-};
-
-schema set object-class (1.3.6.1.4.1.20988.2.2.4) = {
-	name = rsToken
-	ldap-names = rsToken
-	subclass-of top
-	kind = structural
-	must-contain
-		o
-	may-contain
-		expiration,
-		status,
-		seeAlso,
-		tokenOwner,
-		tokenRequestor
-};
-
-schema set object-class (1.3.6.1.4.1.20988.2.2.5) = {
-	name = rsGroup
-	ldap-names = rsGroup
-	subclass-of groupOfNames
-	kind = structural
-	must-contain
-		inum
-	may-contain
-		c,
-		cn,
-		groupType,
-		iname,
-		o,
-		permission,
-		RCN,
-		status,
-		softDeleted
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.6) = {
@@ -637,7 +600,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.7) = {
 	subclass-of top
 	kind = structural
     must-contain
-        baseUrlId,
+        rsId,
         publicUrl
     may-contain
         baseUrlType,
@@ -803,8 +766,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.19) = {
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.20) = {
-    name = saContainer
-    ldap-names = saContainer
+    name = rsContainer
+    ldap-names = rsContainer
     subclass-of top
     kind = structural
     must-contain
@@ -817,11 +780,11 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.21) = {
     subclass-of top
     kind = structural
     must-contain
+        rsId,
         cn,
         enabled
     may-contain
     	description,
-        tenantId,
         tenantDisplayName
 };
 
@@ -843,9 +806,20 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.23) = {
 	subclass-of top
     kind = structural
     must-contain
+        rsId,
         cn,
         clientId
     may-contain
         description
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.24) = {
+    name = rsNextId
+    ldap-names = rsNextId
+    subclass-of top
+    kind = structural
+    must-contain
+        cn,
+        rsId
 };
 

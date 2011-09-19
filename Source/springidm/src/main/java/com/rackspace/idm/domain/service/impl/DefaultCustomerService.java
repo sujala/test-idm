@@ -35,19 +35,20 @@ public class DefaultCustomerService implements CustomerService {
     }
 
     
+    @Override
     public void addCustomer(Customer customer) {
         logger.info("Adding Customer: {}", customer);
 
         Customer exists = customerDao
-            .getCustomerByCustomerId(customer.getCustomerId());
+            .getCustomerByCustomerId(customer.getRCN());
 
         if (exists != null) {
-            String errMsg = String.format("Couldn't add customer %s because customerId already taken", customer.getCustomerId());
+            String errMsg = String.format("Couldn't add customer %s because customerId already taken", customer.getRCN());
             logger.warn(errMsg);
             throw new DuplicateException(errMsg);
         }
 
-        customer.setInum(customerDao.getUnusedCustomerInum());
+        customer.setId(this.customerDao.getNextCustomerId());
 
         this.customerDao.addCustomer(customer);
 
@@ -55,6 +56,7 @@ public class DefaultCustomerService implements CustomerService {
     }
 
     
+    @Override
     public void deleteCustomer(String customerId) {
         logger.info("Deleting Customer: {}", customerId);
         
@@ -80,6 +82,7 @@ public class DefaultCustomerService implements CustomerService {
     }
 
     
+    @Override
     public Customer getCustomer(String customerId) {
         logger.debug("Getting Customer: {}", customerId);
         Customer customer = customerDao.getCustomerByCustomerId(customerId);
@@ -88,10 +91,11 @@ public class DefaultCustomerService implements CustomerService {
     }
 
     
+    @Override
     public void setCustomerLocked(Customer customer, boolean locked) {
         logger.info("Setting customer's locked state: {}", customer);
 
-        String customerId = customer.getCustomerId();
+        String customerId = customer.getRCN();
 
         // lock all users under customer
         userDao.setUsersLockedFlagByCustomerId(customerId, locked);
@@ -107,6 +111,7 @@ public class DefaultCustomerService implements CustomerService {
     }
 
     
+    @Override
     public void softDeleteCustomer(String customerId) {
         logger.info("Soft Deleting customer: {}", customerId);
         Customer customer = this.customerDao.getCustomerByCustomerId(customerId);
@@ -116,6 +121,7 @@ public class DefaultCustomerService implements CustomerService {
     }
 
     
+    @Override
     public void updateCustomer(Customer customer) {
         logger.info("Updating Customer: {}", customer);
         this.customerDao.updateCustomer(customer);

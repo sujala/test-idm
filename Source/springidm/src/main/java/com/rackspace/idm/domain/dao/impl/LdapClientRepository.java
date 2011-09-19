@@ -18,7 +18,6 @@ import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.exception.DuplicateClientGroupException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Filter;
@@ -54,8 +53,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         Attribute[] attributes = getAddAttributesForClient(client);
 
-        String clientDN = new LdapDnBuilder(APPLICATIONS_BASE_DN)
-            .addAttribute(ATTR_INUM, client.getInum()).build();
+        String clientDN = new LdapDnBuilder(APPLICATIONS_BASE_DN).addAttribute(
+            ATTR_ID, client.getId()).build();
 
         client.setUniqueId(clientDN);
 
@@ -212,8 +211,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         List<Client> clients = new ArrayList<Client>();
 
-        List<SearchResultEntry> entries = this.getMultipleEntries(APPLICATIONS_BASE_DN,
-            SearchScope.SUB, searchFilter, ATTR_NAME);
+        List<SearchResultEntry> entries = this.getMultipleEntries(
+            APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, ATTR_NAME);
 
         for (SearchResultEntry entry : entries) {
             clients.add(getClient(entry));
@@ -296,16 +295,16 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     @Override
-    public Client getClientByInum(String inum) {
-        getLogger().debug("Doing search for Inum {}", inum);
+    public Client getClientById(String id) {
+        getLogger().debug("Doing search for id {}", id);
 
-        if (StringUtils.isBlank(inum)) {
-            getLogger().error("Null or Empty Inum parameter");
-            throw new IllegalArgumentException("Null or Empty Inum parameter.");
+        if (StringUtils.isBlank(id)) {
+            getLogger().error("Null or Empty id parameter");
+            throw new IllegalArgumentException("Null or Empty id parameter.");
         }
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_INUM, inum)
+            .addEqualAttribute(ATTR_ID, id)
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
@@ -350,8 +349,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP)
             .build();
 
-        SearchResultEntry entry = this.getSingleEntry(APPLICATIONS_BASE_DN, SearchScope.SUB,
-            searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
+        SearchResultEntry entry = this.getSingleEntry(APPLICATIONS_BASE_DN,
+            SearchScope.SUB, searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
 
         if (entry != null) {
             group = getClientGroup(entry);
@@ -438,19 +437,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     }
 
     @Override
-    public String getUnusedClientInum(String customerInum) {
-        // TODO: We might may this call to the XDI server in the future.
-        Client client = null;
-        String inum = "";
-        do {
-            inum = customerInum + InumHelper.getRandomInum(1);
-            client = getClientByInum(inum);
-        } while (client != null);
-        getLogger().debug("Returning inum {}.", inum);
-        return inum;
-    }
-
-    @Override
     public boolean isUserInClientGroup(String username, String groupDN) {
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -458,8 +444,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .addEqualAttribute(ATTR_MEMBER_OF, groupDN).build();
 
-        SearchResultEntry entry = this.getSingleEntry(USERS_BASE_DN, SearchScope.ONE,
-            searchFilter, ATTR_NO_ATTRIBUTES);
+        SearchResultEntry entry = this.getSingleEntry(USERS_BASE_DN,
+            SearchScope.ONE, searchFilter, ATTR_NO_ATTRIBUTES);
 
         return entry != null;
     }
@@ -688,25 +674,21 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             atts.add(new Attribute(ATTR_CLIENT_ID, client.getClientId()));
         }
 
+        if (!StringUtils.isBlank(client.getId())) {
+            atts.add(new Attribute(ATTR_ID, client.getId()));
+        }
+
         if (!StringUtils.isBlank(client.getName())) {
             atts.add(new Attribute(ATTR_NAME, client.getName()));
-        }
-
-        if (!StringUtils.isBlank(client.getIname())) {
-            atts.add(new Attribute(ATTR_INAME, client.getIname()));
-        }
-
-        if (!StringUtils.isBlank(client.getInum())) {
-            atts.add(new Attribute(ATTR_INUM, client.getInum()));
         }
 
         if (!StringUtils.isBlank(client.getOrgInum())) {
             atts.add(new Attribute(ATTR_O, client.getOrgInum()));
         }
 
-        if (!StringUtils.isBlank(client.getCustomerId())) {
+        if (!StringUtils.isBlank(client.getRCN())) {
             atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, client
-                .getCustomerId()));
+                .getRCN()));
         }
 
         if (client.getStatus() != null) {
@@ -752,15 +734,14 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     private Client getClient(SearchResultEntry resultEntry) {
         Client client = new Client();
         client.setUniqueId(resultEntry.getDN());
+        client.setId(resultEntry.getAttributeValue(ATTR_ID));
         client.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
         ClientSecret secret = ClientSecret.existingInstance(resultEntry
             .getAttributeValue(ATTR_CLIENT_SECRET));
         client.setClientSecretObj(secret);
         client.setName(resultEntry.getAttributeValue(ATTR_NAME));
-        client.setInum(resultEntry.getAttributeValue(ATTR_INUM));
-        client.setIname(resultEntry.getAttributeValue(ATTR_INAME));
 
-        client.setCustomerId(resultEntry
+        client.setRCN(resultEntry
             .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
 
         String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
@@ -815,8 +796,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         List<Client> clientList = new ArrayList<Client>();
 
-        List<SearchResultEntry> entries = this.getMultipleEntries(APPLICATIONS_BASE_DN,
-            SearchScope.SUB, searchFilter, ATTR_NAME);
+        List<SearchResultEntry> entries = this.getMultipleEntries(
+            APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, ATTR_NAME);
 
         contentCount = entries.size();
 
@@ -848,8 +829,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
     private Client getSingleClient(Filter searchFilter) {
         Client client = null;
-        SearchResultEntry entry = this.getSingleEntry(APPLICATIONS_BASE_DN, SearchScope.SUB,
-            searchFilter);
+        SearchResultEntry entry = this.getSingleEntry(APPLICATIONS_BASE_DN,
+            SearchScope.SUB, searchFilter);
 
         if (entry != null) {
             client = getClient(entry);
@@ -860,18 +841,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         return client;
     }
 
-    private void getInameModifications(Client cNew, List<Modification> mods,
-        Client cOld) {
-        if (cNew.getIname() != null) {
-            if (StringUtils.isBlank(cNew.getIname())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_INAME));
-            } else if (!StringUtils.equals(cOld.getIname(), cNew.getIname())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_INAME,
-                    cNew.getIname()));
-            }
-        }
-    }
-
     List<Modification> getModifications(Client cOld, Client cNew) {
         List<Modification> mods = new ArrayList<Modification>();
 
@@ -879,8 +848,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
         }
-
-        getInameModifications(cNew, mods, cOld);
 
         if (cNew.isLocked() != null && !cNew.isLocked().equals(cOld.isLocked())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_LOCKED,
@@ -1081,8 +1048,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             conn = getAppConnPool().getConnection();
             final LDAPPersister<ClientRole> persister = LDAPPersister
                 .getInstance(ClientRole.class);
-            List<Modification> modifications = persister.getModifications(
-                role, true);
+            List<Modification> modifications = persister.getModifications(role,
+                true);
             audit.modify(modifications);
             persister.modify(role, conn, null, true);
             getLogger().debug("Updated Client Role: {}", role);
@@ -1124,5 +1091,21 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         ClientRole role = null;
         role = LDAPPersister.getInstance(ClientRole.class).decode(entry);
         return role;
+    }
+
+    @Override
+    public String getNextClientId() {
+        String clientId = null;
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            clientId = getNextId(conn, NEXT_CLIENT_ID);
+        } catch (LDAPException e) {
+            getLogger().error("Error getting next clientId", e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        return clientId;
     }
 }

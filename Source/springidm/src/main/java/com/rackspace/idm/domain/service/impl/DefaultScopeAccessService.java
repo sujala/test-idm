@@ -14,7 +14,6 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.Clients;
@@ -400,7 +399,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public PasswordResetScopeAccess getOrCreatePasswordResetScopeAccessForUser(
-        BaseUser user) {
+        User user) {
 
         if (user == null) {
             String errMsg = String.format("Null argument passed in.");
@@ -719,7 +718,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         DefinedPermission dp = new DefinedPermission();
         dp.setClientId(dClient.getClientId());
-        dp.setCustomerId(dClient.getCustomerId());
+        dp.setCustomerId(dClient.getRCN());
         dp.setPermissionId(permission.getPermissionId());
 
         Permission perm = this.scopeAccessDao
@@ -862,7 +861,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     private UserScopeAccess checkAndGetUserScopeAccess(String clientId,
-        BaseUser user) {
+        User user) {
         final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(
             user.getUniqueId(), clientId);
 

@@ -17,7 +17,7 @@ public class Tenant implements Auditable{
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
     
-    @LDAPField(attribute=LdapRepository.ATTR_TENANT_ID, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+    @LDAPField(attribute=LdapRepository.ATTR_ID, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
     private String tenantId;
     
     @LDAPField(attribute=LdapRepository.ATTR_ENABLED, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
@@ -29,8 +29,8 @@ public class Tenant implements Auditable{
     @LDAPField(attribute=LdapRepository.ATTR_NAME, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String name;
     
-//    @LDAPField(attribute=LdapRepository.ATTR_TENANT_DISPLAY_NAME, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-//    private String displayName;
+    @LDAPField(attribute=LdapRepository.ATTR_TENANT_DISPLAY_NAME, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    private String displayName;
     
     @LDAPField(attribute=LdapRepository.ATTR_CREATED_DATE, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date created;
@@ -83,13 +83,13 @@ public class Tenant implements Auditable{
         this.name = name;
     }
     
-//    public String getDisplayName() {
-//        return displayName;
-//    }
-//
-//    public void setDisplayName(String displayName) {
-//        this.displayName = displayName;
-//    }
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
 
     public Date getCreated() {
         return created;

@@ -139,7 +139,7 @@ public class CustomerUserServicesResource {
         sa.setUsername(user.getUsername());
         sa.setUserRCN(user.getCustomerId());
         sa.setClientId(client.getClientId());
-        sa.setClientRCN(client.getCustomerId());
+        sa.setClientRCN(client.getRCN());
 
         this.scopeAccessService.addDirectScopeAccess(user.getUniqueId(), sa);
 

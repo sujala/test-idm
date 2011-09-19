@@ -10,10 +10,10 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
-import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
+import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
 import com.unboundid.ldap.sdk.SearchResultEntry;
@@ -39,8 +39,8 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         Attribute[] attributes = getAddAttributes(customer);
 
-        String customerDN = new LdapDnBuilder(CUSTOMERS_BASE_DN).addAttribute(ATTR_O,
-            customer.getInum()).build();
+        String customerDN = new LdapDnBuilder(CUSTOMERS_BASE_DN).addAttribute(ATTR_ID,
+            customer.getId()).build();
 
         customer.setUniqueId(customerDN);
 
@@ -132,66 +132,21 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         return customer;
     }
-
-    
-    @Override
-    public Customer getCustomerByInum(String customerInum) {
-        getLogger().debug("Doing search for customerInum {}", customerInum);
-
-        if (StringUtils.isBlank(customerInum)) {
-            String errMsg = "Null or Empty customerInum paramter";
-            getLogger().error(errMsg);
-            throw new IllegalArgumentException(errMsg);
-        }
-
-        Customer customer = null;
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_INUM, customerInum)
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEORGANIZATION).build();
-
-        SearchResultEntry entry = this.getSingleEntry(CUSTOMERS_BASE_DN, SearchScope.ONE,
-            searchFilter, ATTR_RACKSPACE_CUSTOMER_NUMBER);
-
-        if (entry != null) {
-            customer = getCustomer(entry);
-        }
-
-        getLogger().debug("Found customer - {}", customer);
-
-        return customer;
-    }
-
-    
-    @Override
-    public String getUnusedCustomerInum() {
-        getLogger().debug("Getting Unused Customer Inum");
-        Customer customer = null;
-        String inum = "";
-        do {
-            inum = this.getRackspaceInumPrefix() + InumHelper.getRandomInum(2);
-            customer = getCustomerByInum(inum);
-        } while (customer != null);
-        getLogger().debug("Got Unused Customer Inum {}", inum);
-        return inum;
-    }
-
     
     @Override
     public void updateCustomer(Customer customer) {
         getLogger().info("Updating customer {}", customer);
 
-        if (customer == null || StringUtils.isBlank(customer.getCustomerId())) {
+        if (customer == null || StringUtils.isBlank(customer.getRCN())) {
             String errMsg = "Customer instance is null or its customerId has no value";
             getLogger().error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
 
-        Customer oldCustomer = getCustomerByCustomerId(customer.getCustomerId());
+        Customer oldCustomer = getCustomerByCustomerId(customer.getRCN());
 
         if (oldCustomer == null) {
-            String errMsg = String.format("No record found for customer %s", customer.getCustomerId());
+            String errMsg = String.format("No record found for customer %s", customer.getRCN());
             getLogger().error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
@@ -216,19 +171,15 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         atts.add(new Attribute(ATTR_OBJECT_CLASS,
             ATTR_CUSTOMER_OBJECT_CLASS_VALUES));
-
-        if (!StringUtils.isBlank(customer.getIname())) {
-            atts.add(new Attribute(ATTR_INAME, customer.getIname()));
+        
+        if (!StringUtils.isBlank(customer.getId())) {
+            atts.add(new Attribute(ATTR_ID, customer
+                .getId()));
         }
 
-        if (!StringUtils.isBlank(customer.getInum())) {
-            atts.add(new Attribute(ATTR_INUM, customer.getInum()));
-            atts.add(new Attribute(ATTR_O, customer.getInum()));
-        }
-
-        if (!StringUtils.isBlank(customer.getCustomerId())) {
+        if (!StringUtils.isBlank(customer.getRCN())) {
             atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customer
-                .getCustomerId()));
+                .getRCN()));
         }
 
         if (customer.getStatus() != null) {
@@ -254,10 +205,8 @@ public class LdapCustomerRepository extends LdapRepository implements
         Customer customer = new Customer();
 
         customer.setUniqueId(resultEntry.getDN());
-        customer.setCustomerId(resultEntry
+        customer.setRCN(resultEntry
             .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
-        customer.setInum(resultEntry.getAttributeValue(ATTR_INUM));
-        customer.setIname(resultEntry.getAttributeValue(ATTR_INAME));
 
         customer.setPasswordRotationDuration(resultEntry
             .getAttributeValueAsInteger(ATTR_PASSWORD_ROTATION_DURATION));
@@ -287,15 +236,6 @@ public class LdapCustomerRepository extends LdapRepository implements
 
     List<Modification> getModifications(Customer cOld, Customer cNew) {
         List<Modification> mods = new ArrayList<Modification>();
-
-        if (cNew.getIname() != null) {
-            if (StringUtils.isBlank(cNew.getIname())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_INAME));
-            } else if (!StringUtils.equals(cOld.getIname(), cNew.getIname())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_INAME,
-                    cNew.getIname()));
-            }
-        }
 
         if (cNew.getStatus() != null
             && !cNew.getStatus().equals(cOld.getStatus())) {
@@ -330,5 +270,21 @@ public class LdapCustomerRepository extends LdapRepository implements
         }
 
         return mods;
+    }
+    
+    @Override
+    public String getNextCustomerId() {
+        String customerId = null;
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            customerId = getNextId(conn, NEXT_CUSTOMER_ID);
+        } catch (LDAPException e) {
+            getLogger().error("Error getting next customerId", e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        return customerId;
     }
 }

@@ -140,7 +140,7 @@ public class UsersResource {
         }
 
         Customer customer = new Customer();
-        customer.setCustomerId(userDO.getCustomerId());
+        customer.setRCN(userDO.getCustomerId());
         customer.setDefaults();
 
         try {
@@ -148,7 +148,7 @@ public class UsersResource {
         } catch (DuplicateException ex) {
             String errorMsg = String.format(
                 "A customer with customerId '%s' already exists.",
-                customer.getCustomerId());
+                customer.getRCN());
             logger.warn(errorMsg);
             throw new CustomerConflictException(errorMsg);
         }
@@ -157,7 +157,7 @@ public class UsersResource {
             this.userService.addUser(userDO);
         } catch (DuplicateException ex) {
             // Roll Back the Add Customer call
-            this.customerService.deleteCustomer(customer.getCustomerId());
+            this.customerService.deleteCustomer(customer.getRCN());
             // Then throw the error
             String errorMsg = String.format(
                 "A user with username '%s' already exists.",
@@ -172,7 +172,7 @@ public class UsersResource {
         logger.debug("Added User: {}", userDO);
 
         String locationUri = String.format("/customers/%s/users/%s",
-            customer.getCustomerId(), user.getUsername());
+            customer.getRCN(), user.getUsername());
 
         user = userConverter.toUserJaxb(userDO);
 

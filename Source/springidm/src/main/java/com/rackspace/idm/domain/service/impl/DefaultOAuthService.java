@@ -20,8 +20,6 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.AuthCredentials;
-import com.rackspace.idm.domain.entity.BaseClient;
-import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
@@ -401,7 +399,7 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     private ClientScopeAccess getAndUpdateClientScopeAccessForClientId(
-        BaseClient client) {
+        Client client) {
 
         logger.debug("Get and Update Client ScopeAccess for ClientId: {}",
             client.getClientId());
@@ -416,7 +414,7 @@ public class DefaultOAuthService implements OAuthService {
                 client.getClientId(), client.getClientId());
             scopeAccess = new ClientScopeAccess();
             scopeAccess.setClientId(client.getClientId());
-            scopeAccess.setClientRCN(client.getCustomerId());
+            scopeAccess.setClientRCN(client.getRCN());
             scopeAccess = (ClientScopeAccess) this.scopeAccessService
                 .addDirectScopeAccess(client.getUniqueId(), scopeAccess);
         }
@@ -445,7 +443,7 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     private RackerScopeAccess getAndUpdateRackerScopeAccessForClientId(
-        Racker racker, BaseClient client) {
+        Racker racker, Client client) {
 
         logger.debug(
             "Get and Update ScopeAccess for Racker: {} and ClientId: {}",
@@ -460,7 +458,7 @@ public class DefaultOAuthService implements OAuthService {
             scopeAccess = new RackerScopeAccess();
             scopeAccess.setRackerId(racker.getRackerId());
             scopeAccess.setClientId(client.getClientId());
-            scopeAccess.setClientRCN(client.getCustomerId());
+            scopeAccess.setClientRCN(client.getRCN());
             logger.debug(
                 "Creating ScopeAccess for Racker: {} and ClientId: {}",
                 racker.getRackerId(), client.getClientId());
@@ -499,7 +497,7 @@ public class DefaultOAuthService implements OAuthService {
     }
 
     private UserScopeAccess getAndUpdateUserScopeAccessForClientId(
-        BaseUser user, BaseClient client) {
+        User user, Client client) {
 
         logger.debug(
             "Get and Update ScopeAccess for User: {} and ClientId: {}",

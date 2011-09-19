@@ -50,12 +50,12 @@ public class DefaultClientService implements ClientService {
     public void add(Client client) {
         logger.debug("Adding Client: {}", client);
         Customer customer = customerDao.getCustomerByCustomerId(client
-            .getCustomerId());
+            .getRCN());
 
         if (customer == null) {
             logger.warn(
                 "Couldn't add client {} because customerId doesn't exist",
-                client.getCustomerId());
+                client.getRCN());
             throw new NotFoundException("Customer doesn't exist");
         }
 
@@ -77,9 +77,8 @@ public class DefaultClientService implements ClientService {
             logger.error("Unsupported hashing algorithm - {}", e);
             throw new IllegalStateException("Unsupported hashing algorithm", e);
         }
-
-        client.setOrgInum(customer.getInum());
-        client.setInum(clientDao.getUnusedClientInum(customer.getInum()));
+        
+        client.setId(this.clientDao.getNextClientId());
 
         clientDao.addClient(client);
         logger.debug("Added Client: {}", client);
@@ -152,7 +151,7 @@ public class DefaultClientService implements ClientService {
         if (sa == null) {
             sa = new ClientScopeAccess();
             sa.setClientId(client.getClientId());
-            sa.setClientRCN(client.getCustomerId());
+            sa.setClientRCN(client.getRCN());
             sa = this.scopeAccessDao.addDirectScopeAccess(client.getUniqueId(), sa);
         }
 
@@ -231,7 +230,7 @@ public class DefaultClientService implements ClientService {
         
         Permission permission = new DefinedPermission();
         permission.setPermissionId(permissionId);
-        permission.setCustomerId(client.getCustomerId());
+        permission.setCustomerId(client.getRCN());
         permission.setClientId(client.getClientId());
 
         permission = this.scopeAccessDao.getPermissionByParentAndPermission(
@@ -250,7 +249,7 @@ public class DefaultClientService implements ClientService {
         logger.debug("Find Permission by ClientId: {}", client.getClientId());
         Permission filter = new Permission();
         filter.setClientId(client.getClientId());
-        filter.setCustomerId(client.getCustomerId());
+        filter.setCustomerId(client.getRCN());
         
         List<Permission> permissions = this.scopeAccessDao
             .getPermissionsByParentAndPermission(client.getUniqueId(),

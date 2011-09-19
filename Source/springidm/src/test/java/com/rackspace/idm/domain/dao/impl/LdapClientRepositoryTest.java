@@ -37,6 +37,8 @@ public class LdapClientRepositoryTest {
     private LdapClientRepository repo;
     private LdapConnectionPools connPools;
     
+    String id = "XXXX";
+    
     String userDN = "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111,ou=users,o=rackspace,dc=rackspace,dc=com";
     String testCustomerDN = "o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,ou=customers,o=rackspace,dc=rackspace,dc=com";
     
@@ -122,7 +124,7 @@ public class LdapClientRepositoryTest {
         }
 
         try {
-            repo.getClientByInum("    ");
+            repo.getClientById("    ");
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
@@ -189,9 +191,9 @@ public class LdapClientRepositoryTest {
         }
 
         Client changedClient = repo.getClientByClientId(clientId);
-        Assert.assertTrue(changedClient.equals(newClient));
 
         repo.deleteClient(newClient);
+        Assert.assertTrue(changedClient.getStatus() == ClientStatus.INACTIVE);
     }
      
     @Test
@@ -219,16 +221,9 @@ public class LdapClientRepositoryTest {
     }
 
     @Test
-    public void shouldGetUnusedClientInum() {
-        String inum = repo
-            .getUnusedClientInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE");
-        Assert.assertFalse(inum.equals("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!2222"));
-    }
-
-    @Test
     public void shouldSetAllClientLocked() {
         Client newClient = addNewTestClient();
-        repo.setClientsLockedFlagByCustomerId(newClient.getCustomerId(), true);
+        repo.setClientsLockedFlagByCustomerId(newClient.getRCN(), true);
         Client changedClient = repo.getClientByClientId(newClient.getClientId());
         Assert.assertEquals(changedClient.isLocked(), true);
         repo.deleteClient(newClient);
@@ -341,7 +336,7 @@ public class LdapClientRepositoryTest {
     @Test
     public void shouldReturnNullForGetClientGroupForNonExistentGroup() {
         Client testClient = addNewTestClient();
-        ClientGroup returnedGroup = repo.getClientGroup(testClient.getCustomerId(), testClient.getClientId(), "SOMEBADNAME");
+        ClientGroup returnedGroup = repo.getClientGroup(testClient.getRCN(), testClient.getClientId(), "SOMEBADNAME");
         Assert.assertNull(returnedGroup);
         repo.deleteClient(testClient);
     }
@@ -552,17 +547,17 @@ public class LdapClientRepositoryTest {
     }
     
     private ClientGroup createNewTestClientGroup(Client client) {
-        return new ClientGroup (client.getClientId(), client.getCustomerId(), "New Group", "TYPE");
+        return new ClientGroup (client.getClientId(), client.getRCN(), "New Group", "TYPE");
     }
 
     private Client createTestClientInstance() {
         Random ran = new Random();
         //int random = ran.nextInt();
         Client newClient = new Client("DELETE_My_ClientId", ClientSecret
-            .newInstance("DELETE_My_Client_Secret"), "DELETE_My_Name", "inum",
-            "iname", "RCN-123-456-789", ClientStatus.ACTIVE);
+            .newInstance("DELETE_My_Client_Secret"), "DELETE_My_Name", "RCN-123-456-789", ClientStatus.ACTIVE);
         newClient.setLocked(false);
         newClient.setSoftDeleted(false);
+        newClient.setId(id);
         return newClient;
     }
     
@@ -590,15 +585,13 @@ public class LdapClientRepositoryTest {
         newUser.setCountry("USA");
         newUser.setPersonId("RPN-111-222-333");
         newUser.setDisplayName("MY DISPLAY NAME");
-        newUser.setIname("@Rackspace.TestCustomer*deleteme");
-        newUser.setInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE.5555");
-        newUser.setOrgInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE");
         newUser.setStatus(UserStatus.ACTIVE);
         newUser.setRegion("ORD");
         newUser.setSoftDeleted(false);
         newUser.setDefaults();
         newUser.setNastId("TESTNASTID");
         newUser.setMossoId(88888);
+        newUser.setId(id);
         return newUser;
     }
 }

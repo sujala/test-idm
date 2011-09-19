@@ -776,8 +776,7 @@ public class OAuthServiceTests {
 
     private Client getTestClient() {
         final Client client = new Client(clientId,
-                ClientSecret.newInstance(clientSecret), "DELETE_My_Name", "inum",
-                "iname", customerId, ClientStatus.ACTIVE);
+                ClientSecret.newInstance(clientSecret), "DELETE_My_Name", customerId, ClientStatus.ACTIVE);
         client.setUniqueId(uniqueId);
         return client;
     }

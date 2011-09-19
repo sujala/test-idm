@@ -95,7 +95,7 @@ public class CustomerLockResource extends AbstractCustomerConsumer {
         this.customerService.setCustomerLocked(customer, isLocked);
         logger.debug("Successfully locked customer: {}", customer);
 
-        logger.debug("Revoking all user tokens for customer {}", customer.getCustomerId());
+        logger.debug("Revoking all user tokens for customer {}", customer.getRCN());
 
         if (isLocked) {
             oauthService.revokeAllTokensForCustomer(customerId);

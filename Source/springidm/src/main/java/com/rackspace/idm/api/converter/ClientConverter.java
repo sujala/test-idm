@@ -18,9 +18,11 @@ public class ClientConverter {
 
     public Client toClientDO(com.rackspace.api.idm.v1.Client jaxbClient) {
         Client client = new Client();
+        
+        client.setId(jaxbClient.getId());
 
         client.setClientId(jaxbClient.getClientId());
-        client.setCustomerId(jaxbClient.getCustomerId());
+        client.setRCN(jaxbClient.getCustomerId());
 
         if (jaxbClient.getCredentials() != null
             && !StringUtils.isBlank(jaxbClient.getCredentials()
@@ -28,10 +30,6 @@ public class ClientConverter {
             client.setClientSecret(jaxbClient.getCredentials()
                 .getClientSecret());
         }
-
-        client.setIname(jaxbClient.getIname());
-        client.setInum(jaxbClient.getInum());
-        client.setOrgInum(jaxbClient.getCustomerInum());
 
         client.setLocked(jaxbClient.isLocked());
 
@@ -85,12 +83,11 @@ public class ClientConverter {
     private com.rackspace.api.idm.v1.Client toClientJaxb(Client client,
         boolean includeCredentials) {
         com.rackspace.api.idm.v1.Client returnedClient = of.createClient();
+        
+        returnedClient.setId(client.getId());
 
         returnedClient.setClientId(client.getClientId());
-        returnedClient.setCustomerId(client.getCustomerId());
-        returnedClient.setCustomerInum(client.getOrgInum());
-        returnedClient.setIname(client.getIname());
-        returnedClient.setInum(client.getInum());
+        returnedClient.setCustomerId(client.getRCN());
         returnedClient.setLocked(client.isLocked());
         returnedClient.setName(client.getName());
         returnedClient.setSoftDeleted(client.isSoftDeleted());

@@ -53,7 +53,7 @@ public class ServiceTestsBase {
     public void BlankTest() {}
 
     protected Client getFakeClient() {
-        Client client = new Client(clientId, clientSecret, name, inum, iname,
+        Client client = new Client(clientId, clientSecret, name, 
             customerId, status);
 
         client.setUniqueId(uniqueId);
@@ -61,8 +61,8 @@ public class ServiceTestsBase {
     }
 
     protected Customer getFakeCustomer() {
-        return new Customer(customerId, customerInum, customerIname,
-            customerStatus, customerSeeAlso, owner);
+        return new Customer(customerId, 
+            customerStatus);
     }
 
     protected User getFakeUser() {

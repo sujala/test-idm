@@ -65,42 +65,24 @@
 
 	<!-- Complex Types -->
 	<complexType name="Customer">
-		<attribute name="customerId" type="string" use="optional">
+		<attribute name="RCN" type="string" use="optional">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
 					<p>
-						A unique customer Id. This is also known as the customer number.
+						A unique customer Id. This is also known as the
+						customer number.
 					</p>
 				</xsd:documentation>
 			</annotation>
 		</attribute>
-		<attribute name="inum" type="string" use="optional">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>
-						A unique inum associated with the customer.
-                    </p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-        <attribute name="iname" type="xsd:string" use="optional">
-			<annotation>
-				<xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
-					<p>
-						A unique iname associated with the customer inum.
-                    </p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-        <attribute name="locked" type="boolean" use="optional">
+		<attribute name="locked" type="boolean" use="optional">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
 					<p>
 						A boolean indicating if the customer is locked.
-                    </p>
+					</p>
 				</xsd:documentation>
 			</annotation>
 		</attribute>
@@ -109,11 +91,13 @@
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
 					<p>
-						A boolean indicating if the customer has been soft deleted.
-                    </p>
+						A boolean indicating if the customer has been
+						soft deleted.
+					</p>
 				</xsd:documentation>
 			</annotation>
 		</attribute>
+		<attribute name="id" type="xsd:string"></attribute>
 	</complexType>
 
 	<complexType name="CustomerList">

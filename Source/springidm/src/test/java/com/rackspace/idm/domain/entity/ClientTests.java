@@ -1,34 +1,26 @@
 package com.rackspace.idm.domain.entity;
 
-import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.ClientStatus;
-
-import org.junit.Assert;
-
-import org.junit.Test;
+import java.util.Set;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
-import java.util.Set;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ClientTests {
 
-    private String clientId = "Id";
-    private String clientPassword = "Secret";
-    private String name = "Name";
-    private String inum = "Inum";
-    private String iname = "Iname";
-    private String customerId = "CustomerId";
-    private ClientStatus status = ClientStatus.ACTIVE;
-    private String seeAlso = "SeeAlso";
-    private String owner = "Owner";
+    private final String clientId = "Id";
+    private final String clientPassword = "Secret";
+    private final String name = "Name";
+    private final String customerId = "CustomerId";
+    private final ClientStatus status = ClientStatus.ACTIVE;
 
     private Client getTestClient() {
         ClientSecret clientSecret = ClientSecret.newInstance(clientPassword);
 
-        return new Client(clientId, clientSecret, name, inum, iname,
+        return new Client(clientId, clientSecret, name,
             customerId, status);
     }
 
@@ -56,17 +48,13 @@ public class ClientTests {
 
         client1.setClientId(null);
         client1.setClientSecretObj(null);
-        client1.setCustomerId(null);
-        client1.setIname(null);
-        client1.setInum(null);
+        client1.setRCN(null);
         client1.setName(null);
         client1.setStatus(null);
 
         client2.setClientId(null);
         client2.setClientSecretObj(null);
-        client2.setCustomerId(null);
-        client2.setIname(null);
-        client2.setInum(null);
+        client2.setRCN(null);
         client2.setName(null);
         client2.setStatus(null);
 
@@ -93,23 +81,11 @@ public class ClientTests {
         Assert.assertFalse(client2.equals(client1));
         client2.setClientSecretObj(client1.getClientSecretObj());
 
-        client2.setCustomerId("SomeOtherValue");
+        client2.setRCN("SomeOtherValue");
         Assert.assertFalse(client1.equals(client2));
-        client2.setCustomerId(null);
+        client2.setRCN(null);
         Assert.assertFalse(client2.equals(client1));
-        client2.setCustomerId(client1.getCustomerId());
-
-        client2.setIname("SomeOtherValue");
-        Assert.assertFalse(client1.equals(client2));
-        client2.setIname(null);
-        Assert.assertFalse(client2.equals(client1));
-        client2.setIname(client1.getIname());
-
-        client2.setInum("SomeOtherValue");
-        Assert.assertFalse(client1.equals(client2));
-        client2.setInum(null);
-        Assert.assertFalse(client2.equals(client1));
-        client2.setInum(client1.getInum());
+        client2.setRCN(client1.getRCN());
 
         client2.setName("SomeOtherValue");
         Assert.assertFalse(client1.equals(client2));

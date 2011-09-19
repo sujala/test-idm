@@ -17,6 +17,8 @@ import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPSearchException;
 import com.unboundid.ldap.sdk.Modification;
+import com.unboundid.ldap.sdk.ModificationType;
+import com.unboundid.ldap.sdk.ResultCode;
 import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
@@ -49,9 +51,12 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS = "delegatedClientScopeAccess";
     public static final String OBJECTCLASS_PASSWORDRESETSCOPEACCESS = "passwordResetScopeAccess";
     public static final String OBJECTCLASS_RACKERSCOPEACCESS = "rackerScopeAccess";
-    public static final String OBJECTCLASS_SCOPEACCESS_CONTAINER = "saContainer";
+    public static final String OBJECTCLASS_RACKSPACE_CONTAINER = "rsContainer";
     public static final String OBJECTCLASS_TENANT = "tenant";
     public static final String OBJECTCLASS_TENANT_ROLE = "tenantRole";
+
+    public static final String OBJECTCLASS_NEXT_ID = "rsNextId";
+    public static final String ATTR_ID = "rsId";
 
     protected static final String OBJECTCLASS_TOP = "top";
 
@@ -100,9 +105,7 @@ public abstract class LdapRepository {
     public static final String ATTR_GIVEN_NAME = "rsGivenName";
     public static final String ATTR_GRANTED_BY_DEFAULT = "grantedByDefault";
     public static final String ATTR_GROUP_TYPE = "groupType";
-    public static final String ATTR_INAME = "iname";
     public static final String ATTR_INTERNAL_URL = "internalUrl";
-    public static final String ATTR_INUM = "inum";
     public static final String ATTR_LANG = "preferredLanguage";
     public static final String ATTR_LOCKED = "locked";
     public static final String ATTR_MAIL = "rsMail";
@@ -164,28 +167,28 @@ public abstract class LdapRepository {
     protected static final String APPLICATIONS_BASE_DN = "ou=applications,o=rackspace,dc=rackspace,dc=com";
     protected static final String USERS_BASE_DN = "ou=users,o=rackspace,dc=rackspace,dc=com";
     protected static final String RACKERS_BASE_DN = "ou=rackers,o=rackspace,dc=rackspace,dc=com";
-    
+    protected static final String NEXT_IDS_BASE_DN = "ou=nextIds,o=rackspace,dc=rackspace,dc=com";
+
     // Definitions for OU names
     protected static final String OU_GROUPS_NAME = "groups";
     protected static final String OU_PEOPLE_NAME = "people";
     protected static final String OU_APPLICATIONS_NAME = "applications";
     protected static final String OU_PERMISSIONS_NAME = "permissions";
-    
+
     // Definitions for ScopeAccess Contatiner Names
     protected static final String CONTAINER_DIRECT = "DIRECT";
     protected static final String CONTAINER_DELEGATE = "DELEGATE";
     protected static final String CONTAINER_ROLES = "ROLES";
-    
-    //Search Attributes
+
+    // Search Attributes
     protected static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {
-        ATTR_OBJECT_CLASS, ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_CLIENT_ID, ATTR_GROUP_TYPE,
-        ATTR_NAME };
+        ATTR_OBJECT_CLASS, ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_CLIENT_ID,
+        ATTR_GROUP_TYPE, ATTR_NAME};
     protected static final String[] ATTR_USER_SEARCH_ATTRIBUTES = {"*",
         ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
     protected static final String[] ATTR_TENANT_SEARCH_ATTRIBUTES = {"*",
         ATTR_CREATED_DATE, ATTR_UPDATED_DATE};
 
-    
     private final LdapConnectionPools connPools;
     private final Configuration config;
 
@@ -243,13 +246,15 @@ public abstract class LdapRepository {
         this.deleteEntryAndSubtree(conn, dn, audit);
         getAppConnPool().releaseConnection(conn);
     }
-    
-    protected List<SearchResultEntry> getMultipleEntries(String baseDN, SearchScope scope, Filter searchFilter, String sortAttribute, String... attributes) {
+
+    protected List<SearchResultEntry> getMultipleEntries(String baseDN,
+        SearchScope scope, Filter searchFilter, String sortAttribute,
+        String... attributes) {
         SearchResult searchResult = null;
-        
+
         ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
             new SortKey(sortAttribute));
-        
+
         try {
 
             SearchRequest request = new SearchRequest(baseDN, scope,
@@ -262,11 +267,12 @@ public abstract class LdapRepository {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
         }
-        
+
         return searchResult.getSearchEntries();
     }
-    
-    protected SearchResultEntry getSingleEntry(String baseDN, SearchScope scope, Filter searchFilter, String... attributes) {
+
+    protected SearchResultEntry getSingleEntry(String baseDN,
+        SearchScope scope, Filter searchFilter, String... attributes) {
         SearchResultEntry entry = null;
         try {
             entry = getAppConnPool().searchForEntry(baseDN, scope,
@@ -278,12 +284,14 @@ public abstract class LdapRepository {
 
         return entry;
     }
-    
-    protected SearchResultEntry getSingleEntry(LDAPConnection conn, String baseDN, SearchScope scope, Filter searchFilter, String... attributes) {
+
+    protected SearchResultEntry getSingleEntry(LDAPConnection conn,
+        String baseDN, SearchScope scope, Filter searchFilter,
+        String... attributes) {
         SearchResultEntry entry = null;
         try {
-            entry = conn.searchForEntry(baseDN, scope,
-                searchFilter, attributes);
+            entry = conn
+                .searchForEntry(baseDN, scope, searchFilter, attributes);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
@@ -329,7 +337,7 @@ public abstract class LdapRepository {
     protected String getRackspaceInumPrefix() {
         return config.getString("rackspace.inum.prefix");
     }
-    
+
     protected String getRackspaceCustomerId() {
         return config.getString("rackspace.customerId");
     }
@@ -355,13 +363,13 @@ public abstract class LdapRepository {
             throw new IllegalStateException(e);
         }
     }
-    
+
     protected void addContianer(LDAPConnection conn, String parentUniqueId,
         String name) {
         Audit audit = Audit.log("Adding ScopeAccess_Container").add();
         List<Attribute> atts = new ArrayList<Attribute>();
         atts.add(new Attribute(ATTR_OBJECT_CLASS,
-            OBJECTCLASS_SCOPEACCESS_CONTAINER));
+            OBJECTCLASS_RACKSPACE_CONTAINER));
         atts.add(new Attribute(ATTR_NAME, name));
         Attribute[] attributes = atts.toArray(new Attribute[0]);
         String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME,
@@ -374,13 +382,46 @@ public abstract class LdapRepository {
         String parentUniqueId, String name) {
         Filter filter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_SCOPEACCESS_CONTAINER)
+                OBJECTCLASS_RACKSPACE_CONTAINER)
             .addEqualAttribute(ATTR_NAME, name).build();
 
         SearchResultEntry entry = this.getSingleEntry(conn, parentUniqueId,
             SearchScope.ONE, filter);
 
         return entry;
+    }
+    
+    protected static final String NEXT_USER_ID = "nextUserId";
+    protected static final String NEXT_TENANT_ID = "nextTenantId";
+    protected static final String NEXT_ROLE_ID = "nextRoleId";
+    protected static final String NEXT_CLIENT_ID = "nextClientId";
+    protected static final String NEXT_CUSTOMER_ID = "nextCustomerId";
+    
+    protected String getNextId(LDAPConnection conn, String type) {
+        Filter filter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_NEXT_ID)
+            .addEqualAttribute(ATTR_NAME, type).build();
+        
+        SearchResultEntry entry = this.getSingleEntry(conn, NEXT_IDS_BASE_DN,
+            SearchScope.ONE, filter);
+        
+        long nextId = entry.getAttributeValueAsLong(ATTR_ID);
+        
+        List<Modification> mods = new ArrayList<Modification>();
+        mods.add(new Modification(ModificationType.DELETE,ATTR_ID, String.valueOf(nextId)));
+        mods.add(new Modification(ModificationType.ADD,ATTR_ID, String.valueOf(nextId + 1)));
+        
+        try {
+            conn.modify(entry.getDN(), mods);
+        } catch (LDAPException ex) {
+            if (ex.getResultCode() == ResultCode.NO_SUCH_ATTRIBUTE) {
+                // Another applicaiton already got the number so
+                // we have to repeat the call
+                return getNextId(conn, type);
+            }
+            throw new IllegalStateException();
+        }
+        return String.valueOf(nextId);
     }
 
     private static class QueryPair {
@@ -466,7 +507,7 @@ public abstract class LdapRepository {
             filters.add(filter);
             return this;
         }
-        
+
         public LdapSearchBuilder addPresenceAttribute(String attribute) {
             Filter filter = Filter.createPresenceFilter(attribute);
             filters.add(filter);
@@ -485,5 +526,4 @@ public abstract class LdapRepository {
             return Filter.createANDFilter(filters);
         }
     }
-
 }

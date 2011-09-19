@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.easymock.EasyMock;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,6 +38,8 @@ public class CustomerServiceTests {
     String customerCountry = "USA";
     String username = "username";
     String clientId = "clientId";
+    
+    String id = "XXX";
 
     @Before
     public void setUp() throws Exception {
@@ -57,8 +58,7 @@ public class CustomerServiceTests {
 
         EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
             .andReturn(null);
-        EasyMock.expect(mockCustomerDao.getUnusedCustomerInum()).andReturn(
-            "Inum");
+        EasyMock.expect(mockCustomerDao.getNextCustomerId()).andReturn(id);
         mockCustomerDao.addCustomer(customer);
         EasyMock.replay(mockCustomerDao);
 
@@ -73,8 +73,6 @@ public class CustomerServiceTests {
 
         EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
             .andReturn(customer);
-        EasyMock.expect(mockCustomerDao.getUnusedCustomerInum()).andReturn(
-            "Inum");
         mockCustomerDao.addCustomer(customer);
         EasyMock.replay(mockCustomerDao);
 
@@ -92,7 +90,7 @@ public class CustomerServiceTests {
         mockUserDao.deleteUser(username);
         EasyMock.replay(mockUserDao);
         EasyMock.expect(mockClientDao.getClientsByCustomerId(customerId, 0, 100)).andReturn(getFakeClients());
-        mockClientDao.deleteClient(getFakeClient());
+        mockClientDao.deleteClient(EasyMock.anyObject(Client.class));
         EasyMock.replay(mockClientDao);
         service.deleteCustomer(customerId);
         EasyMock.verify(mockCustomerDao);
@@ -113,7 +111,6 @@ public class CustomerServiceTests {
         EasyMock.replay(mockCustomerDao);
         Customer customer = service.getCustomer(customerId);
 
-        Assert.assertTrue(customer.getInum().equals(customerInum));
         EasyMock.verify(mockCustomerDao);
     }
 
@@ -121,7 +118,7 @@ public class CustomerServiceTests {
     public void shouldSetCustomerLocked() {
 
         Customer customer = getFakeCustomer();
-        String customerId = customer.getCustomerId();
+        String customerId = customer.getRCN();
         boolean locked = true;
 
         mockUserDao.setUsersLockedFlagByCustomerId(customerId, locked);
@@ -165,8 +162,8 @@ public class CustomerServiceTests {
     }
 
     private Customer getFakeCustomer() {
-        return new Customer(customerId, customerInum, customerIname,
-            customerStatus, customerSeeAlso, customerOwner);
+        return new Customer(customerId, 
+            customerStatus);
     }
     
     private User getFakeUser() {

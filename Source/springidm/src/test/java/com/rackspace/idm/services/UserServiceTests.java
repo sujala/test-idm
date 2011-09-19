@@ -72,6 +72,8 @@ public class UserServiceTests {
     String preferredLang = "en_US";
     String timeZone = "America/Chicago";
     
+    String id = "XXX";
+    
     String secureId = "XXX";
 
     String customerDN = "o=@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA,o=rackspace,dc=rackspace,dc=com";
@@ -176,11 +178,9 @@ public class UserServiceTests {
         EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
         .andReturn(customer);
         EasyMock.replay(mockCustomerDao);
-        EasyMock.expect(
-                mockUserDao.getUnusedUserInum((String) EasyMock.anyObject()))
-                .andReturn("@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA!3333.3333");
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername()))
         .andReturn(true);
+        EasyMock.expect(mockUserDao.getNextUserId()).andReturn(id);
         mockUserDao.addUser((User) EasyMock.anyObject());
         EasyMock.replay(mockUserDao);
         userService.addUser(user);
@@ -664,24 +664,20 @@ public class UserServiceTests {
         final UserCredential cred = new UserCredential(userpass, secretQuestion,
                 secretAnswer);
         final User user = new User(username, customerId, email, name, pref, cred);
-        user.setInum("inum=@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA.1234");
         user.setStatus(UserStatus.ACTIVE);
         return user;
     }
 
     private Customer getFakeCustomer() {
-        return new Customer(customerId, "@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA",
-                "@Rackspace.Testing", CustomerStatus.ACTIVE,
-                "inum=@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA",
-        "inum=@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA");
+        return new Customer(customerId, CustomerStatus.ACTIVE);
     }
 
     private List<Client> getFakeClients() {
 
         final Client client1 = new Client();
-        client1.setInum("client1inum");
+        client1.setId("id1");
         final Client client2 = new Client();
-        client2.setInum("client2inum");
+        client2.setId("id2");
 
         final List<Client> clients = new ArrayList<Client>();
         clients.add(client1);
