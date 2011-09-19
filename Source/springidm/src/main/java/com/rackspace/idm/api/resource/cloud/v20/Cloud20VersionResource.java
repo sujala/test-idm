@@ -63,7 +63,7 @@ public class Cloud20VersionResource {
 
     @POST
     @Path("tokens")
-    public Response authenticate(@Context HttpHeaders httpHeaders, JAXBElement<AuthenticationRequest> authenticationRequest) throws IOException {
+    public Response authenticate(@Context HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) throws IOException {
         return getCloud20Service().authenticate(httpHeaders,authenticationRequest).build();
     }
 
@@ -114,7 +114,7 @@ public class Cloud20VersionResource {
     @Path("tenants")
     public Response listTenants_getTenantByName(
         @Context HttpHeaders httpHeaders, @QueryParam("name") String name, @QueryParam("marker") String marker,
-        @QueryParam("limit") int limit) throws IOException {
+        @QueryParam("limit") Integer limit) throws IOException {
         //Note: getTenantByName only available to admin
         return Response.ok().build(); 
     }
@@ -134,7 +134,7 @@ public class Cloud20VersionResource {
     @GET
     @Path("users/credentials")
     public Response listCredentials(@Context HttpHeaders httpHeaders, @QueryParam("marker") String marker,
-        @QueryParam("limit") int limit) throws IOException {
+        @QueryParam("limit") Integer limit) throws IOException {
         return Response.ok().build(); 
     }
 

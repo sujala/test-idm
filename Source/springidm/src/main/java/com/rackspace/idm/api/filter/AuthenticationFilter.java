@@ -65,13 +65,13 @@ public class AuthenticationFilter implements ContainerRequestFilter,
 
         // skip token authentication for any url that ends with public.
         // convention for public documentation is /*/*/public
+        // also if path is /cloud we want to ensure we show the splash page
         // TODO: double check that this is an efficient check and will not cause collisions
-        if (path.endsWith("public")) {
+        if (path.endsWith("public") || path.equals("cloud")) {
             return request;
         }
 
         // Skip token authentication for cloud resources
-
         if (path.startsWith("cloud")) {
             if (path.matches("cloud/v\\d\\.\\d/{0,1}$") || path.matches("cloud/v\\d\\.\\d/auth") || path.matches("cloud/v\\d\\.\\d/tokens")) {
                 return request;
