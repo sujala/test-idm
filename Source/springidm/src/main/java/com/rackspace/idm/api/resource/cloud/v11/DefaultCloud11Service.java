@@ -520,9 +520,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         List<CloudBaseUrl> baseUrls = this.endpointService.getBaseUrls();
 
         if (StringUtils.isEmpty(serviceName)) {
-            return Response.ok(OBJ_FACTORY
-                .createBaseURLs(this.endpointConverterCloudV11
-                    .toBaseUrls(baseUrls)));
+            return Response.ok(OBJ_FACTORY.createBaseURLs(this.endpointConverterCloudV11.toBaseUrls(baseUrls)));
         }
 
         List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
