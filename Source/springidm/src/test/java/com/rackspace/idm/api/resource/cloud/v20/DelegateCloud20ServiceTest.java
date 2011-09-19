@@ -9,7 +9,6 @@ import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 
@@ -29,7 +28,7 @@ public class DelegateCloud20ServiceTest {
     CloudClient cloudClient = mock(CloudClient.class);
     HttpHeaders httpHeaders = mock(HttpHeaders.class);
     private Configuration config = mock(Configuration.class);
-    JAXBElement<AuthenticationRequest> authenticationRequest =mock(JAXBElement.class);
+    AuthenticationRequest authenticationRequest =mock(AuthenticationRequest.class);
     String url = "url";
 
     @Before

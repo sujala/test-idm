@@ -4,7 +4,6 @@ import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBElement;
 import java.io.IOException;
 
 /**
@@ -14,5 +13,5 @@ import java.io.IOException;
  * Time: 5:15 PM
  */
 public interface Cloud20Service {
-    Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, JAXBElement<AuthenticationRequest> authenticationRequest) throws IOException;
+    Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) throws IOException;
 }

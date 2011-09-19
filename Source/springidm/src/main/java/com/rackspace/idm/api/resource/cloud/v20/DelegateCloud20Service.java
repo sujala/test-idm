@@ -51,8 +51,8 @@ public class DelegateCloud20Service implements Cloud20Service {
 
 
     @Override
-    public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, JAXBElement<AuthenticationRequest> authenticationRequest) throws IOException {
-        String body = marshallObjectToString(authenticationRequest);
+    public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) throws IOException {
+        String body = marshallObjectToString(OBJ_FACTORY.createAuth(authenticationRequest));
         return cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
     }
 

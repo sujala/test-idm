@@ -63,7 +63,7 @@ public class Cloud20VersionResource {
 
     @POST
     @Path("tokens")
-    public Response authenticate(@Context HttpHeaders httpHeaders, JAXBElement<AuthenticationRequest> authenticationRequest) throws IOException {
+    public Response authenticate(@Context HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) throws IOException {
         return getCloud20Service().authenticate(httpHeaders,authenticationRequest).build();
     }
 

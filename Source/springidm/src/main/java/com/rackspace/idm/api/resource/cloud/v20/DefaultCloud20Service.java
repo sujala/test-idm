@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBElement;
 import java.io.IOException;
 
 /**
@@ -19,7 +18,7 @@ public class
         DefaultCloud20Service implements Cloud20Service{
 
     @Override
-    public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, JAXBElement<AuthenticationRequest> authenticationRequest) throws IOException {
+    public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) throws IOException {
         //TODO write me
         throw new UnsupportedOperationException("not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.authenticate");
     }
