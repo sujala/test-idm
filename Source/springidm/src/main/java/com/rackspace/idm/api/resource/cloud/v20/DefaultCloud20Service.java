@@ -90,7 +90,7 @@ public class
 
 	@Override
 	public ResponseBuilder listCredentials(HttpHeaders httpHeaders,
-			String marker, int limit) throws IOException {
+			String marker, Integer limit) throws IOException {
 		//TODO write me
 		throw new UnsupportedOperationException("not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.listCredentials");
 	}
@@ -125,7 +125,7 @@ public class
 
 	@Override
 	public ResponseBuilder listTenants(HttpHeaders httpHeaders, String marker,
-			int limit) throws IOException {
+			Integer limit) throws IOException {
 		//TODO write me
 		throw new UnsupportedOperationException("not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.listTenants");
 	}

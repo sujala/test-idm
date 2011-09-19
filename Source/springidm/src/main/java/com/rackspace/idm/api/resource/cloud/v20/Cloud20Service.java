@@ -29,7 +29,7 @@ public interface Cloud20Service {
 
     Response.ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String userId) throws IOException;
 
-    Response.ResponseBuilder listTenants(HttpHeaders httpHeaders, String marker, int limit) throws IOException;
+    Response.ResponseBuilder listTenants(HttpHeaders httpHeaders, String marker, Integer limit) throws IOException;
 
     Response.ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String name) throws IOException;
 
@@ -37,7 +37,7 @@ public interface Cloud20Service {
 
     Response.ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String body) throws IOException;
 
-    Response.ResponseBuilder listCredentials(HttpHeaders httpHeaders, String marker, int limit) throws IOException;
+    Response.ResponseBuilder listCredentials(HttpHeaders httpHeaders, String marker, Integer limit) throws IOException;
 
     Response.ResponseBuilder updateUserCredential(HttpHeaders httpHeaders, String body) throws IOException;
 
