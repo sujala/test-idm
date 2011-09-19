@@ -697,7 +697,11 @@
                         <include>**/*Test*.java</include>
                     </includes>
                     <systemProperties>
-                        <idm.properties.location>${idm.properties.location}</idm.properties.location>
+                        <property>
+                            <name>idm.properties.location</name>
+                            <value>${idm.properties.location}</value>
+                        </property>
+                        <!--<idm.properties.location>${idm.properties.location}</idm.properties.location>-->
                     </systemProperties>
                 </configuration>
 

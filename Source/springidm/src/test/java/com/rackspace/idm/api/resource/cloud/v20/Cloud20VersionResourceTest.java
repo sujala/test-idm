@@ -51,10 +51,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
                 .post(ClientResponse.class,
-                "{\n" +
-                        "\"auth\":{\n" +
-                        "\"passwordCredentials\":{\n" +
-                        "\"username\":\"cmarin1\",\"password\":\"Password1\"},\"tenantId\":\"1234\" }}");
+                "{" +"\"auth\":{" +"\"passwordCredentials\":{" +"\"username\":\"cmarin1\",\"password\":\"Password1\"},\"tenantId\":\"1234\" }}");
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
