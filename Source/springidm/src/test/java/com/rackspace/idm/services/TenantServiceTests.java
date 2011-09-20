@@ -43,6 +43,7 @@ public class TenantServiceTests {
     @Test
     public void shouldAddTenant() {
         Tenant tenant = getTestTenant();
+        EasyMock.expect(mockTenantDao.getNextTenantId()).andReturn(tenantId1);
         mockTenantDao.addTenant(tenant);
         EasyMock.replay(mockTenantDao);
         tenantService.addTenant(tenant);
