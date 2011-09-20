@@ -175,8 +175,8 @@ public abstract class LdapRepository {
     protected static final String NEXT_IDS_BASE_DN = "ou=nextIds,o=rackspace,dc=rackspace,dc=com";
 
     // Definitions for Contatiner Names
-    protected static final String CONTAINER_DIRECT = "DIRECT TOKENS";
-    protected static final String CONTAINER_DELEGATE = "DELEGATE TOKENS";
+    protected static final String CONTAINER_DIRECT = "DIRECT";
+    protected static final String CONTAINER_DELEGATE = "DELEGATE";
     protected static final String CONTAINER_ROLES = "CLIENT ROLES";
 
     // Search Attributes

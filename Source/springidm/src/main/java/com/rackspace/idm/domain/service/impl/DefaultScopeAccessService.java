@@ -1,40 +1,24 @@
 package com.rackspace.idm.domain.service.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.util.AuthHeaderHelper;
+import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.dao.ClientDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.Clients;
-import com.rackspace.idm.domain.entity.DefinedPermission;
-import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
-import com.rackspace.idm.domain.entity.DelegatedPermission;
-import com.rackspace.idm.domain.entity.GrantedPermission;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
-import com.rackspace.idm.domain.entity.Permission;
-import com.rackspace.idm.domain.entity.RackerScopeAccess;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.domain.entity.hasAccessToken;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.util.AuthHeaderHelper;
-import com.unboundid.ldap.sdk.LDAPException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class DefaultScopeAccessService implements ScopeAccessService {
 
@@ -568,8 +552,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public UserScopeAccess getUserScopeAccessForClientId(String userUniqueId,
-        String clientId) {
+    public UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId) {
         logger.debug("Getting User ScopeAccess by clientId {}", clientId);
         final UserScopeAccess scopeAccess = (UserScopeAccess) this.scopeAccessDao
             .getDirectScopeAccessForParentByClientId(userUniqueId, clientId);
@@ -652,8 +635,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         handleAuthenticationFailure(username, result);
 
-        final UserScopeAccess scopeAccess = checkAndGetUserScopeAccess(
-            clientId, result.getUser());
+        final UserScopeAccess scopeAccess = checkAndGetUserScopeAccess(clientId, result.getUser());
 
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccess.setAccessTokenString(this.generateToken());
@@ -862,8 +844,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     private UserScopeAccess checkAndGetUserScopeAccess(String clientId,
         User user) {
-        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(
-            user.getUniqueId(), clientId);
+        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(user.getUniqueId(), clientId);
 
         if (scopeAccess == null) {
             String errMsg = "Scope access not found.";
