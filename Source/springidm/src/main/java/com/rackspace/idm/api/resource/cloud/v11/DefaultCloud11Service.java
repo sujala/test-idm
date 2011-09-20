@@ -700,8 +700,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
 
         try {
-            UserScopeAccess usa = this.scopeAccessService
-                .getUserScopeAccessForClientIdByUsernameAndApiCredentials(
+            UserScopeAccess usa = this.scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(
                     username, apiKey, getCloudAuthClientId());
             List<CloudEndpoint> endpoints = this.endpointService
                 .getEndpointsForUser(username);

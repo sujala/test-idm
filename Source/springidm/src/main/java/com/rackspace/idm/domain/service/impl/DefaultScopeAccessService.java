@@ -618,8 +618,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public UserScopeAccess getUserScopeAccessForClientId(String userUniqueId,
-        String clientId) {
+    public UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId) {
         logger.debug("Getting User ScopeAccess by clientId {}", clientId);
         final UserScopeAccess scopeAccess = (UserScopeAccess) this.scopeAccessDao
             .getDirectScopeAccessForParentByClientId(userUniqueId, clientId);
@@ -702,8 +701,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         handleAuthenticationFailure(username, result);
 
-        final UserScopeAccess scopeAccess = checkAndGetUserScopeAccess(
-            clientId, result.getUser());
+        final UserScopeAccess scopeAccess = checkAndGetUserScopeAccess(clientId, result.getUser());
 
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccess.setAccessTokenString(this.generateToken());
@@ -912,8 +910,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     private UserScopeAccess checkAndGetUserScopeAccess(String clientId,
         User user) {
-        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(
-            user.getUniqueId(), clientId);
+        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(user.getUniqueId(), clientId);
 
         if (scopeAccess == null) {
             String errMsg = "Scope access not found.";
