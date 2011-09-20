@@ -1,18 +1,16 @@
 package com.rackspace.idm.domain.entity;
 
-import java.util.Locale;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-
+import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.validator.constraints.Length;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.validation.MessageTexts;
-import com.rackspace.idm.validation.RegexPatterns;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import java.util.Locale;
 
 public class User implements Auditable {
     private static final long serialVersionUID = 1347677880811855274L;
@@ -460,177 +458,67 @@ public class User implements Auditable {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + ((apiKey == null) ? 0 : apiKey.hashCode());
-        result = prime * result + ((country == null) ? 0 : country.hashCode());
-        result = prime * result + ((created == null) ? 0 : created.hashCode());
-        result = prime * result
-            + ((credential == null) ? 0 : credential.hashCode());
-        result = prime * result
-            + ((displayName == null) ? 0 : displayName.hashCode());
-        result = prime * result + ((email == null) ? 0 : email.hashCode());
-        result = prime * result + ((locked == null) ? 0 : locked.hashCode());
-        result = prime
-            * result
-            + ((maxLoginFailuresExceded == null) ? 0 : maxLoginFailuresExceded
-                .hashCode());
-        result = prime * result + ((mossoId == null) ? 0 : mossoId.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result + ((nastId == null) ? 0 : nastId.hashCode());
-        result = prime * result
-            + ((personId == null) ? 0 : personId.hashCode());
-        result = prime * result
-            + ((preference == null) ? 0 : preference.hashCode());
-        result = prime * result + ((region == null) ? 0 : region.hashCode());
-        result = prime * result
-            + ((softDeleted == null) ? 0 : softDeleted.hashCode());
-        result = prime
-            * result
-            + ((softDeletedTimestamp == null) ? 0 : softDeletedTimestamp
-                .hashCode());
-        result = prime * result + ((status == null) ? 0 : status.hashCode());
-        result = prime * result + ((updated == null) ? 0 : updated.hashCode());
-        return result;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        User user = (User) o;
+
+        if (apiKey != null ? !apiKey.equals(user.apiKey) : user.apiKey != null) return false;
+        if (country != null ? !country.equals(user.country) : user.country != null) return false;
+        if (created != null ? !created.equals(user.created) : user.created != null) return false;
+        if (credential != null ? !credential.equals(user.credential) : user.credential != null) return false;
+        if (customerId != null ? !customerId.equals(user.customerId) : user.customerId != null) return false;
+        if (displayName != null ? !displayName.equals(user.displayName) : user.displayName != null) return false;
+        if (email != null ? !email.equals(user.email) : user.email != null) return false;
+        if (id != null ? !id.equals(user.id) : user.id != null) return false;
+        if (locked != null ? !locked.equals(user.locked) : user.locked != null) return false;
+        if (maxLoginFailuresExceded != null ? !maxLoginFailuresExceded.equals(user.maxLoginFailuresExceded) : user.maxLoginFailuresExceded != null)
+            return false;
+        if (mossoId != null ? !mossoId.equals(user.mossoId) : user.mossoId != null) return false;
+        if (name != null ? !name.equals(user.name) : user.name != null) return false;
+        if (nastId != null ? !nastId.equals(user.nastId) : user.nastId != null) return false;
+        if (personId != null ? !personId.equals(user.personId) : user.personId != null) return false;
+        if (preference != null ? !preference.equals(user.preference) : user.preference != null) return false;
+        if (region != null ? !region.equals(user.region) : user.region != null) return false;
+        if (secureId != null ? !secureId.equals(user.secureId) : user.secureId != null) return false;
+        if (softDeleted != null ? !softDeleted.equals(user.softDeleted) : user.softDeleted != null) return false;
+        if (softDeletedTimestamp != null ? !softDeletedTimestamp.equals(user.softDeletedTimestamp) : user.softDeletedTimestamp != null)
+            return false;
+        if (status != user.status) return false;
+        if (uniqueId != null ? !uniqueId.equals(user.uniqueId) : user.uniqueId != null) return false;
+        if (updated != null ? !updated.equals(user.updated) : user.updated != null) return false;
+        if (username != null ? !username.equals(user.username) : user.username != null) return false;
+
+        return true;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!super.equals(obj)) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        User other = (User) obj;
-        if (apiKey == null) {
-            if (other.apiKey != null) {
-                return false;
-            }
-        } else if (!apiKey.equals(other.apiKey)) {
-            return false;
-        }
-        if (country == null) {
-            if (other.country != null) {
-                return false;
-            }
-        } else if (!country.equals(other.country)) {
-            return false;
-        }
-        if (created == null) {
-            if (other.created != null) {
-                return false;
-            }
-        } else if (!created.equals(other.created)) {
-            return false;
-        }
-        if (credential == null) {
-            if (other.credential != null) {
-                return false;
-            }
-        } else if (!credential.equals(other.credential)) {
-            return false;
-        }
-        if (displayName == null) {
-            if (other.displayName != null) {
-                return false;
-            }
-        } else if (!displayName.equals(other.displayName)) {
-            return false;
-        }
-        if (email == null) {
-            if (other.email != null) {
-                return false;
-            }
-        } else if (!email.equals(other.email)) {
-            return false;
-        }
-        if (locked == null) {
-            if (other.locked != null) {
-                return false;
-            }
-        } else if (!locked.equals(other.locked)) {
-            return false;
-        }
-        if (maxLoginFailuresExceded == null) {
-            if (other.maxLoginFailuresExceded != null) {
-                return false;
-            }
-        } else if (!maxLoginFailuresExceded
-            .equals(other.maxLoginFailuresExceded)) {
-            return false;
-        }
-        if (mossoId == null) {
-            if (other.mossoId != null) {
-                return false;
-            }
-        } else if (!mossoId.equals(other.mossoId)) {
-            return false;
-        }
-        if (name == null) {
-            if (other.name != null) {
-                return false;
-            }
-        } else if (!name.equals(other.name)) {
-            return false;
-        }
-        if (nastId == null) {
-            if (other.nastId != null) {
-                return false;
-            }
-        } else if (!nastId.equals(other.nastId)) {
-            return false;
-        }
-        if (personId == null) {
-            if (other.personId != null) {
-                return false;
-            }
-        } else if (!personId.equals(other.personId)) {
-            return false;
-        }
-        if (preference == null) {
-            if (other.preference != null) {
-                return false;
-            }
-        } else if (!preference.equals(other.preference)) {
-            return false;
-        }
-        if (region == null) {
-            if (other.region != null) {
-                return false;
-            }
-        } else if (!region.equals(other.region)) {
-            return false;
-        }
-        if (softDeleted == null) {
-            if (other.softDeleted != null) {
-                return false;
-            }
-        } else if (!softDeleted.equals(other.softDeleted)) {
-            return false;
-        }
-        if (softDeletedTimestamp == null) {
-            if (other.softDeletedTimestamp != null) {
-                return false;
-            }
-        } else if (!softDeletedTimestamp.equals(other.softDeletedTimestamp)) {
-            return false;
-        }
-        if (status != other.status) {
-            return false;
-        }
-        if (updated == null) {
-            if (other.updated != null) {
-                return false;
-            }
-        } else if (!updated.equals(other.updated)) {
-            return false;
-        }
-        return true;
+    public int hashCode() {
+        int result = uniqueId != null ? uniqueId.hashCode() : 0;
+        result = 31 * result + (id != null ? id.hashCode() : 0);
+        result = 31 * result + (username != null ? username.hashCode() : 0);
+        result = 31 * result + (customerId != null ? customerId.hashCode() : 0);
+        result = 31 * result + (email != null ? email.hashCode() : 0);
+        result = 31 * result + (credential != null ? credential.hashCode() : 0);
+        result = 31 * result + (personId != null ? personId.hashCode() : 0);
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (preference != null ? preference.hashCode() : 0);
+        result = 31 * result + (country != null ? country.hashCode() : 0);
+        result = 31 * result + (displayName != null ? displayName.hashCode() : 0);
+        result = 31 * result + (locked != null ? locked.hashCode() : 0);
+        result = 31 * result + (apiKey != null ? apiKey.hashCode() : 0);
+        result = 31 * result + (status != null ? status.hashCode() : 0);
+        result = 31 * result + (softDeleted != null ? softDeleted.hashCode() : 0);
+        result = 31 * result + (region != null ? region.hashCode() : 0);
+        result = 31 * result + (nastId != null ? nastId.hashCode() : 0);
+        result = 31 * result + (mossoId != null ? mossoId.hashCode() : 0);
+        result = 31 * result + (created != null ? created.hashCode() : 0);
+        result = 31 * result + (updated != null ? updated.hashCode() : 0);
+        result = 31 * result + (softDeletedTimestamp != null ? softDeletedTimestamp.hashCode() : 0);
+        result = 31 * result + (maxLoginFailuresExceded != null ? maxLoginFailuresExceded.hashCode() : 0);
+        result = 31 * result + (secureId != null ? secureId.hashCode() : 0);
+        return result;
     }
 
     @Override
