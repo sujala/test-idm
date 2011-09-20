@@ -1108,4 +1108,20 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         }
         return clientId;
     }
+    
+    @Override
+    public String getNextRoleId() {
+        String roleId = null;
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            roleId = getNextId(conn, NEXT_ROLE_ID);
+        } catch (LDAPException e) {
+            getLogger().error("Error getting next roleId", e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        return roleId;
+    }
 }

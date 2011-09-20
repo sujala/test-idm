@@ -5,6 +5,7 @@ import java.util.List;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.Clients;
 import com.rackspace.idm.domain.entity.DefinedPermission;
@@ -72,4 +73,14 @@ public interface ClientService {
     Client getClientByScope(String scope);
     
     List<Client> getAvailableScopes();
+    
+    void addClientRole(ClientRole role);
+    
+    void deleteClientRole(ClientRole role);
+    
+    void updateClientRole(ClientRole role);
+    
+    List<ClientRole> getClientRolesByClientId(String clientId);
+    
+    ClientRole getClientRoleByClientIdAndRoleName(String clientId, String roleName);
 }

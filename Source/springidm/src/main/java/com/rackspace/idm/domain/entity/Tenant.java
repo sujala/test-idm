@@ -1,6 +1,9 @@
 package com.rackspace.idm.domain.entity;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
@@ -37,6 +40,9 @@ public class Tenant implements Auditable{
     
     @LDAPField(attribute=LdapRepository.ATTR_UPDATED_DATE, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date updated;
+    
+    @LDAPField(attribute=LdapRepository.ATTR_BASEURL_ID, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    private String[] baseUrlIds;
     
     public ReadOnlyEntry getLDAPEntry() {
         return ldapEntry;
@@ -97,6 +103,46 @@ public class Tenant implements Auditable{
 
     public Date getUpdated() {
         return updated;
+    }
+
+    public String[] getBaseUrlIds() {
+        return baseUrlIds;
+    }
+
+    public void setBaseUrlIds(String[] baseUrlIds) {
+        this.baseUrlIds = baseUrlIds;
+    }
+    
+    public void addBaseUrlId(String baseUrlId) {
+        List<String> baseUrls = new ArrayList<String>();
+        if (baseUrlIds != null || baseUrlIds.length > 0) {
+            Collections.addAll(baseUrls, baseUrlIds);
+        }
+        if (!baseUrls.contains(baseUrlId)) {
+            baseUrls.add(baseUrlId);
+        }
+        baseUrlIds = baseUrls.toArray(new String[baseUrls.size()]);
+    }
+
+    public void removeBaseUrlId(String baseUrlId) {
+        if (baseUrlIds == null || baseUrlIds.length == 0) {
+            return;
+        }
+        List<String> baseUrls = new ArrayList<String>();
+        Collections.addAll(baseUrls, baseUrlIds);
+        if (baseUrls.contains(baseUrlId)) {
+            baseUrls.remove(baseUrlId);
+        }
+        baseUrlIds = baseUrls.toArray(new String[baseUrls.size()]);
+    }
+
+    public boolean containsBaseUrlId(String baseUrlId) {
+        if (baseUrlIds == null || baseUrlIds.length == 0) {
+            return false;
+        }
+        List<String> baseUrls = new ArrayList<String>();
+        Collections.addAll(baseUrls, baseUrlIds);
+        return baseUrls.contains(baseUrlId);
     }
 
     public void copyChanges(Tenant modifiedTenant) {

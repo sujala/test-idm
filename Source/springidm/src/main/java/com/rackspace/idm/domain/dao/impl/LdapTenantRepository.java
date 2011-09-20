@@ -418,4 +418,20 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
             getAppConnPool().releaseConnection(conn);
         }
     }
+    
+    @Override
+    public String getNextTenantId() {
+        String userId = null;
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            userId = getNextId(conn, NEXT_TENANT_ID);
+        } catch (LDAPException e) {
+            getLogger().error("Error getting next tenantId", e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        return userId;
+    }
 }

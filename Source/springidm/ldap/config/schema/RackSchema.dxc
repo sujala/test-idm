@@ -498,6 +498,14 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.65) = {
     description = "Version Info URL"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.66) = {
+    name = openStackType
+    ldap-names = openStackType
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "The OpenStack-registered type"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 	name = rsPerson
 	ldap-names = rsPerson
@@ -606,6 +614,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.7) = {
         baseUrlType,
         cn,
         def,
+        openStackType,
         rsGlobal,
         service,
         rsRegion,
@@ -785,7 +794,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.21) = {
         enabled
     may-contain
     	description,
-        tenantDisplayName
+        tenantDisplayName,
+        baseUrlId
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.22) = {

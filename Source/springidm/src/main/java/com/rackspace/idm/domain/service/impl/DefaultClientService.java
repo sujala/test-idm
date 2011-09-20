@@ -15,6 +15,7 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.Clients;
@@ -44,7 +45,6 @@ public class DefaultClientService implements ClientService {
         this.userDao = userDao;
         this.scopeAccessDao = scopeAccessDao;
     }
-
     
     @Override
     public void add(Client client) {
@@ -637,5 +637,55 @@ public class DefaultClientService implements ClientService {
         logger.info("Updating Client: {}", client);
         this.clientDao.updateClient(client);
         logger.info("Updated Client: {}", client);
+    }
+
+
+    @Override
+    public void addClientRole(ClientRole role) {
+        logger.info("Adding Client Role: {}", role);
+        Client client = this.clientDao.getClientByClientId(role.getClientId());
+        if (client == null) {
+            String errMsg = String.format("Client %s not found", role.getClientId());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        role.setId(this.clientDao.getNextRoleId());
+        this.clientDao.addClientRole(client.getUniqueId(), role);
+        logger.info("Added Client Role: {}", role);
+    }
+
+
+    @Override
+    public void deleteClientRole(ClientRole role) {
+        logger.info("Delete Client Role: {}", role);
+        this.clientDao.deleteClientRole(role);
+        logger.info("Deleted Client Role: {}", role);
+    }
+
+
+    @Override
+    public void updateClientRole(ClientRole role) {
+        logger.info("Update Client Role: {}", role);
+        this.clientDao.updateClientRole(role);
+        logger.info("Udpated Client Role: {}", role);
+    }
+
+
+    @Override
+    public List<ClientRole> getClientRolesByClientId(String clientId) {
+        logger.debug("Getting Client Roles for client: {}", clientId);
+        List<ClientRole> roles = this.clientDao.getClientRolesByClientId(clientId);
+        logger.debug("Got {} Client Roles", roles.size());
+        return roles;
+    }
+
+
+    @Override
+    public ClientRole getClientRoleByClientIdAndRoleName(String clientId,
+        String roleName) {
+        logger.debug("Getting Client Role {} for client {}", roleName, clientId);
+        ClientRole role = this.clientDao.getClientRoleByClientIdAndRoleName(clientId, roleName);
+        logger.debug("Got Client Role {} for client {}", roleName, clientId);
+        return role;
     }
 }

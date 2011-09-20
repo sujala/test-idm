@@ -66,4 +66,6 @@ public interface ClientDao {
     void updateClientRole(ClientRole role);
     
     String getNextClientId();
+
+    String getNextRoleId();
 }

@@ -85,6 +85,27 @@ public class LdapEndpointRepository extends LdapRepository implements
             atts.add(new Attribute(ATTR_ENABLED, baseUrl.getEnabled()
                 .toString()));
         }
+        
+        if (!StringUtils.isBlank(baseUrl.getOpenstackType())) {
+            atts.add(new Attribute(ATTR_OPENSTACK_TYPE, baseUrl.getOpenstackType()));
+        }
+        
+        if (!StringUtils.isBlank(baseUrl.getVersionId())) {
+            atts.add(new Attribute(ATTR_VERSION_ID, baseUrl.getVersionId()));
+        }
+        
+        if (!StringUtils.isBlank(baseUrl.getVersionInfo())) {
+            atts.add(new Attribute(ATTR_VERSION_INFO, baseUrl.getVersionInfo()));
+        }
+        
+        if (!StringUtils.isBlank(baseUrl.getVersionList())) {
+            atts.add(new Attribute(ATTR_VERSION_LIST, baseUrl.getVersionList()));
+        }
+        
+        if (baseUrl.getGlobal() != null) {
+            atts.add(new Attribute(ATTR_GLOBAL, baseUrl.getGlobal().toString()));
+        }
+        
 
         String baseUrlDN = new LdapDnBuilder(BASEURL_BASE_DN).addAttribute(
             ATTR_ID, String.valueOf(baseUrl.getBaseUrlId())).build();
@@ -394,6 +415,13 @@ public class LdapEndpointRepository extends LdapRepository implements
         baseUrl.setService(resultEntry.getAttributeValue(ATTR_SERVICE));
         baseUrl
             .setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
+        
+        baseUrl.setOpenstackType(resultEntry.getAttributeValue(ATTR_OPENSTACK_TYPE));
+        baseUrl.setVersionId(resultEntry.getAttributeValue(ATTR_VERSION_ID));
+        baseUrl.setVersionInfo(resultEntry.getAttributeValue(ATTR_VERSION_INFO));
+        baseUrl.setVersionList(resultEntry.getAttributeValue(ATTR_VERSION_LIST));
+        baseUrl.setGlobal(resultEntry.getAttributeValueAsBoolean(ATTR_GLOBAL));
+        
         getLogger().debug("Exiting getBaseUrl");
         return baseUrl;
     }

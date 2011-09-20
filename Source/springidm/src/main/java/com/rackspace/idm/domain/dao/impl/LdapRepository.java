@@ -157,6 +157,11 @@ public abstract class LdapRepository {
     public static final String ATTR_SOFT_DELETED_DATE = "softDeletedTimestamp";
     public static final String ATTR_PASSWORD_UPDATED_TIMESTAMP = "passwordUpdatedTimestamp";
     public static final String ATTR_PASSWORD_SELF_UPDATED = "passwordSelfUpdated";
+    public static final String ATTR_VERSION_ID = "versionId";
+    public static final String ATTR_VERSION_INFO = "versionInfo";
+    public static final String ATTR_VERSION_LIST = "versionList";
+    public static final String ATTR_GLOBAL = "rsGlobal";
+    public static final String ATTR_OPENSTACK_TYPE = "openstackType";
 
     // Definitions for LDAP DNs
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
@@ -169,16 +174,10 @@ public abstract class LdapRepository {
     protected static final String RACKERS_BASE_DN = "ou=rackers,o=rackspace,dc=rackspace,dc=com";
     protected static final String NEXT_IDS_BASE_DN = "ou=nextIds,o=rackspace,dc=rackspace,dc=com";
 
-    // Definitions for OU names
-    protected static final String OU_GROUPS_NAME = "groups";
-    protected static final String OU_PEOPLE_NAME = "people";
-    protected static final String OU_APPLICATIONS_NAME = "applications";
-    protected static final String OU_PERMISSIONS_NAME = "permissions";
-
-    // Definitions for ScopeAccess Contatiner Names
-    protected static final String CONTAINER_DIRECT = "DIRECT";
-    protected static final String CONTAINER_DELEGATE = "DELEGATE";
-    protected static final String CONTAINER_ROLES = "ROLES";
+    // Definitions for Contatiner Names
+    protected static final String CONTAINER_DIRECT = "DIRECT TOKENS";
+    protected static final String CONTAINER_DELEGATE = "DELEGATE TOKENS";
+    protected static final String CONTAINER_ROLES = "CLIENT ROLES";
 
     // Search Attributes
     protected static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {

@@ -1,22 +1,49 @@
 package com.rackspace.idm.domain.config;
 
-import com.rackspace.idm.domain.dao.*;
-import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.domain.service.impl.*;
-import com.rackspace.idm.util.AuthHeaderHelper;
-import com.rackspace.idm.util.LdapRouterMBean;
-import com.rackspace.idm.util.LoggerMBean;
-import com.rackspace.idm.util.WadlTrie;
-import com.rackspace.idm.validation.InputValidator;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.validation.Validation;
+import javax.validation.Validator;
+
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jmx.export.MBeanExporter;
 
-import javax.validation.Validation;
-import javax.validation.Validator;
-import java.util.HashMap;
-import java.util.Map;
+import com.rackspace.idm.domain.dao.ApiDocDao;
+import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.CustomerDao;
+import com.rackspace.idm.domain.dao.EndpointDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.service.ApiDocService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.CustomerService;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.OAuthService;
+import com.rackspace.idm.domain.service.PasswordComplexityService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.impl.DefaultApiDocService;
+import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
+import com.rackspace.idm.domain.service.impl.DefaultClientService;
+import com.rackspace.idm.domain.service.impl.DefaultCustomerService;
+import com.rackspace.idm.domain.service.impl.DefaultEndpointService;
+import com.rackspace.idm.domain.service.impl.DefaultOAuthService;
+import com.rackspace.idm.domain.service.impl.DefaultPasswordComplexityService;
+import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
+import com.rackspace.idm.domain.service.impl.DefaultTenantService;
+import com.rackspace.idm.domain.service.impl.DefaultUserService;
+import com.rackspace.idm.util.AuthHeaderHelper;
+import com.rackspace.idm.util.LdapRouterMBean;
+import com.rackspace.idm.util.LoggerMBean;
+import com.rackspace.idm.util.WadlTrie;
+import com.rackspace.idm.validation.InputValidator;
 
 /**
  * @author john.eo <br/>
@@ -141,7 +168,7 @@ public class ServiceConfiguration {
     
     @Bean
     public TenantService tenantService() {
-        return new DefaultTenantService(tenantDao);
+        return new DefaultTenantService(tenantDao, clientDao, scopeAccessDao);
     }
 
     @Bean
