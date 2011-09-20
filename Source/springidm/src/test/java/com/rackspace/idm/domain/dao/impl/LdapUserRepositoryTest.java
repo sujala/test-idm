@@ -37,6 +37,8 @@ public class LdapUserRepositoryTest {
     private LdapConnectionPools connPools;
     
     String rackerId = "racker";
+    
+    String id = "XXXX";
 
     private final String testCustomerDN = "o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,ou=customers,o=rackspace,dc=rackspace,dc=com";
 
@@ -140,14 +142,14 @@ public class LdapUserRepositoryTest {
         }
 
         try {
-            repo.getUserByInum(null);
+            repo.getUserById(null);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
 
         try {
-            repo.getUserByInum("     ");
+            repo.getUserById("     ");
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
@@ -183,13 +185,6 @@ public class LdapUserRepositoryTest {
 
         try {
             repo.authenticateByNastIdAndAPIKey(null, "");
-            Assert.fail("Should have thrown an exception!");
-        } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
-        }
-
-        try {
-            repo.getUnusedUserInum(null);
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
@@ -268,32 +263,11 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
-    public void shouldFindOneUserThatExistsByInum() {
-        User user = addNewTestUser();
-        User returned = repo.getUserByInum(user.getInum());
-        repo.deleteUser(user.getUsername());
-        Assert.assertNotNull(returned);
-        Assert.assertEquals(returned.getLastname(), user.getLastname());
-    }
-
-    @Test
-    public void shouldNotFindUserThatDoesNotExistByInum() {
-        User user = repo.getUserByUsername("BADINUM");
-        Assert.assertNull(user);
-    }
-
-    @Test
     public void shouldAddNewUser() {
         User newUser = addNewTestUser();
         User checkuser = repo.getUserByUsername(newUser.getUsername());
         Assert.assertNotNull(checkuser);
         repo.deleteUser(newUser.getUsername());
-    }
-
-    @Test
-    public void shouldGetUnusedUserInum() {
-        String inum = repo.getUnusedUserInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE");
-        Assert.assertFalse(inum.equals("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111"));
     }
 
     @Test
@@ -615,15 +589,13 @@ public class LdapUserRepositoryTest {
         newUser.setCountry("USA");
         newUser.setPersonId("RPN-111-222-333");
         newUser.setDisplayName("MY DISPLAY NAME");
-        newUser.setIname("@Rackspace.TestCustomer*deleteme");
-        newUser.setInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE.5555");
-        newUser.setOrgInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE");
         newUser.setStatus(UserStatus.ACTIVE);
         newUser.setRegion("ORD");
         newUser.setSoftDeleted(false);
         newUser.setDefaults();
         newUser.setNastId("TESTNASTID");
         newUser.setMossoId(88888);
+        newUser.setId(id);
         return newUser;
     }
 
@@ -639,6 +611,7 @@ public class LdapUserRepositoryTest {
             "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE", "XXX", UserStatus.ACTIVE,
             "RPN-111-222-333");
         newUser.setDefaults();
+        newUser.setId(id);
         return newUser;
     }
 
@@ -653,11 +626,9 @@ public class LdapUserRepositoryTest {
         newUser.setCountry("USA");
         newUser.setPersonId("RPN-111-222-333");
         newUser.setDisplayName("MY DISPLAY NAME");
-        newUser.setIname("@Rackspace.TestCustomer*delete.me");
-        newUser.setInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE.5557");
-        newUser.setOrgInum("@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE");
         newUser.setStatus(UserStatus.ACTIVE);
         newUser.setDefaults();
+        newUser.setId(id);
         return newUser;
     }
 

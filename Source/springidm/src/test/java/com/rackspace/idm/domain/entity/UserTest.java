@@ -107,11 +107,8 @@ public class UserTest {
         user1.setDisplayName(null);
         user1.setEmail(null);
         user1.setFirstname(null);
-        user1.setIname(null);
-        user1.setInum(null);
         user1.setLastname(null);
         user1.setMiddlename(null);
-        user1.setOrgInum(null);
         user1.setPasswordObj(null);
         user1.setPersonId(null);
         user1.setLocale(null);
@@ -126,11 +123,8 @@ public class UserTest {
         user2.setDisplayName(null);
         user2.setEmail(null);
         user2.setFirstname(null);
-        user2.setIname(null);
-        user2.setInum(null);
         user2.setLastname(null);
         user2.setMiddlename(null);
-        user2.setOrgInum(null);
         user2.setPasswordObj(null);
         user2.setPersonId(null);
         user2.setLocale(null);
@@ -186,18 +180,6 @@ public class UserTest {
         Assert.assertFalse(user2.equals(user1));
         user2.setFirstname(user1.getFirstname());
 
-        user2.setIname("SomeOtherValue");
-        Assert.assertFalse(user1.equals(user2));
-        user2.setIname(null);
-        Assert.assertFalse(user2.equals(user1));
-        user2.setIname(user1.getIname());
-
-        user2.setInum("SomeOtherValue");
-        Assert.assertFalse(user1.equals(user2));
-        user2.setInum(null);
-        Assert.assertFalse(user2.equals(user1));
-        user2.setInum(user1.getInum());
-
         user2.setLastname("SomeOtherValue");
         Assert.assertFalse(user1.equals(user2));
         user2.setLastname(null);
@@ -209,12 +191,6 @@ public class UserTest {
         user2.setMiddlename(null);
         Assert.assertFalse(user2.equals(user1));
         user2.setMiddlename(user1.getMiddlename());
-
-        user2.setOrgInum("SomeOtherValue");
-        Assert.assertFalse(user1.equals(user2));
-        user2.setOrgInum(null);
-        Assert.assertFalse(user2.equals(user1));
-        user2.setOrgInum(user1.getOrgInum());
 
         user2.setPasswordObj(Password.newInstance("SomeOtherValue"));
         Assert.assertFalse(user1.equals(user2));

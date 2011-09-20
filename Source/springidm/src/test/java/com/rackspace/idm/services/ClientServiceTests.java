@@ -65,6 +65,8 @@ public class ClientServiceTests {
     String username = "username";
 
     String uniqueId = "uniqueId";
+    
+    String id = "XXX";
 
     @Before
     public void setUp() throws Exception {
@@ -166,14 +168,13 @@ public class ClientServiceTests {
         Customer customer = getFakeCustomer();
 
         EasyMock.expect(
-            mockCustomerDao.getCustomerByCustomerId(client.getCustomerId()))
+            mockCustomerDao.getCustomerByCustomerId(client.getRCN()))
             .andReturn(customer);
         EasyMock.replay(mockCustomerDao);
 
         EasyMock.expect(mockClientDao.getClientByClientname(client.getName()))
             .andReturn(null);
-        EasyMock.expect(mockClientDao.getUnusedClientInum(customer.getInum()))
-            .andReturn(customer.getInum() + "!8888.8888");
+        EasyMock.expect(mockClientDao.getNextClientId()).andReturn(id);
         mockClientDao.addClient((Client) EasyMock.anyObject());
         EasyMock.replay(mockClientDao);
 
@@ -187,7 +188,7 @@ public class ClientServiceTests {
         Client client = getFakeClient();
 
         EasyMock.expect(
-            mockCustomerDao.getCustomerByCustomerId(client.getCustomerId()))
+            mockCustomerDao.getCustomerByCustomerId(client.getRCN()))
             .andReturn(null);
         EasyMock.replay(mockCustomerDao);
 
@@ -200,7 +201,7 @@ public class ClientServiceTests {
         Customer customer = getFakeCustomer();
 
         EasyMock.expect(
-            mockCustomerDao.getCustomerByCustomerId(client.getCustomerId()))
+            mockCustomerDao.getCustomerByCustomerId(client.getRCN()))
             .andReturn(customer);
         EasyMock.replay(mockCustomerDao);
 
@@ -216,7 +217,7 @@ public class ClientServiceTests {
     @Test
     public void shouldDeleteClient() {
         List<Permission> perms = new ArrayList<Permission>();
-        mockClientDao.deleteClient(getFakeClient());
+        mockClientDao.deleteClient(EasyMock.anyObject(Client.class));
         EasyMock.expect(mockClientDao.getClientByClientId(clientId)).andReturn(
             getFakeClient());
 
@@ -681,15 +682,15 @@ public class ClientServiceTests {
     }
 
     private Client getFakeClient() {
-        Client client = new Client(clientId, clientSecret, name, inum, iname,
+        Client client = new Client(clientId, clientSecret, name,
             customerId, status);
         client.setUniqueId(uniqueId);
         return client;
     }
 
     private Customer getFakeCustomer() {
-        return new Customer(customerId, customerInum, customerIname,
-            customerStatus, customerSeeAlso, owner);
+        return new Customer(customerId, 
+            customerStatus);
     }
 
     private List<ClientGroup> getFakeClientGroupList() {

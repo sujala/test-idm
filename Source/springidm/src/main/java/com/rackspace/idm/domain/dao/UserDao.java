@@ -34,11 +34,9 @@ public interface UserDao {
 
     Racker getRackerByRackerId(String rackerId);
 
-    String getUnusedUserInum(String customerInum);
-
     User getUserByCustomerIdAndUsername(String customerId, String username);
 
-    User getUserByInum(String inum);
+    User getUserById(String id);
 
     User getUserByMossoId(int mossoId);
 
@@ -61,4 +59,6 @@ public interface UserDao {
      * @param hasSelfUpdatedPassword True if the user is changing his/her own password.
      */
     void updateUser(User user, boolean hasSelfUpdatedPassword);
+    
+    String getNextUserId();
 }

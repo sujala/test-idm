@@ -20,6 +20,8 @@ public class UserConverter {
 
     public User toUserDO(com.rackspace.api.idm.v1.User jaxbUser) {
         User user = new User();
+        
+        user.setId(jaxbUser.getId());
 
         user.setCountry(jaxbUser.getCountry());
         user.setTimeZone(jaxbUser.getTimeZone());
@@ -27,13 +29,10 @@ public class UserConverter {
         user.setDisplayName(jaxbUser.getDisplayName());
         user.setEmail(jaxbUser.getEmail());
         user.setFirstname(jaxbUser.getFirstName());
-        user.setIname(jaxbUser.getIname());
-        user.setInum(jaxbUser.getInum());
         user.setLocked(jaxbUser.isLocked());
 
         user.setLastname(jaxbUser.getLastName());
         user.setMiddlename(jaxbUser.getMiddleName());
-        user.setOrgInum(jaxbUser.getCustomerInum());
         user.setPersonId(jaxbUser.getPersonId());
         user.setPreferredLang(jaxbUser.getPrefLanguage());
         user.setRegion(jaxbUser.getRegion());
@@ -165,14 +164,12 @@ public class UserConverter {
     private com.rackspace.api.idm.v1.User toUserJaxb(User user,
         boolean includePassword, boolean includeSecret) {
         com.rackspace.api.idm.v1.User returnedUser = of.createUser();
+        returnedUser.setId(user.getId());
         returnedUser.setCountry(user.getCountry());
         returnedUser.setTimeZone(user.getTimeZone());
         returnedUser.setCustomerId(user.getCustomerId());
-        returnedUser.setCustomerInum(user.getOrgInum());
         returnedUser.setDisplayName(user.getDisplayName());
         returnedUser.setEmail(user.getEmail());
-        returnedUser.setIname(user.getIname());
-        returnedUser.setInum(user.getInum());
         returnedUser.setLocked(user.isLocked());
         returnedUser.setFirstName(user.getFirstname());
         returnedUser.setLastName(user.getLastname());

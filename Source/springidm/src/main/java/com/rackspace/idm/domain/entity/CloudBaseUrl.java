@@ -27,6 +27,14 @@ public class CloudBaseUrl implements Auditable {
     private Boolean def = null;
     private Boolean enabled = null;
     
+    private String openstackType = null;
+    private String name = null;
+    private Boolean global = null;
+    
+    private String versionId = null;
+    private String versionInfo = null;
+    private String versionList = null;
+    
     public String getUniqueId() {
         return uniqueId;
     }
@@ -107,6 +115,54 @@ public class CloudBaseUrl implements Auditable {
         this.enabled = enabled;
     }
 
+    public String getOpenstackType() {
+        return openstackType;
+    }
+
+    public void setOpenstackType(String openstackType) {
+        this.openstackType = openstackType;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Boolean getGlobal() {
+        return global;
+    }
+
+    public void setGlobal(Boolean global) {
+        this.global = global;
+    }
+
+    public String getVersionId() {
+        return versionId;
+    }
+
+    public void setVersionId(String versionId) {
+        this.versionId = versionId;
+    }
+
+    public String getVersionInfo() {
+        return versionInfo;
+    }
+
+    public void setVersionInfo(String versionInfo) {
+        this.versionInfo = versionInfo;
+    }
+
+    public String getVersionList() {
+        return versionList;
+    }
+
+    public void setVersionList(String versionList) {
+        this.versionList = versionList;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -119,12 +175,24 @@ public class CloudBaseUrl implements Auditable {
             + ((baseUrlType == null) ? 0 : baseUrlType.hashCode());
         result = prime * result + ((def == null) ? 0 : def.hashCode());
         result = prime * result + ((enabled == null) ? 0 : enabled.hashCode());
+        result = prime * result + ((global == null) ? 0 : global.hashCode());
         result = prime * result
             + ((internalUrl == null) ? 0 : internalUrl.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result
+            + ((openstackType == null) ? 0 : openstackType.hashCode());
         result = prime * result
             + ((publicUrl == null) ? 0 : publicUrl.hashCode());
         result = prime * result + ((region == null) ? 0 : region.hashCode());
         result = prime * result + ((service == null) ? 0 : service.hashCode());
+        result = prime * result
+            + ((uniqueId == null) ? 0 : uniqueId.hashCode());
+        result = prime * result
+            + ((versionId == null) ? 0 : versionId.hashCode());
+        result = prime * result
+            + ((versionInfo == null) ? 0 : versionInfo.hashCode());
+        result = prime * result
+            + ((versionList == null) ? 0 : versionList.hashCode());
         return result;
     }
 
@@ -175,11 +243,32 @@ public class CloudBaseUrl implements Auditable {
         } else if (!enabled.equals(other.enabled)) {
             return false;
         }
+        if (global == null) {
+            if (other.global != null) {
+                return false;
+            }
+        } else if (!global.equals(other.global)) {
+            return false;
+        }
         if (internalUrl == null) {
             if (other.internalUrl != null) {
                 return false;
             }
         } else if (!internalUrl.equals(other.internalUrl)) {
+            return false;
+        }
+        if (name == null) {
+            if (other.name != null) {
+                return false;
+            }
+        } else if (!name.equals(other.name)) {
+            return false;
+        }
+        if (openstackType == null) {
+            if (other.openstackType != null) {
+                return false;
+            }
+        } else if (!openstackType.equals(other.openstackType)) {
             return false;
         }
         if (publicUrl == null) {
@@ -203,16 +292,40 @@ public class CloudBaseUrl implements Auditable {
         } else if (!service.equals(other.service)) {
             return false;
         }
+        if (uniqueId == null) {
+            if (other.uniqueId != null) {
+                return false;
+            }
+        } else if (!uniqueId.equals(other.uniqueId)) {
+            return false;
+        }
+        if (versionId == null) {
+            if (other.versionId != null) {
+                return false;
+            }
+        } else if (!versionId.equals(other.versionId)) {
+            return false;
+        }
+        if (versionInfo == null) {
+            if (other.versionInfo != null) {
+                return false;
+            }
+        } else if (!versionInfo.equals(other.versionInfo)) {
+            return false;
+        }
+        if (versionList == null) {
+            if (other.versionList != null) {
+                return false;
+            }
+        } else if (!versionList.equals(other.versionList)) {
+            return false;
+        }
         return true;
     }
 
     @Override
     public String toString() {
-        return "CloudBaseUrl [baseUrlId=" + baseUrlId + ", baseUrlType="
-            + baseUrlType + ", region=" + region + ", service=" + service
-            + ", publicUrl=" + publicUrl + ", internalUrl=" + internalUrl
-            + ", adminUrl=" + adminUrl + ", def=" + def + ", enabled="
-            + enabled + "]";
+        return getAuditContext();
     }
     
     @Override

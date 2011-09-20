@@ -1,18 +1,34 @@
 package com.rackspace.idm.domain.entity;
 
-import java.util.Locale;
-
+import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
 import org.apache.commons.lang.StringUtils;
+import org.hibernate.validator.constraints.Length;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import com.rackspace.idm.GlobalConstants;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import java.util.Locale;
 
-public class User extends BaseUser implements Auditable {
+public class User implements Auditable {
     private static final long serialVersionUID = 1347677880811855274L;
+    
+    private String uniqueId = null;
+    
+    private String id = null;
+
+    @NotNull
+    @Length(min = 1, max = 32)
+    @Pattern(regexp = RegexPatterns.USERNAME, message = MessageTexts.USERNAME)
+    private String username = null;
+
+    @NotNull
+    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
+    private String customerId = null;
 
     private String email = null;
-
 
     private UserCredential credential = new UserCredential();
     private String personId = null;
@@ -21,10 +37,7 @@ public class User extends BaseUser implements Auditable {
     private UserLocale preference = new UserLocale();
     private String country = null;
     private String displayName = null;
-    private String inum = null;
-    private String iname = null;
     private Boolean locked = null;
-    private String orgInum = null;
     private String apiKey = null;
     private UserStatus status = null;
 
@@ -51,13 +64,14 @@ public class User extends BaseUser implements Auditable {
 
     @Deprecated
     public User(String username) {
-        super(username);
+        this.username = username;
     }
 
     @Deprecated
     public User(String username, String customerId, String email,
         UserHumanName name, UserLocale pref, UserCredential cred) {
-        super(username, customerId);
+        this.username = username;
+        this.customerId = customerId;
         this.email = email;
         this.name = name;
         this.preference = pref;
@@ -70,32 +84,51 @@ public class User extends BaseUser implements Auditable {
         String country, String displayName, String inum, String iname,
         String orgInum, String apiKey, UserStatus status,
         String personId) {
-        super.setUsername(username);
-        super.setCustomerId(customerId);
+        this.username = username;
+        this.customerId = customerId;
         this.email = email;
         this.name = name;
         this.preference = preference;
         this.credential = credential;
         this.country = country;
         this.displayName = displayName;
-        this.inum = inum;
-        this.iname = iname;
-        this.orgInum = orgInum;
         this.apiKey = apiKey;
         this.status = status;
         this.personId = personId;
     }
-
-    @Override
+    
     public String getUniqueId() {
-        return super.getUniqueId();
+        return uniqueId;
     }
 
-    @Override
     public void setUniqueId(String uniqueId) {
         if (uniqueId != null) {
-            super.setUniqueId(uniqueId);
+            this.uniqueId = uniqueId;
         }
+    }
+    
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
     }
     
     public String getSecureId() {
@@ -147,16 +180,6 @@ public class User extends BaseUser implements Auditable {
         }
     }
 
-    public String getIname() {
-        return iname;
-    }
-
-    public void setIname(String iname) {
-        if (iname != null) {
-            this.iname = iname;
-        }
-    }
-
     public Boolean isLocked() {
         return locked;
     }
@@ -171,16 +194,6 @@ public class User extends BaseUser implements Auditable {
     
     public void setMaxLoginFailuresExceded(Boolean maxLoginFailuresExceded) {
         this.maxLoginFailuresExceded = maxLoginFailuresExceded;
-    }
-
-    public String getOrgInum() {
-        return orgInum;
-    }
-
-    public void setOrgInum(String orgInum) {
-        if (orgInum != null) {
-            this.orgInum = orgInum;
-        }
     }
 
     public String getApiKey() {
@@ -201,16 +214,6 @@ public class User extends BaseUser implements Auditable {
         if (status != null) {
             this.status = status;
         }
-    }
-
-    @Override
-    public String getUsername() {
-        return super.getUsername();
-    }
-
-    @Override
-    public void setUsername(String username) {
-        super.setUsername(username);
     }
 
     public void setPasswordObj(Password password) {
@@ -318,7 +321,6 @@ public class User extends BaseUser implements Auditable {
         preference.setTimeZone(DateTimeZone.forID(timeZone));
     }
 
-    // TODO jeo check all places where these are used!
     public String getSecretQuestion() {
         return credential.getSecretQuestion();
     }
@@ -336,16 +338,6 @@ public class User extends BaseUser implements Auditable {
     public void setSecretAnswer(String secretAnswer) {
         if (secretAnswer != null) {
             this.credential.setSecretAnswer(secretAnswer);
-        }
-    }
-
-    public String getInum() {
-        return inum;
-    }
-
-    public void setInum(String inum) {
-        if (inum != null) {
-            this.inum = inum;
         }
     }
 
@@ -408,11 +400,6 @@ public class User extends BaseUser implements Auditable {
         return disabled;
     }
 
-    @Override
-    public void setCustomerId(String customerId) {
-        super.setCustomerId(customerId);
-    }
-
     public void setDefaults() {
         if (this.preference.getLocale() == null) {
             this.setPreferredLang(GlobalConstants.USER_PREFERRED_LANG_DEFAULT);
@@ -425,13 +412,6 @@ public class User extends BaseUser implements Auditable {
         this.setLocked(false);
         this.setSoftDeleted(false);
         this.setStatus(UserStatus.ACTIVE);
-    }
-
-    public BaseUser getBaseUser() {
-        BaseUser baseUser = new BaseUser();
-        baseUser.setCustomerId(getCustomerId());
-        baseUser.setUsername(getUsername());
-        return baseUser;
     }
 
     public void copyChanges(User modifiedUser) {
@@ -478,215 +458,72 @@ public class User extends BaseUser implements Auditable {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + ((apiKey == null) ? 0 : apiKey.hashCode());
-        result = prime * result + ((country == null) ? 0 : country.hashCode());
-        result = prime * result + ((created == null) ? 0 : created.hashCode());
-        result = prime * result
-            + ((credential == null) ? 0 : credential.hashCode());
-        result = prime * result
-            + ((displayName == null) ? 0 : displayName.hashCode());
-        result = prime * result + ((email == null) ? 0 : email.hashCode());
-        result = prime * result + ((iname == null) ? 0 : iname.hashCode());
-        result = prime * result + ((inum == null) ? 0 : inum.hashCode());
-        result = prime * result + ((locked == null) ? 0 : locked.hashCode());
-        result = prime
-            * result
-            + ((maxLoginFailuresExceded == null) ? 0 : maxLoginFailuresExceded
-                .hashCode());
-        result = prime * result + ((mossoId == null) ? 0 : mossoId.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result + ((nastId == null) ? 0 : nastId.hashCode());
-        result = prime * result + ((orgInum == null) ? 0 : orgInum.hashCode());
-        result = prime * result
-            + ((personId == null) ? 0 : personId.hashCode());
-        result = prime * result
-            + ((preference == null) ? 0 : preference.hashCode());
-        result = prime * result + ((region == null) ? 0 : region.hashCode());
-        result = prime * result
-            + ((softDeleted == null) ? 0 : softDeleted.hashCode());
-        result = prime
-            * result
-            + ((softDeletedTimestamp == null) ? 0 : softDeletedTimestamp
-                .hashCode());
-        result = prime * result + ((status == null) ? 0 : status.hashCode());
-        result = prime * result + ((updated == null) ? 0 : updated.hashCode());
-        return result;
-    }
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!super.equals(obj)) {
+        User user = (User) o;
+
+        if (apiKey != null ? !apiKey.equals(user.apiKey) : user.apiKey != null) return false;
+        if (country != null ? !country.equals(user.country) : user.country != null) return false;
+        if (created != null ? !created.equals(user.created) : user.created != null) return false;
+        if (credential != null ? !credential.equals(user.credential) : user.credential != null) return false;
+        if (customerId != null ? !customerId.equals(user.customerId) : user.customerId != null) return false;
+        if (displayName != null ? !displayName.equals(user.displayName) : user.displayName != null) return false;
+        if (email != null ? !email.equals(user.email) : user.email != null) return false;
+        if (id != null ? !id.equals(user.id) : user.id != null) return false;
+        if (locked != null ? !locked.equals(user.locked) : user.locked != null) return false;
+        if (maxLoginFailuresExceded != null ? !maxLoginFailuresExceded.equals(user.maxLoginFailuresExceded) : user.maxLoginFailuresExceded != null)
             return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (mossoId != null ? !mossoId.equals(user.mossoId) : user.mossoId != null) return false;
+        if (name != null ? !name.equals(user.name) : user.name != null) return false;
+        if (nastId != null ? !nastId.equals(user.nastId) : user.nastId != null) return false;
+        if (personId != null ? !personId.equals(user.personId) : user.personId != null) return false;
+        if (preference != null ? !preference.equals(user.preference) : user.preference != null) return false;
+        if (region != null ? !region.equals(user.region) : user.region != null) return false;
+        if (secureId != null ? !secureId.equals(user.secureId) : user.secureId != null) return false;
+        if (softDeleted != null ? !softDeleted.equals(user.softDeleted) : user.softDeleted != null) return false;
+        if (softDeletedTimestamp != null ? !softDeletedTimestamp.equals(user.softDeletedTimestamp) : user.softDeletedTimestamp != null)
             return false;
-        }
-        User other = (User) obj;
-        if (apiKey == null) {
-            if (other.apiKey != null) {
-                return false;
-            }
-        } else if (!apiKey.equals(other.apiKey)) {
-            return false;
-        }
-        if (country == null) {
-            if (other.country != null) {
-                return false;
-            }
-        } else if (!country.equals(other.country)) {
-            return false;
-        }
-        if (created == null) {
-            if (other.created != null) {
-                return false;
-            }
-        } else if (!created.equals(other.created)) {
-            return false;
-        }
-        if (credential == null) {
-            if (other.credential != null) {
-                return false;
-            }
-        } else if (!credential.equals(other.credential)) {
-            return false;
-        }
-        if (displayName == null) {
-            if (other.displayName != null) {
-                return false;
-            }
-        } else if (!displayName.equals(other.displayName)) {
-            return false;
-        }
-        if (email == null) {
-            if (other.email != null) {
-                return false;
-            }
-        } else if (!email.equals(other.email)) {
-            return false;
-        }
-        if (iname == null) {
-            if (other.iname != null) {
-                return false;
-            }
-        } else if (!iname.equals(other.iname)) {
-            return false;
-        }
-        if (inum == null) {
-            if (other.inum != null) {
-                return false;
-            }
-        } else if (!inum.equals(other.inum)) {
-            return false;
-        }
-        if (locked == null) {
-            if (other.locked != null) {
-                return false;
-            }
-        } else if (!locked.equals(other.locked)) {
-            return false;
-        }
-        if (maxLoginFailuresExceded == null) {
-            if (other.maxLoginFailuresExceded != null) {
-                return false;
-            }
-        } else if (!maxLoginFailuresExceded
-            .equals(other.maxLoginFailuresExceded)) {
-            return false;
-        }
-        if (mossoId == null) {
-            if (other.mossoId != null) {
-                return false;
-            }
-        } else if (!mossoId.equals(other.mossoId)) {
-            return false;
-        }
-        if (name == null) {
-            if (other.name != null) {
-                return false;
-            }
-        } else if (!name.equals(other.name)) {
-            return false;
-        }
-        if (nastId == null) {
-            if (other.nastId != null) {
-                return false;
-            }
-        } else if (!nastId.equals(other.nastId)) {
-            return false;
-        }
-        if (orgInum == null) {
-            if (other.orgInum != null) {
-                return false;
-            }
-        } else if (!orgInum.equals(other.orgInum)) {
-            return false;
-        }
-        if (personId == null) {
-            if (other.personId != null) {
-                return false;
-            }
-        } else if (!personId.equals(other.personId)) {
-            return false;
-        }
-        if (preference == null) {
-            if (other.preference != null) {
-                return false;
-            }
-        } else if (!preference.equals(other.preference)) {
-            return false;
-        }
-        if (region == null) {
-            if (other.region != null) {
-                return false;
-            }
-        } else if (!region.equals(other.region)) {
-            return false;
-        }
-        if (softDeleted == null) {
-            if (other.softDeleted != null) {
-                return false;
-            }
-        } else if (!softDeleted.equals(other.softDeleted)) {
-            return false;
-        }
-        if (softDeletedTimestamp == null) {
-            if (other.softDeletedTimestamp != null) {
-                return false;
-            }
-        } else if (!softDeletedTimestamp.equals(other.softDeletedTimestamp)) {
-            return false;
-        }
-        if (status != other.status) {
-            return false;
-        }
-        if (updated == null) {
-            if (other.updated != null) {
-                return false;
-            }
-        } else if (!updated.equals(other.updated)) {
-            return false;
-        }
+        if (status != user.status) return false;
+        if (uniqueId != null ? !uniqueId.equals(user.uniqueId) : user.uniqueId != null) return false;
+        if (updated != null ? !updated.equals(user.updated) : user.updated != null) return false;
+        if (username != null ? !username.equals(user.username) : user.username != null) return false;
+
         return true;
     }
 
     @Override
+    public int hashCode() {
+        int result = uniqueId != null ? uniqueId.hashCode() : 0;
+        result = 31 * result + (id != null ? id.hashCode() : 0);
+        result = 31 * result + (username != null ? username.hashCode() : 0);
+        result = 31 * result + (customerId != null ? customerId.hashCode() : 0);
+        result = 31 * result + (email != null ? email.hashCode() : 0);
+        result = 31 * result + (credential != null ? credential.hashCode() : 0);
+        result = 31 * result + (personId != null ? personId.hashCode() : 0);
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (preference != null ? preference.hashCode() : 0);
+        result = 31 * result + (country != null ? country.hashCode() : 0);
+        result = 31 * result + (displayName != null ? displayName.hashCode() : 0);
+        result = 31 * result + (locked != null ? locked.hashCode() : 0);
+        result = 31 * result + (apiKey != null ? apiKey.hashCode() : 0);
+        result = 31 * result + (status != null ? status.hashCode() : 0);
+        result = 31 * result + (softDeleted != null ? softDeleted.hashCode() : 0);
+        result = 31 * result + (region != null ? region.hashCode() : 0);
+        result = 31 * result + (nastId != null ? nastId.hashCode() : 0);
+        result = 31 * result + (mossoId != null ? mossoId.hashCode() : 0);
+        result = 31 * result + (created != null ? created.hashCode() : 0);
+        result = 31 * result + (updated != null ? updated.hashCode() : 0);
+        result = 31 * result + (softDeletedTimestamp != null ? softDeletedTimestamp.hashCode() : 0);
+        result = 31 * result + (maxLoginFailuresExceded != null ? maxLoginFailuresExceded.hashCode() : 0);
+        result = 31 * result + (secureId != null ? secureId.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
-        return "User [email=" + email + ", credential=" + credential
-            + ", personId=" + personId + ", name=" + name + ", preference="
-            + preference + ", country=" + country + ", displayName="
-            + displayName + ", inum=" + inum + ", iname=" + iname + ", locked="
-            + locked + ", orgInum=" + orgInum + ", apiKey=" + apiKey
-            + ", status=" + status + ", softDeleted=" + softDeleted
-            + ", region=" + region + ", nastId=" + nastId + ", mossoId="
-            + mossoId + ", created=" + created + ", updated=" + updated
-            + ", softDeletedTimestamp=" + softDeletedTimestamp
-            + ", maxLoginFailuresExceded=" + maxLoginFailuresExceded + "]";
+        return getAuditContext();
     }
 
     public static class Builder {
@@ -704,8 +541,6 @@ public class User extends BaseUser implements Auditable {
         public Builder setUniqueIds(String userName, String inum, String iname,
             String uniqueId) {
             user.setUsername(userName);
-            user.inum = inum;
-            user.iname = iname;
             user.setUniqueId(uniqueId);
 
             return this;
@@ -739,12 +574,6 @@ public class User extends BaseUser implements Auditable {
             user.setPreferredLang(preferredLanguage);
             user.setTimeZone(timeZone);
             user.setCountry(country);
-
-            return this;
-        }
-
-        public Builder setOrgInum(String orgInum) {
-            user.orgInum = orgInum;
 
             return this;
         }

@@ -91,11 +91,11 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         }
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_TENANT_ID, tenantId)
+            .addEqualAttribute(ATTR_ID, tenantId)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT).build();
 
         Tenant tenant = null;
-        ;
+        
         try {
             tenant = getSingleTenant(searchFilter);
         } catch (LDAPPersistException e) {
@@ -157,7 +157,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     private List<Tenant> getMultipleTenants(Filter searchFilter)
         throws LDAPPersistException {
         List<SearchResultEntry> entries = this.getMultipleEntries(
-            TENANT_BASE_DN, SearchScope.SUB, searchFilter, ATTR_TENANT_ID, ATTR_TENANT_SEARCH_ATTRIBUTES);
+            TENANT_BASE_DN, SearchScope.SUB, searchFilter, ATTR_ID, ATTR_TENANT_SEARCH_ATTRIBUTES);
 
         List<Tenant> tenants = new ArrayList<Tenant>();
         for (SearchResultEntry entry : entries) {
@@ -363,7 +363,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     private List<TenantRole> getMultipleTenantRoles(String parentUniqueId,
         Filter searchFilter) throws LDAPPersistException {
         List<SearchResultEntry> entries = this.getMultipleEntries(
-            parentUniqueId, SearchScope.SUB, searchFilter, ATTR_TENANT_ID);
+            parentUniqueId, SearchScope.SUB, searchFilter, ATTR_ID);
 
         List<TenantRole> roles = new ArrayList<TenantRole>();
         for (SearchResultEntry entry : entries) {
@@ -417,5 +417,21 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         } finally {
             getAppConnPool().releaseConnection(conn);
         }
+    }
+    
+    @Override
+    public String getNextTenantId() {
+        String userId = null;
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            userId = getNextId(conn, NEXT_TENANT_ID);
+        } catch (LDAPException e) {
+            getLogger().error("Error getting next tenantId", e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        return userId;
     }
 }

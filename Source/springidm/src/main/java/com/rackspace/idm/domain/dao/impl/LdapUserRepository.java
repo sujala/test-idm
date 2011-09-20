@@ -27,10 +27,10 @@ import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
 import com.rackspace.idm.exception.StalePasswordException;
 import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.util.CryptHelper;
-import com.rackspace.idm.util.InumHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
@@ -87,7 +87,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         String userDN = new LdapDnBuilder(USERS_BASE_DN)
-            .addAttribute(ATTR_INUM, user.getInum()).build();
+            .addAttribute(ATTR_ID, user.getId()).build();
 
         user.setUniqueId(userDN);
 
@@ -292,27 +292,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public String getUnusedUserInum(String customerInum) {
-        // TODO: We might may this call to the XDI server in the future.
-        if (StringUtils.isBlank(customerInum)) {
-            getLogger().error("Null or empty customerInum value passesed in.");
-            throw new IllegalArgumentException(
-                "Null or empty customerInum value passesed in.");
-        }
-
-        User user = null;
-        String inum = "";
-        do {
-            inum = customerInum + InumHelper.getRandomInum(1);
-            user = getUserByInum(inum);
-        } while (user != null);
-
-        getLogger().debug("Generated a new inum {}", inum);
-
-        return inum;
-    }
-
-    @Override
     public User getUserByCustomerIdAndUsername(String customerId,
         String username) {
 
@@ -346,18 +325,18 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public User getUserByInum(String inum) {
+    public User getUserById(String id) {
         // NOTE: This method returns a user regardless of whether the
         // softDeleted flag is set or not because this method is only
         // used internally.
-        getLogger().debug("Doing search for inum " + inum);
-        if (StringUtils.isBlank(inum)) {
-            getLogger().error("Null or Empty inum parameter");
-            throw new IllegalArgumentException("Null or Empty inum parameter.");
+        getLogger().debug("Doing search for id " + id);
+        if (StringUtils.isBlank(id)) {
+            getLogger().error("Null or Empty id parameter");
+            throw new IllegalArgumentException("Null or Empty id parameter.");
         }
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_INUM, inum)
+            .addEqualAttribute(ATTR_ID, id)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
@@ -780,6 +759,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         List<Attribute> atts = new ArrayList<Attribute>();
 
         atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_USER_OBJECT_CLASS_VALUES));
+        
+        if (!StringUtils.isBlank(user.getId())) {
+            atts.add(new Attribute(ATTR_ID, user.getId()));
+        }
 
         if (!StringUtils.isBlank(user.getCountry())) {
             atts.add(new Attribute(ATTR_C, user.getCountry()));
@@ -795,14 +778,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 .getFirstname())));
         }
 
-        if (!StringUtils.isBlank(user.getIname())) {
-            atts.add(new Attribute(ATTR_INAME, user.getIname()));
-        }
-
-        if (!StringUtils.isBlank(user.getInum())) {
-            atts.add(new Attribute(ATTR_INUM, user.getInum()));
-        }
-
         if (!StringUtils.isBlank(user.getEmail())) {
             atts.add(new Attribute(ATTR_MAIL, cryptHelper.encrypt(user
                 .getEmail())));
@@ -810,10 +785,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         if (!StringUtils.isBlank(user.getMiddlename())) {
             atts.add(new Attribute(ATTR_MIDDLE_NAME, user.getMiddlename()));
-        }
-
-        if (!StringUtils.isBlank(user.getOrgInum())) {
-            atts.add(new Attribute(ATTR_O, user.getOrgInum()));
         }
 
         if (user.getLocale() != null) {
@@ -996,12 +967,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .getAttributeValueBytes(ATTR_DISPLAY_NAME)));
         user.setFirstname(cryptHelper.decrypt(resultEntry
             .getAttributeValueBytes(ATTR_GIVEN_NAME)));
-        user.setIname(resultEntry.getAttributeValue(ATTR_INAME));
-        user.setInum(resultEntry.getAttributeValue(ATTR_INUM));
         user.setEmail(cryptHelper.decrypt(resultEntry
             .getAttributeValueBytes(ATTR_MAIL)));
         user.setMiddlename(resultEntry.getAttributeValue(ATTR_MIDDLE_NAME));
-        user.setOrgInum(resultEntry.getAttributeValue(ATTR_O));
         user.setPreferredLang(resultEntry.getAttributeValue(ATTR_LANG));
         user.setCustomerId(resultEntry
             .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
@@ -1176,15 +1144,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             }
         }
 
-        if (uNew.getIname() != null) {
-            if (StringUtils.isBlank(uNew.getIname())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_INAME));
-            } else if (!StringUtils.equals(uOld.getIname(), uNew.getIname())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_INAME,
-                    uNew.getIname()));
-            }
-        }
-
         if (uNew.getEmail() != null) {
             if (StringUtils.isBlank(uNew.getEmail())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_MAIL));
@@ -1331,5 +1290,21 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Found {} mods.", mods.size());
 
         return mods;
+    }
+
+    @Override
+    public String getNextUserId() {
+        String userId = null;
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            userId = getNextId(conn, NEXT_USER_ID);
+        } catch (LDAPException e) {
+            getLogger().error("Error getting next userId", e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        return userId;
     }
 }

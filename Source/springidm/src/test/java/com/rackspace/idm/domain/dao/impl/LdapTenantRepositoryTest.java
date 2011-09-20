@@ -27,6 +27,7 @@ public class LdapTenantRepositoryTest {
     private final String name = "Tenant";
     private final String roleName = "Role";
     private final String dn = LdapRepository.BASE_DN;
+    private final String displayName = "Display Name";
     
     private static LdapTenantRepository getRepo(LdapConnectionPools connPools) {
         Configuration appConfig = null;
@@ -204,6 +205,7 @@ public class LdapTenantRepositoryTest {
         tenant.setDescription(description);
         tenant.setEnabled(enabled);
         tenant.setName(name);
+        tenant.setDisplayName(displayName);
         tenant.setTenantId(tenantId);
         return tenant;
     }

@@ -102,20 +102,20 @@ public class CustomersResource {
             throw new BadRequestException(err.getMessage());
         }
 
-        logger.debug("Adding Customer: {}", customer.getCustomerId());
+        logger.debug("Adding Customer: {}", customer.getRCN());
 
         try {
             this.customerService.addCustomer(customer);
         } catch (DuplicateException ex) {
             String errorMsg = String.format("A customer with that customerId already exists: %s",
-                customer.getCustomerId());
+                customer.getRCN());
             logger.warn(errorMsg);
             throw new CustomerConflictException(errorMsg);
         }
 
         logger.debug("Added Customer: {}", customer);
 
-        String location = uriInfo.getPath() + customer.getCustomerId();
+        String location = uriInfo.getPath() + customer.getRCN();
 
         URI uri = null;
         try {

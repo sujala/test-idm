@@ -244,15 +244,14 @@
 						xmlns="http://www.w3.org/1999/xhtml">
 						<p>
 							The user's secret contains a question and
-							answer that can be
-							used to confirm the
+							answer that can be used to confirm the
 							user's identity.
 						</p>
 					</xsd:documentation>
 				</annotation>
 			</element>
-			<element name="password" type="idm:UserPassword" minOccurs="0"
-				maxOccurs="1">
+			<element name="password" type="idm:UserPassword"
+				minOccurs="0" maxOccurs="1">
 				<annotation>
 					<xsd:documentation xml:lang="EN"
 						xmlns="http://www.w3.org/1999/xhtml">
@@ -269,8 +268,8 @@
 					</xsd:documentation>
 				</annotation>
 			</element>
-			<element name="groups" type="idm:ClientGroupList" minOccurs="0"
-				maxOccurs="1">
+			<element name="groups" type="idm:ClientGroupList"
+				minOccurs="0" maxOccurs="1">
 				<annotation>
 					<xsd:documentation xml:lang="EN"
 						xmlns="http://www.w3.org/1999/xhtml">
@@ -294,18 +293,6 @@
 					<p>
 						The customerId of the customer that the user is
 						associated with.
-					</p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-		<attribute name="customerInum" type="string" use="optional">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>
-						The customer inum of the customer that the user
-						is associated
-						with.
 					</p>
 				</xsd:documentation>
 			</annotation>
@@ -363,22 +350,6 @@
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
 					<p>The user's preferred language.</p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-		<attribute name="inum" type="string" use="optional">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>The user's unique i-number.</p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-		<attribute name="iname" type="string" use="optional">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>The user's unique i-name.</p>
 				</xsd:documentation>
 			</annotation>
 		</attribute>
@@ -471,11 +442,14 @@
 			<annotation>
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
-					<p>The boolean indicating if a user has been locked out due to the
-						excessive login failures</p>
+					<p>
+						The boolean indicating if a user has been locked
+						out due to the excessive login failures
+					</p>
 				</xsd:documentation>
 			</annotation>
 		</attribute>
+		<attribute name="id" type="xsd:string"></attribute>
 	</complexType>
 
 	<complexType name="UserList">

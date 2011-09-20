@@ -17,7 +17,6 @@ import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Clients;
@@ -102,10 +101,6 @@ public class DefaultUserService implements UserService {
             throw new IllegalStateException("Customer doesn't exist");
         }
 
-        String customerDN = customer.getUniqueId();
-
-        user.setOrgInum(customer.getInum());
-        user.setInum(userDao.getUnusedUserInum(customer.getInum()));
         user.setStatus(UserStatus.ACTIVE);
 
         if (user.getPasswordObj() == null
@@ -124,6 +119,8 @@ public class DefaultUserService implements UserService {
             throw new IllegalArgumentException(
                 "The password appears to be an existing instance. It must be a new instance!");
         }
+        
+        user.setId(this.userDao.getNextUserId());
 
         userDao.addUser(user);
         logger.info("Added User: {}", user);
@@ -172,7 +169,7 @@ public class DefaultUserService implements UserService {
                 this.userDao.addRacker(racker);
             }
             
-            BaseUser user = new BaseUser(username);
+            User user = new User(username);
             user.setUniqueId(racker.getUniqueId());
             return new UserAuthenticationResult(user, authenticated);
     }

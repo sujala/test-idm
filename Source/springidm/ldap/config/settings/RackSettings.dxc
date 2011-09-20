@@ -32,4 +32,4 @@ set op-attrs = true;
 set ignore-name-bindings = true;
 set force-encrypt-auth = true;
 set mimic-netscape-for-siteminder = true;
-set concurrent-bind-user = <dc com><dc rackspace><ou internal><cn admin>;
+set concurrent-bind-user = <dc com><dc rackspace><o rackspace><ou internal><cn admin>;

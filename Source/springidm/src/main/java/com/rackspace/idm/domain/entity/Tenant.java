@@ -1,6 +1,9 @@
 package com.rackspace.idm.domain.entity;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
@@ -17,7 +20,7 @@ public class Tenant implements Auditable{
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
     
-    @LDAPField(attribute=LdapRepository.ATTR_TENANT_ID, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+    @LDAPField(attribute=LdapRepository.ATTR_ID, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
     private String tenantId;
     
     @LDAPField(attribute=LdapRepository.ATTR_ENABLED, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
@@ -29,14 +32,17 @@ public class Tenant implements Auditable{
     @LDAPField(attribute=LdapRepository.ATTR_NAME, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String name;
     
-//    @LDAPField(attribute=LdapRepository.ATTR_TENANT_DISPLAY_NAME, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-//    private String displayName;
+    @LDAPField(attribute=LdapRepository.ATTR_TENANT_DISPLAY_NAME, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    private String displayName;
     
     @LDAPField(attribute=LdapRepository.ATTR_CREATED_DATE, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date created;
     
     @LDAPField(attribute=LdapRepository.ATTR_UPDATED_DATE, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date updated;
+    
+    @LDAPField(attribute=LdapRepository.ATTR_BASEURL_ID, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    private String[] baseUrlIds;
     
     public ReadOnlyEntry getLDAPEntry() {
         return ldapEntry;
@@ -83,13 +89,13 @@ public class Tenant implements Auditable{
         this.name = name;
     }
     
-//    public String getDisplayName() {
-//        return displayName;
-//    }
-//
-//    public void setDisplayName(String displayName) {
-//        this.displayName = displayName;
-//    }
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
 
     public Date getCreated() {
         return created;
@@ -97,6 +103,46 @@ public class Tenant implements Auditable{
 
     public Date getUpdated() {
         return updated;
+    }
+
+    public String[] getBaseUrlIds() {
+        return baseUrlIds;
+    }
+
+    public void setBaseUrlIds(String[] baseUrlIds) {
+        this.baseUrlIds = baseUrlIds;
+    }
+    
+    public void addBaseUrlId(String baseUrlId) {
+        List<String> baseUrls = new ArrayList<String>();
+        if (baseUrlIds != null || baseUrlIds.length > 0) {
+            Collections.addAll(baseUrls, baseUrlIds);
+        }
+        if (!baseUrls.contains(baseUrlId)) {
+            baseUrls.add(baseUrlId);
+        }
+        baseUrlIds = baseUrls.toArray(new String[baseUrls.size()]);
+    }
+
+    public void removeBaseUrlId(String baseUrlId) {
+        if (baseUrlIds == null || baseUrlIds.length == 0) {
+            return;
+        }
+        List<String> baseUrls = new ArrayList<String>();
+        Collections.addAll(baseUrls, baseUrlIds);
+        if (baseUrls.contains(baseUrlId)) {
+            baseUrls.remove(baseUrlId);
+        }
+        baseUrlIds = baseUrls.toArray(new String[baseUrls.size()]);
+    }
+
+    public boolean containsBaseUrlId(String baseUrlId) {
+        if (baseUrlIds == null || baseUrlIds.length == 0) {
+            return false;
+        }
+        List<String> baseUrls = new ArrayList<String>();
+        Collections.addAll(baseUrls, baseUrlIds);
+        return baseUrls.contains(baseUrlId);
     }
 
     public void copyChanges(Tenant modifiedTenant) {

@@ -34,32 +34,36 @@ import com.rackspace.idm.domain.entity.UserScopeAccess;
 
 public class LdapScopeAccessPersistenceRepositoryTest {
     private LdapCustomerRepository customerRepo;
-    private ScopeAccessDao   repo;
-    private LdapClientRepository   clientRepo;
-    private LdapConnectionPools    connPools;
+    private ScopeAccessDao repo;
+    private LdapClientRepository clientRepo;
+    private LdapConnectionPools connPools;
 
-    static String                  customerId   = "DELETE_My_CustomerId";
-    String                         customerName = "DELETE_My_Name";
-    String                         inum         = "@!FFFF.FFFF.FFFF.FFFF!CCCC.CCCC";
-    String                         iname        = "@Rackspae.TESTING";
-    CustomerStatus                 status       = CustomerStatus.ACTIVE;
-    String                         seeAlso      = "inum=@!FFFF.FFFF.FFFF.FFFF!CCCC.CCCC";
-    String                         owner        = "inum=@!FFFF.FFFF.FFFF.FFFF!CCCC.CCCC";
-    String                         country      = "USA";
-    boolean                        softDeleted  = false;
+    static String customerId = "DELETE_My_CustomerId";
+    String customerName = "DELETE_My_Name";
+    String inum = "@!FFFF.FFFF.FFFF.FFFF!CCCC.CCCC";
+    String iname = "@Rackspae.TESTING";
+    CustomerStatus status = CustomerStatus.ACTIVE;
+    String seeAlso = "inum=@!FFFF.FFFF.FFFF.FFFF!CCCC.CCCC";
+    String owner = "inum=@!FFFF.FFFF.FFFF.FFFF!CCCC.CCCC";
+    String country = "USA";
+    boolean softDeleted = false;
 
-    String                         clientId     = "XXX";
-    String                         clientId2    = "YYY";
-    String                         RCN          = "RACKSPACE";
+    String clientId = "XXX";
+    String clientId2 = "YYY";
+    String RCN = "RACKSPACE";
 
-    String                         permissionId = "PermissionName";
+    String permissionId = "PermissionName";
 
-    String                         accessToken  = "YYYYYYY";
-    String                         refreshToken = "ZZZZZZZ";
+    String accessToken = "YYYYYYY";
+    String refreshToken = "ZZZZZZZ";
 
     Client                         client       = null;
     Client                         client2      = null;
     Customer                       customer     = null;
+    
+    String                          id = "XXXX";
+    String                          id2 = "YYYY";
+
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -83,14 +87,17 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         customerRepo = getCustomerRepo(connPools);
         clientRepo = getClientRepo(connPools);
 
-        customer = addNewTestCustomer(customerId, customerName, inum, iname, status, seeAlso, owner, country);
-        client = addNewTestClient(clientId);
-        client2 = addNewTestClient(clientId2);
+        try {
+            customer = addNewTestCustomer(customerId, customerName, inum, iname, status, seeAlso, owner, country);
+            client = addNewTestClient(clientId);
+            client2 = addNewTestClient2(clientId2);
+        } catch (Exception e) {
+        }
     }
 
     @After
     public void tearDown() throws Exception {
-        customerRepo.deleteCustomer(customer.getCustomerId());
+        customerRepo.deleteCustomer(customer.getRCN());
         clientRepo.deleteClient(client);
         clientRepo.deleteClient(client2);
         connPools.close();
@@ -100,7 +107,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     public void testAddDuplicateScopeAccess() {
         ScopeAccess sa = new ScopeAccess();
         sa.setClientId(client.getClientId());
-        sa.setClientRCN(client.getCustomerId());
+        sa.setClientRCN(client.getRCN());
 
         sa = repo.addDirectScopeAccess(client.getUniqueId(), sa);
         sa = repo.addDirectScopeAccess(client.getUniqueId(), sa);
@@ -108,7 +115,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         Assert.assertEquals(sa.getClientId(), client.getClientId());
     }
-    
+
     @Test
     public void testAddScopeAccess() {
         ScopeAccess sa = new ScopeAccess();
@@ -190,7 +197,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
         p.setDescription("description");
         p.setTitle("title");
         p.setEnabled(false);
@@ -200,12 +207,12 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         Assert.assertNotNull(p);
         Assert.assertTrue(p.getGrantedByDefault());
         Assert.assertEquals("title", p.getTitle());
-        Assert.assertEquals("description",p.getDescription());
+        Assert.assertEquals("description", p.getDescription());
 
         final Boolean doesAccessTokenHavePermission = repo.doesAccessTokenHavePermission(sa, p);
         Assert.assertTrue(doesAccessTokenHavePermission);
     }
-    
+
     @Test
     public void testDefineDuplicatePermissionToScopeAccess() {
         UserScopeAccess sa = new UserScopeAccess();
@@ -220,7 +227,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
         p.setDescription("description");
         p.setTitle("title");
         p.setEnabled(false);
@@ -231,7 +238,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         Assert.assertNotNull(p);
         Assert.assertTrue(p.getGrantedByDefault());
         Assert.assertEquals("title", p.getTitle());
-        Assert.assertEquals("description",p.getDescription());
+        Assert.assertEquals("description", p.getDescription());
 
         final Boolean doesAccessTokenHavePermission = repo.doesAccessTokenHavePermission(sa, p);
         Assert.assertTrue(doesAccessTokenHavePermission);
@@ -251,8 +258,9 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
         p.setResourceGroups(new String[] { "test" });
+
         p = repo.grantPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(p);
         Assert.assertNotNull(p.getResourceGroups());
@@ -260,7 +268,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         final Boolean doesAccessTokenHavePermission = repo.doesAccessTokenHavePermission(sa, p);
         Assert.assertTrue(doesAccessTokenHavePermission);
     }
-    
+
     @Test
     public void testGrantDuplicatePermissionToScopeAccess() {
         UserScopeAccess sa = new UserScopeAccess();
@@ -275,8 +283,9 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
         p.setResourceGroups(new String[] { "test" });
+
         p = repo.grantPermission(sa.getUniqueId(), p);
         p = repo.grantPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(p);
@@ -315,7 +324,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (ClientScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
         p = repo.grantPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(p);
 
@@ -340,8 +349,8 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         final List<ScopeAccess> scopeAccessesByParent = repo.getScopeAccessesByParent(client.getUniqueId());
 
         for (final ScopeAccess scopeAccess : scopeAccessesByParent) {
-            if(scopeAccess instanceof UserScopeAccess) {
-                Assert.assertEquals(((UserScopeAccess)scopeAccess).getAccessTokenString(), accessToken);
+            if (scopeAccess instanceof UserScopeAccess) {
+                Assert.assertEquals(((UserScopeAccess) scopeAccess).getAccessTokenString(), accessToken);
             } else {
                 fail("wrong scope access");
             }
@@ -386,7 +395,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         Assert.assertNotNull(scopeAccessByRefreshToken);
         Assert.assertTrue(scopeAccessByRefreshToken instanceof UserScopeAccess);
-        Assert.assertEquals(((UserScopeAccess)scopeAccessByRefreshToken).getAccessTokenString(), accessToken);
+        Assert.assertEquals(((UserScopeAccess) scopeAccessByRefreshToken).getAccessTokenString(), accessToken);
     }
 
     @Test
@@ -420,7 +429,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         Assert.assertNotNull(scopeAccess);
     }
-    
+
     @Test
     public void testGetScopeAccessByUsername() {
         DelegatedClientScopeAccess sa1 = new DelegatedClientScopeAccess();
@@ -434,7 +443,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa1.setRefreshTokenExp(new Date());
 
         sa1 = (DelegatedClientScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa1);
-        
+
         DelegatedClientScopeAccess sa2 = new DelegatedClientScopeAccess();
         sa2.setClientId(client2.getClientId());
         sa2.setClientRCN(client2.getName());
@@ -444,15 +453,15 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa2.setUserRCN("user RCN");
         sa2.setRefreshTokenString(refreshToken);
         sa2.setRefreshTokenExp(new Date());
-        
+
         sa2 = (DelegatedClientScopeAccess) repo.addDirectScopeAccess(client2.getUniqueId(), sa2);
-       
-        final List<DelegatedClientScopeAccess> scopeAccessList = repo.getDelegatedClientScopeAccessByUsername("username");  
-        
+
+        final List<DelegatedClientScopeAccess> scopeAccessList = repo.getDelegatedClientScopeAccessByUsername("username");
+
         Assert.assertNotNull(scopeAccessList);
         Assert.assertEquals(2, scopeAccessList.size());
-        
-    }   
+
+    }
 
     @Test
     public void testGetPermissions() {
@@ -468,7 +477,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        DefinedPermission p = createDefinedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
         p.setDescription("description");
         p.setTitle("title");
         p.setEnabled(false);
@@ -478,14 +487,15 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         Assert.assertNotNull(p);
         Assert.assertTrue(p.getGrantedByDefault());
         Assert.assertEquals("title", p.getTitle());
-        Assert.assertEquals("description",p.getDescription());
-        
+        Assert.assertEquals("description", p.getDescription());
+
         Permission filter = new Permission(p.getCustomerId(), p.getClientId(), p.getPermissionId());
 
         List<Permission> list = repo.getPermissionsByPermission(filter);
-        
+
         Assert.assertTrue(list.size() >= 1);
     }
+
     @Test
     public void testRemovePermissionFromScopeAccess() {
         UserScopeAccess sa = new UserScopeAccess();
@@ -500,7 +510,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
         p = repo.grantPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(p);
 
@@ -539,7 +549,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         final ScopeAccess scopeAccess = repo.getScopeAccessByAccessToken(accessToken);
 
         Assert.assertTrue(scopeAccess instanceof UserScopeAccess);
-        Assert.assertEquals(((UserScopeAccess)scopeAccess).getAccessTokenExp(), newDate);
+        Assert.assertEquals(((UserScopeAccess) scopeAccess).getAccessTokenExp(), newDate);
     }
 
     @Test
@@ -556,17 +566,17 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getCustomerId(), permissionId);
+        GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
         p = repo.grantPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(p);
 
         final Boolean doesAccessTokenHavePermission = repo.doesAccessTokenHavePermission(sa, p);
         Assert.assertTrue(doesAccessTokenHavePermission);
 
-        GrantedPermission po = (GrantedPermission)repo.getPermissionByParentAndPermission(sa.getUniqueId(), p);
+        GrantedPermission po = (GrantedPermission) repo.getPermissionByParentAndPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(po);
 
-        po.setResourceGroups(new String[] { "test" });
+        po.setResourceGroups(new String[]{"test"});
         final Boolean result = repo.updatePermissionForScopeAccess(po);
         Assert.assertTrue(result);
 
@@ -620,18 +630,18 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     }
 
     private Customer addNewTestCustomer(String customerId, String name, String inum, String iname,
-            CustomerStatus status, String seeAlso, String owner, String country) {
+                                        CustomerStatus status, String seeAlso, String owner, String country) {
 
-        final Customer newCustomer = createTestCustomerInstance(customerId, inum, iname, status, seeAlso, owner);
+        final Customer newCustomer = createTestCustomerInstance(customerId, status);
         newCustomer.setSoftDeleted(softDeleted);
+        newCustomer.setId(id);
         customerRepo.addCustomer(newCustomer);
         return newCustomer;
     }
 
-    private Customer createTestCustomerInstance(String customerId, String inum, String iname, CustomerStatus status,
-            String seeAlso, String owner) {
+    private Customer createTestCustomerInstance(String customerId, CustomerStatus status) {
 
-        final Customer newCustomer = new Customer(customerId, inum, iname, status, seeAlso, owner);
+        final Customer newCustomer = new Customer(customerId, status );
         newCustomer.setSoftDeleted(softDeleted);
         return newCustomer;
     }
@@ -639,26 +649,34 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     private Client addNewTestClient(String clientId) {
         final Client newClient = createTestClientInstance();
         newClient.setClientId(clientId);
-        newClient.setInum(clientId);
+        newClient.setId(id);
+        clientRepo.addClient(newClient);
+        return newClient;
+    }
+    
+    private Client addNewTestClient2(String clientId) {
+        final Client newClient = createTestClientInstance();
+        newClient.setClientId(clientId);
+        newClient.setId(id2);
         clientRepo.addClient(newClient);
         return newClient;
     }
 
     private Client createTestClientInstance() {
         final Client newClient = new Client("DELETE_My_ClientId", ClientSecret.newInstance("DELETE_My_Client_Secret"),
-                "DELETE_My_Name", "inum", "iname", "RCN-123-456-789", ClientStatus.ACTIVE);
+                "DELETE_My_Name", "RCN-123-456-789", ClientStatus.ACTIVE);
         newClient.setLocked(false);
         newClient.setSoftDeleted(false);
         return newClient;
     }
 
     private DefinedPermission createDefinedPermissionInstance(String clientId, String RCN, String permissionId) {
-        final DefinedPermission res = new DefinedPermission(RCN,clientId,permissionId);
+        final DefinedPermission res = new DefinedPermission(RCN, clientId, permissionId);
         return res;
     }
-    
+
     private GrantedPermission createGrantedPermissionInstance(String clientId, String RCN, String permissionId) {
-        final GrantedPermission res = new GrantedPermission(RCN,clientId,permissionId);
+        final GrantedPermission res = new GrantedPermission(RCN, clientId, permissionId);
         return res;
     }
 }

@@ -5,25 +5,39 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.NotFoundException;
 
 public class DefaultTenantService implements TenantService {
 
     private final TenantDao tenantDao;
+    private final ClientDao clientDao;
+    private final ScopeAccessDao scopeAccessDao;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultTenantService(TenantDao tenantDao) {
+    public DefaultTenantService(TenantDao tenantDao, ClientDao clientDao,
+        ScopeAccessDao scopeAccessDao) {
         this.tenantDao = tenantDao;
+        this.clientDao = clientDao;
+        this.scopeAccessDao = scopeAccessDao;
     }
 
     @Override
     public void addTenant(Tenant tenant) {
         logger.info("Adding Tenant {}", tenant);
+        tenant.setTenantId(this.tenantDao.getNextTenantId());
         this.tenantDao.addTenant(tenant);
         logger.info("Added Tenant {}", tenant);
     }
@@ -57,13 +71,14 @@ public class DefaultTenantService implements TenantService {
         this.tenantDao.updateTenant(tenant);
         logger.info("Updated Tenant {}", tenant);
     }
-    
+
     @Override
     public List<Tenant> getTenantsForParentByTenantRoles(String parentUniqueId) {
         logger.info("Getting Tenants for Parent");
         List<Tenant> tenants = new ArrayList<Tenant>();
         List<String> tenantIds = new ArrayList<String>();
-        List<TenantRole> tenantRoles = this.tenantDao.getTenantRolesByParent(parentUniqueId);
+        List<TenantRole> tenantRoles = this.tenantDao
+            .getTenantRolesByParent(parentUniqueId);
         for (TenantRole role : tenantRoles) {
             if (role.getTenantIds() != null && role.getTenantIds().length > 0) {
                 for (String tenantId : role.getTenantIds()) {
@@ -172,6 +187,88 @@ public class DefaultTenantService implements TenantService {
             .getTenantRolesByParentAndClientId(parentUniqueId, clientId);
         logger.debug("Got {} Tenant Roles", roles.size());
         return roles;
+    }
+
+    @Override
+    public void addTenantRoleToUser(User user, TenantRole role) {
+        if (user == null || StringUtils.isBlank(user.getUniqueId())) {
+            throw new IllegalArgumentException(
+                "User cannont be null and must have uniqueID");
+        }
+
+        Client client = this.clientDao.getClientByClientId(role.getClientId());
+        if (client == null) {
+            String errMsg = String.format("Client %s not found",
+                role.getClientId());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
+        ClientRole cRole = this.clientDao.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
+        if (cRole == null) {
+            String errMsg = String.format("ClientRole %s not found",
+                role.getName());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        UserScopeAccess sa = (UserScopeAccess) this.scopeAccessDao
+            .getDirectScopeAccessForParentByClientId(user.getUniqueId(),
+                role.getClientId());
+        
+        if (sa == null) {
+            sa = new UserScopeAccess();
+            sa.setClientId(client.getClientId());
+            sa.setClientRCN(client.getRCN());
+            sa.setUsername(user.getUsername());
+            sa.setUserRCN(user.getCustomerId());
+            sa = (UserScopeAccess) this.scopeAccessDao.addDirectScopeAccess(
+                user.getUniqueId(), sa);
+        }
+        
+        addTenantRole(sa.getUniqueId(), role);
+
+        logger.info("Adding tenantRole {} to user {}", role, user);
+    }
+
+    @Override
+    public void addTenantRoleToClient(Client client, TenantRole role) {
+        if (client == null || StringUtils.isBlank(client.getUniqueId())) {
+            throw new IllegalArgumentException(
+                "User cannont be null and must have uniqueID");
+        }
+
+        Client owner = this.clientDao.getClientByClientId(role.getClientId());
+        if (owner == null) {
+            String errMsg = String.format("Client %s not found",
+                role.getClientId());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        
+        ClientRole cRole = this.clientDao.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
+        if (cRole == null) {
+            String errMsg = String.format("ClientRole %s not found",
+                role.getName());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        ScopeAccess sa = this.scopeAccessDao
+            .getDirectScopeAccessForParentByClientId(client.getUniqueId(),
+                role.getClientId());
+        
+        if (sa == null) {
+            sa = new ScopeAccess();
+            sa.setClientId(client.getClientId());
+            sa.setClientRCN(client.getRCN());
+            sa = this.scopeAccessDao.addDirectScopeAccess(
+                client.getUniqueId(), sa);
+        }
+        
+        addTenantRole(sa.getUniqueId(), role);
+
+        logger.info("Added tenantRole {} to client {}", role, client);
     }
 
 }

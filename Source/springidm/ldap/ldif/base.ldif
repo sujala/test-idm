@@ -1,53 +1,86 @@
 ######################################## Top Levels #######################################
 
-dn: o=rackspace
+dn: o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: organization
 o: rackspace
 
-dn: ou=internal,o=rackspace
+dn: ou=internal,o=rackspace,dc=rackspace,dc=com
 objectClass:top
 objectClass:organizationalUnit
-ou:internal
+ou: internal
 
-dn: ou=users,o=rackspace
+dn: ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass:top
 objectClass:organizationalUnit
-ou:internal
+ou: users
 
-dn: ou=applications,o=rackspace
+dn: ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass:top
 objectClass:organizationalUnit
-ou:internal
+ou: applications
 
-dn: ou=customers,o=rackspace
+dn: ou=customers,o=rackspace,dc=rackspace,dc=com
 objectClass:top
 objectClass:organizationalUnit
-ou:internal
+ou: customers
+
+dn: ou=rackers,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:organizationalUnit
+ou: rackers
+
+dn: ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:organizationalUnit
+ou: nextIds
+
+######################################## Next Ids #######################################
+
+dn: cn=nextUserId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:rsNextId
+cn: nextUserId
+rsId: 10000000
+
+dn: cn=nextTenantId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:rsNextId
+cn: nextTenantId
+rsId: 10000000
+
+dn: cn=nextRoleId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:rsNextId
+cn: nextRoleId
+rsId: 10000000
+
+dn: cn=nextClientId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:rsNextId
+cn: nextClientId
+rsId: 10000000
+
+dn: cn=nextCustomerId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:rsNextId
+cn: nextCustomerId
+rsId: 10000000
+
 
 ######################################## Cloud Objects #######################################
 
-dn: ou=cloud,o=rackspace
+dn: ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit
 ou: cloud
 
-dn: ou=adminUsers,ou=cloud,o=rackspace
+dn: ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit
 ou: tenants
 
-dn: ou=baseUrls,ou=cloud,o=rackspace
-objectClass: top
-objectClass: organizationalUnit
-ou: baseUrls
-
-dn: ou=tenants,ou=cloud,o=rackspace
-objectClass: top
-objectClass: organizationalUnit
-ou: tenants
-
-dn: cn=auth,ou=adminUsers,ou=cloud,o=rackspace
+dn: cn=auth,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: inetOrgPerson
 objectClass: top
 cn: auth
@@ -55,9 +88,14 @@ sn: auth
 uid: auth
 userPassword: auth123
 
+dn: ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: baseUrls
+
 ######################################## Admin User #######################################
 
-dn: cn=admin,ou=internal,o=rackspace
+dn: cn=admin,ou=internal,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: inetOrgPerson
 cn: admin
@@ -67,27 +105,25 @@ userPassword: qwerty
 
 ######################################## Customers #######################################
 
-dn: o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,ou=customers,o=rackspace
+dn: rsId=1,ou=customers,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsOrganization
-inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
 locked: FALSE
-o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
 RCN: RACKSPACE
+rsId: 1
 softDeleted: FALSE
 status: ACTIVE
 
 ######################################## Applications #######################################
 
-dn: inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsApplication
 cn: Customer Idm
 description: Our description here ...
-inum: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0
 locked: FALSE
-o: @!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE
 RCN: RACKSPACE
+rsId: 1
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 status: ACTIVE
 title: Rackspace User Management
@@ -95,16 +131,40 @@ tokenScope: user_mgmt
 softDeleted: FALSE
 userPassword: password
 
+dn: rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+cn: Cloud Auth Service
+locked: FALSE
+RCN: RACKSPACE
+rsId: 2
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+status: ACTIVE
+softDeleted: FALSE
+userPassword: password
+
 ######################################## ScopeAccesses Containers ##########################
 
-dn: cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: saContainer
-cn: DIRECT
+cn: DIRECT TOKENS
+
+dn: cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: saContainer
+cn: DIRECT TOKENS
 
 ######################################## ScopeAccesses #####################################
 
-dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: clientScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: scopeAccess
 objectClass: clientScopeAccess
@@ -113,7 +173,7 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 
 ######################################## Client Groups #######################################
 
-dn: cn=Idm Admin,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=Idm Admin,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: groupOfNames
 objectClass: clientGroup
@@ -123,8 +183,9 @@ RCN: RACKSPACE
 
 ######################################## Permissions #######################################
 
-dn: cn=getServiceCatalog,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getServiceCatalog,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getServiceCatalog
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -132,8 +193,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=updateUserMossoId,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=updateUserMossoId,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: updateUserMossoId
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -141,8 +203,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=updateUserNastId,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=updateUserNastId,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: updateUserNastId
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -150,8 +213,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=updateUserRPN,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=updateUserRPN,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: updateUserRPN
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -159,8 +223,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getBaseUrlRefs,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getBaseUrlRefs,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getBaseUrlRefs
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -168,8 +233,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=addBaseUrlRef,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=addBaseUrlRef,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: addBaseUrlRef
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -177,8 +243,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=deleteBaseUrlRef,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=deleteBaseUrlRef,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: deleteBaseUrlRef
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -186,8 +253,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getBaseUrlRef,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getBaseUrlRef,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getBaseUrlRef
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -195,8 +263,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getBaseUrls,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getBaseUrls,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getBaseUrls
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -204,8 +273,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=addBaseUrl,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=addBaseUrl,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: addBaseUrl
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -213,8 +283,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getBaseUrl,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getBaseUrl,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getBaseUrl
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -222,8 +293,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=deleteBaseUrl,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=deleteBaseUrl,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: deleteBaseUrl
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -231,8 +303,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getUsernameAuth,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getUsernameAuth,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getUsernameAuth
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -240,8 +313,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=authByUsernameAndPassword,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=authByUsernameAndPassword,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: authByUsernameAndPassword
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -249,8 +323,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=authWithMossoIdAndApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=authWithMossoIdAndApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: authWithMossoIdAndApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -258,8 +333,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=authWithNastIdAndApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=authWithNastIdAndApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: authWithNastIdAndApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -267,8 +343,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getUserByUsername,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getUserByUsername,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getUserByUsername
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -276,8 +353,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getUserByMossoId,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getUserByMossoId,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getUserByMossoId
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -285,8 +363,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getUserByNastId,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getUserByNastId,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getUserByNastId
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -294,8 +373,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=addCustomer,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=addCustomer,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: addCustomer
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -303,8 +383,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getCustomer,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getCustomer,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getCustomer
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -312,8 +393,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=deleteCustomer,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=deleteCustomer,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: deleteCustomer
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -321,8 +403,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=setCustomerLockStatus,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=setCustomerLockStatus,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: setCustomerLockStatus
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -330,8 +413,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getClients,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getClients,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getClients
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -339,8 +423,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=addClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=addClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: addClient
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -348,8 +433,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getClient
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -357,8 +443,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getClientDefinedPermissions,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getClientDefinedPermissions,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getClientDefinedPermissions
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -366,8 +453,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getClientDefinedPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getClientDefinedPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getClientDefinedPermission
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -375,8 +463,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=addClientDefinedPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=addClientDefinedPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: addClientDefinedPermission
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -384,8 +473,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=updateClientDefinedPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=updateClientDefinedPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: updateClientDefinedPermission
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -393,8 +483,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=deleteClientDefinedPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=deleteClientDefinedPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: deleteClientDefinedPermission
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -402,8 +493,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getUsers,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getUsers,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getUsers
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -411,8 +503,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=addUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=addUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: addUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -420,8 +513,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -429,8 +523,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=updateUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=updateUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: updateUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -438,8 +533,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=deleteUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=deleteUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: deleteUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -447,8 +543,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -456,8 +553,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=resetApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=resetApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: resetApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -465,8 +563,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=setApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=setApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: setApiKey
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -474,8 +573,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=setUserLock,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=setUserLock,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: setUserLock
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -483,8 +583,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getUserPassword,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getUserPassword,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getUserPassword
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -492,8 +593,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=resetUserPassword,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=resetUserPassword,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: resetUserPassword
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -501,8 +603,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=setUserPassword,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=setUserPassword,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: setUserPassword
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -510,8 +613,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getPasswordResetToken,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getPasswordResetToken,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getPasswordResetToken
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -519,8 +623,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getUserSecret,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getUserSecret,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getUserSecret
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -528,8 +633,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=setUserSecret,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=setUserSecret,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: setUserSecret
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -537,8 +643,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=setUserSoftDelete,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=setUserSoftDelete,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: setUserSoftDelete
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -546,8 +653,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=setUserStatus,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=setUserStatus,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: setUserStatus
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -555,8 +663,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=addFirstUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=addFirstUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: addFirstUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -564,8 +673,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=validateAccessToken,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=validateAccessToken,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: validateAccessToken
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -573,8 +683,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=revokeAccessToken,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=revokeAccessToken,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: revokeAccessToken
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -582,8 +693,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=addClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=addClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: addClientGroup
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -591,8 +703,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=addUserToClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=addUserToClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: addUserToClientGroup
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -600,8 +713,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=addUserToGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=addUserToGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: addUserToGroup
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -609,8 +723,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=checkPassword,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=checkPassword,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: checkPassword
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -618,8 +733,9 @@ RCN: RACKSPACE
 grantedByDefault: TRUE
 enabled: TRUE
 
-dn: cn=deleteClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=deleteClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: deleteClient
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -627,8 +743,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=deleteClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=deleteClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: deleteClientGroup
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -636,8 +753,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getAccessToken,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getAccessToken,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getAccessToken
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -645,8 +763,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getClientGroup
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -654,8 +773,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getClientGroups,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getClientGroups,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getClientGroups
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -663,8 +783,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getGroups,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getGroups,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getGroups
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -672,8 +793,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getRules,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getRules,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getRules
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -681,8 +803,9 @@ RCN: RACKSPACE
 grantedByDefault: TRUE
 enabled: TRUE
 
-dn: cn=getUserBasedOnRPN,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getUserBasedOnRPN,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getUserBasedOnRPN
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -690,8 +813,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getVersionInfo,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getVersionInfo,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getVersionInfo
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -699,8 +823,9 @@ RCN: RACKSPACE
 grantedByDefault: TRUE
 enabled: TRUE
 
-dn: cn=getWadl,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getWadl,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getWadl
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -708,8 +833,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getWadl2,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getWadl2,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getWadl2
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -717,8 +843,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getXSD,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getXSD,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getXSD
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -726,8 +853,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getXSLT,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getXSLT,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getXSLT
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -735,8 +863,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=removeUserFromClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=removeUserFromClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: removeUserFromClientGroup
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -744,8 +873,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=removeUserFromGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=removeUserFromGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: removeUserFromGroup
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -753,8 +883,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=resetClientSecret,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=resetClientSecret,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: resetClientSecret
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -762,8 +893,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=updateClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=updateClientGroup,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: updateClientGroup
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -771,8 +903,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=updatePasswordRotationCustomer,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=updatePasswordRotationCustomer,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: updatePasswordRotationCustomer
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -780,8 +913,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=validateTokenPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=validateTokenPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: validateTokenPermission
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -789,8 +923,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=addServiceToUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=addServiceToUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: addServiceToUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -798,8 +933,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=checkIfUserHasPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=checkIfUserHasPermission,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: checkIfUserHasPermission
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -807,8 +943,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=grantPermissionToUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=grantPermissionToUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: grantPermissionToUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -816,8 +953,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=revokePermissionFromUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=revokePermissionFromUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: revokePermissionFromUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -825,8 +963,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=removeServiceFromUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=removeServiceFromUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: removeServiceFromUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -834,8 +973,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getServicesForUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getServicesForUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getServicesForUser
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -843,8 +983,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=checkIfPermissionGrantedToClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=checkIfPermissionGrantedToClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: checkIfPermissionGrantedToClient
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -852,8 +993,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=grantPermissionToClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=grantPermissionToClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: grantPermissionToClient
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -861,8 +1003,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=revokePermissionFromClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=revokePermissionFromClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: revokePermissionFromClient
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -870,8 +1013,9 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getServicesForClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getServicesForClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
+objectClass: rsPermission
 objectClass: definedPermission
 cn: getServicesForClient
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
@@ -879,7 +1023,7 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=updateClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=updateClient,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPermission
 objectClass: definedPermission
@@ -889,7 +1033,7 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getAvailableScopes,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getAvailableScopes,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPermission
 objectClass: definedPermission
@@ -899,7 +1043,7 @@ RCN: RACKSPACE
 grantedByDefault: TRUE
 enabled: TRUE
 
-dn: cn=getTokens,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getTokens,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPermission
 objectClass: definedPermission
@@ -909,7 +1053,7 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=getTokenDetails,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=getTokenDetails,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPermission
 objectClass: definedPermission
@@ -919,7 +1063,7 @@ RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
 
-dn: cn=deleteToken,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT,inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!8AC0,ou=applications,o=rackspace
+dn: cn=deleteToken,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPermission
 objectClass: definedPermission
@@ -928,3 +1072,158 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 RCN: RACKSPACE
 grantedByDefault: FALSE
 enabled: TRUE
+
+
+################################################### IDM Permissions Granted to Clients #####################################
+
+dn: cn=addFirstUser,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=5,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: addFirstUser
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=setCustomerLockStatus,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: setCustomerLockStatus
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=getUsernameAuth,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: getUsernameAuth
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=authByUsernameAndPassword,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: authByUsernameAndPassword
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=authWithMossoIdAndApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: authWithMossoIdAndApiKey
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=authWithNastIdAndApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: authWithNastIdAndApiKey
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=getBaseUrls,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: getBaseUrls
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=getBaseUrl,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: getBaseUrl
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=addBaseUrl,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: addBaseUrl
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=addBaseUrlRef,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: addBaseUrlRef
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=getBaseUrlRef,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: getBaseUrlRef
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=getBaseUrlRefs,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: getBaseUrlRefs
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=deleteBaseUrl,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: deleteBaseUrl
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=deleteBaseUrlRef,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: deleteBaseUrlRef
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=getServiceCatalog,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: getServiceCatalog
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=setApiKey,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: setApiKey
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=updateUserMossoId,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: updateUserMossoId
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=updateUserNastId,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: updateUserNastId
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE
+
+dn: cn=updateUserRPN,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPermission
+objectClass: grantedPermission
+cn: updateUserRPN
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+RCN: RACKSPACE

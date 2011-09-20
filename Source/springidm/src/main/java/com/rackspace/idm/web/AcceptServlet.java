@@ -140,7 +140,7 @@ public class AcceptServlet extends HttpServlet {
         if (dcsa == null) {
             dcsa = new DelegatedClientScopeAccess();
             dcsa.setClientId(client.getClientId());
-            dcsa.setClientRCN(client.getCustomerId());
+            dcsa.setClientRCN(client.getRCN());
             dcsa.setUsername(user.getUsername());
             dcsa.setUserRCN(user.getCustomerId());
             dcsa = (DelegatedClientScopeAccess) getScopeAccessService()

@@ -145,16 +145,6 @@
 				</documentation>
 			</annotation>
 		</attribute>
-		<attribute name="customerInum" type="xsd:string">
-            <annotation>
-                <documentation>
-                    <p>
-                        The unique inum for the customer the client
-                        belongs to.
-                    </p>
-                </documentation>
-            </annotation>		
-		</attribute>
 		<attribute name="name" type="string" use="required">
 			<annotation>
 				<documentation>
@@ -162,21 +152,8 @@
 				</documentation>
 			</annotation>
 		</attribute>
-		<attribute name="inum" type="string" use="optional">
-			<annotation>
-				<documentation>
-					<p>The client's unique i-number.</p>
-				</documentation>
-			</annotation>
-		</attribute>
-		<attribute name="iname" type="string" use="optional">
-			<annotation>
-				<documentation>
-					<p>The client's unique i-name.</p>
-				</documentation>
-			</annotation>
-		</attribute>
-		<attribute name="status" type="idm:ClientStatus" use="optional">
+		<attribute name="status" type="idm:ClientStatus"
+			use="optional">
 			<annotation>
 				<documentation>
 					<p>The user's status.</p>
@@ -207,8 +184,9 @@
 			<annotation>
 				<documentation>
 					<p>
-						The client Title that will be displayed to users.
-                    </p>
+						The client Title that will be displayed to
+						users.
+					</p>
 				</documentation>
 			</annotation>
 		</attribute>
@@ -216,29 +194,27 @@
 			<annotation>
 				<documentation>
 					<p>
-						A human readable description of what the client does.
-                    </p>
+						A human readable description of what the client
+						does.
+					</p>
 				</documentation>
 			</annotation>
 		</attribute>
 		<attribute name="callBackUrl" type="xsd:string">
 			<annotation>
 				<documentation>
-					<p>
-						The OAuth callback url for a client.
-                    </p>
+					<p>The OAuth callback url for a client.</p>
 				</documentation>
 			</annotation>
 		</attribute>
 		<attribute name="scope" type="xsd:string">
 			<annotation>
 				<documentation>
-					<p>
-						A one word description of a client.
-                    </p>
+					<p>A one word description of a client.</p>
 				</documentation>
 			</annotation>
 		</attribute>
+		<attribute name="id" type="xsd:string"></attribute>
 	</complexType>
 
 	<complexType name="ClientList">

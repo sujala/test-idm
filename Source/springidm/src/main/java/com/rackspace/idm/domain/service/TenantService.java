@@ -2,8 +2,10 @@ package com.rackspace.idm.domain.service;
 
 import java.util.List;
 
+import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.User;
 
 public interface TenantService {
 
@@ -16,6 +18,8 @@ public interface TenantService {
     List<Tenant> getTenantsForParentByTenantRoles(String parentUniqueId);
     
     void addTenantRole(String parentUniqueId, TenantRole role);
+    void addTenantRoleToUser(User user, TenantRole role);
+    void addTenantRoleToClient(Client client, TenantRole role);
     void deleteTenantRole(String parentUniqueId, TenantRole role);
     TenantRole getTenantRoleForParentByRoleName(String parentUniqueId, String roleName);
     TenantRole getTenantRoleForParentByRoleNameAndClientId(String parentUniqueId, String roleName, String clientId);

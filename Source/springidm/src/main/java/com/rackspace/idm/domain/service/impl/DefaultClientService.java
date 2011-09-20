@@ -15,6 +15,7 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.Clients;
@@ -44,18 +45,17 @@ public class DefaultClientService implements ClientService {
         this.userDao = userDao;
         this.scopeAccessDao = scopeAccessDao;
     }
-
     
     @Override
     public void add(Client client) {
         logger.debug("Adding Client: {}", client);
         Customer customer = customerDao.getCustomerByCustomerId(client
-            .getCustomerId());
+            .getRCN());
 
         if (customer == null) {
             logger.warn(
                 "Couldn't add client {} because customerId doesn't exist",
-                client.getCustomerId());
+                client.getRCN());
             throw new NotFoundException("Customer doesn't exist");
         }
 
@@ -77,9 +77,8 @@ public class DefaultClientService implements ClientService {
             logger.error("Unsupported hashing algorithm - {}", e);
             throw new IllegalStateException("Unsupported hashing algorithm", e);
         }
-
-        client.setOrgInum(customer.getInum());
-        client.setInum(clientDao.getUnusedClientInum(customer.getInum()));
+        
+        client.setId(this.clientDao.getNextClientId());
 
         clientDao.addClient(client);
         logger.debug("Added Client: {}", client);
@@ -152,7 +151,7 @@ public class DefaultClientService implements ClientService {
         if (sa == null) {
             sa = new ClientScopeAccess();
             sa.setClientId(client.getClientId());
-            sa.setClientRCN(client.getCustomerId());
+            sa.setClientRCN(client.getRCN());
             sa = this.scopeAccessDao.addDirectScopeAccess(client.getUniqueId(), sa);
         }
 
@@ -231,7 +230,7 @@ public class DefaultClientService implements ClientService {
         
         Permission permission = new DefinedPermission();
         permission.setPermissionId(permissionId);
-        permission.setCustomerId(client.getCustomerId());
+        permission.setCustomerId(client.getRCN());
         permission.setClientId(client.getClientId());
 
         permission = this.scopeAccessDao.getPermissionByParentAndPermission(
@@ -250,7 +249,7 @@ public class DefaultClientService implements ClientService {
         logger.debug("Find Permission by ClientId: {}", client.getClientId());
         Permission filter = new Permission();
         filter.setClientId(client.getClientId());
-        filter.setCustomerId(client.getCustomerId());
+        filter.setCustomerId(client.getRCN());
         
         List<Permission> permissions = this.scopeAccessDao
             .getPermissionsByParentAndPermission(client.getUniqueId(),
@@ -638,5 +637,55 @@ public class DefaultClientService implements ClientService {
         logger.info("Updating Client: {}", client);
         this.clientDao.updateClient(client);
         logger.info("Updated Client: {}", client);
+    }
+
+
+    @Override
+    public void addClientRole(ClientRole role) {
+        logger.info("Adding Client Role: {}", role);
+        Client client = this.clientDao.getClientByClientId(role.getClientId());
+        if (client == null) {
+            String errMsg = String.format("Client %s not found", role.getClientId());
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        role.setId(this.clientDao.getNextRoleId());
+        this.clientDao.addClientRole(client.getUniqueId(), role);
+        logger.info("Added Client Role: {}", role);
+    }
+
+
+    @Override
+    public void deleteClientRole(ClientRole role) {
+        logger.info("Delete Client Role: {}", role);
+        this.clientDao.deleteClientRole(role);
+        logger.info("Deleted Client Role: {}", role);
+    }
+
+
+    @Override
+    public void updateClientRole(ClientRole role) {
+        logger.info("Update Client Role: {}", role);
+        this.clientDao.updateClientRole(role);
+        logger.info("Udpated Client Role: {}", role);
+    }
+
+
+    @Override
+    public List<ClientRole> getClientRolesByClientId(String clientId) {
+        logger.debug("Getting Client Roles for client: {}", clientId);
+        List<ClientRole> roles = this.clientDao.getClientRolesByClientId(clientId);
+        logger.debug("Got {} Client Roles", roles.size());
+        return roles;
+    }
+
+
+    @Override
+    public ClientRole getClientRoleByClientIdAndRoleName(String clientId,
+        String roleName) {
+        logger.debug("Getting Client Role {} for client {}", roleName, clientId);
+        ClientRole role = this.clientDao.getClientRoleByClientIdAndRoleName(clientId, roleName);
+        logger.debug("Got Client Role {} for client {}", roleName, clientId);
+        return role;
     }
 }

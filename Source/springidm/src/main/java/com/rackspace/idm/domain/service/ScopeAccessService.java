@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.service;
 
 import java.util.List;
 
-import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
@@ -50,7 +49,7 @@ public interface ScopeAccessService {
 
     ClientScopeAccess getClientScopeAccessForClientId(String clientUniqueId, String clientId);
 
-    PasswordResetScopeAccess getOrCreatePasswordResetScopeAccessForUser(BaseUser user);
+    PasswordResetScopeAccess getOrCreatePasswordResetScopeAccessForUser(User user);
 
     Permission getPermissionForParent(String parentUniqueId, Permission permission);
 

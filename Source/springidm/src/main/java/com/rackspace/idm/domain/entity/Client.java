@@ -1,15 +1,22 @@
 package com.rackspace.idm.domain.entity;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 
-public class Client extends BaseClient implements Auditable {
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
+public class Client implements Auditable {
     private static final long serialVersionUID = -3160754818606772239L;
 
     private ClientSecret clientSecret;
+    
+    private String uniqueId = null;
+    
+    private String clientId = null;
+    @NotNull
+    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
+    private String rcn = null;
 
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
@@ -17,9 +24,9 @@ public class Client extends BaseClient implements Auditable {
 
     @NotNull
     private ClientStatus status = null;
+    
+    private String id = null;
 
-    private String inum = null;
-    private String iname = null;
     private String orgInum = null;
     private Boolean locked = null;
     private Boolean softDeleted = null;
@@ -33,25 +40,46 @@ public class Client extends BaseClient implements Auditable {
     }
 
     public Client(String clientId, ClientSecret clientSecret, String name,
-        String inum, String iname, String customerId, ClientStatus status) {
-        super(clientId, customerId);
+        String rcn, ClientStatus status) {
+        this.clientId = clientId;
+        this.rcn = rcn;
         this.clientSecret = clientSecret;
         this.name = name;
-        this.inum = inum;
-        this.iname = iname;
         this.status = status;
     }
 
-    @Override
     public void setUniqueId(String uniqueId) {
         if (uniqueId != null) {
-            super.setUniqueId(uniqueId);
+            this.uniqueId = uniqueId;
         }
     }
 
-    @Override
     public String getUniqueId() {
-        return super.getUniqueId();
+        return uniqueId;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+    
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+    
+    public String getRCN() {
+        return rcn;
+    }
+    
+    public void setRCN(String rcn) {
+        this.rcn = rcn;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public void setClientSecretObj(ClientSecret clientSecret) {
@@ -94,16 +122,6 @@ public class Client extends BaseClient implements Auditable {
         return name;
     }
 
-    public String getIname() {
-        return iname;
-    }
-
-    public void setIname(String iname) {
-        if (iname != null) {
-            this.iname = iname;
-        }
-    }
-
     public ClientStatus getStatus() {
         return status;
     }
@@ -128,16 +146,6 @@ public class Client extends BaseClient implements Auditable {
 
     public void setLocked(Boolean isLocked) {
         this.locked = isLocked;
-    }
-
-    public void setInum(String inum) {
-        if (inum != null) {
-            this.inum = inum;
-        }
-    }
-
-    public String getInum() {
-        return inum;
     }
     
     public String getScope() {
@@ -171,21 +179,6 @@ public class Client extends BaseClient implements Auditable {
     public void setDescription(String description) {
         this.description = description;
     }
-
-    // The following overrides allow for a more permissive mutators in the child
-    // (Client)
-    // while maintaining a more strict, immutable-ish characteristics in the
-    // parent (BaseClient).
-
-    @Override
-    public void setClientId(String clientId) {
-        super.setClientId(clientId);
-    }
-
-    @Override
-    public void setCustomerId(String customerId) {
-        super.setCustomerId(customerId);
-    }
     
     public void setDefaults() {
         this.setLocked(false);
@@ -199,14 +192,6 @@ public class Client extends BaseClient implements Auditable {
         disabled = this.isSoftDeleted() == null ? disabled : disabled || this.isSoftDeleted().booleanValue();
         disabled = this.getStatus() == null ? disabled : disabled || this.getStatus().equals(ClientStatus.INACTIVE);
         return disabled;
-    }
-
-    public BaseClient getBaseClient() {
-        return getBaseClientWithoutClientPerms();
-    }
-
-    public BaseClient getBaseClientWithoutClientPerms() {
-        return new BaseClient(getClientId(),getCustomerId());
     }
     
     public void copyChanges(Client modifiedClient) {
@@ -229,137 +214,58 @@ public class Client extends BaseClient implements Auditable {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result
-            + ((callBackUrl == null) ? 0 : callBackUrl.hashCode());
-        result = prime * result
-            + ((clientSecret == null) ? 0 : clientSecret.hashCode());
-        result = prime * result
-            + ((description == null) ? 0 : description.hashCode());
-        result = prime * result + ((iname == null) ? 0 : iname.hashCode());
-        result = prime * result + ((inum == null) ? 0 : inum.hashCode());
-        result = prime * result + ((locked == null) ? 0 : locked.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result + ((orgInum == null) ? 0 : orgInum.hashCode());
-        result = prime * result + ((scope == null) ? 0 : scope.hashCode());
-        result = prime * result
-            + ((softDeleted == null) ? 0 : softDeleted.hashCode());
-        result = prime * result + ((status == null) ? 0 : status.hashCode());
-        result = prime * result + ((title == null) ? 0 : title.hashCode());
-        return result;
-    }
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!super.equals(obj)) {
+        Client client = (Client) o;
+
+        if (callBackUrl != null ? !callBackUrl.equals(client.callBackUrl) : client.callBackUrl != null) return false;
+        if (clientId != null ? !clientId.equals(client.clientId) : client.clientId != null) return false;
+        if (clientSecret != null ? !clientSecret.equals(client.clientSecret) : client.clientSecret != null)
             return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        Client other = (Client) obj;
-        if (callBackUrl == null) {
-            if (other.callBackUrl != null) {
-                return false;
-            }
-        } else if (!callBackUrl.equals(other.callBackUrl)) {
-            return false;
-        }
-        if (clientSecret == null) {
-            if (other.clientSecret != null) {
-                return false;
-            }
-        } else if (!clientSecret.equals(other.clientSecret)) {
-            return false;
-        }
-        if (description == null) {
-            if (other.description != null) {
-                return false;
-            }
-        } else if (!description.equals(other.description)) {
-            return false;
-        }
-        if (iname == null) {
-            if (other.iname != null) {
-                return false;
-            }
-        } else if (!iname.equals(other.iname)) {
-            return false;
-        }
-        if (inum == null) {
-            if (other.inum != null) {
-                return false;
-            }
-        } else if (!inum.equals(other.inum)) {
-            return false;
-        }
-        if (locked == null) {
-            if (other.locked != null) {
-                return false;
-            }
-        } else if (!locked.equals(other.locked)) {
-            return false;
-        }
-        if (name == null) {
-            if (other.name != null) {
-                return false;
-            }
-        } else if (!name.equals(other.name)) {
-            return false;
-        }
-        if (orgInum == null) {
-            if (other.orgInum != null) {
-                return false;
-            }
-        } else if (!orgInum.equals(other.orgInum)) {
-            return false;
-        }
-        if (scope == null) {
-            if (other.scope != null) {
-                return false;
-            }
-        } else if (!scope.equals(other.scope)) {
-            return false;
-        }
-        if (softDeleted == null) {
-            if (other.softDeleted != null) {
-                return false;
-            }
-        } else if (!softDeleted.equals(other.softDeleted)) {
-            return false;
-        }
-        if (status != other.status) {
-            return false;
-        }
-        if (title == null) {
-            if (other.title != null) {
-                return false;
-            }
-        } else if (!title.equals(other.title)) {
-            return false;
-        }
+        if (description != null ? !description.equals(client.description) : client.description != null) return false;
+        if (id != null ? !id.equals(client.id) : client.id != null) return false;
+        if (locked != null ? !locked.equals(client.locked) : client.locked != null) return false;
+        if (name != null ? !name.equals(client.name) : client.name != null) return false;
+        if (orgInum != null ? !orgInum.equals(client.orgInum) : client.orgInum != null) return false;
+        if (rcn != null ? !rcn.equals(client.rcn) : client.rcn != null) return false;
+        if (scope != null ? !scope.equals(client.scope) : client.scope != null) return false;
+        if (softDeleted != null ? !softDeleted.equals(client.softDeleted) : client.softDeleted != null) return false;
+        if (status != client.status) return false;
+        if (title != null ? !title.equals(client.title) : client.title != null) return false;
+        if (uniqueId != null ? !uniqueId.equals(client.uniqueId) : client.uniqueId != null) return false;
+
         return true;
     }
 
     @Override
+    public int hashCode() {
+        int result = clientSecret != null ? clientSecret.hashCode() : 0;
+        result = 31 * result + (uniqueId != null ? uniqueId.hashCode() : 0);
+        result = 31 * result + (clientId != null ? clientId.hashCode() : 0);
+        result = 31 * result + (rcn != null ? rcn.hashCode() : 0);
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (status != null ? status.hashCode() : 0);
+        result = 31 * result + (id != null ? id.hashCode() : 0);
+        result = 31 * result + (orgInum != null ? orgInum.hashCode() : 0);
+        result = 31 * result + (locked != null ? locked.hashCode() : 0);
+        result = 31 * result + (softDeleted != null ? softDeleted.hashCode() : 0);
+        result = 31 * result + (scope != null ? scope.hashCode() : 0);
+        result = 31 * result + (callBackUrl != null ? callBackUrl.hashCode() : 0);
+        result = 31 * result + (title != null ? title.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
-        return "Client [clientSecret=" + clientSecret + ", name=" + name
-            + ", status=" + status + ", inum=" + inum + ", iname=" + iname
-            + ", orgInum=" + orgInum + ", locked=" + locked + ", softDeleted="
-            + softDeleted + ", scope=" + scope + ", callBackUrl=" + callBackUrl
-            + ", title=" + title + ", description=" + description
-            + ", getClientId()=" + getClientId() + ", getCustomerId()="
-            + getCustomerId() + "]";
+        return getAuditContext();
     }
 
     @Override
     public String getAuditContext() {
-        String format = "clientId=%s,customerId=%s";
-        return String.format(format, getClientId(), getCustomerId());
+        String format = "ID=%s,clientId=%s,customerId=%s";
+        return String.format(format, getId(), getClientId(), getRCN());
     }
 }

@@ -1,19 +1,12 @@
 package com.rackspace.idm.api.converter.cloudv11;
 
-import java.util.List;
-
-import org.apache.commons.configuration.Configuration;
-
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.util.CloudAuthServiceCatalogFactory;
-import com.rackspacecloud.docs.auth.api.v1.BaseURL;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
-import com.rackspacecloud.docs.auth.api.v1.ObjectFactory;
-import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
-import com.rackspacecloud.docs.auth.api.v1.UserType;
+import com.rackspacecloud.docs.auth.api.v1.*;
+import org.apache.commons.configuration.Configuration;
+
+import java.util.List;
 
 public class EndpointConverterCloudV11 {
     private final Configuration config;
@@ -40,7 +33,7 @@ public class EndpointConverterCloudV11 {
         baseUrl.setServiceName(url.getService());
         if (url.getBaseUrlType() != null) {
             baseUrl.setUserType(Enum.valueOf(UserType.class, url
-                .getBaseUrlType().toUpperCase()));
+                    .getBaseUrlType().toUpperCase()));
         }
         return baseUrl;
     }
@@ -72,8 +65,8 @@ public class EndpointConverterCloudV11 {
         baseUrlRef.setId(endpoint.getBaseUrl().getBaseUrlId());
         baseUrlRef.setV1Default(endpoint.isV1preferred());
         baseUrlRef.setHref(String.format(getBaseUrlReferenceString(),
-            endpoint.getBaseUrl().getBaseUrlId()));
-        
+                endpoint.getBaseUrl().getBaseUrlId()));
+
         return baseUrlRef;
     }
 
