@@ -139,7 +139,7 @@ public class ServiceConfiguration {
     @Bean
     public ScopeAccessService scopeAccessService() {
         return new DefaultScopeAccessService(userRepo, clientDao,
-            scopeAccessDao, authHeaderHelper(), config);
+            scopeAccessDao, tenantDao, endpointDao, authHeaderHelper(), config);
     }
 
     @Bean

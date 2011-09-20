@@ -12,7 +12,9 @@ import org.slf4j.MDC;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
@@ -21,10 +23,13 @@ import com.rackspace.idm.domain.entity.DefinedPermission;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.DelegatedPermission;
 import com.rackspace.idm.domain.entity.GrantedPermission;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
@@ -47,15 +52,60 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ScopeAccessDao scopeAccessDao;
     private final UserDao userDao;
+    private final TenantDao tenantDao;
+    private final EndpointDao endpointDao;
 
     public DefaultScopeAccessService(UserDao userDao, ClientDao clientDao,
-        ScopeAccessDao scopeAccessDao, AuthHeaderHelper authHeaderHelper,
+        ScopeAccessDao scopeAccessDao, TenantDao tenantDao, EndpointDao endpointDao, AuthHeaderHelper authHeaderHelper,
         Configuration config) {
         this.userDao = userDao;
         this.clientDao = clientDao;
         this.scopeAccessDao = scopeAccessDao;
+        this.tenantDao = tenantDao;
+        this.endpointDao = endpointDao;
         this.authHeaderHelper = authHeaderHelper;
         this.config = config;
+    }
+    
+    @Override
+    public List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess token) {
+        
+        String parentUniqueId = null;
+        
+        if (token instanceof DelegatedClientScopeAccess) {
+            parentUniqueId = token.getUniqueId();
+        } else {
+            try {
+                parentUniqueId = token.getLDAPEntry().getParentDNString();
+            } catch (LDAPException e) {
+                // noop
+            }
+        }
+        
+        // First get the tenantRoles for the token
+        List<TenantRole> roles = this.tenantDao.getTenantRolesByParent(parentUniqueId);
+        
+        // Second get the tenants from each of those roles
+        List<Tenant> tenants = new ArrayList<Tenant>();
+        for (TenantRole role : roles) {
+            for (String tenantId : role.getTenantIds()) {
+                Tenant tenant = this.tenantDao.getTenant(tenantId);
+                if (tenant != null) {
+                    tenants.add(tenant);
+                }
+            }
+        }
+        
+        // Third get the endppoints for each tenant
+        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
+        for (Tenant tenant : tenants) {
+            OpenstackEndpoint endpoint = this.endpointDao.getOpenstackEndpointsForTenant(tenant);
+            if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
+                endpoints.add(endpoint);
+            }
+        }
+        
+        return endpoints;
     }
 
     @Override

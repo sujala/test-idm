@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import com.rackspace.idm.domain.entity.Tenant;
 
 public interface EndpointDao {
     void addBaseUrl(CloudBaseUrl baseUrl);
@@ -21,4 +23,6 @@ public interface EndpointDao {
     void removeBaseUrlFromUser(int baseUrlId, String username);
 
     void setBaseUrlEnabled(int baseUrlId, boolean enabled);
+
+    OpenstackEndpoint getOpenstackEndpointsForTenant(Tenant tenant);
 }

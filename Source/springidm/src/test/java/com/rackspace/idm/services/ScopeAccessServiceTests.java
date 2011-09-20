@@ -14,7 +14,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
@@ -39,6 +41,8 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     UserDao mockUserDao;
     ScopeAccessDao scopeAccessDao;
     ClientDao mockClientDao;
+    TenantDao tenantDao;
+    EndpointDao endpointDao;
     AuthHeaderHelper authHeaderHelper;
     ScopeAccessService scopeAccessService;
 
@@ -56,8 +60,10 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         mockUserDao = EasyMock.createMock(UserDao.class);
         mockClientDao = EasyMock.createMock(ClientDao.class);
         scopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
+        endpointDao = EasyMock.createMock(EndpointDao.class);
+        tenantDao = EasyMock.createMock(TenantDao.class);
         scopeAccessService = new DefaultScopeAccessService(mockUserDao,
-            mockClientDao, scopeAccessDao, authHeaderHelper, appConfig);
+            mockClientDao, scopeAccessDao, tenantDao, endpointDao, authHeaderHelper, appConfig);
     }
 
     @Test

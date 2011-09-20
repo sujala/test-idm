@@ -12,6 +12,8 @@ import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.EndPoints;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Filter;
@@ -308,6 +310,26 @@ public class LdapEndpointRepository extends LdapRepository implements
         }
         getLogger().info("Got Endpoints for User {}", username);
         return endpoints;
+    }
+    
+    @Override
+    public OpenstackEndpoint getOpenstackEndpointsForTenant(Tenant tenant) {
+
+        List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
+        
+        for (String baseUrlId : tenant.getBaseUrlIds()) {
+            CloudBaseUrl baseUrl = this.getBaseUrlById(Integer.parseInt(baseUrlId));
+            if (baseUrl != null) {
+                baseUrls.add(baseUrl);
+            }
+        }
+        
+        OpenstackEndpoint point = new OpenstackEndpoint();
+        point.setTenantId(tenant.getTenantId());
+        point.setTenantName(tenant.getName());
+        point.setBaseUrls(baseUrls);
+        
+        return point;
     }
 
     @Override
