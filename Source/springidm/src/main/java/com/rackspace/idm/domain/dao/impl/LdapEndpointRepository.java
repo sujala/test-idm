@@ -1,18 +1,29 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.EndPoints;
 import com.rackspace.idm.exception.NotFoundException;
-import com.unboundid.ldap.sdk.*;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.StringUtils;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import com.unboundid.ldap.sdk.Attribute;
+import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.LDAPResult;
+import com.unboundid.ldap.sdk.LDAPSearchException;
+import com.unboundid.ldap.sdk.Modification;
+import com.unboundid.ldap.sdk.ModificationType;
+import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.ldap.sdk.SearchResult;
+import com.unboundid.ldap.sdk.SearchResultEntry;
+import com.unboundid.ldap.sdk.SearchScope;
 
 public class LdapEndpointRepository extends LdapRepository implements
     EndpointDao {
@@ -76,7 +87,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         }
 
         String baseUrlDN = new LdapDnBuilder(BASEURL_BASE_DN).addAttribute(
-            ATTR_BASEURL_ID, String.valueOf(baseUrl.getBaseUrlId())).build();
+            ATTR_ID, String.valueOf(baseUrl.getBaseUrlId())).build();
 
         LDAPResult result;
 
@@ -160,7 +171,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         LDAPResult result = null;
 
         String baseUrlDN = new LdapDnBuilder(BASEURL_BASE_DN).addAttribute(
-            ATTR_BASEURL_ID, String.valueOf(baseUrlId)).build();
+            ATTR_ID, String.valueOf(baseUrlId)).build();
 
         try {
             result = getAppConnPool().delete(
@@ -190,7 +201,7 @@ public class LdapEndpointRepository extends LdapRepository implements
         SearchResult searchResult = null;
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_BASEURL_ID, String.valueOf(baseUrlId))
+            .addEqualAttribute(ATTR_ID, String.valueOf(baseUrlId))
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
 
         try {
