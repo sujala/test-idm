@@ -96,6 +96,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 	public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String name)
 			throws IOException {
         String request = getCloudAuthV20Url() + "users";
+        if(name != null) {
+            request += "?name=" + name;
+        }
         return cloudClient.get(request, httpHeaders);
 	}
 
