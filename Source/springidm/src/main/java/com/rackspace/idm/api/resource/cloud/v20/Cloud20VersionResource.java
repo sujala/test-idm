@@ -42,7 +42,6 @@ public class Cloud20VersionResource {
     }
 
     @GET()
-    @Path("public")
     public Response getPublicCloud20VersionInfo(
             @Context HttpHeaders httpHeaders
     ) throws IOException {
@@ -51,7 +50,6 @@ public class Cloud20VersionResource {
         return cloudClient.get(getCloudAuthV20Url(), httpHeaders).build();
     }
 
-    @GET
     public Response getInternalCloud20VersionInfo() {
         final String responseXml = cloudContractDescriptionBuilder.buildInternalVersionPage(CloudContractDescriptionBuilder.VERSION_2_0, uriInfo);
         return Response.ok(responseXml).build();

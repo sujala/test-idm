@@ -62,7 +62,6 @@ public class Cloud11VersionResource {
     }
 
     @GET
-    @Path("public")
     public Response getPublicCloud11VersionInfo(@Context HttpHeaders httpHeaders)
             throws IOException {
     	//For the pubic profile, we're just forwarding to what cloud has. Once we become the
@@ -70,7 +69,6 @@ public class Cloud11VersionResource {
         return cloudClient.get(getCloudAuthV11Url(), httpHeaders).build();
     }
     
-    @GET
     public Response getInternalCloud11VersionInfo() {
        	final String responseXml = cloudContractDescriptionBuilder.buildInternalVersionPage(CloudContractDescriptionBuilder.VERSION_1_1, uriInfo);
     	return Response.ok(responseXml).build();
