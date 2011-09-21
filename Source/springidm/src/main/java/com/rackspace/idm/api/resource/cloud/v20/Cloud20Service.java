@@ -35,15 +35,15 @@ public interface Cloud20Service {
 
     Response.ResponseBuilder getTenantById(HttpHeaders httpHeaders, String tenantsId) throws IOException;
 
-    Response.ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String body) throws IOException;
+    Response.ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String userId, String body) throws IOException;
 
-    Response.ResponseBuilder listCredentials(HttpHeaders httpHeaders, String marker, Integer limit) throws IOException;
+    Response.ResponseBuilder listCredentials(HttpHeaders httpHeaders, String userId, String marker, Integer limit) throws IOException;
 
-    Response.ResponseBuilder updateUserCredential(HttpHeaders httpHeaders, String body) throws IOException;
+    Response.ResponseBuilder updateUserCredential(HttpHeaders httpHeaders, String userId, String body) throws IOException;
 
-    Response.ResponseBuilder getUserCredential(HttpHeaders httpHeaders) throws IOException;
+    Response.ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String userId) throws IOException;
 
-    Response.ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders) throws IOException;
+    Response.ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String userId) throws IOException;
 
     Response.ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders, String tenantsId, String userId) throws IOException;
 }

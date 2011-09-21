@@ -121,38 +121,6 @@ public class DelegateCloud20Service implements Cloud20Service {
 			Integer limit) throws IOException {
 		// TODO Auto-generated method stub
         String request = getCloudAuthV20Url() + "tenants";
-		return cloudClient.get(request,httpHeaders);
-	}
-
-
-	@Override
-	public ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String name)
-			throws IOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	@Override
-	public ResponseBuilder getTenantById(HttpHeaders httpHeaders,
-			String tenantsId) throws IOException {
-        String request = getCloudAuthV20Url() + "tenants/" + tenantsId;
-        return cloudClient.get(request, httpHeaders);
-	}
-
-
-	@Override
-	public ResponseBuilder addUserCredential(HttpHeaders httpHeaders,
-			String body) throws IOException {
-        String request = getCloudAuthV20Url() + "users/credentials";
-        return cloudClient.post(request, httpHeaders, body);
-	}
-
-
-	@Override
-	public ResponseBuilder listCredentials(HttpHeaders httpHeaders,
-			String marker, Integer limit) throws IOException {
-        String request = getCloudAuthV20Url() + "users/credentials";
         if(marker != null && limit != null) {
             request += "?limit=" + limit + "&marker=" + marker;
         } else if (marker != null ) {
@@ -165,25 +133,67 @@ public class DelegateCloud20Service implements Cloud20Service {
 
 
 	@Override
-	public ResponseBuilder updateUserCredential(HttpHeaders httpHeaders,
-			String body) throws IOException {
-        String request = getCloudAuthV20Url() + "users/credentials/RAX-KSKEY:apikeyCredentials";
-        return cloudClient.post(request, httpHeaders, body);
-	}
-
-
-	@Override
-	public ResponseBuilder getUserCredential(HttpHeaders httpHeaders)
+	public ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String name)
 			throws IOException {
-        String request = getCloudAuthV20Url() + "users/credentials/RAX-KSKEY:apikeyCredentials";
+        String request = getCloudAuthV20Url() + "tenants";
+        if(name != null) {
+            request += "?name=" + name;
+        }
         return cloudClient.get(request, httpHeaders);
 	}
 
 
 	@Override
-	public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders)
+	public ResponseBuilder getTenantById(HttpHeaders httpHeaders,
+			String tenantsId) throws IOException {
+        String request = getCloudAuthV20Url() + "tenants/" + tenantsId;
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String userId,
+			String body) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId + "/credentials";
+        return cloudClient.post(request, httpHeaders, body);
+	}
+
+
+	@Override
+	public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String userId,
+			String marker, Integer limit) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId + "/credentials";
+        if(marker != null && limit != null) {
+            request += "?limit=" + limit + "&marker=" + marker;
+        } else if (marker != null ) {
+            request += "?marker=" + marker;
+        } else if (limit != null) {
+            request += "?limit=" + limit;
+        }
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder updateUserCredential(HttpHeaders httpHeaders, String userId,
+			String body) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId + "/credentials/RAX-KSKEY:apikeyCredentials";
+        return cloudClient.post(request, httpHeaders, body);
+	}
+
+
+	@Override
+	public ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String userId)
 			throws IOException {
-        String request = getCloudAuthV20Url() + "users/credentials/RAX-KSKEY:apikeyCredentials";
+        String request = getCloudAuthV20Url() + "users/" + userId + "/credentials/RAX-KSKEY:apikeyCredentials";
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String userId)
+			throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId + "/credentials/RAX-KSKEY:apikeyCredentials";
         return cloudClient.delete(request, httpHeaders);
 	}
 
@@ -191,7 +201,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 	@Override
 	public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders,
 			String tenantId, String userId) throws IOException {
-        String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users/" + userId;
+        String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users/" + userId + "/roles";
         return cloudClient.get(request, httpHeaders);
 	}
 

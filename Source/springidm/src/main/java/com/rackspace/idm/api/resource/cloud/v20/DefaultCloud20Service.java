@@ -82,35 +82,35 @@ public class
 	}
 
 	@Override
-	public ResponseBuilder addUserCredential(HttpHeaders httpHeaders,
+	public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String userId,
 			String body) throws IOException {
 		//TODO write me
 		throw new UnsupportedOperationException("not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.addUserCredential");
 	}
 
 	@Override
-	public ResponseBuilder listCredentials(HttpHeaders httpHeaders,
+	public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String userId,
 			String marker, Integer limit) throws IOException {
 		//TODO write me
 		throw new UnsupportedOperationException("not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.listCredentials");
 	}
 
 	@Override
-	public ResponseBuilder updateUserCredential(HttpHeaders httpHeaders,
+	public ResponseBuilder updateUserCredential(HttpHeaders httpHeaders, String userId,
 			String body) throws IOException {
 		//TODO write me
 		throw new UnsupportedOperationException("not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.updateUserCredential");
 	}
 
 	@Override
-	public ResponseBuilder getUserCredential(HttpHeaders httpHeaders)
+	public ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String userId)
 			throws IOException {
 		//TODO write me
 		throw new UnsupportedOperationException("not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.getUserCredential");
 	}
 
 	@Override
-	public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders)
+	public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String userId)
 			throws IOException {
 		//TODO write me
 		throw new UnsupportedOperationException("not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.deleteUserCredential");

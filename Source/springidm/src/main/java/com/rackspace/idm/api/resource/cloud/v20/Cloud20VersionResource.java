@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
-import javax.xml.bind.JAXBElement;
 import java.io.IOException;
 
 /**
@@ -128,38 +127,38 @@ public class Cloud20VersionResource {
     }
 
     @POST
-    @Path("users/credentials")
-    public Response addUserCredential(@Context HttpHeaders httpHeaders, String body) throws IOException {
-        return getCloud20Service().addUserCredential(httpHeaders, body).build();
+    @Path("users/{userId}/credentials")
+    public Response addUserCredential(@Context HttpHeaders httpHeaders, @PathParam("userId") String userId, String body) throws IOException {
+        return getCloud20Service().addUserCredential(httpHeaders, userId, body).build();
     }
 
     @GET
-    @Path("users/credentials")
-    public Response listCredentials(@Context HttpHeaders httpHeaders, @QueryParam("marker") String marker,
+    @Path("users/{userId}/credentials")
+    public Response listCredentials(@Context HttpHeaders httpHeaders, @PathParam("userId") String userId, @QueryParam("marker") String marker,
         @QueryParam("limit") Integer limit) throws IOException {
-        return getCloud20Service().listCredentials(httpHeaders, marker, limit).build();
+        return getCloud20Service().listCredentials(httpHeaders, userId, marker, limit).build();
     }
 
     @POST
-    @Path("users/credentials/RAX-KSKEY:apikeyCredentials")
-    public Response updateUserCredential(@Context HttpHeaders httpHeaders, String body) throws IOException {
-        return getCloud20Service().updateUserCredential(httpHeaders, body).build();
+    @Path("users/{userId}/credentials/RAX-KSKEY:apikeyCredentials")
+    public Response updateUserCredential(@Context HttpHeaders httpHeaders, @PathParam("userId") String userId, String body) throws IOException {
+        return getCloud20Service().updateUserCredential(httpHeaders, userId, body).build();
     }
 
     @GET
-    @Path("users/credentials/RAX-KSKEY:apikeyCredentials")
-    public Response getUserCredential(@Context HttpHeaders httpHeaders) throws IOException {
-        return getCloud20Service().getUserCredential(httpHeaders).build();
+    @Path("users/{userId}/credentials/RAX-KSKEY:apikeyCredentials")
+    public Response getUserCredential(@Context HttpHeaders httpHeaders, @PathParam("userId") String userId) throws IOException {
+        return getCloud20Service().getUserCredential(httpHeaders, userId).build();
     }
 
     @DELETE
-    @Path("users/credentials/RAX-KSKEY:apikeyCredentials")
-    public Response deleteUserCredential(@Context HttpHeaders httpHeaders) throws IOException {
-        return getCloud20Service().deleteUserCredential(httpHeaders).build();
+    @Path("users/{userId}/credentials/RAX-KSKEY:apikeyCredentials")
+    public Response deleteUserCredential(@Context HttpHeaders httpHeaders, @PathParam("userId") String userId) throws IOException {
+        return getCloud20Service().deleteUserCredential(httpHeaders, userId).build();
     }
 
     @GET
-    @Path("tenants/{tenantId}/users/{userId}")
+    @Path("tenants/{tenantId}/users/{userId}/roles")
     public Response listRolesForUserOnTenant(@Context HttpHeaders httpHeaders, @PathParam("tenantId") String tenantId,
         @PathParam("userId") String userId) throws IOException {
         return getCloud20Service().listRolesForUserOnTenant(httpHeaders, tenantId, userId).build();
