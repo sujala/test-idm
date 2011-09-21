@@ -34,22 +34,20 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
-    //TODO update version to 2.0
     @Test
     public void getVersion_acceptsXml_returnsVersion() throws Exception {
         WebResource resource = resource().path("cloud/v2.0");
         ClientResponse clientResponse = resource.accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         String entity = clientResponse.getEntity(String.class);
-        assertThat("version", entity, Matchers.containsString("id=\"v1.1\""));
+        assertThat("version", entity, Matchers.containsString("id=\"v2.0\""));
     }
 
-    //TODO update version to 2.0
     @Test
     public void getVersion_acceptsJson_returnsVersion() throws Exception {
         WebResource resource = resource().path("cloud/v2.0");
         ClientResponse clientResponse = resource.get(ClientResponse.class);
         String entity = clientResponse.getEntity(String.class);
-        assertThat("version", entity, Matchers.containsString("\"@id\":\"v1.1\""));
+        assertThat("version", entity, Matchers.containsString("\"@id\":\"v2.0\""));
     }
 
     @Test
