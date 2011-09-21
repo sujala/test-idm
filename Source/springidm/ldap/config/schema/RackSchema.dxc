@@ -186,7 +186,8 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.24) = {
 schema set attribute (1.3.6.1.4.1.20988.2.1.25) = {
 	name = baseUrlId
 	ldap-names = baseUrlId
-	syntax = integer
+    equality = caseIgnoreMatch
+    syntax = directoryString
 	description = "baseUrlId"
 };
 

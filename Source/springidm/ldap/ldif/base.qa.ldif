@@ -104,6 +104,11 @@ publicUrl: https://storage101.dfw1.stg.swift.racklabs.com/v1/v1
 service: cloudFiles
 internalUrl: https://snet-storage101.dfw1.stg.swift.racklabs.com/v1/v1
 rsRegion: DFW
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+openStackType: object-store
+rsGlobal: FALSE
 
 dn: rsId=2,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -116,6 +121,11 @@ publicUrl: https://storage.stg.swift.racklabs.com/v1/v1
 service: cloudFiles
 internalUrl: https://snet-storage.stg.swift.racklabs.com/v1/v1
 rsRegion: INACTIVE
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+openStackType: object-store
+rsGlobal: FALSE
 
 dn: rsId=3,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -128,6 +138,11 @@ publicUrl: https://storage.stg.swift.racklabs.com/v1
 service: cloudFiles
 internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
 rsRegion: ORD
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+openStackType: object-store
+rsGlobal: FALSE
 
 dn: rsId=4,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -140,6 +155,11 @@ publicUrl: https://storage4.stg.swift.racklabs.com
 service: cloudFiles
 internalUrl: https://snet-storage4.stg.swift.racklabs.com
 rsRegion: INACTIVE
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+openStackType: object-store
+rsGlobal: FALSE
 
 dn: rsId=5,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -152,6 +172,11 @@ publicUrl: https://storage5.stg.swift.racklabs.com
 service: cloudFiles
 internalUrl: https://snet-storage5.stg.swift.racklabs.com
 rsRegion: INACTIVE
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+openStackType: object-store
+rsGlobal: FALSE
 
 dn: rsId=6,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -164,6 +189,11 @@ publicUrl: https://storage.stg.swift.racklabs.com/v1
 service: cloudFiles
 internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
 rsRegion: STAGING
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+openStackType: object-store
+rsGlobal: FALSE
 
 dn: rsId=7,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -176,6 +206,11 @@ publicUrl: https://storage101.dfw1.stg.swift.racklabs.com
 service: cloudFiles
 internalUrl: https://snet-storage101.dfw1.stg.swift.racklabs.com
 rsRegion: DFW
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+openStackType: object-store
+rsGlobal: FALSE
 
 dn: rsId=8,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -188,6 +223,11 @@ publicUrl: https://storage.stg.swift.racklabs.com/v1
 service: cloudFiles
 internalUrl: https://snet-storage101.lon3.stg.swift.racklabs.com
 rsRegion: LON
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+openStackType: object-store
+rsGlobal: FALSE
 
 dn: rsId=9,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -199,6 +239,11 @@ enabled: TRUE
 publicUrl: https://cdn.stg.clouddrive.com/v1
 service: cloudFilesCDN
 rsRegion: DFW
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+openStackType: object-store
+rsGlobal: FALSE
 
 dn: rsId=10,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -210,6 +255,11 @@ enabled: TRUE
 publicUrl: https://cdn1.stg.clouddrive.com/v1
 service: cloudFilesCDN
 rsRegion: DFW
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+openStackType: object-store
+rsGlobal: FALSE
 
 dn: rsId=11,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -221,6 +271,11 @@ enabled: TRUE
 publicUrl: https://cdn2.stg.clouddrive.com/v1
 service: cloudFilesCDN
 rsRegion: ORD
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+openStackType: object-store
+rsGlobal: FALSE
 
 dn: rsId=12,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -232,6 +287,11 @@ enabled: TRUE
 publicUrl: https://cdn.stg.clouddrive.com:8442/v1
 service: cloudFilesCDN
 rsRegion: LON
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+openStackType: object-store
+rsGlobal: FALSE
 
 dn: rsId=13,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -243,6 +303,11 @@ enabled: TRUE
 publicUrl: https://cdn.stg.clouddrive.com/v1
 service: cloudFilesCDN
 rsRegion: STAGING
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+openStackType: object-store
+rsGlobal: FALSE
 
 dn: rsId=14,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -254,6 +319,8 @@ enabled: TRUE
 publicUrl: https://cdn.stg.clouddrive.com
 service: cloudFilesCDN
 rsRegion: STAGING
+openStackType: object-store
+rsGlobal: FALSE
 
 dn: rsId=15,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -264,6 +331,11 @@ def: TRUE
 enabled: TRUE
 publicUrl: https://servers.api.staging.us.ccp.rackspace.net/v1.0
 service: cloudServers
+versionId: 1.0
+versionInfo: https://api.info.uri.com/v1.0/
+versionList: https://api.list.uri.com/v1.0/
+openStackType: compute
+rsGlobal: FALSE
 
 dn: rsId=16,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -275,6 +347,11 @@ enabled: TRUE
 publicUrl: https://ord.servers.api.rackspacecloud.com/v1.0
 service: cloudServers
 rsRegion: LON
+versionId: 1.0
+versionInfo: https://api.info.uri.com/v1.0/
+versionList: https://api.list.uri.com/v1.0/
+openStackType: compute
+rsGlobal: FALSE
 
 dn: rsId=17,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -285,11 +362,57 @@ def: TRUE
 enabled: TRUE
 publicUrl: https://staging.dnsaas.rackspace.net/v1.0
 service: cloudDNS
+openStackType: dnsextension:dns
+rsGlobal: FALSE
 
 dn: ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit
 ou: tenants
+
+dn: rsId=1,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenant
+rsId: 1
+cn: 90000
+enabled: TRUE
+description: mkovacs test mosso tenant
+tenantDisplayName: 90000-test
+baseUrlId: 15
+baseUrlId: 17
+
+dn: rsId=2,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenant
+rsId: 2
+cn: KovacsNastId
+enabled: TRUE
+description: mkovacs test mosso tenant
+tenantDisplayName: KovacsNastId-test
+baseUrlId: 3
+baseUrlId: 11
+
+dn: rsId=3,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenant
+rsId: 3
+cn: 30000001
+enabled: TRUE
+description: authuser1 test mosso tenant
+tenantDisplayName: 30000001-test
+baseUrlId: 15
+baseUrlId: 17
+
+dn: rsId=4,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenant
+rsId: 4
+cn: AuthUserNastId
+enabled: TRUE
+description: authuser1 test mosso tenant
+tenantDisplayName: AuthUserNastId-test
+baseUrlId: 3
+baseUrlId: 11
 
 ######################################## Admin User #######################################
 
@@ -448,6 +571,44 @@ clientId: QATESTCLIENT
 status: ACTIVE
 softDeleted: FALSE
 userPassword: password
+
+######################################## Client Role Containers ############################
+
+dn: cn=CLIENT ROLES,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: CLIENT ROLES
+
+dn: cn=CLIENT ROLES,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: CLIENT ROLES
+
+######################################## Client Roles ######################################
+
+dn: rsId=1,cn=CLIENT ROLES,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 1
+cn: Super Admin
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+description: A role that allows a user/application full access to Global Auth
+
+dn: rsId=2,cn=CLIENT ROLES,rsId=1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 2
+cn: Customer Admin
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+description: A Role that allows a user to Admin other users in his customer
+
+dn: rsId=3,cn=CLIENT ROLES,rsId=2,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 3
+cn: Admin
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
 
 ######################################## ScopeAccesses Containers ##########################
 
@@ -625,7 +786,7 @@ rsDisplayName:: UFJsww2bOetqwKfdrYFd+Q==
 rsGivenName:: xGvFK9QyVhwJYN4MD3feYQ==
 rsMail:: si9sZ2IBfvz2WPZuaLVP+EHf5WYvJWyArc6DOI819lE=
 rsMossoId: 30000001
-rsNastId: xxx
+rsNastId: AuthUserNastId
 rsRegion: USA
 rsSn:: PZi9PwWFO7mMKNmAchN9ag==
 secretAnswer:: CRowCw8F9Q4gQM6FIP2uQQ==
@@ -828,6 +989,8 @@ clientId: QATESTCLIENT
 uid: qaadmin
 userRCN: RCN-QATestingCustomer
 
+######################################## User Scope Accesses for Cloud Auth Service #######################################
+
 dn: clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: scopeAccess
@@ -882,6 +1045,9 @@ clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 uid: qaadmin
 userRCN: RCN-QATestingCustomer
 
+######################################## User Scope Accesses for Customer Idm #######################################
+
+
 dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: scopeAccess
@@ -935,6 +1101,25 @@ clientRCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 uid: qaadmin
 userRCN: RCN-QATestingCustomer
+
+######################################## User Tenant Roles #######################################
+
+dn: cn=Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+cn: Admin
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+tenantId: 1
+tenantId: 2
+
+dn: cn=Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+cn: Admin
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+tenantId: 3
+tenantId: 4
+
 
 ######################################## Permissions #######################################
 

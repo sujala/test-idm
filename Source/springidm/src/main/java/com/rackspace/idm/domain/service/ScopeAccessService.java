@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.DelegatedPermission;
 import com.rackspace.idm.domain.entity.GrantedPermission;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
@@ -99,4 +100,7 @@ public interface ScopeAccessService {
 
     boolean doesUserHavePermissionForClient(User user, Permission permission,
         Client client);
+
+    List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(
+        ScopeAccess scopeAccess);
 }
