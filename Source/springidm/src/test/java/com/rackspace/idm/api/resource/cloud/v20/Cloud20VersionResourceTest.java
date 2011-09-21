@@ -34,6 +34,13 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
     }
 
     @Test
+    public void getTenants__returns200() throws Exception {
+        WebResource resource = resource().path("cloud/v2.0/tenants");
+        ClientResponse clientResponse = resource.get(ClientResponse.class);
+        assertThat("response code", clientResponse.getStatus(), equalTo(200));
+    }
+
+    @Test
     public void authenticate_withValidPath_returns200() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/tokens");
         ClientResponse clientResponse = resource

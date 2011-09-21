@@ -120,7 +120,8 @@ public class DelegateCloud20Service implements Cloud20Service {
 	public ResponseBuilder listTenants(HttpHeaders httpHeaders, String marker,
 			Integer limit) throws IOException {
 		// TODO Auto-generated method stub
-		return null;
+        String request = getCloudAuthV20Url() + "tenants";
+		return cloudClient.get(request,httpHeaders);
 	}
 
 
