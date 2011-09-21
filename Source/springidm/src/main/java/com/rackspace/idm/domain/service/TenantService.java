@@ -12,6 +12,7 @@ public interface TenantService {
     void addTenant(Tenant tenant);
     void deleteTenant(String tenantId);
     Tenant getTenant(String tenantId);
+    Tenant getTenantByName(String name);
     List<Tenant> getTenants();
     void updateTenant(Tenant tenant);
     
@@ -21,8 +22,7 @@ public interface TenantService {
     void addTenantRoleToUser(User user, TenantRole role);
     void addTenantRoleToClient(Client client, TenantRole role);
     void deleteTenantRole(String parentUniqueId, TenantRole role);
-    TenantRole getTenantRoleForParentByRoleName(String parentUniqueId, String roleName);
-    TenantRole getTenantRoleForParentByRoleNameAndClientId(String parentUniqueId, String roleName, String clientId);
+    TenantRole getTenantRoleForParentById(String parentUniqueId, String id);
     List<TenantRole> getTenantRolesByParent(String parentUniqueId);
     List<TenantRole> getTenantRolesByParentAndClientId(String parentUniqueId, String clientId);
 }

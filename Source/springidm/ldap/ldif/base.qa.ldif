@@ -75,10 +75,15 @@ objectClass: top
 objectClass: organizationalUnit
 ou: cloud
 
+dn: ou=services,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: services
+
 dn: ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit
-ou: tenants
+ou: adminUsers
 
 dn: cn=auth,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: inetOrgPerson
@@ -1104,18 +1109,18 @@ userRCN: RCN-QATestingCustomer
 
 ######################################## User Tenant Roles #######################################
 
-dn: cn=Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
+dn: rsId=3,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: tenantRole
-cn: Admin
+rsId: 3
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 tenantId: 1
 tenantId: 2
 
-dn: cn=Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=users,o=rackspace,dc=rackspace,dc=com
+dn: rsId=3,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=2,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: tenantRole
-cn: Admin
+rsId: 3
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 tenantId: 3
 tenantId: 4

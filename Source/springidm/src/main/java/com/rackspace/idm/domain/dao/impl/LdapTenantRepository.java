@@ -106,6 +106,32 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
         return tenant;
     }
+    
+    @Override
+    public Tenant getTenantByName(String name) {
+        getLogger().debug("Doing search for name " + name);
+        if (StringUtils.isBlank(name)) {
+            getLogger().error("Null or Empty name parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty name parameter.");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_NAME, name)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT).build();
+
+        Tenant tenant = null;
+        
+        try {
+            tenant = getSingleTenant(searchFilter);
+        } catch (LDAPPersistException e) {
+            getLogger().error("Error getting tenant object", e);
+            throw new IllegalStateException(e);
+        }
+        getLogger().debug("Found Tenant - {}", tenant);
+
+        return tenant;
+    }
 
     @Override
     public List<Tenant> getTenants() {
@@ -157,7 +183,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     private List<Tenant> getMultipleTenants(Filter searchFilter)
         throws LDAPPersistException {
         List<SearchResultEntry> entries = this.getMultipleEntries(
-            TENANT_BASE_DN, SearchScope.SUB, searchFilter, ATTR_ID, ATTR_TENANT_SEARCH_ATTRIBUTES);
+            TENANT_BASE_DN, SearchScope.ONE, searchFilter, ATTR_ID, ATTR_TENANT_SEARCH_ATTRIBUTES);
 
         List<Tenant> tenants = new ArrayList<Tenant>();
         for (SearchResultEntry entry : entries) {
@@ -169,7 +195,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     private Tenant getSingleTenant(Filter searchFilter)
         throws LDAPPersistException {
         SearchResultEntry entry = this.getSingleEntry(TENANT_BASE_DN,
-            SearchScope.SUB, searchFilter, ATTR_TENANT_SEARCH_ATTRIBUTES);
+            SearchScope.ONE, searchFilter, ATTR_TENANT_SEARCH_ATTRIBUTES);
         Tenant tenant = getTenant(entry);
         return tenant;
     }
@@ -233,61 +259,22 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     }
 
     @Override
-    public TenantRole getTenantRoleForParentByRoleName(String parentUniqueId,
-        String roleName) {
+    public TenantRole getTenantRoleForParentById(String parentUniqueId,
+        String id) {
         if (StringUtils.isBlank(parentUniqueId)) {
             String errmsg = "ParentUniqueId cannot be blank";
             getLogger().error(errmsg);
             throw new IllegalArgumentException(errmsg);
         }
-        if (StringUtils.isBlank(roleName)) {
-            getLogger().error("Null or Empty roleName parameter");
+        if (StringUtils.isBlank(id)) {
+            getLogger().error("Null or Empty id parameter");
             throw new IllegalArgumentException(
-                "Null or Empty roleName parameter.");
+                "Null or Empty id parameter.");
         }
-        getLogger().debug("Doing search for TenantRole " + roleName);
+        getLogger().debug("Doing search for TenantRole " + id);
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_NAME, roleName)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
-            .build();
-
-        TenantRole role = null;
-
-        try {
-            role = getSingleTenantRole(parentUniqueId, searchFilter);
-        } catch (LDAPPersistException e) {
-            getLogger().error("Error getting role object", e);
-            throw new IllegalStateException(e);
-        }
-        getLogger().debug("Found Tenant Role - {}", role);
-
-        return role;
-    }
-
-    @Override
-    public TenantRole getTenantRoleForParentByRoleNameAndClientId(
-        String parentUniqueId, String roleName, String clientId) {
-        if (StringUtils.isBlank(parentUniqueId)) {
-            String errmsg = "ParentUniqueId cannot be blank";
-            getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
-        }
-        if (StringUtils.isBlank(roleName)) {
-            getLogger().error("Null or Empty roleName parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty roleName parameter.");
-        }
-        if (StringUtils.isBlank(clientId)) {
-            getLogger().error("Null or Empty clientId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty clientId parameter.");
-        }
-        getLogger().debug("Doing search for TenantRole " + roleName);
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_NAME, roleName)
-            .addEqualAttribute(ATTR_CLIENT_ID, clientId)
+            .addEqualAttribute(ATTR_ID, id)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
             .build();
 

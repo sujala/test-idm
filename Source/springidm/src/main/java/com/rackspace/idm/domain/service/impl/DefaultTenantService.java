@@ -56,6 +56,14 @@ public class DefaultTenantService implements TenantService {
         logger.info("Got Tenant {}", tenant);
         return tenant;
     }
+    
+    @Override
+    public Tenant getTenantByName(String name) {
+        logger.info("Getting Tenant {}", name);
+        Tenant tenant = this.tenantDao.getTenantByName(name);
+        logger.info("Got Tenant {}", tenant);
+        return tenant;
+    }
 
     @Override
     public List<Tenant> getTenants() {
@@ -101,8 +109,8 @@ public class DefaultTenantService implements TenantService {
         // the user already has that role on not.
         logger.info("Adding Tenant Role {}", role);
         TenantRole existingRole = this.tenantDao
-            .getTenantRoleForParentByRoleNameAndClientId(parentUniqueId,
-                role.getName(), role.getClientId());
+            .getTenantRoleForParentById(parentUniqueId,
+                role.getId());
         if (existingRole == null) {
             // if the user does not have the role then just add the
             // tenant role normally.
@@ -129,8 +137,8 @@ public class DefaultTenantService implements TenantService {
     public void deleteTenantRole(String parentUniqueId, TenantRole role) {
         logger.info("Deleted Tenant Role {}", role);
         TenantRole existingRole = this.tenantDao
-            .getTenantRoleForParentByRoleNameAndClientId(parentUniqueId,
-                role.getName(), role.getClientId());
+            .getTenantRoleForParentById(parentUniqueId,
+                role.getId());
 
         if (existingRole == null) {
             throw new NotFoundException("Tenant Role not found");
@@ -150,23 +158,17 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public TenantRole getTenantRoleForParentByRoleName(String parentUniqueId,
-        String roleName) {
-        logger.debug("Getting Tenant Role {}", roleName);
-        TenantRole role = this.tenantDao.getTenantRoleForParentByRoleName(
-            parentUniqueId, roleName);
-        logger.debug("Got Tenant Role {}", roleName);
-        return role;
-    }
-
-    @Override
-    public TenantRole getTenantRoleForParentByRoleNameAndClientId(
-        String parentUniqueId, String roleName, String clientId) {
-        logger.debug("Getting Tenant Role {}", roleName);
+    public TenantRole getTenantRoleForParentById(
+        String parentUniqueId, String id) {
+        logger.debug("Getting Tenant Role {}", id);
         TenantRole role = this.tenantDao
-            .getTenantRoleForParentByRoleNameAndClientId(parentUniqueId,
-                roleName, clientId);
-        logger.debug("Got Tenant Role {}", roleName);
+            .getTenantRoleForParentById(parentUniqueId,id);
+        if (role != null) {
+            ClientRole cRole = this.clientDao.getClientRoleById(role.getId());
+            role.setName(cRole.getName());
+            role.setDescription(cRole.getDescription());
+        }
+        logger.debug("Got Tenant Role {}", role);
         return role;
     }
 
@@ -175,6 +177,13 @@ public class DefaultTenantService implements TenantService {
         logger.debug("Getting Tenant Roles");
         List<TenantRole> roles = this.tenantDao
             .getTenantRolesByParent(parentUniqueId);
+        for (TenantRole role : roles) {
+            if (role != null) {
+                ClientRole cRole = this.clientDao.getClientRoleById(role.getId());
+                role.setName(cRole.getName());
+                role.setDescription(cRole.getDescription());
+                }
+        }
         logger.debug("Got {} Tenant Roles", roles.size());
         return roles;
     }
@@ -185,6 +194,13 @@ public class DefaultTenantService implements TenantService {
         logger.debug("Getting Tenant Roles by ClientId: {}", clientId);
         List<TenantRole> roles = this.tenantDao
             .getTenantRolesByParentAndClientId(parentUniqueId, clientId);
+        for (TenantRole role : roles) {
+            if (role != null) {
+                ClientRole cRole = this.clientDao.getClientRoleById(role.getId());
+                role.setName(cRole.getName());
+                role.setDescription(cRole.getDescription());
+                }
+        }
         logger.debug("Got {} Tenant Roles", roles.size());
         return roles;
     }
@@ -203,8 +219,9 @@ public class DefaultTenantService implements TenantService {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        
-        ClientRole cRole = this.clientDao.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
+
+        ClientRole cRole = this.clientDao.getClientRoleByClientIdAndRoleName(
+            role.getClientId(), role.getName());
         if (cRole == null) {
             String errMsg = String.format("ClientRole %s not found",
                 role.getName());
@@ -215,7 +232,7 @@ public class DefaultTenantService implements TenantService {
         UserScopeAccess sa = (UserScopeAccess) this.scopeAccessDao
             .getDirectScopeAccessForParentByClientId(user.getUniqueId(),
                 role.getClientId());
-        
+
         if (sa == null) {
             sa = new UserScopeAccess();
             sa.setClientId(client.getClientId());
@@ -225,7 +242,7 @@ public class DefaultTenantService implements TenantService {
             sa = (UserScopeAccess) this.scopeAccessDao.addDirectScopeAccess(
                 user.getUniqueId(), sa);
         }
-        
+
         addTenantRole(sa.getUniqueId(), role);
 
         logger.info("Adding tenantRole {} to user {}", role, user);
@@ -245,8 +262,9 @@ public class DefaultTenantService implements TenantService {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        
-        ClientRole cRole = this.clientDao.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
+
+        ClientRole cRole = this.clientDao.getClientRoleByClientIdAndRoleName(
+            role.getClientId(), role.getName());
         if (cRole == null) {
             String errMsg = String.format("ClientRole %s not found",
                 role.getName());
@@ -257,18 +275,21 @@ public class DefaultTenantService implements TenantService {
         ScopeAccess sa = this.scopeAccessDao
             .getDirectScopeAccessForParentByClientId(client.getUniqueId(),
                 role.getClientId());
-        
+
         if (sa == null) {
             sa = new ScopeAccess();
             sa.setClientId(client.getClientId());
             sa.setClientRCN(client.getRCN());
-            sa = this.scopeAccessDao.addDirectScopeAccess(
-                client.getUniqueId(), sa);
+            sa = this.scopeAccessDao.addDirectScopeAccess(client.getUniqueId(),
+                sa);
         }
-        
+
         addTenantRole(sa.getUniqueId(), role);
 
         logger.info("Added tenantRole {} to client {}", role, client);
     }
 
+    private ClientRole getClientRoleById(String id) {
+        return this.clientDao.getClientRoleById(id);
+    }
 }

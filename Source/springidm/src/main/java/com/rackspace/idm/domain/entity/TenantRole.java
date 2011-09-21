@@ -17,9 +17,9 @@ public class TenantRole implements Auditable {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
-
-    @LDAPField(attribute = LdapRepository.ATTR_NAME, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
-    private String name;
+    
+    @LDAPField(attribute=LdapRepository.ATTR_ID, objectClass=LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+    private String id;
 
     @LDAPField(attribute = LdapRepository.ATTR_TENANT_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String[] tenantIds;
@@ -30,6 +30,9 @@ public class TenantRole implements Auditable {
     public ReadOnlyEntry getLDAPEntry() {
         return ldapEntry;
     }
+    
+    private String name;
+    private String description;
 
     public String getUniqueId() {
         if (ldapEntry == null) {
@@ -37,6 +40,22 @@ public class TenantRole implements Auditable {
         } else {
             return ldapEntry.getDN();
         }
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
     }
 
     public String getName() {
@@ -47,12 +66,12 @@ public class TenantRole implements Auditable {
         this.name = name;
     }
 
-    public String getClientId() {
-        return clientId;
+    public String getDescription() {
+        return description;
     }
 
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String[] getTenantIds() {
@@ -101,7 +120,7 @@ public class TenantRole implements Auditable {
         int result = 1;
         result = prime * result
             + ((clientId == null) ? 0 : clientId.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
         result = prime * result + Arrays.hashCode(tenantIds);
         return result;
     }
@@ -125,11 +144,11 @@ public class TenantRole implements Auditable {
         } else if (!clientId.equals(other.clientId)) {
             return false;
         }
-        if (name == null) {
-            if (other.name != null) {
+        if (id == null) {
+            if (other.id != null) {
                 return false;
             }
-        } else if (!name.equals(other.name)) {
+        } else if (!id.equals(other.id)) {
             return false;
         }
         if (!Arrays.equals(tenantIds, other.tenantIds)) {
@@ -140,8 +159,8 @@ public class TenantRole implements Auditable {
 
     @Override
     public String getAuditContext() {
-        String format = "role=%s,clientId=%s,tenantIds=%s";
-        return String.format(format, getName(), getClientId(), getTenantIds());
+        String format = "roleId=%s,clientId=%s,tenantIds=%s";
+        return String.format(format, getId(), getClientId(), getTenantIds());
     }
 
     @Override

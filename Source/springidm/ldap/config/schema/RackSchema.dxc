@@ -574,6 +574,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.3) = {
 		userPassword
 	may-contain
 	    callbackUrl,
+	    openStackType,
 	    description,
 		locked,
 		permission,
@@ -806,7 +807,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.22) = {
     kind = structural
     must-contain
     	clientId,
-        cn
+        rsId
     may-contain
     	tenantId
 };
@@ -833,4 +834,5 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.24) = {
         cn,
         rsId
 };
+
 

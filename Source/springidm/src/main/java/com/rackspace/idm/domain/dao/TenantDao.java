@@ -10,14 +10,14 @@ public interface TenantDao {
     void addTenant(Tenant tenant);
     void deleteTenant(String tenantId);
     Tenant getTenant(String tenantId);
+    Tenant getTenantByName(String name);
     List<Tenant> getTenants();
     void updateTenant(Tenant tenant);
     
     void addTenantRoleToParent(String parentUniqueId, TenantRole role);
     void deleteTenantRole(TenantRole role);
     void updateTenantRole(TenantRole role);
-    TenantRole getTenantRoleForParentByRoleName(String parentUniqueId, String roleName);
-    TenantRole getTenantRoleForParentByRoleNameAndClientId(String parentUniqueId, String roleName, String clientId);
+    TenantRole getTenantRoleForParentById(String parentUniqueId, String id);
     List<TenantRole> getTenantRolesByParent(String parentUniqueId);
     List<TenantRole> getTenantRolesByParentAndClientId(String parentUniqueId, String clientId);
     String getNextTenantId();

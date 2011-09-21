@@ -673,6 +673,10 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         if (!StringUtils.isBlank(client.getClientId())) {
             atts.add(new Attribute(ATTR_CLIENT_ID, client.getClientId()));
         }
+        
+        if (!StringUtils.isBlank(client.getOpenStackType())) {
+            atts.add(new Attribute(ATTR_OPENSTACK_TYPE, client.getOpenStackType()));
+        }
 
         if (!StringUtils.isBlank(client.getId())) {
             atts.add(new Attribute(ATTR_ID, client.getId()));
@@ -743,6 +747,8 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
 
         client.setRCN(resultEntry
             .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
+        
+        client.setOpenStackType(resultEntry.getAttributeValue(ATTR_OPENSTACK_TYPE));
 
         String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
         if (statusStr != null) {
@@ -1123,5 +1129,32 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             getAppConnPool().releaseConnection(conn);
         }
         return roleId;
+    }
+    
+    @Override
+    public ClientRole getClientRoleById(String id) {
+        if (StringUtils.isBlank(id)) {
+            String errmsg = "id cannot be blank";
+            getLogger().error(errmsg);
+            throw new IllegalArgumentException(errmsg);
+        }
+        getLogger().debug("Doing search for ClientRole " + id);
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_ID, id)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
+            .build();
+
+        ClientRole role = null;
+
+        try {
+            role = getSingleClientRole(APPLICATIONS_BASE_DN, searchFilter);
+        } catch (LDAPPersistException e) {
+            getLogger().error("Error getting role object", e);
+            throw new IllegalStateException(e);
+        }
+        getLogger().debug("Found Client Role - {}", role);
+
+        return role;
     }
 }

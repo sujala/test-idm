@@ -1,10 +1,10 @@
 package com.rackspace.idm.domain.entity;
 
-import com.rackspace.idm.validation.MessageTexts;
-import com.rackspace.idm.validation.RegexPatterns;
-
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
 
 public class Client implements Auditable {
     private static final long serialVersionUID = -3160754818606772239L;
@@ -26,6 +26,8 @@ public class Client implements Auditable {
     private ClientStatus status = null;
     
     private String id = null;
+    
+    private String openStackType = null;
 
     private String orgInum = null;
     private Boolean locked = null;
@@ -72,6 +74,14 @@ public class Client implements Auditable {
     
     public void setRCN(String rcn) {
         this.rcn = rcn;
+    }
+    
+    public String getOpenStackType() {
+        return openStackType;
+    }
+
+    public void setOpenStackType(String openStackType) {
+        this.openStackType = openStackType;
     }
 
     public String getId() {
