@@ -4,6 +4,8 @@ import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
+
 import java.io.IOException;
 
 /**
@@ -46,4 +48,64 @@ public interface Cloud20Service {
     Response.ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String userId) throws IOException;
 
     Response.ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders, String tenantsId, String userId) throws IOException;
+
+	Response.ResponseBuilder listUsers(HttpHeaders httpHeaders) throws IOException;
+
+	ResponseBuilder addUser(HttpHeaders httpHeaders, String body) throws IOException;
+
+	ResponseBuilder updateUser(HttpHeaders httpHeaders, String userId, String body) throws IOException;
+
+	ResponseBuilder deleteUser(HttpHeaders httpHeaders, String userId) throws IOException;
+
+	ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String userId, String body) throws IOException;
+
+	ResponseBuilder listUserRoles(HttpHeaders httpHeaders, String userId, String serviceId) throws IOException;
+
+	ResponseBuilder addUserRole(HttpHeaders httpHeaders, String userId, String roleId) throws IOException;
+
+	ResponseBuilder getUserRole(HttpHeaders httpHeaders, String userId, String roleId) throws IOException;
+
+	ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String userId, String roleId) throws IOException;
+
+	ResponseBuilder OS_KSADM_addUserCredential(HttpHeaders httpHeaders, String userId, String body) throws IOException;
+
+	ResponseBuilder OS_KSADM_listCredentials(HttpHeaders httpHeaders, String userId, String marker, Integer limit) throws IOException;
+
+	ResponseBuilder OS_KSADM_updateUserCredential(HttpHeaders httpHeaders, String userId, String credentialType, String body) throws IOException;
+
+	ResponseBuilder OS_KSADM_getUserCredential(HttpHeaders httpHeaders, String userId, String credentialType) throws IOException;
+
+	ResponseBuilder OS_KSADM_deleteUserCredential(HttpHeaders httpHeaders, String userId, String credentialType) throws IOException;
+
+	ResponseBuilder addTenant(HttpHeaders httpHeaders, String body) throws IOException;
+
+	ResponseBuilder updateTenant(HttpHeaders httpHeaders, String tenantId, String body) throws IOException;
+
+	ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String tenantId) throws IOException;
+
+	ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders, String tenantId, String marker, Integer limit) throws IOException;
+
+	ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders, String tenantId, String roleId, String marker, Integer limit) throws IOException;
+
+	ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String tenantId, String marker, Integer limit) throws IOException;
+
+	ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String tenantId, String userId, String roleId) throws IOException;
+
+	ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String tenantId, String userId, String roleId) throws IOException;
+
+	ResponseBuilder listRoles(HttpHeaders httpHeaders, String serviceId, String marker, Integer limit) throws IOException;
+
+	ResponseBuilder addRole(HttpHeaders httpHeaders, String body) throws IOException;
+
+	ResponseBuilder getRole(HttpHeaders httpHeaders, String roleId) throws IOException;
+
+	ResponseBuilder deleteRole(HttpHeaders httpHeaders, String roleId) throws IOException;
+
+	ResponseBuilder listServices(HttpHeaders httpHeaders, String marker, Integer limit) throws IOException;
+
+	ResponseBuilder addService(HttpHeaders httpHeaders, String body) throws IOException;
+
+	ResponseBuilder getService(HttpHeaders httpHeaders, String serviceId) throws IOException;
+
+	ResponseBuilder deleteService(HttpHeaders httpHeaders, String serviceId) throws IOException;
 }

@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import java.util.HashMap;
+
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
@@ -61,9 +63,11 @@ public class DelegateCloud20Service implements Cloud20Service {
 	public ResponseBuilder validateToken(HttpHeaders httpHeaders,
 			String tokenId, String belongsTo) throws IOException {
         String request = getCloudAuthV20Url() + "tokens/" + tokenId;
-        if (belongsTo != null) {
-            request += "?belongsTo=" + belongsTo;
-        }
+
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("belongsTo", belongsTo);
+        request = appendQueryParams(request, params);
+
         return cloudClient.get(request, httpHeaders);
 	}
 
@@ -96,9 +100,11 @@ public class DelegateCloud20Service implements Cloud20Service {
 	public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String name)
 			throws IOException {
         String request = getCloudAuthV20Url() + "users";
-        if(name != null) {
-            request += "?name=" + name;
-        }
+
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("name", name);
+        request = appendQueryParams(request, params);
+
         return cloudClient.get(request, httpHeaders);
 	}
 
@@ -122,15 +128,13 @@ public class DelegateCloud20Service implements Cloud20Service {
 	@Override
 	public ResponseBuilder listTenants(HttpHeaders httpHeaders, String marker,
 			Integer limit) throws IOException {
-		// TODO Auto-generated method stub
         String request = getCloudAuthV20Url() + "tenants";
-        if(marker != null && limit != null) {
-            request += "?limit=" + limit + "&marker=" + marker;
-        } else if (marker != null ) {
-            request += "?marker=" + marker;
-        } else if (limit != null) {
-            request += "?limit=" + limit;
-        }
+
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("marker", marker);
+        params.put("limit", limit);
+        request = appendQueryParams(request, params);
+
         return cloudClient.get(request, httpHeaders);
 	}
 
@@ -139,9 +143,11 @@ public class DelegateCloud20Service implements Cloud20Service {
 	public ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String name)
 			throws IOException {
         String request = getCloudAuthV20Url() + "tenants";
-        if(name != null) {
-            request += "?name=" + name;
-        }
+
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("name", name);
+        request = appendQueryParams(request, params);
+
         return cloudClient.get(request, httpHeaders);
 	}
 
@@ -166,13 +172,12 @@ public class DelegateCloud20Service implements Cloud20Service {
 	public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String userId,
 			String marker, Integer limit) throws IOException {
         String request = getCloudAuthV20Url() + "users/" + userId + "/credentials";
-        if(marker != null && limit != null) {
-            request += "?limit=" + limit + "&marker=" + marker;
-        } else if (marker != null ) {
-            request += "?marker=" + marker;
-        } else if (limit != null) {
-            request += "?limit=" + limit;
-        }
+
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("marker", marker);
+        params.put("limit", limit);
+        request = appendQueryParams(request, params);
+
         return cloudClient.get(request, httpHeaders);
 	}
 
@@ -207,6 +212,296 @@ public class DelegateCloud20Service implements Cloud20Service {
         String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users/" + userId + "/roles";
         return cloudClient.get(request, httpHeaders);
 	}
+
+	@Override
+	public ResponseBuilder listUsers(HttpHeaders httpHeaders) throws IOException {
+		String request = getCloudAuthV20Url() + "users";
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder addUser(HttpHeaders httpHeaders, String body) throws IOException {
+        String request = getCloudAuthV20Url() + "users";
+        return cloudClient.post(request, httpHeaders, body);
+	}
+
+
+	@Override
+	public ResponseBuilder updateUser(HttpHeaders httpHeaders, String userId, String body) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId;
+        return cloudClient.post(request, httpHeaders, body);
+	}
+
+
+	@Override
+	public ResponseBuilder deleteUser(HttpHeaders httpHeaders, String userId) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId;
+        return cloudClient.delete(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String userId, String body) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/enabled";
+        return cloudClient.put(request, httpHeaders, body);
+	}
+
+
+	@Override
+	public ResponseBuilder listUserRoles(HttpHeaders httpHeaders,
+			String userId, String serviceId) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/roles";
+
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("serviceId", serviceId);
+        request = appendQueryParams(request, params);
+
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder addUserRole(HttpHeaders httpHeaders, String userId,
+			String roleId) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/roles/" + roleId;
+        return cloudClient.put(request, httpHeaders, "");
+	}
+
+
+	@Override
+	public ResponseBuilder getUserRole(HttpHeaders httpHeaders, String userId,
+			String roleId) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/roles/" + roleId;
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders,
+			String userId, String roleId) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/roles/" + roleId;
+        return cloudClient.delete(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder OS_KSADM_addUserCredential(HttpHeaders httpHeaders,
+			String userId, String body) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials";
+        return cloudClient.post(request, httpHeaders, body);
+	}
+
+
+	@Override
+	public ResponseBuilder OS_KSADM_listCredentials(HttpHeaders httpHeaders,
+			String userId, String marker, Integer limit) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials";
+
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("marker", marker);
+        params.put("limit", limit);
+        request = appendQueryParams(request, params);
+        
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder OS_KSADM_updateUserCredential(
+			HttpHeaders httpHeaders, String userId, String credentialType,
+			String body) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials/" + credentialType;
+        return cloudClient.post(request, httpHeaders, body);
+	}
+
+
+	@Override
+	public ResponseBuilder OS_KSADM_getUserCredential(HttpHeaders httpHeaders,
+			String userId, String credentialType) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials/" + credentialType;
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder OS_KSADM_deleteUserCredential(
+			HttpHeaders httpHeaders, String userId, String credentialType) throws IOException {
+        String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials/" + credentialType;
+        return cloudClient.delete(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder addTenant(HttpHeaders httpHeaders, String body) throws IOException {
+        String request = getCloudAuthV20Url() + "tenants";
+        return cloudClient.post(request, httpHeaders, body);
+	}
+
+
+	@Override
+	public ResponseBuilder updateTenant(HttpHeaders httpHeaders, String tenantId, String body) throws IOException {
+        String request = getCloudAuthV20Url() + "tenants/" + tenantId;
+        return cloudClient.post(request, httpHeaders, body);
+	}
+
+
+	@Override
+	public ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String tenantId) throws IOException {
+        String request = getCloudAuthV20Url() + "tenants/" + tenantId;
+        return cloudClient.delete(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders,
+			String tenantId, String marker, Integer limit) throws IOException {
+        String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/OS-KSADM/roles";
+
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("marker", marker);
+        params.put("limit", limit);
+        request = appendQueryParams(request, params);
+
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders,
+			String tenantId, String roleId, String marker, Integer limit) throws IOException {
+        String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users";
+
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("roleId", roleId);
+        params.put("marker", marker);
+        params.put("limit", limit);
+        request = appendQueryParams(request, params);
+
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders,
+			String tenantId, String marker, Integer limit) throws IOException {
+        String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users";
+
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("marker", marker);
+        params.put("limit", limit);
+        request = appendQueryParams(request, params);
+
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders,
+			String tenantId, String userId, String roleId) throws IOException {
+        String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
+        return cloudClient.put(request, httpHeaders, "");
+	}
+
+
+	@Override
+	public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders,
+			String tenantId, String userId, String roleId) throws IOException {
+        String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
+        return cloudClient.delete(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder listRoles(HttpHeaders httpHeaders, String serviceId,
+			String marker, Integer limit) throws IOException {
+        String request = getCloudAuthV20Url() + "OS-KSADM/roles";
+
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("serviceId", serviceId);
+        params.put("marker", marker);
+        params.put("limit", limit);
+        request = appendQueryParams(request, params);
+
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder addRole(HttpHeaders httpHeaders, String body) throws IOException {
+        String request = getCloudAuthV20Url() + "OS-KSADM/roles";
+        return cloudClient.post(request, httpHeaders, body);
+	}
+
+
+	@Override
+	public ResponseBuilder getRole(HttpHeaders httpHeaders, String roleId) throws IOException {
+        String request = getCloudAuthV20Url() + "OS-KSADM/roles/" + roleId;
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder deleteRole(HttpHeaders httpHeaders, String roleId) throws IOException {
+        String request = getCloudAuthV20Url() + "OS-KSADM/roles/" + roleId;
+        return cloudClient.delete(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder listServices(HttpHeaders httpHeaders, String marker,
+			Integer limit) throws IOException {
+        String request = getCloudAuthV20Url() + "OS-KSADM/services";
+
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        params.put("marker", marker);
+        params.put("limit", limit);
+        request = appendQueryParams(request, params);
+
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder addService(HttpHeaders httpHeaders, String body) throws IOException {
+        String request = getCloudAuthV20Url() + "OS-KSADM/services";
+        return cloudClient.post(request, httpHeaders, body);
+	}
+
+
+	@Override
+	public ResponseBuilder getService(HttpHeaders httpHeaders, String serviceId) throws IOException {
+        String request = getCloudAuthV20Url() + "OS-KSADM/services/" + serviceId;
+        return cloudClient.get(request, httpHeaders);
+	}
+
+
+	@Override
+	public ResponseBuilder deleteService(HttpHeaders httpHeaders,
+			String serviceId) throws IOException {
+        String request = getCloudAuthV20Url() + "OS-KSADM/services/" + serviceId;
+        return cloudClient.delete(request, httpHeaders);
+	}
+
+    public String appendQueryParams(String request, HashMap<String, Object> params) {
+        String result = "";
+
+        for(String key : params.keySet()) {
+            Object value = params.get(key);
+
+            if(value != null) {
+                if(result.length() == 0) {
+                    result += "?";
+                } else {
+                    result += "&";
+                }
+
+                result += key + "=" + value.toString();
+            }
+        }
+
+        return request + result;
+    }
 
     public void setCloudClient(CloudClient cloudClient) {
         this.cloudClient = cloudClient;
