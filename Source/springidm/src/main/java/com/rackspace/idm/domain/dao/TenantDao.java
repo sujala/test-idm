@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.User;
 
 public interface TenantDao {
 
@@ -21,4 +22,5 @@ public interface TenantDao {
     List<TenantRole> getTenantRolesByParent(String parentUniqueId);
     List<TenantRole> getTenantRolesByParentAndClientId(String parentUniqueId, String clientId);
     String getNextTenantId();
+    List<TenantRole> getTenantRolesForUser(User user);
 }

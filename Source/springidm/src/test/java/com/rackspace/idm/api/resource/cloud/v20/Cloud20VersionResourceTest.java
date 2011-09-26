@@ -1,17 +1,18 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
+
+import javax.ws.rs.core.MediaType;
+
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import javax.ws.rs.core.MediaType;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
 
 /**
  * Created by IntelliJ IDEA.
@@ -47,7 +48,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         WebResource resource = resource().path("cloud/v2.0");
         ClientResponse clientResponse = resource.get(ClientResponse.class);
         String entity = clientResponse.getEntity(String.class);
-        assertThat("version", entity, Matchers.containsString("\"@id\":\"v2.0\""));
+        assertThat("version", entity, Matchers.containsString("\"id\":\"v2.0\""));
     }
 
     @Test

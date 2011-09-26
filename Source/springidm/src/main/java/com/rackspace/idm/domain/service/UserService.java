@@ -42,6 +42,8 @@ public interface UserService {
 
     User getUser(String username);
     
+    User getUserById(String id);
+    
     User getUserByRPN(String rpn);
 
     User getUserByNastId(String natsId);

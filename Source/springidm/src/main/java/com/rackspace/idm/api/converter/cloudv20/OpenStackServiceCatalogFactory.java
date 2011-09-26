@@ -1,0 +1,85 @@
+package com.rackspace.idm.api.converter.cloudv20;
+
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.openstack.docs.identity.api.v2.EndpointForService;
+import org.openstack.docs.identity.api.v2.ServiceCatalog;
+import org.openstack.docs.identity.api.v2.ServiceForCatalog;
+import org.openstack.docs.identity.api.v2.VersionForService;
+
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+
+
+public class OpenStackServiceCatalogFactory {
+    public ServiceCatalog createNew(List<OpenstackEndpoint> endPoints) {
+        if (endPoints == null) {
+            throw new IllegalArgumentException("endPoints can not be null");
+        }
+
+        ServiceCatalog serviceCatalog = new ServiceCatalog();
+
+        for (OpenstackEndpoint endPoint : endPoints) {
+            processEndpoint(serviceCatalog, endPoint);
+        }
+
+        return serviceCatalog;
+    }
+
+    static void processEndpoint(ServiceCatalog serviceCatalog,
+        OpenstackEndpoint endPoint) {
+        
+        for (CloudBaseUrl baseUrl : endPoint.getBaseUrls()) {
+            
+            ServiceForCatalog currentService = new OpenStackServiceCatalogHelper(serviceCatalog)
+            .getEndPointService(baseUrl.getOpenstackType());
+            
+            VersionForService version = new VersionForService();
+            version.setId(baseUrl.getVersionId());
+            version.setInfo(baseUrl.getVersionInfo());
+            version.setList(baseUrl.getVersionList());
+            
+            EndpointForService endpoint = new EndpointForService();
+            
+            endpoint.setAdminURL(baseUrl.getAdminUrl());
+            endpoint.setInternalURL(baseUrl.getInternalUrl());
+            endpoint.setPublicURL(baseUrl.getPublicUrl());
+            endpoint.setTenantId(endpoint.getTenantId());
+            endpoint.setRegion(baseUrl.getRegion());
+            if (!StringUtils.isBlank(version.getId())) {
+                endpoint.setVersion(version);
+            }
+            
+            setEndpointUrls(endpoint, endPoint.getTenantName());
+            
+            currentService.getEndpoint().add(endpoint);
+        }
+    }
+
+    static void setEndpointUrls(EndpointForService endpoint, String accountId) {
+        endpoint.setAdminURL(createUrl(endpoint.getAdminURL(), accountId));
+        endpoint
+            .setInternalURL(createUrl(endpoint.getInternalURL(), accountId));
+        endpoint.setPublicURL(createUrl(endpoint.getPublicURL(), accountId));
+    }
+
+    static String createUrl(String urlBase, String accountId) {
+        if (StringUtils.isBlank(accountId)) {
+            throw new IllegalArgumentException(
+                "accountId can not be null or empty");
+        }
+
+        String url = null;
+
+        if (!StringUtils.isBlank(urlBase)) {
+            url = urlBase + getUrlDelimiter(urlBase) + accountId;
+        }
+
+        return url;
+    }
+
+    static String getUrlDelimiter(String urlBase) {
+        return urlBase.charAt(urlBase.length() - 1) == '/' ? "" : "/";
+    }
+}

@@ -9,7 +9,7 @@ import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 
-@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_TENANT)
+@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE)
 public class ClientRole implements Auditable {
     
     @LDAPEntryField()

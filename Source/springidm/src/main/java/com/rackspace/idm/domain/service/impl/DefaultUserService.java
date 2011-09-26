@@ -527,4 +527,13 @@ public class DefaultUserService implements UserService {
         }
         
     }
+
+
+    @Override
+    public User getUserById(String id) {
+        logger.debug("Getting User: {}", id);
+        User user = userDao.getUserById(id);
+        logger.debug("Got User: {}", user);
+        return user;
+    }
 }

@@ -1,22 +1,24 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.HashMap;
 
-import com.rackspace.idm.api.resource.cloud.CloudClient;
-import org.apache.commons.configuration.Configuration;
-import org.openstack.docs.identity.api.v2.AuthenticationRequest;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import java.io.IOException;
-import java.io.StringWriter;
+
+import org.apache.commons.configuration.Configuration;
+import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.rackspace.idm.api.resource.cloud.CloudClient;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,8 +31,9 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Autowired
     private CloudClient cloudClient;
 
-    @Autowired
-    private Configuration config;
+    @Autowired private Configuration config;
+    @Autowired private DefaultCloud20Service defaultCloud20Service;
+    @Autowired private DummyCloud20Service dummyCloud20Service;
 
     public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
         DelegateCloud20Service.OBJ_FACTORY = OBJ_FACTORY;
@@ -54,8 +57,15 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) throws IOException {
-        String body = marshallObjectToString(OBJ_FACTORY.createAuth(authenticationRequest));
-        return cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
+        Response.ResponseBuilder serviceResponse = getCloud20Service().authenticate(httpHeaders, authenticationRequest);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String body = marshallObjectToString(OBJ_FACTORY.createAuth(authenticationRequest));
+            return cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
+        }
+        return serviceResponse;
     }
 
 
@@ -510,6 +520,10 @@ public class DelegateCloud20Service implements Cloud20Service {
     public void setConfig(Configuration config) {
         this.config = config;
     }
+    
+    public void setDummyCloud20Service(DummyCloud20Service dummyCloud20Service) {
+        this.dummyCloud20Service = dummyCloud20Service;
+    }
 
     private String getCloudAuthV20Url() {
         String cloudAuth20url = config.getString("cloudAuth20url");
@@ -529,5 +543,13 @@ public class DelegateCloud20Service implements Cloud20Service {
 
         return sw.toString();
 
+    }
+    
+    private Cloud20Service getCloud20Service() {
+        if (config.getBoolean("GAKeystoneDisabled")) {
+            return dummyCloud20Service;
+        } else {
+            return defaultCloud20Service;
+        }
     }
 }

@@ -1,24 +1,28 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
 import java.util.HashMap;
 
-import com.rackspace.idm.api.resource.cloud.CloudClient;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBException;
+
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBException;
-import java.io.IOException;
-
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.anyOf;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.*;
+import com.rackspace.idm.api.resource.cloud.CloudClient;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,18 +32,23 @@ import static org.mockito.Mockito.*;
  */
 public class DelegateCloud20ServiceTest {
 
+    DummyCloud20Service dummyCloud20Service;
     DelegateCloud20Service delegateCloud20Service;
     CloudClient cloudClient = mock(CloudClient.class);
     HttpHeaders httpHeaders = mock(HttpHeaders.class);
-    private Configuration config = mock(Configuration.class);
+    private final Configuration config = mock(Configuration.class);
     AuthenticationRequest authenticationRequest =mock(AuthenticationRequest.class);
     String url = "url";
+    Boolean disabled = true;
 
     @Before
     public void setUp() throws IOException, JAXBException {
+        dummyCloud20Service = new DummyCloud20Service();
         delegateCloud20Service = new DelegateCloud20Service();
+        delegateCloud20Service.setDummyCloud20Service(dummyCloud20Service);
         delegateCloud20Service.setCloudClient(cloudClient);
         when(config.getString("cloudAuth20url")).thenReturn(url);
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(disabled);
         delegateCloud20Service.setConfig(config);
         when(cloudClient.post(anyString(), Matchers.<HttpHeaders>any(), anyString())).thenReturn(Response.ok());
     }
