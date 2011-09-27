@@ -243,6 +243,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) throws IOException {
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
     public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders,
         String authToken, String tokenId) throws IOException {
 
@@ -1018,7 +1023,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(
-                fault));
+                    fault));
     }
 
     private Response.ResponseBuilder notAuthenticatedExceptionResponse(
@@ -1031,7 +1036,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUnauthorized(
-                fault));
+                    fault));
     }
 
     private Response.ResponseBuilder notFoundExceptionResponse(String message) {
@@ -1042,7 +1047,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFound(
-                fault));
+                    fault));
     }
 
     private Response.ResponseBuilder badRequestExceptionResponse(String message) {
@@ -1053,7 +1058,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
-                fault));
+                    fault));
     }
 
     private Response.ResponseBuilder serviceExceptionResponse() {
