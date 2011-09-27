@@ -83,4 +83,6 @@ public interface ClientService {
     List<ClientRole> getClientRolesByClientId(String clientId);
     
     ClientRole getClientRoleByClientIdAndRoleName(String clientId, String roleName);
+    
+    ClientRole getClientRoleById(String id);
 }

@@ -47,12 +47,14 @@ import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.service.ClientService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
@@ -74,6 +76,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     private UserService userService;
     @Autowired
     private TenantService tenantService;
+    @Autowired
+    private ClientService clientService;
     @Autowired
     private EndpointService endpointService;
     @Autowired
@@ -442,29 +446,117 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUserRoles(HttpHeaders httpHeaders,
         String authToken, String userId, String serviceId) {
-        // TODO write me
-        return Response.status(Status.NOT_FOUND);
+
+        User user = this.userService.getUserById(userId);
+
+        if (user == null) {
+            String errMsg = String.format("User %s not found", userId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        List<TenantRole> roles = this.tenantService.getGlobalRolesForUser(user);
+
+        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
     }
 
     @Override
     public ResponseBuilder addUserRole(HttpHeaders httpHeaders,
         String authToken, String userId, String roleId) {
-        // TODO write me
-        return Response.status(Status.NOT_FOUND);
+
+        User user = this.userService.getUserById(userId);
+        if (user == null) {
+            String errMsg = String.format("User %s not found", userId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        ClientRole cRole = this.clientService.getClientRoleById(roleId);
+        if (cRole == null) {
+            String errMsg = String.format("Role %s not found", roleId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        TenantRole role = new TenantRole();
+        role.setClientId(cRole.getClientId());
+        role.setId(cRole.getId());
+
+        this.tenantService.addTenantRoleToUser(user, role);
+
+        return Response.ok();
     }
 
     @Override
     public ResponseBuilder getUserRole(HttpHeaders httpHeaders,
         String authToken, String userId, String roleId) {
-        // TODO write me
-        return Response.status(Status.NOT_FOUND);
+
+        User user = this.userService.getUserById(userId);
+        if (user == null) {
+            String errMsg = String.format("User %s not found", userId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        List<TenantRole> globalRoles = this.tenantService
+            .getGlobalRolesForUser(user);
+
+        TenantRole role = null;
+
+        for (TenantRole globalRole : globalRoles) {
+            if (globalRole.getId().equals(roleId)) {
+                role = globalRole;
+            }
+        }
+
+        if (role == null) {
+            String errMsg = String.format("Role %s not found for user %s",
+                roleId, userId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        ClientRole cRole = this.clientService.getClientRoleById(roleId);
+
+        role.setDescription(cRole.getDescription());
+        role.setName(cRole.getName());
+
+        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createRole(this.roleConverterCloudV20.toRole(role)));
     }
 
     @Override
     public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders,
         String authToken, String userId, String roleId) {
-        // TODO write me
-        return Response.status(Status.NOT_FOUND);
+        User user = this.userService.getUserById(userId);
+        if (user == null) {
+            String errMsg = String.format("User %s not found", userId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        List<TenantRole> globalRoles = this.tenantService
+            .getGlobalRolesForUser(user);
+
+        TenantRole role = null;
+
+        for (TenantRole globalRole : globalRoles) {
+            if (globalRole.getId().equals(roleId)) {
+                role = globalRole;
+            }
+        }
+
+        if (role == null) {
+            String errMsg = String.format("Role %s not found for user %s",
+                roleId, userId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        this.tenantService.deleteGlobalRole(role);
+
+        return Response.noContent();
     }
 
     @Override
@@ -545,8 +637,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             cred = (JAXBElement<? extends CredentialType>) unmarshaller
                 .unmarshal(new StringReader(body));
         } catch (JAXBException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new BadRequestException();
         }
         return cred;
     }
@@ -641,8 +732,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateUserCredential(HttpHeaders httpHeaders,
-        String authToken, String userId, String credentialType, String body) throws IOException {
+        String authToken, String userId, String credentialType, String body)
+        throws IOException {
         JAXBElement<? extends CredentialType> creds = null;
+
+        if (!(credentialType.equals("passwordCredentials") || credentialType
+            .endsWith("apiKeyCredentials"))) {
+            return badRequestExceptionResponse("unsupported credential type");
+        }
 
         try {
             if (httpHeaders.getMediaType().isCompatible(
@@ -701,23 +798,78 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.userService.updateUser(user, false);
         }
 
-        return Response.ok(
-            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredential(
-                creds.getValue())).status(Status.CREATED);
+        return Response.ok(creds).status(Status.CREATED);
     }
 
     @Override
     public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders,
-        String authToken, String userId, String credentialType) throws IOException {
-        // TODO write me
-        return Response.status(Status.NOT_FOUND);
+        String authToken, String userId, String credentialType)
+        throws IOException {
+
+        if (!(credentialType.equals("passwordCredentials") || credentialType
+            .endsWith("apiKeyCredentials"))) {
+            return badRequestExceptionResponse("unsupported credential type");
+        }
+
+        User user = this.userService.getUserById(userId);
+        if (user == null) {
+            String errMsg = String.format("User %s not found", userId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        if (credentialType.equals("passwordCredentials")) {
+            user.setPassword("");
+        } else if (credentialType.equals("apiKeyCredentials")) {
+            user.setApiKey("");
+        }
+
+        this.userService.updateUser(user, false);
+
+        return Response.noContent();
     }
 
     @Override
     public ResponseBuilder getUserCredential(HttpHeaders httpHeaders,
-        String authToken, String userId, String credentialType) throws IOException {
-        // TODO write me
-        return Response.status(Status.NOT_FOUND);
+        String authToken, String userId, String credentialType)
+        throws IOException {
+
+        if (!(credentialType.equals("passwordCredentials") || credentialType
+            .endsWith("apiKeyCredentials"))) {
+            return badRequestExceptionResponse("unsupported credential type");
+        }
+
+        User user = this.userService.getUserById(userId);
+        if (user == null) {
+            String errMsg = String.format("User %s not found", userId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        JAXBElement<? extends CredentialType> creds = null;
+
+        if (credentialType.equals("passwordCredentials")) {
+            if (StringUtils.isBlank(user.getPassword())) {
+                return notFoundExceptionResponse("User doesn't have password credentials");
+            }
+            PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
+            userCreds.setPassword(user.getPassword());
+            userCreds.setUsername(user.getUsername());
+            creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createCredential(userCreds);
+
+        } else if (credentialType.equals("apiKeyCredentials")) {
+            if (StringUtils.isBlank(user.getApiKey())) {
+                return notFoundExceptionResponse("User doesn't have api key credentials");
+            }
+            ApikeyCredentialsWithUsername userCreds = new ApikeyCredentialsWithUsername();
+            userCreds.setApikey(user.getApiKey());
+            userCreds.setUsername(user.getUsername());
+            creds = OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory()
+                .createApikeyCredentials(userCreds);
+        }
+
+        return Response.ok(creds);
     }
 
     // KSADM Extension Tenant Methods

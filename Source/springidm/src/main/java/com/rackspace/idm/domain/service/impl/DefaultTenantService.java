@@ -102,11 +102,11 @@ public class DefaultTenantService implements TenantService {
         logger.info("Got {} tenants", tenants.size());
         return tenants;
     }
-    
+
     @Override
     public List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa) {
         logger.info("Getting Tenants for ScopeAccess");
-        
+
         String dn = null;
         try {
             dn = sa.getLDAPEntry().getParentDNString();
@@ -166,6 +166,13 @@ public class DefaultTenantService implements TenantService {
             }
         }
         logger.info("Deleted Tenant Role {}", role);
+    }
+
+    @Override
+    public void deleteGlobalRole(TenantRole role) {
+        logger.info("Deleting Global Role {}", role);
+        this.tenantDao.deleteTenantRole(role);
+        logger.info("Deleted Global Role {}", role);
     }
 
     @Override
@@ -345,9 +352,10 @@ public class DefaultTenantService implements TenantService {
         logger.debug("Got {} Tenant Roles", roles.size());
         return globalRoles;
     }
-    
+
     @Override
-    public List<TenantRole> getTenantRolesForUserOnTenant(User user, Tenant tenant) {
+    public List<TenantRole> getTenantRolesForUserOnTenant(User user,
+        Tenant tenant) {
         logger.debug("Getting Tenant Roles");
         List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user);
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
@@ -357,7 +365,7 @@ public class DefaultTenantService implements TenantService {
                 newRole.setClientId(role.getClientId());
                 newRole.setId(role.getId());
                 newRole.setName(role.getName());
-                newRole.setTenantIds(new String[] {tenant.getTenantId()});
+                newRole.setTenantIds(new String[]{tenant.getTenantId()});
                 tenantRoles.add(newRole);
             }
         }
