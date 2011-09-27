@@ -2,16 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import java.io.IOException;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -97,6 +88,16 @@ public class Cloud20VersionResource {
         @PathParam("tokenId") String tokenId,
         @QueryParam("belongsTo") String belongsTo) throws IOException {
         return getCloud20Service().validateToken(httpHeaders, authToken,
+                tokenId, belongsTo).build();
+    }
+
+    @HEAD
+    @Path("tokens/{tokenId}")
+    public Response checkToken(@Context HttpHeaders httpHeaders,
+        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @PathParam("tokenId") String tokenId,
+        @QueryParam("belongsTo") String belongsTo) throws IOException {
+        return getCloud20Service().validateToken(httpHeaders, authToken,
             tokenId, belongsTo).build();
     }
 
@@ -106,7 +107,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tokenId") String tokenId) throws IOException {
         return getCloud20Service().listEndpointsForToken(httpHeaders,
-            authToken, tokenId).build();
+                authToken, tokenId).build();
     }
 
     @GET
@@ -151,7 +152,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId) throws IOException {
         return getCloud20Service().listUserGlobalRoles(httpHeaders, authToken,
-            userId).build();
+                userId).build();
     }
 
     @GET
@@ -177,7 +178,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantsId) throws IOException {
         return getCloud20Service().getTenantById(httpHeaders, authToken,
-            tenantsId).build();
+                tenantsId).build();
     }
 
     @GET
@@ -273,7 +274,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId, String body) throws IOException {
         return getCloud20Service().addUserCredential(httpHeaders,
-            authToken, userId, body).build();
+                authToken, userId, body).build();
     }
 
     @GET
@@ -284,7 +285,7 @@ public class Cloud20VersionResource {
         @QueryParam("marker") String marker, @QueryParam("limit") Integer limit)
         throws IOException {
         return getCloud20Service().listCredentials(httpHeaders,
-            authToken, userId, marker, limit).build();
+                authToken, userId, marker, limit).build();
     }
 
     @POST
@@ -296,7 +297,7 @@ public class Cloud20VersionResource {
         @PathParam("credentialType") String credentialType, String body)
         throws IOException {
         return getCloud20Service().updateUserCredential(httpHeaders,
-            authToken, userId, credentialType, body).build();
+                authToken, userId, credentialType, body).build();
     }
 
     @GET
@@ -307,7 +308,7 @@ public class Cloud20VersionResource {
         @PathParam("userId") String userId,
         @PathParam("credentialType") String credentialType) throws IOException {
         return getCloud20Service().getUserCredential(httpHeaders,
-            authToken, userId, credentialType).build();
+                authToken, userId, credentialType).build();
     }
 
     @DELETE
@@ -318,7 +319,7 @@ public class Cloud20VersionResource {
         @PathParam("userId") String userId,
         @PathParam("credentialType") String credentialType) throws IOException {
         return getCloud20Service().deleteUserCredential(httpHeaders,
-            authToken, userId, credentialType).build();
+                authToken, userId, credentialType).build();
     }
 
     @POST

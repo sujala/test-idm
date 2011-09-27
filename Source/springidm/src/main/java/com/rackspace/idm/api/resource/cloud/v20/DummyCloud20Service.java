@@ -1,16 +1,15 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import java.io.IOException;
+import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.User;
+import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
-
-import org.openstack.docs.identity.api.v2.AuthenticationRequest;
-import org.openstack.docs.identity.api.v2.User;
-import org.springframework.stereotype.Component;
+import java.io.IOException;
 
 @Component
 public class DummyCloud20Service implements Cloud20Service{
@@ -25,6 +24,11 @@ public class DummyCloud20Service implements Cloud20Service{
     public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken,
         String tokenId, String belongsTo) throws IOException {
         
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) throws IOException {
         return Response.status(Status.NOT_FOUND);
     }
 
