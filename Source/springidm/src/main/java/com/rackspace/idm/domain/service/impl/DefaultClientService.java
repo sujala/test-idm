@@ -688,4 +688,12 @@ public class DefaultClientService implements ClientService {
         logger.debug("Got Client Role {} for client {}", roleName, clientId);
         return role;
     }
+
+    @Override
+    public ClientRole getClientRoleById(String id) {
+        logger.debug("Getting Client Role {}", id);
+        ClientRole role = this.clientDao.getClientRoleById(id);
+        logger.debug("Got Client Role {}", id);
+        return role;
+    }
 }

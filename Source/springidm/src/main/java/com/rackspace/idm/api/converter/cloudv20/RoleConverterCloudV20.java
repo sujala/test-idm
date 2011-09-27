@@ -41,4 +41,12 @@ public class RoleConverterCloudV20 {
 
         return jaxbRoles;
     }
+    
+    public Role toRole(com.rackspace.idm.domain.entity.TenantRole role) {
+        Role jaxbRole = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole();
+        jaxbRole.setDescription(role.getDescription());
+        jaxbRole.setId(role.getId());
+        jaxbRole.setServiceId(role.getClientId());
+        return jaxbRole;
+    }
 }
