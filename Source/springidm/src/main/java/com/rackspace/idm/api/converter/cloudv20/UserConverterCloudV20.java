@@ -21,6 +21,15 @@ public class UserConverterCloudV20 {
     
     @Autowired
     private RoleConverterCloudV20 roleConverterCloudV20;
+    
+    public com.rackspace.idm.domain.entity.User toUserDO(User user) {
+        
+        com.rackspace.idm.domain.entity.User userDO = new com.rackspace.idm.domain.entity.User();
+        userDO.setUsername(user.getUsername());
+        userDO.setEmail(user.getEmail());
+        userDO.setDisplayName(user.getDisplayName());
+        return userDO;
+    }
 
     public UserForAuthenticateResponse toUserForAuthenticateResponse(com.rackspace.idm.domain.entity.User user, List<TenantRole> roles) {
         UserForAuthenticateResponse jaxbUser = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserForAuthenticateResponse();

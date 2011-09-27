@@ -1,16 +1,30 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 
 import org.apache.commons.configuration.Configuration;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.BadRequestFault;
+import org.openstack.docs.identity.api.v2.CredentialListType;
+import org.openstack.docs.identity.api.v2.CredentialType;
 import org.openstack.docs.identity.api.v2.EndpointList;
 import org.openstack.docs.identity.api.v2.IdentityFault;
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault;
@@ -22,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApikeyCredentialsWithUsername;
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
@@ -42,6 +57,7 @@ import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.UserDisabledException;
 
@@ -155,33 +171,43 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listTenants(HttpHeaders httpHeaders, String marker,
-        Integer limit) throws IOException {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.listTenants");
+    public ResponseBuilder listTenants(HttpHeaders httpHeaders,
+        String authToken, String marker, Integer limit) throws IOException {
+
+        ScopeAccess sa = this.scopeAccessService
+            .getScopeAccessByAccessToken(authToken);
+
+        if (sa == null) {
+            String errMsg = String.format("Token %s not found", authToken);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        List<Tenant> tenants = this.tenantService
+            .getTenantsForScopeAccessByTenantRoles(sa);
+
+        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createTenants(this.tenantConverterCloudV20.toTenantList(tenants)));
     }
 
     @Override
     public ResponseBuilder listExtensions(HttpHeaders httpHeaders)
         throws IOException {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.listExtensions");
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
     public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias)
         throws IOException {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.getExtension");
+        return Response.status(Status.NOT_FOUND);
     }
 
     // Core Admin Token Methods
     @Override
     public ResponseBuilder validateToken(HttpHeaders httpHeaders,
-        String tokenId, String belongsTo) throws IOException {
+        String authToken, String tokenId, String belongsTo) throws IOException {
 
         ScopeAccess sa = this.scopeAccessService
             .getScopeAccessByAccessToken(tokenId);
@@ -214,7 +240,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders,
-        String tokenId) throws IOException {
+        String authToken, String tokenId) throws IOException {
 
         ScopeAccess sa = this.scopeAccessService
             .getScopeAccessByAccessToken(tokenId);
@@ -237,15 +263,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     // Core Admin User Methods
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders) {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.listUsers");
-    }
-
-    @Override
-    public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String name)
-        throws IOException {
+    public ResponseBuilder getUserByName(HttpHeaders httpHeaders,
+        String authToken, String name) throws IOException {
 
         User user = this.userService.getUser(name);
 
@@ -260,8 +279,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUserById(HttpHeaders httpHeaders, String userId)
-        throws IOException {
+    public ResponseBuilder getUserById(HttpHeaders httpHeaders,
+        String authToken, String userId) throws IOException {
 
         User user = this.userService.getUserById(userId);
 
@@ -277,7 +296,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders,
-        String userId) throws IOException {
+        String authToken, String userId) throws IOException {
 
         User user = this.userService.getUserById(userId);
 
@@ -296,7 +315,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     // Core Admin Tenant Methods
     @Override
     public ResponseBuilder getTenantById(HttpHeaders httpHeaders,
-        String tenantsId) throws IOException {
+        String authToken, String tenantsId) throws IOException {
 
         Tenant tenant = this.tenantService.getTenant(tenantsId);
 
@@ -311,8 +330,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String name)
-        throws IOException {
+    public ResponseBuilder getTenantByName(HttpHeaders httpHeaders,
+        String authToken, String name) throws IOException {
         Tenant tenant = this.tenantService.getTenantByName(name);
 
         if (tenant == null) {
@@ -327,7 +346,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders,
-        String tenantsId, String userId) throws IOException {
+        String authToken, String tenantsId, String userId) throws IOException {
 
         Tenant tenant = this.tenantService.getTenant(tenantsId);
 
@@ -353,271 +372,475 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     }
 
-    // END OF CORE METHODS
+    // ====== END OF CORE METHODS
 
+    // ====== START KSADM Extension Methods
+
+    // KSADM Extension User methods
     @Override
-    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders,
-        String userId, String body) throws IOException {
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken,
+        String marker, int limit) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.addUserCredential");
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
-    public ResponseBuilder listCredentials(HttpHeaders httpHeaders,
-        String userId, String marker, Integer limit) throws IOException {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.listCredentials");
+    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo,
+        String authToken, org.openstack.docs.identity.api.v2.User user) {
+
+        User userDO = this.userConverterCloudV20.toUserDO(user);
+
+        this.userService.addUser(userDO);
+
+        return Response.created(
+            uriInfo.getRequestUriBuilder().path(user.getId()).build()).entity(
+            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(
+                this.userConverterCloudV20.toUser(userDO)));
     }
 
     @Override
-    public ResponseBuilder updateUserCredential(HttpHeaders httpHeaders,
-        String userId, String body) throws IOException {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.updateUserCredential");
+    public ResponseBuilder updateUser(HttpHeaders httpHeaders,
+        String authToken, String userId,
+        org.openstack.docs.identity.api.v2.User user) throws IOException {
+
+        User retrievedUser = this.userService.getUserById(userId);
+
+        if (retrievedUser == null) {
+            String errMsg = String.format("User %s not found", userId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        User userDO = this.userConverterCloudV20.toUserDO(user);
+
+        retrievedUser.copyChanges(userDO);
+
+        this.userService.updateUser(retrievedUser, false);
+
+        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createUser(this.userConverterCloudV20.toUser(retrievedUser)));
     }
 
     @Override
-    public ResponseBuilder getUserCredential(HttpHeaders httpHeaders,
-        String userId) throws IOException {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.getUserCredential");
-    }
+    public ResponseBuilder deleteUser(HttpHeaders httpHeaders,
+        String authToken, String userId) throws IOException {
 
-    @Override
-    public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders,
-        String userId) throws IOException {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.deleteUserCredential");
-    }
+        User user = this.userService.getUserById(userId);
 
-    @Override
-    public ResponseBuilder addUser(HttpHeaders httpHeaders, String body) {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.addUser");
-    }
+        if (user == null) {
+            String errMsg = String.format("User %s not found", userId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
 
-    @Override
-    public ResponseBuilder updateUser(HttpHeaders httpHeaders, String userId,
-        String body) throws IOException {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.updateUser");
-    }
+        user.setSoftDeleted(true);
+        this.userService.updateUser(user, false);
 
-    @Override
-    public ResponseBuilder deleteUser(HttpHeaders httpHeaders, String userId)
-        throws IOException {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.deleteUser");
-    }
-
-    @Override
-    public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders,
-        String userId, String body) throws IOException {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.setUserEnabled");
+        return Response.noContent();
     }
 
     @Override
     public ResponseBuilder listUserRoles(HttpHeaders httpHeaders,
-        String userId, String serviceId) {
+        String authToken, String userId, String serviceId) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.listUserRoles");
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
-    public ResponseBuilder addUserRole(HttpHeaders httpHeaders, String userId,
-        String roleId) {
+    public ResponseBuilder addUserRole(HttpHeaders httpHeaders,
+        String authToken, String userId, String roleId) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.addUserRole");
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
-    public ResponseBuilder getUserRole(HttpHeaders httpHeaders, String userId,
-        String roleId) {
+    public ResponseBuilder getUserRole(HttpHeaders httpHeaders,
+        String authToken, String userId, String roleId) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.getUserRole");
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
     public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders,
-        String userId, String roleId) {
+        String authToken, String userId, String roleId) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.deleteUserRole");
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
-    public ResponseBuilder OS_KSADM_addUserCredential(HttpHeaders httpHeaders,
-        String userId, String body) {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.OS_KSADM_addUserCredential");
+    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders,
+        String authToken, String userId, String body) throws IOException {
+
+        JAXBElement<? extends CredentialType> creds = null;
+
+        try {
+            if (httpHeaders.getMediaType().isCompatible(
+                MediaType.APPLICATION_XML_TYPE)) {
+                creds = getXMLCredentials(body);
+            } else {
+                creds = getJSONCredentials(body);
+            }
+        } catch (BadRequestException ex) {
+            return badRequestExceptionResponse(ex.getMessage());
+        }
+
+        String username = null;
+        String password = null;
+        String apiKey = null;
+
+        User user = null;
+
+        if (creds.getDeclaredType().isAssignableFrom(
+            PasswordCredentialsRequiredUsername.class)) {
+            PasswordCredentialsRequiredUsername userCreds = (PasswordCredentialsRequiredUsername) creds
+                .getValue();
+            username = userCreds.getUsername();
+            password = userCreds.getPassword();
+            user = this.userService.getUserById(userId);
+            if (user == null) {
+                String errMsg = String.format("User %s not found", userId);
+                logger.warn(errMsg);
+                return notFoundExceptionResponse(errMsg);
+            }
+            if (!username.equals(user.getUsername())) {
+                String errMsg = "User and UserId mis-matched";
+                logger.warn(errMsg);
+                return badRequestExceptionResponse(errMsg);
+            }
+            user.setPassword(password);
+            this.userService.updateUser(user, false);
+        } else if (creds.getDeclaredType().isAssignableFrom(
+            ApikeyCredentialsWithUsername.class)) {
+            ApikeyCredentialsWithUsername userCreds = (ApikeyCredentialsWithUsername) creds
+                .getValue();
+            username = userCreds.getUsername();
+            apiKey = userCreds.getApikey();
+            user = this.userService.getUserById(userId);
+            if (user == null) {
+                String errMsg = String.format("User %s not found", userId);
+                logger.warn(errMsg);
+                return notFoundExceptionResponse(errMsg);
+            }
+            if (!username.equals(user.getUsername())) {
+                String errMsg = "User and UserId mis-matched";
+                logger.warn(errMsg);
+                return badRequestExceptionResponse(errMsg);
+            }
+            user.setApiKey(apiKey);
+            this.userService.updateUser(user, false);
+        }
+
+        return Response.ok(
+            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredential(
+                creds.getValue())).status(Status.CREATED);
+    }
+
+    @SuppressWarnings("unchecked")
+    private JAXBElement<? extends CredentialType> getXMLCredentials(String body) {
+        JAXBElement<? extends CredentialType> cred = null;
+        try {
+            JAXBContext context = JAXBContext
+                .newInstance("org.openstack.docs.identity.api.v2:com.rackspace.docs.identity.api.ext.rax_kskey.v1");
+            Unmarshaller unmarshaller = context.createUnmarshaller();
+            cred = (JAXBElement<? extends CredentialType>) unmarshaller
+                .unmarshal(new StringReader(body));
+        } catch (JAXBException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return cred;
+    }
+
+    private JAXBElement<? extends CredentialType> getJSONCredentials(
+        String jsonBody) {
+
+        JSONParser parser = new JSONParser();
+        JAXBElement<? extends CredentialType> creds = null;
+
+        try {
+            JSONObject obj = (JSONObject) parser.parse(jsonBody);
+
+            if (obj.containsKey("passwordCredentials")) {
+                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
+                    "passwordCredentials").toString());
+                PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
+                String username = obj3.get("username").toString();
+                String password = obj3.get("password").toString();
+                if (StringUtils.isBlank(username)) {
+                    throw new BadRequestException("username required");
+                }
+                if (StringUtils.isBlank(password)) {
+                    throw new BadRequestException("password required");
+                }
+                userCreds.setUsername(username);
+                userCreds.setPassword(password);
+                creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                    .createCredential(userCreds);
+
+            } else if (obj.containsKey("apiKeyCredentials")) {
+                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
+                    "apiKeyCredentials").toString());
+                ApikeyCredentialsWithUsername userCreds = new ApikeyCredentialsWithUsername();
+                String username = obj3.get("username").toString();
+                String apikey = obj3.get("apikey").toString();
+                if (StringUtils.isBlank(username)) {
+                    throw new BadRequestException("username required");
+                }
+                if (StringUtils.isBlank(apikey)) {
+                    throw new BadRequestException("apikey required");
+                }
+                userCreds.setUsername(username);
+                userCreds.setApikey(apikey);
+                creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                    .createCredential(userCreds);
+            } else {
+                throw new BadRequestException("unrecognized credential type");
+            }
+        } catch (ParseException e) {
+            throw new BadRequestException("malformed JSON");
+        }
+        return creds;
     }
 
     @Override
-    public ResponseBuilder OS_KSADM_listCredentials(HttpHeaders httpHeaders,
-        String userId, String marker, Integer limit) {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.OS_KSADM_listCredentials");
+    public ResponseBuilder listCredentials(HttpHeaders httpHeaders,
+        String authToken, String userId, String marker, Integer limit)
+        throws IOException {
+
+        User user = this.userService.getUserById(userId);
+        if (user == null) {
+            String errMsg = String.format("User %s not found", userId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        CredentialListType creds = OBJ_FACTORIES
+            .getOpenStackIdentityV2Factory().createCredentialListType();
+
+        if (!StringUtils.isBlank(user.getPassword())) {
+            PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
+            userCreds.setPassword(user.getPassword());
+            userCreds.setUsername(user.getUsername());
+            creds.getCredential().add(
+                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredential(
+                    userCreds));
+        }
+
+        if (!StringUtils.isBlank(user.getApiKey())) {
+            ApikeyCredentialsWithUsername userCreds = new ApikeyCredentialsWithUsername();
+            userCreds.setApikey(user.getApiKey());
+            userCreds.setUsername(user.getUsername());
+            creds.getCredential().add(
+                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredential(
+                    userCreds));
+        }
+
+        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createCredentials(creds));
     }
 
     @Override
-    public ResponseBuilder OS_KSADM_updateUserCredential(
-        HttpHeaders httpHeaders, String userId, String credentialType,
+    public ResponseBuilder updateUserCredential(HttpHeaders httpHeaders,
+        String authToken, String userId, String credentialType, String body) throws IOException {
+        JAXBElement<? extends CredentialType> creds = null;
+
+        try {
+            if (httpHeaders.getMediaType().isCompatible(
+                MediaType.APPLICATION_XML_TYPE)) {
+                creds = getXMLCredentials(body);
+            } else {
+                creds = getJSONCredentials(body);
+            }
+        } catch (BadRequestException ex) {
+            return badRequestExceptionResponse(ex.getMessage());
+        }
+
+        String username = null;
+        String password = null;
+        String apiKey = null;
+
+        User user = null;
+
+        if (creds.getDeclaredType().isAssignableFrom(
+            PasswordCredentialsRequiredUsername.class)) {
+            PasswordCredentialsRequiredUsername userCreds = (PasswordCredentialsRequiredUsername) creds
+                .getValue();
+            username = userCreds.getUsername();
+            password = userCreds.getPassword();
+            user = this.userService.getUserById(userId);
+            if (user == null) {
+                String errMsg = String.format("User %s not found", userId);
+                logger.warn(errMsg);
+                return notFoundExceptionResponse(errMsg);
+            }
+            if (!username.equals(user.getUsername())) {
+                String errMsg = "User and UserId mis-matched";
+                logger.warn(errMsg);
+                return badRequestExceptionResponse(errMsg);
+            }
+            user.setPassword(password);
+            this.userService.updateUser(user, false);
+        } else if (creds.getDeclaredType().isAssignableFrom(
+            ApikeyCredentialsWithUsername.class)) {
+            ApikeyCredentialsWithUsername userCreds = (ApikeyCredentialsWithUsername) creds
+                .getValue();
+            username = userCreds.getUsername();
+            apiKey = userCreds.getApikey();
+            user = this.userService.getUserById(userId);
+            if (user == null) {
+                String errMsg = String.format("User %s not found", userId);
+                logger.warn(errMsg);
+                return notFoundExceptionResponse(errMsg);
+            }
+            if (!username.equals(user.getUsername())) {
+                String errMsg = "User and UserId mis-matched";
+                logger.warn(errMsg);
+                return badRequestExceptionResponse(errMsg);
+            }
+            user.setApiKey(apiKey);
+            this.userService.updateUser(user, false);
+        }
+
+        return Response.ok(
+            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredential(
+                creds.getValue())).status(Status.CREATED);
+    }
+
+    @Override
+    public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders,
+        String authToken, String userId, String credentialType) throws IOException {
+        // TODO write me
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder getUserCredential(HttpHeaders httpHeaders,
+        String authToken, String userId, String credentialType) throws IOException {
+        // TODO write me
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    // KSADM Extension Tenant Methods
+    @Override
+    public ResponseBuilder addTenant(HttpHeaders httpHeaders, String authToken,
         String body) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.OS_KSADM_updateUserCredential");
-    }
-
-    @Override
-    public ResponseBuilder OS_KSADM_getUserCredential(HttpHeaders httpHeaders,
-        String userId, String credentialType) {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.OS_KSADM_getUserCredential");
-    }
-
-    @Override
-    public ResponseBuilder OS_KSADM_deleteUserCredential(
-        HttpHeaders httpHeaders, String userId, String credentialType) {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.OS_KSADM_deleteUserCredential");
-    }
-
-    @Override
-    public ResponseBuilder addTenant(HttpHeaders httpHeaders, String body) {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.addTenant");
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
     public ResponseBuilder updateTenant(HttpHeaders httpHeaders,
-        String tenantId, String body) throws IOException {
+        String authToken, String tenantId, String body) throws IOException {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.updateTenant");
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
-    public ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String tenantId) {
+    public ResponseBuilder deleteTenant(HttpHeaders httpHeaders,
+        String authToken, String tenantId) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.deleteTenant");
-    }
-
-    @Override
-    public ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders,
-        String tenantId, String marker, Integer limit) {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.listRolesForTenant");
-    }
-
-    @Override
-    public ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders,
-        String tenantId, String roleId, String marker, Integer limit) {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.listUsersWithRoleForTenant");
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
     public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders,
-        String tenantId, String marker, Integer limit) {
+        String authToken, String tenantId, String marker, Integer limit) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.listUsersForTenant");
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders,
+        String authToken, String tenantId, String roleId, String marker,
+        Integer limit) {
+        // TODO write me
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders,
+        String authToken, String tenantId, String marker, Integer limit) {
+        // TODO write me
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders,
-        String tenantId, String userId, String roleId) {
+        String authToken, String tenantId, String userId, String roleId) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.addRolesToUserOnTenant");
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
     public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders,
-        String tenantId, String userId, String roleId) {
+        String authToken, String tenantId, String userId, String roleId) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.deleteRoleFromUserOnTenant");
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    // KSADM Extension Role Methods
+    @Override
+    public ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken,
+        String serviceId, String marker, Integer limit) {
+        // TODO write me
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
-    public ResponseBuilder listRoles(HttpHeaders httpHeaders, String serviceId,
-        String marker, Integer limit) {
+    public ResponseBuilder addRole(HttpHeaders httpHeaders, String authToken,
+        String body) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.listRoles");
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
-    public ResponseBuilder addRole(HttpHeaders httpHeaders, String body) {
+    public ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken,
+        String roleId) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.addRole");
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
-    public ResponseBuilder getRole(HttpHeaders httpHeaders, String roleId) {
+    public ResponseBuilder deleteRole(HttpHeaders httpHeaders,
+        String authToken, String roleId) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.getRole");
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    // KSADM Extension Role Methods
+    @Override
+    public ResponseBuilder listServices(HttpHeaders httpHeaders,
+        String authToken, String marker, Integer limit) {
+        // TODO write me
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
-    public ResponseBuilder deleteRole(HttpHeaders httpHeaders, String roleId) {
+    public ResponseBuilder addService(HttpHeaders httpHeaders,
+        String authToken, String body) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.deleteRole");
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
-    public ResponseBuilder listServices(HttpHeaders httpHeaders, String marker,
-        Integer limit) {
+    public ResponseBuilder getService(HttpHeaders httpHeaders,
+        String authToken, String serviceId) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.listServices");
-    }
-
-    @Override
-    public ResponseBuilder addService(HttpHeaders httpHeaders, String body) {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.addService");
-    }
-
-    @Override
-    public ResponseBuilder getService(HttpHeaders httpHeaders, String serviceId) {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.getService");
+        return Response.status(Status.NOT_FOUND);
     }
 
     @Override
     public ResponseBuilder deleteService(HttpHeaders httpHeaders,
-        String serviceId) {
+        String authToken, String serviceId) {
         // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.deleteService");
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders,
+        String authToken, String userId, String body) throws IOException {
+        // TODO write me
+        return Response.status(Status.NOT_FOUND);
     }
 
     private Response.ResponseBuilder userNotFoundExceptionResponse(
@@ -667,6 +890,17 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFound(
+                fault));
+    }
+
+    private Response.ResponseBuilder badRequestExceptionResponse(String message) {
+        BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createBadRequestFault();
+        fault.setCode(HttpServletResponse.SC_BAD_REQUEST);
+        fault.setMessage(message);
+        fault.setDetails(MDC.get(Audit.GUUID));
+        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
+            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
                 fault));
     }
 
