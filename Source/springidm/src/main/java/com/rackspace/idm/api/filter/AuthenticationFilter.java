@@ -73,16 +73,16 @@ public class AuthenticationFilter implements ContainerRequestFilter,
 
         // Skip token authentication for cloud resources
         if (path.startsWith("cloud")) {
-//            if(path.matches("cloud/v1.0.*$") || path.matches("cloud/v2.0.*$") || path.matches("cloud/v1.1/auth") ||
-//                    path.matches("cloud/v1.1$") || path.matches("cloud/v1.1/$")  ){
-//                return  request;
-//            }
-//            //hack until auth changes behavior for  unauthorized users for get requests
-//            else if ("GET".equals(method)) {
-//                authenticateCloudAdminUserForGetRequests(request);
-//            } else {
-//                authenticateCloudAdminUser(request);
-//            }
+            if(path.matches("cloud/v1.0.*$") || path.matches("cloud/v2.0.*$") || path.matches("cloud/v1.1/auth") ||
+                    path.matches("cloud/v1.1$") || path.matches("cloud/v1.1/$")  ){
+                return  request;
+            }
+            //hack until auth changes behavior for  unauthorized users for get requests
+            else if ("GET".equals(method)) {
+                authenticateCloudAdminUserForGetRequests(request);
+            } else {
+                authenticateCloudAdminUser(request);
+            }
             return request;
         }
 
