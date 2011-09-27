@@ -302,4 +302,9 @@ public class DummyCloud20Service implements Cloud20Service{
         return Response.status(Status.NOT_FOUND);
     }
 
+    @Override
+    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId) throws IOException {
+        return Response.status(Status.NOT_FOUND);
+    }
+
 }

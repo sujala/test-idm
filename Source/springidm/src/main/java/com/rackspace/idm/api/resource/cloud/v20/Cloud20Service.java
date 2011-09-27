@@ -102,4 +102,6 @@ public interface Cloud20Service {
 
     ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken,
         String marker, int limit) throws IOException;
+
+    ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId) throws IOException;
 }
