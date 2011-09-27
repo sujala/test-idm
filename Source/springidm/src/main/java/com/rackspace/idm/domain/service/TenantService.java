@@ -29,4 +29,5 @@ public interface TenantService {
     List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess);
     List<TenantRole> getGlobalRolesForUser(User user);
     List<TenantRole> getTenantRolesForUserOnTenant(User user, Tenant tenant);
+    List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa);
 }

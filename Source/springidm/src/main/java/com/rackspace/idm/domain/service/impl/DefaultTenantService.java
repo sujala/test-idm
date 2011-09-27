@@ -102,6 +102,19 @@ public class DefaultTenantService implements TenantService {
         logger.info("Got {} tenants", tenants.size());
         return tenants;
     }
+    
+    @Override
+    public List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa) {
+        logger.info("Getting Tenants for ScopeAccess");
+        
+        String dn = null;
+        try {
+            dn = sa.getLDAPEntry().getParentDNString();
+        } catch (Exception ex) {
+            throw new IllegalStateException();
+        }
+        return getTenantsForParentByTenantRoles(dn);
+    }
 
     @Override
     public void addTenantRole(String parentUniqueId, TenantRole role) {
