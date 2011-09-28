@@ -461,6 +461,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId) throws IOException {
+        //TODO write me
+        throw new UnsupportedOperationException("not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.listUserGroups");
+    }
+
+    @Override
     public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo,
         String authToken, org.openstack.docs.identity.api.v2.User user) {
 

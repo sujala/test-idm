@@ -248,6 +248,14 @@ public class Cloud20VersionResource {
             userId, serviceId).build();
     }
 
+    @GET
+    @Path("users/{userId}/RAX-KSGRP/groups")
+    public Response listUserGroups(@Context HttpHeaders httpHeaders,
+        @PathParam("userId") String userId) throws IOException {
+        return getCloud20Service().listUserGroups(httpHeaders, userId).build();
+    }
+
+
     @PUT
     @Path("users/{userId}/OS-KSADM/roles/{roleId}")
     public Response addUserRole(@Context HttpHeaders httpHeaders,
