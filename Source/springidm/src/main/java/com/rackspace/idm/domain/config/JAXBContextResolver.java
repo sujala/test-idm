@@ -12,8 +12,6 @@ public class JAXBContextResolver implements ContextResolver<JAXBContext> {
 
     private final JAXBContext context;
 
-    // private Class[] types = {AuthCredentials.class};
-
     public JAXBContextResolver() throws Exception {
         this.context = new JSONJAXBContext(
             JSONConfiguration.natural().rootUnwrapping(false).build(),
