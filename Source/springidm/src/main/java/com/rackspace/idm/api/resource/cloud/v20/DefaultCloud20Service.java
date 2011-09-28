@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.List;
@@ -214,9 +215,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 JAXBContext jaxbContext = JAXBContext
                     .newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
                 Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-                currentExtensions = unmarshaller.unmarshal(
-                    new StreamSource(sc
-                        .getResourceAsStream("/WEB-INF/extensions.xml")),
+                
+                InputStream is = StringUtils.class.getResourceAsStream("/extensions.xml");
+                StreamSource ss = new StreamSource(is);
+                
+                currentExtensions = unmarshaller.unmarshal(ss,
                     Extensions.class);
             }
 
@@ -246,9 +249,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                         .newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
                     Unmarshaller unmarshaller = jaxbContext
                         .createUnmarshaller();
-                    currentExtensions = unmarshaller.unmarshal(
-                        new StreamSource(sc
-                            .getResourceAsStream("/WEB-INF/extensions.xml")),
+                    InputStream is = StringUtils.class.getResourceAsStream("/extensions.xml");
+                    StreamSource ss = new StreamSource(is);
+                    
+                    currentExtensions = unmarshaller.unmarshal(ss,
                         Extensions.class);
                 }
 
