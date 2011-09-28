@@ -577,34 +577,34 @@ cn: CLIENT ROLES
 
 ######################################## Client Roles ######################################
 
-dn: rsId=1,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+dn: rsId=3,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientRole
-rsId: 1
+rsId: 3
 cn: Super Admin
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 description: A role that allows a user/application full access to Global Auth
 
-dn: rsId=2,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+dn: rsId=4,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientRole
-rsId: 2
+rsId: 4
 cn: Customer Admin
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 description: A Role that allows a user to Admin other users in his customer
 
-dn: rsId=3,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+dn: rsId=1,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientRole
-rsId: 3
+rsId: 1
 cn: identity:admin
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 description: A Role that allows a user access to keystone Admin methods
 
-dn: rsId=4,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+dn: rsId=2,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: clientRole
-rsId: 4
+rsId: 2
 cn: identity:default
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 description: A Role that allows a user access to keystone Service methods
@@ -904,7 +904,6 @@ rsGroupDN: cn=Idm Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=app
 dn: rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
-clearPassword:: u4ulicmrLfboYsh1KryLww==
 locked: FALSE
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20110428013526.504Z
@@ -948,6 +947,11 @@ objectClass: rsContainer
 cn: DIRECT TOKENS
 
 dn: cn=DIRECT TOKENS,rsId=6,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: DIRECT TOKENS
+
+dn: cn=DIRECT TOKENS,rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsContainer
 cn: DIRECT TOKENS
@@ -1064,6 +1068,15 @@ clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 uid: qaadmin
 userRCN: RCN-QATestingCustomer
 
+dn: clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+uid: cmarin2
+userRCN: RACKSPACE
+
 ######################################## User Scope Accesses for Customer Idm #######################################
 
 
@@ -1121,26 +1134,43 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 uid: qaadmin
 userRCN: RCN-QATestingCustomer
 
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+uid: cmarin2
+userRCN: RACKSPACE
+
 ######################################## User Tenant Roles #######################################
 
-dn: roleRsId=3,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
+dn: roleRsId=1,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: tenantRole
-roleRsId: 3
+roleRsId: 1
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 tenantRsId: 1
 tenantRsId: 2
 userRsId: 1
 
-dn: roleRsId=3,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=2,ou=users,o=rackspace,dc=rackspace,dc=com
+dn: roleRsId=1,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=2,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: tenantRole
-roleRsId: 3
+roleRsId: 1
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 tenantRsId: 3
 tenantRsId: 4
 userRsId: 2
 
+dn: roleRsId=1,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+roleRsId: 1
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+tenantRsId: 1
+tenantRsId: 2
+userRsId: 104472
 
 ######################################## Permissions #######################################
 
