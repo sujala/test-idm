@@ -435,16 +435,20 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addTenant(HttpHeaders httpHeaders, String authToken, String body)
+    public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, org.openstack.docs.identity.api.v2.Tenant tenant)
         throws IOException {
         String request = getCloudAuthV20Url() + "tenants";
+        String body = marshallObjectToString(OBJ_FACTORY
+            .createTenant(tenant));
         return cloudClient.post(request, httpHeaders, body);
     }
 
     @Override
     public ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken,
-        String tenantId, String body) throws IOException {
+        String tenantId, org.openstack.docs.identity.api.v2.Tenant tenant) throws IOException {
         String request = getCloudAuthV20Url() + "tenants/" + tenantId;
+        String body = marshallObjectToString(OBJ_FACTORY
+            .createTenant(tenant));
         return cloudClient.post(request, httpHeaders, body);
     }
 

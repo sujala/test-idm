@@ -25,8 +25,6 @@ public class Client implements Auditable {
     @NotNull
     private ClientStatus status = null;
     
-    private String id = null;
-    
     private String openStackType = null;
 
     private String orgInum = null;
@@ -82,14 +80,6 @@ public class Client implements Auditable {
 
     public void setOpenStackType(String openStackType) {
         this.openStackType = openStackType;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public void setClientSecretObj(ClientSecret clientSecret) {
@@ -235,7 +225,6 @@ public class Client implements Auditable {
         if (clientSecret != null ? !clientSecret.equals(client.clientSecret) : client.clientSecret != null)
             return false;
         if (description != null ? !description.equals(client.description) : client.description != null) return false;
-        if (id != null ? !id.equals(client.id) : client.id != null) return false;
         if (locked != null ? !locked.equals(client.locked) : client.locked != null) return false;
         if (name != null ? !name.equals(client.name) : client.name != null) return false;
         if (orgInum != null ? !orgInum.equals(client.orgInum) : client.orgInum != null) return false;
@@ -257,7 +246,6 @@ public class Client implements Auditable {
         result = 31 * result + (rcn != null ? rcn.hashCode() : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (status != null ? status.hashCode() : 0);
-        result = 31 * result + (id != null ? id.hashCode() : 0);
         result = 31 * result + (orgInum != null ? orgInum.hashCode() : 0);
         result = 31 * result + (locked != null ? locked.hashCode() : 0);
         result = 31 * result + (softDeleted != null ? softDeleted.hashCode() : 0);
@@ -275,7 +263,7 @@ public class Client implements Auditable {
 
     @Override
     public String getAuditContext() {
-        String format = "ID=%s,clientId=%s,customerId=%s";
-        return String.format(format, getId(), getClientId(), getRCN());
+        String format = "clientId=%s,customerId=%s";
+        return String.format(format, getClientId(), getRCN());
     }
 }

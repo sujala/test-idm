@@ -174,7 +174,6 @@ public class ClientServiceTests {
 
         EasyMock.expect(mockClientDao.getClientByClientname(client.getName()))
             .andReturn(null);
-        EasyMock.expect(mockClientDao.getNextClientId()).andReturn(id);
         mockClientDao.addClient((Client) EasyMock.anyObject());
         EasyMock.replay(mockClientDao);
 

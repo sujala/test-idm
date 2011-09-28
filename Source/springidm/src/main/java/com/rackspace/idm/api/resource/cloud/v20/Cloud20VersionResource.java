@@ -2,7 +2,17 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import java.io.IOException;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -11,6 +21,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.Tenant;
 import org.openstack.docs.identity.api.v2.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -324,10 +335,10 @@ public class Cloud20VersionResource {
 
     @POST
     @Path("tenants")
-    public Response addTenant(@Context HttpHeaders httpHeaders,
-        @HeaderParam(X_AUTH_TOKEN) String authToken, String body)
+    public Response addTenant(@Context HttpHeaders httpHeaders, @Context UriInfo uriInfo,
+        @HeaderParam(X_AUTH_TOKEN) String authToken, Tenant tenant)
         throws IOException {
-        return getCloud20Service().addTenant(httpHeaders, authToken, body)
+        return getCloud20Service().addTenant(httpHeaders, uriInfo, authToken, tenant)
             .build();
     }
 
@@ -335,9 +346,9 @@ public class Cloud20VersionResource {
     @Path("tenants/{tenantId}")
     public Response updateTenant(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("tenantId") String tenantId, String body) throws IOException {
+        @PathParam("tenantId") String tenantId, Tenant tenant) throws IOException {
         return getCloud20Service().updateTenant(httpHeaders, authToken,
-            tenantId, body).build();
+            tenantId, tenant).build();
     }
 
     @DELETE

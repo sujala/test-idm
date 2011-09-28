@@ -557,7 +557,6 @@ public class LdapClientRepositoryTest {
             .newInstance("DELETE_My_Client_Secret"), "DELETE_My_Name", "RCN-123-456-789", ClientStatus.ACTIVE);
         newClient.setLocked(false);
         newClient.setSoftDeleted(false);
-        newClient.setId(id);
         return newClient;
     }
     

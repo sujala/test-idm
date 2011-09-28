@@ -507,6 +507,30 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.66) = {
     description = "The OpenStack-registered type"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.67) = {
+    name = userRsId
+    ldap-names = userRsId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "The rsId for a user"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.68) = {
+    name = roleRsId
+    ldap-names = roleRsId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "The rsId for a role"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.69) = {
+    name = tenantRsId
+    ldap-names = tenantRsId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "The rsId for a tenant"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 	name = rsPerson
 	ldap-names = rsPerson
@@ -570,7 +594,6 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.3) = {
 	must-contain
 		cn,
 		clientId,
-		rsId,
 		userPassword
 	may-contain
 	    callbackUrl,
@@ -806,10 +829,11 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.22) = {
     subclass-of top
     kind = structural
     must-contain
-    	clientId,
-        rsId
+        clientId,
+        roleRsId
     may-contain
-    	tenantId
+        userRsId,
+    	tenantRsId
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.23) = {

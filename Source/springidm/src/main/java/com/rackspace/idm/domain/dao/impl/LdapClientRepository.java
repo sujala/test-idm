@@ -54,7 +54,7 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         Attribute[] attributes = getAddAttributesForClient(client);
 
         String clientDN = new LdapDnBuilder(APPLICATIONS_BASE_DN).addAttribute(
-            ATTR_ID, client.getId()).build();
+            ATTR_CLIENT_ID, client.getClientId()).build();
 
         client.setUniqueId(clientDN);
 
@@ -678,10 +678,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
             atts.add(new Attribute(ATTR_OPENSTACK_TYPE, client.getOpenStackType()));
         }
 
-        if (!StringUtils.isBlank(client.getId())) {
-            atts.add(new Attribute(ATTR_ID, client.getId()));
-        }
-
         if (!StringUtils.isBlank(client.getName())) {
             atts.add(new Attribute(ATTR_NAME, client.getName()));
         }
@@ -738,7 +734,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
     private Client getClient(SearchResultEntry resultEntry) {
         Client client = new Client();
         client.setUniqueId(resultEntry.getDN());
-        client.setId(resultEntry.getAttributeValue(ATTR_ID));
         client.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
         ClientSecret secret = ClientSecret.existingInstance(resultEntry
             .getAttributeValue(ATTR_CLIENT_SECRET));
@@ -1097,22 +1092,6 @@ public class LdapClientRepository extends LdapRepository implements ClientDao {
         ClientRole role = null;
         role = LDAPPersister.getInstance(ClientRole.class).decode(entry);
         return role;
-    }
-
-    @Override
-    public String getNextClientId() {
-        String clientId = null;
-        LDAPConnection conn = null;
-        try {
-            conn = getAppConnPool().getConnection();
-            clientId = getNextId(conn, NEXT_CLIENT_ID);
-        } catch (LDAPException e) {
-            getLogger().error("Error getting next clientId", e);
-            throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
-        }
-        return clientId;
     }
     
     @Override

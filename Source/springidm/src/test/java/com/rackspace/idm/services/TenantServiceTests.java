@@ -11,6 +11,7 @@ import org.junit.Test;
 import com.rackspace.idm.domain.dao.ClientDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
@@ -22,6 +23,7 @@ public class TenantServiceTests {
 
     private TenantDao mockTenantDao;
     private ClientDao mockClientDao;
+    private UserDao mockUserDao;
     private ScopeAccessDao mockScopeAccessDao;
     private TenantService tenantService;
 
@@ -42,8 +44,9 @@ public class TenantServiceTests {
 
         mockTenantDao = EasyMock.createMock(TenantDao.class);
         mockClientDao = EasyMock.createMock(ClientDao.class);
+        mockUserDao = EasyMock.createMock(UserDao.class);
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
-        tenantService = new DefaultTenantService(mockTenantDao, mockClientDao, mockScopeAccessDao);
+        tenantService = new DefaultTenantService(mockTenantDao, mockClientDao, mockUserDao, mockScopeAccessDao);
     }
 
     @Test
@@ -100,7 +103,7 @@ public class TenantServiceTests {
     public void shouldAddTenantRole() {
         TenantRole role = getTestSingleTenantRole();
         EasyMock.expect(
-            mockTenantDao.getTenantRoleForParentById(null,role.getId())).andReturn(null);
+            mockTenantDao.getTenantRoleForParentById(null,role.getRoleRsId())).andReturn(null);
         mockTenantDao.addTenantRoleToParent(null, role);
         EasyMock.replay(mockTenantDao);
         tenantService.addTenantRole(null, role);
@@ -114,7 +117,7 @@ public class TenantServiceTests {
         TenantRole combined = getTestMultipleTenantRole();
         role2.setTenantIds(new String[]{tenantId2});
         EasyMock.expect(
-            mockTenantDao.getTenantRoleForParentById(null, role.getId())).andReturn(role2);
+            mockTenantDao.getTenantRoleForParentById(null, role.getRoleRsId())).andReturn(role2);
         mockTenantDao.updateTenantRole(EasyMock.eq(combined));
         EasyMock.replay(mockTenantDao);
         tenantService.addTenantRole(null, role);
@@ -126,7 +129,7 @@ public class TenantServiceTests {
         TenantRole role = getTestSingleTenantRole();
         TenantRole global = getTestGlobalTenantRole();
         EasyMock.expect(
-            mockTenantDao.getTenantRoleForParentById(null,role.getId())).andReturn(global);
+            mockTenantDao.getTenantRoleForParentById(null,role.getRoleRsId())).andReturn(global);
         EasyMock.replay(mockTenantDao);
         tenantService.addTenantRole(null, role);
         EasyMock.verify(mockTenantDao);
@@ -136,7 +139,7 @@ public class TenantServiceTests {
     public void shouldNotDeleteNonExistentTenantRole() {
         TenantRole role = getTestSingleTenantRole();
         EasyMock.expect(
-            mockTenantDao.getTenantRoleForParentById(null,role.getId())).andReturn(null);
+            mockTenantDao.getTenantRoleForParentById(null,role.getRoleRsId())).andReturn(null);
         EasyMock.replay(mockTenantDao);
         tenantService.deleteTenantRole(null, role);
     }
@@ -145,7 +148,7 @@ public class TenantServiceTests {
     public void shouldDeleteGlobalTenantRole() {
         TenantRole global = getTestGlobalTenantRole();
         EasyMock.expect(
-            mockTenantDao.getTenantRoleForParentById(null,global.getId())).andReturn(global);
+            mockTenantDao.getTenantRoleForParentById(null,global.getRoleRsId())).andReturn(global);
         mockTenantDao.deleteTenantRole(global);
         EasyMock.replay(mockTenantDao);
         tenantService.deleteTenantRole(null, global);
@@ -156,7 +159,7 @@ public class TenantServiceTests {
     public void shouldDeleteSingleTenantRole() {
         TenantRole role = getTestSingleTenantRole();
         EasyMock.expect(
-            mockTenantDao.getTenantRoleForParentById(null,role.getId())).andReturn(role);
+            mockTenantDao.getTenantRoleForParentById(null,role.getRoleRsId())).andReturn(role);
         mockTenantDao.deleteTenantRole(role);
         EasyMock.replay(mockTenantDao);
         tenantService.deleteTenantRole(null, role);
@@ -249,7 +252,7 @@ public class TenantServiceTests {
 
     private TenantRole getTestGlobalTenantRole() {
         TenantRole role = new TenantRole();
-        role.setId(id2);
+        role.setRoleRsId(id2);
         role.setClientId(clientId);
         role.setName(roleName);
         role.setTenantIds(null);
@@ -258,7 +261,7 @@ public class TenantServiceTests {
 
     private TenantRole getTestSingleTenantRole() {
         TenantRole role = new TenantRole();
-        role.setId(id);
+        role.setRoleRsId(id);
         role.setClientId(clientId);
         role.setName(roleName);
         role.setTenantIds(new String[]{tenantId1});
@@ -267,7 +270,7 @@ public class TenantServiceTests {
 
     private TenantRole getTestMultipleTenantRole() {
         TenantRole role = new TenantRole();
-        role.setId(id);
+        role.setRoleRsId(id);
         role.setClientId(clientId);
         role.setName(roleName);
         role.setTenantIds(new String[]{tenantId1, tenantId2});

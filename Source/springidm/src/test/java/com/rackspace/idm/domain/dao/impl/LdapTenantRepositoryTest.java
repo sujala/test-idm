@@ -29,6 +29,7 @@ public class LdapTenantRepositoryTest {
     private final String dn = LdapRepository.BASE_DN;
     private final String displayName = "Display Name";
     private final String id = "XXX";
+    private final String userId = "1";
     
     private static LdapTenantRepository getRepo(LdapConnectionPools connPools) {
         Configuration appConfig = null;
@@ -134,7 +135,7 @@ public class LdapTenantRepositoryTest {
         TenantRole notThere = this.repo.getTenantRoleForParentById(dn, id);
         Assert.assertNotNull(role);
         Assert.assertEquals(tenantId, role.getTenantIds()[0]);
-        Assert.assertEquals(id, role.getId());
+        Assert.assertEquals(id, role.getRoleRsId());
         Assert.assertEquals(clientId, role.getClientId());
         Assert.assertTrue(roles.size() > 0);
         Assert.assertTrue(roles2.size() > 0);
@@ -193,8 +194,9 @@ public class LdapTenantRepositoryTest {
     
     private TenantRole getTestTenantRole() {
         TenantRole role = new TenantRole();
-        role.setId(id);
+        role.setRoleRsId(id);
         role.setClientId(clientId);
+        role.setUserId(userId);
         role.setName(roleName);
         role.setTenantIds(new String[] {tenantId});
         return role;

@@ -69,4 +69,18 @@ public class TenantConverterCloudV20 {
         
         return jaxbTenants;
     }
+
+    public com.rackspace.idm.domain.entity.Tenant toTenantDO(
+        org.openstack.docs.identity.api.v2.Tenant jaxbTenant) {
+        
+        com.rackspace.idm.domain.entity.Tenant tenant = new com.rackspace.idm.domain.entity.Tenant();
+        
+        tenant.setDescription(jaxbTenant.getDescription());
+        tenant.setDisplayName(jaxbTenant.getDisplayName());
+        tenant.setEnabled(jaxbTenant.isEnabled());
+        tenant.setName(jaxbTenant.getName());
+        tenant.setTenantId(jaxbTenant.getId());
+        
+        return tenant;
+    }
 }

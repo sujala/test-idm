@@ -18,8 +18,6 @@ public class ClientConverter {
 
     public Client toClientDO(com.rackspace.api.idm.v1.Client jaxbClient) {
         Client client = new Client();
-        
-        client.setId(jaxbClient.getId());
 
         client.setClientId(jaxbClient.getClientId());
         client.setRCN(jaxbClient.getCustomerId());
@@ -83,8 +81,6 @@ public class ClientConverter {
     private com.rackspace.api.idm.v1.Client toClientJaxb(Client client,
         boolean includeCredentials) {
         com.rackspace.api.idm.v1.Client returnedClient = of.createClient();
-        
-        returnedClient.setId(client.getId());
 
         returnedClient.setClientId(client.getClientId());
         returnedClient.setCustomerId(client.getRCN());

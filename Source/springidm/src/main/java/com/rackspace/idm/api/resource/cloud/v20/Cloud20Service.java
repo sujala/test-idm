@@ -1,13 +1,15 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import org.openstack.docs.identity.api.v2.AuthenticationRequest;
-import org.openstack.docs.identity.api.v2.User;
+import java.io.IOException;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
+
+import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.Tenant;
+import org.openstack.docs.identity.api.v2.User;
 
 /**
  * Created by IntelliJ IDEA.
@@ -68,9 +70,9 @@ public interface Cloud20Service {
 
 	ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) throws IOException;
 
-	ResponseBuilder addTenant(HttpHeaders httpHeaders, String authToken, String body) throws IOException;
+	ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Tenant tenant) throws IOException;
 
-	ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String body) throws IOException;
+	ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Tenant tenant) throws IOException;
 
 	ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String authToken, String tenantId) throws IOException;
 

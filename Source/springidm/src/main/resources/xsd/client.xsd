@@ -214,7 +214,6 @@
 				</documentation>
 			</annotation>
 		</attribute>
-		<attribute name="id" type="xsd:string"></attribute>
 	</complexType>
 
 	<complexType name="ClientList">

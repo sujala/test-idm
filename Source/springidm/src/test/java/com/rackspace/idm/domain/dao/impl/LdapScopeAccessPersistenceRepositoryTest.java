@@ -649,15 +649,13 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     private Client addNewTestClient(String clientId) {
         final Client newClient = createTestClientInstance();
         newClient.setClientId(clientId);
-        newClient.setId(id);
         clientRepo.addClient(newClient);
         return newClient;
     }
     
     private Client addNewTestClient2(String clientId) {
         final Client newClient = createTestClientInstance();
-        newClient.setClientId(clientId);
-        newClient.setId(id2);
+        newClient.setClientId(clientId2);
         clientRepo.addClient(newClient);
         return newClient;
     }

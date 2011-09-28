@@ -31,4 +31,5 @@ public interface TenantService {
     List<TenantRole> getTenantRolesForUserOnTenant(User user, Tenant tenant);
     List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa);
     void deleteGlobalRole(TenantRole role);
+    List<User> getUsersForTenant(String tenantId);
 }

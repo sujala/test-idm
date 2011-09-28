@@ -675,9 +675,9 @@ public class UserServiceTests {
     private List<Client> getFakeClients() {
 
         final Client client1 = new Client();
-        client1.setId("id1");
+        client1.setClientId("id1");
         final Client client2 = new Client();
-        client2.setId("id2");
+        client2.setClientId("id2");
 
         final List<Client> clients = new ArrayList<Client>();
         clients.add(client1);

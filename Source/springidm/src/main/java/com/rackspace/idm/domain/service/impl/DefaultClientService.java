@@ -77,8 +77,6 @@ public class DefaultClientService implements ClientService {
             logger.error("Unsupported hashing algorithm - {}", e);
             throw new IllegalStateException("Unsupported hashing algorithm", e);
         }
-        
-        client.setId(this.clientDao.getNextClientId());
 
         clientDao.addClient(client);
         logger.debug("Added Client: {}", client);

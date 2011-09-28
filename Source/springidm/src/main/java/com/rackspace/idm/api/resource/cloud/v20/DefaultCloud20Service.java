@@ -2,9 +2,12 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.List;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -15,11 +18,14 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.configuration.Configuration;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.openstack.docs.common.api.v1.Extension;
+import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.openstack.docs.identity.api.v2.BadRequestFault;
@@ -99,7 +105,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private Configuration config;
 
+    @Context
+    private ServletContext sc;
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    private JAXBElement<Extensions> currentExtensions;
+    private HashMap<String, JAXBElement<Extension>> extensionMap;
 
     // Core Service Methods
     @Override
@@ -197,15 +209,69 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listExtensions(HttpHeaders httpHeaders)
         throws IOException {
-        // TODO write me
-        return Response.status(Status.NOT_FOUND);
+        try {
+            if (currentExtensions == null) {
+                JAXBContext jaxbContext = JAXBContext
+                    .newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
+                Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+                currentExtensions = unmarshaller.unmarshal(
+                    new StreamSource(sc
+                        .getResourceAsStream("/WEB-INF/extensions.xml")),
+                    Extensions.class);
+            }
+
+            return Response.ok(currentExtensions);
+        } catch (Exception e) {
+            // Return 500 error. Is WEB-IN/extensions.xml malformed?
+            return serviceExceptionResponse();
+        }
     }
 
     @Override
     public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias)
         throws IOException {
-        // TODO write me
-        return Response.status(Status.NOT_FOUND);
+        if (StringUtils.isBlank(alias)) {
+            return badRequestExceptionResponse("Invalid extension alias '"
+                + alias + "'.");
+        }
+
+        final String normalizedAlias = alias.trim().toUpperCase();
+
+        if (extensionMap == null) {
+            extensionMap = new HashMap<String, JAXBElement<Extension>>();
+
+            try {
+                if (currentExtensions == null) {
+                    JAXBContext jaxbContext = JAXBContext
+                        .newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
+                    Unmarshaller unmarshaller = jaxbContext
+                        .createUnmarshaller();
+                    currentExtensions = unmarshaller.unmarshal(
+                        new StreamSource(sc
+                            .getResourceAsStream("/WEB-INF/extensions.xml")),
+                        Extensions.class);
+                }
+
+                Extensions exts = currentExtensions.getValue();
+
+                for (Extension e : exts.getExtension()) {
+                    extensionMap.put(e.getAlias().trim().toUpperCase(),
+                        OBJ_FACTORIES.getOpenStackCommonV1Factory()
+                            .createExtension(e));
+                }
+            } catch (Exception e) {
+                // Return 500 error. Is WEB-IN/extensions.xml malformed?
+                return serviceExceptionResponse();
+            }
+        }
+
+        if (!extensionMap.containsKey(normalizedAlias)) {
+            return notFoundExceptionResponse("Extension with alias '"
+                + normalizedAlias + "' is not available.");
+        }
+
+        return Response.ok(extensionMap.get(normalizedAlias));
+
     }
 
     // Core Admin Token Methods
@@ -243,7 +309,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) throws IOException {
+    public ResponseBuilder checkToken(HttpHeaders httpHeaders,
+        String authToken, String tokenId, String belongsTo) throws IOException {
         return Response.status(Status.NOT_FOUND);
     }
 
@@ -486,7 +553,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         TenantRole role = new TenantRole();
         role.setClientId(cRole.getClientId());
-        role.setId(cRole.getId());
+        role.setRoleRsId(cRole.getId());
 
         this.tenantService.addTenantRoleToUser(user, role);
 
@@ -510,7 +577,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         TenantRole role = null;
 
         for (TenantRole globalRole : globalRoles) {
-            if (globalRole.getId().equals(roleId)) {
+            if (globalRole.getRoleRsId().equals(roleId)) {
                 role = globalRole;
             }
         }
@@ -547,7 +614,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         TenantRole role = null;
 
         for (TenantRole globalRole : globalRoles) {
-            if (globalRole.getId().equals(roleId)) {
+            if (globalRole.getRoleRsId().equals(roleId)) {
                 role = globalRole;
             }
         }
@@ -879,24 +946,57 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     // KSADM Extension Tenant Methods
     @Override
-    public ResponseBuilder addTenant(HttpHeaders httpHeaders, String authToken,
-        String body) {
-        // TODO write me
-        return Response.status(Status.NOT_FOUND);
+    public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo,
+        String authToken, org.openstack.docs.identity.api.v2.Tenant tenant) {
+
+        Tenant savedTenant = this.tenantConverterCloudV20.toTenantDO(tenant);
+
+        this.tenantService.addTenant(savedTenant);
+
+        return Response.created(
+            uriInfo.getRequestUriBuilder().path(savedTenant.getTenantId())
+                .build()).entity(
+            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenant(
+                this.tenantConverterCloudV20.toTenant(savedTenant)));
     }
 
     @Override
     public ResponseBuilder updateTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantId, String body) throws IOException {
-        // TODO write me
-        return Response.status(Status.NOT_FOUND);
+        String authToken, String tenantId,
+        org.openstack.docs.identity.api.v2.Tenant tenant) throws IOException {
+
+        Tenant tenantDO = this.tenantService.getTenant(tenantId);
+        if (tenantDO == null) {
+            String errMsg = String.format("Tenant %s not found", tenantId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        tenantDO.setDescription(tenant.getDescription());
+        tenantDO.setDisplayName(tenant.getDisplayName());
+        tenantDO.setEnabled(tenant.isEnabled());
+        tenantDO.setName(tenant.getName());
+
+        this.tenantService.updateTenant(tenantDO);
+
+        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createTenant(this.tenantConverterCloudV20.toTenant(tenantDO)));
     }
 
     @Override
     public ResponseBuilder deleteTenant(HttpHeaders httpHeaders,
         String authToken, String tenantId) {
-        // TODO write me
-        return Response.status(Status.NOT_FOUND);
+
+        Tenant tenant = this.tenantService.getTenant(tenantId);
+        if (tenant == null) {
+            String errMsg = String.format("Tenant %s not found", tenantId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        this.tenantService.deleteTenant(tenantId);
+
+        return Response.noContent();
     }
 
     @Override
@@ -1023,7 +1123,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(
-                    fault));
+                fault));
     }
 
     private Response.ResponseBuilder notAuthenticatedExceptionResponse(
@@ -1036,7 +1136,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUnauthorized(
-                    fault));
+                fault));
     }
 
     private Response.ResponseBuilder notFoundExceptionResponse(String message) {
@@ -1047,7 +1147,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFound(
-                    fault));
+                fault));
     }
 
     private Response.ResponseBuilder badRequestExceptionResponse(String message) {
@@ -1058,7 +1158,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
-                    fault));
+                fault));
     }
 
     private Response.ResponseBuilder serviceExceptionResponse() {
