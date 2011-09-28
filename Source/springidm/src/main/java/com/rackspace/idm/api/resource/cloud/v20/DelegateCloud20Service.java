@@ -178,22 +178,40 @@ public class DelegateCloud20Service implements Cloud20Service {
     public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken,
                                      String marker, int limit) throws IOException {
 
-        //TODO: Implement routing to DefaultCloud20Service
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .listUsers(httpHeaders, authToken, marker, limit);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            //TODO: Implement routing to DefaultCloud20Service
 
-        String request = getCloudAuthV20Url() + "users";
+            String request = getCloudAuthV20Url() + "users";
 
-        HashMap<String, Object> params = new HashMap<String, Object>();
-        params.put("marker", marker);
-        params.put("limit", limit);
-        request = appendQueryParams(request, params);
+            HashMap<String, Object> params = new HashMap<String, Object>();
+            params.put("marker", marker);
+            params.put("limit", limit);
+            request = appendQueryParams(request, params);
 
-        return cloudClient.get(request, httpHeaders);
+            return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId) throws IOException {
-        String request = getCloudAuthV20Url() + "users/"+userId+"/RAX-KSGRP/groups";
-        return cloudClient.get(request, httpHeaders);
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .listUserGroups(httpHeaders, userId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "users/"+userId+"/RAX-KSGRP/groups";
+            return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
@@ -319,93 +337,197 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken,
                                              String userId, String body) throws IOException {
-        String request = getCloudAuthV20Url() + "users/" + userId
-                + "/credentials";
-        return cloudClient.post(request, httpHeaders, body);
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .addUserCredential(httpHeaders, authToken, userId, body);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "users/" + userId
+                    + "/credentials";
+            return cloudClient.post(request, httpHeaders, body);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken,
                                            String userId, String marker, Integer limit) throws IOException {
-        String request = getCloudAuthV20Url() + "users/" + userId
-                + "/credentials";
 
-        HashMap<String, Object> params = new HashMap<String, Object>();
-        params.put("marker", marker);
-        params.put("limit", limit);
-        request = appendQueryParams(request, params);
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .listCredentials(httpHeaders, authToken, userId, marker, limit);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "users/" + userId
+                    + "/credentials";
 
-        return cloudClient.get(request, httpHeaders);
+            HashMap<String, Object> params = new HashMap<String, Object>();
+            params.put("marker", marker);
+            params.put("limit", limit);
+            request = appendQueryParams(request, params);
+
+            return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder updateUserCredential(HttpHeaders httpHeaders, String authToken,
                                                 String userId, String credentialType, String body) throws IOException {
-        String request = getCloudAuthV20Url() + "users/" + userId
-                + "/credentials/" + credentialType;
-        return cloudClient.post(request, httpHeaders, body);
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .updateUserCredential(httpHeaders, authToken, userId, credentialType, body);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "users/" + userId
+                    + "/credentials/" + credentialType;
+            return cloudClient.post(request, httpHeaders, body);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken,
                                              String userId, String credentialType) throws IOException {
-        String request = getCloudAuthV20Url() + "users/" + userId
-                + "/credentials/" + credentialType;
-        return cloudClient.get(request, httpHeaders);
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .getUserCredential(httpHeaders, authToken, userId, credentialType);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "users/" + userId
+                    + "/credentials/" + credentialType;
+            return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String authToken,
                                                 String userId, String credentialType) throws IOException {
-        String request = getCloudAuthV20Url() + "users/" + userId
-                + "/credentials/" + credentialType;
-        return cloudClient.delete(request, httpHeaders);
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .deleteUserCredential(httpHeaders, authToken, userId, credentialType);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "users/" + userId
+                    + "/credentials/" + credentialType;
+            return cloudClient.delete(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders, String authToken,
                                                     String tenantId, String userId) throws IOException {
-        String request = getCloudAuthV20Url() + "tenants/" + tenantId
-                + "/users/" + userId + "/roles";
-        return cloudClient.get(request, httpHeaders);
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .listRolesForUserOnTenant(httpHeaders, authToken, tenantId, userId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "tenants/" + tenantId
+                    + "/users/" + userId + "/roles";
+            return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, User user)
             throws IOException {
-        String request = getCloudAuthV20Url() + "users";
-        String body = marshallObjectToString(OBJ_FACTORY
-                .createUser(user));
-        return cloudClient.post(request, httpHeaders, body);
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .addUser(httpHeaders, uriInfo, authToken, user);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "users";
+            String body = marshallObjectToString(OBJ_FACTORY
+                    .createUser(user));
+            return cloudClient.post(request, httpHeaders, body);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId,
                                       User user) throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .updateUser(httpHeaders, authToken, userId, user);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "users/" + userId;
         String body = marshallObjectToString(OBJ_FACTORY
                 .createUser(user));
         return cloudClient.post(request, httpHeaders, body);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId)
             throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .deleteUser(httpHeaders, authToken, userId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "users/" + userId;
         return cloudClient.delete(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken,
                                           String userId, String body) throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .setUserEnabled(httpHeaders, authToken, userId, body);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/enabled";
         return cloudClient.put(request, httpHeaders, body);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder listUserRoles(HttpHeaders httpHeaders, String authToken,
                                          String userId, String serviceId) throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .listUserRoles(httpHeaders, authToken, userId, serviceId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/roles";
 
@@ -414,61 +536,135 @@ public class DelegateCloud20Service implements Cloud20Service {
         request = appendQueryParams(request, params);
 
         return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId,
                                        String roleId) throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .addUserRole(httpHeaders, authToken, userId, roleId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/roles/" + roleId;
         return cloudClient.put(request, httpHeaders, "");
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder getUserRole(HttpHeaders httpHeaders, String authToken, String userId,
                                        String roleId) throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .getUserRole(httpHeaders, authToken, userId, roleId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/roles/" + roleId;
         return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String authToken,
                                           String userId, String roleId) throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .deleteUserRole(httpHeaders, authToken, userId, roleId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/roles/" + roleId;
         return cloudClient.delete(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, org.openstack.docs.identity.api.v2.Tenant tenant)
         throws IOException {
 
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .addTenant(httpHeaders, uriInfo, authToken, tenant);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
+
         String request = getCloudAuthV20Url() + "tenants";
         String body = marshallObjectToString(OBJ_FACTORY
             .createTenant(tenant));
         return cloudClient.post(request, httpHeaders, body);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken,
         String tenantId, org.openstack.docs.identity.api.v2.Tenant tenant) throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .updateTenant(httpHeaders, authToken, tenantId, tenant);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "tenants/" + tenantId;
         String body = marshallObjectToString(OBJ_FACTORY
             .createTenant(tenant));
         return cloudClient.post(request, httpHeaders, body);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String authToken, String tenantId)
             throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .deleteTenant(httpHeaders, authToken, tenantId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "tenants/" + tenantId;
         return cloudClient.delete(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders, String authToken,
                                               String tenantId, String marker, Integer limit) throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .listRolesForTenant(httpHeaders, authToken, tenantId, marker, limit);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/OS-KSADM/roles";
 
@@ -478,12 +674,23 @@ public class DelegateCloud20Service implements Cloud20Service {
         request = appendQueryParams(request, params);
 
         return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders, String authToken,
                                                       String tenantId, String roleId, String marker, Integer limit)
             throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .listUsersWithRoleForTenant(httpHeaders, authToken, tenantId, roleId, marker, limit);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/users";
 
@@ -494,11 +701,22 @@ public class DelegateCloud20Service implements Cloud20Service {
         request = appendQueryParams(request, params);
 
         return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String authToken,
                                               String tenantId, String marker, Integer limit) throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .listUsersForTenant(httpHeaders, authToken, tenantId, marker, limit);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/users";
 
@@ -508,27 +726,60 @@ public class DelegateCloud20Service implements Cloud20Service {
         request = appendQueryParams(request, params);
 
         return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken,
                                                   String tenantId, String userId, String roleId) throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .addRolesToUserOnTenant(httpHeaders, authToken, tenantId, userId, roleId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
         return cloudClient.put(request, httpHeaders, "");
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken,
                                                       String tenantId, String userId, String roleId) throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .deleteRoleFromUserOnTenant(httpHeaders, authToken, tenantId, userId, roleId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
         return cloudClient.delete(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken, String serviceId,
                                      String marker, Integer limit) throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .listRoles(httpHeaders, authToken, serviceId, marker, limit);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "OS-KSADM/roles";
 
         HashMap<String, Object> params = new HashMap<String, Object>();
@@ -538,32 +789,76 @@ public class DelegateCloud20Service implements Cloud20Service {
         request = appendQueryParams(request, params);
 
         return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder addRole(HttpHeaders httpHeaders, String authToken, String body)
             throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .addRole(httpHeaders, authToken, body);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "OS-KSADM/roles";
         return cloudClient.post(request, httpHeaders, body);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken, String roleId)
             throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .getRole(httpHeaders, authToken, roleId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "OS-KSADM/roles/" + roleId;
         return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId)
             throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .deleteRole(httpHeaders, authToken, roleId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "OS-KSADM/roles/" + roleId;
         return cloudClient.delete(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, String marker,
                                         Integer limit) throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .listServices(httpHeaders, authToken, marker, limit);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "OS-KSADM/services";
 
         HashMap<String, Object> params = new HashMap<String, Object>();
@@ -572,29 +867,64 @@ public class DelegateCloud20Service implements Cloud20Service {
         request = appendQueryParams(request, params);
 
         return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder addService(HttpHeaders httpHeaders, String authToken, String body)
             throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .addService(httpHeaders, authToken, body);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "OS-KSADM/services";
         return cloudClient.post(request, httpHeaders, body);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder getService(HttpHeaders httpHeaders, String authToken, String serviceId)
             throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .getService(httpHeaders, authToken, serviceId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "OS-KSADM/services/"
                 + serviceId;
         return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
     public ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken,
                                          String serviceId) throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+                .deleteService(httpHeaders, authToken, serviceId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+
         String request = getCloudAuthV20Url() + "OS-KSADM/services/"
                 + serviceId;
         return cloudClient.delete(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     public String appendQueryParams(String request,
