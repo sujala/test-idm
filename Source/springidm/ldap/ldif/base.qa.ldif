@@ -901,6 +901,25 @@ uid: qaadmin
 userPassword:: e1NIQX1heWc3c0dEQ2FVTXRDS3d6dEhvemZBcEFBMTA9
 rsGroupDN: cn=Idm Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
 
+dn: rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+clearPassword:: u4ulicmrLfboYsh1KryLww==
+locked: FALSE
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20110428013526.504Z
+preferredLanguage: en-us
+RCN: RACKSPACE
+rsId: 104472
+rsRegion: USA
+softDeleted: FALSE
+status: ACTIVE
+timeZone: America/Chicago
+uid: cmarin2
+userPassword: Password1
+rsGroupDN: cn=Idm Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+
+
 ######################################## User ScopeAccesses Containers ##########################
 
 dn: cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
