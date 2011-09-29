@@ -48,7 +48,7 @@ public class LdapClientRepositoryTest {
         LdapClientRepository cleanUpRepo = getRepo(pools);
         LdapUserRepository cleanUpRepo2 = getUserRepo(pools);
         Client deleteme = cleanUpRepo.getClientByClientId("DELETE_My_ClientId");
-        User deleteme2 = cleanUpRepo2.getUserById("XXX");
+        User deleteme2 = cleanUpRepo2.getUserById("XXXX");
         if (deleteme != null) {
             cleanUpRepo.deleteClient(deleteme);
         }
