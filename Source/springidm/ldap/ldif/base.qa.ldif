@@ -922,6 +922,23 @@ uid: qaadmin
 userPassword:: e1NIQX1heWc3c0dEQ2FVTXRDS3d6dEhvemZBcEFBMTA9
 rsGroupDN: cn=Idm Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
 
+dn: rsId=7,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+locked: FALSE
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20110428013526.504Z
+preferredLanguage: en-us
+RCN: RACKSPACE
+rsId: 7
+rsRegion: USA
+softDeleted: FALSE
+status: ACTIVE
+timeZone: America/Chicago
+uid: admin
+userPassword: secrete
+rsGroupDN: cn=Idm Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+
 dn: rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
@@ -968,6 +985,11 @@ objectClass: rsContainer
 cn: DIRECT TOKENS
 
 dn: cn=DIRECT TOKENS,rsId=6,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: DIRECT TOKENS
+
+dn: cn=DIRECT TOKENS,rsId=7,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsContainer
 cn: DIRECT TOKENS
@@ -1089,6 +1111,17 @@ clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 uid: qaadmin
 userRCN: RCN-QATestingCustomer
 
+dn: clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=7,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+uid: admin
+userRCN: RACKSPACE
+accessToken: 111222333444
+accessTokenExp: 30110428013526.504Z
+
 dn: clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: scopeAccess
@@ -1155,6 +1188,15 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 uid: qaadmin
 userRCN: RCN-QATestingCustomer
 
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=7,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+uid: admin
+userRCN: RACKSPACE
+
 dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: scopeAccess
@@ -1199,6 +1241,13 @@ objectClass: tenantRole
 roleRsId: 1
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 userRsId: 104472
+
+dn: roleRsId=1,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=7,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+roleRsId: 1
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 7
 
 ######################################## Permissions #######################################
 
