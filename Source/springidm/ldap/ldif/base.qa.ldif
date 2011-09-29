@@ -413,6 +413,27 @@ tenantDisplayName: AuthUserNastId-test
 baseUrlId: 3
 baseUrlId: 11
 
+dn: rsId=5,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenant
+rsId: 5
+cn: MossoCloudFS_f3b094b3-0185-45bf-9608-a853456a3ef1
+enabled: TRUE
+description: cmarin2 test tenant
+tenantDisplayName: MossoCloudFS_f3b094b3-0185-45bf-9608-a853456a3ef1-test
+baseUrlId: 7
+baseUrlId: 11
+
+dn: rsId=6,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenant
+rsId: 6
+cn: 5701091
+enabled: TRUE
+description: cmarin2 test tenant
+tenantDisplayName: 5701091
+baseUrlId: 15
+
 ######################################## Admin User #######################################
 
 dn: cn=admin,ou=internal,o=rackspace,dc=rackspace,dc=com
@@ -1145,31 +1166,38 @@ userRCN: RACKSPACE
 
 ######################################## User Tenant Roles #######################################
 
-dn: roleRsId=1,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
+dn: roleRsId=2,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: tenantRole
-roleRsId: 1
+roleRsId: 2
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 tenantRsId: 1
 tenantRsId: 2
 userRsId: 1
 
-dn: roleRsId=1,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=2,ou=users,o=rackspace,dc=rackspace,dc=com
+dn: roleRsId=2,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=2,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: tenantRole
-roleRsId: 1
+roleRsId: 2
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 tenantRsId: 3
 tenantRsId: 4
 userRsId: 2
+
+dn: roleRsId=2,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+roleRsId: 2
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+tenantRsId: 5
+tenantRsId: 6
+userRsId: 104472
 
 dn: roleRsId=1,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: tenantRole
 roleRsId: 1
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-tenantRsId: 1
-tenantRsId: 2
 userRsId: 104472
 
 ######################################## Permissions #######################################
