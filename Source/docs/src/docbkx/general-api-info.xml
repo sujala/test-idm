@@ -1,0 +1,333 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE book [<!-- Some useful entities borrowed from HTML -->
+    <!ENTITY ndash  "–">
+    <!ENTITY mdash  "—">
+    <!ENTITY hellip "…">
+
+    <!-- Useful for describing APIs -->
+    <!ENTITY GET    '<command xmlns="http://docbook.org/ns/docbook">GET</command>'>
+    <!ENTITY PUT    '<command xmlns="http://docbook.org/ns/docbook">PUT</command>'>
+    <!ENTITY POST   '<command xmlns="http://docbook.org/ns/docbook">POST</command>'>
+    <!ENTITY DELETE '<command xmlns="http://docbook.org/ns/docbook">DELETE</command>'>
+
+
+    <!ENTITY CHECK  '<inlinemediaobject xmlns="http://docbook.org/ns/docbook">
+                 <imageobject>
+                  <imagedata fileref="../img/Check_mark_23x20_02.svg"
+                             format="SVG" scale="60"/>
+                </imageobject>
+              </inlinemediaobject>'>
+    <!ENTITY CODES       'Normal Response Code(s):'>
+    <!ENTITY ERROR_CODES 'Error Response Code(s):'>
+    <!ENTITY NO_REQUEST '<para xmlns="http://docbook.org/ns/docbook">
+                          This operation does not require a request body.</para>'>
+]>
+
+<chapter  xmlns="http://docbook.org/ns/docbook"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+  xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0"
+  xml:id="General_API_Info">
+    <title>General API Information</title>
+    <para> This document is intended for software developers interested in developing applications
+    which utilizes Global Auth API as the authentication engine. It includes details on
+    how to integrate with Global Auth API. </para>
+  
+    <para>The Global Auth API is implemented using a RESTful web service interface. All requests to
+      authenticate and operate against the Global Auth API are performed using SSL over HTTP (HTTPS)
+      on TCP port 443.</para>
+  
+    <para> This Guide assumes the reader is familiar with RESTful web services, HTTP/1.1, and JSON
+       and/or XML serialization formats. </para>
+  
+    <section>
+      <title>Request/Response Types</title>
+      <para>The Global Auth API supports both the JSON and XML data serialization formats. The
+        request format is specified using the <code>Content-Type</code> header and is required for
+        operations that have a request body. The response format can be specified in requests using
+        either the <code>Accept</code> header or adding an <code>.xml</code> or <code>.json</code>
+        extension to the request URI. Note that it is possible for a response to be serialized using
+        a format different from the request (see example below). If no response format is specified,
+        XML is the default. If conflicting formats are specified using both an <code>Accept</code>
+        header and a query extension, the query extension takes precedence.</para>
+      <table rules="all">
+        <caption>Response Types</caption>
+        <thead>
+          <tr>
+            <td>Format</td>
+            <td>Accept Header</td>
+            <td>Query Extension</td>
+            <td>Default</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>JSON</td>
+            <td>application/json</td>
+            <td>.json</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>XML</td>
+            <td>application/xml</td>
+            <td>.xml</td>
+            <td>Yes</td>
+          </tr>
+        </tbody>
+      </table>
+      <example>
+        <title>JSON Request with Headers</title>
+        <programlisting language="xml">
+<xi:include href="../formattedsamples/samplerequestheader.json" parse="text"/>
+</programlisting>
+        <programlisting language="xml">
+<xi:include href="../formattedsamples/auth_credentials.json" parse="text"/>
+</programlisting>
+      </example>
+      <example>
+        <title>XML Response with Headers</title>
+        <programlisting language="xml">
+<xi:include href="../formattedsamples/sampleresponseheader.json" parse="text"/>
+</programlisting>
+        <programlisting language="xml">
+<xi:include href="../formattedsamples/auth.xml" parse="text"/>
+</programlisting>
+      </example>
+    </section>
+ 
+    <section>
+      <title>Contracts</title>
+      <para>
+        The Global Auth API uses a URI versioning scheme. The first element of the path contains the
+        target version identifier (e.g. https://idm.api.rackspace.com/v1.0/...) All requests (except
+        to query for contract version - see below) must contain a target version. Any features or
+        functionality changes that would necessitate a break in API-compatibility will require a new
+        version, which will result in the URI version being updated accordingly. When new API
+        versions are released, older versions will be marked as <code>Deprecated</code>. Rackspace
+        will work with developers and partners to ensure there is adequate time to migrate to the
+        new version before deprecated versions are discontinued. 
+      </para>
+      <example>
+        <title>Request with URI versioning</title>
+        <literallayout class="monospaced">
+          GET /v1.0/users HTTP/1.1
+          Host: idm.api.rackspace.com
+          Accept: application/xml
+          Authorization: Oauth ab48a9efdfedb23ty3494
+			  </literallayout>
+      </example>
+      
+      <para>
+        Your application can programmatically determine
+        available API contract versions by performing a &GET; on the
+        root URL (i.e. with the version and everything to the
+        right of it truncated) returned from the
+        authentication system.  
+      </para>
+      <example>
+        <title>Service Profile Request</title>
+        <literallayout class="monospaced">
+          GET HTTP/1.1
+          Host: idm.api.rackspace.com
+          Accept: application/xml
+			</literallayout>
+      </example>
+      &NO_REQUEST;
+      <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+      <simpara>&ERROR_CODES;<errorcode>400</errorcode>, <errorcode>500</errorcode>, <errorcode>503</errorcode></simpara>
+      <simpara>Your application can programmatically determine available API contract versions by
+        performing a <command>GET</command> on the root URL
+        (https://idm.api.rackspace.com/).</simpara>
+
+      <example>
+        <title>Service Profile Response</title>
+        <programlisting language="xml">
+          <xi:include href="../formattedsamples/serviceprofile.xml" parse="text"/>
+        </programlisting>
+      </example>
+      
+      <para>
+        You can also obtain additional information about a
+        contract version by performing a &GET; on the base
+        version URL
+        (e.g. https://idm.api.rackspace.com/v1.0).
+      </para>
+      <example>
+        <title>Service Contract Request</title>
+        <literallayout class="monospaced">
+          GET HTTP/1.1
+          Host: idm.api.rackspace.com/v1.0
+          Accept: application/xml
+			</literallayout>
+      </example>
+      &NO_REQUEST;
+      <simpara>&CODES;<returnvalue>200</returnvalue></simpara>
+      <simpara>&ERROR_CODES;<errorcode>400</errorcode>, <errorcode>500</errorcode>, <errorcode>503</errorcode></simpara>
+      <example>
+        <title>Service Contract Response</title>
+        <programlisting language="xml">
+          <xi:include href="../formattedsamples/servicecontract.xml" parse="text"/>
+        </programlisting>
+      </example>
+   </section>   
+   
+    <section>
+      <title>Faults</title>
+      <para>When an error occurs the system will return an HTTP error response code denoting the
+        type of error. The system will also return additional information about the fault in the
+        body of the response. </para>
+      <example>
+        <title>XML Fault Response</title>
+        <programlisting language="xml">
+<xi:include href="../formattedsamples/service_fault.xml" parse="text"/>
+</programlisting>
+      </example>
+      <example>
+        <title>JSON Fault Response</title>
+        <programlisting language="javascript">
+<xi:include href="../formattedsamples/service_fault.json" parse="text"/>
+</programlisting>
+      </example>
+      <para>The error code is returned in the body of the response for convenience. The message
+        section returns a human readable message. The details section is optional and may contain
+        useful information for tracking down an error (e.g a stack trace). </para>
+      <para>The root element of the fault (serviceFault) may change depending on how important it is to explicitly
+        identify a specific fault type for a service. E.g it might be important to a client to distinguish between usernameConflict
+        and applicationConflict even though they both have an error code of 409.The following is an example of a 
+        usernameConflict error. </para>
+      <example>
+        <title>XML Username Conflict Fault</title>
+        <programlisting language="xml">
+<xi:include href="../formattedsamples/username_conflict.xml" parse="text"/>
+</programlisting>
+      </example>
+      <example>
+        <title>JSON Username Conflict Fault</title>
+        <programlisting language="javascript">
+<xi:include href="../formattedsamples/username_conflict.json" parse="text"/>
+</programlisting>
+      </example>
+      <para> The following is a list of possible fault types along with their associated error
+        codes. </para>
+      <table rules="all">
+        <caption>Fault Types</caption>
+        <thead>
+          <tr>
+            <td>Fault Element</td>
+            <td>Associated Error Code</td>
+            <td>Expected in Most Requests</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr align="center">
+            <td>serviceFault</td>
+            <td>500</td>
+            <td> &CHECK; </td>
+          </tr>
+          <tr align="center">
+            <td>badRequest</td>
+            <td>400</td>
+            <td> &CHECK; </td>
+          </tr>
+          <tr align="center">
+            <td>serviceUnavailable</td>
+            <td>503</td>
+            <td> &CHECK; </td>
+          </tr>
+          <tr align="center">
+            <td>unauthorized</td>
+            <td>401</td>
+            <td> &CHECK; </td>
+          </tr>
+          <tr align="center">
+            <td>forbidden</td>
+            <td>403</td>
+            <td/>
+          </tr>
+          <tr align="center">
+            <td>itemNotFound</td>
+            <td>404</td>
+            <td/>
+          </tr>
+          <tr align="center">
+            <td>passwordValidation</td>
+            <td>400</td>
+            <td/>
+          </tr>
+          <tr align="center">
+            <td>userDisabled</td>
+            <td>403</td>
+            <td/>
+          </tr>
+          <tr align="center">
+            <td>applicationNameConflict</td>
+            <td>409</td>
+            <td/>
+          </tr>
+          <tr align="center">
+            <td>usernameConflict</td>
+            <td>409</td>
+            <td/>
+          </tr>
+        </tbody>
+      </table>
+      
+      <para>From an XML schema perspective, all API faults are extensions of the base fault type
+          <type>Fault</type>. When working with a system that binds XML to actual classes (such
+        as JAXB), one should be capable of using <type>Fault</type> as a “catch-all” if
+        there&apos;s no interest in distinguishing between individual fault types. </para>
+    </section>
+  
+    <section>
+      <title>Getting Started</title>
+      <para>The first step to using the Global Auth API is registering your application with Global
+        Auth. The Global Auth Team will need the following information in order to register your
+        application.</para>
+      <table rules="all">
+        <caption>Application Information needed to register with Global Auth API</caption>
+        <thead>
+          <tr>
+            <td>Item</td>
+            <td>Description</td>
+            <td>Example</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Name</td>
+            <td>The name of the application</td>
+            <td>Cloud Servers API</td>
+          </tr>
+          <tr>
+            <td>Simple Name</td>
+            <td>A continuous lower case name</td>
+            <td>cloud_servers_api</td>
+          </tr>
+          <tr>
+            <td>Description</td>
+            <td>A human readable description of what the application does, which should be presentable to end users.</td>
+            <td>Cloud Servers API is ...</td>
+          </tr>
+        </tbody>
+      </table>
+      <para>Once the Global Auth Team has this information we will add your application to the Global 
+        Auth System and send you the clientId and clientSecret that you will need in order to 
+        authenticate with the Global Auth API (see api details below for Authentication).
+      </para>
+    </section>
+  
+    <section xml:id="authheadersection">
+      <title>Authorization Header</title>
+      <para>Most calls made against the Global Auth API require the addition of an authorization
+        header in the request.</para>
+      <para>The format of the authoriztion header is the word "OAuth" followed by a space followed
+        by the access token id that belongs to the entity making the call. For example, here is an
+        sample request for getting a user's details. </para>
+      <example>
+        <title>Authorization Header Request Format</title>
+        <programlisting language="xml">
+        <xi:include href="../formattedsamples/samplerequestheader2.json" parse="text"/>
+        </programlisting>
+      </example>
+    </section>
+</chapter>
+  

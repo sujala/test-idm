@@ -215,6 +215,14 @@
 			</element>
 			<element ref="idm:roles"/>
 		</sequence>
+		<attribute name="id" type="xsd:string">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>The unique id of the user.</p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
 		<attribute name="username" type="string" use="optional">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
@@ -230,18 +238,6 @@
 					<p>
 						The customerId of the customer that the user is
 						associated with.
-					</p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-		<attribute name="customerInum" type="string" use="optional">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>
-						The customer inum of the customer that the user
-						is associated
-						with.
 					</p>
 				</xsd:documentation>
 			</annotation>
@@ -299,14 +295,6 @@
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
 					<p>The user's preferred language.</p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-		<attribute name="inum" type="string" use="optional">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>The user's unique i-number.</p>
 				</xsd:documentation>
 			</annotation>
 		</attribute>
@@ -445,7 +433,46 @@
 		<sequence>
 			<element ref="idm:roles"/>
 		</sequence>
-		<attribute name="rackerId" type="xsd:string"></attribute>
+		<attribute name="id" type="xsd:string">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>The unique id of the user.</p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+		<attribute name="sso" type="string" use="optional">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>The racker's sso.</p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+		<attribute name="firstName" type="string" use="optional">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>The racker's first name.</p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+		<attribute name="lastName" type="string" use="optional">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>The rackers's last name.</p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
+		<attribute name="displayName" type="string" use="optional">
+			<annotation>
+				<xsd:documentation xml:lang="EN"
+					xmlns="http://www.w3.org/1999/xhtml">
+					<p>The rackers's display name.</p>
+				</xsd:documentation>
+			</annotation>
+		</attribute>
 	</complexType>
 
 	<!-- Simple Types -->

@@ -1,5 +1,5 @@
 {
-  "message": "Username already taken.",
+  "message": "Conflict",
   "details": "Error Details...",
   "code": 409
 }

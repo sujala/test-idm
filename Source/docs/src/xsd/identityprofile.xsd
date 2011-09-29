@@ -25,7 +25,7 @@
     </annotation>
 
 	<!-- Elements -->
-	<element name="identityprofile" type="idm:IdentityProfile">
+	<element name="customerIdentityProfile" type="idm:IdentityProfile">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
 				xmlns="http://www.w3.org/1999/xhtml">
@@ -44,7 +44,7 @@
 		</annotation>
 	</element>
 
-	<element name="identityprofiles" type="idm:IdentityProfileList">
+	<element name="customeridentityprofiles" type="idm:IdentityProfileList">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
 				xmlns="http://www.w3.org/1999/xhtml">

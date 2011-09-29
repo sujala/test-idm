@@ -126,13 +126,6 @@
 				</documentation>
 			</annotation>
 		</attribute>
-		<attribute name="inum" type="string" use="optional">
-			<annotation>
-				<documentation>
-					<p>The application's unique i-number.</p>
-				</documentation>
-			</annotation>
-		</attribute>
 		<attribute name="iname" type="string" use="optional">
 			<annotation>
 				<documentation>

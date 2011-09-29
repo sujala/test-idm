@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
-<identityprofile xmlns="http://idm.api.rackspace.com/v1.0"
+<customeridentityprofile xmlns="http://idm.api.rackspace.com/v1.0"
     softDeleted="false" 
     locked="false" 
     iname="@Rackspace*Customer"

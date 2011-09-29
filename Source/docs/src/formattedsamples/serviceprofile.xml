@@ -1,0 +1,33 @@
+<service-profile
+  xmlns="http://service-registry.api.rackspace.com/service-profile"
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="https://service-registry.api.rackspace.com/service-profile ./../resources/xsd/service-profile-v2.0.xsd"
+  
+  id="000"
+  name="Customer Idm"
+  canonical-name="idm"
+  dns-zone="idm.api.rackspace.com"
+  service-model="Utility">
+  
+    <atom:link rel="self" href="https://idm.api.rackspace.com" />
+    
+    <short-description>Allows users access Rackspace resources and systems.</short-description>
+    
+    <detailed-description>
+      The customer idm api allows Rackspace clients to obtain tokens that can be used to access resources in Rackspace.
+      It also allows clients manage identities and delegate access to resources.
+    </detailed-description>
+    
+    <contract version="v1.0" status="BETA">
+      <media-types>
+        <media-type base="application/xml" type="application/vnd.rackspace.idm-v1.0+xml">
+          <atom:link rel="describedby" type="application/xml" href="${baseUrl}v1.0/docs/xsd/idmapi.xsd" />
+        </media-type>
+      </media-types>
+      
+      <atom:link rel="self" href="${baseUrl}v1.0"/>
+      <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="${baseUrl}v1.0/application.wadl" title="Wadl" />
+      <atom:link rel="documentation" href="${baseUrl}docs/v1.0/developerguide.pdf" title="Developer Guide"/>
+   </contract>
+</service-profile>
