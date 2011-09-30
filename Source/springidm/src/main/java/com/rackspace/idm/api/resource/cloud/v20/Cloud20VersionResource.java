@@ -19,6 +19,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import javax.xml.bind.JAXBException;
+
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.openstack.docs.identity.api.v2.Tenant;
@@ -87,7 +89,7 @@ public class Cloud20VersionResource {
     @POST
     @Path("tokens")
     public Response authenticate(@Context HttpHeaders httpHeaders,
-        AuthenticationRequest authenticationRequest) throws IOException {
+        AuthenticationRequest authenticationRequest) throws IOException, JAXBException {
         return getCloud20Service().authenticate(httpHeaders,
             authenticationRequest).build();
     }
@@ -206,7 +208,7 @@ public class Cloud20VersionResource {
     @Path("users")
     public Response addUser(@Context HttpHeaders httpHeaders, @Context UriInfo uriInfo,
         @HeaderParam(X_AUTH_TOKEN) String authToken, User user)
-        throws IOException {
+        throws IOException, JAXBException {
         return getCloud20Service().addUser(httpHeaders, uriInfo, authToken, user)
             .build();
     }
@@ -215,7 +217,7 @@ public class Cloud20VersionResource {
     @Path("users/{userId}")
     public Response updateUser(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("userId") String userId, User user) throws IOException {
+        @PathParam("userId") String userId, User user) throws IOException, JAXBException {
         return getCloud20Service().updateUser(httpHeaders, authToken, userId,
             user).build();
     }
@@ -345,7 +347,7 @@ public class Cloud20VersionResource {
     @Path("tenants")
     public Response addTenant(@Context HttpHeaders httpHeaders, @Context UriInfo uriInfo,
         @HeaderParam(X_AUTH_TOKEN) String authToken, Tenant tenant)
-        throws IOException {
+        throws IOException, JAXBException {
         return getCloud20Service().addTenant(httpHeaders, uriInfo, authToken, tenant)
             .build();
     }
@@ -354,7 +356,7 @@ public class Cloud20VersionResource {
     @Path("tenants/{tenantId}")
     public Response updateTenant(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("tenantId") String tenantId, Tenant tenant) throws IOException {
+        @PathParam("tenantId") String tenantId, Tenant tenant) throws IOException, JAXBException {
         return getCloud20Service().updateTenant(httpHeaders, authToken,
             tenantId, tenant).build();
     }

@@ -7,6 +7,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import javax.xml.bind.JAXBException;
+
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.openstack.docs.identity.api.v2.Tenant;
 import org.openstack.docs.identity.api.v2.User;
@@ -18,7 +20,7 @@ import org.openstack.docs.identity.api.v2.User;
  * Time: 5:15 PM
  */
 public interface Cloud20Service {
-    Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) throws IOException;
+    Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) throws IOException, JAXBException;
 
     Response.ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) throws IOException;
 
@@ -54,9 +56,9 @@ public interface Cloud20Service {
 
     Response.ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantsId, String userId) throws IOException;
 
-	ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, User user) throws IOException;
+	ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, User user) throws IOException, JAXBException;
 
-	ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, User user) throws IOException;
+	ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, User user) throws IOException, JAXBException;
 
 	ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId) throws IOException;
 
@@ -70,9 +72,9 @@ public interface Cloud20Service {
 
 	ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) throws IOException;
 
-	ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Tenant tenant) throws IOException;
+	ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Tenant tenant) throws IOException, JAXBException;
 
-	ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Tenant tenant) throws IOException;
+	ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Tenant tenant) throws IOException, JAXBException;
 
 	ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String authToken, String tenantId) throws IOException;
 
