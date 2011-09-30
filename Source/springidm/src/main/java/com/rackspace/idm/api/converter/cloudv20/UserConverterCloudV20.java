@@ -7,6 +7,7 @@ import javax.xml.datatype.DatatypeFactory;
 
 import org.openstack.docs.identity.api.v2.User;
 import org.openstack.docs.identity.api.v2.UserForAuthenticateResponse;
+import org.openstack.docs.identity.api.v2.UserList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -70,5 +71,16 @@ public class UserConverterCloudV20 {
         }
         
         return jaxbUser;
+    }
+    
+    public UserList toUserList(List<com.rackspace.idm.domain.entity.User> users) {
+        
+        UserList list = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserList();
+        
+        for (com.rackspace.idm.domain.entity.User user : users) {
+            list.getUser().add(this.toUser(user));
+        }
+        
+        return list;
     }
 }

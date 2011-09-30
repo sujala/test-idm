@@ -468,4 +468,36 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
         return roles;
     }
+    
+    @Override
+    public List<TenantRole> getAllTenantRolesForTenantAndRole(String tenantId, String roleId) {
+        if (StringUtils.isBlank(tenantId)) {
+            getLogger().error("Null or Empty tenantId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty tenantId parameter.");
+        }
+        
+        if (StringUtils.isBlank(roleId)) {
+            getLogger().error("Null or Empty roleId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty roleId parameter.");
+        }
+
+        getLogger().debug("Getting tenantRoles by tenantId");
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
+            .addEqualAttribute(ATTR_TENANT_RS_ID, tenantId)
+            .addEqualAttribute(ATTR_ROLE_RS_ID, roleId).build();
+
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        try {
+            roles = getMultipleTenantRoles(USERS_BASE_DN, searchFilter);
+        } catch (LDAPPersistException e) {
+            getLogger().error("Error getting tenant object", e);
+            throw new IllegalStateException(e);
+        }
+        getLogger().debug("Got {} Tenant Roles", roles.size());
+
+        return roles;
+    }
 }

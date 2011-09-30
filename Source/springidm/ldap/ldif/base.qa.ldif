@@ -925,6 +925,7 @@ rsGroupDN: cn=Idm Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=app
 dn: rsId=7,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
+clearPassword:: u4ulicmrLfboYsh1KryLww==
 locked: FALSE
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20110428013526.504Z
@@ -942,6 +943,7 @@ rsGroupDN: cn=Idm Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=app
 dn: rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
+clearPassword:: u4ulicmrLfboYsh1KryLww==
 locked: FALSE
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20110428013526.504Z

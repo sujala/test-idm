@@ -694,4 +694,20 @@ public class DefaultClientService implements ClientService {
         logger.debug("Got Client Role {}", id);
         return role;
     }
+
+    @Override
+    public List<ClientRole> getAllClientRoles() {
+        logger.debug("Getting All Client Roles");
+        List<ClientRole> roles = this.clientDao.getAllClientRoles();
+        logger.debug("Got {} Client Roles", roles.size());
+        return roles;
+    }
+    
+    @Override
+    public List<Client> getOpenStackServices() {
+        logger.debug("Getting Open Stack Services");
+        List<Client> clients = this.clientDao.getOpenStackServices();
+        logger.debug("Got {} Open Stack Services", clients.size());
+        return clients;
+    }
 }

@@ -401,4 +401,30 @@ public class DefaultTenantService implements TenantService {
         logger.debug("Got {} Users for Tenant {}", users.size(), tenantId);
         return users;
     }
+
+    @Override
+    public List<User> getUsersWithTenantRole(Tenant tenant, ClientRole cRole) {
+        List<User> users = new ArrayList<User>();
+        
+        List<TenantRole> roles = this.tenantDao.getAllTenantRolesForTenantAndRole(tenant.getTenantId(), cRole.getId());
+        
+        List<String> userIds = new ArrayList<String>();
+        
+        for (TenantRole role : roles) {
+            if (!userIds.contains(role.getUserId())) {
+                userIds.add(role.getUserId());
+            }
+        }
+        
+        for (String userId : userIds) {
+            User user = this.userDao.getUserById(userId);
+            if (user != null) {
+                users.add(user);
+            }
+        }
+        
+        logger.debug("Got {} Users for Tenant {}", users.size(), tenant.getTenantId());
+        return users;
+        
+    }
 }
