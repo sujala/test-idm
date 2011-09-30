@@ -308,7 +308,7 @@ public class Cloud20VersionResource {
     }
 
     @POST
-    @Path("users/{userId}/OS-KSADM/credentials/{credentialType}")
+    @Path("users/{userId}/OS-KSADM/credentials/RAX-KSKEY:{credentialType}")
     public Response updateUserCredential(
         @Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
@@ -320,7 +320,7 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    @Path("users/{userId}/OS-KSADM/credentials/{credentialType}")
+    @Path("users/{userId}/OS-KSADM/credentials/RAX-KSKEY:{credentialType}")
     public Response getUserCredential(
         @Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
@@ -331,7 +331,7 @@ public class Cloud20VersionResource {
     }
 
     @DELETE
-    @Path("users/{userId}/OS-KSADM/credentials/{credentialType}")
+    @Path("users/{userId}/OS-KSADM/credentials/RAX-KSKEY:{credentialType}")
     public Response deleteUserCredential(
         @Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,

@@ -387,7 +387,7 @@ public class DelegateCloud20Service implements Cloud20Service {
                 .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                    + "/credentials/" + credentialType;
+                    + "/OS-KSADM/credentials/RAX-KSKEY:" + credentialType;
             return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
@@ -405,7 +405,7 @@ public class DelegateCloud20Service implements Cloud20Service {
                 .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                    + "/credentials/" + credentialType;
+                    + "/OS-KSADM/credentials/RAX-KSKEY:" + credentialType;
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
@@ -422,7 +422,7 @@ public class DelegateCloud20Service implements Cloud20Service {
                 .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                    + "/credentials/" + credentialType;
+                    + "/OS-KSADM/credentials/RAX-KSKEY:" + credentialType;
             return cloudClient.delete(request, httpHeaders);
         }
         return serviceResponse;
