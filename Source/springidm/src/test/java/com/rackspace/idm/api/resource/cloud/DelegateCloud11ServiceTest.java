@@ -1,22 +1,21 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-
-import org.apache.commons.configuration.Configuration;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Matchers;
-
 import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service;
 import com.rackspace.idm.api.resource.cloud.v11.DelegateCloud11Service;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
+import org.apache.commons.configuration.Configuration;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Matchers;
+
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.namespace.QName;
+
+import static org.mockito.Mockito.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -53,6 +52,7 @@ public class DelegateCloud11ServiceTest {
         UserWithOnlyEnabled user = new UserWithOnlyEnabled();
         user.setEnabled(true);
         when(defaultCloud11Service.setUserEnabled("testId",user,null)).thenReturn(new ResponseBuilderImpl().status(404));
+        when(OBJ_FACTORY.createUser(user)).thenReturn(new JAXBElement<User>(QName.valueOf("name"),User.class,null));
         delegateCloud11Service.setUserEnabled("testId", user, null);
         verify(OBJ_FACTORY).createUser(Matchers.<User>any());
     }
