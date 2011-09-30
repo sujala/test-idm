@@ -28,6 +28,7 @@ import org.json.simple.parser.ParseException;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.openstack.docs.identity.api.v2.BadRequestFault;
@@ -1367,5 +1368,61 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     private String getCloudAuthClientId() {
         return config.getString("cloudAuth.clientId");
+    }
+
+    @Override
+    public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
+        String authToken, String serviceId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, EndpointTemplate endpoint) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, String endpointTemplateId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, String enpdointTemplateId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ResponseBuilder listEndpoints(HttpHeaders httpHeaders,
+        String authToken, String tenantId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ResponseBuilder addEndpoint(HttpHeaders httpHeaders,
+        String authToken, EndpointTemplate endpoint) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ResponseBuilder getEndpoint(HttpHeaders httpHeaders,
+        String authToken, String endpointId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders,
+        String authToken, String endpointId) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

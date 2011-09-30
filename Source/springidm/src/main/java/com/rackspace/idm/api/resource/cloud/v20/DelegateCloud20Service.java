@@ -15,6 +15,7 @@ import javax.xml.bind.Marshaller;
 
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.openstack.docs.identity.api.v2.Role;
@@ -66,7 +67,8 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders,
-        AuthenticationRequest authenticationRequest) throws IOException, JAXBException {
+        AuthenticationRequest authenticationRequest) throws IOException,
+        JAXBException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
             .authenticate(httpHeaders, authenticationRequest);
@@ -398,7 +400,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                    + "/OS-KSADM/credentials/RAX-KSKEY:" + credentialType;
+                + "/OS-KSADM/credentials/RAX-KSKEY:" + credentialType;
             return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
@@ -417,7 +419,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                    + "/OS-KSADM/credentials/RAX-KSKEY:" + credentialType;
+                + "/OS-KSADM/credentials/RAX-KSKEY:" + credentialType;
 
             return cloudClient.get(request, httpHeaders);
         }
@@ -437,7 +439,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                    + "/OS-KSADM/credentials/RAX-KSKEY:" + credentialType;
+                + "/OS-KSADM/credentials/RAX-KSKEY:" + credentialType;
             return cloudClient.delete(request, httpHeaders);
         }
         return serviceResponse;
@@ -461,7 +463,6 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-
     public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo,
         String authToken, User user) throws IOException, JAXBException {
         Response.ResponseBuilder serviceResponse = getCloud20Service().addUser(
@@ -480,7 +481,8 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateUser(HttpHeaders httpHeaders,
-        String authToken, String userId, User user) throws IOException, JAXBException {
+        String authToken, String userId, User user) throws IOException,
+        JAXBException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
             .updateUser(httpHeaders, authToken, userId, user);
         // We have to clone the ResponseBuilder from above because once we build
@@ -515,7 +517,8 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders,
-        String authToken, String userId, UserWithOnlyEnabled user) throws IOException, JAXBException {
+        String authToken, String userId, UserWithOnlyEnabled user)
+        throws IOException, JAXBException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
             .setUserEnabled(httpHeaders, authToken, userId, user);
         // We have to clone the ResponseBuilder from above because once we build
@@ -633,7 +636,8 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateTenant(HttpHeaders httpHeaders,
         String authToken, String tenantId,
-        org.openstack.docs.identity.api.v2.Tenant tenant) throws IOException, JAXBException {
+        org.openstack.docs.identity.api.v2.Tenant tenant) throws IOException,
+        JAXBException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
             .updateTenant(httpHeaders, authToken, tenantId, tenant);
@@ -991,20 +995,17 @@ public class DelegateCloud20Service implements Cloud20Service {
         return cloudAuth20url;
     }
 
-    private String marshallObjectToString(Object jaxbObject) throws JAXBException {
+    private String marshallObjectToString(Object jaxbObject)
+        throws JAXBException {
 
         StringWriter sw = new StringWriter();
 
-        JAXBContext jaxbContext = JAXBContext.newInstance("org.openstack.docs.identity.api.v2");
+        JAXBContext jaxbContext = JAXBContext
+            .newInstance("org.openstack.docs.identity.api.v2");
         Marshaller marshaller = jaxbContext.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
 
-        try {
-            marshaller.marshal(jaxbObject, sw);
-        } catch (JAXBException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        marshaller.marshal(jaxbObject, sw);
 
         return sw.toString();
 
@@ -1016,5 +1017,61 @@ public class DelegateCloud20Service implements Cloud20Service {
         } else {
             return defaultCloud20Service;
         }
+    }
+
+    @Override
+    public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
+        String authToken, String serviceId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, EndpointTemplate endpoint) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, String endpointTemplateId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, String enpdointTemplateId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ResponseBuilder listEndpoints(HttpHeaders httpHeaders,
+        String authToken, String tenantId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ResponseBuilder addEndpoint(HttpHeaders httpHeaders,
+        String authToken, EndpointTemplate endpoint) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ResponseBuilder getEndpoint(HttpHeaders httpHeaders,
+        String authToken, String endpointId) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders,
+        String authToken, String endpointId) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

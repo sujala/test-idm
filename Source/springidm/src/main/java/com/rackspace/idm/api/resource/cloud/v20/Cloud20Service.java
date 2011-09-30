@@ -8,6 +8,7 @@ import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBException;
 
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.Tenant;
@@ -111,4 +112,28 @@ public interface Cloud20Service {
         String marker, int limit) throws IOException;
 
     ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId) throws IOException;
+
+    ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
+        String authToken, String serviceId);
+
+    ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, EndpointTemplate endpoint);
+
+    ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, String endpointTemplateId);
+
+    ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, String enpdointTemplateId);
+
+    ResponseBuilder listEndpoints(HttpHeaders httpHeaders, String authToken,
+        String tenantId);
+
+    ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken,
+        EndpointTemplate endpoint);
+
+    ResponseBuilder getEndpoint(HttpHeaders httpHeaders, String authToken,
+        String endpointId);
+
+    ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders, String authToken,
+        String endpointId);
 }

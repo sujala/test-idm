@@ -9,6 +9,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.Tenant;
@@ -310,6 +311,54 @@ public class DummyCloud20Service implements Cloud20Service{
 
     @Override
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId) throws IOException {
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
+        String authToken, String serviceId) {
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, EndpointTemplate endpoint) {
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, String endpointTemplateId) {
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, String enpdointTemplateId) {
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder listEndpoints(HttpHeaders httpHeaders,
+        String authToken, String tenantId) {
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder addEndpoint(HttpHeaders httpHeaders,
+        String authToken, EndpointTemplate endpoint) {
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder getEndpoint(HttpHeaders httpHeaders,
+        String authToken, String endpointId) {
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders,
+        String authToken, String endpointId) {
         return Response.status(Status.NOT_FOUND);
     }
 
