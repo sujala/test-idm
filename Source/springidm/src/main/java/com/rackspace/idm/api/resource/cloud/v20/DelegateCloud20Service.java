@@ -61,11 +61,13 @@ public class DelegateCloud20Service implements Cloud20Service {
             .newInstance("org.openstack.docs.identity.api.v2");
         marshaller = jaxbContext.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
+
     }
 
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders,
-        AuthenticationRequest authenticationRequest) throws IOException {
+        AuthenticationRequest authenticationRequest) throws IOException, JAXBException {
+
         Response.ResponseBuilder serviceResponse = getCloud20Service()
             .authenticate(httpHeaders, authenticationRequest);
         // We have to clone the ResponseBuilder from above because once we build
@@ -396,7 +398,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/credentials/" + credentialType;
+                    + "/OS-KSADM/credentials/RAX-KSKEY:" + credentialType;
             return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
@@ -415,7 +417,8 @@ public class DelegateCloud20Service implements Cloud20Service {
             .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/credentials/" + credentialType;
+                    + "/OS-KSADM/credentials/RAX-KSKEY:" + credentialType;
+
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
@@ -434,7 +437,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/credentials/" + credentialType;
+                    + "/OS-KSADM/credentials/RAX-KSKEY:" + credentialType;
             return cloudClient.delete(request, httpHeaders);
         }
         return serviceResponse;
@@ -458,8 +461,9 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
+
     public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo,
-        String authToken, User user) throws IOException {
+        String authToken, User user) throws IOException, JAXBException {
         Response.ResponseBuilder serviceResponse = getCloud20Service().addUser(
             httpHeaders, uriInfo, authToken, user);
         // We have to clone the ResponseBuilder from above because once we build
@@ -476,7 +480,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateUser(HttpHeaders httpHeaders,
-        String authToken, String userId, User user) throws IOException {
+        String authToken, String userId, User user) throws IOException, JAXBException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
             .updateUser(httpHeaders, authToken, userId, user);
         // We have to clone the ResponseBuilder from above because once we build
@@ -511,7 +515,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders,
-        String authToken, String userId, UserWithOnlyEnabled user) throws IOException {
+        String authToken, String userId, UserWithOnlyEnabled user) throws IOException, JAXBException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
             .setUserEnabled(httpHeaders, authToken, userId, user);
         // We have to clone the ResponseBuilder from above because once we build
@@ -608,7 +612,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo,
         String authToken, org.openstack.docs.identity.api.v2.Tenant tenant)
-        throws IOException {
+        throws IOException, JAXBException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
             .addTenant(httpHeaders, uriInfo, authToken, tenant);
@@ -629,7 +633,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateTenant(HttpHeaders httpHeaders,
         String authToken, String tenantId,
-        org.openstack.docs.identity.api.v2.Tenant tenant) throws IOException {
+        org.openstack.docs.identity.api.v2.Tenant tenant) throws IOException, JAXBException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
             .updateTenant(httpHeaders, authToken, tenantId, tenant);
@@ -814,7 +818,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo,
-        String authToken, Role role) throws IOException {
+        String authToken, Role role) throws IOException, JAXBException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service().addRole(
             httpHeaders, uriInfo, authToken, role);
@@ -893,7 +897,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo,
-        String authToken, Service service) throws IOException {
+        String authToken, Service service) throws IOException, JAXBException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
             .addService(httpHeaders, uriInfo, authToken, service);
@@ -987,9 +991,13 @@ public class DelegateCloud20Service implements Cloud20Service {
         return cloudAuth20url;
     }
 
-    private String marshallObjectToString(Object jaxbObject) {
+    private String marshallObjectToString(Object jaxbObject) throws JAXBException {
 
         StringWriter sw = new StringWriter();
+
+        JAXBContext jaxbContext = JAXBContext.newInstance("org.openstack.docs.identity.api.v2");
+        Marshaller marshaller = jaxbContext.createMarshaller();
+        marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
 
         try {
             marshaller.marshal(jaxbObject, sw);
