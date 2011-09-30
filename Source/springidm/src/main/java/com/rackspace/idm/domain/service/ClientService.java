@@ -85,4 +85,8 @@ public interface ClientService {
     ClientRole getClientRoleByClientIdAndRoleName(String clientId, String roleName);
     
     ClientRole getClientRoleById(String id);
+    
+    List<ClientRole> getAllClientRoles();
+    
+    List<Client> getOpenStackServices();
 }

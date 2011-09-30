@@ -20,13 +20,16 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.configuration.Configuration;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.Tenant;
 import org.openstack.docs.identity.api.v2.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 
@@ -233,9 +236,9 @@ public class Cloud20VersionResource {
     @Path("users/{userId}/OS-KSADM/enabled")
     public Response setUserEnabled(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("userId") String userId, String body) throws IOException {
+        @PathParam("userId") String userId, UserWithOnlyEnabled user) throws IOException {
         return getCloud20Service().setUserEnabled(httpHeaders, authToken,
-            userId, body).build();
+            userId, user).build();
     }
 
     @GET
@@ -433,10 +436,10 @@ public class Cloud20VersionResource {
 
     @POST
     @Path("OS-KSADM/roles")
-    public Response addRole(@Context HttpHeaders httpHeaders,
-        @HeaderParam(X_AUTH_TOKEN) String authToken, String body)
+    public Response addRole(@Context HttpHeaders httpHeaders, @Context UriInfo uriInfo,
+        @HeaderParam(X_AUTH_TOKEN) String authToken, Role role)
         throws IOException {
-        return getCloud20Service().addRole(httpHeaders, authToken, body)
+        return getCloud20Service().addRole(httpHeaders, uriInfo, authToken, role)
             .build();
     }
 
@@ -470,10 +473,10 @@ public class Cloud20VersionResource {
 
     @POST
     @Path("OS-KSADM/services")
-    public Response addService(@Context HttpHeaders httpHeaders,
-        @HeaderParam(X_AUTH_TOKEN) String authToken, String body)
+    public Response addService(@Context HttpHeaders httpHeaders, @Context UriInfo uriInfo,
+        @HeaderParam(X_AUTH_TOKEN) String authToken, Service service)
         throws IOException {
-        return getCloud20Service().addService(httpHeaders, authToken, body)
+        return getCloud20Service().addService(httpHeaders, uriInfo, authToken, service)
             .build();
     }
 

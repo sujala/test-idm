@@ -24,4 +24,5 @@ public interface TenantDao {
     String getNextTenantId();
     List<TenantRole> getTenantRolesForUser(User user);
     List<TenantRole> getAllTenantRolesForTenant(String tenantId);
+    List<TenantRole> getAllTenantRolesForTenantAndRole(String tenantId, String roleId);
 }
