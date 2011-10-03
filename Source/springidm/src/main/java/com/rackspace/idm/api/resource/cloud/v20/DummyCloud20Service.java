@@ -327,7 +327,7 @@ public class DummyCloud20Service implements Cloud20Service{
     }
 
     @Override
-    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+    public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
         String authToken, String endpointTemplateId) {
         return Response.status(Status.NOT_FOUND);
     }

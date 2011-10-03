@@ -6,9 +6,7 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -39,6 +37,7 @@ import org.openstack.docs.identity.api.v2.IdentityFault;
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.openstack.docs.identity.api.v2.Role;
+import org.openstack.docs.identity.api.v2.TenantConflictFault;
 import org.openstack.docs.identity.api.v2.UnauthorizedFault;
 import org.openstack.docs.identity.api.v2.UserDisabledFault;
 import org.slf4j.Logger;
@@ -61,6 +60,7 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.Client;
 import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.Tenant;
@@ -73,6 +73,7 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.UserDisabledException;
 
@@ -113,9 +114,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     private JAXBObjectFactories OBJ_FACTORIES;
     @Autowired
     private Configuration config;
-
-    @Context
-    private ServletContext sc;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -972,8 +970,13 @@ public class DefaultCloud20Service implements Cloud20Service {
         String authToken, org.openstack.docs.identity.api.v2.Tenant tenant) {
 
         Tenant savedTenant = this.tenantConverterCloudV20.toTenantDO(tenant);
-
-        this.tenantService.addTenant(savedTenant);
+        try {
+            this.tenantService.addTenant(savedTenant);
+        } catch (DuplicateException de) {
+            return tenantConflictExceptionResponse(de.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
 
         return Response.created(
             uriInfo.getRequestUriBuilder().path(savedTenant.getTenantId())
@@ -1366,6 +1369,18 @@ public class DefaultCloud20Service implements Cloud20Service {
                     .createIdentityFault(fault));
     }
 
+    private Response.ResponseBuilder tenantConflictExceptionResponse(
+        String message) {
+        TenantConflictFault fault = OBJ_FACTORIES
+            .getOpenStackIdentityV2Factory().createTenantConflictFault();
+        fault.setCode(HttpServletResponse.SC_CONFLICT);
+        fault.setMessage(message);
+        fault.setDetails(MDC.get(Audit.GUUID));
+        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
+            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenantConflict(
+                fault));
+    }
+
     private String getCloudAuthClientId() {
         return config.getString("cloudAuth.clientId");
     }
@@ -1373,8 +1388,27 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
         String authToken, String serviceId) {
-        // TODO Auto-generated method stub
-        return null;
+
+        List<CloudBaseUrl> baseUrls = null;
+
+        if (StringUtils.isBlank(serviceId)) {
+            baseUrls = this.endpointService.getBaseUrls();
+        } else {
+            Client client = this.clientService.getById(serviceId);
+            if (client == null) {
+                String errMsg = String
+                    .format("Serivce %s not found", serviceId);
+                logger.warn(errMsg);
+                return notFoundExceptionResponse(errMsg);
+            }
+            baseUrls = this.endpointService.getBaseUrlsByServiceId(client
+                .getOpenStackType());
+        }
+
+        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createEndpoints(
+                this.endpointConverterCloudV20
+                    .toEndpointListFromBaseUrls(baseUrls)));
     }
 
     @Override
@@ -1385,7 +1419,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+    public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
         String authToken, String endpointTemplateId) {
         // TODO Auto-generated method stub
         return null;

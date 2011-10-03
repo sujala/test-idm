@@ -1034,7 +1034,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+    public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
         String authToken, String endpointTemplateId) {
         // TODO Auto-generated method stub
         return null;

@@ -19,11 +19,12 @@ public class EndpointConverterCloudV20 {
 
     @Autowired
     private JAXBObjectFactories OBJ_FACTORIES;
-    
+
     private final OpenStackServiceCatalogFactory sf = new OpenStackServiceCatalogFactory();
-    
+
     public ServiceCatalog toServiceCatalog(List<OpenstackEndpoint> endpoints) {
-        ServiceCatalog catalog = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createServiceCatalog();
+        ServiceCatalog catalog = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createServiceCatalog();
 
         if (endpoints == null || endpoints.size() == 0) {
             return catalog;
@@ -33,22 +34,24 @@ public class EndpointConverterCloudV20 {
 
         return catalog;
     }
-    
+
     public EndpointList toEndpointList(List<OpenstackEndpoint> endpoints) {
-        EndpointList list = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpointList();
-        
+        EndpointList list = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createEndpointList();
+
         if (endpoints == null || endpoints.size() == 0) {
             return list;
         }
-        
+
         for (OpenstackEndpoint point : endpoints) {
             for (CloudBaseUrl baseUrl : point.getBaseUrls()) {
                 VersionForService version = new VersionForService();
                 version.setId(baseUrl.getVersionId());
                 version.setInfo(baseUrl.getVersionInfo());
                 version.setList(baseUrl.getVersionList());
-                
-                Endpoint endpoint = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint();
+
+                Endpoint endpoint = OBJ_FACTORIES
+                    .getOpenStackIdentityV2Factory().createEndpoint();
                 endpoint.setAdminURL(baseUrl.getAdminUrl());
                 endpoint.setId(baseUrl.getBaseUrlId());
                 endpoint.setInternalURL(baseUrl.getInternalUrl());
@@ -61,6 +64,38 @@ public class EndpointConverterCloudV20 {
                 }
                 list.getEndpoint().add(endpoint);
             }
+        }
+        return list;
+    }
+
+    public EndpointList toEndpointListFromBaseUrls(List<CloudBaseUrl> baseUrls) {
+        EndpointList list = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createEndpointList();
+
+        if (baseUrls == null || baseUrls.size() == 0) {
+            return list;
+        }
+
+        for (CloudBaseUrl baseUrl : baseUrls) {
+            VersionForService version = new VersionForService();
+            version.setId(baseUrl.getVersionId());
+            version.setInfo(baseUrl.getVersionInfo());
+            version.setList(baseUrl.getVersionList());
+
+            Endpoint endpoint = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createEndpoint();
+            endpoint.setAdminURL(baseUrl.getAdminUrl());
+            endpoint.setId(baseUrl.getBaseUrlId());
+            endpoint.setInternalURL(baseUrl.getInternalUrl());
+            endpoint.setName(baseUrl.getName());
+            endpoint.setPublicURL(baseUrl.getPublicUrl());
+            endpoint.setRegion(baseUrl.getRegion());
+            endpoint.setType(baseUrl.getOpenstackType());
+            if (!StringUtils.isBlank(version.getId())) {
+                endpoint.setVersion(version);
+            }
+            list.getEndpoint().add(endpoint);
+
         }
         return list;
     }

@@ -23,4 +23,6 @@ public interface EndpointService {
     void removeBaseUrlFromUser(int baseUrlId, String username);
     
     void setBaseUrlEnabled(int baseUrlId, boolean enabled);
+
+    List<CloudBaseUrl> getBaseUrlsByServiceId(String serviceType);
 }

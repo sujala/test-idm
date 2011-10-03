@@ -119,7 +119,7 @@ public interface Cloud20Service {
     ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
         String authToken, EndpointTemplate endpoint);
 
-    ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+    ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
         String authToken, String endpointTemplateId);
 
     ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders,

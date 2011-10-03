@@ -524,7 +524,7 @@ public class Cloud20VersionResource {
     public Response getEndpointTemplate(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("endpointTemplateId") String endpointTemplateId) throws IOException {
-        return getCloud20Service().addEndpointTemplate(httpHeaders,
+        return getCloud20Service().getEndpointTemplate(httpHeaders,
             authToken, endpointTemplateId).build();
     }
     

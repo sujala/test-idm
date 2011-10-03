@@ -19,6 +19,7 @@ import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 
 public class DefaultTenantService implements TenantService {
@@ -40,6 +41,12 @@ public class DefaultTenantService implements TenantService {
     @Override
     public void addTenant(Tenant tenant) {
         logger.info("Adding Tenant {}", tenant);
+        Tenant exists = this.tenantDao.getTenantByName(tenant.getName());
+        if (exists != null) {
+            String errMsg = String.format("Tenant with name %s already exists", tenant.getName());
+            logger.warn(errMsg);
+            throw new DuplicateException(errMsg);
+        }
         tenant.setTenantId(this.tenantDao.getNextTenantId());
         this.tenantDao.addTenant(tenant);
         logger.info("Added Tenant {}", tenant);
