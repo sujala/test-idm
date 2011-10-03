@@ -116,7 +116,7 @@ public interface Cloud20Service {
     ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
         String authToken, String serviceId);
 
-    ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+    ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo,
         String authToken, EndpointTemplate endpoint);
 
     ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
@@ -128,12 +128,12 @@ public interface Cloud20Service {
     ResponseBuilder listEndpoints(HttpHeaders httpHeaders, String authToken,
         String tenantId);
 
-    ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken,
+    ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId,
         EndpointTemplate endpoint);
 
-    ResponseBuilder getEndpoint(HttpHeaders httpHeaders, String authToken,
+    ResponseBuilder getEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId,
         String endpointId);
 
-    ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders, String authToken,
+    ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId,
         String endpointId);
 }

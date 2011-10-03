@@ -321,7 +321,7 @@ public class DummyCloud20Service implements Cloud20Service{
     }
 
     @Override
-    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo,
         String authToken, EndpointTemplate endpoint) {
         return Response.status(Status.NOT_FOUND);
     }
@@ -346,19 +346,19 @@ public class DummyCloud20Service implements Cloud20Service{
 
     @Override
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders,
-        String authToken, EndpointTemplate endpoint) {
+        String authToken, String tenantId, EndpointTemplate endpoint) {
         return Response.status(Status.NOT_FOUND);
     }
 
     @Override
     public ResponseBuilder getEndpoint(HttpHeaders httpHeaders,
-        String authToken, String endpointId) {
+        String authToken, String tenantId, String endpointId) {
         return Response.status(Status.NOT_FOUND);
     }
 
     @Override
     public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders,
-        String authToken, String endpointId) {
+        String authToken, String tenantId, String endpointId) {
         return Response.status(Status.NOT_FOUND);
     }
 

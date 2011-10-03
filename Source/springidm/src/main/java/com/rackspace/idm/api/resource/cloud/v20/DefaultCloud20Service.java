@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -1405,6 +1406,89 @@ public class DefaultCloud20Service implements Cloud20Service {
                 .getOpenStackType());
         }
 
+        return Response
+            .ok(OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory()
+                .createEndpointTemplates(
+                    this.endpointConverterCloudV20
+                        .toEndpointTemplateList(baseUrls)));
+    }
+
+    @Override
+    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+        UriInfo uriInfo, String authToken, EndpointTemplate endpoint) {
+
+        CloudBaseUrl baseUrl = this.endpointConverterCloudV20
+            .toCloudBaseUrl(endpoint);
+
+        this.endpointService.addBaseUrl(baseUrl);
+
+        return Response.created(
+            uriInfo.getRequestUriBuilder()
+                .path(String.valueOf(baseUrl.getBaseUrlId())).build())
+            .entity(
+                OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory()
+                    .createEndpointTemplate(
+                        this.endpointConverterCloudV20
+                            .toEndpointTemplate(baseUrl)));
+    }
+
+    @Override
+    public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, String endpointTemplateId) {
+
+        Integer baseUrlId = Integer.parseInt(endpointTemplateId);
+
+        CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseUrlId);
+        if (baseUrl == null) {
+            String errMsg = String.format("EnpointTemplate %s not found",
+                baseUrlId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        return Response.ok(OBJ_FACTORIES
+            .getOpenStackIdentityExtKscatalogV1Factory()
+            .createEndpointTemplate(
+                this.endpointConverterCloudV20.toEndpointTemplate(baseUrl)));
+    }
+
+    @Override
+    public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, String endpointTemplateId) {
+
+        Integer baseUrlId = Integer.parseInt(endpointTemplateId);
+
+        CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseUrlId);
+        if (baseUrl == null) {
+            String errMsg = String.format("EnpointTemplate %s not found",
+                baseUrlId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        this.endpointService.deleteBaseUrl(baseUrlId);
+
+        return Response.noContent();
+
+    }
+
+    @Override
+    public ResponseBuilder listEndpoints(HttpHeaders httpHeaders,
+        String authToken, String tenantId) {
+
+        Tenant tenant = this.tenantService.getTenant(tenantId);
+        if (tenant == null) {
+            String errMsg = String.format("Tenant %s not found", tenantId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
+        for (String id : tenant.getBaseUrlIds()) {
+            Integer baseUrlId = Integer.parseInt(id);
+            baseUrls.add(this.endpointService.getBaseUrlById(baseUrlId));
+        }
+
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
             .createEndpoints(
                 this.endpointConverterCloudV20
@@ -1412,51 +1496,89 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
-        String authToken, EndpointTemplate endpoint) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
-        String authToken, String endpointTemplateId) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders,
-        String authToken, String enpdointTemplateId) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public ResponseBuilder listEndpoints(HttpHeaders httpHeaders,
-        String authToken, String tenantId) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders,
-        String authToken, EndpointTemplate endpoint) {
-        // TODO Auto-generated method stub
-        return null;
+        String authToken, String tenantId, EndpointTemplate endpoint) {
+
+        Tenant tenant = this.tenantService.getTenant(tenantId);
+        if (tenant == null) {
+            String errMsg = String.format("Tenant %s not found", tenantId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(endpoint
+            .getId());
+        if (baseUrl == null) {
+            String errMsg = String.format("EndpointTemplate %s not found",
+                endpoint.getId());
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        tenant.addBaseUrlId(String.valueOf(endpoint.getId()));
+        this.tenantService.updateTenant(tenant);
+
+        return Response
+            .ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint(
+                this.endpointConverterCloudV20.toEndpoint(baseUrl)));
     }
 
     @Override
     public ResponseBuilder getEndpoint(HttpHeaders httpHeaders,
-        String authToken, String endpointId) {
-        // TODO Auto-generated method stub
-        return null;
+        String authToken, String tenantId, String endpointId) {
+
+        Tenant tenant = this.tenantService.getTenant(tenantId);
+        if (tenant == null) {
+            String errMsg = String.format("Tenant %s not found", tenantId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        if (!tenant.containsBaseUrlId(endpointId)) {
+            String errMsg = String.format(
+                "Tenant %s does not have endpoint %s", tenantId, endpointId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        Integer baseUrlId = Integer.parseInt(endpointId);
+
+        CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseUrlId);
+        if (baseUrl == null) {
+            String errMsg = String.format("Endpoint %s not found", baseUrlId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        return Response
+            .ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint(
+                this.endpointConverterCloudV20.toEndpoint(baseUrl)));
     }
 
     @Override
     public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders,
-        String authToken, String endpointId) {
-        // TODO Auto-generated method stub
-        return null;
+        String authToken, String tenantId, String endpointId) {
+        Tenant tenant = this.tenantService.getTenant(tenantId);
+        if (tenant == null) {
+            String errMsg = String.format("Tenant %s not found", tenantId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        Integer baseUrlId = Integer.parseInt(endpointId);
+
+        CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseUrlId);
+        if (baseUrl == null) {
+            String errMsg = String.format("EndpointTemplate %s not found",
+                baseUrlId);
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
+        tenant.removeBaseUrlId(endpointId);
+
+        this.tenantService.updateTenant(tenant);
+
+        return Response.noContent();
     }
 }

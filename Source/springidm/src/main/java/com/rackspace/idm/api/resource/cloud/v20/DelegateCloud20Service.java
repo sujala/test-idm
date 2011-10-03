@@ -1027,7 +1027,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo,
         String authToken, EndpointTemplate endpoint) {
         // TODO Auto-generated method stub
         return null;
@@ -1056,21 +1056,21 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders,
-        String authToken, EndpointTemplate endpoint) {
+        String authToken, String tenantId, EndpointTemplate endpoint) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public ResponseBuilder getEndpoint(HttpHeaders httpHeaders,
-        String authToken, String endpointId) {
+        String authToken, String tenantId, String endpointId) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders,
-        String authToken, String endpointId) {
+        String authToken, String tenantId, String endpointId) {
         // TODO Auto-generated method stub
         return null;
     }

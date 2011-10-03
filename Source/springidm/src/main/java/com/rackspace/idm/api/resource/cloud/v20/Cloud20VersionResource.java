@@ -513,9 +513,10 @@ public class Cloud20VersionResource {
     @POST
     @Path("OS-KSCATAGLOG/endpointTemplates")
     public Response addEndpointTemplate(@Context HttpHeaders httpHeaders,
+        @Context UriInfo uriInfo,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         EndpointTemplate endpoint) throws IOException, JAXBException {
-        return getCloud20Service().addEndpointTemplate(httpHeaders,
+        return getCloud20Service().addEndpointTemplate(httpHeaders, uriInfo,
             authToken, endpoint).build();
     }
     
@@ -548,22 +549,23 @@ public class Cloud20VersionResource {
     
     @POST
     @Path("/tenants/{tenantId}/OS-KSCATAGLOG/endpoints")
-    public Response addEndpointTemplate(@Context HttpHeaders httpHeaders,
+    public Response addEndpoint(@Context HttpHeaders httpHeaders,
+        @Context UriInfo uriInfo,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantId,
         EndpointTemplate endpoint) throws IOException, JAXBException {
         return getCloud20Service().addEndpoint(httpHeaders,
-            authToken, endpoint).build();
+            authToken, tenantId, endpoint).build();
     }
     
     @GET
     @Path("/tenants/{tenantId}/OS-KSCATAGLOG/endpoint/{endpointId}")
-    public Response getEndpointTemplate(@Context HttpHeaders httpHeaders,
+    public Response getEndpoint(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantId,
         @PathParam("endpointId") String endpointId) throws IOException {
         return getCloud20Service().getEndpoint(httpHeaders,
-            authToken, endpointId).build();
+            authToken, tenantId, endpointId).build();
     }
     
     @DELETE
@@ -573,7 +575,7 @@ public class Cloud20VersionResource {
         @PathParam("tenantId") String tenantId,
         @PathParam("endpointId") String endpointId) throws IOException {
         return getCloud20Service().deleteEndpoint(httpHeaders,
-            authToken, endpointId).build();
+            authToken, tenantId, endpointId).build();
     }
     
 

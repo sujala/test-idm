@@ -2,6 +2,8 @@ package com.rackspace.idm.api.converter.cloudv20;
 
 import java.util.List;
 
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
 import org.openstack.docs.identity.api.v2.Endpoint;
 import org.openstack.docs.identity.api.v2.EndpointList;
 import org.openstack.docs.identity.api.v2.ServiceCatalog;
@@ -68,15 +70,15 @@ public class EndpointConverterCloudV20 {
         return list;
     }
 
-    public EndpointList toEndpointListFromBaseUrls(List<CloudBaseUrl> baseUrls) {
+    public EndpointList toEndpointListFromBaseUrls(List<CloudBaseUrl> endpoints) {
         EndpointList list = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
             .createEndpointList();
 
-        if (baseUrls == null || baseUrls.size() == 0) {
+        if (endpoints == null || endpoints.size() == 0) {
             return list;
         }
 
-        for (CloudBaseUrl baseUrl : baseUrls) {
+        for (CloudBaseUrl baseUrl : endpoints) {
             VersionForService version = new VersionForService();
             version.setId(baseUrl.getVersionId());
             version.setInfo(baseUrl.getVersionInfo());
@@ -98,5 +100,88 @@ public class EndpointConverterCloudV20 {
 
         }
         return list;
+    }
+
+    public EndpointTemplate toEndpointTemplate(CloudBaseUrl baseUrl) {
+
+        VersionForService version = new VersionForService();
+        version.setId(baseUrl.getVersionId());
+        version.setInfo(baseUrl.getVersionInfo());
+        version.setList(baseUrl.getVersionList());
+
+        EndpointTemplate template = OBJ_FACTORIES
+            .getOpenStackIdentityExtKscatalogV1Factory()
+            .createEndpointTemplate();
+        template.setAdminURL(baseUrl.getAdminUrl());
+        template.setEnabled(baseUrl.getEnabled());
+        template.setGlobal(baseUrl.getGlobal());
+        template.setId(baseUrl.getBaseUrlId());
+        template.setInternalURL(baseUrl.getInternalUrl());
+        template.setName(baseUrl.getName());
+        template.setPublicURL(baseUrl.getPublicUrl());
+        template.setRegion(baseUrl.getRegion());
+        template.setType(baseUrl.getOpenstackType());
+
+        if (!StringUtils.isBlank(version.getId())) {
+            template.setVersion(version);
+        }
+        return template;
+    }
+
+    public EndpointTemplateList toEndpointTemplateList(
+        List<CloudBaseUrl> baseUrls) {
+        EndpointTemplateList list = OBJ_FACTORIES
+            .getOpenStackIdentityExtKscatalogV1Factory()
+            .createEndpointTemplateList();
+
+        if (baseUrls == null || baseUrls.size() == 0) {
+            return list;
+        }
+
+        for (CloudBaseUrl baseUrl : baseUrls) {
+            list.getEndpointTemplate().add(toEndpointTemplate(baseUrl));
+        }
+
+        return list;
+    }
+
+    public Endpoint toEndpoint(CloudBaseUrl baseUrl) {
+        VersionForService version = new VersionForService();
+        version.setId(baseUrl.getVersionId());
+        version.setInfo(baseUrl.getVersionInfo());
+        version.setList(baseUrl.getVersionList());
+
+        Endpoint endpoint = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createEndpoint();
+        endpoint.setAdminURL(baseUrl.getAdminUrl());
+        endpoint.setId(baseUrl.getBaseUrlId());
+        endpoint.setInternalURL(baseUrl.getInternalUrl());
+        endpoint.setName(baseUrl.getName());
+        endpoint.setPublicURL(baseUrl.getPublicUrl());
+        endpoint.setRegion(baseUrl.getRegion());
+        endpoint.setType(baseUrl.getOpenstackType());
+        if (!StringUtils.isBlank(version.getId())) {
+            endpoint.setVersion(version);
+        }
+        return endpoint;
+    }
+    
+    public CloudBaseUrl toCloudBaseUrl(EndpointTemplate template) {
+        CloudBaseUrl baseUrl = new CloudBaseUrl();
+        baseUrl.setAdminUrl(template.getAdminURL());
+        baseUrl.setBaseUrlId(template.getId());
+        baseUrl.setEnabled(template.isEnabled());
+        baseUrl.setGlobal(template.isGlobal());
+        baseUrl.setInternalUrl(template.getInternalURL());
+        baseUrl.setName(template.getName());
+        baseUrl.setOpenstackType(template.getType());
+        baseUrl.setPublicUrl(template.getPublicURL());
+        baseUrl.setRegion(template.getRegion());
+        if (template.getVersion() != null) {
+            baseUrl.setVersionId(template.getVersion().getId());
+            baseUrl.setVersionInfo(template.getVersion().getInfo());
+            baseUrl.setVersionList(template.getVersion().getList());
+        }
+        return baseUrl;
     }
 }
