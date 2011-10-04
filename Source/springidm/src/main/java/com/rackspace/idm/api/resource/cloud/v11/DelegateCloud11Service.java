@@ -50,6 +50,9 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Autowired
     private DefaultCloud11Service defaultCloud11Service;
 
+    @Autowired
+    private DummyCloud11Service dummyCloud11Service;
+
     public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
         DelegateCloud11Service.OBJ_FACTORY = OBJ_FACTORY;
     }
@@ -68,7 +71,7 @@ public class DelegateCloud11Service implements Cloud11Service {
                                                   String belongsTo, String type, HttpHeaders httpHeaders)
             throws IOException {
 
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
                 .validateToken(tokenId, belongsTo, type, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -88,7 +91,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder authenticate(HttpServletResponse response,
                                                  HttpHeaders httpHeaders, String body) throws IOException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service.authenticate(response, httpHeaders, body);
+        Response.ResponseBuilder serviceResponse = getCloud11Service().authenticate(response, httpHeaders, body);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
@@ -102,7 +105,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder adminAuthenticate(
             HttpServletResponse response, HttpHeaders httpHeaders, String body)
             throws IOException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service.adminAuthenticate(response, httpHeaders, body);
+        Response.ResponseBuilder serviceResponse = getCloud11Service().adminAuthenticate(response, httpHeaders, body);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
@@ -119,7 +122,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder revokeToken(String tokenId,
                                                 HttpHeaders httpHeaders) throws IOException {
 
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
                 .revokeToken(tokenId, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -136,7 +139,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder getUserFromMossoId(
             HttpServletRequest request, int mossoId, HttpHeaders httpHeaders)
             throws IOException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
                 .getUserFromMossoId(request, mossoId, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -153,7 +156,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder getUserFromNastId(
             HttpServletRequest request, String nastId, HttpHeaders httpHeaders)
             throws IOException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
                 .getUserFromNastId(request, nastId, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -169,7 +172,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder getBaseURLs(String serviceName,
                                                 HttpHeaders httpHeaders) throws IOException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service.getBaseURLs(serviceName, httpHeaders);
+        Response.ResponseBuilder serviceResponse = getCloud11Service().getBaseURLs(serviceName, httpHeaders);
 
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
 
@@ -188,7 +191,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder getBaseURLId(int baseURLId,
                                                  String serviceName, HttpHeaders httpHeaders) throws IOException {
 
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
                 .getBaseURLId(baseURLId, serviceName, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -210,7 +213,7 @@ public class DelegateCloud11Service implements Cloud11Service {
                                                       HttpHeaders httpHeaders) throws IOException {
         try {
             //TODO
-            return defaultCloud11Service.getEnabledBaseURL(serviceName, httpHeaders);
+            return getCloud11Service().getEnabledBaseURL(serviceName, httpHeaders);
         } catch (Exception e) {
         }
 
@@ -225,7 +228,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder migrate(String user,
                                             HttpHeaders httpHeaders, String body) throws IOException {
         try {
-            return defaultCloud11Service.migrate(user, httpHeaders, body);
+            return getCloud11Service().migrate(user, httpHeaders, body);
         } catch (Exception e) {
         }
         String path = "migration/" + user + "/migrate";
@@ -237,7 +240,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder unmigrate(String user,
                                               HttpHeaders httpHeaders, String body) throws IOException {
         try {
-            return defaultCloud11Service.unmigrate(user, httpHeaders, body);
+            return getCloud11Service().unmigrate(user, httpHeaders, body);
         } catch (Exception e) {
         }
         String path = "migration/" + user + "/unmigrate";
@@ -249,7 +252,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder all(HttpHeaders httpHeaders, String body)
             throws IOException {
         try {
-            return defaultCloud11Service.all(httpHeaders, body);
+            return getCloud11Service().all(httpHeaders, body);
         } catch (Exception e) {
         }
         String path = "migration/all";
@@ -262,7 +265,7 @@ public class DelegateCloud11Service implements Cloud11Service {
                                                User user) throws IOException, JAXBException {
 
         try {
-            return defaultCloud11Service.createUser(httpHeaders, user);
+            return getCloud11Service().createUser(httpHeaders, user);
         } catch (Exception e) {
         }
 
@@ -275,7 +278,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder getUser(String userId,
                                             HttpHeaders httpHeaders) throws IOException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
                 .getUser(userId, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -292,7 +295,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder deleteUser(String userId,
                                                HttpHeaders httpHeaders) throws IOException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
                 .deleteUser(userId, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -309,10 +312,12 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder updateUser(String userId,
                                                HttpHeaders httpHeaders, User user) throws IOException, JAXBException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service.updateUser(userId, httpHeaders, user);
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
+                .updateUser(userId, httpHeaders, user);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+                .clone();
 
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
@@ -327,7 +332,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder getUserEnabled(String userId,
                                                    HttpHeaders httpHeaders) throws IOException {
 
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
                 .getUserEnabled(userId, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -346,7 +351,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder setUserEnabled(String userId,
                                                    UserWithOnlyEnabled user, HttpHeaders httpHeaders) throws IOException, JAXBException {
 
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service.setUserEnabled(userId, user, httpHeaders);
+        Response.ResponseBuilder serviceResponse = getCloud11Service().setUserEnabled(userId, user, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
@@ -362,7 +367,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder getUserKey(String userId,
                                                HttpHeaders httpHeaders) throws IOException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
                 .getUserKey(userId, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -380,7 +385,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder setUserKey(String userId,
                                                HttpHeaders httpHeaders, UserWithOnlyKey user) throws IOException, JAXBException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
                 .setUserKey(userId, httpHeaders, user);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -400,7 +405,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder getServiceCatalog(String userId,
                                                       HttpHeaders httpHeaders) throws IOException {
 
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service.getServiceCatalog(userId, httpHeaders);
+        Response.ResponseBuilder serviceResponse = getCloud11Service().getServiceCatalog(userId, httpHeaders);
 
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -417,7 +422,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder getBaseURLRefs(String userId,
                                                    HttpHeaders httpHeaders) throws IOException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
                 .getBaseURLRefs(userId, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -435,7 +440,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public ResponseBuilder addBaseURL(HttpServletRequest request,
                                       HttpHeaders httpHeaders, BaseURL baseUrl) {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
                 .addBaseURL(request, httpHeaders, baseUrl);
         return serviceResponse;
     }
@@ -444,7 +449,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder addBaseURLRef(String userId,
                                                   HttpHeaders httpHeaders, UriInfo uriInfo, BaseURLRef baseUrlRef)
             throws IOException, JAXBException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
                 .addBaseURLRef(userId, httpHeaders, uriInfo, baseUrlRef);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -464,7 +469,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder getBaseURLRef(String userId,
                                                   String baseURLId, HttpHeaders httpHeaders) throws IOException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
                 .getBaseURLRef(userId, baseURLId, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -482,7 +487,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder deleteBaseURLRef(String userId,
                                                      String baseURLId, HttpHeaders httpHeaders) throws IOException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
+        Response.ResponseBuilder serviceResponse = getCloud11Service()
                 .deleteBaseURLRef(userId, baseURLId, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -497,11 +502,19 @@ public class DelegateCloud11Service implements Cloud11Service {
         return serviceResponse;
     }
 
+    private Cloud11Service getCloud11Service() {
+        if (config.getBoolean("GAKeystoneDisabled")) {
+            return dummyCloud11Service;
+        } else {
+            return defaultCloud11Service;
+        }
+    }
+
     @Override
     public Response.ResponseBuilder getUserGroups(String userId,
                                                   HttpHeaders httpHeaders) throws IOException {
         try {
-            return defaultCloud11Service.getUserGroups(userId, httpHeaders);
+            return getCloud11Service().getUserGroups(userId, httpHeaders);
         } catch (Exception e) {
         }
         String path = "users/" + userId + "/groups";
