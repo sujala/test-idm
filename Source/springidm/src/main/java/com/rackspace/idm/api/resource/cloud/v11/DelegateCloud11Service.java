@@ -309,12 +309,10 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder updateUser(String userId,
                                                HttpHeaders httpHeaders, User user) throws IOException, JAXBException {
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service
-                .updateUser(userId, httpHeaders, user);
+        Response.ResponseBuilder serviceResponse = defaultCloud11Service.updateUser(userId, httpHeaders, user);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
 
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
