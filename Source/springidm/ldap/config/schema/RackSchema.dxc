@@ -457,7 +457,7 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.62) = {
     ldap-names = versionList
     equality = caseIgnoreMatch
     syntax = directoryString
-    description = "Version Info URL"
+    description = "Version List URL"
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.63) = {
@@ -465,7 +465,7 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.63) = {
     ldap-names = versionId
     equality = caseIgnoreMatch
     syntax = directoryString
-    description = "Version Info URL"
+    description = "Version ID"
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.64) = {
@@ -480,7 +480,7 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.65) = {
     ldap-names = rsId
     equality = caseIgnoreMatch
     syntax = directoryString
-    description = "Version Info URL"
+    description = "a unique ID"
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.66) = {
