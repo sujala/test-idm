@@ -5,7 +5,7 @@ objectClass: top
 objectClass: organization
 o: rackspace
 
-dn: ou=internal,o=rackspace,dc=rackspace,dc=com
+dn: ou=internal,dc=rackspace,dc=com
 objectClass:top
 objectClass:organizationalUnit
 ou: internal
@@ -436,7 +436,7 @@ baseUrlId: 15
 
 ######################################## Admin User #######################################
 
-dn: cn=admin,ou=internal,o=rackspace,dc=rackspace,dc=com
+dn: cn=admin,ou=internal,dc=rackspace,dc=com
 objectClass: top
 objectClass: inetOrgPerson
 cn: admin
