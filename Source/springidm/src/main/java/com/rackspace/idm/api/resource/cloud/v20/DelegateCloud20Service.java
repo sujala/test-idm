@@ -218,7 +218,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/RAX-KSGRP/groups";
+                + "/RAX-KSGRP";
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;

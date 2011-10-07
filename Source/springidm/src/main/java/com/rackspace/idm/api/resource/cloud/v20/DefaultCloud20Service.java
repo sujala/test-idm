@@ -49,6 +49,7 @@ import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApikeyCredentialsWithUsername;
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
@@ -955,11 +956,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (StringUtils.isBlank(user.getApiKey())) {
                 return notFoundExceptionResponse("User doesn't have api key credentials");
             }
-            ApikeyCredentialsWithUsername userCreds = new ApikeyCredentialsWithUsername();
-            userCreds.setApikey(user.getApiKey());
+            ApiKeyCredentials userCreds = new ApiKeyCredentials();
+            userCreds.setApiKey(user.getApiKey());
             userCreds.setUsername(user.getUsername());
             creds = OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory()
-                .createApikeyCredentials(userCreds);
+                .createApiKeyCredentials(userCreds);
         }
 
         return Response.ok(creds);
@@ -1171,7 +1172,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         ClientRole clientRole = new ClientRole();
         clientRole.setClientId(role.getServiceId());
         clientRole.setDescription(role.getDescription());
-        // clientRole.setName(role.getName());
+        clientRole.setName(role.getName());
 
         this.clientService.addClientRole(clientRole);
 

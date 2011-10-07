@@ -14,7 +14,7 @@
         xmlns:atom="http://www.w3.org/2005/Atom"
         targetNamespace="http://docs.openstack.org/identity/api/v2.0"
     >
-
+    <include schemaLocation="api.xsd"/>
     <!-- Import ATOM specific schema definitions -->
     <import vc:minVersion="1.1" namespace="http://www.w3.org/2005/Atom"
             schemaLocation="atom/atom.xsd" />
@@ -54,11 +54,11 @@
                             Version details.
                         </p>
                     </xsd:documentation>
-                </annotation>               
+                </annotation>
             </element>
             <element vc:minVersion="1.1" ref="atom:link" minOccurs="0" maxOccurs="unbounded" />
             <any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
-        </sequence>        
+        </sequence>
         <attribute name="id" type="xsd:int" use="required">
             <annotation>
                 <xsd:documentation
@@ -132,6 +132,17 @@
                     xmlns="http://www.w3.org/1999/xhtml">
                     <p>
                         The admin URL.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="tenantId" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation
+                    xml:lang="EN"
+                    xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Tenant id to which the endpoints belong.
                     </p>
                 </xsd:documentation>
             </annotation>
