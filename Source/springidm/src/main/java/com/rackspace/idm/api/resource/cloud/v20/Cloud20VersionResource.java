@@ -259,7 +259,7 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    @Path("users/{userId}/RAX-KSGRP/groups")
+    @Path("users/{userId}/RAX-KSGRP")
     public Response listUserGroups(@Context HttpHeaders httpHeaders,
         @PathParam("userId") String userId) throws IOException {
         return getCloud20Service().listUserGroups(httpHeaders, userId).build();
