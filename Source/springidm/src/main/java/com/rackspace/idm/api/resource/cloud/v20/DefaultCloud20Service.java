@@ -1171,7 +1171,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         ClientRole clientRole = new ClientRole();
         clientRole.setClientId(role.getServiceId());
         clientRole.setDescription(role.getDescription());
-        // clientRole.setName(role.getName());
+        clientRole.setName(role.getName());
 
         this.clientService.addClientRole(clientRole);
 
