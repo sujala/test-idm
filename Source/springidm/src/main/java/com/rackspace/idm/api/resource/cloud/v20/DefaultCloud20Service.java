@@ -50,7 +50,6 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApikeyCredentialsWithUsername;
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
@@ -157,11 +156,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
         } else if (authenticationRequest.getCredential().getDeclaredType()
-            .isAssignableFrom(ApikeyCredentialsWithUsername.class)) {
-            ApikeyCredentialsWithUsername creds = (ApikeyCredentialsWithUsername) authenticationRequest
+            .isAssignableFrom(ApiKeyCredentials.class)) {
+            ApiKeyCredentials creds = (ApiKeyCredentials) authenticationRequest
                 .getCredential().getValue();
             String username = creds.getUsername();
-            String key = creds.getApikey();
+            String key = creds.getApiKey();
 
             user = this.userService.getUser(username);
 
@@ -696,11 +695,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             user.setPassword(password);
             this.userService.updateUser(user, false);
         } else if (creds.getDeclaredType().isAssignableFrom(
-            ApikeyCredentialsWithUsername.class)) {
-            ApikeyCredentialsWithUsername userCreds = (ApikeyCredentialsWithUsername) creds
+            ApiKeyCredentials.class)) {
+            ApiKeyCredentials userCreds = (ApiKeyCredentials) creds
                 .getValue();
             username = userCreds.getUsername();
-            apiKey = userCreds.getApikey();
+            apiKey = userCreds.getApiKey();
             user = this.userService.getUserById(userId);
             if (user == null) {
                 String errMsg = String.format("User %s not found", userId);
@@ -765,7 +764,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             } else if (obj.containsKey("apiKeyCredentials")) {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
                     "apiKeyCredentials").toString());
-                ApikeyCredentialsWithUsername userCreds = new ApikeyCredentialsWithUsername();
+                ApiKeyCredentials userCreds = new ApiKeyCredentials();
                 String username = obj3.get("username").toString();
                 String apikey = obj3.get("apikey").toString();
                 if (StringUtils.isBlank(username)) {
@@ -775,7 +774,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new BadRequestException("apikey required");
                 }
                 userCreds.setUsername(username);
-                userCreds.setApikey(apikey);
+                userCreds.setApiKey(apikey);
                 creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                     .createCredential(userCreds);
             } else {
@@ -812,8 +811,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         if (!StringUtils.isBlank(user.getApiKey())) {
-            ApikeyCredentialsWithUsername userCreds = new ApikeyCredentialsWithUsername();
-            userCreds.setApikey(user.getApiKey());
+            ApiKeyCredentials userCreds = new ApiKeyCredentials();
+            userCreds.setApiKey(user.getApiKey());
             userCreds.setUsername(user.getUsername());
             creds.getCredential().add(
                 OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredential(
@@ -872,11 +871,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             user.setPassword(password);
             this.userService.updateUser(user, false);
         } else if (creds.getDeclaredType().isAssignableFrom(
-            ApikeyCredentialsWithUsername.class)) {
-            ApikeyCredentialsWithUsername userCreds = (ApikeyCredentialsWithUsername) creds
+            ApiKeyCredentials.class)) {
+            ApiKeyCredentials userCreds = (ApiKeyCredentials) creds
                 .getValue();
             username = userCreds.getUsername();
-            apiKey = userCreds.getApikey();
+            apiKey = userCreds.getApiKey();
             user = this.userService.getUserById(userId);
             if (user == null) {
                 String errMsg = String.format("User %s not found", userId);
