@@ -1354,7 +1354,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setCode(HttpServletResponse.SC_BAD_REQUEST);
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
+        return Response.status(HttpServletResponse.SC_BAD_REQUEST).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
                 fault));
     }

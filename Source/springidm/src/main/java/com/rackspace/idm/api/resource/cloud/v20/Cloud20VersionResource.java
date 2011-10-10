@@ -558,7 +558,7 @@ public class Cloud20VersionResource {
     }
     
     @GET
-    @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoint/{endpointId}")
+    @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints/{endpointId}")
     public Response getEndpoint(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantId,
