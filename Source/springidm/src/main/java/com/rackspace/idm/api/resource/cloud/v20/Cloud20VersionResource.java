@@ -502,16 +502,15 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    @Path("OS-KSCATAGLOG/endpointTemplates")
+    @Path("OS-KSCATALOG/endpointTemplates")
     public Response listEndpointTemplates(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @QueryParam("serviceId") String serviceId) throws IOException {
-        return getCloud20Service().listEndpointTemplates(httpHeaders,
-            authToken, serviceId).build();
+        return getCloud20Service().listEndpointTemplates(httpHeaders, authToken, serviceId).build();
     }
     
     @POST
-    @Path("OS-KSCATAGLOG/endpointTemplates")
+    @Path("OS-KSCATALOG/endpointTemplates")
     public Response addEndpointTemplate(@Context HttpHeaders httpHeaders,
         @Context UriInfo uriInfo,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
@@ -521,7 +520,7 @@ public class Cloud20VersionResource {
     }
     
     @GET
-    @Path("OS-KSCATAGLOG/endpointTemplates/{endpointTemplateId}")
+    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}")
     public Response getEndpointTemplate(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("endpointTemplateId") String endpointTemplateId) throws IOException {
@@ -530,7 +529,7 @@ public class Cloud20VersionResource {
     }
     
     @DELETE
-    @Path("OS-KSCATAGLOG/endpointTemplates/{endpointTemplateId}")
+    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}")
     public Response deleteEndpointTemplate(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("endpointTemplateId") String enpdointTemplateId) throws IOException {
@@ -539,7 +538,7 @@ public class Cloud20VersionResource {
     }
     
     @GET
-    @Path("/tenants/{tenantId}/OS-KSCATAGLOG/endpoints")
+    @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints")
     public Response listEndpoints(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantId) throws IOException {
@@ -548,7 +547,7 @@ public class Cloud20VersionResource {
     }
     
     @POST
-    @Path("/tenants/{tenantId}/OS-KSCATAGLOG/endpoints")
+    @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints")
     public Response addEndpoint(@Context HttpHeaders httpHeaders,
         @Context UriInfo uriInfo,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
@@ -559,7 +558,7 @@ public class Cloud20VersionResource {
     }
     
     @GET
-    @Path("/tenants/{tenantId}/OS-KSCATAGLOG/endpoint/{endpointId}")
+    @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoint/{endpointId}")
     public Response getEndpoint(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantId,
@@ -569,7 +568,7 @@ public class Cloud20VersionResource {
     }
     
     @DELETE
-    @Path("/tenants/{tenantId}/OS-KSCATAGLOG/endpoints/{endpointId}")
+    @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints/{endpointId}")
     public Response deleteEndpoint(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantId,
