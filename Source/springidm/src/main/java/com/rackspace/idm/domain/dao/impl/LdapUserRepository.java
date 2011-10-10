@@ -960,6 +960,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         throws GeneralSecurityException, InvalidCipherTextException {
         CryptHelper cryptHelper = CryptHelper.getInstance();
         User user = new User();
+        user.setId(resultEntry.getAttributeValue(ATTR_ID));
         user.setUniqueId(resultEntry.getDN());
         user.setUsername(resultEntry.getAttributeValue(ATTR_UID));
         user.setCountry(resultEntry.getAttributeValue(ATTR_C));
