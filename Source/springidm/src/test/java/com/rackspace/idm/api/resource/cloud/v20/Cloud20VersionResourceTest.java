@@ -103,4 +103,11 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("response code", clientResponse.getStatus(), equalTo(400));
     }
 
+    //This functionality is not implemented in cloud auth
+    @Test
+    public void listEndpointTemplates_returns404() throws Exception {
+        WebResource resource = resource().path("cloud/v2.0/OS-KSCATALOG/endpointTemplates");
+        ClientResponse clientResponse = resource.get(ClientResponse.class);
+        assertThat("response code", clientResponse.getStatus(), equalTo(404));
+    }
 }

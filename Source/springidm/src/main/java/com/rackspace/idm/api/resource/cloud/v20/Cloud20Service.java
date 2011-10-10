@@ -114,7 +114,7 @@ public interface Cloud20Service {
     ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId) throws IOException;
 
     ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
-        String authToken, String serviceId);
+        String authToken, String serviceId) throws IOException;
 
     ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo,
         String authToken, EndpointTemplate endpoint);
