@@ -198,17 +198,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listTenants(HttpHeaders httpHeaders,
         String authToken, String marker, Integer limit) throws IOException {
 
+        List<Tenant> tenants = new ArrayList<Tenant>();
+        
         ScopeAccess sa = this.scopeAccessService
             .getScopeAccessByAccessToken(authToken);
 
-        if (sa == null) {
-            String errMsg = String.format("Token %s not found", authToken);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        List<Tenant> tenants = this.tenantService
+        if (sa != null) {
+            tenants = this.tenantService
             .getTenantsForScopeAccessByTenantRoles(sa);
+        }
 
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
             .createTenants(this.tenantConverterCloudV20.toTenantList(tenants)));
