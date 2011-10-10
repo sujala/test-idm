@@ -360,7 +360,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (user == null) {
             String errMsg = String.format("User %s not found", name);
             logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
+            return notFoundExceptionResponse("User not found");
         }
 
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
@@ -891,7 +891,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.userService.updateUser(user, false);
         }
 
-        return Response.ok(creds).status(Status.CREATED);
+        return Response.ok(creds);
     }
 
     @Override
