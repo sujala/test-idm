@@ -56,7 +56,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private final EndpointDao endpointDao;
 
     public DefaultScopeAccessService(UserDao userDao, ClientDao clientDao,
-        ScopeAccessDao scopeAccessDao, TenantDao tenantDao, EndpointDao endpointDao, AuthHeaderHelper authHeaderHelper,
+        ScopeAccessDao scopeAccessDao, TenantDao tenantDao,
+        EndpointDao endpointDao, AuthHeaderHelper authHeaderHelper,
         Configuration config) {
         this.userDao = userDao;
         this.clientDao = clientDao;
@@ -66,12 +67,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         this.authHeaderHelper = authHeaderHelper;
         this.config = config;
     }
-    
+
     @Override
-    public List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess token) {
-        
+    public List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(
+        ScopeAccess token) {
+
         String parentUniqueId = null;
-        
+
         if (token instanceof DelegatedClientScopeAccess) {
             parentUniqueId = token.getUniqueId();
         } else {
@@ -81,30 +83,34 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 // noop
             }
         }
-        
+
         // First get the tenantRoles for the token
-        List<TenantRole> roles = this.tenantDao.getTenantRolesByParent(parentUniqueId);
-        
+        List<TenantRole> roles = this.tenantDao
+            .getTenantRolesByParent(parentUniqueId);
+
         // Second get the tenants from each of those roles
         List<Tenant> tenants = new ArrayList<Tenant>();
         for (TenantRole role : roles) {
-            for (String tenantId : role.getTenantIds()) {
-                Tenant tenant = this.tenantDao.getTenant(tenantId);
-                if (tenant != null) {
-                    tenants.add(tenant);
+            if (role.getTenantIds() != null) {
+                for (String tenantId : role.getTenantIds()) {
+                    Tenant tenant = this.tenantDao.getTenant(tenantId);
+                    if (tenant != null) {
+                        tenants.add(tenant);
+                    }
                 }
             }
         }
-        
+
         // Third get the endppoints for each tenant
         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
         for (Tenant tenant : tenants) {
-            OpenstackEndpoint endpoint = this.endpointDao.getOpenstackEndpointsForTenant(tenant);
+            OpenstackEndpoint endpoint = this.endpointDao
+                .getOpenstackEndpointsForTenant(tenant);
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
                 endpoints.add(endpoint);
             }
         }
-        
+
         return endpoints;
     }
 
@@ -564,7 +570,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.debug("Getting Delegated ScopeAccess by Access Token {}",
             accessToken);
 
-
         ScopeAccess scopeAccess = scopeAccessDao
             .getScopeAccessByRefreshToken(accessToken);
 
@@ -618,7 +623,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId) {
+    public UserScopeAccess getUserScopeAccessForClientId(String userUniqueId,
+        String clientId) {
         logger.debug("Getting User ScopeAccess by clientId {}", clientId);
         final UserScopeAccess scopeAccess = (UserScopeAccess) this.scopeAccessDao
             .getDirectScopeAccessForParentByClientId(userUniqueId, clientId);
@@ -701,7 +707,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         handleAuthenticationFailure(username, result);
 
-        final UserScopeAccess scopeAccess = checkAndGetUserScopeAccess(clientId, result.getUser());
+        final UserScopeAccess scopeAccess = checkAndGetUserScopeAccess(
+            clientId, result.getUser());
 
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccess.setAccessTokenString(this.generateToken());
@@ -910,7 +917,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     private UserScopeAccess checkAndGetUserScopeAccess(String clientId,
         User user) {
-        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(user.getUniqueId(), clientId);
+        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(
+            user.getUniqueId(), clientId);
 
         if (scopeAccess == null) {
             String errMsg = "Scope access not found.";
