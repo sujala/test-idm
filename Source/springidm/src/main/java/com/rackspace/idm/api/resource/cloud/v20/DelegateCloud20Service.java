@@ -50,6 +50,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     private static org.openstack.docs.identity.api.v2.ObjectFactory OBJ_FACTORY = new org.openstack.docs.identity.api.v2.ObjectFactory();
     private static org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory OBJ_FACTORY_OS_ADMIN_EXT = new org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory();
+    private static org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory OBJ_FACTORY_OS_CATALOG = new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory(); 
 
     public void setMarshaller(Marshaller marshaller) {
         this.marshaller = marshaller;
@@ -955,67 +956,151 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders, String authToken, String serviceId)
-            throws IOException {
-        ResponseBuilder responseBuilder = this.getCloud20Service().listEndpointTemplates(httpHeaders, authToken, serviceId);
-        Response.ResponseBuilder clonedServiceResponse = responseBuilder.clone();
+    public ResponseBuilder listEndpointTemplates(
+        HttpHeaders httpHeaders, String authToken, String serviceId
+    ) throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+            .listEndpointTemplates(httpHeaders, authToken, serviceId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String request = getCloudAuthV20Url() + "OS-KSCATALOG/endpointTemplates";
+
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("serviceId", serviceId);
             request = appendQueryParams(request, params);
+
             return cloudClient.get(request, httpHeaders);
         }
-        return responseBuilder;
+        return serviceResponse;
     }
 
     @Override
-    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo,
-                                               String authToken, EndpointTemplate endpoint) {
-        // TODO Auto-generated method stub
-        return null;
+    public ResponseBuilder addEndpointTemplate(
+        HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, EndpointTemplate endpoint
+    ) throws IOException, JAXBException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+            .addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "OS-KSCATALOG/endpointTemplates";
+            String body = marshallObjectToString(OBJ_FACTORY_OS_CATALOG.createEndpointTemplate(endpoint));
+            return cloudClient.post(request, httpHeaders, body);
+        }
+        return serviceResponse;
     }
 
     @Override
-    public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
-                                               String authToken, String endpointTemplateId) {
-        // TODO Auto-generated method stub
-        return null;
+    public ResponseBuilder getEndpointTemplate(
+        HttpHeaders httpHeaders, String authToken, String endpointTemplateId
+    ) throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+            .getEndpointTemplate(httpHeaders, authToken, endpointTemplateId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "OS-KSCATALOG/endpointTemplates/" + endpointTemplateId;
+            return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
-    public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders,
-                                                  String authToken, String enpdointTemplateId) {
-        // TODO Auto-generated method stub
-        return null;
+    public ResponseBuilder deleteEndpointTemplate(
+        HttpHeaders httpHeaders, String authToken, String endpointTemplateId
+    ) throws IOException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+            .deleteEndpointTemplate(httpHeaders, authToken, endpointTemplateId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "OS-KSCATALOG/endpointTemplates/" + endpointTemplateId;
+            return cloudClient.delete(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
-    public ResponseBuilder listEndpoints(HttpHeaders httpHeaders,
-                                         String authToken, String tenantId) {
-        // TODO Auto-generated method stub
-        return null;
+    public ResponseBuilder listEndpoints(
+        HttpHeaders httpHeaders, String authToken, String tenantId
+    ) throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+            .listEndpoints(httpHeaders, authToken, tenantId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/OS-KSCATALOG/endpoints";
+            return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
-    public ResponseBuilder addEndpoint(HttpHeaders httpHeaders,
-                                       String authToken, String tenantId, EndpointTemplate endpoint) {
-        // TODO Auto-generated method stub
-        return null;
+    public ResponseBuilder addEndpoint(
+        HttpHeaders httpHeaders, String authToken, String tenantId, EndpointTemplate endpoint
+    ) throws IOException, JAXBException {
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+            .addEndpoint(httpHeaders, authToken, tenantId, endpoint);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/OS-KSCATALOG/endpoints";
+            String body = marshallObjectToString(OBJ_FACTORY_OS_CATALOG.createEndpointTemplate(endpoint));
+            return cloudClient.post(request, httpHeaders, body);
+        }
+        return serviceResponse;
     }
 
     @Override
-    public ResponseBuilder getEndpoint(HttpHeaders httpHeaders,
-                                       String authToken, String tenantId, String endpointId) {
-        // TODO Auto-generated method stub
-        return null;
+    public ResponseBuilder getEndpoint(
+        HttpHeaders httpHeaders, String authToken, String endpointId, String tenantId
+    ) throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+            .getEndpoint(httpHeaders, authToken, endpointId, tenantId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/OS-KSCATALOG/endpoints/" + endpointId;
+            return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     @Override
-    public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders,
-                                          String authToken, String tenantId, String endpointId) {
-        // TODO Auto-generated method stub
-        return null;
+    public ResponseBuilder deleteEndpoint(
+        HttpHeaders httpHeaders, String authToken, String endpointId, String tenantId
+    ) throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+            .deleteEndpoint(httpHeaders, authToken, endpointId, tenantId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/OS-KSCATALOG/endpoints/" + endpointId;
+            return cloudClient.delete(request, httpHeaders);
+        }
+        return serviceResponse;
     }
 
     public String appendQueryParams(String request,

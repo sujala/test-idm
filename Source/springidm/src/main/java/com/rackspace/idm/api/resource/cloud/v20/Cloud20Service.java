@@ -117,23 +117,23 @@ public interface Cloud20Service {
         String authToken, String serviceId) throws IOException;
 
     ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo,
-        String authToken, EndpointTemplate endpoint);
+        String authToken, EndpointTemplate endpoint) throws IOException, JAXBException;
 
     ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
-        String authToken, String endpointTemplateId);
+        String authToken, String endpointTemplateId) throws IOException;
 
     ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders,
-        String authToken, String enpdointTemplateId);
+        String authToken, String enpdointTemplateId) throws IOException;
 
     ResponseBuilder listEndpoints(HttpHeaders httpHeaders, String authToken,
-        String tenantId);
+        String tenantId) throws IOException;
 
     ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId,
-        EndpointTemplate endpoint);
+        EndpointTemplate endpoint) throws IOException, JAXBException;
 
     ResponseBuilder getEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId,
-        String endpointId);
+        String endpointId) throws IOException;
 
     ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId,
-        String endpointId);
+        String endpointId) throws IOException;
 }
