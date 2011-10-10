@@ -26,6 +26,7 @@ public class RoleConverterCloudV20 {
                 for (String tenantId : role.getTenantIds()) {
                     Role jaxbRole = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole();
                     jaxbRole.setDescription(role.getDescription());
+                    jaxbRole.setName(role.getName());
                     jaxbRole.setId(role.getRoleRsId());
                     jaxbRole.setServiceId(role.getClientId());
                     jaxbRole.setTenantId(tenantId);
@@ -34,6 +35,7 @@ public class RoleConverterCloudV20 {
             } else {
                 Role jaxbRole = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole();
                 jaxbRole.setDescription(role.getDescription());
+                jaxbRole.setName(role.getName());
                 jaxbRole.setId(role.getRoleRsId());
                 jaxbRole.setServiceId(role.getClientId());
                 jaxbRoles.getRole().add(jaxbRole);

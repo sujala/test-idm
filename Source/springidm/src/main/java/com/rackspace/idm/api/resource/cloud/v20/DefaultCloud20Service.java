@@ -298,7 +298,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (sa == null) {
             String errMsg = String.format("Token %s not found", tokenId);
             logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
+            return notFoundExceptionResponse("Token not found");
         }
 
         AuthenticateResponse access = OBJ_FACTORIES
@@ -409,7 +409,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         Tenant tenant = this.tenantService.getTenant(tenantsId);
 
         if (tenant == null) {
-            String errMsg = String.format("Tenant %s not found", tenantsId);
+            String errMsg = String.format("Tenant with id/name: '%s' was not found", tenantsId);
             logger.warn(errMsg);
             return notFoundExceptionResponse(errMsg);
         }
@@ -424,7 +424,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         Tenant tenant = this.tenantService.getTenantByName(name);
 
         if (tenant == null) {
-            String errMsg = String.format("Tenant %s not found", name);
+            String errMsg = String.format("Tenant with id/name: '%s' was not found", name);
             logger.warn(errMsg);
             return notFoundExceptionResponse(errMsg);
         }
