@@ -184,6 +184,14 @@ public class DefaultCloud20Service implements Cloud20Service {
         List<TenantRole> roles = this.tenantService
             .getTenantRolesForScopeAccess(usa);
 
+        if (!belongsTo(authenticationRequest.getTenantId(), roles)
+            && !belongsTo(authenticationRequest.getTenantName(), roles)) {
+
+            String errMsg = "User does not have access to tenant %s";
+            logger.warn(errMsg);
+            return notFoundExceptionResponse(errMsg);
+        }
+
         List<OpenstackEndpoint> endpoints = this.scopeAccessService
             .getOpenstackEndpointsForScopeAccess(usa);
 
@@ -199,13 +207,13 @@ public class DefaultCloud20Service implements Cloud20Service {
         String authToken, String marker, Integer limit) throws IOException {
 
         List<Tenant> tenants = new ArrayList<Tenant>();
-        
+
         ScopeAccess sa = this.scopeAccessService
             .getScopeAccessByAccessToken(authToken);
 
         if (sa != null) {
             tenants = this.tenantService
-            .getTenantsForScopeAccessByTenantRoles(sa);
+                .getTenantsForScopeAccessByTenantRoles(sa);
         }
 
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
@@ -313,6 +321,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                 access.setUser(this.userConverterCloudV20
                     .toUserForAuthenticateResponse(user, roles));
             }
+
+            if (!belongsTo(belongsTo, roles)) {
+                String errMsg = String.format("Token %s not found", tokenId);
+                logger.warn(errMsg);
+                return notFoundExceptionResponse("Token not found");
+            }
         }
 
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
@@ -322,7 +336,44 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder checkToken(HttpHeaders httpHeaders,
         String authToken, String tokenId, String belongsTo) throws IOException {
-        return Response.status(Status.NOT_FOUND);
+
+        ScopeAccess sa = this.scopeAccessService
+            .getScopeAccessByAccessToken(tokenId);
+
+        if (sa == null || !(sa instanceof UserScopeAccess)) {
+            String errMsg = String.format("Token %s not found", tokenId);
+            logger.warn(errMsg);
+            return Response.ok().status(Status.NOT_FOUND);
+        }
+
+        if (!StringUtils.isBlank(belongsTo)) {
+            UserScopeAccess usa = (UserScopeAccess) sa;
+            List<TenantRole> roles = this.tenantService
+                .getTenantRolesForScopeAccess(usa);
+
+            if (!belongsTo(belongsTo, roles)) {
+                return Response.ok().status(Status.NOT_FOUND);
+            }
+        }
+
+        return Response.ok();
+    }
+
+    private boolean belongsTo(String belongsTo, List<TenantRole> roles) {
+
+        if (StringUtils.isBlank(belongsTo)) {
+            return true;
+        }
+
+        boolean ok = false;
+
+        for (TenantRole role : roles) {
+            if (role.containsTenantId(belongsTo)) {
+                ok = true;
+                break;
+            }
+        }
+        return ok;
     }
 
     @Override
@@ -407,7 +458,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         Tenant tenant = this.tenantService.getTenant(tenantsId);
 
         if (tenant == null) {
-            String errMsg = String.format("Tenant with id/name: '%s' was not found", tenantsId);
+            String errMsg = String.format(
+                "Tenant with id/name: '%s' was not found", tenantsId);
             logger.warn(errMsg);
             return notFoundExceptionResponse(errMsg);
         }
@@ -422,7 +474,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         Tenant tenant = this.tenantService.getTenantByName(name);
 
         if (tenant == null) {
-            String errMsg = String.format("Tenant with id/name: '%s' was not found", name);
+            String errMsg = String.format(
+                "Tenant with id/name: '%s' was not found", name);
             logger.warn(errMsg);
             return notFoundExceptionResponse(errMsg);
         }
@@ -694,8 +747,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.userService.updateUser(user, false);
         } else if (creds.getDeclaredType().isAssignableFrom(
             ApiKeyCredentials.class)) {
-            ApiKeyCredentials userCreds = (ApiKeyCredentials) creds
-                .getValue();
+            ApiKeyCredentials userCreds = (ApiKeyCredentials) creds.getValue();
             username = userCreds.getUsername();
             apiKey = userCreds.getApiKey();
             user = this.userService.getUserById(userId);
@@ -870,8 +922,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.userService.updateUser(user, false);
         } else if (creds.getDeclaredType().isAssignableFrom(
             ApiKeyCredentials.class)) {
-            ApiKeyCredentials userCreds = (ApiKeyCredentials) creds
-                .getValue();
+            ApiKeyCredentials userCreds = (ApiKeyCredentials) creds.getValue();
             username = userCreds.getUsername();
             apiKey = userCreds.getApiKey();
             user = this.userService.getUserById(userId);
