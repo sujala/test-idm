@@ -319,13 +319,12 @@
       <title>Authorization Header</title>
       <para>Most calls made against the Global Auth API require the addition of an authorization
         header in the request.</para>
-      <para>The format of the authoriztion header is the word "OAuth" followed by a space followed
-        by the access token id that belongs to the entity making the call. For example, here is an
-        sample request for getting a user's details. </para>
+      <para>The format of the authoriztion header is the access token id that belongs to the entity making the call. 
+        Here is an example request below </para>
       <example>
         <title>Authorization Header Request Format</title>
         <programlisting language="xml">
-        <xi:include href="../formattedsamples/samplerequestheader2.json" parse="text"/>
+        <xi:include href="../formattedsamples/sampleauthrequestheader.xml" parse="text"/>
         </programlisting>
       </example>
     </section>

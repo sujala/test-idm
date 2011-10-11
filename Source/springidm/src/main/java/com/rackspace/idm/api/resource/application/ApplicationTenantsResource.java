@@ -67,7 +67,7 @@ public class ApplicationTenantsResource extends ParentResource {
 	@GET
 	@Path("roles")
 	public Response getAllTenantRolesForApplication(
-			@HeaderParam("Authorization") String authHeader,
+			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("applicationId") String applicationId,
 			@QueryParam("applicationId") String provisionedApplicationId,
 			@QueryParam("tenantId") String tenantId) {
@@ -110,7 +110,7 @@ public class ApplicationTenantsResource extends ParentResource {
 	@Path("{tenantId}/roles/{roleId}")
 	public Response grantTenantRoleToApplication(@Context Request request,
 			@Context UriInfo uriInfo,
-			@HeaderParam("Authorization") String authHeader,
+			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("applicationId") String applicationId,
 			@PathParam("tenantId") String tenantId,
 			@PathParam("roleId") String roleId) {
@@ -146,7 +146,7 @@ public class ApplicationTenantsResource extends ParentResource {
 	@Path("{tenantId}/roles/{roleId}")
 	public Response deleteTenantRoleFromApplication(@Context Request request,
 			@Context UriInfo uriInfo,
-			@HeaderParam("Authorization") String authHeader,
+			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("applicationId") String applicationId,
 			@PathParam("tenantId") String tenantId,
 			@PathParam("roleId") String roleId) {

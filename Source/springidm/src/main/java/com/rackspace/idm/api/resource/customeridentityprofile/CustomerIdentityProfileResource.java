@@ -14,8 +14,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +24,6 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
 
@@ -46,7 +43,6 @@ public class CustomerIdentityProfileResource extends ParentResource {
     private final CustomerConverter customerConverter;
     private final AuthorizationService authorizationService;
     private final ApplicationsResource applicationsResource;
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public CustomerIdentityProfileResource(PasswordRotationPolicyResource passwordRotationPolicyResource,
@@ -73,10 +69,10 @@ public class CustomerIdentityProfileResource extends ParentResource {
      */
     @GET
     public Response getCustomerIdentityProfile(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, 
+        @HeaderParam("X-Auth-Token") String authHeader, 
         @PathParam("customerId") String customerId) {
 
-        logger.debug("Getting Customer Identity Profile: {}", customerId);
+        getLogger().debug("Getting Customer Identity Profile: {}", customerId);
 
         ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
@@ -88,7 +84,7 @@ public class CustomerIdentityProfileResource extends ParentResource {
 
         com.rackspace.api.idm.v1.CustomerIdentityProfile jaxbCustomer = customerConverter.toJaxbCustomer(customer);
 
-        logger.debug("Got Customer Identity Profile:{}", customer);
+        getLogger().debug("Got Customer Identity Profile:{}", customer);
         return Response.ok(jaxbCustomer).build();
     }
 
@@ -101,10 +97,10 @@ public class CustomerIdentityProfileResource extends ParentResource {
     @DELETE
     public Response deleteCustomerIdentityProfile(@Context Request request, 
     	@Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, 
+        @HeaderParam("X-Auth-Token") String authHeader, 
         @PathParam("customerId") String customerId) {
 
-        logger.info("Deleting Customer Identity Profile :{}", customerId);
+        getLogger().info("Deleting Customer Identity Profile :{}", customerId);
 
         ScopeAccess token = this.scopeAccessService
         .getAccessTokenByAuthHeader(authHeader);
@@ -116,7 +112,7 @@ public class CustomerIdentityProfileResource extends ParentResource {
         this.customerService.loadCustomer(customerId);
 
         this.customerService.deleteCustomer(customerId);
-        logger.debug("Deleted Customer Identity Profile: {}", customerId);
+        getLogger().debug("Deleted Customer Identity Profile: {}", customerId);
 
         return Response.noContent().build();
     }
@@ -131,13 +127,13 @@ public class CustomerIdentityProfileResource extends ParentResource {
     public Response updateCusotmerIdentityProfile(@Context Request request,
     	@Context UriInfo uriInfo,
         @PathParam("customerId") String customerId, 
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         EntityHolder<com.rackspace.api.idm.v1.CustomerIdentityProfile> holder) {
     	
     	validateRequestBody(holder);
 
         com.rackspace.api.idm.v1.CustomerIdentityProfile inputCustomer = holder.getEntity();
-        logger.debug("Getting Customer Identity Profile: {}", customerId);
+        getLogger().debug("Getting Customer Identity Profile: {}", customerId);
 
         ScopeAccess token = this.scopeAccessService
         	.getAccessTokenByAuthHeader(authHeader);
@@ -150,7 +146,7 @@ public class CustomerIdentityProfileResource extends ParentResource {
         customer.setLocked(!inputCustomer.isEnabled());
         customer.setSoftDeleted(inputCustomer.isSoftDeleted());
 
-        logger.debug("Successfully Updated Customer Identity Profile: {}", customer);
+        getLogger().debug("Successfully Updated Customer Identity Profile: {}", customer);
 
         return Response.noContent().build();
     }

@@ -61,7 +61,7 @@ public class UserApplicationResource extends ParentResource {
     @PUT
     public Response provisionApplicationForUser(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
         @PathParam("applicationId") String applicationId) {
 
@@ -101,7 +101,7 @@ public class UserApplicationResource extends ParentResource {
     @DELETE
     public Response removeApplicationFromUser(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
         @PathParam("applicationId") String applicationId) {
 

@@ -63,7 +63,7 @@ public class UserApplicationsResource extends ParentResource {
     @GET
     public Response getApplicationsForUser(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId) {
 
         getLogger().debug("Getting applications for user {}", userId);

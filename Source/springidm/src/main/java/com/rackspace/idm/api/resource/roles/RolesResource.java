@@ -75,7 +75,7 @@ public class RolesResource extends ParentResource {
 	@GET
 	public Response getAllRoles(@Context Request request,
 			@Context UriInfo uriInfo,
-			@HeaderParam("Authorization") String authHeader,
+			@HeaderParam("X-Auth-Token") String authHeader,
 			@QueryParam("name") String name,
 			@QueryParam("applicationId") String applicationId) {
 
@@ -111,7 +111,7 @@ public class RolesResource extends ParentResource {
 	 */
 	@POST
 	public Response addRole(@Context Request request, @Context UriInfo uriInfo,
-			@HeaderParam("Authorization") String authHeader,
+			@HeaderParam("X-Auth-Token") String authHeader,
 			EntityHolder<com.rackspace.api.idm.v1.Role> holder) {
 
 		validateRequestBody(holder);

@@ -68,7 +68,7 @@ public class UsersResource extends ParentResource {
         @QueryParam("username") String username,
         @QueryParam("offset") Integer offset,
         @QueryParam("limit") Integer limit,
-        @HeaderParam("Authorization") String authHeader) {
+        @HeaderParam("X-Auth-Token") String authHeader) {
     	
         //TODO: Implement authorization rules. Also implement filter rules,
     	//if user does not have privileged roles, limit list to the users
@@ -95,7 +95,7 @@ public class UsersResource extends ParentResource {
     @POST
     public Response addUser(@Context Request reqRuest,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         EntityHolder<com.rackspace.api.idm.v1.User> holder) {
 
     	validateRequestBody(holder);

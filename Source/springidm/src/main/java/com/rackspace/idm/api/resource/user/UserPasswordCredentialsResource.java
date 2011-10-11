@@ -66,7 +66,7 @@ public class UserPasswordCredentialsResource extends ParentResource {
     @GET
     public Response getUserPassword(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId) {
 
         ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
@@ -90,7 +90,7 @@ public class UserPasswordCredentialsResource extends ParentResource {
     @PUT
     public Response setUserPassword(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
         EntityHolder<com.rackspace.api.idm.v1.PasswordCredentials> holder) {
         
@@ -116,7 +116,7 @@ public class UserPasswordCredentialsResource extends ParentResource {
     @POST
     public Response resetUserPassword(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId) {
     	
         getLogger().debug("Reseting Password for User: {}", userId);

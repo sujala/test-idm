@@ -27,7 +27,6 @@ import com.rackspace.idm.validation.InputValidator;
 @Component("identityProfileApplicationsResource")
 public class ApplicationsResource extends ParentResource {
 
-    private final InputValidator inputValidator;
     private final ApplicationConverter applicationConverter;
     private final AuthorizationService authorizationService;
     private final ApplicationService applicationService;
@@ -39,8 +38,6 @@ public class ApplicationsResource extends ParentResource {
         Configuration config) {
     	
     	super(inputValidator);
-    	
-        this.inputValidator = inputValidator;
         this.applicationConverter = applicationConverter;
         this.authorizationService = authorizationService;
         this.applicationService = applicationService;

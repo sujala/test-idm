@@ -57,7 +57,7 @@ public class PasswordRulesResource {
      * @param authHeader HTTP Authorization header for authenticating the caller.
      */
     @GET
-    public Response getRules(@HeaderParam("Authorization") String authHeader) {
+    public Response getRules(@HeaderParam("X-Auth-Token") String authHeader) {
 
         logger.debug("Getting password complexity rules");
         List<PasswordRule> rules = passwordComplexityService.getRules();
@@ -82,7 +82,7 @@ public class PasswordRulesResource {
      */
     @POST
     @Path("/validation")
-    public Response checkPassword(@HeaderParam("Authorization") String authHeader,
+    public Response checkPassword(@HeaderParam("X-Auth-Token") String authHeader,
         com.rackspace.api.idm.v1.UserPassword password) {
         
         if (password == null) {

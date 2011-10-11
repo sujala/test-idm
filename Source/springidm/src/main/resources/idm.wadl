@@ -106,7 +106,7 @@
          </method>
       </resource>
       <resource id="token" path="/tokens/{tokenId}">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="tokenId" style="template" type="xsd:string" required="true"/>
@@ -191,7 +191,7 @@
          </method>
       </resource>
       <resource id="tokenApplication" path="/tokens/{tokenId}/applications/{applicationId}">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="tokenId" style="template" type="xsd:string" required="true"/>
@@ -232,7 +232,7 @@
       </resource>
       <resource id="tokenApplicationRole"
                 path="/tokens/{tokenId}/applications/{applicationId}/roles/{roleId}">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="tokenId" style="template" type="xsd:string" required="true"/>
@@ -273,7 +273,7 @@
          </method>
       </resource>
       <!-- users resource --><resource id="users" path="/users">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <method xmlns:rax="http://docs.rackspace.com/api" name="GET" rax:id="getUsers">
@@ -387,7 +387,7 @@
          </method>
       </resource>
       <resource id="user" path="/users/{userId}">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="userId" style="template" type="xsd:string" required="true"/>
@@ -511,7 +511,7 @@
          </method>
       </resource>
       <resource id="userSecret" path="/users/{userId}/secret">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="userId" style="template" type="xsd:string" required="true"/>
@@ -596,7 +596,7 @@
          </method>
       </resource>
       <resource id="userPasswordCredentials" path="/users/{userId}/passwordcredentials">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="userId" style="template" type="xsd:string" required="true"/>
@@ -724,7 +724,7 @@
       </resource>
       <resource id="userPasswordRecoveryToken"
                 path="/users/{userId}/passwordcredentials/recoverytoken">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="userId" style="template" type="xsd:string" required="true"/>
@@ -771,7 +771,7 @@
          </method>
       </resource>
       <resource id="userDelegatedRefreshTokens" path="/users/{userId}/delegatedrefreshtokens">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="userId" style="template" type="xsd:string" required="true"/>
@@ -818,7 +818,7 @@
       </resource>
       <resource id="delegatedRefreshToken"
                 path="/users/{userId}/delegatedrefreshtokens/{tokenId}">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="userId" style="template" type="xsd:string" required="true"/>
@@ -898,7 +898,7 @@
          </method>
       </resource>
       <resource id="userApplications" path="/users/{userId}/applications">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="userId" style="template" type="xsd:string" required="true"/>
@@ -943,7 +943,7 @@
          </method>
       </resource>
       <resource id="userApplication" path="/users/{userId}/applications/{applicationId}">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="userId" style="template" type="xsd:string" required="true"/>
@@ -1011,7 +1011,7 @@
          </method>
       </resource>
       <resource id="userRoles" path="/users/{userId}/roles">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="userId" style="template" type="xsd:string" required="true"/>
@@ -1061,7 +1061,7 @@
          </method>
       </resource>
       <resource id="userRole" path="/users/{userId}/roles/{roleId}">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="userId" style="template" type="xsd:string" required="true"/>
@@ -1129,7 +1129,7 @@
          </method>
       </resource>
       <resource id="userTenantsRoles" path="/users/{userId}/tenants/roles">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="userId" style="template" type="xsd:string" required="true"/>
@@ -1182,7 +1182,7 @@
          </method>
       </resource>
       <resource id="userTenantRole" path="/users/{userId}/tenants/{tenantId}/roles/{roleId}">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="userId" style="template" type="xsd:string" required="true"/>
@@ -1247,7 +1247,7 @@
          </method>
       </resource>
       <!-- applications resource --><resource id="applications" path="/applications">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <method xmlns:rax="http://docs.rackspace.com/api" name="GET" rax:id="getApplications">
@@ -1352,7 +1352,7 @@
          </method>
       </resource>
       <resource id="application" path="/applications/{applicationId}">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="applicationId" style="template" type="xsd:string" required="true"/>
@@ -1478,7 +1478,7 @@
       </resource>
       <resource id="applicationSecretCredentials"
                 path="/applications/{applicationId}/secretcredentials">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="applicationId" style="template" type="xsd:string" required="true"/>
@@ -1524,7 +1524,7 @@
          </method>
       </resource>
       <resource id="applicationApplications" path="/applications/{applicationId}/applications">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="applicationId" style="template" type="xsd:string" required="true"/>
@@ -1572,7 +1572,7 @@
       </resource>
       <resource id="applicationApplication"
                 path="/applications/{applicationId}/applications/{provisionedApplicationId}">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="applicationId" style="template" type="xsd:string" required="true"/>
@@ -1646,7 +1646,7 @@
          </method>
       </resource>
       <resource id="applicationRoles" path="/applications/{applicationId}/roles">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="applicationId" style="template" type="xsd:string" required="true"/>
@@ -1697,7 +1697,7 @@
          </method>
       </resource>
       <resource id="applicationRole" path="/applications/{applicationId}/roles/{roleId}">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="applicationId" style="template" type="xsd:string" required="true"/>
@@ -1766,7 +1766,7 @@
          </method>
       </resource>
       <resource id="applicationTenantsRoles" path="/applications/{applicationId}/tenants/roles">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="applicationId" style="template" type="xsd:string" required="true"/>
@@ -1822,7 +1822,7 @@
       </resource>
       <resource id="applicationTenantRole"
                 path="/applications/{applicationId}/tenants/{tenantId}/roles/{roleId}">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="applicationId" style="template" type="xsd:string" required="true"/>
@@ -1888,7 +1888,7 @@
          </method>
       </resource>
       <!-- roles resource --><resource id="roles" path="/roles">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <method xmlns:rax="http://docs.rackspace.com/api" name="GET" rax:id="getRoles">
@@ -1983,7 +1983,7 @@
          </method>
       </resource>
       <resource id="role" path="/roles/{roleId}">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="roleId" style="template" type="xsd:string" required="true"/>
@@ -2092,7 +2092,7 @@
          </method>
       </resource>
       <!-- identity profiles resource --><resource id="identityProfile" path="/customeridentityprofiles/{customerId}">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="customerId" style="template" type="xsd:string" required="true">
@@ -2261,7 +2261,7 @@
       </resource>
       <resource id="passwordRotationPolicy"
                 path="/customeridentityprofiles/{customerId}/passwordrotationpolicy">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="customerId" style="template" type="xsd:string" required="true">
@@ -2350,7 +2350,7 @@
          </method>
       </resource>
       <resource id="identityProfileUsers" path="/customeridentityprofiles/{customerId}/users">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="customerId" style="template" type="xsd:string" required="true">
@@ -2407,7 +2407,7 @@
       </resource>
       <resource id="identityProfileApplications"
                 path="/customeridentityprofiles/{customerId}/applications">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <param name="customerId" style="template" type="xsd:string" required="true">
@@ -2463,7 +2463,7 @@
          </method>
       </resource>
       <!-- password resources --><resource id="passwordRules" path="/passwordrules">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <method xmlns:rax="http://docs.rackspace.com/api" name="GET" rax:id="getPasswordRules">
@@ -2507,7 +2507,7 @@
          </method>
       </resource>
       <resource id="passwordValidation" path="/passwordrules/validation">
-         <param name="Authorization" style="header" type="xsd:string" required="true">
+         <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
             <doc>You need a valid token for access.</doc>
          </param>
          <method xmlns:rax="http://docs.rackspace.com/api" name="POST" rax:id="validatePassword">

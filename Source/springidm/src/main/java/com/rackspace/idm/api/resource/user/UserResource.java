@@ -86,7 +86,7 @@ public class UserResource extends ParentResource {
 	@GET
 	public Response getUserById(@Context Request request,
 			@Context UriInfo uriInfo,
-			@HeaderParam("Authorization") String authHeader,
+			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("userId") String userId) {
 
 		ScopeAccess token = this.scopeAccessService
@@ -116,7 +116,7 @@ public class UserResource extends ParentResource {
 	@PUT
 	public Response updateUser(@Context Request request,
 			@Context UriInfo uriInfo,
-			@HeaderParam("Authorization") String authHeader,
+			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("userId") String userId,
 			EntityHolder<com.rackspace.api.idm.v1.User> holder) {
 
@@ -153,7 +153,7 @@ public class UserResource extends ParentResource {
 	@DELETE
 	public Response deleteUser(@Context Request request,
 			@Context UriInfo uriInfo,
-			@HeaderParam("Authorization") String authHeader,
+			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("userId") String userId) {
 
 		getLogger().debug("Deleting User :{}", userId);

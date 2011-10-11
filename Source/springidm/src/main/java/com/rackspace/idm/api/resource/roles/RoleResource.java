@@ -63,7 +63,7 @@ public class RoleResource extends ParentResource {
 	 */
 	@GET
 	public Response getRole(
-			@HeaderParam("Authorization") String authHeader,
+			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("roleId") String roleId) {
 
 		ScopeAccess token = this.scopeAccessService
@@ -91,7 +91,7 @@ public class RoleResource extends ParentResource {
 	 */
 	@DELETE
 	public Response deleteRole(
-			@HeaderParam("Authorization") String authHeader,
+			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("roleId") String roleId) {
 
 		ScopeAccess token = this.scopeAccessService
@@ -120,7 +120,7 @@ public class RoleResource extends ParentResource {
 	 */
 	@PUT
 	public Response updateRole(
-			@HeaderParam("Authorization") String authHeader,
+			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("roleId") String roleId,
 			EntityHolder<com.rackspace.api.idm.v1.Role> holder) {
 

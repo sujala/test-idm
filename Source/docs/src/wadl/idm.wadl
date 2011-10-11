@@ -36,7 +36,7 @@
                 <method href="#authenticate" />
                 
                 <resource id="token" path="{tokenId}">
-                    <param name="Authorization" style="header" type="xsd:string" required="true">
+                    <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
                         <doc>You need a valid token for access.</doc>
                     </param>
                     <param name="tokenId" style="template" type="xsd:string" required="true"/>
@@ -57,7 +57,7 @@
             
             <!-- users resource -->
             <resource id="users" path="users">
-                <param name="Authorization" style="header" type="xsd:string" required="true">
+                <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
                     <doc>You need a valid token for access.</doc>
                 </param>
                 <method href="#getUsers" />
@@ -131,7 +131,7 @@
             
             <!-- applications resource -->
             <resource id="applications" path="applications">
-                <param name="Authorization" style="header" type="xsd:string" required="true">
+                <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
                     <doc>You need a valid token for access.</doc>
                 </param>
                 <method href="#getApplications" />
@@ -190,7 +190,7 @@
      
             <!-- roles resource -->
             <resource id="roles" path="roles">
-                <param name="Authorization" style="header" type="xsd:string" required="true">
+                <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
                     <doc>You need a valid token for access.</doc>
                 </param>
                 <method href="#getRoles" />
@@ -206,7 +206,7 @@
             
             <!-- identity profiles resource -->
             <resource id="identityProfiles" path="customeridentityprofiles">
-                <param name="Authorization" style="header" type="xsd:string" required="true">
+                <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
                     <doc>You need a valid token for access.</doc>
                 </param>
                 
@@ -237,7 +237,7 @@
             
             <!-- password resources -->
             <resource id="passwordRules" path="passwordrules">
-                <param name="Authorization" style="header" type="xsd:string" required="true">
+                <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
                     <doc>You need a valid token for access.</doc>
                 </param>
                 

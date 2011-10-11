@@ -63,7 +63,7 @@ public class UserDelegatedRefreshTokensResource {
     @GET
     public Response getTokens(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId) {
 
         ScopeAccess authToken = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
@@ -88,7 +88,7 @@ public class UserDelegatedRefreshTokensResource {
     @Path("{tokenString}")
     public Response getTokenDetails(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
         @PathParam("tokenString") String tokenString) {
 
@@ -129,7 +129,7 @@ public class UserDelegatedRefreshTokensResource {
     @Path("{tokenString}")
     public Response deleteToken(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
         @PathParam("tokenString") String tokenString) {
 

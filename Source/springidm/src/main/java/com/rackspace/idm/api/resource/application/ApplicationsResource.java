@@ -77,7 +77,7 @@ public class ApplicationsResource extends ParentResource {
         @QueryParam("name") String name,
         @QueryParam("offset") Integer offset,
         @QueryParam("limit") Integer limit,
-        @HeaderParam("Authorization") String authHeader) {
+        @HeaderParam("X-Auth-Token") String authHeader) {
     	
     	ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
     	// Racker's, Specific Clients and Admins are authorized
@@ -105,7 +105,7 @@ public class ApplicationsResource extends ParentResource {
      */
     @POST
     public Response addApplication(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, 
+        @HeaderParam("X-Auth-Token") String authHeader, 
         EntityHolder<com.rackspace.api.idm.v1.Application> holder) {
 
         try {
