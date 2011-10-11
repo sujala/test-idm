@@ -138,13 +138,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             String password = creds.getPassword();
             
             if (StringUtils.isBlank(username)) {
-                String errMsg = "username required";
+                String errMsg = "Expecting username";
                 logger.warn(errMsg);
                 return badRequestExceptionResponse(errMsg);
             }
             
             if (StringUtils.isBlank(password)) {
-                String errMsg = "password required";
+                String errMsg = "Expecting password";
                 logger.warn(errMsg);
                 return badRequestExceptionResponse(errMsg);
             }
@@ -175,13 +175,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             String key = creds.getApiKey();
             
             if (StringUtils.isBlank(username)) {
-                String errMsg = "username required";
+                String errMsg = "Expecting username";
                 logger.warn(errMsg);
                 return badRequestExceptionResponse(errMsg);
             }
             
             if (StringUtils.isBlank(key)) {
-                String errMsg = "apiKey required";
+                String errMsg = "Expecting apiKey";
                 logger.warn(errMsg);
                 return badRequestExceptionResponse(errMsg);
             }
