@@ -347,7 +347,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if (!belongsTo(belongsTo, roles)) {
-                String errMsg = String.format("Token %s not found", tokenId);
+                String errMsg = String.format("Token doesn't belong to Tenant with Id: '%s'", belongsTo);
                 logger.warn(errMsg);
                 return notFoundExceptionResponse("Token not found");
             }
