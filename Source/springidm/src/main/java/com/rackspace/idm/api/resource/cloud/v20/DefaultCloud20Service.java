@@ -136,6 +136,18 @@ public class DefaultCloud20Service implements Cloud20Service {
                 .getCredential().getValue();
             String username = creds.getUsername();
             String password = creds.getPassword();
+            
+            if (StringUtils.isBlank(username)) {
+                String errMsg = "username required";
+                logger.warn(errMsg);
+                return badRequestExceptionResponse(errMsg);
+            }
+            
+            if (StringUtils.isBlank(password)) {
+                String errMsg = "password required";
+                logger.warn(errMsg);
+                return badRequestExceptionResponse(errMsg);
+            }
 
             user = this.userService.getUser(username);
 
@@ -161,6 +173,18 @@ public class DefaultCloud20Service implements Cloud20Service {
                 .getCredential().getValue();
             String username = creds.getUsername();
             String key = creds.getApiKey();
+            
+            if (StringUtils.isBlank(username)) {
+                String errMsg = "username required";
+                logger.warn(errMsg);
+                return badRequestExceptionResponse(errMsg);
+            }
+            
+            if (StringUtils.isBlank(key)) {
+                String errMsg = "apiKey required";
+                logger.warn(errMsg);
+                return badRequestExceptionResponse(errMsg);
+            }
 
             user = this.userService.getUser(username);
 
