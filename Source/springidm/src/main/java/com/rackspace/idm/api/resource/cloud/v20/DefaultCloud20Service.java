@@ -34,6 +34,7 @@ import org.openstack.docs.identity.api.v2.BadRequestFault;
 import org.openstack.docs.identity.api.v2.CredentialListType;
 import org.openstack.docs.identity.api.v2.CredentialType;
 import org.openstack.docs.identity.api.v2.EndpointList;
+import org.openstack.docs.identity.api.v2.ForbiddenFault;
 import org.openstack.docs.identity.api.v2.IdentityFault;
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
@@ -69,6 +70,7 @@ import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
@@ -89,6 +91,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private AuthorizationService authorizationService;
     @Autowired
     private TenantService tenantService;
     @Autowired
@@ -321,6 +325,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder validateToken(HttpHeaders httpHeaders,
         String authToken, String tokenId, String belongsTo) throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         ScopeAccess sa = this.scopeAccessService
             .getScopeAccessByAccessToken(tokenId);
@@ -360,6 +372,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder checkToken(HttpHeaders httpHeaders,
         String authToken, String tokenId, String belongsTo) throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            return Response.ok().status(Status.FORBIDDEN);
+        }
 
         ScopeAccess sa = this.scopeAccessService
             .getScopeAccessByAccessToken(tokenId);
@@ -403,6 +421,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders,
         String authToken, String tokenId) throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         ScopeAccess sa = this.scopeAccessService
             .getScopeAccessByAccessToken(tokenId);
@@ -427,6 +453,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders,
         String authToken, String name) throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         User user = this.userService.getUser(name);
 
@@ -443,6 +477,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getUserById(HttpHeaders httpHeaders,
         String authToken, String userId) throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         User user = this.userService.getUserById(userId);
 
@@ -459,6 +501,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders,
         String authToken, String userId) throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         User user = this.userService.getUserById(userId);
 
@@ -478,6 +528,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getTenantById(HttpHeaders httpHeaders,
         String authToken, String tenantsId) throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Tenant tenant = this.tenantService.getTenant(tenantsId);
 
@@ -495,6 +553,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getTenantByName(HttpHeaders httpHeaders,
         String authToken, String name) throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
+        
         Tenant tenant = this.tenantService.getTenantByName(name);
 
         if (tenant == null) {
@@ -511,6 +578,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders,
         String authToken, String tenantsId, String userId) throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Tenant tenant = this.tenantService.getTenant(tenantsId);
 
@@ -544,6 +619,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken,
         String marker, int limit) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
+        
         // TODO write me
         return Response.status(Status.NOT_FOUND);
     }
@@ -559,6 +643,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo,
         String authToken, org.openstack.docs.identity.api.v2.User user) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         User userDO = this.userConverterCloudV20.toUserDO(user);
 
@@ -574,6 +666,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updateUser(HttpHeaders httpHeaders,
         String authToken, String userId,
         org.openstack.docs.identity.api.v2.User user) throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         User retrievedUser = this.userService.getUserById(userId);
 
@@ -596,6 +696,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteUser(HttpHeaders httpHeaders,
         String authToken, String userId) throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         User user = this.userService.getUserById(userId);
 
@@ -614,6 +722,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUserRoles(HttpHeaders httpHeaders,
         String authToken, String userId, String serviceId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         User user = this.userService.getUserById(userId);
 
@@ -632,6 +748,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addUserRole(HttpHeaders httpHeaders,
         String authToken, String userId, String roleId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         User user = this.userService.getUserById(userId);
         if (user == null) {
@@ -659,6 +783,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getUserRole(HttpHeaders httpHeaders,
         String authToken, String userId, String roleId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         User user = this.userService.getUserById(userId);
         if (user == null) {
@@ -697,6 +829,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders,
         String authToken, String userId, String roleId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
+        
         User user = this.userService.getUserById(userId);
         if (user == null) {
             String errMsg = String.format("User %s not found", userId);
@@ -730,6 +871,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addUserCredential(HttpHeaders httpHeaders,
         String authToken, String userId, String body) throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         JAXBElement<? extends CredentialType> creds = null;
 
@@ -862,6 +1011,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listCredentials(HttpHeaders httpHeaders,
         String authToken, String userId, String marker, Integer limit)
         throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         User user = this.userService.getUserById(userId);
         if (user == null) {
@@ -897,6 +1054,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updateUserCredential(HttpHeaders httpHeaders,
         String authToken, String userId, String credentialType, String body)
         throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
+        
         JAXBElement<? extends CredentialType> creds = null;
 
         if (!(credentialType.equals("passwordCredentials") || credentialType
@@ -967,6 +1133,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders,
         String authToken, String userId, String credentialType)
         throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         if (!(credentialType.equals("passwordCredentials") || credentialType
             .endsWith("apiKeyCredentials"))) {
@@ -995,6 +1169,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUserCredential(HttpHeaders httpHeaders,
         String authToken, String userId, String credentialType)
         throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         if (!(credentialType.equals("passwordCredentials") || credentialType
             .endsWith("apiKeyCredentials"))) {
@@ -1038,6 +1220,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo,
         String authToken, org.openstack.docs.identity.api.v2.Tenant tenant) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Tenant savedTenant = this.tenantConverterCloudV20.toTenantDO(tenant);
         try {
@@ -1059,6 +1249,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updateTenant(HttpHeaders httpHeaders,
         String authToken, String tenantId,
         org.openstack.docs.identity.api.v2.Tenant tenant) throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Tenant tenantDO = this.tenantService.getTenant(tenantId);
         if (tenantDO == null) {
@@ -1081,6 +1279,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteTenant(HttpHeaders httpHeaders,
         String authToken, String tenantId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Tenant tenant = this.tenantService.getTenant(tenantId);
         if (tenant == null) {
@@ -1097,6 +1303,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders,
         String authToken, String tenantId, String marker, Integer limit) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Tenant tenant = this.tenantService.getTenant(tenantId);
         if (tenant == null) {
@@ -1115,6 +1329,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders,
         String authToken, String tenantId, String roleId, String marker,
         Integer limit) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Tenant tenant = this.tenantService.getTenant(tenantId);
         if (tenant == null) {
@@ -1140,6 +1362,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders,
         String authToken, String tenantId, String marker, Integer limit) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
+        
         // TODO write me
         return Response.status(Status.NOT_FOUND);
     }
@@ -1147,6 +1378,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders,
         String authToken, String tenantId, String userId, String roleId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Tenant tenant = this.tenantService.getTenant(tenantId);
         if (tenant == null) {
@@ -1183,6 +1422,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders,
         String authToken, String tenantId, String userId, String roleId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
+        
         Tenant tenant = this.tenantService.getTenant(tenantId);
         if (tenant == null) {
             String errMsg = String.format("Tenant %s not found", tenantId);
@@ -1219,6 +1467,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken,
         String serviceId, String marker, Integer limit) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         List<ClientRole> roles = null;
 
@@ -1236,6 +1492,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo,
         String authToken, Role role) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         ClientRole clientRole = new ClientRole();
         clientRole.setClientId(role.getServiceId());
@@ -1256,6 +1520,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken,
         String roleId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         ClientRole role = this.clientService.getClientRoleById(roleId);
         if (role == null) {
@@ -1271,6 +1543,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteRole(HttpHeaders httpHeaders,
         String authToken, String roleId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         ClientRole role = this.clientService.getClientRoleById(roleId);
         if (role == null) {
@@ -1288,6 +1568,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listServices(HttpHeaders httpHeaders,
         String authToken, String marker, Integer limit) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         List<Application> clients = this.clientService.getOpenStackServices();
 
@@ -1299,6 +1587,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo,
         String authToken, Service service) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Application client = new Application();
         client.setOpenStackType(service.getType());
@@ -1319,6 +1615,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getService(HttpHeaders httpHeaders,
         String authToken, String serviceId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Application client = this.clientService.getById(serviceId);
         if (client == null) {
@@ -1335,6 +1639,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteService(HttpHeaders httpHeaders,
         String authToken, String serviceId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Application client = this.clientService.getById(serviceId);
         if (client == null) {
@@ -1352,6 +1664,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders,
         String authToken, String userId, UserWithOnlyEnabled user)
         throws IOException {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         User userDO = this.userService.getUserById(userId);
         if (userDO == null) {
@@ -1360,7 +1680,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return notFoundExceptionResponse(errMsg);
         }
 
-        userDO.setLocked(!user.isEnabled());
+        userDO.setEnabled(user.isEnabled());
         this.userService.updateUser(userDO, false);
 
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
@@ -1403,6 +1723,18 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUnauthorized(
+                fault));
+    }
+    
+    private Response.ResponseBuilder forbiddenExceptionResponse(
+        String errMsg) {
+        ForbiddenFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createForbiddenFault();
+        fault.setCode(HttpServletResponse.SC_FORBIDDEN);
+        fault.setMessage(errMsg);
+        fault.setDetails(MDC.get(Audit.GUUID));
+        return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(
+            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createForbidden(
                 fault));
     }
 
@@ -1458,6 +1790,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
         String authToken, String serviceId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         List<CloudBaseUrl> baseUrls = null;
 
@@ -1485,6 +1825,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
         UriInfo uriInfo, String authToken, EndpointTemplate endpoint) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         CloudBaseUrl baseUrl = this.endpointConverterCloudV20
             .toCloudBaseUrl(endpoint);
@@ -1504,6 +1852,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
         String authToken, String endpointTemplateId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Integer baseUrlId = Integer.parseInt(endpointTemplateId);
 
@@ -1524,6 +1880,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders,
         String authToken, String endpointTemplateId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Integer baseUrlId = Integer.parseInt(endpointTemplateId);
 
@@ -1544,6 +1908,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listEndpoints(HttpHeaders httpHeaders,
         String authToken, String tenantId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Tenant tenant = this.tenantService.getTenant(tenantId);
         if (tenant == null) {
@@ -1567,6 +1939,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders,
         String authToken, String tenantId, EndpointTemplate endpoint) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Tenant tenant = this.tenantService.getTenant(tenantId);
         if (tenant == null) {
@@ -1595,6 +1975,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getEndpoint(HttpHeaders httpHeaders,
         String authToken, String tenantId, String endpointId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
 
         Tenant tenant = this.tenantService.getTenant(tenantId);
         if (tenant == null) {
@@ -1627,6 +2015,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders,
         String authToken, String tenantId, String endpointId) {
+        
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
+        if (!authorized) {
+            String errMsg = String.format("Token %s not authorized", authToken);
+            logger.warn(errMsg);
+            return forbiddenExceptionResponse(errMsg);
+        }
+        
         Tenant tenant = this.tenantService.getTenant(tenantId);
         if (tenant == null) {
             String errMsg = String.format("Tenant %s not found", tenantId);

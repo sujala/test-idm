@@ -32,4 +32,6 @@ public interface AuthorizationService {
         ScopeAccess requestingScopeAccess);
 
     void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token);
+
+    boolean authorizeCloudAdmin(ScopeAccess scopeAccess);
 }

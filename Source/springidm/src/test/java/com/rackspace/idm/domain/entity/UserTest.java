@@ -239,7 +239,7 @@ public class UserTest {
     public void shouldRunValidations() {
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         Set<ConstraintViolation<User>> violations = validator.validate(new User());
-        Assert.assertEquals(2, violations.size());
+        Assert.assertEquals(1, violations.size());
         System.out.println(violations);
     }
 

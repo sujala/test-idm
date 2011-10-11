@@ -9,11 +9,14 @@ import org.apache.commons.lang.StringUtils;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.FilterParam;
+import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.Filter;
@@ -545,5 +548,28 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         getLogger().debug("Got {} Tenant Roles", roles.size());
 
         return roles;
+    }
+    
+    @Override
+    public boolean doesScopeAccessHaveTenantRole(ScopeAccess scopeAccess,
+        ClientRole role) {
+        getLogger().debug("Does Scope Access Have Tenant Role");
+
+        String parentDn = null;
+        try {
+            if (scopeAccess instanceof DelegatedClientScopeAccess) {
+                parentDn = scopeAccess.getUniqueId();
+            } else {
+                parentDn = scopeAccess.getLDAPEntry().getParentDNString();
+            }
+        } catch (Exception ex) {
+            throw new IllegalStateException();
+        }
+
+        TenantRole exists = this.getTenantRoleForParentById(parentDn, role.getId());
+
+        boolean hasRole = exists != null;
+        getLogger().debug("Does Scope Access Have Tenant Role: {}", hasRole);
+        return hasRole;
     }
 }
