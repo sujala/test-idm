@@ -349,7 +349,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (!belongsTo(belongsTo, roles)) {
                 String errMsg = String.format("Token doesn't belong to Tenant with Id: '%s'", belongsTo);
                 logger.warn(errMsg);
-                return notFoundExceptionResponse("Token not found");
+                return notFoundExceptionResponse(errMsg);
             }
         }
 
@@ -789,9 +789,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.userService.updateUser(user, false);
         }
 
-        return Response.ok(
-            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredential(
-                creds.getValue())).status(Status.CREATED);
+        return Response.ok(creds).status(Status.CREATED);
     }
 
     @SuppressWarnings("unchecked")
@@ -880,8 +878,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             userCreds.setPassword(user.getPassword());
             userCreds.setUsername(user.getUsername());
             creds.getCredential().add(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredential(
-                    userCreds));
+                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createPasswordCredentials(userCreds));
         }
 
         if (!StringUtils.isBlank(user.getApiKey())) {
@@ -889,8 +886,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             userCreds.setApiKey(user.getApiKey());
             userCreds.setUsername(user.getUsername());
             creds.getCredential().add(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredential(
-                    userCreds));
+                OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials(userCreds));
         }
 
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
