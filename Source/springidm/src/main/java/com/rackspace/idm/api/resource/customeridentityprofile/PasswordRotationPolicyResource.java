@@ -55,7 +55,7 @@ public class PasswordRotationPolicyResource extends ParentResource {
     @GET
     public Response getPasswordRotationPolicy(
     		@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, 
+        @HeaderParam("X-Auth-Token") String authHeader, 
         @PathParam("customerId") String customerId) {
         
         logger.debug("Getting Customer's Password Rotation Policy: {}", customerId);
@@ -87,7 +87,7 @@ public class PasswordRotationPolicyResource extends ParentResource {
     @PUT
     public Response updatePasswordRotationPolicy(
     		@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, 
+        @HeaderParam("X-Auth-Token") String authHeader, 
         @PathParam("customerId") String customerId,
         EntityHolder<com.rackspace.api.idm.v1.PasswordRotationPolicy> holder) {
         

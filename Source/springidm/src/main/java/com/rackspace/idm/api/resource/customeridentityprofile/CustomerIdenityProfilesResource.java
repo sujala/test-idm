@@ -64,7 +64,7 @@ public class CustomerIdenityProfilesResource extends ParentResource {
      */
     @POST
     public Response addCustomer(@Context UriInfo uriInfo, @Context Request request,
-        @HeaderParam("Authorization") String authHeader, 
+        @HeaderParam("X-Auth-Token") String authHeader, 
         EntityHolder<com.rackspace.api.idm.v1.CustomerIdentityProfile> holder) {
     	
     	validateRequestBody(holder);

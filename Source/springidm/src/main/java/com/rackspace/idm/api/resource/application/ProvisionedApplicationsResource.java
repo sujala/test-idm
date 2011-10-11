@@ -69,7 +69,7 @@ public class ProvisionedApplicationsResource extends ParentResource {
 	@GET
 	public Response getApplicationsForApplication(@Context Request request,
 			@Context UriInfo uriInfo,
-			@HeaderParam("Authorization") String authHeader,
+			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("applicationId") String applicationId) {
 
 		getLogger().debug("Getting applications for application {}", applicationId);

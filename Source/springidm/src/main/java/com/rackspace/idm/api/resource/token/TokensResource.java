@@ -83,7 +83,7 @@ public class TokensResource extends ParentResource {
      * @param creds      AuthCredentials for authenticating the token request.
      */
     @POST
-    public Response authenticate(@HeaderParam("Authorization") String authHeader, EntityHolder<String> holder) throws Throwable {
+    public Response authenticate(@HeaderParam("X-Auth-Token") String authHeader, EntityHolder<String> holder) throws Throwable {
     	validateRequestBody(holder);
     	
 		// Don't rely on jersey to do the marshalling. Different type of credentials can be specified.
@@ -112,7 +112,7 @@ public class TokensResource extends ParentResource {
     @Path("{tokenString}")
     public Response validateAccessToken(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("tokenString") String tokenString) {
 
         logger.debug("Validating Access Token: {}", tokenString);
@@ -139,7 +139,7 @@ public class TokensResource extends ParentResource {
     @Path("{tokenString}")
     public Response revokeAccessToken(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("tokenString") String tokenString) {
 
         logger.debug("Revoking Token: {}", tokenString);
@@ -165,7 +165,7 @@ public class TokensResource extends ParentResource {
     @Path("{tokenString}/applications/{applicationId}")
     public Response doesTokenHaveApplicationAccess(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("tokenString") String tokenString,
         @PathParam("applicationId") String applicationId) {
 
@@ -201,7 +201,7 @@ public class TokensResource extends ParentResource {
     @Path("{tokenString}/applications/{applicationId}/roles/{roleId}")
     public Response doesTokenHaveApplicationRole(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("tokenString") String tokenString,
         @PathParam("applicationId") String applicationId,
         @PathParam("roleId") String roleId) {

@@ -72,7 +72,7 @@ public class UserGlobalRolesResource {
      */
     @GET
     public Response getRoles(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, 
+        @HeaderParam("X-Auth-Token") String authHeader, 
         @PathParam("userId") String userId, 
         @QueryParam("applicationId") String applicationId) {
 

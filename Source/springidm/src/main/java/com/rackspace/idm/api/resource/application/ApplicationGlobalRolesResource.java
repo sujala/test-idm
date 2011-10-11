@@ -71,7 +71,7 @@ public class ApplicationGlobalRolesResource {
      */
     @GET
     public Response getRoles(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, 
+        @HeaderParam("X-Auth-Token") String authHeader, 
         @PathParam("applicationId") String applicationId, 
         @QueryParam("applicationId") String provisionedApplicationId) {
 

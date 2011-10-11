@@ -78,7 +78,7 @@ public class ApplicationResource extends ParentResource {
     @GET
     public Response getApplication(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId) {
     	
         getLogger().debug("Getting Application: {}", applicationId);
@@ -109,7 +109,7 @@ public class ApplicationResource extends ParentResource {
     @PUT
     public Response updateApplication(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId,
         EntityHolder<com.rackspace.api.idm.v1.Application> holder) {
     	
@@ -145,7 +145,7 @@ public class ApplicationResource extends ParentResource {
     @DELETE
     public Response deleteApplication(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId) {
 
         getLogger().info("Deleting Application: {}", applicationId);
@@ -178,7 +178,7 @@ public class ApplicationResource extends ParentResource {
     @POST
     public Response resetApplicationSecretCredential(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId) {
 
         try {

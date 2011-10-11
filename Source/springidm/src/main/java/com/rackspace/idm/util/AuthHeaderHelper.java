@@ -47,21 +47,7 @@ public class AuthHeaderHelper {
             throw new NotAuthorizedException("Invalid Auth Header");
         }
 
-        String tokenString = null;
-
-        Map<String, String> tokenParams = parseTokenParams(authHeader);
-
-        if (tokenParams.isEmpty() || !tokenParams.containsKey("token")) {
-            throw new NotAuthorizedException("Invalid Auth Header");
-        }
-
-        tokenString = tokenParams.get("token");
-
-        if (StringUtils.isBlank(tokenString)) {
-            throw new NotAuthorizedException("Invalid Auth Header");
-        }
-
-        return tokenString;
+        return authHeader.trim();
     }
 
     public String getBase64EncodedString(String authHeader) {

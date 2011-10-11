@@ -56,7 +56,7 @@ public class ProvisionedApplicationResource extends ParentResource {
     @PUT
     public Response provisionApplicationForApplication(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId,
         @PathParam("provisionedApplicationId") String provisionedApplicationId) {
 
@@ -90,7 +90,7 @@ public class ProvisionedApplicationResource extends ParentResource {
     @DELETE
     public Response removeApplicationFromUser(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId,
         @PathParam("provisionedApplicationId") String provisionedApplicationId) {
 

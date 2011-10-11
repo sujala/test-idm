@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
+import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.CloudAdminAuthorizationException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
@@ -113,7 +114,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         if ("POST".equals(method) && "tokens".equals(path)) {
             return request;
         }
-        final String authHeader = request.getHeaderValue(HttpHeaders.AUTHORIZATION);
+        final String authHeader = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
         if (authHeader == null || authHeader.isEmpty()) {
             throw new NotAuthenticatedException("The request for the resource must include the Authorization header.");
         }

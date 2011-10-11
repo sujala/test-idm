@@ -13,16 +13,16 @@ public interface IDMClient {
 
     @POST
     @Consumes({"application/xml", "application/json"})
-    @Path("/token")
+    @Path("/tokens")
     com.rackspace.api.idm.v1.Auth getAccessToken(
         @HeaderParam("Content-Type") String contentType,
         @HeaderParam("Accept") String accept,
-        @HeaderParam("Authorization") String authHeader, AuthCredentials trParam);
+        @HeaderParam("X-Auth-Token") String authHeader, AuthCredentials trParam);
 
     @GET
     @Produces({"application/xml", "application/json"})
-    @Path("/token/{tokenString}")
+    @Path("/tokens/{tokenString}")
     com.rackspace.api.idm.v1.Auth validateAccessToken(
-        @HeaderParam("Authorization") String authHeader);
+        @HeaderParam("X-Auth-Token") String authHeader);
 
 }

@@ -57,7 +57,7 @@ public class UserRecoveryTokenResource extends ParentResource {
     @GET
     public Response getPasswordResetToken(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId) {
 
         ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);

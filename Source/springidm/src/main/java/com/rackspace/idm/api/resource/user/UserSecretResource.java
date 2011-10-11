@@ -58,7 +58,7 @@ public class UserSecretResource extends ParentResource {
      */
     @GET
     public Response getUserSecret(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId) {
 
         getLogger().debug("Getting Secret Q&A for User: {}", userId);
@@ -89,7 +89,7 @@ public class UserSecretResource extends ParentResource {
      */
     @PUT
     public Response setUserSecret(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader, 
+        @HeaderParam("X-Auth-Token") String authHeader, 
         @PathParam("userId") String userId, 
         EntityHolder<com.rackspace.api.idm.v1.Secret> holder) {
         

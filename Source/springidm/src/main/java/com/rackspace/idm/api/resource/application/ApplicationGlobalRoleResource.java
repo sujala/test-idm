@@ -64,7 +64,7 @@ public class ApplicationGlobalRoleResource {
     @PUT
     public Response grantGlobalRoleToApplication(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId,
         @PathParam("roleId") String roleId) {
 
@@ -102,7 +102,7 @@ public class ApplicationGlobalRoleResource {
     @DELETE
     public Response deleteGlobalRoleFromUser(@Context Request request,
         @Context UriInfo uriInfo,
-        @HeaderParam("Authorization") String authHeader,
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId,
         @PathParam("roleId") String roleId) {
 
