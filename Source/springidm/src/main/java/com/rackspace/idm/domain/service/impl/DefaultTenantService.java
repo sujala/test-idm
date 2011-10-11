@@ -152,6 +152,8 @@ public class DefaultTenantService implements TenantService {
                 for (String tenantId : role.getTenantIds()) {
                     existingRole.addTenantId(tenantId);
                 }
+            } else {
+                existingRole.setTenantIds(null);
             }
             this.tenantDao.updateTenantRole(existingRole);
         }
