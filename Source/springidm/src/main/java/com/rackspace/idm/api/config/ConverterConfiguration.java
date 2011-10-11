@@ -4,13 +4,13 @@ import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
+import com.rackspace.idm.api.converter.ApplicationConverter;
 import com.rackspace.idm.api.converter.AuthConverter;
-import com.rackspace.idm.api.converter.ClientConverter;
+import com.rackspace.idm.api.converter.CredentialsConverter;
 import com.rackspace.idm.api.converter.CustomerConverter;
-import com.rackspace.idm.api.converter.GroupConverter;
 import com.rackspace.idm.api.converter.PasswordConverter;
 import com.rackspace.idm.api.converter.PasswordRulesConverter;
-import com.rackspace.idm.api.converter.PermissionConverter;
+import com.rackspace.idm.api.converter.RolesConverter;
 import com.rackspace.idm.api.converter.TokenConverter;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
@@ -24,10 +24,10 @@ public class ConverterConfiguration {
     private Configuration config;
 
     @Bean
-    public PermissionConverter permissionConverter() {
-        return new PermissionConverter();
+    RolesConverter rolesConverter() {
+        return new RolesConverter();
     }
-
+    
     @Bean
     public PasswordConverter passwordConverter() {
         return new PasswordConverter();
@@ -39,18 +39,13 @@ public class ConverterConfiguration {
     }
 
     @Bean
-    ClientConverter clientConverter() {
-        return new ClientConverter();
-    }
-
-    @Bean
-    GroupConverter groupConverter() {
-        return new GroupConverter();
+    ApplicationConverter clientConverter() {
+        return new ApplicationConverter(rolesConverter());
     }
 
     @Bean
     UserConverter userConverter() {
-        return new UserConverter();
+        return new UserConverter(rolesConverter());
     }
 
     @Bean
@@ -60,7 +55,7 @@ public class ConverterConfiguration {
 
     @Bean
     TokenConverter tokenConverter() {
-        return new TokenConverter(permissionConverter());
+        return new TokenConverter();
     }
 
     @Bean
@@ -74,7 +69,12 @@ public class ConverterConfiguration {
         return new AuthConverterCloudV11(config, tokenConverterCloudV11(),
             endpointConverterCloudV11());
     }
-
+    
+    @Bean
+    CredentialsConverter credentialsConverter() {
+        return new CredentialsConverter();
+    }
+    
     @Bean
     EndpointConverterCloudV11 endpointConverterCloudV11() {
         return new EndpointConverterCloudV11(config);

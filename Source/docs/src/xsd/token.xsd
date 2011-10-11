@@ -80,6 +80,8 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+	
+	<element name="rackerCredentials" type="idm:RackerCredentials" />
 
 	<element name="token" type="idm:Token">
 		<annotation>
@@ -298,7 +300,7 @@
 		</attribute>
 	</complexType>
 
-	<complexType name="AuthCredentials">
+	<complexType name="Credentials" abstract="true">
 		<attribute name="grant_type" type="idm:AuthGrantType" use="required">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
@@ -357,6 +359,18 @@
 		</attribute>
 	</complexType>
 
+	<complexType name="AuthCredentials">
+		<complexContent>
+			<extension base="idm:Credentials"></extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="RackerCredentials">
+		<complexContent>
+			<extension base="idm:Credentials"></extension>
+		</complexContent>
+	</complexType>
+	
 	<!-- Simple Types -->
 	<simpleType name="AuthGrantType">
 		<restriction base="string">

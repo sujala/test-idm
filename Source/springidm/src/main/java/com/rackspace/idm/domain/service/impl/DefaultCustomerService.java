@@ -6,32 +6,37 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.Clients;
+import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Users;
+import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.CustomerService;
+import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 
 public class DefaultCustomerService implements CustomerService {
 
-    private final ClientDao clientDao;
+    private final ApplicationDao clientDao;
     private final CustomerDao customerDao;
     private final UserDao userDao;
+    private final TokenService oauthService;
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultCustomerService(ClientDao clientDao, CustomerDao customerDao,
-        UserDao userDao) {
+    public DefaultCustomerService(ApplicationDao clientDao, CustomerDao customerDao,
+        UserDao userDao, TokenService oauthService) {
 
         this.clientDao = clientDao;
         this.customerDao = customerDao;
         this.userDao = userDao;
+        this.oauthService = oauthService;
     }
 
     
@@ -72,8 +77,8 @@ public class DefaultCustomerService implements CustomerService {
             userDao.deleteUser(user.getUsername());
         }
         
-        List<Client> clients = this.getClientListForCustomerId(customerId);
-        for (Client client : clients) {
+        List<Application> clients = this.getClientListForCustomerId(customerId);
+        for (Application client : clients) {
             clientDao.deleteClient(client);
         }
         
@@ -90,52 +95,74 @@ public class DefaultCustomerService implements CustomerService {
         return customer;
     }
 
-    
     @Override
-    public void setCustomerLocked(Customer customer, boolean locked) {
-        logger.info("Setting customer's locked state: {}", customer);
-
-        String customerId = customer.getRCN();
-
-        // lock all users under customer
-        userDao.setUsersLockedFlagByCustomerId(customerId, locked);
-
-        // lock all applications under customer
-        clientDao.setClientsLockedFlagByCustomerId(customerId, locked);
-
-        // lock customer
-        customer.setLocked(locked);
-        customerDao.updateCustomer(customer);
-
-        logger.info("Locked customer: {}", customer);
+    public Customer loadCustomer(String customerId) {
+        logger.debug("Loading Customer: {}", customerId);
+        Customer customer = getCustomer(customerId);
+        if (customer == null) {
+            String errorMsg = String.format("Customer not found: %s", customerId);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+        logger.debug("Loaded Customer: {}", customer);
+        
+        return customer;
     }
-
     
-    @Override
-    public void softDeleteCustomer(String customerId) {
-        logger.info("Soft Deleting customer: {}", customerId);
-        Customer customer = this.customerDao.getCustomerByCustomerId(customerId);
-        customer.setSoftDeleted(true);
-        this.customerDao.updateCustomer(customer);
-        logger.info("Soft Deleted customer: {}", customerId);
-    }
+//    @Override
+//    public void softDeleteCustomer(String customerId) {
+//        logger.info("Soft Deleting customer: {}", customerId);
+//        Customer customer = this.customerDao.getCustomerByCustomerId(customerId);
+//        customer.setSoftDeleted(true);
+//        this.customerDao.updateCustomer(customer);
+//        logger.info("Soft Deleted customer: {}", customerId);
+//    }
 
     
     @Override
     public void updateCustomer(Customer customer) {
         logger.info("Updating Customer: {}", customer);
         this.customerDao.updateCustomer(customer);
+        
+        if (customer.isLockStatusChanged()) {
+        	//TODO: implement some rules
+        }
+        
         logger.info("Updated Customer: {}", customer);
     }
     
+    /**
+     * does some processing once a customer like enable or disable all users of 
+     * that belong to that customer, revoke tokens, etc
+     * @param customer
+     * @param locked - true/false
+     */
+//    private void process(Customer customer, boolean locked) {
+//        logger.info("Setting customer's locked state: {}", customer);
+//
+//        String customerId = customer.getRCN();
+//
+//        // locks/unlockes all users under customer
+//        userDao.setUsersLockedFlagByCustomerId(customerId, locked);
+//
+//        // locks/unlocks all applications under customer
+//        clientDao.setClientsLockedFlagByCustomerId(customerId, locked);
+//       
+//        // revoke all tokens for customer
+//    	oauthService.revokeAllTokensForCustomer(customerId);
+//
+//        logger.info("Locked customer: {}", customer);
+//    }
+    
     private List<User> getUserListForCustomerId(String customerId) {
+    	FilterParam[] filters = new FilterParam[] { new FilterParam(FilterParamName.RCN, customerId)};
         int offset = 0;
         int limit = 100;
         List<User> userList = new ArrayList<User>();
         Users users = null;
 
         do {
-            users = userDao.getUsersByCustomerId(customerId, offset, limit);
+            users = userDao.getAllUsers(filters, offset, limit);
             offset = offset + limit;
             userList.addAll(users.getUsers());
 
@@ -144,11 +171,11 @@ public class DefaultCustomerService implements CustomerService {
         return userList;
     }
     
-    private List<Client> getClientListForCustomerId(String customerId) {
+    private List<Application> getClientListForCustomerId(String customerId) {
         int offset = 0;
         int limit = 100;
-        List<Client> clientList = new ArrayList<Client>();
-        Clients clients = null;
+        List<Application> clientList = new ArrayList<Application>();
+        Applications clients = null;
 
         do {
             clients = clientDao.getClientsByCustomerId(customerId, offset, limit);

@@ -10,7 +10,7 @@ import com.sun.jersey.api.json.JSONJAXBContext;
 @Provider
 public class JAXBContextResolver implements ContextResolver<JAXBContext> {
 
-    private final JAXBContext context;
+    private static JAXBContext context;
 
     public JAXBContextResolver() throws Exception {
         this.context = new JSONJAXBContext(
@@ -21,5 +21,9 @@ public class JAXBContextResolver implements ContextResolver<JAXBContext> {
     @Override
     public JAXBContext getContext(Class<?> objectType) {
         return context;
+    }
+    
+    public static JAXBContext get() {
+    	return context;
     }
 }

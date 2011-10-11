@@ -30,8 +30,8 @@ public class RepositoryConfiguration {
     }
 
     @Bean
-    public ClientDao ldapClientRepository() {
-        return new LdapClientRepository(connPools, appConfig);
+    public ApplicationDao ldapClientRepository() {
+        return new LdapApplicationRepository(connPools, appConfig);
     }
 
     @Bean

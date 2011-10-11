@@ -2,15 +2,14 @@ package com.rackspace.idm.domain.service;
 
 import java.util.List;
 
-import org.joda.time.DateTime;
-
-import com.rackspace.api.idm.v1.UserCredentials;
-import com.rackspace.idm.domain.entity.Clients;
+import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.PasswordCredentials;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
+import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.exception.DuplicateException;
 
@@ -30,10 +29,12 @@ public interface UserService {
 
     void deleteRacker(String rackerId);
     
+    void deleteUser(User user);
+    
     void deleteUser(String username);
 
-    Users getByCustomerId(String customerId, int offset, int limit);
-
+    Users getAllUsers(FilterParam[] filters, int offset, int limit);
+    
     String generateApiKey();
     
     Racker getRackerByRackerId(String rackerId);
@@ -54,14 +55,15 @@ public interface UserService {
 
     User getUser(String customerId, String username);
     
-    Clients getUserServices(User user);
+    Applications getUserApplications(User user);
     
-    User checkAndGetUser(String customerId, String username);
+    User loadUser(String customerId, String username);
+    
+    User loadUser(String userId);
 
     boolean isUsernameUnique(String username);
     
-    void setUserPassword(String customerId, String username, UserCredentials userCred, ScopeAccess token, 
-        boolean isRecovery);
+    void setUserPassword(String userId, PasswordCredentials userCred, ScopeAccess token);
 
     void updateUser(User user, boolean hasSelfUpdatedPassword);
 
@@ -69,7 +71,7 @@ public interface UserService {
 
     void updateUserStatus(User user, String statusStr);
 
-    DateTime getUserPasswordExpirationDate(String userName);
+//    DateTime getUserPasswordExpirationDate(String userName);
 
-    UserAuthenticationResult authenticateRacker(String username, String password);
+    //UserAuthenticationResult authenticateRacker(String username, String password);
 }

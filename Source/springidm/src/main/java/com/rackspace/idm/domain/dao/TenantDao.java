@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.dao;
 
 import java.util.List;
 
+import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
@@ -23,5 +25,7 @@ public interface TenantDao {
     List<TenantRole> getTenantRolesByParentAndClientId(String parentUniqueId, String clientId);
     String getNextTenantId();
     List<TenantRole> getTenantRolesForUser(User user);
+    List<TenantRole> getTenantRolesForUser(User user, FilterParam[] filters);
+    List<TenantRole> getTenantRolesForApplication(Application application, FilterParam[] filters);
     List<TenantRole> getAllTenantRolesForTenant(String tenantId);
 }

@@ -17,31 +17,31 @@ public class ClientTests {
     private final String customerId = "CustomerId";
     private final ClientStatus status = ClientStatus.ACTIVE;
 
-    private Client getTestClient() {
+    private Application getTestClient() {
         ClientSecret clientSecret = ClientSecret.newInstance(clientPassword);
 
-        return new Client(clientId, clientSecret, name,
+        return new Application(clientId, clientSecret, name,
             customerId, status);
     }
 
     @Test
     public void shouldReturnToString() {
-        Client client = getTestClient();
+        Application client = getTestClient();
 
         Assert.assertNotNull(client.toString());
     }
 
     @Test
     public void shouldReturnHashCode() {
-        Client client = getTestClient();
+        Application client = getTestClient();
 
         Assert.assertNotNull(client.hashCode());
     }
 
     @Test
     public void shouldReturnTrueForEquals() {
-        Client client1 = getTestClient();
-        Client client2 = getTestClient();
+        Application client1 = getTestClient();
+        Application client2 = getTestClient();
 
         Assert.assertTrue(client1.equals(client1));
         Assert.assertTrue(client1.equals(client2));
@@ -63,8 +63,8 @@ public class ClientTests {
 
     @Test
     public void shouldReturnFalseForEquals() {
-        Client client1 = getTestClient();
-        Client client2 = getTestClient();
+        Application client1 = getTestClient();
+        Application client2 = getTestClient();
 
         Assert.assertFalse(client1.equals(null));
         Assert.assertFalse(client1.equals(1));
@@ -102,7 +102,7 @@ public class ClientTests {
      @Test
     public void shouldRunValidation() {
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-        Set<ConstraintViolation<Client>> violations = validator.validate(new Client());
+        Set<ConstraintViolation<Application>> violations = validator.validate(new Application());
         Assert.assertEquals(3, violations.size());
         System.out.println(violations);
     }

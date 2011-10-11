@@ -6,6 +6,7 @@
 <schema elementFormDefault="qualified" attributeFormDefault="unqualified"
 	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
 	xmlns:idm="http://idm.api.rackspace.com/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+	xmlns:atom="http://www.w3.org/2005/Atom"
 	targetNamespace="http://idm.api.rackspace.com/v1.0">
 
 	<annotation>
@@ -19,14 +20,16 @@
 		</xsd:documentation>
 	</annotation>
 
+	<import namespace="http://www.w3.org/2005/Atom" schemaLocation="atom/atom-v1.0.xsd" />
+	
 	<include schemaLocation="role.xsd"></include>
 	
 	<!-- Elements -->
-	<element name="userCredentials" type="idm:UserCredentials">
+	<element name="passwordCredentials" type="idm:UserPasswordCredentials">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
 				xmlns="http://www.w3.org/1999/xhtml">
-				<p>A rackspace user's credentials.</p>
+				<p>A user's password credentials.</p>
 			</xsd:documentation>
 			<xsd:appinfo>
 				<xsdxt:samples>
@@ -98,7 +101,7 @@
 		</annotation>
 	</element>
 
-	<element name="userSecret" type="idm:UserSecret">
+	<element name="secret" type="idm:UserSecret">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
 				xmlns="http://www.w3.org/1999/xhtml">
@@ -138,7 +141,7 @@
 	
 
 	<!-- Complex Types -->
-	<complexType name="UserCredentials">
+	<complexType name="UserPasswordCredentials">
 		<sequence>
 			<element name="newPassword" type="idm:UserPassword"
 				minOccurs="0" maxOccurs="1">
@@ -204,12 +207,12 @@
 					</xsd:documentation>
 				</annotation>
 			</element>
-			<element name="password" type="idm:UserPassword" minOccurs="0"
+			<element name="passwordCredentials" type="idm:UserPasswordCredentials" minOccurs="0"
 				maxOccurs="1">
 				<annotation>
 					<xsd:documentation xml:lang="EN"
 						xmlns="http://www.w3.org/1999/xhtml">
-						<p>A user's password.</p>
+						<p>A user's credential.</p>
 					</xsd:documentation>
 				</annotation>
 			</element>
@@ -298,14 +301,6 @@
 				</xsd:documentation>
 			</annotation>
 		</attribute>
-		<attribute name="iname" type="string" use="optional">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>The user's unique i-name.</p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
 		<attribute name="region" type="string" use="optional">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
@@ -314,15 +309,7 @@
 				</xsd:documentation>
 			</annotation>
 		</attribute>
-		<attribute name="status" type="idm:UserStatus" use="optional">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>The user's status.</p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-		<attribute name="locked" type="boolean" use="optional">
+		<attribute name="enabled" type="boolean" use="optional">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
@@ -388,8 +375,8 @@
 
 	<complexType name="UserList">
 		<sequence>
-			<element name="user" type="idm:User" minOccurs="0" maxOccurs="1000">
-			</element>
+			<element name="user" type="idm:User" minOccurs="0" maxOccurs="1000"/>
+			<element ref="atom:link" minOccurs="0" maxOccurs="unbounded" />
 		</sequence>
 		<attribute name="totalRecords" type="xsd:int" use="optional">
 			<annotation>
@@ -441,7 +428,7 @@
 				</xsd:documentation>
 			</annotation>
 		</attribute>
-		<attribute name="sso" type="string" use="optional">
+		<attribute name="username" type="string" use="optional">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
@@ -474,42 +461,5 @@
 			</annotation>
 		</attribute>
 	</complexType>
-
-	<!-- Simple Types -->
-	<simpleType name="UserStatus">
-		<annotation>
-			<xsd:documentation xml:lang="EN"
-				xmlns="http://www.w3.org/1999/xhtml">
-				<p>
-					The UserStatus indicates whether the user is active
-					or inactive
-				</p>
-			</xsd:documentation>
-		</annotation>
-		<restriction base="string">
-			<enumeration value="ACTIVE">
-				<annotation>
-					<xsd:documentation xml:lang="EN"
-						xmlns="http://www.w3.org/1999/xhtml">
-						<p>
-							The user is Active and can authenticate with
-							the Idm API.
-						</p>
-					</xsd:documentation>
-				</annotation>
-			</enumeration>
-			<enumeration value="INACTIVE">
-				<annotation>
-					<xsd:documentation xml:lang="EN"
-						xmlns="http://www.w3.org/1999/xhtml">
-						<p>
-							The user is Inactive and cannot authenticate
-							with the Idm API.
-						</p>
-					</xsd:documentation>
-				</annotation>
-			</enumeration>
-		</restriction>
-	</simpleType>
 
 </schema>

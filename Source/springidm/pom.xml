@@ -755,9 +755,9 @@
                     <execution>
                         <goals>
                             <goal>compile</goal>
-                            <!-- use this goal to weave all your main classes -->
+                            <!--  use this goal to weave all your main classes -->
                             <goal>test-compile</goal>
-                            <!-- use this goal to weave all your test classes -->
+                            <!--  use this goal to weave all your test classes -->
                         </goals>
                     </execution>
                 </executions>
@@ -765,7 +765,7 @@
                     <source>1.6</source>
                     <target>1.6</target>
                 </configuration>
-            </plugin>
+            </plugin> 
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -910,6 +910,10 @@
                         <resource>
                             <directory>src/main/resources/xsd</directory>
                             <targetPath>docs/xsd</targetPath>
+                        </resource>
+                        <resource>
+                            <directory>src/main/resources/xslt</directory>
+                            <targetPath>docs/xslt</targetPath>
                         </resource>
                         <resource>
                             <directory>src/main/resources/xslt</directory>

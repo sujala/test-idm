@@ -39,21 +39,6 @@
   <xi:include href="concepts.xml"/>
   <xi:include href="general-api-info.xml"/>
   
-  <chapter xml:id="api_operations" role="api-reference">
-    <title>Service API (Client Operations)</title>
-    <section xmlns="http://docbook.org/ns/docbook"
-             xml:id="Service_API_Client_Operations"
-             version="5.0">
-      <title>Token Operations</title>
-      <para>The operations described in this section allow clients to authenticate and get access tokens.</para>
-      <wadl:resources xmlns:wadl="http://wadl.dev.java.net/2009/02">
-        <wadl:resource href="idm.wadl#tokens" >
-          <wadl:method href="authenticate"/>
-        </wadl:resource>
-      </wadl:resources>
-    </section>
-  </chapter>
-  
   <chapter xml:id="admin_operations" role="api-reference">
     <title>Admin API (Service Developer Operations)</title>
     <section xmlns="http://docbook.org/ns/docbook"
@@ -93,22 +78,14 @@
           <wadl:method href="updateUser"/>
           <wadl:method href="deleteUser"/>
         </wadl:resource>
-        <wadl:resource href="idm.wadl#userSoftDeleted" >
-          <wadl:method href="softDeleteUser"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#userLock" >
-          <wadl:method href="setUserLock"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#userStatus" >
-          <wadl:method href="setUserStatus"/>
-        </wadl:resource>
         <wadl:resource href="idm.wadl#userSecret" >
+          <wadl:method href="getUserSecret"/>
           <wadl:method href="setUserSecret"/>
         </wadl:resource>
-        <wadl:resource href="idm.wadl#userPassword" >
-          <wadl:method href="getUserPassword"/>
-          <wadl:method href="setUserPassword"/>
-          <wadl:method href="resetUserPassword"/>
+        <wadl:resource href="idm.wadl#userPasswordCredentials" >
+          <wadl:method href="getUserPasswordCredentials"/>
+          <wadl:method href="setUserPasswordCredentials"/>
+          <wadl:method href="resetUserPasswordCredentials"/>
         </wadl:resource>
         <wadl:resource href="idm.wadl#userPasswordRecoveryToken" >
           <wadl:method href="getPasswordRecoveryToken"/>
@@ -127,12 +104,19 @@
           <wadl:method href="addUserApplication"/>
           <wadl:method href="deleteUserApplication"/>
         </wadl:resource>
-        <wadl:resource href="idm.wadl#userApplicationRole" >
-          <wadl:method href="addUserApplicationRole"/>
-          <wadl:method href="deleteUserApplicationRole"/>
+        <wadl:resource href="idm.wadl#userTenantsRoles" >
+          <wadl:method href="getUserTenantsRoles"/>
+        </wadl:resource>
+        <wadl:resource href="idm.wadl#userTenantRole" >
+          <wadl:method href="addUserTenantRole"/>
+          <wadl:method href="deleteUserTenantRole"/>
         </wadl:resource>
         <wadl:resource href="idm.wadl#userRoles" >
-          <wadl:method href="getUserRoles"/>
+          <wadl:method href="getUserGlobalRoles"/>
+        </wadl:resource>
+        <wadl:resource href="idm.wadl#userRole" >
+          <wadl:method href="addUserGlobalRole"/>
+          <wadl:method href="deleteUserGlobalRole"/>
         </wadl:resource>
       </wadl:resources>
     </section>
@@ -155,15 +139,15 @@
         <wadl:resource href="idm.wadl#applicationSoftDeleted" >
           <wadl:method href="softDeleteApplication"/>
         </wadl:resource>
+        <wadl:resource href="idm.wadl#applicationSecretCredentials" >
+          <wadl:method href="resetApplicationSecretCredentials"/>
+        </wadl:resource>
         <wadl:resource href="idm.wadl#applicationDefinedRoles" >
           <wadl:method href="getApplicationDefinedRoles"/>
         </wadl:resource>
         <wadl:resource href="idm.wadl#applicationDefinedRole" >
           <wadl:method href="addApplicationDefinedRole"/>
           <wadl:method href="deleteApplicationDefinedRole"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#applicationSecret" >
-          <wadl:method href="resetApplicationSecret"/>
         </wadl:resource>
         <wadl:resource href="idm.wadl#applicationApplications" >
           <wadl:method href="getApplicationApplications"/>
@@ -172,12 +156,19 @@
           <wadl:method href="addApplicationApplication"/>
           <wadl:method href="deleteApplicationApplication"/>
         </wadl:resource>
-        <wadl:resource href="idm.wadl#applicationApplicationRole" >
-          <wadl:method href="addApplicationApplicationRole"/>
-          <wadl:method href="deleteApplicationApplicationRole"/>
+        <wadl:resource href="idm.wadl#applicationTenantsRoles" >
+          <wadl:method href="getApplicationTenantsRoles"/>
+        </wadl:resource>
+        <wadl:resource href="idm.wadl#applicationTenantRole" >
+          <wadl:method href="addApplicationTenantRole"/>
+          <wadl:method href="deleteApplicationTenantRole"/>
         </wadl:resource>
         <wadl:resource href="idm.wadl#applicationRoles" >
-          <wadl:method href="getApplicationRoles"/>
+          <wadl:method href="getApplicationGlobalRoles"/>
+        </wadl:resource>
+        <wadl:resource href="idm.wadl#applicationRole" >
+          <wadl:method href="addApplicationGlobalRole"/>
+          <wadl:method href="deleteApplicationGlobalRole"/>
         </wadl:resource>
       </wadl:resources>
     </section>
@@ -189,13 +180,13 @@
       <para>The operations described in this section allows service developers manage customer identity profiles.</para>
       <wadl:resources xmlns:wadl="http://wadl.dev.java.net/2009/02">
         <wadl:resource href="idm.wadl#identityProfile" >
+          <wadl:method href="addIdentityProfile"/>
           <wadl:method href="getIdentityProfile"/>
+          <wadl:method href="updateIdentityProfile"/>
           <wadl:method href="deleteIdentityProfile"/>
         </wadl:resource>
-        <wadl:resource href="idm.wadl#identityProfileLock" >
-          <wadl:method href="setIdentityProfileLock"/>
-        </wadl:resource>
         <wadl:resource href="idm.wadl#passwordRotationPolicy" >
+          <wadl:method href="getPasswordRotationPolicy"/>
           <wadl:method href="setPasswordRotationPolicy"/>
         </wadl:resource>
         <wadl:resource href="idm.wadl#identityProfileUsers" >
@@ -218,6 +209,25 @@
         </wadl:resource>
         <wadl:resource href="idm.wadl#passwordValidation" >
           <wadl:method href="validatePassword"/>
+        </wadl:resource>
+      </wadl:resources>
+    </section>
+    
+    
+    <section xmlns="http://docbook.org/ns/docbook"
+      xml:id="Role_Operations"
+      version="5.0">
+      <title>Role Operations</title>
+      <para>The operations described in this section allows service developers manage roles.</para>
+      <wadl:resources xmlns:wadl="http://wadl.dev.java.net/2009/02">
+        <wadl:resource href="idm.wadl#roles" >
+          <wadl:method href="getRoles"/>
+          <wadl:method href="addRole"/>
+        </wadl:resource>
+        <wadl:resource href="idm.wadl#role" >
+          <wadl:method href="getRole"/>
+          <wadl:method href="updateRole"/>
+          <wadl:method href="deleteRole"/>
         </wadl:resource>
       </wadl:resources>
     </section>

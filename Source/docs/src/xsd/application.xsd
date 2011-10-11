@@ -8,6 +8,7 @@
 	xmlns:idm="http://idm.api.rackspace.com/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
 	xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" jaxb:version="2.1"
 	xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+	xmlns:atom="http://www.w3.org/2005/Atom"
 	jaxb:extensionBindingPrefixes="xjc"
 	targetNamespace="http://idm.api.rackspace.com/v1.0">
 
@@ -23,6 +24,8 @@
 			</p>
 		</xsd:documentation>
 	</annotation>
+	
+	<import namespace="http://www.w3.org/2005/Atom" schemaLocation="atom/atom-v1.0.xsd" />
 	
 	<include schemaLocation="role.xsd"></include>
 
@@ -63,7 +66,7 @@
 		</annotation>
 	</element>
 
-	<element name="applicationCredentials" type="idm:ApplicationCredentials">
+	<element name="secretCredentials" type="idm:ApplicationSecretCredentials">
 		<annotation>
 			<xsd:documentation>
 				<p>A rackspace applications's credentials.</p>
@@ -85,11 +88,11 @@
 	<complexType name="Application">
 		<sequence>
 			<element ref="idm:roles" />
-			<element name="credentials" type="idm:ApplicationCredentials"
+			<element name="secretCredentials" type="idm:ApplicationSecretCredentials"
 				minOccurs="0" maxOccurs="1">
 				<annotation>
 					<documentation>
-						<p>The application's credentials.</p>
+						<p>The application's secret credentials.</p>
 					</documentation>
 				</annotation>
 			</element>
@@ -101,7 +104,7 @@
 				</documentation>
 			</annotation>
 		</attribute>
-		<attribute name="customerId" type="xsd:string" use="required">
+		<attribute name="customerId" type="xsd:string" use="optional">
 			<annotation>
 				<documentation>
 					<p>
@@ -110,15 +113,6 @@
 				</documentation>
 			</annotation>
 		</attribute>
-		<attribute name="customerInum" type="xsd:string">
-            <annotation>
-                <documentation>
-                    <p>
-                        The unique inum for the customer the application belongs to.
-                    </p>
-                </documentation>
-            </annotation>		
-		</attribute>
 		<attribute name="name" type="string" use="required">
 			<annotation>
 				<documentation>
@@ -126,21 +120,7 @@
 				</documentation>
 			</annotation>
 		</attribute>
-		<attribute name="iname" type="string" use="optional">
-			<annotation>
-				<documentation>
-					<p>The application's unique i-name.</p>
-				</documentation>
-			</annotation>
-		</attribute>
-		<attribute name="status" type="idm:ApplicationStatus" use="optional">
-			<annotation>
-				<documentation>
-					<p>The application's status.</p>
-				</documentation>
-			</annotation>
-		</attribute>
-		<attribute name="locked" type="boolean" use="optional">
+		<attribute name="enabled" type="boolean" use="optional">
 			<annotation>
 				<documentation>
 					<p>
@@ -200,8 +180,8 @@
 
 	<complexType name="ApplicationList">
 		<sequence>
-			<element name="application" type="idm:Application" minOccurs="0" maxOccurs="1000">
-			</element>
+			<element name="application" type="idm:Application" minOccurs="0" maxOccurs="1000"/>
+			<element ref="atom:link" minOccurs="0" maxOccurs="unbounded" />
 		</sequence>
 		<attribute name="totalRecords" type="xsd:int">
 			<annotation>
@@ -232,7 +212,7 @@
 		</attribute>
 	</complexType>
 
-	<complexType name="ApplicationCredentials">
+	<complexType name="ApplicationSecretCredentials">
 		<attribute name="clientSecret" type="string" use="required">
 			<annotation>
 				<documentation>
@@ -242,36 +222,4 @@
 		</attribute>
 	</complexType>
 	
-	<!-- Simple Types -->
-	<simpleType name="ApplicationStatus">
-		<annotation>
-			<documentation>
-				<p>
-					Indicates whether the application is active or inactive
-				</p>
-			</documentation>
-		</annotation>
-		<restriction base="string">
-			<enumeration value="ACTIVE">
-				<annotation>
-					<documentation>
-						<p>
-							The application is Active and can authenticate
-							with the Idm API.
-						</p>
-					</documentation>
-				</annotation>
-			</enumeration>
-			<enumeration value="INACTIVE">
-				<annotation>
-					<documentation>
-						<p>
-							The application is Inactive and cannot
-							authenticate with the Idm API.
-						</p>
-					</documentation>
-				</annotation>
-			</enumeration>
-		</restriction>
-	</simpleType>
 </schema>

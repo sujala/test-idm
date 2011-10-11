@@ -5,19 +5,19 @@ import com.rackspace.idm.domain.entity.Customer;
 
 public class CustomerConverter {
 
-    private final ObjectFactory of = new ObjectFactory();
+    private final ObjectFactory objectFactory = new ObjectFactory();
 
     public CustomerConverter() {
     }
 
-    public Customer toCustomerDO(com.rackspace.api.idm.v1.Customer jaxbCustomer) {
+    public Customer toCustomerDO(com.rackspace.api.idm.v1.CustomerIdentityProfile jaxbCustomer) {
 
         Customer customer = new Customer();
 
         customer.setId(jaxbCustomer.getId());
-        customer.setRCN(jaxbCustomer.getRCN());
-        if (jaxbCustomer.isLocked() != null) {
-            customer.setLocked(jaxbCustomer.isLocked());
+        customer.setRCN(jaxbCustomer.getRcn());
+        if (jaxbCustomer.isEnabled() != null) {
+            customer.setLocked(!jaxbCustomer.isEnabled());
         }
 
         if (jaxbCustomer.isSoftDeleted() != null) {
@@ -27,16 +27,14 @@ public class CustomerConverter {
         return customer;
     }
 
-    public com.rackspace.api.idm.v1.Customer toJaxbCustomer(Customer customer) {
+    public com.rackspace.api.idm.v1.CustomerIdentityProfile toJaxbCustomer(Customer customer) {
 
-        com.rackspace.api.idm.v1.Customer jaxbCustomer = of.createCustomer();
+        com.rackspace.api.idm.v1.CustomerIdentityProfile jaxbCustomer = objectFactory.createCustomerIdentityProfile();
         jaxbCustomer.setId(customer.getId());
-        jaxbCustomer.setRCN(customer.getRCN());
-        jaxbCustomer.setLocked(customer.isLocked());
+        jaxbCustomer.setRcn(customer.getRCN());
+        jaxbCustomer.setEnabled(!customer.isLocked());
         jaxbCustomer.setSoftDeleted(customer.getSoftDeleted());
 
         return jaxbCustomer;
     }
-    
-  
 }

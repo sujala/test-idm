@@ -4,7 +4,7 @@ import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
@@ -52,8 +52,8 @@ public class ServiceTestsBase {
     @Test
     public void BlankTest() {}
 
-    protected Client getFakeClient() {
-        Client client = new Client(clientId, clientSecret, name, 
+    protected Application getFakeClient() {
+        Application client = new Application(clientId, clientSecret, name, 
             customerId, status);
 
         client.setUniqueId(uniqueId);

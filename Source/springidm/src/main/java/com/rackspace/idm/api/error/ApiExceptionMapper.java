@@ -1,10 +1,20 @@
 package com.rackspace.idm.api.error;
 
-import com.rackspace.api.idm.v1.*;
-import com.rackspace.idm.ErrorMsg;
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.exception.*;
-import com.rackspacecloud.docs.auth.api.v1.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
+
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Variant;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+
 import org.apache.commons.lang.StringUtils;
 import org.omg.CORBA.portable.ApplicationException;
 import org.slf4j.Logger;
@@ -13,15 +23,48 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.*;
-import javax.ws.rs.core.Response.ResponseBuilder;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
+import com.rackspace.api.common.fault.v1.BadRequest;
+import com.rackspace.api.common.fault.v1.Detail;
+import com.rackspace.api.common.fault.v1.Fault;
+import com.rackspace.api.common.fault.v1.Forbidden;
+import com.rackspace.api.common.fault.v1.ItemNotFound;
+import com.rackspace.api.common.fault.v1.MethodNotAllowed;
+import com.rackspace.api.common.fault.v1.ServiceFault;
+import com.rackspace.api.common.fault.v1.ServiceUnavailable;
+import com.rackspace.api.common.fault.v1.Unauthorized;
+import com.rackspace.api.idm.v1.ApplicationNameConflict;
+import com.rackspace.api.idm.v1.BaseUrlIdConflict;
+import com.rackspace.api.idm.v1.ClientGroupConflict;
+import com.rackspace.api.idm.v1.CustomerIdConflict;
+import com.rackspace.api.idm.v1.NotProvisioned;
+import com.rackspace.api.idm.v1.PasswordSelfUpdateTooSoonFault;
+import com.rackspace.api.idm.v1.PasswordValidationFault;
+import com.rackspace.api.idm.v1.PermissionIdConflict;
+import com.rackspace.api.idm.v1.StalePasswordFault;
+import com.rackspace.api.idm.v1.UserDisabled;
+import com.rackspace.api.idm.v1.UsernameConflict;
+import com.rackspace.idm.ErrorMsg;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.BaseUrlConflictException;
+import com.rackspace.idm.exception.ClientConflictException;
+import com.rackspace.idm.exception.CloudAdminAuthorizationException;
+import com.rackspace.idm.exception.CustomerConflictException;
+import com.rackspace.idm.exception.DuplicateClientException;
+import com.rackspace.idm.exception.DuplicateClientGroupException;
+import com.rackspace.idm.exception.DuplicateUsernameException;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.IdmException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.NotAuthorizedException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.NotProvisionedException;
+import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
+import com.rackspace.idm.exception.PasswordValidationException;
+import com.rackspace.idm.exception.PermissionConflictException;
+import com.rackspace.idm.exception.StalePasswordException;
+import com.rackspace.idm.exception.UserDisabledException;
+import com.rackspacecloud.docs.auth.api.v1.AuthFault;
 
 @Component
 @Provider
@@ -99,13 +142,13 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             return toResponse(new UsernameConflict(), e, 409);
         }
         if (e instanceof DuplicateClientException || e instanceof ClientConflictException) {
-            return toResponse(new ClientnameConflict(), e, 409);
+            return toResponse(new ApplicationNameConflict(), e, 409);
         }
         if (e instanceof ClassCastException) {
             return toResponse(new BadRequest(), e, 400);
         }
         if (e instanceof IdmException) {
-            return toResponse(new ServerError(), e, 500);
+            return toResponse(new ServiceFault(), e, 500);
         }
         if (e instanceof WebApplicationException) {
             WebApplicationException wae = (WebApplicationException) e;
@@ -138,7 +181,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
                     variants.add(new Variant(MediaType.APPLICATION_JSON_TYPE, Locale.getDefault(), "UTF-8"));
                     return Response.notAcceptable(variants).build();
                 case 500:
-                    return toResponse(new ServerError(), e.getCause(), 500);
+                    return toResponse(new ServiceFault(), e.getCause(), 500);
                 case 503:
                     return toResponse(new ServiceUnavailable(), e.getCause(), 503);
                 default:
@@ -147,10 +190,10 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         }
 
         logger.error(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
-        return toResponse(new ServerError(), new Exception("Server Error"), 500);
+        return toResponse(new ServiceFault(), new Exception("Server Error"), 500);
     }
 
-    private Response toResponse(IdmFault fault, Throwable t, int code) {
+    private Response toResponse(Fault fault, Throwable t, int code) {
         fault.setCode(code);
 
         String msg = null;
@@ -177,7 +220,10 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         dtl = MDC.get(Audit.GUUID);
 
         fault.setMessage(msg);
-        fault.setDetails(dtl);
+        
+        Detail detail = new Detail();
+        detail.setDescription(dtl);
+        fault.setDetail(detail);
 
         ResponseBuilder builder = Response.status(code).entity(fault);
         return builder.build();

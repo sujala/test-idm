@@ -6,6 +6,7 @@
 <schema elementFormDefault="qualified" attributeFormDefault="unqualified"
 	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
 	xmlns:idm="http://idm.api.rackspace.com/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
+	xmlns:atom="http://www.w3.org/2005/Atom"
 	targetNamespace="http://idm.api.rackspace.com/v1.0">
 
 	<annotation>
@@ -19,22 +20,14 @@
 		</xsd:documentation>
 	</annotation>
 	
+    <import namespace="http://www.w3.org/2005/Atom" schemaLocation="atom/atom-v1.0.xsd" />
+    
 	<element name="role" type="idm:Role">
         <annotation>
             <xsd:documentation xml:lang="EN"
                 xmlns="http://www.w3.org/1999/xhtml">
                 <p>A rackspace employee role</p>
             </xsd:documentation>
-            <xsd:appinfo>
-                <xsdxt:samples>
-                    <xsdxt:sample>
-                        <xsdxt:code type="application/xml" href="../formattedsamples/role.xml" />
-                    </xsdxt:sample>
-                    <xsdxt:sample>
-                        <xsdxt:code type="application/json" href="../formattedsamples/role.json" />
-                    </xsdxt:sample>
-                </xsdxt:samples>
-            </xsd:appinfo>
         </annotation>
     </element>
     
@@ -42,22 +35,13 @@
         <annotation>
             <xsd:documentation xml:lang="EN"
                 xmlns="http://www.w3.org/1999/xhtml">
-                <p>A list of racker roles.</p>
+                <p>A list of roles.</p>
             </xsd:documentation>
-            <xsd:appinfo>
-                <xsdxt:samples>
-                    <xsdxt:sample>
-                        <xsdxt:code type="application/xml" href="../formattedsamples/roles.xml" />
-                    </xsdxt:sample>
-                    <xsdxt:sample>
-                        <xsdxt:code type="application/json" href="../formattedsamples/roles.json" />
-                    </xsdxt:sample>
-                </xsdxt:samples>
-            </xsd:appinfo>
         </annotation>
     </element>
-
+    
 	<complexType name="Role">
+	    <attribute name="id" type="xsd:string"/>
         <attribute name="name" type="xsd:string"/>
 		<attribute name="tenantId" type="xsd:string"/>
 		<attribute name="description" type="xsd:string"/>
@@ -66,8 +50,33 @@
     
     <complexType name="RoleList">
         <sequence>
-            <element name="role" type="idm:Role" minOccurs="0" maxOccurs="1000">
-            </element>
+            <element name="role" type="idm:Role" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="atom:link" minOccurs="0" maxOccurs="unbounded" />
         </sequence>
+        <attribute name="totalRecords" type="xsd:int" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN"
+                    xmlns="http://www.w3.org/1999/xhtml">
+                    <p>The total nubmer of records in a search</p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="offset" type="xsd:int" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN"
+                    xmlns="http://www.w3.org/1999/xhtml">
+                    <p>A zero based offset for the subset of users returned in a search
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="limit" type="xsd:int" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN"
+                    xmlns="http://www.w3.org/1999/xhtml">
+                    <p>The limit of users requested in a search.</p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
     </complexType>
 </schema>

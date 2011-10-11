@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.entity;
 import java.util.regex.Pattern;
 
 
+
 public class NumberRule extends PasswordRule {
     private static final int RULE_ID = 4;
     private static final String RULE_NAME = "Number Rule";

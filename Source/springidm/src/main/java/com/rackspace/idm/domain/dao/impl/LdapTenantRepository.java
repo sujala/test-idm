@@ -8,9 +8,12 @@ import org.apache.commons.lang.StringUtils;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.Filter;
@@ -222,7 +225,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
         if (role == null) {
             String errmsg = "Null instance of TenantRole was passed";
-            getLogger().error(errmsg);
+            getLogger().error(errmsg); 
             throw new IllegalArgumentException(errmsg);
         }
 
@@ -338,6 +341,16 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     }
 
     @Override
+	public List<TenantRole> getTenantRolesForUser(User user, FilterParam[] filters) {
+    	return getTenantRolesForClient(user.getUniqueId(), filters);
+	}
+
+    @Override
+	public List<TenantRole> getTenantRolesForApplication(Application application, FilterParam[] filters) {
+    	 return getTenantRolesForClient(application.getUniqueId(), filters);
+	}
+    
+    @Override
     public List<TenantRole> getTenantRolesByParentAndClientId(
         String parentUniqueId, String clientId) {
         if (StringUtils.isBlank(parentUniqueId)) {
@@ -368,6 +381,39 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
         return roles;
     }
+    
+	private List<TenantRole> getTenantRolesForClient(String uniqueParentClientId, FilterParam[] filters) {
+   	 getLogger().debug("Getting tenantRoles");
+   	 
+        LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
+        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE);
+        
+        if (filters != null) {
+        	for (FilterParam filter : filters) {
+        		// can only filter on tenantId and applicationId for now
+        		if (filter.getParam() == FilterParamName.APPLICATION_ID) {
+        			searchBuilder.addEqualAttribute(ATTR_CLIENT_ID, filter.getStrValue());
+        		}
+        		else if (filter.getParam() == FilterParamName.TENANT_ID) {
+        			searchBuilder.addEqualAttribute(ATTR_TENANT_RS_ID, filter.getStrValue());
+        		}
+        	}
+        }
+        
+        String dn = new LdapDnBuilder(uniqueParentClientId).addAttribute(ATTR_NAME, CONTAINER_DIRECT).build();
+   	 
+        Filter searchFilter = searchBuilder.build();
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        try {
+            roles = getMultipleTenantRoles(dn, searchFilter);
+        } catch (LDAPPersistException e) {
+            getLogger().error("Error getting tenant object", e);
+            throw new IllegalStateException(e);
+        }
+        getLogger().debug("Got {} Tenant Roles", roles.size());
+
+        return roles;
+	}
 
     private List<TenantRole> getMultipleTenantRoles(String parentUniqueId,
         Filter searchFilter) throws LDAPPersistException {

@@ -48,16 +48,16 @@ public final class Password {
     }
 
     public String getValue() {
-
         return value;
     }
 
     /**
      * Don't use this method.
      */
-    public void setValue(String pwd) {
-        throw new UnsupportedOperationException(
-            "Do not use this method. It's there to comply with the JavaBean spec.");
+    public void setValue(String value) {
+    	this.value = value;
+//        throw new UnsupportedOperationException(
+//            "Do not use this method. It's there to comply with the JavaBean spec.");
     }
 
     public DateTime getLastUpdated() {

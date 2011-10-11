@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.hasAccessToken;
+import com.rackspace.idm.domain.entity.HasAccessToken;
 
 @Component
 public class TokenConverterCloudV20 {
@@ -24,11 +24,11 @@ public class TokenConverterCloudV20 {
     public Token toToken(ScopeAccess scopeAccess) {
         Token token = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createToken();
         
-        if (scopeAccess instanceof hasAccessToken) {
+        if (scopeAccess instanceof HasAccessToken) {
             
-            token.setId(((hasAccessToken)scopeAccess).getAccessTokenString());
+            token.setId(((HasAccessToken)scopeAccess).getAccessTokenString());
             
-            Date expires = ((hasAccessToken)scopeAccess).getAccessTokenExp();
+            Date expires = ((HasAccessToken)scopeAccess).getAccessTokenExp();
             GregorianCalendar gc = new GregorianCalendar();
             gc.setTime(expires);
             

@@ -4,7 +4,7 @@ import java.util.Date;
 
 import org.joda.time.DateTime;
 
-public interface hasAccessToken {
+public interface HasAccessToken {
 
     void setAccessTokenExpired();
     

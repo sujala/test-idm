@@ -20,8 +20,10 @@ import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
+import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
+import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
 import com.rackspace.idm.exception.StalePasswordException;
@@ -196,6 +198,19 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
+    public void deleteUser(User user) {
+        getLogger().info("Deleting user - {}", user.getUsername());
+
+        Audit audit = Audit.log(user.getUsername()).delete();
+
+        deleteEntryAndSubtree(user.getUniqueId(), audit);
+
+        audit.succeed();
+        
+        getLogger().info("Deleted username - {}", user.getUsername());
+    }
+    
+    @Override
     public void deleteUser(String username) {
         getLogger().info("Deleting username - {}", username);
         if (StringUtils.isBlank(username)) {
@@ -218,21 +233,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         audit.succeed();
         getLogger().info("Deleted username - {}", username);
-    }
-
-    @Override
-    public Users getAllUsers(int offset, int limit) {
-        getLogger().debug("Search all users");
-
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
-            ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON).build();
-        Users users = getMultipleUsers(searchFilter,
-            ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
-
-        getLogger().debug("Found Users - {}", users);
-
-        return users;
-
     }
 
     @Override
@@ -449,23 +449,27 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public Users getUsersByCustomerId(String customerId, int offset, int limit) {
-        getLogger().debug("Doing search for customerId {}", customerId);
+    public Users getAllUsers(FilterParam[] filterParams, int offset, int limit) {
+        getLogger().debug("Getting all users");
 
-        if (StringUtils.isBlank(customerId)) {
-            getLogger().error("Null or Empty customerId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty customerId parameter.");
+        LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
+        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON);
+        searchBuilder.addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false));
+        
+        if (filterParams != null) {
+        	for (FilterParam filter : filterParams) {
+        		// can only filter on rcn and username for now
+        		if (filter.getParam() == FilterParamName.RCN) {
+        			searchBuilder.addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, filter.getStrValue());
+        		}
+        		else if (filter.getParam() == FilterParamName.USERNAME) {
+        			searchBuilder.addEqualAttribute(ATTR_UID, filter.getStrValue());
+        		}
+        	}
         }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        Users users = getMultipleUsers(searchFilter,
-            ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
+        
+        Filter searchFilter = searchBuilder.build();
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
 
         getLogger().debug("Found Users - {}", users);
 
@@ -960,6 +964,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         throws GeneralSecurityException, InvalidCipherTextException {
         CryptHelper cryptHelper = CryptHelper.getInstance();
         User user = new User();
+        user.setId(resultEntry.getAttributeValue(ATTR_ID));
         user.setUniqueId(resultEntry.getDN());
         user.setUsername(resultEntry.getAttributeValue(ATTR_UID));
         user.setCountry(resultEntry.getAttributeValue(ATTR_C));
@@ -1021,6 +1026,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         String locked = resultEntry.getAttributeValue(ATTR_LOCKED);
         if (locked != null) {
+        	//TODO: we're going to remove locked, for now using it as enabled flag
+        	user.setEnabled(!resultEntry.getAttributeValueAsBoolean(ATTR_LOCKED));
             user.setLocked(resultEntry.getAttributeValueAsBoolean(ATTR_LOCKED));
         }
 
@@ -1098,6 +1105,16 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(uNew.getPasswordObj()
                     .getValue())));
+        }
+        
+        if (uNew.getCustomerId() != null) {
+            if (StringUtils.isBlank(uNew.getCustomerId())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_CUSTOMER_NUMBER));
+            } else if (!StringUtils
+                .equals(uOld.getCustomerId(), uNew.getCustomerId())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_CUSTOMER_NUMBER,
+                    uNew.getCustomerId()));
+            }
         }
 
         if (uNew.getCountry() != null) {

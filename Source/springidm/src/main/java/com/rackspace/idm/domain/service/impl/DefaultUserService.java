@@ -8,44 +8,49 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rackspace.api.idm.v1.UserCredentials;
 import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.Clients;
-import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.PasswordComplexityResult;
+import com.rackspace.idm.domain.entity.PasswordCredentials;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
+import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.PasswordComplexityService;
+import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.PasswordValidationException;
 import com.rackspace.idm.util.HashHelper;
 
 public class DefaultUserService implements UserService {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(".+@.+\\.[\\w]+");
     private final AuthDao authDao;
-    private final ClientService clientService;
+    private final ApplicationService clientService;
+    private final TokenService oauthService;
     private final Configuration config;
-    private final CustomerDao customerDao;
+   // private final CustomerDao customerDao;
+    private final PasswordComplexityService passwordComplexityService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
     
     private final ScopeAccessDao scopeAccessDao;
@@ -53,18 +58,20 @@ public class DefaultUserService implements UserService {
     private final UserDao userDao;
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
-        CustomerDao customerDao, ScopeAccessDao scopeAccessDao,
-        ClientService clientService, Configuration config) {
+    	ScopeAccessDao scopeAccessDao,
+        ApplicationService clientService, Configuration config, TokenService oauthService,
+        PasswordComplexityService passwordComplexityService) {
 
         this.userDao = userDao;
         this.authDao = rackerDao;
-        this.customerDao = customerDao;
+        //this.customerDao = customerDao;
         this.scopeAccessDao = scopeAccessDao;
         this.clientService = clientService;
         this.config = config;
+        this.oauthService = oauthService;
+        this.passwordComplexityService = passwordComplexityService;
     }
 
-    
     @Override
     public void addRacker(Racker racker) {
         logger.info("Adding Racker {}", racker);
@@ -76,55 +83,21 @@ public class DefaultUserService implements UserService {
         logger.info("Added Racker {}", racker);
     }
 
-    
     @Override
     public void addUser(User user) throws DuplicateException {
         logger.info("Adding User: {}", user);
-        String customerId = user.getCustomerId();
         
         validateUserEmailAddress(user);
-
-        boolean isUsernameUnique = userDao.isUsernameUnique(user.getUsername());
-
-        if (!isUsernameUnique) {
-            logger.warn("Couldn't add user {} because username already taken",
-                user);
-            throw new DuplicateException(String.format(
-                "Username %s already exists", user.getUsername()));
-        }
-
-        Customer customer = customerDao.getCustomerByCustomerId(customerId);
-
-        if (customer == null) {
-            logger.warn("Couldn't add user {} because customer doesn't exist",
-                user);
-            throw new IllegalStateException("Customer doesn't exist");
-        }
-
-        user.setStatus(UserStatus.ACTIVE);
-
-        if (user.getPasswordObj() == null
-            || StringUtils.isBlank(user.getPassword())) {
-            Password newpassword = Password.generateRandom(false); // False,
-                                                                   // since a
-                                                                   // user
-                                                                   // wouldn't
-                                                                   // add
-                                                                   // himself.
-            user.setPasswordObj(newpassword);
-        } else
-
-        if (!user.getPasswordObj().isNew()) {
-            logger.error("Password of User is an existing instance");
-            throw new IllegalArgumentException(
-                "The password appears to be an existing instance. It must be a new instance!");
-        }
+        validateUsername(user);
+        setPasswordIfNecessary(user);
         
+        user.setEnabled(true);
         user.setId(this.userDao.getNextUserId());
-
+        
         userDao.addUser(user);
         logger.info("Added User: {}", user);
         
+        //Every user by default has the idm application provisioned for them
         logger.info("Adding User Scope Access for Idm to user {}", user);
         UserScopeAccess usa = new UserScopeAccess();
         usa.setUsername(user.getUsername());
@@ -136,44 +109,15 @@ public class DefaultUserService implements UserService {
         logger.info("Added User Scope Access for Idm to user {}", user);
     }
 
-    
+    //TODO: consider removing this method. Just here so code doesn't break
     @Override
-    public UserAuthenticationResult authenticate(String username,
-        String password) {
-        logger.debug("Authenticating User: {}", username);
-
-        UserAuthenticationResult result = userDao.authenticate(username,
-            password);
-
-        logger.debug("Authenticated User: {} : {}", username, result);
-        return result;
+    public UserAuthenticationResult authenticate(String username, String password) {
+        logger.debug("Authenticating User: {} by Username", username);
+        UserAuthenticationResult authenticated = userDao.authenticate(username, password);
+        logger.debug("Authenticated User: {} by Username - {}", username,
+            authenticated);
+        return authenticated;
     }
-    
-    @Override
-    public UserAuthenticationResult authenticateRacker(String username,
-        String password) {
-        logger.debug("Authenticating Racker: {}", username);
-        
-        if (!isTrustedServer()) {
-            throw new ForbiddenException();
-        }
-
-            boolean authenticated = authDao.authenticate(username, password);
-            logger.debug("Authenticated Racker {} : {}", username,
-                authenticated);
-            Racker racker = this.getRackerByRackerId(username);
-            
-            if (racker == null) {
-                racker = new Racker();
-                racker.setRackerId(username);
-                this.userDao.addRacker(racker);
-            }
-            
-            User user = new User(username);
-            user.setUniqueId(racker.getUniqueId());
-            return new UserAuthenticationResult(user, authenticated);
-    }
-
     
     @Override
     public UserAuthenticationResult authenticateWithApiKey(String username,
@@ -213,7 +157,7 @@ public class DefaultUserService implements UserService {
 
     
     @Override
-    public User checkAndGetUser(String customerId, String username) {
+    public User loadUser(String customerId, String username) {
         User user = this.getUser(customerId, username);
         if (user == null) {
             String errorMsg = String.format("User not found: %s - %s",
@@ -221,9 +165,20 @@ public class DefaultUserService implements UserService {
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
+        
         return user;
     }
 
+    @Override
+    public User loadUser(String userId) {
+        User user = this.getUserById(userId);
+        if (user == null) {
+            String errorMsg = String.format("User not found with id: %s", userId);
+            logger.warn(errorMsg);
+            throw new NotFoundException(errorMsg);
+        }
+        return user;
+    }
     
     @Override
     public void deleteRacker(String rackerId) {
@@ -234,6 +189,14 @@ public class DefaultUserService implements UserService {
         logger.info("Deleted Racker: {}", rackerId);
     }
 
+    @Override
+    public void deleteUser(User user) {
+        logger.info("Deleting User: {}", user.getUsername());
+
+        this.userDao.deleteUser(user);
+
+        logger.info("Deleted User: {}", user.getUsername());
+    }
     
     @Override
     public void deleteUser(String username) {
@@ -262,19 +225,16 @@ public class DefaultUserService implements UserService {
         }
     }
 
-    
     @Override
-    public Users getByCustomerId(String customerId, int offset, int limit) {
-        logger.debug("Getting Users for Cutomer: {}", customerId);
+    public Users getAllUsers(FilterParam[] filters, int offset, int limit) {
+        logger.debug("Getting All Users");
 
-        Users users = this.userDao.getUsersByCustomerId(customerId, offset,
-            limit);
+        Users users = this.userDao.getAllUsers(filters, offset, limit);
 
-        logger.debug("Got Users for Customer: {}", customerId);
+        logger.debug("Got All Users {}", filters);
 
         return users;
     }
-
     
     @Override
     public Racker getRackerByRackerId(String rackerId) {
@@ -350,50 +310,50 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
+//    
+//    @Override
+//    public DateTime getUserPasswordExpirationDate(String userName) {
+//
+//        DateTime passwordExpirationDate = null;
+//
+//        User user = getUser(userName);
+//
+//        if (user == null) {
+//            logger.debug("No user found, returning null.");
+//            return null;
+//        }
+//
+//        Customer customer = customerDao.getCustomerByCustomerId(user
+//            .getCustomerId());
+//
+//        if (customer == null) {
+//            logger.debug("No customer found, returning null");
+//            return null;
+//        }
+//
+//        Boolean passwordRotationPolicyEnabled = customer
+//            .getPasswordRotationEnabled();
+//
+//        if (passwordRotationPolicyEnabled != null
+//            && passwordRotationPolicyEnabled) {
+//            int passwordRotationDurationInDays = customer
+//                .getPasswordRotationDuration();
+//
+//            DateTime timeOfLastPwdChange = user.getPasswordObj()
+//                .getLastUpdated();
+//
+//            passwordExpirationDate = timeOfLastPwdChange
+//                .plusDays(passwordRotationDurationInDays);
+//        }
+//        logger
+//            .debug("Password expiration date set: {}", passwordExpirationDate);
+//
+//        return passwordExpirationDate;
+//    }
+
     
     @Override
-    public DateTime getUserPasswordExpirationDate(String userName) {
-
-        DateTime passwordExpirationDate = null;
-
-        User user = getUser(userName);
-
-        if (user == null) {
-            logger.debug("No user found, returning null.");
-            return null;
-        }
-
-        Customer customer = customerDao.getCustomerByCustomerId(user
-            .getCustomerId());
-
-        if (customer == null) {
-            logger.debug("No customer found, returning null");
-            return null;
-        }
-
-        Boolean passwordRotationPolicyEnabled = customer
-            .getPasswordRotationEnabled();
-
-        if (passwordRotationPolicyEnabled != null
-            && passwordRotationPolicyEnabled) {
-            int passwordRotationDurationInDays = customer
-                .getPasswordRotationDuration();
-
-            DateTime timeOfLastPwdChange = user.getPasswordObj()
-                .getLastUpdated();
-
-            passwordExpirationDate = timeOfLastPwdChange
-                .plusDays(passwordRotationDurationInDays);
-        }
-        logger
-            .debug("Password expiration date set: {}", passwordExpirationDate);
-
-        return passwordExpirationDate;
-    }
-
-    
-    @Override
-    public Clients getUserServices(User user) {
+    public Applications getUserApplications(User user) {
         if (user == null || user.getUniqueId() == null) {
             String errmsg = "Null User instance or is lacking uniqueID";
             logger.debug(errmsg);
@@ -402,7 +362,7 @@ public class DefaultUserService implements UserService {
         List<ScopeAccess> services = this.scopeAccessDao
             .getScopeAccessesByParent(user.getUniqueId());
 
-        List<Client> clientList = new ArrayList<Client>();
+        List<Application> clientList = new ArrayList<Application>();
 
         for (ScopeAccess service : services) {
             if (service instanceof UserScopeAccess) {
@@ -411,7 +371,7 @@ public class DefaultUserService implements UserService {
             }
         }
 
-        Clients clients = new Clients();
+        Applications clients = new Applications();
         clients.setClients(clientList);
         clients.setOffset(0);
         clients.setLimit(clientList.size());
@@ -442,50 +402,53 @@ public class DefaultUserService implements UserService {
 
     
     @Override
-    public void setUserPassword(String customerId, String username,
-        UserCredentials userCred, ScopeAccess token, boolean isRecovery) {
+    public void setUserPassword(String userId, PasswordCredentials userCred, ScopeAccess token) {
+        logger.debug("Updating Password for User: {}", userId);
+        
+        User user = loadUser(userId);
+        checkPasswordComplexity(userCred.getNewPassword());
 
-        logger.debug("Updating Password for User: {}", username);
-
-        if (!isRecovery) {
-            if (userCred.getCurrentPassword() == null
-                || StringUtils.isBlank(userCred.getCurrentPassword()
-                    .getPassword())) {
+        if (userCred.isVerifyCurrentPassword()) {
+            if (userCred.getCurrentPassword() == null ||
+                StringUtils.isBlank(userCred.getCurrentPassword().getValue())) {
                 String errMsg = "Value for Current Password cannot be blank";
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
-
+            
             // authenticate using old password
-            UserAuthenticationResult uaResult = this.authenticate(username,
-                userCred.getCurrentPassword().getPassword());
+            UserAuthenticationResult uaResult = this.authenticate(user.getUsername(), userCred.getCurrentPassword().getValue());
             if (!uaResult.isAuthenticated()) {
-                String errorMsg = String.format(
-                    "Current password does not match for user: %s", username);
+                String errorMsg = String.format("Current password does not match for user: %s", userId);
                 logger.warn(errorMsg);
                 throw new NotAuthenticatedException(errorMsg);
             }
         }
 
-        User user = this.checkAndGetUser(customerId, username);
-
-        user.setPasswordObj(Password.newInstance(userCred.getNewPassword()
-            .getPassword()));
-        boolean isSelfUpdate = (token instanceof UserScopeAccess && ((UserScopeAccess) token)
-            .getUsername().equals(username))
-            || (token instanceof PasswordResetScopeAccess && ((PasswordResetScopeAccess) token)
-                .getUsername().equals(username));
+        user.setPasswordObj(Password.newInstance(userCred.getNewPassword().getValue()));
+        
+        boolean isSelfUpdate = (token instanceof UserScopeAccess && ((UserScopeAccess) token).getUsername().equals(user.getUsername()))
+            				|| (token instanceof PasswordResetScopeAccess && ((PasswordResetScopeAccess) token).getUsername().equals(user.getUsername()));
 
         this.updateUser(user, isSelfUpdate);
         logger.debug("Updated password for user: {}", user);
-
     }
 
-    
     @Override
     public void updateUser(User user, boolean hasSelfUpdatedPassword) {
         logger.info("Updating User: {}", user);
         validateUserEmailAddress(user);
+        
+        //TODO: We might restrict this to certain roles, so we might need a param passed in this method as well
+        if (user.isSoftDeleted()) {
+            oauthService.revokeAllTokensForUser(user.getUniqueId());
+        }
+        
+        //TODO: We might restrict this to certain roles, so we might need a param passed in this method as well
+        if (user.isDisabled()) {
+        	 oauthService.revokeAllTokensForUser(user.getUniqueId());
+        }
+        
         this.userDao.updateUser(user, hasSelfUpdatedPassword);
         logger.info("Updated User: {}", user);
     }
@@ -528,12 +491,55 @@ public class DefaultUserService implements UserService {
         
     }
 
-
+    private void validateUsername(User user) {
+    	boolean isUsernameUnique = userDao.isUsernameUnique(user.getUsername());
+    	if (!isUsernameUnique) {
+    		logger.warn("Couldn't add user {} because username already taken",
+    				user);
+    		throw new DuplicateUsernameException(String.format(
+    		  	"Username %s already exists", user.getUsername()));
+	 	}
+    }
+    
     @Override
     public User getUserById(String id) {
         logger.debug("Getting User: {}", id);
         User user = userDao.getUserById(id);
         logger.debug("Got User: {}", user);
         return user;
+    }
+
+    private void setPasswordIfNecessary(User user) {
+    	Password password = user.getPasswordObj();
+    	
+        if (!user.hasEmptyPassword()) {
+        	checkPasswordComplexity(password);
+        }
+        else {
+        	// False, since a user wouldn't add himself
+        	Password newpassword = Password.generateRandom(false); 
+        	user.setPasswordObj(newpassword);
+        }
+
+        if (!user.getPasswordObj().isNew()) {
+            logger.error("Password of User is an existing instance");
+            throw new IllegalArgumentException(
+                "The password appears to be an existing instance. It must be a new instance!");
+        }
+    }
+    
+    private void checkPasswordComplexity(Password password) {
+       	if (isPasswordRulesEnforced()) {
+    		PasswordComplexityResult result = passwordComplexityService.checkPassword(password.getValue());
+    		if (!result.isValidPassword()) {
+    			String errorMsg = String.format("Invalid password %s", password);
+    			logger.warn(errorMsg);
+    			throw new PasswordValidationException(errorMsg);
+    		}
+    	}
+    }
+    
+    private boolean isPasswordRulesEnforced() {
+        return config.getBoolean("password.rules.enforced", true);
     }
 }

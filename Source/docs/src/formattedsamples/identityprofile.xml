@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
-<customeridentityprofile xmlns="http://idm.api.rackspace.com/v1.0"
+<customerIdentityProfile xmlns="http://idm.api.rackspace.com/v1.0"
     softDeleted="false" 
-    locked="false" 
-    iname="@Rackspace*Customer"
-    inum="@FFFF.FFFF.FFFF.FFFF!0ABE.34EC" 
-    customerId="RCN-123-549-034" />
+    enabled="false" 
+    rcn="RCN-123-549-034" />
     

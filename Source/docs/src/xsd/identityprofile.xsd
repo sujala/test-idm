@@ -65,41 +65,32 @@
 
 	<!-- Complex Types -->
 	<complexType name="IdentityProfile">
-		<attribute name="customerId" type="string" use="optional">
+		<attribute name="id" type="string" use="optional">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
 					<p>
-						A unique customer Id. This is also known as the customer number.
+						A unique id.
 					</p>
 				</xsd:documentation>
 			</annotation>
 		</attribute>
-		<attribute name="inum" type="string" use="optional">
+		<attribute name="rcn" type="string" use="required">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
 					<p>
-						A unique inum associated with the customer.
-                    </p>
+						This is the customer number.
+					</p>
 				</xsd:documentation>
 			</annotation>
 		</attribute>
-        <attribute name="iname" type="xsd:string" use="optional">
-			<annotation>
-				<xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
-					<p>
-						A unique iname associated with the customer inum.
-                    </p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-        <attribute name="locked" type="boolean" use="optional">
+        <attribute name="enabled" type="boolean" use="optional">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
 					<p>
-						A boolean indicating if the customer is locked.
+						A boolean indicating if the customer is enabled.
                     </p>
 				</xsd:documentation>
 			</annotation>

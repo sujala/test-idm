@@ -18,7 +18,7 @@ import org.junit.Test;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
@@ -35,7 +35,7 @@ import com.rackspace.idm.domain.entity.UserScopeAccess;
 public class LdapScopeAccessPersistenceRepositoryTest {
     private LdapCustomerRepository customerRepo;
     private ScopeAccessDao repo;
-    private LdapClientRepository clientRepo;
+    private LdapApplicationRepository clientRepo;
     private LdapConnectionPools connPools;
 
     static String customerId = "DELETE_My_CustomerId";
@@ -57,8 +57,8 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     String accessToken = "YYYYYYY";
     String refreshToken = "ZZZZZZZ";
 
-    Client                         client       = null;
-    Client                         client2      = null;
+    Application                         client       = null;
+    Application                         client2      = null;
     Customer                       customer     = null;
     
     String                          id = "XXXX";
@@ -68,8 +68,8 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         final LdapConnectionPools pools = getConnPools();
-        final LdapClientRepository cleanUpRepo = getClientRepo(pools);
-        final Client deleteme = cleanUpRepo.getClientByClientId("XXX");
+        final LdapApplicationRepository cleanUpRepo = getClientRepo(pools);
+        final Application deleteme = cleanUpRepo.getClientByClientId("XXX");
         if (deleteme != null) {
             cleanUpRepo.deleteClient(deleteme);
         }
@@ -585,7 +585,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         Assert.assertNotNull(po.getResourceGroups());
     }
 
-    private static LdapClientRepository getClientRepo(LdapConnectionPools connPools) {
+    private static LdapApplicationRepository getClientRepo(LdapConnectionPools connPools) {
         Configuration appConfig = null;
         try {
             appConfig = new PropertiesConfiguration("config.properties");
@@ -593,7 +593,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         } catch (ConfigurationException e) {
             System.out.println(e);
         }
-        return new LdapClientRepository(connPools, appConfig);
+        return new LdapApplicationRepository(connPools, appConfig);
     }
 
     private static ScopeAccessDao getSaRepo(LdapConnectionPools connPools) {
@@ -646,22 +646,22 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         return newCustomer;
     }
 
-    private Client addNewTestClient(String clientId) {
-        final Client newClient = createTestClientInstance();
+    private Application addNewTestClient(String clientId) {
+        final Application newClient = createTestClientInstance();
         newClient.setClientId(clientId);
         clientRepo.addClient(newClient);
         return newClient;
     }
     
-    private Client addNewTestClient2(String clientId) {
-        final Client newClient = createTestClientInstance();
+    private Application addNewTestClient2(String clientId) {
+        final Application newClient = createTestClientInstance();
         newClient.setClientId(clientId2);
         clientRepo.addClient(newClient);
         return newClient;
     }
 
-    private Client createTestClientInstance() {
-        final Client newClient = new Client("DELETE_My_ClientId", ClientSecret.newInstance("DELETE_My_Client_Secret"),
+    private Application createTestClientInstance() {
+        final Application newClient = new Application("DELETE_My_ClientId", ClientSecret.newInstance("DELETE_My_Client_Secret"),
                 "DELETE_My_Name", "RCN-123-456-789", ClientStatus.ACTIVE);
         newClient.setLocked(false);
         newClient.setSoftDeleted(false);

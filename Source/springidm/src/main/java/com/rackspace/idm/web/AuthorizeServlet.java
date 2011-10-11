@@ -18,11 +18,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
-import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.UserDisabledException;
@@ -31,7 +31,7 @@ public class AuthorizeServlet extends HttpServlet {
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private ClientService clientService;
+    private ApplicationService clientService;
     private UserService userService;
     private ScopeAccessService scopeAccessService;
     
@@ -69,14 +69,14 @@ public class AuthorizeServlet extends HttpServlet {
 
         String[] scopes = scopeList.split(" ");
         for (String s : scopes) {
-            Client c = getClientService().getClientByScope(s);
+            Application c = getClientService().getClientByScope(s);
             if (c == null) {
                 setErrorResponse(response, redirectUri, INVALID_SCOPE);
                 return;
             }
         }
 
-        Client client = getClientService().getById(clientId);
+        Application client = getClientService().getById(clientId);
         if (client == null || client.isDisabled()) {
             setErrorResponse(response, redirectUri, UNAUTHORIZED_CLIENT);
             return;
@@ -117,10 +117,10 @@ public class AuthorizeServlet extends HttpServlet {
             return;
         }
 
-        List<Client> clients = new ArrayList<Client>();
+        List<Application> clients = new ArrayList<Application>();
         String[] scopes = scopeList.split(" ");
         for (String s : scopes) {
-            Client c = getClientService().getClientByScope(s);
+            Application c = getClientService().getClientByScope(s);
             if (c == null) {
                 setErrorResponse(response, redirectUri, INVALID_SCOPE);
                 return;
@@ -128,7 +128,7 @@ public class AuthorizeServlet extends HttpServlet {
             clients.add(c);
         }
 
-        Client client = getClientService().getById(clientId);
+        Application client = getClientService().getById(clientId);
         if (client == null || client.isDisabled()) {
             setErrorResponse(response, redirectUri, UNAUTHORIZED_CLIENT);
             return;
@@ -149,7 +149,7 @@ public class AuthorizeServlet extends HttpServlet {
             return;
         }
 
-        for (Client c : clients) {
+        for (Application c : clients) {
             ScopeAccess sa = getScopeAccessService()
                 .getDirectScopeAccessForParentByClientId(
                     uaResult.getUser().getUniqueId(), c.getClientId());
@@ -174,11 +174,11 @@ public class AuthorizeServlet extends HttpServlet {
 
     }
 
-    private synchronized ClientService getClientService() {
+    private synchronized ApplicationService getClientService() {
         if (clientService == null) {
             WebApplicationContext context = WebApplicationContextUtils
                 .getWebApplicationContext(getServletContext());
-            clientService = context.getBean(ClientService.class);
+            clientService = context.getBean(ApplicationService.class);
         }
         return clientService;
     }

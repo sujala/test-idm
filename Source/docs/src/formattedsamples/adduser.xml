@@ -9,5 +9,7 @@
     customerId="RCN-000-000-000" username="jqsmith">
     <secret secretAnswer="Francis" 
         secretQuestion="What is your dogs name?" />
-    <password password="C@n+f001me!" />
+    <passwordCredentials xmlns="http://idm.api.rackspace.com/v1.0" >
+       <currentPassword password="C@n+f001me!" />
+    </passwordCredentials>
 </user>

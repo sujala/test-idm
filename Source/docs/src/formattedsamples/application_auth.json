@@ -3,8 +3,11 @@
     "id": "ab48a9efdfedb23ty3494",
     "expiresIn": 3600
   },
-  "client": { 
-    "clientId": "ab4820dhcb39347",
-    "customerId": "RACKSPACE",
-   }
+  "refreshToken": {
+    "id": "8792gdfskjbadf98y234r"
+  },
+  "user" : {
+    "clientId": "781hhh47kj34kj3434",
+    "customerId": "RCN-000-000-000",
+  }
 }

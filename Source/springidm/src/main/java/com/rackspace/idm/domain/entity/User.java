@@ -10,6 +10,8 @@ import org.joda.time.DateTimeZone;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+
+import java.util.List;
 import java.util.Locale;
 
 public class User implements Auditable {
@@ -24,8 +26,6 @@ public class User implements Auditable {
     @Pattern(regexp = RegexPatterns.USERNAME, message = MessageTexts.USERNAME)
     private String username = null;
 
-    @NotNull
-    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String customerId = null;
 
     private String email = null;
@@ -56,13 +56,14 @@ public class User implements Auditable {
     
     private String secureId = null;
     
+    private Boolean enabled = null;
 
-
+    private List<TenantRole> roles = null;
+    
     public User() {
         // Needed by JAX-RS
     }
 
-    @Deprecated
     public User(String username) {
         this.username = username;
     }
@@ -188,6 +189,14 @@ public class User implements Auditable {
         this.locked = isLocked;
     }
     
+    public Boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
+    }
+    
     public Boolean isMaxLoginFailuresExceded() {
         return maxLoginFailuresExceded;
     }
@@ -222,6 +231,10 @@ public class User implements Auditable {
         }
     }
 
+    public boolean hasEmptyPassword() {
+     	return getPasswordObj() == null || StringUtils.isBlank(getPasswordObj().getValue());
+    }
+    
     public Password getPasswordObj() {
         return credential.getPassword();
     }
@@ -391,13 +404,8 @@ public class User implements Auditable {
         this.updated = updated;
     }
     
-    
     public boolean isDisabled() {
-        boolean disabled = false;
-        disabled = this.isLocked() == null ? disabled : disabled || this.isLocked().booleanValue();
-        disabled = this.isSoftDeleted() == null ? disabled : disabled || this.isSoftDeleted().booleanValue();
-        disabled = this.getStatus() == null ? disabled : disabled || this.getStatus().equals(UserStatus.INACTIVE);
-        return disabled;
+    	return this.enabled == null ? true : !this.enabled;
     }
 
     public void setDefaults() {
@@ -411,11 +419,19 @@ public class User implements Auditable {
 
         this.setLocked(false);
         this.setSoftDeleted(false);
-        this.setStatus(UserStatus.ACTIVE);
+        this.setEnabled(true);
     }
 
     public void copyChanges(User modifiedUser) {
 
+    	if (modifiedUser.getCustomerId() != null) {
+    		setCustomerId(modifiedUser.getCustomerId());
+    	}
+    	
+    	if (modifiedUser.isEnabled() != null) {
+    		setEnabled(modifiedUser.isEnabled());
+    	}
+    	
         if (modifiedUser.getPersonId() != null) {
             setPersonId(modifiedUser.getPersonId());
         }
@@ -617,5 +633,12 @@ public class User implements Auditable {
         String format = "username=%s, customer=%s";
         return String.format(format, getUsername(), getCustomerId());
     }
-    
+
+	public List<TenantRole> getRoles() {
+		return roles;
+	}
+
+	public void setRoles(List<TenantRole> roles) {
+		this.roles = roles;
+	}
 }

@@ -32,7 +32,7 @@ import com.rackspace.idm.exception.NotFoundException;
 public class RootResource {
 
     private final CloudVersionsResource cloudVersionsResource;
-    private final VersionResource versionResource;
+    private final Version10Resource versionResource;
     private final ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -40,7 +40,7 @@ public class RootResource {
     private UriInfo uriInfo;
     
     @Autowired
-    public RootResource(CloudVersionsResource cloudVersionsResource, VersionResource versionResource, 
+    public RootResource(CloudVersionsResource cloudVersionsResource, Version10Resource versionResource, 
     		Configuration config, ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder ) {
         this.cloudVersionsResource = cloudVersionsResource;
         this.versionResource = versionResource;
@@ -88,7 +88,7 @@ public class RootResource {
     }
 
     @Path("{versionId: v[1-9].[0-9]}")
-    public VersionResource getVersionResource(@PathParam("versionId") String versionId) {
+    public Version10Resource getVersionResource(@PathParam("versionId") String versionId) {
         if (versionId.equalsIgnoreCase("v1.0")) {
             return versionResource;
         }

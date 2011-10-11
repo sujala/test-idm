@@ -69,26 +69,15 @@
                     <method href="#updateUser" />
                     <method href="#deleteUser" />
                     
-                    <resource id="userSoftDeleted" path="softdeleted">
-                        <method href="#softDeleteUser" />
-                    </resource>
-                    
-                    <resource id="userLock" path="lock">
-                        <method href="#setUserLock" />
-                    </resource>
-                    
-                    <resource id="userStatus" path="status">
-                        <method href="#setUserStatus" />
-                    </resource>
-                    
                     <resource id="userSecret" path="secret">
+                        <method href="#getUserSecret" />
                         <method href="#setUserSecret" />
                     </resource>
                     
-                    <resource id="userPassword" path="password">
-                        <method href="#getUserPassword" />
-                        <method href="#setUserPassword" />
-                        <method href="#resetUserPassword" />
+                    <resource id="userPasswordCredentials" path="passwordcredentials">
+                        <method href="#getUserPasswordCredentials" />
+                        <method href="#setUserPasswordCredentials" />
+                        <method href="#resetUserPasswordCredentials" />
                         
                         <resource id="userPasswordRecoveryToken" path="recoverytoken">
                             <method href="#getPasswordRecoveryToken" />
@@ -112,17 +101,30 @@
                             <param name="applicationId" style="template" type="xsd:string" required="true"/>
                             <method href="#addUserApplication" />
                             <method href="#deleteUserApplication" />
-                            
-                            <resource id="userApplicationRole" path="roles/{roleId}">
-                                <param name="roleId" style="template" type="xsd:string" required="true"/>
-                                <method href="#addUserApplicationRole" />
-                                <method href="#deleteUserApplicationRole" />
-                            </resource>
                         </resource>
                     </resource>
                     
                     <resource id="userRoles" path="roles">
-                        <method href="#getUserRoles" />
+                        <method href="#getUserGlobalRoles" />
+                        
+                        <resource id="userRole" path="{roleId}">
+                            <param name="roleId" style="template" type="xsd:string" required="true"/>
+                            <method href="#addUserGlobalRole" />
+                            <method href="#deleteUserGlobalRole" />
+                        </resource>
+                    </resource>
+                    
+                    <resource id="userTenants" path="tenants">
+                        <resource id="userTenantsRoles" path="roles">
+                            <method href="#getUserTenantsRoles" />
+                        </resource>
+                        
+                        <resource id="userTenantRole" path="{tenantId}/roles/{roleId}">
+                            <param name="tenantId" style="template" type="xsd:string" required="true"/>
+                            <param name="roleId" style="template" type="xsd:string" required="true"/>
+                            <method href="#addUserTenantRole" />
+                            <method href="#deleteUserTenantRole" />
+                        </resource>
                     </resource>
                 </resource>
             </resource> 
@@ -141,22 +143,8 @@
                     <method href="#updateApplication" />
                     <method href="#deleteApplication" />
                     
-                    <resource id="applicationSoftDeleted" path="softdeleted">
-                        <method href="#softDeleteApplication" />
-                    </resource>
-                    
-                    <resource id="applicationDefinedRoles" path="definedroles">
-                        <method href="#getApplicationDefinedRoles" />
-                        
-                        <resource id="applicationDefinedRole" path="{roleId}">
-                            <param name="roleId" style="template" type="xsd:string" required="true"/>
-                            <method href="#addApplicationDefinedRole" />
-                            <method href="#deleteApplicationDefinedRole" />
-                        </resource>
-                    </resource>
-                    
-                    <resource id="applicationSecret" path="secret">
-                        <method href="#resetApplicationSecret" />
+                    <resource id="applicationSecretCredentials" path="secretcredentials">
+                        <method href="#resetApplicationSecretCredentials" />
                     </resource>
                     
                     <resource id="applicationApplications" path="applications">
@@ -176,11 +164,46 @@
                     </resource>
                     
                     <resource id="applicationRoles" path="roles">
-                        <method href="#getApplicationRoles" />
+                        <method href="#getApplicationGlobalRoles" />
+                        
+                        <resource id="applicationRole" path="{roleId}">
+                            <param name="roleId" style="template" type="xsd:string" required="true"/>
+                            <method href="#addApplicationGlobalRole" />
+                            <method href="#deleteApplicationGlobalRole" />
+                        </resource>
+                    </resource>
+                    
+                    <resource id="applicationTenants" path="tenants">
+                        <resource id="applicationTenantsRoles" path="roles">
+                            <method href="#getApplicationTenantsRoles" />
+                        </resource>
+                        
+                        <resource id="applicationTenantRole" path="{tenantId}/roles/{roleId}">
+                            <param name="tenantId" style="template" type="xsd:string" required="true"/>
+                            <param name="roleId" style="template" type="xsd:string" required="true"/>
+                            <method href="#addApplicationTenantRole" />
+                            <method href="#deleteApplicationTenantRole" />
+                        </resource>
                     </resource>
                 </resource>
              </resource>
      
+            <!-- roles resource -->
+            <resource id="roles" path="roles">
+                <param name="Authorization" style="header" type="xsd:string" required="true">
+                    <doc>You need a valid token for access.</doc>
+                </param>
+                <method href="#getRoles" />
+                <method href="#addRole" />
+                
+                <resource id="role" path="{roleId}">
+                    <param name="roleId" style="template" type="xsd:string" required="true"/>
+                    <method href="#getRole" />
+                    <method href="#updateRole" />
+                    <method href="#deleteRole" />
+                </resource>
+            </resource>
+            
             <!-- identity profiles resource -->
             <resource id="identityProfiles" path="customeridentityprofiles">
                 <param name="Authorization" style="header" type="xsd:string" required="true">
@@ -188,15 +211,16 @@
                 </param>
                 
                 <resource id="identityProfile" path="{customerId}">
-                    <param name="customerId" style="template" type="xsd:string" required="true"/>
+                    <param name="customerId" style="template" type="xsd:string" required="true">
+                        <doc>This is the customer's RCN.</doc>
+                    </param>
+                    <method href="#addIdentityProfile" />
                     <method href="#getIdentityProfile" />
                     <method href="#deleteIdentityProfile" />
-                    
-                    <resource id="identityProfileLock" path="locked">
-                        <method href="#setIdentityProfileLock" />
-                    </resource>
+                    <method href="#updateIdentityProfile" />
                     
                     <resource id="passwordRotationPolicy" path="passwordrotationpolicy">
+                        <method href="#getPasswordRotationPolicy" />
                         <method href="#setPasswordRotationPolicy" />
                     </resource>
                     
@@ -248,13 +272,33 @@
             <xhtml:p class="shortdesc">
                 Authenticate a client and generate an access token.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Auth Request">
+            <xhtml:p>
+                There are various ways to authenticate in the global auth system. You can authenticate as a Racker, an application on behalf of a 
+                customer, or an application directly. Examples below show the different authentication mechanisms.
+            </xhtml:p>
+            <examples xmlns="http://docs.rackspace.com/api" title="Auth as Application Request">
+                <example href="../formattedsamples/application_auth_credentials.xml" language="xml"/>
+                <example href="../formattedsamples/application_auth_credentials.json" language="javascript"/>
+            </examples>
+            <examples xmlns="http://docs.rackspace.com/api" title="Auth as Application Response">
+                <example href="../formattedsamples/application_auth.xml" language="xml"/>
+                <example href="../formattedsamples/application_auth.json" language="javascript"/>
+            </examples>
+            <examples xmlns="http://docs.rackspace.com/api" title="Auth as Customer Request">
                 <example href="../formattedsamples/auth_credentials.xml" language="xml"/>
                 <example href="../formattedsamples/auth_credentials.json" language="javascript"/>
             </examples>
-            <examples xmlns="http://docs.rackspace.com/api" title="Auth Response">
+            <examples xmlns="http://docs.rackspace.com/api" title="Auth as Customer Response">
                 <example href="../formattedsamples/auth.xml" language="xml"/>
                 <example href="../formattedsamples/auth.json" language="javascript"/>
+            </examples>
+            <examples xmlns="http://docs.rackspace.com/api" title="Auth as Racker Request">
+                <example href="../formattedsamples/racker_auth_credentials.xml" language="xml"/>
+                <example href="../formattedsamples/racker_auth_credentials.json" language="javascript"/>
+            </examples>
+            <examples xmlns="http://docs.rackspace.com/api" title="Auth as Racker Response">
+                <example href="../formattedsamples/racker_auth.xml" language="xml"/>
+                <example href="../formattedsamples/racker_auth.json" language="javascript"/>
             </examples>
         </doc>
         <request>
@@ -346,7 +390,13 @@
         <request>
             <param name="username" style="query" type="xsd:string">
                 <doc>Allows you search for a user by username</doc>
-            </param>
+            </param> 
+            <param name="offset" style="query" type="xsd:int">
+                <doc>0 based index to start list</doc>
+            </param> 
+            <param name="limit" style="query" type="xsd:int">
+                <doc>Number of records to be returned</doc>
+            </param> 
         </request>
         <response status="200">
             <representation mediaType="application/xml" element="idm:users"/>
@@ -359,13 +409,11 @@
     <method name="POST" id="addUser">
         <doc xml:lang="EN" title="Add a User">
             <xhtml:p class="shortdesc">
-                Adds a new user. If the customer specified does not exist, adds this first user as the admin user.
+                Adds a new user. 
             </xhtml:p>
             <xhtml:p>
-                The Username attribute, CustomerId attribute and Password element are required in
-                this request. If a blank password is passed in the Password element, the API will generate
-                a random password for the user. If the customer does not already exist in IdM, the system
-                will create the customer and add this user as the admin user. The prefLanguage attribute defaults 
+                The Username attribute is required in this request.If a blank password is passed in the Password element, 
+                the API will generate a random password for the user. The prefLanguage attribute defaults 
                 to "US_en" and the timeZone attribute defaults to "America/Chicago".
             </xhtml:p>
             <examples xmlns="http://docs.rackspace.com/api" title="Add User Request">
@@ -373,8 +421,8 @@
                 <example href="../formattedsamples/adduser.json" language="javascript"/>
             </examples>
             <examples xmlns="http://docs.rackspace.com/api" title="Add User Response">
-                <example href="../formattedsamples/adduserresponse.xml" language="xml"/>
-                <example href="../formattedsamples/adduserresponse.json" language="javascript"/>
+                <example href="../formattedsamples/addeduser.xml" language="xml"/>
+                <example href="../formattedsamples/addeduser.json" language="javascript"/>
             </examples>
         </doc>
         <request>
@@ -382,19 +430,21 @@
             <representation mediaType="application/json"/>
         </request>
         <response status="200">
+            <param name="Location" style="header" type="xsd:string" required="true">
+                <doc>Location to the uri of the newly created resource</doc>
+            </param>
             <representation mediaType="application/xml" element="idm:user"/>
             <representation mediaType="application/json"/>
         </response>
-        <response status="409">
-            <representation mediaType="application/xml" element="idm:emailConflict"/>
+        <response status="400">
+            <representation mediaType="application/xml" element="idm:passwordValidationFault"/>
             <representation mediaType="application/json"/>
-        </response>
+         </response>
         <response status="409">
             <representation mediaType="application/xml" element="idm:usernameConflict"/>
             <representation mediaType="application/json"/>
         </response>
         &commonFaults;
-        &getFaults;
     </method>
     
     <method name="GET" id="getUser">
@@ -452,59 +502,20 @@
         &getFaults;
     </method>
     
-    <method name="PUT" id="softDeleteUser">
-        <doc xml:lang="EN" title="Soft Delete a User">
+    <method name="GET" id="getUserSecret">
+        <doc xml:lang="EN" title="Get User Secret">
             <xhtml:p class="shortdesc">
-                Soft deletes a user.
+                Get a user's secret question and answer.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Soft Delete User Request">
-                <example href="../formattedsamples/userWithOnlySoftDeleted.xml" language="xml"/>
-                <example href="../formattedsamples/userWithOnlySoftDeleted.json" language="javascript"/>
+            <examples xmlns="http://docs.rackspace.com/api" title="Get User Secret Response">
+                <example href="../formattedsamples/user_secret.xml" language="xml"/>
+                <example href="../formattedsamples/user_secret.json" language="javascript"/>
             </examples>
         </doc>
-        <request>
-            <representation mediaType="application/xml" element="idm:user"/>
+        <response status="200">
+            <representation mediaType="application/xml" element="idm:userSecret"/>
             <representation mediaType="application/json"/>
-        </request>
-        <response status="204" />
-        &commonFaults;
-        &getFaults;
-    </method>
-    
-    <method name="PUT" id="setUserLock">
-        <doc xml:lang="EN" title="Lock or Unlock a User">
-            <xhtml:p class="shortdesc">
-                Lock or unlock a user.
-            </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="User Lock Request">
-                <example href="../formattedsamples/userWithOnlyLock.xml" language="xml"/>
-                <example href="../formattedsamples/userWithOnlyLock.json" language="javascript"/>
-            </examples>
-        </doc>
-        <request>
-            <representation mediaType="application/xml" element="idm:user"/>
-            <representation mediaType="application/json"/>
-        </request>
-        <response status="204" />
-        &commonFaults;
-        &getFaults;
-    </method>
-    
-    <method name="PUT" id="setUserStatus">
-        <doc xml:lang="EN" title="Set User Status">
-            <xhtml:p class="shortdesc">
-                Set a user's status to ACTIVE or INACTIVE.
-            </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Set User Status Request">
-                <example href="../formattedsamples/userWithOnlyStatus.xml" language="xml"/>
-                <example href="../formattedsamples/userWithOnlyStatus.json" language="javascript"/>
-            </examples>
-        </doc>
-        <request>
-            <representation mediaType="application/xml" element="idm:user"/>
-            <representation mediaType="application/json"/>
-        </request>
-        <response status="204" />
+        </response>
         &commonFaults;
         &getFaults;
     </method>
@@ -528,62 +539,55 @@
         &getFaults;
     </method>
     
-    <method name="GET" id="getUserPassword">
-        <doc xml:lang="EN" title="Get User Password">
+    <method name="GET" id="getUserPasswordCredentials">
+        <doc xml:lang="EN" title="Get User's Password">
             <xhtml:p class="shortdesc">
-                Get a user's password.
+                Get a user's password credentials.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get User Password Response">
-                <example href="../formattedsamples/user_password.xml" language="xml"/>
-                <example href="../formattedsamples/user_password.json" language="javascript"/>
-            </examples>
-        </doc>
-        <response status="200">
-            <representation mediaType="application/xml" element="idm:userPassword"/>
-            <representation mediaType="application/json"/>
-        </response>
-        &commonFaults;
-        &getFaults;
-    </method>
-    
-    <method name="PUT" id="setUserPassword">
-        <doc xml:lang="EN" title="Set User Password">
-            <xhtml:p class="shortdesc">
-                Sets a user's password.
-            </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Set User Password Request">
+            <examples xmlns="http://docs.rackspace.com/api" title="Get Password Credentials Response">
                 <example href="../formattedsamples/user_credentials.xml" language="xml"/>
                 <example href="../formattedsamples/user_credentials.json" language="javascript"/>
             </examples>
-            <examples xmlns="http://docs.rackspace.com/api" title="Set User Password Response">
-                <example href="../formattedsamples/user_password.xml" language="xml"/>
-                <example href="../formattedsamples/user_password.json" language="javascript"/>
-            </examples>
         </doc>
-        <request>
-            <representation mediaType="application/xml" element="idm:userCredentials"/>
-            <representation mediaType="application/json"/>
-        </request>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:userPassword"/>
+            <representation mediaType="application/xml" element="idm:passwordCredentials"/>
             <representation mediaType="application/json"/>
         </response>
         &commonFaults;
         &getFaults;
     </method>
     
-    <method name="POST" id="resetUserPassword">
-        <doc xml:lang="EN" title="Reset User Password">
+    <method name="PUT" id="setUserPasswordCredentials">
+        <doc xml:lang="EN" title="Set User's Password">
             <xhtml:p class="shortdesc">
-                Reset a user's password.
+                Sets a user's password credentials.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Reset User Password Response">
-                <example href="../formattedsamples/user_password.xml" language="xml"/>
-                <example href="../formattedsamples/user_password.json" language="javascript"/>
+            <examples xmlns="http://docs.rackspace.com/api" title="Set User Credential Request">
+                <example href="../formattedsamples/set_user_credentials.xml" language="xml"/>
+                <example href="../formattedsamples/set_user_credentials.json" language="javascript"/>
+            </examples>
+        </doc>
+        <request>
+            <representation mediaType="application/xml" element="idm:passwordCredentials"/>
+            <representation mediaType="application/json"/>
+        </request>
+        <response status="204" />
+        &commonFaults;
+        &getFaults;
+    </method>
+    
+    <method name="POST" id="resetUserPasswordCredentials">
+        <doc xml:lang="EN" title="Reset User's Password">
+            <xhtml:p class="shortdesc">
+                Reset a user's password credentials.
+            </xhtml:p>
+            <examples xmlns="http://docs.rackspace.com/api" title="Reset User Credential Response">
+                <example href="../formattedsamples/user_credentials.xml" language="xml"/>
+                <example href="../formattedsamples/user_credentials.json" language="javascript"/>
             </examples>
         </doc>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:userPassword"/>
+            <representation mediaType="application/xml" element="idm:passwordCredentials"/>
             <representation mediaType="application/json"/>
         </response>
         &commonFaults;
@@ -593,9 +597,9 @@
     <method name="GET" id="getPasswordRecoveryToken">
         <doc xml:lang="EN" title="Get Password Recovery Token">
             <xhtml:p class="shortdesc">
-                Get a token that can be used to reset a user's password.
+                Get a token that can be used to reset a user's password credentials.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Password Recovery Token Response">
+            <examples xmlns="http://docs.rackspace.com/api" title="Get Credentials Recovery Token Response">
                 <example href="../formattedsamples/token.xml" language="xml"/>
                 <example href="../formattedsamples/token.json" language="javascript"/>
             </examples>
@@ -660,7 +664,7 @@
             <xhtml:p class="shortdesc">
                 Get the applications that have been provisioned for a user.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Delegated Refresh Token Response">
+            <examples xmlns="http://docs.rackspace.com/api" title="Get User Applications Response">
                 <example href="../formattedsamples/applications.xml" language="xml"/>
                 <example href="../formattedsamples/applications.json" language="javascript"/>
             </examples>
@@ -678,24 +682,8 @@
             <xhtml:p class="shortdesc">
                 Provision an application for a user.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Provision User Application Request">
-                <example href="../formattedsamples/application_only_id.xml" language="xml"/>
-                <example href="../formattedsamples/application_only_id.json" language="javascript"/>
-            </examples>
-            <examples xmlns="http://docs.rackspace.com/api" title="Provision User Application Response">
-                <example href="../formattedsamples/application_only_id.xml" language="xml"/>
-                <example href="../formattedsamples/application_only_id.json" language="javascript"/>
-            </examples>
         </doc>
-        <request>
-            <representation mediaType="application/xml" element="idm:application"/>
-            <representation mediaType="application/json"/>
-        </request>
-        <response>
-            <representation mediaType="application/xml" element="idm:application"/>
-            <representation mediaType="application/json"/>
-        </response>
-        <response status="200" />
+        <response status="204" />
         &commonFaults;
         &getFaults;
     </method>
@@ -709,43 +697,58 @@
         </doc>
         <response status="204" />
         &commonFaults;
-        &getFaults;
     </method>
     
-    <method name="PUT" id="addUserApplicationRole">
-        <doc xml:lang="EN" title="Grant User Role on Application">
+    <method name="GET" id="getUserTenantsRoles">
+        <doc xml:lang="EN" title="Get User Tenants Roles">
             <xhtml:p class="shortdesc">
-                Grant user a role on the application.
+                Get a list of user's roles on all tenants.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Grant User Role Request">
-                <example href="../formattedsamples/role.xml" language="xml"/>
-                <example href="../formattedsamples/role.json" language="javascript"/>
+            <examples xmlns="http://docs.rackspace.com/api" title="Get User Tenant Roles Response">
+                <example href="../formattedsamples/tenantroles.xml" language="xml"/>
+                <example href="../formattedsamples/tenantroles.json" language="javascript"/>
             </examples>
         </doc>
         <request>
-            <representation mediaType="application/xml" element="idm:role"/>
-            <representation mediaType="application/json"/>
+            <param name="applicationId" style="query" type="xsd:string" required="false">
+                <doc>Filter list of user tenant roles by applicationId</doc>
+            </param>
+            <param name="tenantId" style="query" type="xsd:string" required="false">
+                <doc>Filter list of user tenant roles by tenantId</doc>
+            </param>
         </request>
-        <response status="204" />
+        <response status="200">
+            <representation mediaType="application/xml" element="idm:roles"/>
+            <representation mediaType="application/json"/>
+        </response>
         &commonFaults;
         &getFaults;
     </method>
     
-    <method name="DELETE" id="deleteUserApplicationRole">
-        <doc xml:lang="EN" title="Revoke a User Role on Application">
+    <method name="PUT" id="addUserTenantRole">
+        <doc xml:lang="EN" title="Grant User Role on Tenant">
             <xhtml:p class="shortdesc">
-                Revoke a user's role on the application.
+                Grant user a role on the tenant
             </xhtml:p>
         </doc>
         <response status="204" />
         &commonFaults;
-        &getFaults;
     </method>
     
-    <method name="GET" id="getUserRoles">
-        <doc xml:lang="EN" title="Get User Roles">
+    <method name="DELETE" id="deleteUserTenantRole">
+        <doc xml:lang="EN" title="Revoke a User Role on Tenant">
             <xhtml:p class="shortdesc">
-                Get the applications that have been provisioned for a user.
+                Revoke a user's role on a tenant.
+            </xhtml:p>
+        </doc>
+        <response status="204" />
+        &commonFaults;
+    </method>
+    
+    <method name="GET" id="getUserGlobalRoles">
+        <doc xml:lang="EN" title="Get User Global Roles">
+            <xhtml:p class="shortdesc">
+                Get a list of user's global roles.
             </xhtml:p>
             <examples xmlns="http://docs.rackspace.com/api" title="Get User Roles Response">
                 <example href="../formattedsamples/roles.xml" language="xml"/>
@@ -765,6 +768,29 @@
         &getFaults;
     </method>
     
+    <method name="PUT" id="addUserGlobalRole">
+        <doc xml:lang="EN" title="Grant User a Global Role">
+            <xhtml:p class="shortdesc">
+                Grant user a global role.
+            </xhtml:p>
+            <xhtml:p>
+                A global role is one that is not restricted just to a tenant. A global role could be application specific.
+                A user could have the global admin role for the nova application, or a global admin role for all applications.
+            </xhtml:p>
+        </doc>
+        <response status="204" />
+        &commonFaults;
+    </method>
+    
+    <method name="DELETE" id="deleteUserGlobalRole">
+        <doc xml:lang="EN" title="Remove User's Global Role">
+            <xhtml:p class="shortdesc">
+                Remove global role from user.
+            </xhtml:p>
+        </doc>
+        <response status="204" />
+        &commonFaults;
+    </method>
     
     <!-- Application Methods -->
     <method name="GET" id="getApplications">
@@ -780,6 +806,12 @@
         <request>
             <param name="name" style="query" type="xsd:string">
                 <doc>Allows you search for an application by name</doc>
+            </param>
+            <param name="offset" style="query" type="xsd:int">
+                <doc>0 based index to start list</doc>
+            </param> 
+            <param name="limit" style="query" type="xsd:int">
+                <doc>Number of records to be returned</doc>
             </param>
         </request>
         <response status="200">
@@ -799,7 +831,7 @@
                 <example href="../formattedsamples/addapplication.xml" language="xml"/>
                 <example href="../formattedsamples/addapplication.json" language="javascript"/>
             </examples>
-            <examples xmlns="http://docs.rackspace.com/api" title="Add Application Response">
+            <examples xmlns="http://docs.rackspace.com/api" title="Add Application Request">
                 <example href="../formattedsamples/addedapplication.xml" language="xml"/>
                 <example href="../formattedsamples/addedapplication.json" language="javascript"/>
             </examples>
@@ -809,6 +841,9 @@
             <representation mediaType="application/json"/>
         </request>
         <response status="200">
+            <param name="Location" style="header" type="xsd:string" required="true">
+                <doc>Location to the uri of the newly created resource</doc>
+            </param>
             <representation mediaType="application/xml" element="idm:application"/>
             <representation mediaType="application/json"/>
         </response>
@@ -817,7 +852,6 @@
             <representation mediaType="application/json"/>
         </response>
         &commonFaults;
-        &getFaults;
     </method>
     
     <method name="GET" id="getApplication">
@@ -874,76 +908,9 @@
         &commonFaults;
         &getFaults;
     </method>
-    
-    <method name="PUT" id="softDeleteApplication">
-        <doc xml:lang="EN" title="Soft Delete an Application">
-            <xhtml:p class="shortdesc">
-                Soft deletes an application.
-            </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Soft Delete Application Request">
-                <example href="../formattedsamples/applicationWithOnlySoftDeleted.xml" language="xml"/>
-                <example href="../formattedsamples/applicationWithOnlySoftDeleted.json" language="javascript"/>
-            </examples>
-        </doc>
-        <request>
-            <representation mediaType="application/xml" element="idm:application"/>
-            <representation mediaType="application/json"/>
-        </request>
-        <response status="204" />
-        &commonFaults;
-        &getFaults;
-    </method>
 
-    <method name="GET" id="getApplicationDefinedRoles">
-        <doc xml:lang="EN" title="Get Roles defined by an Application">
-            <xhtml:p class="shortdesc">
-                Get roles defined by an application.
-            </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Defined Roles Response">
-                <example href="../formattedsamples/application_roles.xml" language="xml"/>
-                <example href="../formattedsamples/application_roles.json" language="javascript"/>
-            </examples>
-        </doc>
-        <response status="200">
-            <representation mediaType="application/xml" element="idm:roles"/>
-            <representation mediaType="application/json"/>
-        </response>
-        &commonFaults;
-        &getFaults;
-    </method>
-    
-    <method name="PUT" id="addApplicationDefinedRole">
-        <doc xml:lang="EN" title="Define a Role for an Application">
-            <xhtml:p class="shortdesc">
-                Add a role defined by an application.
-            </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Define Role Request">
-                <example href="../formattedsamples/addrole.xml" language="xml"/>
-                <example href="../formattedsamples/addrole.json" language="javascript"/>
-            </examples>
-        </doc>
-        <request>
-            <representation mediaType="application/xml" element="idm:role"/>
-            <representation mediaType="application/json"/>
-        </request>
-        <response status="204" />
-        &commonFaults;
-        &getFaults;
-    </method>
-    
-    <method name="DELETE" id="deleteApplicationDefinedRole">
-        <doc xml:lang="EN" title="Delete a Defined Role for an Application">
-            <xhtml:p class="shortdesc">
-                Delete a role defined by an application.
-            </xhtml:p>
-        </doc>
-        <response status="204" />
-        &commonFaults;
-        &getFaults;
-    </method>
-    
-    <method name="POST" id="resetApplicationSecret">
-        <doc xml:lang="EN" title="Reset Application Secret">
+    <method name="POST" id="resetApplicationSecretCredentials">
+        <doc xml:lang="EN" title="Reset Application's Secret">
             <xhtml:p class="shortdesc">
                 Reset application secret.
             </xhtml:p>
@@ -953,7 +920,7 @@
             </examples>
         </doc>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:applicationCredentials"/>
+            <representation mediaType="application/xml" element="idm:secretCredentials"/>
             <representation mediaType="application/json"/>
         </response>
         &commonFaults;
@@ -983,15 +950,7 @@
             <xhtml:p class="shortdesc">
                 Provision an application for this application.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Provision Application Request">
-                <example href="../formattedsamples/application_only_id.xml" language="xml"/>
-                <example href="../formattedsamples/application_only_id.json" language="javascript"/>
-            </examples>
         </doc>
-        <request>
-            <representation mediaType="application/xml" element="idm:application"/>
-            <representation mediaType="application/json"/>
-        </request>
         <response status="204" />
         &commonFaults;
         &getFaults;
@@ -1008,49 +967,22 @@
         &getFaults;
     </method>
     
-    <method name="PUT" id="addApplicationApplicationRole">
-        <doc xml:lang="EN" title="Grant Application Role on another Application">
+    <method name="GET" id="getApplicationTenantsRoles">
+        <doc xml:lang="EN" title="Get Application Tenants Roles">
             <xhtml:p class="shortdesc">
-                Grant application a role on another application.
+                Get a list of applications's roles on all tenants.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Grant Application Role Request">
-                <example href="../formattedsamples/role.xml" language="xml"/>
-                <example href="../formattedsamples/role.json" language="javascript"/>
-            </examples>
-        </doc>
-        <request>
-            <representation mediaType="application/xml" element="idm:role"/>
-            <representation mediaType="application/json"/>
-        </request>
-        <response status="204" />
-        &commonFaults;
-        &getFaults;
-    </method>
-    
-    <method name="DELETE" id="deleteApplicationApplicationRole">
-        <doc xml:lang="EN" title="Revoke an Application Role on another Application">
-            <xhtml:p class="shortdesc">
-                Revoke an application's role on another application..
-            </xhtml:p>
-        </doc>
-        <response status="204" />
-        &commonFaults;
-        &getFaults;
-    </method>
-    
-    <method name="GET" id="getApplicationRoles">
-        <doc xml:lang="EN" title="Get Application Roles">
-            <xhtml:p class="shortdesc">
-                Get the applications that have been provisioned for this application.
-            </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Application Roles Response">
-                <example href="../formattedsamples/roles.xml" language="xml"/>
-                <example href="../formattedsamples/roles.json" language="javascript"/>
+            <examples xmlns="http://docs.rackspace.com/api" title="Get Application Tenant Roles Response">
+                <example href="../formattedsamples/tenantroles.xml" language="xml"/>
+                <example href="../formattedsamples/tenantroles.json" language="javascript"/>
             </examples>
         </doc>
         <request>
             <param name="applicationId" style="query" type="xsd:string" required="false">
-                <doc>Filter list of application roles by applicationId</doc>
+                <doc>Filter list of application tenant roles by applicationId</doc>
+            </param>
+            <param name="tenantId" style="query" type="xsd:string" required="false">
+                <doc>Filter list of application tenant roles by tenantId</doc>
             </param>
         </request>
         <response status="200">
@@ -1061,7 +993,198 @@
         &getFaults;
     </method>
     
+    <method name="PUT" id="addApplicationTenantRole">
+        <doc xml:lang="EN" title="Grant Application Role on Tenant">
+            <xhtml:p class="shortdesc">
+                Grant application a role on the tenant
+            </xhtml:p>
+        </doc>
+        <response status="204" />
+        &commonFaults;
+    </method>
+    
+    <method name="DELETE" id="deleteApplicationTenantRole">
+        <doc xml:lang="EN" title="Revoke an Application Role on Tenant">
+            <xhtml:p class="shortdesc">
+                Revoke an application's role on a tenant.
+            </xhtml:p>
+        </doc>
+        <response status="204" />
+        &commonFaults;
+    </method>
+    
+    <method name="GET" id="getApplicationGlobalRoles">
+        <doc xml:lang="EN" title="Get Application Global Roles">
+            <xhtml:p class="shortdesc">
+                Get a list of aplications's global roles.
+            </xhtml:p>
+            <examples xmlns="http://docs.rackspace.com/api" title="Get Application Roles Response">
+                <example href="../formattedsamples/roles.xml" language="xml"/>
+                <example href="../formattedsamples/roles.json" language="javascript"/>
+            </examples>
+        </doc>
+        <request>
+            <param name="applicationId" style="query" type="xsd:string" required="false">
+                <doc>Filter list of aplication roles by applicationId</doc>
+            </param>
+        </request>
+        <response status="200">
+            <representation mediaType="application/xml" element="idm:roles"/>
+            <representation mediaType="application/json"/>
+        </response>
+        &commonFaults;
+        &getFaults;
+    </method>
+    
+    <method name="PUT" id="addApplicationGlobalRole">
+        <doc xml:lang="EN" title="Grant Application a Global Role">
+            <xhtml:p class="shortdesc">
+                Grant application a global role.
+            </xhtml:p>
+            <xhtml:p>
+                A global role is one that is not restricted just to a tenant. A global role could be application specific.
+                An application could have the global admin role for the nova application, or a global admin role for all applications.
+            </xhtml:p>
+        </doc>
+        <response status="204" />
+        &commonFaults;
+    </method>
+    
+    <method name="DELETE" id="deleteApplicationGlobalRole">
+        <doc xml:lang="EN" title="Remove Application's Global Role">
+            <xhtml:p class="shortdesc">
+                Remove global role from application.
+            </xhtml:p>
+        </doc>
+        <response status="204" />
+        &commonFaults;
+    </method>
+    
+    <!-- Role Methods -->
+    <method name="POST" id="addRole">
+        <doc xml:lang="EN" title="Add a Role">
+            <xhtml:p class="shortdesc">
+                Add a new role.
+            </xhtml:p>
+            <xhtml:p>
+                Can also add application specific roles by specifying the application id in the request payload.
+            </xhtml:p>
+            <examples xmlns="http://docs.rackspace.com/api" title="Add Role Request">
+                <example href="../formattedsamples/addrole.xml" language="xml"/>
+                <example href="../formattedsamples/addrole.json" language="javascript"/>
+            </examples>
+        </doc>
+        <request>
+            <representation mediaType="application/xml" element="idm:role"/>
+            <representation mediaType="application/json"/>
+        </request>
+        <response status="201">
+            <param name="Location" style="header" type="xsd:string" required="true">
+                <doc>Location to the uri of the newly created role</doc>
+            </param>
+        </response>
+        &commonFaults;
+    </method>
+    
+    <method name="GET" id="getRoles">
+        <doc xml:lang="EN" title="Get All Roles">
+            <xhtml:p class="shortdesc">
+                Get all roles.
+            </xhtml:p>
+            <examples xmlns="http://docs.rackspace.com/api" title="Get Roles Response">
+                <example href="../formattedsamples/roles.xml" language="xml"/>
+                <example href="../formattedsamples/roles.json" language="javascript"/>
+            </examples>
+        </doc>
+        <request>
+            <param name="name" style="query" type="xsd:string" required="false">
+                <doc>Name of the role</doc>
+            </param>
+            <param name="applicationId" style="query" type="xsd:string" required="false">
+                <doc>Application that role is tied to.</doc>
+            </param>
+        </request>
+        <response status="200">
+            <representation mediaType="application/xml" element="idm:roles"/>
+            <representation mediaType="application/json"/>
+        </response>
+        &commonFaults;
+        &getFaults;
+    </method>
+    
+    <method name="GET" id="getRole">
+        <doc xml:lang="EN" title="Get Role">
+            <xhtml:p class="shortdesc">
+                Get a Role
+            </xhtml:p>
+            <examples xmlns="http://docs.rackspace.com/api" title="Get Role Response">
+                <example href="../formattedsamples/role.xml" language="xml"/>
+                <example href="../formattedsamples/role.json" language="javascript"/>
+            </examples>
+        </doc>
+        <response status="200">
+            <representation mediaType="application/xml" element="idm:role"/>
+            <representation mediaType="application/json"/>
+        </response>
+        &commonFaults;
+        &getFaults;
+    </method>
+    
+    <method name="POST" id="updateRole">
+        <doc xml:lang="EN" title="Modify a Role">
+            <xhtml:p class="shortdesc">
+                Modify an existing role.
+            </xhtml:p>
+            <examples xmlns="http://docs.rackspace.com/api" title="Update Role Request">
+                <example href="../formattedsamples/addrole.xml" language="xml"/>
+                <example href="../formattedsamples/addrole.json" language="javascript"/>
+            </examples>
+        </doc>
+        <request>
+            <representation mediaType="application/xml" element="idm:role"/>
+            <representation mediaType="application/json"/>
+        </request>
+        <response status="204" />
+        &commonFaults;
+    </method>
+    
+    <method name="POST" id="deleteRole">
+        <doc xml:lang="EN" title="Delete a Role">
+            <xhtml:p class="shortdesc">
+                Delete an existing role.
+            </xhtml:p>
+        </doc>
+        <response status="204" />
+        &commonFaults;
+    </method>
+    
     <!-- Identity Profile Methods -->
+    <method name="POST" id="addIdentityProfile">
+        <doc xml:lang="EN" title="Adds a Customer's Identity Profile">
+            <xhtml:p class="shortdesc">
+                Adds a customer's identity profile.
+            </xhtml:p>
+            <examples xmlns="http://docs.rackspace.com/api" title="Customer Identity Profile Add Request">
+                <example href="../formattedsamples/addidentityprofile.xml" language="xml"/>
+                <example href="../formattedsamples/addidentityprofile.json" language="javascript"/>
+            </examples>
+        </doc>
+        <request>
+            <representation mediaType="application/xml" element="idm:customerIdentityProfile"/>
+            <representation mediaType="application/json"/>
+        </request>
+        <response status="201">
+            <param name="Location" style="header" type="xsd:string" required="true">
+                <doc>Location to the uri of the newly created customer identity profile</doc>
+            </param>
+        </response>
+        <response status="409">
+            <representation mediaType="application/xml" element="idm:customerIdConflict"/>
+            <representation mediaType="application/json"/>
+        </response>
+        &commonFaults;
+    </method>
+    
     <method name="GET" id="getIdentityProfile">
         <doc xml:lang="EN" title="Get a Customer's Identity Profile">
             <xhtml:p class="shortdesc">
@@ -1091,14 +1214,14 @@
         &getFaults;
     </method>
     
-    <method name="PUT" id="setIdentityProfileLock">
-        <doc xml:lang="EN" title="Lock or Unlock Customer's Identity Profile">
+    <method name="PUT" id="updateIdentityProfile">
+        <doc xml:lang="EN" title="Updates a Customer's Identity Profile">
             <xhtml:p class="shortdesc">
-                Lock or unlock a customer's identity profile.
+                Updates a customer's identity profile.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Customer Identity Profile Lock Request">
-                <example href="../formattedsamples/identityprofilelock.xml" language="xml"/>
-                <example href="../formattedsamples/identityprofilelock.json" language="javascript"/>
+            <examples xmlns="http://docs.rackspace.com/api" title="Customer Identity Profile Update Request">
+                <example href="../formattedsamples/identityprofile.xml" language="xml"/>
+                <example href="../formattedsamples/identityprofile.json" language="javascript"/>
             </examples>
         </doc>
         <request>
@@ -1129,6 +1252,24 @@
         &getFaults;
     </method>
     
+    <method name="GET" id="getPasswordRotationPolicy">
+        <doc xml:lang="EN" title="Get Password Rotation Policy">
+            <xhtml:p class="shortdesc">
+                Gets the password rotation policy for a customer.
+            </xhtml:p>
+            <examples xmlns="http://docs.rackspace.com/api" title="Password Rotation Policy Response">
+                <example href="../formattedsamples/passwordrotation.xml" language="xml"/>
+                <example href="../formattedsamples/passwordrotation.json" language="javascript"/>
+            </examples>
+        </doc>
+        <response status="200">
+            <representation mediaType="application/xml" element="idm:passwordRotationPolicy"/>
+            <representation mediaType="application/json"/>
+        </response>
+        &commonFaults;
+        &getFaults;
+    </method>
+    
     <method name="GET" id="getIdentityProfileUsers">
         <doc xml:lang="EN" title="Get Users">
             <xhtml:p class="shortdesc">
@@ -1139,6 +1280,14 @@
                 <example href="../formattedsamples/users.json" language="javascript"/>
             </examples>
         </doc>
+        <request>
+            <param name="offset" style="query" type="xsd:int">
+                <doc>0 based index to start list</doc>
+            </param> 
+            <param name="limit" style="query" type="xsd:int">
+                <doc>Number of records to be returned</doc>
+            </param> 
+        </request>
         <response status="200">
             <representation mediaType="application/xml" element="idm:users"/>
             <representation mediaType="application/json"/>
@@ -1157,6 +1306,14 @@
                 <example href="../formattedsamples/applications.json" language="javascript"/>
             </examples>
         </doc>
+        <request>
+            <param name="offset" style="query" type="xsd:int">
+                <doc>0 based index to start list</doc>
+            </param> 
+            <param name="limit" style="query" type="xsd:int">
+                <doc>Number of records to be returned</doc>
+            </param> 
+        </request>
         <response status="200">
             <representation mediaType="application/xml" element="idm:applications"/>
             <representation mediaType="application/json"/>

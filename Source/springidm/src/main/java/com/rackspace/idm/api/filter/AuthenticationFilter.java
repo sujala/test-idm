@@ -110,7 +110,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             return request;
         }
 
-        if ("POST".equals(method) && "token".equals(path)) {
+        if ("POST".equals(method) && "tokens".equals(path)) {
             return request;
         }
         final String authHeader = request.getHeaderValue(HttpHeaders.AUTHORIZATION);

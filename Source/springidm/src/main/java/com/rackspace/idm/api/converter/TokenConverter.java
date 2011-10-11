@@ -9,21 +9,22 @@ import javax.xml.datatype.DatatypeFactory;
 import org.joda.time.DateTime;
 
 import com.rackspace.api.idm.v1.ObjectFactory;
-import com.rackspace.api.idm.v1.Permissions;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.Permission;
 
 public class TokenConverter {
-    private final PermissionConverter permissionConverter;
     
     private final ObjectFactory of = new ObjectFactory();
     
-    public TokenConverter(PermissionConverter permissionConverter) {
-        this.permissionConverter = permissionConverter;
+    public TokenConverter() {
     }
 
     public com.rackspace.api.idm.v1.Token toTokenJaxb(String tokenString,
         Date expiration) {
+    	if (tokenString == null) {
+    		return null;
+    	}
+    	
         com.rackspace.api.idm.v1.Token jaxbToken = of.createToken();
 
         jaxbToken.setId(tokenString);
@@ -44,31 +45,31 @@ public class TokenConverter {
         return jaxbToken;
     }
 
-    public com.rackspace.api.idm.v1.Token toTokenJaxb(String tokenString,
-        Date expiration, Permissions permList) {
-        com.rackspace.api.idm.v1.Token jaxbToken = of.createToken();
-
-        jaxbToken.setId(tokenString);
-
-        try {
-            if (expiration != null) {
-
-                jaxbToken.setExpires(DatatypeFactory.newInstance()
-                    .newXMLGregorianCalendar(
-                        new DateTime(expiration).toGregorianCalendar()));
-            }
-
-        } catch (DatatypeConfigurationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        if (permList != null) {
-            jaxbToken.setPermissionList(permList);
-        }
-
-        return jaxbToken;
-    }
+//    public com.rackspace.api.idm.v1.Token toTokenJaxb(String tokenString,
+//        Date expiration, Permissions permList) {
+//        com.rackspace.api.idm.v1.Token jaxbToken = of.createToken();
+//
+//        jaxbToken.setId(tokenString);
+//
+//        try {
+//            if (expiration != null) {
+//
+//                jaxbToken.setExpires(DatatypeFactory.newInstance()
+//                    .newXMLGregorianCalendar(
+//                        new DateTime(expiration).toGregorianCalendar()));
+//            }
+//
+//        } catch (DatatypeConfigurationException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
+//
+//        if (permList != null) {
+//            jaxbToken.setPermissionList(permList);
+//        }
+//
+//        return jaxbToken;
+//    }
 
     public com.rackspace.api.idm.v1.DelegatedToken toDelegatedTokenJaxb(
         DelegatedClientScopeAccess token, List<Permission> perms) {
@@ -87,10 +88,6 @@ public class TokenConverter {
         } catch (DatatypeConfigurationException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-        }
-
-        if (perms != null && perms.size() > 0) {
-            jaxbToken.setPermissionList(permissionConverter.toPermissionListJaxb(perms));
         }
 
         return jaxbToken;

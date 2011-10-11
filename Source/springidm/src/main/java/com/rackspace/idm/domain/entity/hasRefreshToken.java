@@ -4,7 +4,7 @@ import java.util.Date;
 
 import org.joda.time.DateTime;
 
-public interface hasRefreshToken {
+public interface HasRefreshToken {
     
     void setRefreshTokenExpired();
     

@@ -15,7 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientSecret;
@@ -34,7 +34,7 @@ import com.unboundid.ldap.sdk.Modification;
 public class LdapClientRepositoryTest {
 
     private LdapUserRepository userRepo;
-    private LdapClientRepository repo;
+    private LdapApplicationRepository repo;
     private LdapConnectionPools connPools;
     
     String id = "XXXX";
@@ -45,15 +45,15 @@ public class LdapClientRepositoryTest {
     @BeforeClass
     public static void cleanUpData() {
         final LdapConnectionPools pools = getConnPools();
-        LdapClientRepository cleanUpRepo = getRepo(pools);
-        Client deleteme = cleanUpRepo.getClientByClientId("DELETE_My_ClientId");
+        LdapApplicationRepository cleanUpRepo = getRepo(pools);
+        Application deleteme = cleanUpRepo.getClientByClientId("DELETE_My_ClientId");
         if (deleteme != null) {
             cleanUpRepo.deleteClient(deleteme);
         }
         pools.close();
     }
 
-    private static LdapClientRepository getRepo(LdapConnectionPools connPools) {
+    private static LdapApplicationRepository getRepo(LdapConnectionPools connPools) {
         Configuration appConfig = null;
         try {
             appConfig = new PropertiesConfiguration("config.properties");
@@ -61,7 +61,7 @@ public class LdapClientRepositoryTest {
         } catch (ConfigurationException e) {
             System.out.println(e);
         }
-        return new LdapClientRepository(connPools, appConfig);
+        return new LdapApplicationRepository(connPools, appConfig);
     }
     
     private static LdapUserRepository getUserRepo(LdapConnectionPools connPools) {
@@ -140,27 +140,27 @@ public class LdapClientRepositoryTest {
 
     @Test
     public void shouldFindOneClientThatExists() {
-        Client client = repo.getClientByClientId("ABCDEF");
+        Application client = repo.getClientByClientId("ABCDEF");
         Assert.assertNotNull(client);
         Assert.assertEquals("ABCDEF", client.getClientId());
     }
 
     @Test
     public void shouldNotFindClientThatDoesNotExist() {
-        Client client = repo.getClientByClientname("hi. i don't exist.");
+        Application client = repo.getClientByClientname("hi. i don't exist.");
         Assert.assertNull(client);
     }
 
     @Test
     public void shouldRetrieveAllClientsThatExist() {
-        List<Client> clients = repo.getAllClients();
+        List<Application> clients = repo.getAllClients();
         Assert.assertTrue(clients.size() >= 2);
     }
 
     @Test
     public void shouldAddNewClient() {
-        Client newClient = addNewTestClient();
-        Client checkClient = repo.getClientByClientId(newClient.getClientId());
+        Application newClient = addNewTestClient();
+        Application checkClient = repo.getClientByClientId(newClient.getClientId());
         Assert.assertNotNull(checkClient);
         Assert.assertEquals("DELETE_My_Name", checkClient.getName());
         repo.deleteClient(newClient);
@@ -168,15 +168,15 @@ public class LdapClientRepositoryTest {
 
     @Test
     public void shouldDeleteClient() {
-        Client newClient = addNewTestClient();
+        Application newClient = addNewTestClient();
         repo.deleteClient(newClient);
-        Client idontexist = repo.getClientByClientname(newClient.getName());
+        Application idontexist = repo.getClientByClientname(newClient.getName());
         Assert.assertNull(idontexist);
     }
 
     @Test
     public void shouldUpdateNonDnAttrOfClient() {
-        Client newClient = addNewTestClient();
+        Application newClient = addNewTestClient();
         String clientId = newClient.getClientId();
 
         // Update all non-DN attributes
@@ -190,7 +190,7 @@ public class LdapClientRepositoryTest {
             Assert.fail("Could not save the record: " + e.getMessage());
         }
 
-        Client changedClient = repo.getClientByClientId(clientId);
+        Application changedClient = repo.getClientByClientId(clientId);
 
         repo.deleteClient(newClient);
         Assert.assertTrue(changedClient.getStatus() == ClientStatus.INACTIVE);
@@ -204,8 +204,8 @@ public class LdapClientRepositoryTest {
 
     @Test
     public void shouldGenerateModifications() {
-        Client client = createTestClientInstance();
-        Client cClient = createTestClientInstance();
+        Application client = createTestClientInstance();
+        Application cClient = createTestClientInstance();
         cClient.setName("changed_client_name");
         cClient.setClientSecretObj(ClientSecret
             .newInstance("changed_client_secret"));
@@ -222,16 +222,16 @@ public class LdapClientRepositoryTest {
 
     @Test
     public void shouldSetAllClientLocked() {
-        Client newClient = addNewTestClient();
+        Application newClient = addNewTestClient();
         repo.setClientsLockedFlagByCustomerId(newClient.getRCN(), true);
-        Client changedClient = repo.getClientByClientId(newClient.getClientId());
+        Application changedClient = repo.getClientByClientId(newClient.getClientId());
         Assert.assertEquals(changedClient.isLocked(), true);
         repo.deleteClient(newClient);
     }
     
     @Test
     public void shouldAddClientGroup() {
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group, testClient.getUniqueId());
         ClientGroup returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
@@ -242,7 +242,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldUpdateClientGroup() {
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group,testClient.getUniqueId());
         group = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
@@ -263,7 +263,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldNotAddClientGroupForDuplicate() {
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group,testClient.getUniqueId());
         ClientGroup returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
@@ -281,7 +281,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldDeleteClientGroup() {
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group,testClient.getUniqueId());
         ClientGroup returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
@@ -294,7 +294,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldGetClientGroup() {
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group,testClient.getUniqueId());
         ClientGroup returnedGroup = repo.getClientGroup(group.getCustomerId(), group.getClientId(), group.getName());
@@ -305,7 +305,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldGetClientGroups() {
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group,testClient.getUniqueId());
         group.setName("NEWGROUPNAME");
@@ -335,7 +335,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldReturnNullForGetClientGroupForNonExistentGroup() {
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup returnedGroup = repo.getClientGroup(testClient.getRCN(), testClient.getClientId(), "SOMEBADNAME");
         Assert.assertNull(returnedGroup);
         repo.deleteClient(testClient);
@@ -344,7 +344,7 @@ public class LdapClientRepositoryTest {
     @Test
     public void shouldAddUserToClientGroup() {
         User user = addNewTestUser();
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group,testClient.getUniqueId());
         repo.addUserToClientGroup(user.getUniqueId(), group);
@@ -359,7 +359,7 @@ public class LdapClientRepositoryTest {
     @Test
     public void shouldNotAddUserToClientGroupIfAlreadyInGroup() {
         User user = addNewTestUser();
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group,testClient.getUniqueId());
         repo.addUserToClientGroup(user.getUniqueId(), group);
@@ -378,7 +378,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldNotAddUserToClientGroupForNullUser() {
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         try {
         repo.addUserToClientGroup(null, group);
@@ -392,7 +392,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldNotAddUserToClientGroupForUserWithBlankUniqueID() {
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         try {
         repo.addUserToClientGroup(new User().getUniqueId(), group);
@@ -406,7 +406,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldNotAddUserToClientGroupForNullGroup() {
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         try {
         repo.addUserToClientGroup(createTestUser().getUniqueId(), null);
@@ -421,7 +421,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldNotAddUserToClientGroupForGroupWithBlankUniqueID() {
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         group.setUniqueId(null);
         try {
@@ -439,7 +439,7 @@ public class LdapClientRepositoryTest {
     public void shouldRemoveUserFromClientGroup() {
 
         User user = addNewTestUser();
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group,testClient.getUniqueId());
         repo.addUserToClientGroup(user.getUniqueId(), group);
@@ -453,7 +453,7 @@ public class LdapClientRepositoryTest {
     public void shouldNotRemoveUserFromClientGroupIfUserNotInGroup() {
 
         User user = addNewTestUser();
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         repo.addClientGroup(group,testClient.getUniqueId());
         try {
@@ -469,7 +469,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldNotRemoveUserFromClientGroupForNullUser() {
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         try {
         repo.removeUserFromGroup(null, group);
@@ -484,7 +484,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldNotRemoveUserFromClientGroupForUserWithBlankUniqueID() {
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         try {
         repo.removeUserFromGroup(new User().getUniqueId(), group);
@@ -499,7 +499,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldNotRemoveUserFromClientGroupForNullGroup() {
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         try {
         repo.removeUserFromGroup(createTestUser().getUniqueId(), null);
@@ -514,7 +514,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldNotRemoveUserFromClientGroupForGroupWithBlankUniqueID() {
-        Client testClient = addNewTestClient();
+        Application testClient = addNewTestClient();
         ClientGroup group = createNewTestClientGroup(testClient);
         group.setUniqueId(null);
         try {
@@ -530,7 +530,7 @@ public class LdapClientRepositoryTest {
     
     @Test
     public void shouldGetClientWithDefinedScopeAccess() {
-        List<Client> clients = repo.getAvailableScopes();
+        List<Application> clients = repo.getAvailableScopes();
         Assert.assertTrue(clients.size() > 0);
     }
     
@@ -540,20 +540,20 @@ public class LdapClientRepositoryTest {
         connPools.close();
     }
 
-    private Client addNewTestClient() {
-        Client newClient = createTestClientInstance();
+    private Application addNewTestClient() {
+        Application newClient = createTestClientInstance();
         repo.addClient(newClient);
         return newClient;
     }
     
-    private ClientGroup createNewTestClientGroup(Client client) {
+    private ClientGroup createNewTestClientGroup(Application client) {
         return new ClientGroup (client.getClientId(), client.getRCN(), "New Group", "TYPE");
     }
 
-    private Client createTestClientInstance() {
+    private Application createTestClientInstance() {
         Random ran = new Random();
         //int random = ran.nextInt();
-        Client newClient = new Client("DELETE_My_ClientId", ClientSecret
+        Application newClient = new Application("DELETE_My_ClientId", ClientSecret
             .newInstance("DELETE_My_Client_Secret"), "DELETE_My_Name", "RCN-123-456-789", ClientStatus.ACTIVE);
         newClient.setLocked(false);
         newClient.setSoftDeleted(false);

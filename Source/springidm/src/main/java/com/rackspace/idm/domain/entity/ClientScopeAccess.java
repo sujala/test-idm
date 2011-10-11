@@ -14,7 +14,7 @@ import com.unboundid.ldap.sdk.persist.LDAPGetter;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_CLIENTSCOPEACCESS,requestAllAttributes=true)
-public class ClientScopeAccess extends ScopeAccess implements hasAccessToken {
+public class ClientScopeAccess extends ScopeAccess implements HasAccessToken {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;

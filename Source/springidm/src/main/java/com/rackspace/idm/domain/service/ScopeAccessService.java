@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.service;
 
 import java.util.List;
 
-import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.DelegatedPermission;
@@ -32,12 +32,14 @@ public interface ScopeAccessService {
 
     void deleteScopeAccess(ScopeAccess scopeAccess);
     
+    void deleteScopeAccessesForParentByApplicationId(String parentUniqueId, String clientId);
+    
     void deleteDelegatedToken(User user, String tokenString);
 
     boolean doesAccessTokenHavePermission(ScopeAccess token, Permission permission);
     
     boolean doesAccessTokenHaveService(ScopeAccess token, String clientId);
-
+    
     void expireAccessToken(String tokenString);
 
     void expireAllTokensForClient(String clientId);
@@ -57,6 +59,8 @@ public interface ScopeAccessService {
     RackerScopeAccess getRackerScopeAccessForClientId(String rackerUniqueId, String clientId);
 
     ScopeAccess getScopeAccessByAccessToken(String accessToken);
+    
+    ScopeAccess loadScopeAccessByAccessToken(String accessToken);
 
     ScopeAccess getScopeAccessByRefreshToken(String refreshToken);
 
@@ -99,7 +103,7 @@ public interface ScopeAccessService {
         String clientId);
 
     boolean doesUserHavePermissionForClient(User user, Permission permission,
-        Client client);
+        Application client);
 
     List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(
         ScopeAccess scopeAccess);

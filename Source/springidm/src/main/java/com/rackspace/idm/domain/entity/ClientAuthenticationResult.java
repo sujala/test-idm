@@ -2,18 +2,18 @@ package com.rackspace.idm.domain.entity;
 
 public class ClientAuthenticationResult extends AuthenticationResult {
 
-    private Client client;
+    private Application client;
     
-    public ClientAuthenticationResult(Client client, boolean authenticated) {
+    public ClientAuthenticationResult(Application client, boolean authenticated) {
         super(authenticated);
         this.client = client;
     }
 
-    public Client getClient() {
+    public Application getClient() {
         return client;
     }
 
-    public void setClient(Client client) {
+    public void setClient(Application client) {
         this.client = client;
     }
 

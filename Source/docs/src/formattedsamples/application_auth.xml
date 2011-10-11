@@ -4,7 +4,9 @@
 	<access_token 
 	   expires_in="3600" 
 	   id="ab48a9efdfedb23ty3494" />
-	<client
-        customerId="RACKSPACE" 
-        clientId="ab4820dhcb39347" />
+	<refresh_token 
+	   id="8792gdfskjbadf98y234r" />
+	<application 
+	    customerId="RCN-000-000-000"
+	    clientId="781hhh47kj34kj3434" />
 </auth>

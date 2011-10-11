@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
+import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Users;
 
 public interface UserDao {
@@ -24,11 +25,13 @@ public interface UserDao {
 
     void deleteRacker(String rackerId);
 
+    void deleteUser(User user);
+    
     void deleteUser(String username);
 
     void removeUsersFromClientGroup(ClientGroup group);
 
-    Users getAllUsers(int offset, int limit);
+    Users getAllUsers(FilterParam[] filters, int offset, int limit);
 
     String[] getGroupIdsForUser(String username);
 
@@ -47,8 +50,6 @@ public interface UserDao {
     User getUserBySecureId(String secureId);
 
     User getUserByUsername(String username);
-
-    Users getUsersByCustomerId(String customerId, int offset, int limit);
 
     boolean isUsernameUnique(String username);
 

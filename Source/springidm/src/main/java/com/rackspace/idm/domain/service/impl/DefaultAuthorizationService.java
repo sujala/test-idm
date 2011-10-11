@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
@@ -16,14 +16,14 @@ import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.entity.hasAccessToken;
+import com.rackspace.idm.domain.entity.HasAccessToken;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.util.WadlTrie;
 
 public class DefaultAuthorizationService implements AuthorizationService {
 
-    private final ClientDao clientDao;
+    private final ApplicationDao clientDao;
     private final Configuration config;
     private final ScopeAccessDao scopeAccessDao;
     private final WadlTrie wadlTrie;
@@ -32,7 +32,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private static String IDM_ADMIN_GROUP_DN = null;
 
     public DefaultAuthorizationService(ScopeAccessDao scopeAccessDao,
-        ClientDao clientDao, WadlTrie wadlTrie, Configuration config) {
+        ApplicationDao clientDao, WadlTrie wadlTrie, Configuration config) {
         this.scopeAccessDao = scopeAccessDao;
         this.clientDao = clientDao;
         this.wadlTrie = wadlTrie;
@@ -209,7 +209,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     public void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token) {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
-                ((hasAccessToken) token).getAccessTokenString());
+                ((HasAccessToken) token).getAccessTokenString());
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }

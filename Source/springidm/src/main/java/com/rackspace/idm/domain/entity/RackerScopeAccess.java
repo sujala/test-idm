@@ -14,7 +14,7 @@ import com.unboundid.ldap.sdk.persist.LDAPGetter;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_RACKERSCOPEACCESS,requestAllAttributes=true)
-public class RackerScopeAccess extends ScopeAccess implements hasAccessToken, hasRefreshToken {
+public class RackerScopeAccess extends ScopeAccess implements HasAccessToken, HasRefreshToken {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;

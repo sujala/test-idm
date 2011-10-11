@@ -423,14 +423,14 @@ public class LdapUserRepositoryTest {
             .getValue());
     }
 
-    @Test
-    @Ignore
-    public void shouldRetrieveAllRecords() {
-        User user = addNewTestUser();
-        Users users = repo.getAllUsers(0, 100);
-        repo.deleteUser(user.getUsername());
-        Assert.assertTrue(users.getUsers().size() > 1);
-    }
+//    @Test
+//    @Ignore
+//    public void shouldRetrieveAllRecords() {
+//        User user = addNewTestUser();
+//        Users users = repo.getAllUsers(0, 100);
+//        repo.deleteUser(user.getUsername());
+//        Assert.assertTrue(users.getUsers().size() > 1);
+//    }
 
     @Test
     public void shouldAuthenticateForCorrectCredentials() {
@@ -517,17 +517,17 @@ public class LdapUserRepositoryTest {
         Assert.assertEquals(ReChangedUser.isLocked(), false);
     }
 
-    @Test
-    public void shouldFindByCustomerID() {
-        User user = addNewTestUser();
-        Users users = repo.getUsersByCustomerId("RACKSPACE", 0, 200);
-        repo.deleteUser(user.getUsername());
-        Assert.assertTrue(users.getLimit() == 200);
-        Assert.assertTrue(users.getOffset() == 0);
-
-        Assert.assertTrue(users.getTotalRecords() >= 1);
-        Assert.assertTrue(users.getUsers().size() >= 1);
-    }
+//    @Test
+//    public void shouldFindByCustomerID() {
+//        User user = addNewTestUser();
+//        Users users = repo.getUsersByCustomerId("RACKSPACE", 0, 200);
+//        repo.deleteUser(user.getUsername());
+//        Assert.assertTrue(users.getLimit() == 200);
+//        Assert.assertTrue(users.getOffset() == 0);
+//
+//        Assert.assertTrue(users.getTotalRecords() >= 1);
+//        Assert.assertTrue(users.getUsers().size() >= 1);
+//    }
     
     @Test
     public void shouldFindBySecureID() {

@@ -8,7 +8,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
@@ -22,7 +22,7 @@ import com.rackspace.idm.exception.NotFoundException;
 public class TenantServiceTests {
 
     private TenantDao mockTenantDao;
-    private ClientDao mockClientDao;
+    private ApplicationDao mockClientDao;
     private UserDao mockUserDao;
     private ScopeAccessDao mockScopeAccessDao;
     private TenantService tenantService;
@@ -43,7 +43,7 @@ public class TenantServiceTests {
     public void setUp() throws Exception {
 
         mockTenantDao = EasyMock.createMock(TenantDao.class);
-        mockClientDao = EasyMock.createMock(ClientDao.class);
+        mockClientDao = EasyMock.createMock(ApplicationDao.class);
         mockUserDao = EasyMock.createMock(UserDao.class);
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
         tenantService = new DefaultTenantService(mockTenantDao, mockClientDao, mockUserDao, mockScopeAccessDao);

@@ -9,7 +9,7 @@ import com.rackspace.idm.domain.entity.PasswordRuleResult;
 
 public class PasswordRulesConverter {
 
-    private final ObjectFactory of = new ObjectFactory();
+    private final ObjectFactory objectFactory = new ObjectFactory();
 
     public PasswordRulesConverter() {
     }
@@ -21,7 +21,7 @@ public class PasswordRulesConverter {
             return null;
         }
         
-        com.rackspace.api.idm.v1.PasswordRules jaxbRules = of
+        com.rackspace.api.idm.v1.PasswordRules jaxbRules = objectFactory
             .createPasswordRules();
 
         for (PasswordRule rule : rules) {
@@ -33,7 +33,7 @@ public class PasswordRulesConverter {
 
     public com.rackspace.api.idm.v1.PasswordRule toPasswordRuleJaxb(
         PasswordRule rule) {
-        com.rackspace.api.idm.v1.PasswordRule jaxbRule = of.createPasswordRule();
+        com.rackspace.api.idm.v1.PasswordRule jaxbRule = objectFactory.createPasswordRule();
 
         jaxbRule.setId(rule.getRuleId());
         jaxbRule.setMessage(rule.getMessage());
@@ -45,10 +45,10 @@ public class PasswordRulesConverter {
     public com.rackspace.api.idm.v1.PasswordValidation toPasswordValidationJaxb(
         PasswordComplexityResult passwordComplexityResult) {
 
-        com.rackspace.api.idm.v1.PasswordValidation jaxbpasswordValidation = of
+        com.rackspace.api.idm.v1.PasswordValidation jaxbpasswordValidation = objectFactory
             .createPasswordValidation();
 
-        com.rackspace.api.idm.v1.PasswordRuleResults jaxbRulesResult = of
+        com.rackspace.api.idm.v1.PasswordRuleResults jaxbRulesResult = objectFactory
             .createPasswordRuleResults();
 
         List<PasswordRuleResult> ruleResults = passwordComplexityResult
@@ -68,7 +68,7 @@ public class PasswordRulesConverter {
 
     public com.rackspace.api.idm.v1.PasswordRuleResult toPasswordRuleResult(
         PasswordRuleResult result) {
-        com.rackspace.api.idm.v1.PasswordRuleResult jaxbRuleResult = of
+        com.rackspace.api.idm.v1.PasswordRuleResult jaxbRuleResult = objectFactory
             .createPasswordRuleResult();
         jaxbRuleResult.setRuleId(result.getRuleId());
         jaxbRuleResult.setRuleName(result.getRuleName());

@@ -20,14 +20,14 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.DelegatedPermission;
 import com.rackspace.idm.domain.entity.GrantedPermission;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 
@@ -35,7 +35,7 @@ public class AcceptServlet extends HttpServlet {
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private ClientService clientService;
+    private ApplicationService clientService;
     private UserService userService;
     private ScopeAccessService scopeAccessService;
     private Configuration config;
@@ -83,10 +83,10 @@ public class AcceptServlet extends HttpServlet {
             return;
         }
 
-        List<Client> clients = new ArrayList<Client>();
+        List<Application> clients = new ArrayList<Application>();
         String[] scopes = scopeList.split(" ");
         for (String s : scopes) {
-            Client c = getClientService().getClientByScope(s);
+            Application c = getClientService().getClientByScope(s);
             if (c == null) {
                 setErrorResponse(response, redirectUri, INVALID_SCOPE);
                 return;
@@ -94,7 +94,7 @@ public class AcceptServlet extends HttpServlet {
             clients.add(c);
         }
 
-        Client client = getClientService().getById(clientId);
+        Application client = getClientService().getById(clientId);
         if (client == null || client.isDisabled()) {
             setErrorResponse(response, redirectUri, UNAUTHORIZED_CLIENT);
             return;
@@ -108,7 +108,7 @@ public class AcceptServlet extends HttpServlet {
             return;
         }
 
-        for (Client c : clients) {
+        for (Application c : clients) {
             ScopeAccess sa = getScopeAccessService()
                 .getDirectScopeAccessForParentByClientId(user.getUniqueId(),
                     c.getClientId());
@@ -160,7 +160,7 @@ public class AcceptServlet extends HttpServlet {
             .toDate());
         getScopeAccessService().updateScopeAccess(dcsa);
 
-        for (Client c : clients) {
+        for (Application c : clients) {
             ScopeAccess sa = getScopeAccessService()
                 .getDirectScopeAccessForParentByClientId(user.getUniqueId(),
                     c.getClientId());
@@ -198,11 +198,11 @@ public class AcceptServlet extends HttpServlet {
         return;
     }
 
-    private synchronized ClientService getClientService() {
+    private synchronized ApplicationService getClientService() {
         if (clientService == null) {
             WebApplicationContext context = WebApplicationContextUtils
                 .getWebApplicationContext(getServletContext());
-            clientService = context.getBean(ClientService.class);
+            clientService = context.getBean(ApplicationService.class);
         }
         return clientService;
     }

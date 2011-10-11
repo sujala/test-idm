@@ -2,11 +2,9 @@
 
 <application xmlns="http://idm.api.rackspace.com/v1.0"
     softDeleted="false" 
-    locked="false" 
-    status="ACTIVE"
-    inum="@FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!0001"
+    enabled="true" 
     name="Test Application2" 
     customerId="RCN-000-000-000" 
     clientId="ab4820dhcb39347">
-    <credentials clientSecret="3af738fbeiwu23" />
+    <secretCredentials clientSecret="3af738fbeiwu23" />
 </application>

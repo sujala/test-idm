@@ -12,6 +12,9 @@ public class Customer implements Auditable {
     
     private String id = null;
 
+    // flag determines if the customer has been locked or unlocked.
+    private boolean lockStatusChanged = false;
+    
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String RCN = null;
@@ -33,7 +36,7 @@ public class Customer implements Auditable {
     }
     
     public Boolean getPasswordRotationEnabled() {
-        return passwordRotationEnabled;
+        return passwordRotationEnabled == null ? false : passwordRotationEnabled;
     }
     
     public void setPasswordRotationEnabled(Boolean passwordRotationEnabled) {
@@ -89,6 +92,10 @@ public class Customer implements Auditable {
     }
 
     public void setLocked(Boolean isLocked) {
+    	if (this.locked != isLocked) {
+    		this.lockStatusChanged = true;
+    	}
+    	
         this.locked = isLocked;
     }
 
@@ -104,7 +111,7 @@ public class Customer implements Auditable {
 
     public void setDefaults() {
         this.status = CustomerStatus.ACTIVE;
-        this.locked = false;
+        this.locked = (this.locked == null ? false : this.locked);
         this.softDeleted = false;
     }
 
@@ -193,4 +200,12 @@ public class Customer implements Auditable {
         String format = "id=%s,RCN=%s";
         return String.format(format, getId(), RCN);
     }
+
+	public boolean isLockStatusChanged() {
+		return lockStatusChanged;
+	}
+
+	public void setLockStatusChanged(boolean lockStatusChanged) {
+		this.lockStatusChanged = lockStatusChanged;
+	}
 }

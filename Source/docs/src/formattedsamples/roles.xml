@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <roles xmlns="http://idm.api.rackspace.com/v1.0">
-    <role name="network_admin" applicationId="compute"/>
-    <role name="technical_reviewer" tenantId="57884" applicationId="swift"/>
-    <role name="admin" tenantId="cf_89983" applicationId="billing"/>     
+    <role id="23" name="network_admin" applicationId="compute"/>
+    <role id="24" name="technical_reviewer" applicationId="swift"/>
+    <role id="56" name="admin" />     
 </roles>
 

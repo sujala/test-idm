@@ -7,16 +7,18 @@ import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.Client;
-import com.rackspace.idm.domain.entity.Clients;
+import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
+import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.CustomerService;
+import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.impl.DefaultCustomerService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -24,9 +26,10 @@ import com.rackspace.idm.exception.NotFoundException;
 public class CustomerServiceTests {
     CustomerService service;
 
-    ClientDao mockClientDao;
+    ApplicationDao mockClientDao;
     CustomerDao mockCustomerDao;
     UserDao mockUserDao;
+    TokenService mockTokenService;
 
     String customerId = "CustomerId";
     String customerName = "Name";
@@ -44,12 +47,13 @@ public class CustomerServiceTests {
     @Before
     public void setUp() throws Exception {
 
-        mockClientDao = EasyMock.createMock(ClientDao.class);
+        mockClientDao = EasyMock.createMock(ApplicationDao.class);
         mockCustomerDao = EasyMock.createMock(CustomerDao.class);
         mockUserDao = EasyMock.createMock(UserDao.class);
+        mockTokenService = EasyMock.createMock(TokenService.class);
 
         service = new DefaultCustomerService(mockClientDao, mockCustomerDao,
-            mockUserDao);
+            mockUserDao, mockTokenService);
     }
 
     @Test
@@ -86,11 +90,11 @@ public class CustomerServiceTests {
         mockCustomerDao.deleteCustomer(customerId);
         EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId)).andReturn(getFakeCustomer());
         EasyMock.replay(mockCustomerDao);   
-        EasyMock.expect(mockUserDao.getUsersByCustomerId(customerId, 0, 100)).andReturn(getFakeUsers());
+        EasyMock.expect(mockUserDao.getAllUsers(EasyMock.anyObject(FilterParam[].class), 0, 100)).andReturn(getFakeUsers());
         mockUserDao.deleteUser(username);
         EasyMock.replay(mockUserDao);
         EasyMock.expect(mockClientDao.getClientsByCustomerId(customerId, 0, 100)).andReturn(getFakeClients());
-        mockClientDao.deleteClient(EasyMock.anyObject(Client.class));
+        mockClientDao.deleteClient(EasyMock.anyObject(Application.class));
         EasyMock.replay(mockClientDao);
         service.deleteCustomer(customerId);
         EasyMock.verify(mockCustomerDao);
@@ -110,44 +114,6 @@ public class CustomerServiceTests {
             .andReturn(getFakeCustomer());
         EasyMock.replay(mockCustomerDao);
         Customer customer = service.getCustomer(customerId);
-
-        EasyMock.verify(mockCustomerDao);
-    }
-
-    @Test
-    public void shouldSetCustomerLocked() {
-
-        Customer customer = getFakeCustomer();
-        String customerId = customer.getRCN();
-        boolean locked = true;
-
-        mockUserDao.setUsersLockedFlagByCustomerId(customerId, locked);
-        EasyMock.replay(mockUserDao);
-
-        mockClientDao.setClientsLockedFlagByCustomerId(customerId, locked);
-        EasyMock.replay(mockClientDao);
-
-        mockCustomerDao.updateCustomer(customer);
-        EasyMock.replay(mockCustomerDao);
-
-        service.setCustomerLocked(customer, locked);
-
-        EasyMock.verify(mockUserDao);
-        EasyMock.verify(mockClientDao);
-        EasyMock.verify(mockCustomerDao);
-    }
-
-    @Test
-    public void shouldSoftDeleteCustomer() {
-        Customer customer = getFakeCustomer();
-
-        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
-            .andReturn(customer);
-        customer.setSoftDeleted(true);
-        mockCustomerDao.updateCustomer(customer);
-        EasyMock.replay(mockCustomerDao);
-
-        service.softDeleteCustomer(customerId);
 
         EasyMock.verify(mockCustomerDao);
     }
@@ -181,15 +147,15 @@ public class CustomerServiceTests {
         return users;
     }
     
-    private Client getFakeClient() {
-        Client client = new Client();
+    private Application getFakeClient() {
+        Application client = new Application();
         client.setClientId(clientId);
         return client;
     }
     
-    private Clients getFakeClients() {
-        Clients clients = new Clients();
-        List<Client> clientList = new ArrayList<Client>();
+    private Applications getFakeClients() {
+        Applications clients = new Applications();
+        List<Application> clientList = new ArrayList<Application>();
         clientList.add(getFakeClient());
         clients.setLimit(100);
         clients.setOffset(0);

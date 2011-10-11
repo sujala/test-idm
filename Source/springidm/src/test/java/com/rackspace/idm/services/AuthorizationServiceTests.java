@@ -16,9 +16,9 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.Permission;
@@ -30,7 +30,7 @@ import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.util.WadlTrie;
 
 public class AuthorizationServiceTests {
-    ClientDao mockClientDao;
+    ApplicationDao mockClientDao;
     ScopeAccessDao mockScopeAccessDao;
     AuthorizationService service;
     WadlTrie mockWadlTrie;
@@ -63,10 +63,10 @@ public class AuthorizationServiceTests {
     String permissionId = "Permission";
     String permissionValue = verb + " " + uri;
 
-    Client authorizedClient;
-    Client notAuthorizedClient;
-    Client nonRackspaceClient;
-    Client idmClient;
+    Application authorizedClient;
+    Application notAuthorizedClient;
+    Application nonRackspaceClient;
+    Application idmClient;
 
     User authorizedUser;
     User otherCompanyUser;
@@ -93,7 +93,7 @@ public class AuthorizationServiceTests {
 
     @Before
     public void setUp() throws Exception {
-        mockClientDao = EasyMock.createMock(ClientDao.class);
+        mockClientDao = EasyMock.createMock(ApplicationDao.class);
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
         mockWadlTrie = EasyMock.createMock(WadlTrie.class);
         mockUriInfo = EasyMock.createMock(UriInfo.class);

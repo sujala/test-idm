@@ -61,7 +61,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.ClientService;
+import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
@@ -84,7 +84,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private TenantService tenantService;
     @Autowired
-    private ClientService clientService;
+    private ApplicationService clientService;
     @Autowired
     private EndpointService endpointService;
     @Autowired

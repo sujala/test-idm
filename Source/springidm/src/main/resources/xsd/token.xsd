@@ -30,19 +30,12 @@
 			</xsd:documentation>
 		</annotation>
 	</include>
-	<include schemaLocation="client.xsd">
+	
+	<include schemaLocation="application.xsd">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
 				xmlns="http://www.w3.org/1999/xhtml">
-				<p>Entities related to clients.</p>
-			</xsd:documentation>
-		</annotation>
-	</include>
-	<include schemaLocation="permission.xsd">
-		<annotation>
-			<xsd:documentation xml:lang="EN"
-				xmlns="http://www.w3.org/1999/xhtml">
-				<p>Entities related to permissions.</p>
+				<p>Entities related to applications.</p>
 			</xsd:documentation>
 		</annotation>
 	</include>
@@ -87,6 +80,8 @@
 			</xsd:appinfo>
 		</annotation>
 	</element>
+	
+	<element name="rackerCredentials" type="idm:RackerCredentials" />
 
 	<element name="token" type="idm:Token">
 		<annotation>
@@ -167,11 +162,6 @@
 
 	<!-- Complex Types -->
 	<complexType name="Token">
-		<sequence>
-			<element name="PermissionList" type="idm:PermissionList"
-				minOccurs="0" maxOccurs="1">
-			</element>
-		</sequence>
 		<attribute name="id" type="xsd:string" use="required">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
@@ -191,11 +181,6 @@
 	</complexType>
 
 	<complexType name="DelegatedToken">
-		<sequence>
-			<element name="PermissionList" type="idm:PermissionList"
-				minOccurs="0" maxOccurs="1">
-			</element>
-		</sequence>
 		<attribute name="id" type="xsd:string" use="required">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
@@ -266,12 +251,12 @@
 					</xsd:documentation>
 				</annotation>
 			</element>
-			<element name="client" type="idm:Client" minOccurs="0"
+			<element name="application" type="idm:Application" minOccurs="0"
 				maxOccurs="1">
 				<annotation>
 					<xsd:documentation xml:lang="EN"
 						xmlns="http://www.w3.org/1999/xhtml">
-						<p>A client associated with the token.</p>
+						<p>An application associated with the token.</p>
 					</xsd:documentation>
 				</annotation>
 			</element>
@@ -315,7 +300,7 @@
 		</attribute>
 	</complexType>
 
-	<complexType name="AuthCredentials">
+	<complexType name="Credentials" abstract="true">
 		<attribute name="grant_type" type="idm:AuthGrantType" use="required">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
@@ -374,25 +359,21 @@
 		</attribute>
 	</complexType>
 
+	<complexType name="AuthCredentials">
+		<complexContent>
+			<extension base="idm:Credentials"></extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="RackerCredentials">
+		<complexContent>
+			<extension base="idm:Credentials"></extension>
+		</complexContent>
+	</complexType>
+	
 	<!-- Simple Types -->
 	<simpleType name="AuthGrantType">
 		<restriction base="string">
-			<enumeration value="API_CREDENTIALS">
-				<annotation>
-					<xsd:documentation xml:lang="EN"
-						xmlns="http://www.w3.org/1999/xhtml">
-						<p>The OAuth grant type api_credentials.</p>
-					</xsd:documentation>
-				</annotation>
-			</enumeration>
-			<enumeration value="ASSERTION">
-				<annotation>
-					<xsd:documentation xml:lang="EN"
-						xmlns="http://www.w3.org/1999/xhtml">
-						<p>The OAuth grant type assertion.</p>
-					</xsd:documentation>
-				</annotation>
-			</enumeration>
 			<enumeration value="AUTHORIZATION_CODE">
 				<annotation>
 					<xsd:documentation xml:lang="EN"
@@ -417,19 +398,19 @@
 					</xsd:documentation>
 				</annotation>
 			</enumeration>
-			<enumeration value="RACKER">
-                <annotation>
-                    <xsd:documentation xml:lang="EN"
-                        xmlns="http://www.w3.org/1999/xhtml">
-                        <p>The Rackspace grant type racker.</p>
-                    </xsd:documentation>
-                </annotation>
-            </enumeration>
 			<enumeration value="REFRESH_TOKEN">
 				<annotation>
 					<xsd:documentation xml:lang="EN"
 						xmlns="http://www.w3.org/1999/xhtml">
 						<p>The OAuth grant type refresh_token.</p>
+					</xsd:documentation>
+				</annotation>
+			</enumeration>
+			<enumeration value="RACKER">
+				<annotation>
+					<xsd:documentation xml:lang="EN"
+						xmlns="http://www.w3.org/1999/xhtml">
+						<p>This is an extended grant type. Enables us know if a racker is authenticating.</p>
 					</xsd:documentation>
 				</annotation>
 			</enumeration>

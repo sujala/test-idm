@@ -13,16 +13,17 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.dao.ClientDao;
+import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.Client;
+import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.Clients;
+import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.entity.DefinedPermission;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
+import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.GrantedPermission;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.Permission;
@@ -40,7 +41,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
     UserDao mockUserDao;
     ScopeAccessDao scopeAccessDao;
-    ClientDao mockClientDao;
+    ApplicationDao mockClientDao;
     TenantDao tenantDao;
     EndpointDao endpointDao;
     AuthHeaderHelper authHeaderHelper;
@@ -58,7 +59,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         authHeaderHelper = new AuthHeaderHelper();
 
         mockUserDao = EasyMock.createMock(UserDao.class);
-        mockClientDao = EasyMock.createMock(ClientDao.class);
+        mockClientDao = EasyMock.createMock(ApplicationDao.class);
         scopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
         endpointDao = EasyMock.createMock(EndpointDao.class);
         tenantDao = EasyMock.createMock(TenantDao.class);
@@ -114,7 +115,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
     @Test
     public void shouldGetScopeAccessForParentByClientId() {
-        Client client = getFakeClient();
+        Application client = getFakeClient();
         EasyMock.expect(
             scopeAccessDao.getDirectScopeAccessForParentByClientId(
                 client.getUniqueId(), client.getClientId())).andReturn(
@@ -128,7 +129,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     @Test
     public void shouldGetPermissionForParent() {
 
-        Client client = getFakeClient();
+        Application client = getFakeClient();
         Permission permission = getFakePermission("permissionId");
         EasyMock.expect(
             scopeAccessDao.getPermissionByParentAndPermission(
@@ -157,7 +158,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
     @Test
     public void shouldGrantPermissionToClient() {
-        Client client = getFakeClient();
+        Application client = getFakeClient();
         ScopeAccess sa = getFakeScopeAccess();
         Permission perm = getFakePermission("fakePermissionObjectId");
 
@@ -201,7 +202,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     @Test
     public void shouldGrantPermissionToUser() {
         User user = getFakeUser();
-        Client client = getFakeClient();
+        Application client = getFakeClient();
         UserScopeAccess sa = getFakeUserScopeAccess();
         Permission perm = getFakePermission("fakePermissionObjectId");
 
@@ -245,7 +246,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
     @Test(expected = NotFoundException.class)
     public void shouldNotGrantPermissionIfClientIsNotFound() {
-        Client client = getFakeClient();
+        Application client = getFakeClient();
         ScopeAccess sa = getFakeScopeAccess();
         Permission perm = getFakePermission("fakePermissionObjectId");
         
@@ -263,7 +264,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
     @Test(expected = NotFoundException.class)
     public void shouldNotGrantPermissionIfPermissionIsNotFound() {
-        Client client = getFakeClient();
+        Application client = getFakeClient();
         ScopeAccess sa = getFakeScopeAccess();
         Permission perm = getFakePermission("fakePermissionObjectId");
         
@@ -287,7 +288,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     public void shouldGetUserScopeAccessForClientIdByUsernameAndPassword() {
 
         User user = getFakeUser();
-        Client client = getFakeClient();
+        Application client = getFakeClient();
         UserScopeAccess sa = getFakeUserScopeAccess();
         EasyMock.expect(mockUserDao.authenticate(username, "password"))
             .andReturn(new UserAuthenticationResult(user, true));
@@ -310,7 +311,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     @Test
     public void shouldGetUserScopeAccessForClientIdByNastIdAndApiCredentials() {
         User user = getFakeUser();
-        Client client = getFakeClient();
+        Application client = getFakeClient();
         UserScopeAccess sa = getFakeUserScopeAccess();
 
         String nastId = "fakeNastId";
@@ -338,7 +339,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     @Test
     public void shouldGetUserScopeAccessForClientIdByMossoIdAndApiCredentials() {
         User user = getFakeUser();
-        Client client = getFakeClient();
+        Application client = getFakeClient();
         UserScopeAccess sa = getFakeUserScopeAccess();
 
         int mossoId = 12345;
@@ -366,7 +367,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     @Test
     public void shouldGetUserScopeAccessForClientIdByUsernameAndApiCredentials() {
         User user = getFakeUser();
-        Client client = getFakeClient();
+        Application client = getFakeClient();
         UserScopeAccess sa = getFakeUserScopeAccess();
 
         String apiKey = "fakeApiKey";
@@ -506,13 +507,13 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
     @Test
     public void shouldExpireAllTokensForClient() {
-        Client fakeClient = getFakeClient();
+        Application fakeClient = getFakeClient();
         setUpClientTokenExiprationTest(true, fakeClient);
         EasyMock.verify(mockClientDao, scopeAccessDao);
     }
 
     private void setUpClientTokenExiprationTest(boolean doTest,
-        Client fakeClient) {
+        Application fakeClient) {
         EasyMock.expect(
             mockClientDao.getClientByClientId(fakeClient.getClientId()))
             .andReturn(fakeClient);
@@ -543,10 +544,10 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     public void shouldExpireAllTokensForCustomer() {
         Configuration config = EasyMock.createMock(Configuration.class);
         EasyMock.expect(config.getInt("ldap.paging.limit.max")).andReturn(10);
-        Client client0 = getFakeClient();
-        List<Client> clientsList = new ArrayList<Client>();
+        Application client0 = getFakeClient();
+        List<Application> clientsList = new ArrayList<Application>();
         clientsList.add(client0);
-        Clients clients = new Clients();
+        Applications clients = new Applications();
         clients.setClients(clientsList);
         EasyMock.expect(
             mockClientDao.getClientsByCustomerId(customerId, 0, 1000))
@@ -557,7 +558,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         usersList.add(user0);
         Users users = new Users();
         users.setUsers(usersList);
-        EasyMock.expect(mockUserDao.getUsersByCustomerId(customerId, 0, 1000))
+        EasyMock.expect(mockUserDao.getAllUsers(EasyMock.anyObject(FilterParam[].class), 0, 1000))
             .andReturn(users);
 
         setUpClientTokenExiprationTest(false, client0);

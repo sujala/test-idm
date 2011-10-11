@@ -3,8 +3,10 @@
     "secretAnswer": "Francis",
     "secretQuestion": "What is your dogs name?"
   },
-  "password": {
-    "password": "P@ssword1"
+  "passwordCredentials": {
+  	"currentPassword": {
+    	     "password": "P@ssword1"
+  	 }
   },
   "username": "jqsmith",
   "customerId": "RCN-000-000-000",
