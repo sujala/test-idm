@@ -1,8 +1,8 @@
 package com.rackspace.idm.domain.entity;
 
-import java.util.Date;
-
 import org.joda.time.DateTime;
+
+import java.util.Date;
 
 public interface HasAccessToken {
 
