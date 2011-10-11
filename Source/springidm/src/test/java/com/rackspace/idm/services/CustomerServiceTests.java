@@ -90,7 +90,7 @@ public class CustomerServiceTests {
         mockCustomerDao.deleteCustomer(customerId);
         EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId)).andReturn(getFakeCustomer());
         EasyMock.replay(mockCustomerDao);   
-        EasyMock.expect(mockUserDao.getAllUsers(EasyMock.anyObject(FilterParam[].class), 0, 100)).andReturn(getFakeUsers());
+        EasyMock.expect(mockUserDao.getAllUsers(EasyMock.anyObject(FilterParam[].class), EasyMock.eq(0), EasyMock.eq(100))).andReturn(getFakeUsers());
         mockUserDao.deleteUser(username);
         EasyMock.replay(mockUserDao);
         EasyMock.expect(mockClientDao.getClientsByCustomerId(customerId, 0, 100)).andReturn(getFakeClients());

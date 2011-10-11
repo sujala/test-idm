@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.Tenant;
@@ -31,8 +32,8 @@ public class DefaultTenantService implements TenantService {
     private final ScopeAccessDao scopeAccessDao;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultTenantService(TenantDao tenantDao, ApplicationDao clientDao, UserDao userDao,
-        ScopeAccessDao scopeAccessDao) {
+    public DefaultTenantService(TenantDao tenantDao, ApplicationDao clientDao,
+        UserDao userDao, ScopeAccessDao scopeAccessDao) {
         this.tenantDao = tenantDao;
         this.clientDao = clientDao;
         this.userDao = userDao;
@@ -44,7 +45,8 @@ public class DefaultTenantService implements TenantService {
         logger.info("Adding Tenant {}", tenant);
         Tenant exists = this.tenantDao.getTenantByName(tenant.getName());
         if (exists != null) {
-            String errMsg = String.format("Tenant with name %s already exists", tenant.getName());
+            String errMsg = String.format("Tenant with name %s already exists",
+                tenant.getName());
             logger.warn(errMsg);
             throw new DuplicateException(errMsg);
         }
@@ -193,7 +195,8 @@ public class DefaultTenantService implements TenantService {
         TenantRole role = this.tenantDao.getTenantRoleForParentById(
             parentUniqueId, id);
         if (role != null) {
-            ClientRole cRole = this.clientDao.getClientRoleById(role.getRoleRsId());
+            ClientRole cRole = this.clientDao.getClientRoleById(role
+                .getRoleRsId());
             role.setName(cRole.getName());
             role.setDescription(cRole.getDescription());
         }
@@ -224,7 +227,11 @@ public class DefaultTenantService implements TenantService {
 
         String parentDn = null;
         try {
-            parentDn = scopeAccess.getLDAPEntry().getParentDNString();
+            if (scopeAccess instanceof DelegatedClientScopeAccess) {
+                parentDn = scopeAccess.getUniqueId();
+            } else {
+                parentDn = scopeAccess.getLDAPEntry().getParentDNString();
+            }
         } catch (Exception ex) {
             throw new IllegalStateException();
         }
@@ -268,7 +275,8 @@ public class DefaultTenantService implements TenantService {
                 "User cannont be null and must have uniqueID");
         }
 
-        Application client = this.clientDao.getClientByClientId(role.getClientId());
+        Application client = this.clientDao.getClientByClientId(role
+            .getClientId());
         if (client == null) {
             String errMsg = String.format("Client %s not found",
                 role.getClientId());
@@ -311,7 +319,8 @@ public class DefaultTenantService implements TenantService {
                 "Client cannont be null and must have uniqueID");
         }
 
-        Application owner = this.clientDao.getClientByClientId(role.getClientId());
+        Application owner = this.clientDao.getClientByClientId(role
+            .getClientId());
         if (owner == null) {
             String errMsg = String.format("Client %s not found",
                 role.getClientId());
@@ -349,26 +358,31 @@ public class DefaultTenantService implements TenantService {
     public List<TenantRole> getGlobalRolesForUser(User user) {
         logger.debug("Getting Global Roles for user {}", user.getUsername());
         List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user);
-        
+
         return getGlobalRoles(roles);
     }
 
     @Override
-    public List<TenantRole> getGlobalRolesForUser(User user, FilterParam[] filters) {
+    public List<TenantRole> getGlobalRolesForUser(User user,
+        FilterParam[] filters) {
         logger.debug("Getting Global Roles");
-        List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user, filters);
+        List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user,
+            filters);
 
         return getGlobalRoles(roles);
     }
-    
+
     @Override
-    public List<TenantRole> getGlobalRolesForApplication(Application application, FilterParam[] filters) {
-    	logger.debug("Getting Global Roles for application {}", application.getName());
-        List<TenantRole> roles = this.tenantDao.getTenantRolesForApplication(application, filters);
+    public List<TenantRole> getGlobalRolesForApplication(
+        Application application, FilterParam[] filters) {
+        logger.debug("Getting Global Roles for application {}",
+            application.getName());
+        List<TenantRole> roles = this.tenantDao.getTenantRolesForApplication(
+            application, filters);
 
         return getGlobalRoles(roles);
     }
-    
+
     @Override
     public List<TenantRole> getTenantRolesForUserOnTenant(User user,
         Tenant tenant) {
@@ -388,67 +402,73 @@ public class DefaultTenantService implements TenantService {
         logger.debug("Got {} Tenant Roles", roles.size());
         return tenantRoles;
     }
-    
+
     @Override
-    public List<TenantRole> getTenantRolesForUser(User user, FilterParam[] filters) {
-    	logger.debug("Getting Tenant Roles");
-        List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user, filters);
-        
-        return getTenantOnlyRoles(roles);
-    }
-    
-    @Override
-    public List<TenantRole> getTenantRolesForApplication(Application application, FilterParam[] filters) {
-    	logger.debug("Getting Tenant Roles");
-        List<TenantRole> roles = this.tenantDao.getTenantRolesForApplication(application, filters);
+    public List<TenantRole> getTenantRolesForUser(User user,
+        FilterParam[] filters) {
+        logger.debug("Getting Tenant Roles");
+        List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user,
+            filters);
 
         return getTenantOnlyRoles(roles);
     }
-    
+
+    @Override
+    public List<TenantRole> getTenantRolesForApplication(
+        Application application, FilterParam[] filters) {
+        logger.debug("Getting Tenant Roles");
+        List<TenantRole> roles = this.tenantDao.getTenantRolesForApplication(
+            application, filters);
+
+        return getTenantOnlyRoles(roles);
+    }
+
     @Override
     public List<User> getUsersForTenant(String tenantId) {
         logger.debug("Getting Users for Tenant {}", tenantId);
         List<User> users = new ArrayList<User>();
-        
-        List<TenantRole> roles = this.tenantDao.getAllTenantRolesForTenant(tenantId);
-        
+
+        List<TenantRole> roles = this.tenantDao
+            .getAllTenantRolesForTenant(tenantId);
+
         List<String> userIds = new ArrayList<String>();
-        
+
         for (TenantRole role : roles) {
             if (!userIds.contains(role.getUserId())) {
                 userIds.add(role.getUserId());
             }
         }
-        
+
         for (String userId : userIds) {
             User user = this.userDao.getUserById(userId);
             if (user != null) {
                 users.add(user);
             }
         }
-        
+
         logger.debug("Got {} Users for Tenant {}", users.size(), tenantId);
         return users;
     }
-    
+
     /**
      * get roles in this list that are non-tenant specific
      * @param roles
      */
     private List<TenantRole> getGlobalRoles(List<TenantRole> roles) {
-          List<TenantRole> globalRoles = new ArrayList<TenantRole>();
-          for (TenantRole role : roles) {
-              if (role != null
-                  && (role.getTenantIds() == null || role.getTenantIds().length == 0)) {
-                  ClientRole cRole = this.clientDao.getClientRoleById(role.getRoleRsId());
-                  role.setName(cRole.getName());
-                  role.setDescription(cRole.getDescription());
-                  globalRoles.add(role);
-              }
-          }
-          return globalRoles;
+        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
+        for (TenantRole role : roles) {
+            if (role != null
+                && (role.getTenantIds() == null || role.getTenantIds().length == 0)) {
+                ClientRole cRole = this.clientDao.getClientRoleById(role
+                    .getRoleRsId());
+                role.setName(cRole.getName());
+                role.setDescription(cRole.getDescription());
+                globalRoles.add(role);
+            }
+        }
+        return globalRoles;
     }
-    
+
     /**
      * get roles in this list that are tenant specific
      * @param roles
@@ -456,7 +476,7 @@ public class DefaultTenantService implements TenantService {
     private List<TenantRole> getTenantOnlyRoles(List<TenantRole> roles) {
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
-        	//we only want to include roles on a tenant, and not global roles
+            // we only want to include roles on a tenant, and not global roles
             if (role.getTenantIds() != null && role.getTenantIds().length > 0) {
                 TenantRole newRole = new TenantRole();
                 newRole.setClientId(role.getClientId());
@@ -466,33 +486,36 @@ public class DefaultTenantService implements TenantService {
                 tenantRoles.add(newRole);
             }
         }
-        
+
         return tenantRoles;
     }
 
     @Override
     public List<User> getUsersWithTenantRole(Tenant tenant, ClientRole cRole) {
         List<User> users = new ArrayList<User>();
-        
-        List<TenantRole> roles = this.tenantDao.getAllTenantRolesForTenantAndRole(tenant.getTenantId(), cRole.getId());
-        
+
+        List<TenantRole> roles = this.tenantDao
+            .getAllTenantRolesForTenantAndRole(tenant.getTenantId(),
+                cRole.getId());
+
         List<String> userIds = new ArrayList<String>();
-        
+
         for (TenantRole role : roles) {
             if (!userIds.contains(role.getUserId())) {
                 userIds.add(role.getUserId());
             }
         }
-        
+
         for (String userId : userIds) {
             User user = this.userDao.getUserById(userId);
             if (user != null) {
                 users.add(user);
             }
         }
-        
-        logger.debug("Got {} Users for Tenant {}", users.size(), tenant.getTenantId());
+
+        logger.debug("Got {} Users for Tenant {}", users.size(),
+            tenant.getTenantId());
         return users;
-        
+
     }
 }

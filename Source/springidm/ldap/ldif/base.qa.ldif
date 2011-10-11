@@ -958,6 +958,24 @@ uid: cmarin2
 userPassword: Password1
 rsGroupDN: cn=Idm Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
 
+dn: rsId=104476,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+clearPassword:: u4ulicmrLfboYsh1KryLww==
+locked: FALSE
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20110428013526.504Z
+preferredLanguage: en-us
+RCN: RACKSPACE
+rsId: 104472
+rsRegion: USA
+softDeleted: FALSE
+status: ACTIVE
+timeZone: America/Chicago
+uid: cmarin3
+userPassword: Password1
+rsGroupDN: cn=Idm Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+
 
 ######################################## User ScopeAccesses Containers ##########################
 
@@ -1133,6 +1151,15 @@ clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 uid: cmarin2
 userRCN: RACKSPACE
 
+dn: clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=104476,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+uid: cmarin3
+userRCN: RACKSPACE
+
 ######################################## User Scope Accesses for Customer Idm #######################################
 
 
@@ -1208,6 +1235,15 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 uid: cmarin2
 userRCN: RACKSPACE
 
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=104476,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+uid: cmarin3
+userRCN: RACKSPACE
+
 ######################################## User Tenant Roles #######################################
 
 dn: roleRsId=2,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
@@ -1250,6 +1286,13 @@ objectClass: tenantRole
 roleRsId: 1
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 userRsId: 7
+
+dn: roleRsId=2,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=104476,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+roleRsId: 2
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 104476
 
 ######################################## Permissions #######################################
 

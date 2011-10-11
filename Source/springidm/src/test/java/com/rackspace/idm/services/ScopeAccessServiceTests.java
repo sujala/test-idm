@@ -19,8 +19,8 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.Applications;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.DefinedPermission;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.FilterParam;
@@ -558,7 +558,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         usersList.add(user0);
         Users users = new Users();
         users.setUsers(usersList);
-        EasyMock.expect(mockUserDao.getAllUsers(EasyMock.anyObject(FilterParam[].class), 0, 1000))
+        EasyMock.expect(mockUserDao.getAllUsers(EasyMock.anyObject(FilterParam[].class), EasyMock.eq(0), EasyMock.eq(1000)))
             .andReturn(users);
 
         setUpClientTokenExiprationTest(false, client0);

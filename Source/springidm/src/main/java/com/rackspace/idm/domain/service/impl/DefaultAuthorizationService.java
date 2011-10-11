@@ -3,20 +3,23 @@ package com.rackspace.idm.domain.service.impl;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.configuration.Configuration;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
+import com.rackspace.idm.domain.entity.HasAccessToken;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.entity.HasAccessToken;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.util.WadlTrie;
@@ -26,20 +29,49 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private final ApplicationDao clientDao;
     private final Configuration config;
     private final ScopeAccessDao scopeAccessDao;
+    private final TenantDao tenantDao;
     private final WadlTrie wadlTrie;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static String IDM_ADMIN_GROUP_DN = null;
+    private static ClientRole CLOUD_ADMIN_ROLE = null;
 
     public DefaultAuthorizationService(ScopeAccessDao scopeAccessDao,
-        ApplicationDao clientDao, WadlTrie wadlTrie, Configuration config) {
+        ApplicationDao clientDao, TenantDao tenantDao, WadlTrie wadlTrie,
+        Configuration config) {
         this.scopeAccessDao = scopeAccessDao;
         this.clientDao = clientDao;
+        this.tenantDao = tenantDao;
         this.wadlTrie = wadlTrie;
         this.config = config;
     }
 
-    
+    @Override
+    public boolean authorizeCloudAdmin(ScopeAccess scopeAccess) {
+        logger.debug("Authorizing {} as cloud admin", scopeAccess);
+
+        if (scopeAccess == null
+            || ((HasAccessToken) scopeAccess)
+                .isAccessTokenExpired(new DateTime())) {
+            return false;
+        }
+
+        if (CLOUD_ADMIN_ROLE == null) {
+            ClientRole role = this.clientDao
+                .getClientRoleByClientIdAndRoleName(getCloudAuthClientId(),
+                    getCloudAuthAdminRole());
+            CLOUD_ADMIN_ROLE = role;
+        }
+
+        boolean authorized = this.tenantDao.doesScopeAccessHaveTenantRole(
+            scopeAccess, CLOUD_ADMIN_ROLE);
+
+        logger.debug("Authorized {} as cloud admin - {}", scopeAccess,
+            authorized);
+        return authorized;
+    }
+
+    @Override
     public boolean authorizeRacker(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as racker", scopeAccess);
         boolean authorized = scopeAccess instanceof RackerScopeAccess;
@@ -47,7 +79,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    
+    @Override
     public boolean authorizeRackspaceClient(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as rackspace client", scopeAccess);
         if (!(scopeAccess instanceof ClientScopeAccess)) {
@@ -60,7 +92,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    
+    @Override
     public boolean authorizeClient(ScopeAccess scopeAccess, String verb,
         UriInfo uriInfo) {
         logger.debug("Authorizing {} as client", scopeAccess);
@@ -86,7 +118,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    
+    @Override
     public boolean authorizeUser(ScopeAccess scopeAccess, String customerId,
         String username) {
         logger.debug("Authorizing {} as user", scopeAccess);
@@ -107,7 +139,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    
+    @Override
     public boolean authorizeCustomerUser(ScopeAccess scopeAccess,
         String customerId) {
         logger.debug("Authorizing {} as customer user", scopeAccess);
@@ -127,7 +159,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    
+    @Override
     public boolean authorizeAdmin(ScopeAccess scopeAccess, String customerId) {
         logger.debug("Authorizing {} as admin user", scopeAccess);
         if (!(scopeAccess instanceof UserScopeAccess || scopeAccess instanceof DelegatedClientScopeAccess)) {
@@ -163,7 +195,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    
+    @Override
     public boolean authorizeCustomerIdm(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as Idm", scopeAccess);
         if (!(scopeAccess instanceof ClientScopeAccess)) {
@@ -178,7 +210,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
-    
+    @Override
     public boolean authorizeAsRequestorOrOwner(ScopeAccess targetScopeAccess,
         ScopeAccess requestingScopeAccess) {
         logger.debug("Authorizing as Requestor or Owner");
@@ -205,7 +237,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return (isRequestor || isOwner);
     }
 
-    
+    @Override
     public void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token) {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",
@@ -225,5 +257,13 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     private String getRackspaceCustomerId() {
         return config.getString("rackspace.customerId");
+    }
+
+    private String getCloudAuthClientId() {
+        return config.getString("cloudAuth.clientId");
+    }
+
+    private String getCloudAuthAdminRole() {
+        return config.getString("cloudAuth.adminRole");
     }
 }

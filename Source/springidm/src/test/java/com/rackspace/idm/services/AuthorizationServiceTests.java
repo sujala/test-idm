@@ -18,6 +18,7 @@ import org.junit.Test;
 
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
@@ -30,6 +31,7 @@ import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.util.WadlTrie;
 
 public class AuthorizationServiceTests {
+    TenantDao mockTenantDao;
     ApplicationDao mockClientDao;
     ScopeAccessDao mockScopeAccessDao;
     AuthorizationService service;
@@ -93,6 +95,7 @@ public class AuthorizationServiceTests {
 
     @Before
     public void setUp() throws Exception {
+        mockTenantDao = EasyMock.createMock(TenantDao.class);
         mockClientDao = EasyMock.createMock(ApplicationDao.class);
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
         mockWadlTrie = EasyMock.createMock(WadlTrie.class);
@@ -105,7 +108,7 @@ public class AuthorizationServiceTests {
             System.out.println(e);
         }
         service = new DefaultAuthorizationService(mockScopeAccessDao,
-            mockClientDao, mockWadlTrie, appConfig);
+            mockClientDao, mockTenantDao, mockWadlTrie, appConfig);
         setUpObjects();
     }
 

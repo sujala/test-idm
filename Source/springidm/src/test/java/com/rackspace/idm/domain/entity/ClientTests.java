@@ -103,7 +103,7 @@ public class ClientTests {
     public void shouldRunValidation() {
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         Set<ConstraintViolation<Application>> violations = validator.validate(new Application());
-        Assert.assertEquals(3, violations.size());
+        Assert.assertEquals(2, violations.size());
         System.out.println(violations);
     }
 }

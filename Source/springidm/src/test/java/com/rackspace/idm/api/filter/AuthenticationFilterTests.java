@@ -1,17 +1,18 @@
 package com.rackspace.idm.api.filter;
 
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.exception.CloudAdminAuthorizationException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.sun.jersey.spi.container.ContainerRequest;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertThat;
+
+import javax.ws.rs.core.HttpHeaders;
+
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.ws.rs.core.HttpHeaders;
-
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertThat;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.exception.CloudAdminAuthorizationException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.sun.jersey.spi.container.ContainerRequest;
 
 public class AuthenticationFilterTests {
 
@@ -50,7 +51,7 @@ public class AuthenticationFilterTests {
 
     @Test
     public void shouldIgnoreTokenRequest() {
-        EasyMock.expect(request.getPath()).andReturn("v1.0/token");
+        EasyMock.expect(request.getPath()).andReturn("v1.0/tokens");
         EasyMock.expect(request.getMethod()).andReturn("POST");
         replayAndRunFilter();
     }
