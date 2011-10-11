@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<user xmlns="http://idm.api.rackspace.com/v1.0"
+    region="SAT" prefLanguage="US_en" timeZone="America/Chicago"
+    displayName="John Smith" lastName="Smith" 
+    middleName="Quincy" firstName="John" 
+    personId="RPN-111-111-111" 
+    email="john.smith@example.org"
+    customerId="RCN-000-000-000" username="jqsmith"
+    timeZone="America/Chicago"
+    prefLanguage="US_en"
+    region="SAT">
+    <secret secretAnswer="Francis" 
+        secretQuestion="What is your dogs name?" />
+    <passwordCredentials xmlns="http://idm.api.rackspace.com/v1.0" > 
+       <currentPassword password="C@n+f001me!" />
+    </passwordCredentials>
+</user>
