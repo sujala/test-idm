@@ -47,7 +47,7 @@ public class UserConverterCloudV20 {
         
         jaxbUser.setDisplayName(user.getDisplayName());
         jaxbUser.setEmail(user.getEmail());
-        jaxbUser.setEnabled(!user.isLocked());
+        jaxbUser.setEnabled(user.isEnabled());
         jaxbUser.setId(user.getId());
         jaxbUser.setUsername(user.getUsername());
         
