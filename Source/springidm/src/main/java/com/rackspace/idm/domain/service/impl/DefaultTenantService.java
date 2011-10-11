@@ -13,13 +13,14 @@ import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 
 public class DefaultTenantService implements TenantService {
@@ -41,6 +42,12 @@ public class DefaultTenantService implements TenantService {
     @Override
     public void addTenant(Tenant tenant) {
         logger.info("Adding Tenant {}", tenant);
+        Tenant exists = this.tenantDao.getTenantByName(tenant.getName());
+        if (exists != null) {
+            String errMsg = String.format("Tenant with name %s already exists", tenant.getName());
+            logger.warn(errMsg);
+            throw new DuplicateException(errMsg);
+        }
         tenant.setTenantId(this.tenantDao.getNextTenantId());
         this.tenantDao.addTenant(tenant);
         logger.info("Added Tenant {}", tenant);
@@ -461,5 +468,31 @@ public class DefaultTenantService implements TenantService {
         }
         
         return tenantRoles;
+    }
+
+    @Override
+    public List<User> getUsersWithTenantRole(Tenant tenant, ClientRole cRole) {
+        List<User> users = new ArrayList<User>();
+        
+        List<TenantRole> roles = this.tenantDao.getAllTenantRolesForTenantAndRole(tenant.getTenantId(), cRole.getId());
+        
+        List<String> userIds = new ArrayList<String>();
+        
+        for (TenantRole role : roles) {
+            if (!userIds.contains(role.getUserId())) {
+                userIds.add(role.getUserId());
+            }
+        }
+        
+        for (String userId : userIds) {
+            User user = this.userDao.getUserById(userId);
+            if (user != null) {
+                users.add(user);
+            }
+        }
+        
+        logger.debug("Got {} Users for Tenant {}", users.size(), tenant.getTenantId());
+        return users;
+        
     }
 }

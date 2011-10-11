@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -95,5 +96,19 @@ public class DefaultEndpointService implements EndpointService {
     public void setBaseUrlEnabled(int baseUrlId, boolean enabled) {
         logger.info("Setting baseurl {} enabled {}", baseUrlId, enabled);
         this.endpointDao.setBaseUrlEnabled(baseUrlId, enabled);
+    }
+
+    @Override
+    public List<CloudBaseUrl> getBaseUrlsByServiceId(String serviceType) {
+        logger.debug("Getting baseurls by serviceId");
+        List<CloudBaseUrl> allBaseUrls = this.endpointDao.getBaseUrls();
+        List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
+        for (CloudBaseUrl baseUrl : allBaseUrls) {
+            if (baseUrl.getOpenstackType().equals(serviceType)) {
+                filteredBaseUrls.add(baseUrl);
+            }
+        }
+        logger.debug("Got {} baseurls", filteredBaseUrls.size());
+        return filteredBaseUrls;
     }
 }

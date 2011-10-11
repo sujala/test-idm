@@ -28,4 +28,5 @@ public interface TenantDao {
     List<TenantRole> getTenantRolesForUser(User user, FilterParam[] filters);
     List<TenantRole> getTenantRolesForApplication(Application application, FilterParam[] filters);
     List<TenantRole> getAllTenantRolesForTenant(String tenantId);
+    List<TenantRole> getAllTenantRolesForTenantAndRole(String tenantId, String roleId);
 }

@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service;
 import java.util.List;
 
 import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.Tenant;
@@ -38,4 +39,5 @@ public interface TenantService {
     List<TenantRole> getTenantRolesForApplication(Application application, FilterParam[] filters);
     List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa);
     List<User> getUsersForTenant(String tenantId);
+    List<User> getUsersWithTenantRole(Tenant tenant, ClientRole role);
 }

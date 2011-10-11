@@ -8,7 +8,6 @@ import org.apache.commons.lang.StringUtils;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
@@ -703,9 +702,10 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         if (!StringUtils.isBlank(client.getClientId())) {
             atts.add(new Attribute(ATTR_CLIENT_ID, client.getClientId()));
         }
-        
+
         if (!StringUtils.isBlank(client.getOpenStackType())) {
-            atts.add(new Attribute(ATTR_OPENSTACK_TYPE, client.getOpenStackType()));
+            atts.add(new Attribute(ATTR_OPENSTACK_TYPE, client
+                .getOpenStackType()));
         }
 
         if (!StringUtils.isBlank(client.getName())) {
@@ -772,8 +772,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         client.setRCN(resultEntry
             .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
-        
-        client.setOpenStackType(resultEntry.getAttributeValue(ATTR_OPENSTACK_TYPE));
+
+        client.setOpenStackType(resultEntry
+            .getAttributeValue(ATTR_OPENSTACK_TYPE));
 
         String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
         if (statusStr != null) {
@@ -1102,6 +1103,25 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     }
 
     @Override
+    public List<ClientRole> getAllClientRoles() {
+
+        getLogger().debug("Getting all client roles");
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
+            ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE).build();
+
+        List<ClientRole> roles = new ArrayList<ClientRole>();
+        try {
+            roles = getMultipleClientRoles(APPLICATIONS_BASE_DN, searchFilter);
+        } catch (LDAPPersistException e) {
+            getLogger().error("Error getting client roles object", e);
+            throw new IllegalStateException(e);
+        }
+        getLogger().debug("Got {} Client Roles", roles.size());
+
+        return roles;
+    }
+
+    @Override
     public void updateClientRole(ClientRole role) {
         if (role == null || StringUtils.isBlank(role.getUniqueId())) {
             String errmsg = "Null instance of Client Role was passed";
@@ -1159,7 +1179,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         role = LDAPPersister.getInstance(ClientRole.class).decode(entry);
         return role;
     }
-    
+
     @Override
     public String getNextRoleId() {
         String roleId = null;
@@ -1175,7 +1195,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
         return roleId;
     }
-    
+
     @Override
     public ClientRole getClientRoleById(String id) {
         if (StringUtils.isBlank(id)) {
@@ -1201,5 +1221,18 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         getLogger().debug("Found Client Role - {}", role);
 
         return role;
+    }
+
+    @Override
+    public List<Application> getOpenStackServices() {
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addPresenceAttribute(ATTR_OPENSTACK_TYPE)
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+
+        Applications clients = getMultipleClients(searchFilter, 0, 400);
+
+        return clients.getClients();
     }
 }

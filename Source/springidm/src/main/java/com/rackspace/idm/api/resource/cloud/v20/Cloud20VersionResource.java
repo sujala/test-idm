@@ -18,15 +18,20 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.JAXBException;
 
 import org.apache.commons.configuration.Configuration;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.Tenant;
 import org.openstack.docs.identity.api.v2.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 
@@ -87,7 +92,8 @@ public class Cloud20VersionResource {
     @POST
     @Path("tokens")
     public Response authenticate(@Context HttpHeaders httpHeaders,
-        AuthenticationRequest authenticationRequest) throws IOException {
+        AuthenticationRequest authenticationRequest) throws IOException,
+        JAXBException {
         return getCloud20Service().authenticate(httpHeaders,
             authenticationRequest).build();
     }
@@ -99,7 +105,7 @@ public class Cloud20VersionResource {
         @PathParam("tokenId") String tokenId,
         @QueryParam("belongsTo") String belongsTo) throws IOException {
         return getCloud20Service().validateToken(httpHeaders, authToken,
-                tokenId, belongsTo).build();
+            tokenId, belongsTo).build();
     }
 
     @HEAD
@@ -118,7 +124,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tokenId") String tokenId) throws IOException {
         return getCloud20Service().listEndpointsForToken(httpHeaders,
-                authToken, tokenId).build();
+            authToken, tokenId).build();
     }
 
     @GET
@@ -139,9 +145,11 @@ public class Cloud20VersionResource {
     @Path("users")
     public Response getUserByName(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @QueryParam("name") String name, @QueryParam("marker") String marker, @QueryParam("limit") int limit) throws IOException {
+        @QueryParam("name") String name, @QueryParam("marker") String marker,
+        @QueryParam("limit") int limit) throws IOException {
         if (StringUtils.isBlank(name)) {
-            return getCloud20Service().listUsers(httpHeaders, authToken, marker, limit).build();
+            return getCloud20Service().listUsers(httpHeaders, authToken,
+                marker, limit).build();
         } else {
             return getCloud20Service().getUserByName(httpHeaders, authToken,
                 name).build();
@@ -163,7 +171,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId) throws IOException {
         return getCloud20Service().listUserGlobalRoles(httpHeaders, authToken,
-                userId).build();
+            userId).build();
     }
 
     @GET
@@ -189,7 +197,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantsId) throws IOException {
         return getCloud20Service().getTenantById(httpHeaders, authToken,
-                tenantsId).build();
+            tenantsId).build();
     }
 
     @GET
@@ -204,18 +212,19 @@ public class Cloud20VersionResource {
 
     @POST
     @Path("users")
-    public Response addUser(@Context HttpHeaders httpHeaders, @Context UriInfo uriInfo,
-        @HeaderParam(X_AUTH_TOKEN) String authToken, User user)
-        throws IOException {
-        return getCloud20Service().addUser(httpHeaders, uriInfo, authToken, user)
-            .build();
+    public Response addUser(@Context HttpHeaders httpHeaders,
+        @Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken,
+        User user) throws IOException, JAXBException {
+        return getCloud20Service().addUser(httpHeaders, uriInfo, authToken,
+            user).build();
     }
 
     @POST
     @Path("users/{userId}")
     public Response updateUser(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("userId") String userId, User user) throws IOException {
+        @PathParam("userId") String userId, User user) throws IOException,
+        JAXBException {
         return getCloud20Service().updateUser(httpHeaders, authToken, userId,
             user).build();
     }
@@ -233,9 +242,10 @@ public class Cloud20VersionResource {
     @Path("users/{userId}/OS-KSADM/enabled")
     public Response setUserEnabled(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("userId") String userId, String body) throws IOException {
+        @PathParam("userId") String userId, UserWithOnlyEnabled user)
+        throws IOException, JAXBException {
         return getCloud20Service().setUserEnabled(httpHeaders, authToken,
-            userId, body).build();
+            userId, user).build();
     }
 
     @GET
@@ -249,12 +259,11 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    @Path("users/{userId}/RAX-KSGRP/groups")
+    @Path("users/{userId}/RAX-KSGRP")
     public Response listUserGroups(@Context HttpHeaders httpHeaders,
         @PathParam("userId") String userId) throws IOException {
         return getCloud20Service().listUserGroups(httpHeaders, userId).build();
     }
-
 
     @PUT
     @Path("users/{userId}/OS-KSADM/roles/{roleId}")
@@ -288,12 +297,11 @@ public class Cloud20VersionResource {
 
     @POST
     @Path("users/{userId}/OS-KSADM/credentials")
-    public Response addUserCredential(
-        @Context HttpHeaders httpHeaders,
+    public Response addUserCredential(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId, String body) throws IOException {
-        return getCloud20Service().addUserCredential(httpHeaders,
-                authToken, userId, body).build();
+        return getCloud20Service().addUserCredential(httpHeaders, authToken,
+            userId, body).build();
     }
 
     @GET
@@ -303,58 +311,56 @@ public class Cloud20VersionResource {
         @PathParam("userId") String userId,
         @QueryParam("marker") String marker, @QueryParam("limit") Integer limit)
         throws IOException {
-        return getCloud20Service().listCredentials(httpHeaders,
-                authToken, userId, marker, limit).build();
+        return getCloud20Service().listCredentials(httpHeaders, authToken,
+            userId, marker, limit).build();
     }
 
     @POST
-    @Path("users/{userId}/OS-KSADM/credentials/{credentialType}")
-    public Response updateUserCredential(
-        @Context HttpHeaders httpHeaders,
+    @Path("users/{userId}/OS-KSADM/credentials/RAX-KSKEY:{credentialType}")
+    public Response updateUserCredential(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId,
         @PathParam("credentialType") String credentialType, String body)
         throws IOException {
-        return getCloud20Service().updateUserCredential(httpHeaders,
-                authToken, userId, credentialType, body).build();
+        return getCloud20Service().updateUserCredential(httpHeaders, authToken,
+            userId, credentialType, body).build();
     }
 
     @GET
-    @Path("users/{userId}/OS-KSADM/credentials/{credentialType}")
-    public Response getUserCredential(
-        @Context HttpHeaders httpHeaders,
+    @Path("users/{userId}/OS-KSADM/credentials/RAX-KSKEY:{credentialType}")
+    public Response getUserCredential(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId,
         @PathParam("credentialType") String credentialType) throws IOException {
-        return getCloud20Service().getUserCredential(httpHeaders,
-                authToken, userId, credentialType).build();
+        return getCloud20Service().getUserCredential(httpHeaders, authToken,
+            userId, credentialType).build();
     }
 
     @DELETE
-    @Path("users/{userId}/OS-KSADM/credentials/{credentialType}")
-    public Response deleteUserCredential(
-        @Context HttpHeaders httpHeaders,
+    @Path("users/{userId}/OS-KSADM/credentials/RAX-KSKEY:{credentialType}")
+    public Response deleteUserCredential(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId,
         @PathParam("credentialType") String credentialType) throws IOException {
-        return getCloud20Service().deleteUserCredential(httpHeaders,
-                authToken, userId, credentialType).build();
+        return getCloud20Service().deleteUserCredential(httpHeaders, authToken,
+            userId, credentialType).build();
     }
 
     @POST
     @Path("tenants")
-    public Response addTenant(@Context HttpHeaders httpHeaders, @Context UriInfo uriInfo,
-        @HeaderParam(X_AUTH_TOKEN) String authToken, Tenant tenant)
-        throws IOException {
-        return getCloud20Service().addTenant(httpHeaders, uriInfo, authToken, tenant)
-            .build();
+    public Response addTenant(@Context HttpHeaders httpHeaders,
+        @Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken,
+        Tenant tenant) throws IOException, JAXBException {
+        return getCloud20Service().addTenant(httpHeaders, uriInfo, authToken,
+            tenant).build();
     }
 
     @POST
     @Path("tenants/{tenantId}")
     public Response updateTenant(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("tenantId") String tenantId, Tenant tenant) throws IOException {
+        @PathParam("tenantId") String tenantId, Tenant tenant)
+        throws IOException, JAXBException {
         return getCloud20Service().updateTenant(httpHeaders, authToken,
             tenantId, tenant).build();
     }
@@ -434,10 +440,10 @@ public class Cloud20VersionResource {
     @POST
     @Path("OS-KSADM/roles")
     public Response addRole(@Context HttpHeaders httpHeaders,
-        @HeaderParam(X_AUTH_TOKEN) String authToken, String body)
-        throws IOException {
-        return getCloud20Service().addRole(httpHeaders, authToken, body)
-            .build();
+        @Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken,
+        Role role) throws IOException, JAXBException {
+        return getCloud20Service().addRole(httpHeaders, uriInfo, authToken,
+            role).build();
     }
 
     @GET
@@ -471,10 +477,10 @@ public class Cloud20VersionResource {
     @POST
     @Path("OS-KSADM/services")
     public Response addService(@Context HttpHeaders httpHeaders,
-        @HeaderParam(X_AUTH_TOKEN) String authToken, String body)
-        throws IOException {
-        return getCloud20Service().addService(httpHeaders, authToken, body)
-            .build();
+        @Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken,
+        Service service) throws IOException, JAXBException {
+        return getCloud20Service().addService(httpHeaders, uriInfo, authToken,
+            service).build();
     }
 
     @GET
@@ -494,6 +500,83 @@ public class Cloud20VersionResource {
         return getCloud20Service().deleteService(httpHeaders, authToken,
             serviceId).build();
     }
+
+    @GET
+    @Path("OS-KSCATALOG/endpointTemplates")
+    public Response listEndpointTemplates(@Context HttpHeaders httpHeaders,
+        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @QueryParam("serviceId") String serviceId) throws IOException {
+        return getCloud20Service().listEndpointTemplates(httpHeaders, authToken, serviceId).build();
+    }
+    
+    @POST
+    @Path("OS-KSCATALOG/endpointTemplates")
+    public Response addEndpointTemplate(@Context HttpHeaders httpHeaders,
+        @Context UriInfo uriInfo,
+        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        EndpointTemplate endpoint) throws IOException, JAXBException {
+        return getCloud20Service().addEndpointTemplate(httpHeaders, uriInfo,
+            authToken, endpoint).build();
+    }
+    
+    @GET
+    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}")
+    public Response getEndpointTemplate(@Context HttpHeaders httpHeaders,
+        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @PathParam("endpointTemplateId") String endpointTemplateId) throws IOException {
+        return getCloud20Service().getEndpointTemplate(httpHeaders,
+            authToken, endpointTemplateId).build();
+    }
+    
+    @DELETE
+    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}")
+    public Response deleteEndpointTemplate(@Context HttpHeaders httpHeaders,
+        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @PathParam("endpointTemplateId") String enpdointTemplateId) throws IOException {
+        return getCloud20Service().deleteEndpointTemplate(httpHeaders,
+            authToken, enpdointTemplateId).build();
+    }
+    
+    @GET
+    @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints")
+    public Response listEndpoints(@Context HttpHeaders httpHeaders,
+        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @PathParam("tenantId") String tenantId) throws IOException {
+        return getCloud20Service().listEndpoints(httpHeaders,
+            authToken, tenantId).build();
+    }
+    
+    @POST
+    @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints")
+    public Response addEndpoint(@Context HttpHeaders httpHeaders,
+        @Context UriInfo uriInfo,
+        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @PathParam("tenantId") String tenantId,
+        EndpointTemplate endpoint) throws IOException, JAXBException {
+        return getCloud20Service().addEndpoint(httpHeaders,
+            authToken, tenantId, endpoint).build();
+    }
+    
+    @GET
+    @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints/{endpointId}")
+    public Response getEndpoint(@Context HttpHeaders httpHeaders,
+        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @PathParam("tenantId") String tenantId,
+        @PathParam("endpointId") String endpointId) throws IOException {
+        return getCloud20Service().getEndpoint(httpHeaders,
+            authToken, tenantId, endpointId).build();
+    }
+    
+    @DELETE
+    @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints/{endpointId}")
+    public Response deleteEndpoint(@Context HttpHeaders httpHeaders,
+        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @PathParam("tenantId") String tenantId,
+        @PathParam("endpointId") String endpointId) throws IOException {
+        return getCloud20Service().deleteEndpoint(httpHeaders,
+            authToken, tenantId, endpointId).build();
+    }
+    
 
     private Cloud20Service getCloud20Service() {
         if (config.getBoolean("useCloudAuth")) {

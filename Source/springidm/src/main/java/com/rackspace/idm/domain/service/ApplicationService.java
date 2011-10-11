@@ -1,6 +1,8 @@
 
 package com.rackspace.idm.domain.service;
 
+import java.util.List;
+
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.entity.ClientGroup;
@@ -8,7 +10,6 @@ import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.DefinedPermission;
 import com.rackspace.idm.domain.entity.FilterParam;
-import java.util.List;
 
 public interface ApplicationService {
 
@@ -91,4 +92,6 @@ public interface ApplicationService {
     ClientRole getClientRoleById(String id);
     
     List<ClientRole> getAllClientRoles(FilterParam[] filters);
+    
+    List<Application> getOpenStackServices();
 }

@@ -96,6 +96,10 @@ public class Cloud10VersionResource {
                 "Vary",
                 "Accept, Accept-Encoding, X-Auth-Token, X-Auth-Key, X-Storage-User, X-Storage-Pass");
 
+        if(username==null || username.trim().length() == 0){
+            return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity("Bad username or password").build();
+        }
+
         User user = this.userService.getUser(username);
 
         if (user == null) {

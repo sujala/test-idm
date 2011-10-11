@@ -18,6 +18,13 @@ import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import com.rackspace.idm.exception.NotFoundException;
+import org.easymock.EasyMock;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TenantServiceTests {
 
@@ -52,6 +59,7 @@ public class TenantServiceTests {
     @Test
     public void shouldAddTenant() {
         Tenant tenant = getTestTenant();
+        EasyMock.expect(mockTenantDao.getTenantByName(tenantName)).andReturn(null);
         EasyMock.expect(mockTenantDao.getNextTenantId()).andReturn(tenantId1);
         mockTenantDao.addTenant(tenant);
         EasyMock.replay(mockTenantDao);

@@ -18,6 +18,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.JAXBException;
 
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -214,7 +215,7 @@ public class Cloud11VersionResource {
     public Response createUser(
             @Context HttpHeaders httpHeaders,
             User user
-    ) throws IOException {
+    ) throws IOException, JAXBException {
         return getCloud11Service().createUser(httpHeaders, user).build();
     }
 
@@ -243,7 +244,7 @@ public class Cloud11VersionResource {
     public Response updateUser(
             @PathParam("userId") String userId,
             @Context HttpHeaders httpHeaders,
-            User user) throws IOException {
+            User user) throws IOException, JAXBException {
         userId = Encoder.encode(userId);
         return getCloud11Service().updateUser(userId, httpHeaders, user).build();
     }
@@ -264,7 +265,7 @@ public class Cloud11VersionResource {
             @PathParam("userId") String userId,
             @Context HttpHeaders httpHeaders,
             UserWithOnlyEnabled user
-    ) throws IOException {
+    ) throws IOException, JAXBException {
         userId = Encoder.encode(userId);
         return getCloud11Service().setUserEnabled(userId, user, httpHeaders).build();
     }
@@ -285,7 +286,7 @@ public class Cloud11VersionResource {
             @PathParam("userId") String userId,
             @Context HttpHeaders httpHeaders,
             UserWithOnlyKey user
-    ) throws IOException {
+    ) throws IOException, JAXBException {
         userId = Encoder.encode(userId);
         return getCloud11Service().setUserKey(userId, httpHeaders, user).build();
     }
@@ -317,7 +318,7 @@ public class Cloud11VersionResource {
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
             BaseURLRef baseUrlRef
-    ) throws IOException {
+    ) throws IOException, JAXBException {
         userId = Encoder.encode(userId);
         return getCloud11Service().addBaseURLRef(userId, httpHeaders, uriInfo, baseUrlRef).build();
     }

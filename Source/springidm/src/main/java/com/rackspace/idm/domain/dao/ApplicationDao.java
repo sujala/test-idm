@@ -71,6 +71,10 @@ public interface ApplicationDao {
     void updateClientRole(ClientRole role);
     
     ClientRole getClientRoleById(String id);
+    
+    List<ClientRole> getAllClientRoles();
+    
+    List<Application> getOpenStackServices();
 
     String getNextRoleId();
 }
