@@ -1,4 +1,4 @@
-<%@page import="com.rackspace.idm.domain.entity.Client"%>
+<%@page import="com.rackspace.idm.domain.entity.Application"%>
 <%@page import="org.apache.commons.lang.StringEscapeUtils"%>
 <%@page import="java.util.List"%>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
@@ -12,10 +12,10 @@
 </head>
 <body>
 <form name='input' action='accept' method='POST'>
-<p><%= ((Client) request.getAttribute("requestingClient")).getTitle() %></p>
-<p><%= ((Client) request.getAttribute("requestingClient")).getDescription() %></p>
+<p><%= ((Application) request.getAttribute("requestingClient")).getTitle() %></p>
+<p><%= ((Application) request.getAttribute("requestingClient")).getDescription() %></p>
 <p>wants access to</p>
-<ul><% for (Client c : (List<Client>) request.getAttribute("scopes")) {%>
+<ul><% for (Application c : (List<Application>) request.getAttribute("scopes")) {%>
 <li><%= c.getTitle() %> - <%= c.getDescription() %></li>
 <% } %></ul>
 <br />
