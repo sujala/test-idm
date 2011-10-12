@@ -470,7 +470,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
             .andReturn(fakeScopeAccess);
         EasyMock.replay(scopeAccessDao);
         ScopeAccess sa = scopeAccessService
-            .getAccessTokenByAuthHeader("OAuth accessToken");
+            .getAccessTokenByAuthHeader("accessToken");
         EasyMock.verify(scopeAccessDao);
         Assert.assertEquals(fakeScopeAccess, sa);
     }

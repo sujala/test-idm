@@ -314,18 +314,7 @@
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
 					<p>
-						A boolean which indicates if the user is locked.
-					</p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-		<attribute name="softDeleted" type="boolean" use="optional">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>
-						A boolean which indicates if the user has been
-						soft deleted.
+						A boolean which indicates if the user is enabled.
 					</p>
 				</xsd:documentation>
 			</annotation>

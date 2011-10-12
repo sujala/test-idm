@@ -9,6 +9,7 @@ import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.CloudAdminAuthorizationException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
@@ -62,9 +63,8 @@ public class AuthenticationFilterTests {
         "v1.0/customers/RCN-000-000-000/users/foobar/password");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         final String tokenString = "hiiamatoken";
-        final String header = "OAuth " + tokenString;
-        EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
-        .andReturn(header);
+        EasyMock.expect(request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER))
+        .andReturn(tokenString);
         EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
                 true);
         replayAndRunFilter();
@@ -75,9 +75,8 @@ public class AuthenticationFilterTests {
         EasyMock.expect(request.getPath()).andReturn("v1.0/foo");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         final String tokenString = "hiiamatoken";
-        final String header = "OAuth " + tokenString;
-        EasyMock.expect(request.getHeaderValue(HttpHeaders.AUTHORIZATION))
-        .andReturn(header);
+        EasyMock.expect(request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER))
+        .andReturn(tokenString);
         EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
                 true);
         replayAndRunFilter();

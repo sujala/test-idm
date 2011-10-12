@@ -42,7 +42,11 @@ public class JSONWriter implements
     @Override
     public boolean isWriteable(Class<?> type, Type genericType,
         Annotation[] annotations, MediaType mediaType) {
+<<<<<<< HEAD
         return type == JAXBElement.class;
+=======
+        return type==JAXBElement.class;
+>>>>>>> 9154b7902faa539d0c91179dd50fd9eb9d19d13f
     }
 
     @SuppressWarnings("unchecked")
@@ -54,6 +58,7 @@ public class JSONWriter implements
         
         JAXBElement<?> object = (JAXBElement<?>) element;
 
+        JAXBElement<?> object = (JAXBElement<?>) element;
         if (object.getDeclaredType().isAssignableFrom(EndpointTemplate.class)) {
 
             EndpointTemplate template = (EndpointTemplate) object.getValue();

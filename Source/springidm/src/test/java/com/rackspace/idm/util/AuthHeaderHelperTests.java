@@ -15,9 +15,8 @@ public class AuthHeaderHelperTests {
     private AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private String clientId = "SomeId";
     private String clientSecret = "SomeSecret";
-    private String authHeader = "OAuth XXXX";
-    private String badAuthHeader = "sOAuth XXXX";
-    private String blankTokenHeader = "OAuth";
+    private String authHeader = "XXXX";
+    private String blankTokenHeader = " ";
     
     @Test
     public void shouldReturnAuthParams() {
@@ -35,7 +34,7 @@ public class AuthHeaderHelperTests {
     @Test
     public void shouldReturnTokenParams() {
         
-        Map<String, String> params = authHeaderHelper.parseTokenParams(authHeader);
+        Map<String, String> params = authHeaderHelper.parseTokenParams("Oauth " + authHeader);
         
         Assert.isTrue(params.size() == 1);
         Assert.isTrue(params.containsKey("token"));
@@ -53,11 +52,6 @@ public class AuthHeaderHelperTests {
     @Test(expected = NotAuthorizedException.class)
     public void ShouldThrowErrorForInvalidAuthHeaderWithNullAuthHeader() {
         authHeaderHelper.getTokenFromAuthHeader(null);
-    }
-    
-    @Test(expected = NotAuthorizedException.class)
-    public void ShouldThrowErrorForInvalidAuthHeaderWithBadHeader() {
-        authHeaderHelper.getTokenFromAuthHeader(badAuthHeader);
     }
     
     @Test(expected = NotAuthorizedException.class)

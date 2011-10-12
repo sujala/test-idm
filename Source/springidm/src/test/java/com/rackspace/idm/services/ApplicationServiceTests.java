@@ -181,18 +181,6 @@ public class ApplicationServiceTests {
         EasyMock.verify(mockApplicationDao);
     }
 
-    @Test(expected = NotFoundException.class)
-    public void shouldNotAddClientIfCustomerNotExist() {
-        Application client = getFakeClient();
-
-        EasyMock.expect(
-            mockCustomerDao.getCustomerByCustomerId(client.getRCN()))
-            .andReturn(null);
-        EasyMock.replay(mockCustomerDao);
-
-        clientService.add(client);
-    }
-
     @Test(expected = DuplicateException.class)
     public void shouldNotAddClientIfClientNameAlreadyTaken() {
         Application client = getFakeClient();
@@ -349,7 +337,7 @@ public class ApplicationServiceTests {
     @Test(expected = IllegalArgumentException.class)
     public void shouldNotResetClientSecretIfNull() {
         Application client = null;
-        ClientSecret clientSecret = clientService.resetClientSecret(client);
+        clientService.resetClientSecret(client);
     }
 
     @Test
@@ -439,7 +427,6 @@ public class ApplicationServiceTests {
     @Test(expected = NotFoundException.class)
     public void shouldNotAddUserToClientGroupForUserNotFound() {
         ClientGroup group = getFakeClientGroup();
-        User user = getFakeUser();
         EasyMock.expect(mockUserDao.getUserByUsername(username))
             .andReturn(null);
         EasyMock.replay(mockUserDao);
@@ -456,7 +443,6 @@ public class ApplicationServiceTests {
     @Test(expected = NotFoundException.class)
     public void shouldNotAddUserToClientGroupForGroupNotFound() {
         ClientGroup group = getFakeClientGroup();
-        User user = getFakeUser();
         EasyMock.expect(mockUserDao.getUserByUsername(username)).andThrow(
             new NotFoundException());
         EasyMock.replay(mockUserDao);
@@ -707,6 +693,7 @@ public class ApplicationServiceTests {
         User user = new User();
         user.setUsername(username);
         user.setUniqueId(userDN);
+        user.setEnabled(true);
         return user;
     }
 

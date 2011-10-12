@@ -155,35 +155,8 @@ public class WadlTrieTests {
     }
 
     @Test
-    public void shouldFindPermission() {
-        final Object permissionFor = trie.getPermissionFor("root" , "/", "v1.0", "users", "mkovacs", "GET");
-        Assert.assertEquals(permissionFor, "getUserByUsername");
-    }
-
-    @Test
     public void shouldNotFindPermission() {
         final Object permissionFor = trie.getPermissionFor("root" , "/", "DELETE");
         Assert.assertNull(permissionFor);
-    }
-
-    @Test
-    public void shouldFindPermissionForMultipleWildcards() {
-        final Object permissionFor = trie.getPermissionFor("root" , "/", "v1.0", "customers", "wildcard", "users", "wildcard", "GET");
-        Assert.assertEquals(permissionFor, "getUser");
-    }
-
-    @Test
-    public void shouldFindPermissionForUriInfo() {
-        final UriInfo uriInfo = new MyUriInfo();
-
-        final Object permissionFor = trie.getPermissionFor("GET", uriInfo);
-        Assert.assertEquals(permissionFor, "getUser");
-    }
-    
-    @Test
-    public void shouldFindPermissionForArray() {
-        Object[] paths = new String[] { "root", "/", "v1.0", "customers", "RCN-QATestingCustomer", "clients", "b5c7f48cee82dc30d3271d8aa9bfbc3ab874b772", "permissions", "POST"};
-        Object p = trie.getPermissionFor(paths);
-        Assert.assertEquals("addClientDefinedPermission", p);
     }
 }
