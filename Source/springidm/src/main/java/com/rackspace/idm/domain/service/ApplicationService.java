@@ -66,8 +66,6 @@ public interface ApplicationService {
     ClientSecret resetClientSecret(Application client);
 
     void save(Application client);
-
-    void softDelete(String clientId);
     
     void updateClient(Application client);
 
@@ -94,4 +92,6 @@ public interface ApplicationService {
     List<ClientRole> getAllClientRoles(FilterParam[] filters);
     
     List<Application> getOpenStackServices();
+
+    void softDeleteApplication(Application application);
 }

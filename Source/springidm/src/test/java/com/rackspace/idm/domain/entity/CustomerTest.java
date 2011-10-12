@@ -7,10 +7,11 @@ import org.junit.Test;
 public class CustomerTest {
 
     private final String customerId = "123";
-    private final CustomerStatus status = CustomerStatus.ACTIVE;
 
     private Customer getTestCustomer() {
-        return new Customer(customerId, status);
+        Customer customer = new Customer();
+        customer.setRCN(customerId);
+        return customer;
     }
 
     @Test
@@ -33,10 +34,8 @@ public class CustomerTest {
         Assert.assertTrue(customer1.equals(customer1));
 
         customer1.setRCN(null);
-        customer1.setStatus(null);
 
         customer2.setRCN(null);
-        customer2.setStatus(null);
 
         Assert.assertTrue(customer1.equals(customer2));
     }
@@ -48,12 +47,6 @@ public class CustomerTest {
 
         Assert.assertFalse(customer1.equals(null));
         Assert.assertFalse(customer1.equals(1));
-
-        customer2.setStatus(CustomerStatus.INACTIVE);
-        Assert.assertFalse(customer1.equals(customer2));
-        customer2.setStatus(null);
-        Assert.assertFalse(customer2.equals(customer1));
-        customer2.setStatus(customer1.getStatus());
 
         customer2.setRCN("NewId");
         Assert.assertFalse(customer1.equals(customer2));

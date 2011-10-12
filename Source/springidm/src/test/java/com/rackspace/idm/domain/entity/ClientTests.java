@@ -50,13 +50,11 @@ public class ClientTests {
         client1.setClientSecretObj(null);
         client1.setRCN(null);
         client1.setName(null);
-        client1.setStatus(null);
 
         client2.setClientId(null);
         client2.setClientSecretObj(null);
         client2.setRCN(null);
         client2.setName(null);
-        client2.setStatus(null);
 
         Assert.assertTrue(client1.equals(client2));
     }
@@ -92,11 +90,6 @@ public class ClientTests {
         client2.setName(null);
         Assert.assertFalse(client2.equals(client1));
         client2.setName(client1.getName());
-
-        client2.setStatus(ClientStatus.INACTIVE);
-        Assert.assertFalse(client1.equals(client2));
-        client2.setStatus(null);
-        Assert.assertFalse(client2.equals(client1));
     }
 
      @Test

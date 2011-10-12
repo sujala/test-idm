@@ -25,7 +25,7 @@ public class UserConverterCloudV11 {
         jaxbUser.setKey(user.getApiKey());
         jaxbUser.setMossoId(user.getMossoId());
         jaxbUser.setNastId(user.getNastId());
-        jaxbUser.setEnabled(!user.isLocked());
+        jaxbUser.setEnabled(user.isEnabled());
         
         try {
             if (user.getCreated() != null) {
@@ -57,7 +57,7 @@ public class UserConverterCloudV11 {
         
         com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled jaxbUser = OBJ_FACTORY.createUserWithOnlyEnabled();
         jaxbUser.setId(user.getUsername());
-        jaxbUser.setEnabled(!user.isLocked());
+        jaxbUser.setEnabled(user.isEnabled());
         
         return jaxbUser;
     }

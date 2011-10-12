@@ -17,6 +17,7 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.PasswordComplexityResult;
 import com.rackspace.idm.domain.entity.PasswordCredentials;
@@ -25,9 +26,7 @@ import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
@@ -440,28 +439,12 @@ public class DefaultUserService implements UserService {
         validateUserEmailAddress(user);
         
         //TODO: We might restrict this to certain roles, so we might need a param passed in this method as well
-        if (user.isSoftDeleted()) {
-            oauthService.revokeAllTokensForUser(user.getUniqueId());
-        }
-        
-        //TODO: We might restrict this to certain roles, so we might need a param passed in this method as well
-        if (user.isDisabled()) {
+        if (!user.isEnabled()) {
         	 oauthService.revokeAllTokensForUser(user.getUniqueId());
         }
         
         this.userDao.updateUser(user, hasSelfUpdatedPassword);
         logger.info("Updated User: {}", user);
-    }
-
-    
-    @Override
-    public void updateUserStatus(User user, String statusStr) {
-        UserStatus status = Enum.valueOf(UserStatus.class,
-            statusStr.toUpperCase());
-        user.setStatus(status);
-        this.userDao.updateUser(user, false);
-
-        logger.info("Updated User's status: {}, {}", user, status);
     }
 
     private String getIdmClientId() {
@@ -507,6 +490,13 @@ public class DefaultUserService implements UserService {
         User user = userDao.getUserById(id);
         logger.debug("Got User: {}", user);
         return user;
+    }
+    
+    @Override
+    public void softDeleteUser(User user) {
+        logger.debug("SoftDeleting User: {}", user);
+        userDao.softDeleteUser(user);
+        logger.debug("SoftDeleted User: {}", user);
     }
 
     private void setPasswordIfNecessary(User user) {

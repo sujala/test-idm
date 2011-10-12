@@ -95,7 +95,7 @@ public class AcceptServlet extends HttpServlet {
         }
 
         Application client = getClientService().getById(clientId);
-        if (client == null || client.isDisabled()) {
+        if (client == null || !client.isEnabled()) {
             setErrorResponse(response, redirectUri, UNAUTHORIZED_CLIENT);
             return;
         }

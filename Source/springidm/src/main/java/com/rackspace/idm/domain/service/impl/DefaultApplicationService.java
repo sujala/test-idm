@@ -283,15 +283,6 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public void softDelete(String clientId) {
-        logger.info("Soft Deleting client: {}", clientId);
-        Application client = this.clientDao.getClientByClientId(clientId);
-        client.setSoftDeleted(true);
-        this.clientDao.updateClient(client);
-        logger.info("Soft Deleted cilent: {}", clientId);
-    }
-
-    @Override
     public List<Application> getAvailableScopes() {
         List<Application> clientList = this.clientDao.getAvailableScopes();
 
@@ -710,5 +701,12 @@ public class DefaultApplicationService implements ApplicationService {
         List<Application> clients = this.clientDao.getOpenStackServices();
         logger.debug("Got {} Open Stack Services", clients.size());
         return clients;
+    }
+    
+    @Override
+    public void softDeleteApplication(Application application) {
+        logger.debug("SoftDeleting Application: {}", application);
+        clientDao.softDeleteApplication(application);
+        logger.debug("SoftDeleted Application: {}", application);
     }
 }

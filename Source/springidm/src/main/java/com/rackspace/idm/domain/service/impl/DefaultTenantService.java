@@ -152,6 +152,8 @@ public class DefaultTenantService implements TenantService {
                 for (String tenantId : role.getTenantIds()) {
                     existingRole.addTenantId(tenantId);
                 }
+            } else {
+                existingRole.setTenantIds(null);
             }
             this.tenantDao.updateTenantRole(existingRole);
         }
@@ -441,7 +443,7 @@ public class DefaultTenantService implements TenantService {
 
         for (String userId : userIds) {
             User user = this.userDao.getUserById(userId);
-            if (user != null) {
+            if (user != null && user.isEnabled()) {
                 users.add(user);
             }
         }
@@ -508,7 +510,7 @@ public class DefaultTenantService implements TenantService {
 
         for (String userId : userIds) {
             User user = this.userDao.getUserById(userId);
-            if (user != null) {
+            if (user != null && user.isEnabled()) {
                 users.add(user);
             }
         }

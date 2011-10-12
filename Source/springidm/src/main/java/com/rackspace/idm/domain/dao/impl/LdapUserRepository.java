@@ -16,14 +16,13 @@ import org.joda.time.Seconds;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.FilterParam;
+import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
 import com.rackspace.idm.exception.StalePasswordException;
@@ -63,8 +62,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalArgumentException(errmsg);
         }
 
-        String userDN = new LdapDnBuilder(RACKERS_BASE_DN)
-            .addAttribute(ATTR_RACKER_ID, racker.getRackerId()).build();
+        String userDN = new LdapDnBuilder(RACKERS_BASE_DN).addAttribute(
+            ATTR_RACKER_ID, racker.getRackerId()).build();
 
         racker.setUniqueId(userDN);
 
@@ -88,8 +87,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalArgumentException(errmsg);
         }
 
-        String userDN = new LdapDnBuilder(USERS_BASE_DN)
-            .addAttribute(ATTR_ID, user.getId()).build();
+        String userDN = new LdapDnBuilder(USERS_BASE_DN).addAttribute(ATTR_ID,
+            user.getId()).build();
 
         user.setUniqueId(userDN);
 
@@ -206,10 +205,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         deleteEntryAndSubtree(user.getUniqueId(), audit);
 
         audit.succeed();
-        
+
         getLogger().info("Deleted username - {}", user.getUsername());
     }
-    
+
     @Override
     public void deleteUser(String username) {
         getLogger().info("Deleting username - {}", username);
@@ -248,12 +247,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_UID, username)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        SearchResultEntry entry = this.getSingleEntry(USERS_BASE_DN, SearchScope.SUB,
-            searchFilter, ATTR_MEMBER_OF);
+        SearchResultEntry entry = this.getSingleEntry(USERS_BASE_DN,
+            SearchScope.SUB, searchFilter, ATTR_MEMBER_OF);
 
         if (entry != null) {
             groupIds = entry.getAttributeValues(ATTR_MEMBER_OF);
@@ -279,8 +277,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Racker racker = null;
 
-        SearchResultEntry entry = this.getSingleEntry(RACKERS_BASE_DN, SearchScope.ONE,
-            searchFilter);
+        SearchResultEntry entry = this.getSingleEntry(RACKERS_BASE_DN,
+            SearchScope.ONE, searchFilter);
         if (entry != null) {
             racker = new Racker();
             racker.setUniqueId(entry.getDN());
@@ -313,7 +311,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_UID, username)
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
@@ -453,23 +450,25 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Getting all users");
 
         LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
-        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON);
-        searchBuilder.addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false));
-        
+        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS,
+            OBJECTCLASS_RACKSPACEPERSON);
+
         if (filterParams != null) {
-        	for (FilterParam filter : filterParams) {
-        		// can only filter on rcn and username for now
-        		if (filter.getParam() == FilterParamName.RCN) {
-        			searchBuilder.addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, filter.getStrValue());
-        		}
-        		else if (filter.getParam() == FilterParamName.USERNAME) {
-        			searchBuilder.addEqualAttribute(ATTR_UID, filter.getStrValue());
-        		}
-        	}
+            for (FilterParam filter : filterParams) {
+                // can only filter on rcn and username for now
+                if (filter.getParam() == FilterParamName.RCN) {
+                    searchBuilder.addEqualAttribute(
+                        ATTR_RACKSPACE_CUSTOMER_NUMBER, filter.getStrValue());
+                } else if (filter.getParam() == FilterParamName.USERNAME) {
+                    searchBuilder.addEqualAttribute(ATTR_UID,
+                        filter.getStrValue());
+                }
+            }
         }
-        
+
         Filter searchFilter = searchBuilder.build();
-        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
+        Users users = getMultipleUsers(searchFilter,
+            ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
 
         getLogger().debug("Found Users - {}", users);
 
@@ -484,32 +483,26 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
+        User user = null;
+        try {
+
+            SearchResultEntry entry = this.getSingleEntry(BASE_DN,
+                SearchScope.SUB, searchFilter);
+
+            if (entry != null) {
+                user = getUser(entry);
+            }
+
+        } catch (GeneralSecurityException e) {
+            getLogger().error("Encryption error", e);
+            throw new IllegalStateException(e);
+        } catch (InvalidCipherTextException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        }
+
         getLogger().debug("Unique user search attempt yielded: {}", user);
         return user == null;
-    }
-
-    @Override
-    public void setUsersLockedFlagByCustomerId(String customerId,
-        boolean isLocked) {
-        Users users = this.findFirst100ByCustomerIdAndLock(customerId,
-            !isLocked);
-        String msg = String.format(
-            "Setting lock status to %s for %s users under customer %s",
-            isLocked, users.getTotalRecords(), customerId);
-        getLogger().debug(msg);
-        if (users.getUsers() != null && users.getUsers().size() > 0) {
-            for (User user : users.getUsers()) {
-                user.setLocked(isLocked);
-                this.updateUser(user, false);
-            }
-        }
-        if (users.getTotalRecords() > 0) {
-            getLogger().debug(
-                "Attempting lookup of additional users under customer {}.",
-                customerId);
-            this.setUsersLockedFlagByCustomerId(customerId, isLocked);
-        }
     }
 
     @Override
@@ -578,8 +571,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         List<User> userList = new ArrayList<User>();
         SearchResult searchResult = null;
         try {
-            SearchRequest request = new SearchRequest(USERS_BASE_DN, SearchScope.SUB,
-                searchFilter);
+            SearchRequest request = new SearchRequest(USERS_BASE_DN,
+                SearchScope.SUB, searchFilter);
             searchResult = getAppConnPool().search(request);
 
             for (SearchResultEntry entry : searchResult.getSearchEntries()) {
@@ -734,28 +727,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return ResultCode.SUCCESS.equals(result.getResultCode());
     }
 
-    private Users findFirst100ByCustomerIdAndLock(String customerId,
-        boolean isLocked) {
-        getLogger().debug("Doing search for customerId {}", customerId);
-
-        int limit = 100;
-        int offset = 0;
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_LOCKED, String.valueOf(isLocked))
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        Users users = getMultipleUsers(searchFilter,
-            ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
-
-        getLogger().debug("Found {} Users", users.getTotalRecords());
-
-        return users;
-    }
-
     private Attribute[] getAddAttributes(User user)
         throws GeneralSecurityException, InvalidCipherTextException {
         CryptHelper cryptHelper = CryptHelper.getInstance();
@@ -763,7 +734,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         List<Attribute> atts = new ArrayList<Attribute>();
 
         atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_USER_OBJECT_CLASS_VALUES));
-        
+
         if (!StringUtils.isBlank(user.getId())) {
             atts.add(new Attribute(ATTR_ID, user.getId()));
         }
@@ -826,10 +797,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 .getLastname())));
         }
 
-        if (user.getStatus() != null) {
-            atts.add(new Attribute(ATTR_STATUS, user.getStatus().toString()));
-        }
-
         if (user.getTimeZoneObj() != null) {
             atts.add(new Attribute(ATTR_TIME_ZONE, user.getTimeZone()));
         }
@@ -851,13 +818,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             atts.add(new Attribute(ATTR_RACKSPACE_REGION, user.getRegion()));
         }
 
-        if (user.isLocked() != null) {
-            atts.add(new Attribute(ATTR_LOCKED, String.valueOf(user.isLocked())));
-        }
-
-        if (user.isSoftDeleted() != null) {
-            atts.add(new Attribute(ATTR_SOFT_DELETED, String.valueOf(user
-                .isSoftDeleted())));
+        if (user.isEnabled() != null) {
+            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(user
+                .isEnabled())));
         }
 
         if (!StringUtils.isBlank(user.getNastId())) {
@@ -887,8 +850,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         try {
 
-            List<SearchResultEntry> entries = this.getMultipleEntries(USERS_BASE_DN,
-                SearchScope.SUB, searchFilter, ATTR_UID, searchAttributes);
+            List<SearchResultEntry> entries = this.getMultipleEntries(
+                USERS_BASE_DN, SearchScope.SUB, searchFilter, ATTR_UID,
+                searchAttributes);
 
             contentCount = entries.size();
 
@@ -960,6 +924,32 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
+    private User getSingleSoftDeletedUser(Filter searchFilter,
+        String[] searchAttributes) {
+        User user = null;
+        try {
+
+            SearchResultEntry entry = this.getSingleEntry(
+                SOFT_DELETED_USERS_BASE_DN, SearchScope.SUB, searchFilter,
+                searchAttributes);
+
+            if (entry != null) {
+                user = getUser(entry);
+            }
+
+        } catch (GeneralSecurityException e) {
+            getLogger().error("Encryption error", e);
+            throw new IllegalStateException(e);
+        } catch (InvalidCipherTextException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        }
+
+        getLogger().debug("Found User - {}", user);
+
+        return user;
+    }
+
     private User getUser(SearchResultEntry resultEntry)
         throws GeneralSecurityException, InvalidCipherTextException {
         CryptHelper cryptHelper = CryptHelper.getInstance();
@@ -986,13 +976,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .getAttributeValueBytes(ATTR_PASSWORD_SECRET_Q)));
         user.setSecretAnswer(cryptHelper.decrypt(resultEntry
             .getAttributeValueBytes(ATTR_PASSWORD_SECRET_A)));
-
-        String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
-        if (statusStr != null) {
-            user.setStatus(Enum.valueOf(UserStatus.class,
-                statusStr.toUpperCase()));
-        }
-
         user.setLastname(cryptHelper.decrypt(resultEntry
             .getAttributeValueBytes(ATTR_SN)));
         user.setTimeZoneObj(DateTimeZone.forID(resultEntry
@@ -1011,12 +994,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         user.setRegion(resultEntry.getAttributeValue(ATTR_RACKSPACE_REGION));
 
-        String deleted = resultEntry.getAttributeValue(ATTR_SOFT_DELETED);
-        if (deleted != null) {
-            user.setSoftDeleted(resultEntry
-                .getAttributeValueAsBoolean(ATTR_SOFT_DELETED));
-        }
-
         String softDeletedTimestamp = resultEntry
             .getAttributeValue(ATTR_SOFT_DELETED_DATE);
         if (softDeletedTimestamp != null) {
@@ -1024,12 +1001,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 .getAttributeValueAsDate(ATTR_SOFT_DELETED_DATE)));
         }
 
-        String locked = resultEntry.getAttributeValue(ATTR_LOCKED);
-        if (locked != null) {
-        	//TODO: we're going to remove locked, for now using it as enabled flag
-        	user.setEnabled(!resultEntry.getAttributeValueAsBoolean(ATTR_LOCKED));
-            user.setLocked(resultEntry.getAttributeValueAsBoolean(ATTR_LOCKED));
-        }
+        user.setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
 
         user.setMossoId(resultEntry.getAttributeValueAsInteger(ATTR_MOSSO_ID));
         user.setNastId(resultEntry.getAttributeValue(ATTR_NAST_ID));
@@ -1106,14 +1078,15 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(uNew.getPasswordObj()
                     .getValue())));
         }
-        
+
         if (uNew.getCustomerId() != null) {
             if (StringUtils.isBlank(uNew.getCustomerId())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_CUSTOMER_NUMBER));
-            } else if (!StringUtils
-                .equals(uOld.getCustomerId(), uNew.getCustomerId())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_CUSTOMER_NUMBER,
-                    uNew.getCustomerId()));
+                mods.add(new Modification(ModificationType.DELETE,
+                    ATTR_RACKSPACE_CUSTOMER_NUMBER));
+            } else if (!StringUtils.equals(uOld.getCustomerId(),
+                uNew.getCustomerId())) {
+                mods.add(new Modification(ModificationType.REPLACE,
+                    ATTR_RACKSPACE_CUSTOMER_NUMBER, uNew.getCustomerId()));
             }
         }
 
@@ -1252,35 +1225,15 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 .getPreferredLang().toString()));
         }
 
-        if (uNew.getStatus() != null
-            && !uOld.getStatus().equals(uNew.getStatus())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_STATUS,
-                uNew.getStatus().toString()));
-        }
-
         if (uNew.getTimeZoneObj() != null
             && !uNew.getTimeZone().equals(uOld.getTimeZone())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_TIME_ZONE,
                 uNew.getTimeZone()));
         }
 
-        if (uNew.isLocked() != null && uNew.isLocked() != uOld.isLocked()) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_LOCKED,
-                String.valueOf(uNew.isLocked())));
-        }
-
-        if (uNew.isSoftDeleted() != null
-            && uNew.isSoftDeleted() != uOld.isSoftDeleted()) {
-            mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_SOFT_DELETED, String.valueOf(uNew.isSoftDeleted())));
-
-            if (uNew.isSoftDeleted()) {
-                mods.add(new Modification(ModificationType.ADD,
-                    ATTR_SOFT_DELETED_DATE, String.valueOf(currentTime)));
-            } else {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_SOFT_DELETED_DATE));
-            }
+        if (uNew.isEnabled() != null && uNew.isEnabled() != uOld.isEnabled()) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED,
+                String.valueOf(uNew.isEnabled())));
         }
 
         if (uNew.getNastId() != null) {
@@ -1323,5 +1276,102 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             getAppConnPool().releaseConnection(conn);
         }
         return userId;
+    }
+
+    @Override
+    public void softDeleteUser(User user) {
+        getLogger().info("SoftDeleting user - {}", user.getUsername());
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            String oldDn = user.getUniqueId();
+            String newRdn = new LdapDnBuilder("").addAttribute(ATTR_ID,
+                user.getId()).build();
+            String newDn = new LdapDnBuilder(SOFT_DELETED_USERS_BASE_DN)
+                .addAttribute(ATTR_ID, user.getId()).build();
+            // Move the User
+            conn.modifyDN(oldDn, newRdn, false, SOFT_DELETED_USERS_BASE_DN);
+            user.setUniqueId(newDn);
+            // Disabled the User
+            conn.modify(user.getUniqueId(), new Modification(
+                ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
+        } catch (LDAPException e) {
+            getLogger().error("Error soft deleting user", e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        getLogger().info("SoftDeleted user - {}", user.getUsername());
+    }
+
+    @Override
+    public User getSoftDeletedUserById(String id) {
+
+        getLogger().debug("Doing search for id " + id);
+        if (StringUtils.isBlank(id)) {
+            getLogger().error("Null or Empty id parameter");
+            throw new IllegalArgumentException("Null or Empty id parameter.");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_ID, id)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
+        User user = getSingleSoftDeletedUser(searchFilter,
+            ATTR_USER_SEARCH_ATTRIBUTES);
+
+        getLogger().debug("Found User - {}", user);
+
+        return user;
+    }
+
+    @Override
+    public User getSoftDeletedUserByUsername(String username) {
+
+        getLogger().debug("Doing search for user " + username);
+        if (StringUtils.isBlank(username)) {
+            getLogger().error("Null or Empty username parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty username parameter.");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_UID, username)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
+        User user = getSingleSoftDeletedUser(searchFilter,
+            ATTR_USER_SEARCH_ATTRIBUTES);
+
+        getLogger().debug("Found User - {}", user);
+
+        return user;
+    }
+
+    @Override
+    public void unSoftDeleteUser(User user) {
+        getLogger().info("SoftDeleting user - {}", user.getUsername());
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            String oldDn = user.getUniqueId();
+            String newRdn = new LdapDnBuilder("").addAttribute(ATTR_ID,
+                user.getId()).build();
+            String newDn = new LdapDnBuilder(USERS_BASE_DN)
+            .addAttribute(ATTR_ID, user.getId()).build();
+            // Modify the User
+            conn.modifyDN(oldDn, newRdn, false, USERS_BASE_DN);
+            user.setUniqueId(newDn);
+            // Enabled the User
+            conn.modify(user.getUniqueId(), new Modification(
+                ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
+        } catch (LDAPException e) {
+            getLogger().error("Error soft deleting user", e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        getLogger().info("SoftDeleted user - {}", user.getUsername());
     }
 }

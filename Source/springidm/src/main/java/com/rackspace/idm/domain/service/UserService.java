@@ -3,13 +3,13 @@ package com.rackspace.idm.domain.service;
 import java.util.List;
 
 import com.rackspace.idm.domain.entity.Applications;
+import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.PasswordCredentials;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.exception.DuplicateException;
 
@@ -69,9 +69,9 @@ public interface UserService {
 
     Password resetUserPassword(User user);
 
-    void updateUserStatus(User user, String statusStr);
-
 //    DateTime getUserPasswordExpirationDate(String userName);
 
     //UserAuthenticationResult authenticateRacker(String username, String password);
+    
+    void softDeleteUser(User user);
 }

@@ -20,13 +20,6 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.3) = {
 	description = "record soft deleted"
 };
 
-schema set attribute (1.3.6.1.4.1.20988.2.1.4) = {
-	name = locked
-	ldap-names = locked
-	syntax = boolean
-	description = "record is locked"
-};
-
 schema set attribute (1.3.6.1.4.1.20988.2.1.5) = {
 	name = rsApiKey
 	ldap-names = rsApiKey
@@ -40,14 +33,6 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.6) = {
 	equality = caseIgnoreMatch
 	syntax = directoryString
 	description = "An API Key for a user"
-};
-
-schema set attribute (1.3.6.1.4.1.20988.2.1.7) = {
-	name = status
-	ldap-names = status
-	equality = caseIgnoreMatch
-	syntax = directoryString
-	description = "status"
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.8) = {
@@ -526,7 +511,6 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 		c,
 		rsDisplayName,
 		rsGivenName,
-		locked,
 		rsMail,
 		middleName,
 		permission,
@@ -539,7 +523,6 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 		secretQuestion,
 		secretAnswer,
 		clearPassword,
-		status,
 		rsSn,
 		timeZone,
 		uid,
@@ -551,7 +534,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 		passwordUpdatedTimestamp,
 		passwordSelfUpdated,
 		rsGroupDN,
-		rsSecureId
+		rsSecureId,
+		enabled
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {
@@ -562,9 +546,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {
 	must-contain
 		rsId
 	may-contain
-		locked,
 		RCN,
-		status,
+		enabled,
 		softDeleted,
 		passwordRotationEnabled,
         passwordRotationDuration
@@ -583,10 +566,9 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.3) = {
 	    callbackUrl,
 	    openStackType,
 	    description,
-		locked,
+		enabled,
 		permission,
 		RCN,
-		status,
 		softDeleted,
 		title,
 		tokenScope

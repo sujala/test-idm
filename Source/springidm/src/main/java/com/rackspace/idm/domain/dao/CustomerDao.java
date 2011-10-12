@@ -6,6 +6,8 @@ import com.rackspace.idm.domain.entity.Customer;
 
 public interface CustomerDao {
     void addCustomer(Customer customer);
+    
+    Customer getCustomerById(String id);
 
     Customer getCustomerByCustomerId(String customerId);
 
@@ -16,4 +18,12 @@ public interface CustomerDao {
     void deleteCustomer(String customerId);
     
     String getNextCustomerId();
+
+    void softDeleteCustomer(Customer customer);
+
+    void unSoftDeleteCustomer(Customer customer);
+
+    Customer getSoftDeletedUserByCustomerId(String customerId);
+
+    Customer getSoftDeletedCustomerById(String id);
 }

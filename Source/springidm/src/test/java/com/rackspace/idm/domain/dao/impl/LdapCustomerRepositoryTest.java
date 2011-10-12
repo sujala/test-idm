@@ -150,8 +150,6 @@ public class LdapCustomerRepositoryTest {
         Customer cClient = createTestCustomerInstance(customerId,
             status);
 
-        cClient.setStatus(CustomerStatus.INACTIVE);
-
         List<Modification> mods = repo.getModifications(client, cClient);
 
         Assert.assertEquals(1, mods.size());
@@ -162,15 +160,14 @@ public class LdapCustomerRepositoryTest {
         CustomerStatus status, String country) {
 
         Customer newCustomer = createTestCustomerInstance(customerId, status);
-        newCustomer.setSoftDeleted(softDeleted);
         repo.addCustomer(newCustomer);
         return newCustomer;
     }
 
     private Customer createTestCustomerInstance(String customerId, CustomerStatus status) {
 
-        Customer newCustomer = new Customer(customerId, status);
-        newCustomer.setSoftDeleted(softDeleted);
+        Customer newCustomer = new Customer();
+        newCustomer.setRCN(customerId);
         newCustomer.setId(id);
         return newCustomer;
     }

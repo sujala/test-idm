@@ -23,7 +23,6 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
@@ -31,7 +30,6 @@ import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserCredential;
 import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
-import com.rackspace.idm.domain.entity.UserStatus;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -420,32 +418,6 @@ public class UserServiceTests {
         EasyMock.verify(mockUserDao);
     }
 
-    @Test
-    public void shouldUpdateUserStatusActive() {
-
-        final String statusStr = "active";
-        final User user = getFakeUser();
-
-        mockUserDao.updateUser(user,false);
-        EasyMock.replay(mockUserDao);
-
-        userService.updateUserStatus(user, statusStr);
-        EasyMock.verify(mockUserDao);
-    }
-
-    @Test
-    public void shouldUpdateUserStatusInActive() {
-
-        final String statusStr = "inactive";
-        final User user = getFakeUser();
-
-        mockUserDao.updateUser(user, false);
-        EasyMock.replay(mockUserDao);
-
-        userService.updateUserStatus(user, statusStr);
-        EasyMock.verify(mockUserDao);
-    }
-
 //    @Test
 //    public void shouldGetUsersByCustomerId() {
 //        final List<User> users = new ArrayList<User>();
@@ -664,12 +636,13 @@ public class UserServiceTests {
         final UserCredential cred = new UserCredential(userpass, secretQuestion,
                 secretAnswer);
         final User user = new User(username, customerId, email, name, pref, cred);
-        user.setStatus(UserStatus.ACTIVE);
         return user;
     }
 
     private Customer getFakeCustomer() {
-        return new Customer(customerId, CustomerStatus.ACTIVE);
+        Customer customer = new Customer();
+        customer.setRCN(customerId);
+        return customer;
     }
 
     private List<Application> getFakeClients() {

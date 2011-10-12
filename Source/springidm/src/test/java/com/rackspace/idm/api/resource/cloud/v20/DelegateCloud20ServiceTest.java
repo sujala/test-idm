@@ -15,6 +15,7 @@ import java.util.HashMap;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
@@ -36,6 +37,7 @@ public class DelegateCloud20ServiceTest {
     DelegateCloud20Service delegateCloud20Service;
     CloudClient cloudClient = mock(CloudClient.class);
     HttpHeaders httpHeaders = mock(HttpHeaders.class);
+    Marshaller marshaller = mock(Marshaller.class);
     private final Configuration config = mock(Configuration.class);
     AuthenticationRequest authenticationRequest =mock(AuthenticationRequest.class);
     String url = "url";
@@ -47,6 +49,7 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service = new DelegateCloud20Service();
         delegateCloud20Service.setDummyCloud20Service(dummyCloud20Service);
         delegateCloud20Service.setCloudClient(cloudClient);
+        delegateCloud20Service.setMarshaller(marshaller);
         when(config.getString("cloudAuth20url")).thenReturn(url);
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(disabled);
         delegateCloud20Service.setConfig(config);

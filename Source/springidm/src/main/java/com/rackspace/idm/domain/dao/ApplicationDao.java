@@ -49,8 +49,6 @@ public interface ApplicationDao {
     boolean isUserInClientGroup(String username, String groupDN);
     
     void removeUserFromGroup(String userUniqueId, ClientGroup group);
-
-    void setClientsLockedFlagByCustomerId(String customerId, boolean locked);
     
     void updateClient(Application client);
     
@@ -77,4 +75,12 @@ public interface ApplicationDao {
     List<Application> getOpenStackServices();
 
     String getNextRoleId();
+
+    void softDeleteApplication(Application application);
+
+    void unSoftDeleteApplication(Application application);
+
+    Application getSoftDeletedClientByName(String clientName);
+
+    Application getSoftDeletedApplicationById(String id);
 }

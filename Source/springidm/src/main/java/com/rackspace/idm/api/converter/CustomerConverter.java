@@ -17,11 +17,7 @@ public class CustomerConverter {
         customer.setId(jaxbCustomer.getId());
         customer.setRCN(jaxbCustomer.getRcn());
         if (jaxbCustomer.isEnabled() != null) {
-            customer.setLocked(!jaxbCustomer.isEnabled());
-        }
-
-        if (jaxbCustomer.isSoftDeleted() != null) {
-            customer.setSoftDeleted(jaxbCustomer.isSoftDeleted());
+            customer.setEnabled(jaxbCustomer.isEnabled());
         }
 
         return customer;
@@ -32,8 +28,7 @@ public class CustomerConverter {
         com.rackspace.api.idm.v1.CustomerIdentityProfile jaxbCustomer = objectFactory.createCustomerIdentityProfile();
         jaxbCustomer.setId(customer.getId());
         jaxbCustomer.setRcn(customer.getRCN());
-        jaxbCustomer.setEnabled(!customer.isLocked());
-        jaxbCustomer.setSoftDeleted(customer.getSoftDeleted());
+        jaxbCustomer.setEnabled(customer.isEnabled());
 
         return jaxbCustomer;
     }

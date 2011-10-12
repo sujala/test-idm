@@ -10,6 +10,26 @@ objectClass:top
 objectClass:organizationalUnit
 ou: internal
 
+dn: ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:organizationalUnit
+ou: softDeleted
+
+dn: ou=users,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:organizationalUnit
+ou: users
+
+dn: ou=customers,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:organizationalUnit
+ou: customers
+
+dn: ou=applications,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:organizationalUnit
+ou: applications
+
 dn: ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass:top
 objectClass:organizationalUnit
@@ -449,29 +469,20 @@ userPassword: qwerty
 dn: rsId=1,ou=customers,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsOrganization
-locked: FALSE
 RCN: RACKSPACE
 rsId: 1
-softDeleted: FALSE
-status: ACTIVE
 
 dn: rsId=2,ou=customers,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsOrganization
-locked: FALSE
 RCN: RCN-111-111-111
 rsId: 2
-softDeleted: FALSE
-status: ACTIVE
 
 dn: rsId=3,ou=customers,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsOrganization
-locked: FALSE
 RCN: RCN-QATestingCustomer
 rsId: 3
-softDeleted: FALSE
-status: ACTIVE
 
 ######################################## Applications #######################################
 
@@ -480,13 +491,11 @@ objectClass: top
 objectClass: rsApplication
 cn: Customer Idm
 description: Our description here ...
-locked: FALSE
 RCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-status: ACTIVE
+enabled: TRUE
 title: Rackspace User Management
 tokenScope: user_mgmt
-softDeleted: FALSE
 userPassword: password
 
 dn: clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
@@ -494,11 +503,9 @@ objectClass: top
 objectClass: rsApplication
 cn: Cloud Auth Service
 openStackType: identity
-locked: FALSE
 RCN: RACKSPACE
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-status: ACTIVE
-softDeleted: FALSE
+enabled: TRUE
 userPassword: password
 
 dn: clientId=ABCDEF,ou=applications,o=rackspace,dc=rackspace,dc=com
@@ -506,11 +513,9 @@ objectClass: top
 objectClass: rsApplication
 cn: Rackspace Cloud Servers
 description: Rackspace Cloud Servers description...
-locked: FALSE
 RCN: RACKSPACE
 clientId: ABCDEF
-status: ACTIVE
-softDeleted: FALSE
+enabled: TRUE
 title: Rackspace Cloud Servers
 tokenScope: cloud_servers
 userPassword: password
@@ -519,22 +524,18 @@ dn: clientId=GHIJKL,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsApplication
 cn: Rackspace Billing Application
-locked: FALSE
 RCN: RACKSPACE
 clientId: GHIJKL
-softDeleted: FALSE
-status: ACTIVE
+enabled: TRUE
 userPassword: password
 
 dn: clientId=MNOPQR,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsApplication
 cn: Rackspace Signup Service
-locked: FALSE
 RCN: RACKSPACE
 clientId: MNOPQR
-status: ACTIVE
-softDeleted: FALSE
+enabled: TRUE
 userPassword: password
 
 dn: clientId=STUVWX,ou=applications,o=rackspace,dc=rackspace,dc=com
@@ -542,46 +543,38 @@ objectClass: top
 objectClass: rsApplication
 cn: Rackspace Cloud Files
 description: Rackspace Cloud Files description ...
-locked: FALSE
 RCN: RACKSPACE
 clientId: STUVWX
-status: ACTIVE
+enabled: TRUE
 title: Rackspace Cloud Files
 tokenScope: cloud_files
-softDeleted: FALSE
 userPassword: password
 
 dn: clientId=IDM,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsApplication
 cn: IDM
-locked: FALSE
 RCN: RACKSPACE
 clientId: IDM
-status: ACTIVE
-softDeleted: FALSE
+enabled: TRUE
 userPassword: password
 
 dn: clientId=CUSTOMERCLIENT,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsApplication
 cn: Customer Client
-locked: FALSE
 RCN: RCN-111-111-111
 clientId: CUSTOMERCLIENT
-status: ACTIVE
-softDeleted: FALSE
+enabled: TRUE
 userPassword: password
 
 dn: clientId=QATESTCLIENT,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsApplication
 cn: QA Client
-locked: FALSE
 RCN: RCN-QATestingCustomer
 clientId: QATESTCLIENT
-status: ACTIVE
-softDeleted: FALSE
+enabled: TRUE
 userPassword: password
 
 ######################################## Client Role Containers ############################
@@ -763,7 +756,6 @@ endpoint: +3
 endpoint: +11
 endpoint: +15
 endpoint: +17
-locked: FALSE
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20110428013526.504Z
 preferredLanguage: en-us
@@ -780,8 +772,7 @@ rsRegion: USA
 rsSn:: PZi9PwWFO7mMKNmAchN9ag==
 secretAnswer:: CRowCw8F9Q4gQM6FIP2uQQ==
 secretQuestion:: OzUFmUirlxImx3pl0nHftqtvOZ0b/k1woae07wz4fU7wWFPq4eQU33302CCFluyN
-softDeleted: FALSE
-status: ACTIVE
+enabled: TRUE
 timeZone: America/Chicago
 uid: mkovacs
 userPassword:: e1NIQX1heWc3c0dEQ2FVTXRDS3d6dEhvemZBcEFBMTA9
@@ -795,7 +786,6 @@ endpoint: +3
 endpoint: +11
 endpoint: +15
 endpoint: +17
-locked: FALSE
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20110428013526.504Z
 preferredLanguage: en-us
@@ -812,8 +802,7 @@ rsRegion: USA
 rsSn:: PZi9PwWFO7mMKNmAchN9ag==
 secretAnswer:: CRowCw8F9Q4gQM6FIP2uQQ==
 secretQuestion:: OzUFmUirlxImx3pl0nHftqtvOZ0b/k1woae07wz4fU7wWFPq4eQU33302CCFluyN
-softDeleted: FALSE
-status: ACTIVE
+enabled: TRUE
 timeZone: America/Chicago
 uid: authuser1
 userPassword:: e1NIQX1heWc3c0dEQ2FVTXRDS3d6dEhvemZBcEFBMTA9
@@ -823,7 +812,6 @@ dn: rsId=3,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
 clearPassword:: u4ulicmrLfboYsh1KryLww==
-locked: FALSE
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20110428013539.900Z
 preferredLanguage: en-us
@@ -837,8 +825,7 @@ rsRegion: USA
 rsSn:: c8rAK8cUupdQS9ESW6PHGQ==
 secretAnswer:: CRowCw8F9Q4gQM6FIP2uQQ==
 secretQuestion:: OzUFmUirlxImx3pl0nHftqtvOZ0b/k1woae07wz4fU7wWFPq4eQU33302CCFluyN
-softDeleted: FALSE
-status: ACTIVE
+enabled: TRUE
 timeZone: America/Chicago
 uid: huey
 userPassword:: e1NIQX1heWc3c0dEQ2FVTXRDS3d6dEhvemZBcEFBMTA9
@@ -847,7 +834,6 @@ dn: rsId=4,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
 clearPassword:: u4ulicmrLfboYsh1KryLww==
-locked: FALSE
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20110428013635.737Z
 preferredLanguage: en-us
@@ -861,8 +847,7 @@ rsRegion: USA
 rsSn:: 0rDNloH2MeahNdzMWxCBUw==
 secretAnswer:: llhb367Q3WCwaP6nO3EJag==
 secretQuestion:: OzUFmUirlxImx3pl0nHftqtvOZ0b/k1woae07wz4fU7wWFPq4eQU33302CCFluyN
-softDeleted: FALSE
-status: ACTIVE
+enabled: TRUE
 timeZone: America/Chicago
 uid: testuser
 userPassword:: e1NIQX1heWc3c0dEQ2FVTXRDS3d6dEhvemZBcEFBMTA9
@@ -872,7 +857,6 @@ dn: rsId=5,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
 clearPassword:: u4ulicmrLfboYsh1KryLww==
-locked: FALSE
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20110428013615.158Z
 preferredLanguage: en-us
@@ -888,8 +872,7 @@ rsRegion: USA
 rsSn:: Qaf12lnL4gfjx2ipZH0moA==
 secretAnswer:: CRowCw8F9Q4gQM6FIP2uQQ==
 secretQuestion:: OzUFmUirlxImx3pl0nHftqtvOZ0b/k1woae07wz4fU7wWFPq4eQU33302CCFluyN
-softDeleted: FALSE
-status: ACTIVE
+enabled: TRUE
 timeZone: America/Chicago
 uid: qauser
 userPassword:: e1NIQX1heWc3c0dEQ2FVTXRDS3d6dEhvemZBcEFBMTA9
@@ -898,7 +881,6 @@ dn: rsId=6,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
 clearPassword:: u4ulicmrLfboYsh1KryLww==
-locked: FALSE
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20110428013603.647Z
 preferredLanguage: en-us
@@ -915,8 +897,7 @@ rsRegion: USA
 rsSn:: Qaf12lnL4gfjx2ipZH0moA==
 secretAnswer:: CRowCw8F9Q4gQM6FIP2uQQ==
 secretQuestion:: OzUFmUirlxImx3pl0nHftqtvOZ0b/k1woae07wz4fU7wWFPq4eQU33302CCFluyN
-softDeleted: FALSE
-status: ACTIVE
+enabled: TRUE
 timeZone: America/Chicago
 uid: qaadmin
 userPassword:: e1NIQX1heWc3c0dEQ2FVTXRDS3d6dEhvemZBcEFBMTA9
@@ -926,15 +907,13 @@ dn: rsId=7,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
 clearPassword:: u4ulicmrLfboYsh1KryLww==
-locked: FALSE
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20110428013526.504Z
 preferredLanguage: en-us
 RCN: RACKSPACE
 rsId: 7
 rsRegion: USA
-softDeleted: FALSE
-status: ACTIVE
+enabled: TRUE
 timeZone: America/Chicago
 uid: admin
 userPassword: secrete
@@ -944,15 +923,13 @@ dn: rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
 clearPassword:: u4ulicmrLfboYsh1KryLww==
-locked: FALSE
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20110428013526.504Z
 preferredLanguage: en-us
 RCN: RACKSPACE
 rsId: 104472
 rsRegion: USA
-softDeleted: FALSE
-status: ACTIVE
+enabled: TRUE
 timeZone: America/Chicago
 uid: cmarin2
 userPassword: Password1
@@ -962,15 +939,13 @@ dn: rsId=104476,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsPerson
 clearPassword:: u4ulicmrLfboYsh1KryLww==
-locked: FALSE
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20110428013526.504Z
 preferredLanguage: en-us
 RCN: RACKSPACE
-rsId: 104472
+rsId: 104476
 rsRegion: USA
-softDeleted: FALSE
-status: ACTIVE
+enabled: TRUE
 timeZone: America/Chicago
 uid: cmarin3
 userPassword: Password1
@@ -1015,6 +990,11 @@ objectClass: rsContainer
 cn: DIRECT TOKENS
 
 dn: cn=DIRECT TOKENS,rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: DIRECT TOKENS
+
+dn: cn=DIRECT TOKENS,rsId=104476,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsContainer
 cn: DIRECT TOKENS
@@ -1150,6 +1130,8 @@ clientRCN: RACKSPACE
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 uid: cmarin2
 userRCN: RACKSPACE
+accessToken: XXXX
+accessTokenExp: 30110428013526.504Z
 
 dn: clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=104476,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -1159,6 +1141,8 @@ clientRCN: RACKSPACE
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 uid: cmarin3
 userRCN: RACKSPACE
+accessToken: YYYY
+accessTokenExp: 30110428013526.504Z
 
 ######################################## User Scope Accesses for Customer Idm #######################################
 

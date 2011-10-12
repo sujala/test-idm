@@ -251,12 +251,10 @@ public class ApplicationServiceTests {
     public void shouldSoftDeleteClient() {
         Application client = getFakeClient();
 
-        EasyMock.expect(mockApplicationDao.getClientByClientId(clientId)).andReturn(
-            client);
-        mockApplicationDao.updateClient(client);
+        mockApplicationDao.softDeleteApplication(client);
         EasyMock.replay(mockApplicationDao);
 
-        clientService.softDelete(clientId);
+        clientService.softDeleteApplication(client);
 
         EasyMock.verify(mockApplicationDao);
     }
@@ -673,8 +671,9 @@ public class ApplicationServiceTests {
     }
 
     private Customer getFakeCustomer() {
-        return new Customer(customerId, 
-            customerStatus);
+        Customer customer = new Customer();
+        customer.setRCN(customerId);
+        return customer;
     }
 
     private List<ClientGroup> getFakeClientGroupList() {

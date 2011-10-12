@@ -143,8 +143,7 @@ public class CustomerIdentityProfileResource extends ParentResource {
         
         //TODO: all this should be in a copy command, refactor
         Customer customer = this.customerService.loadCustomer(customerId);
-        customer.setLocked(!inputCustomer.isEnabled());
-        customer.setSoftDeleted(inputCustomer.isSoftDeleted());
+        customer.setEnabled(inputCustomer.isEnabled());
 
         getLogger().debug("Successfully Updated Customer Identity Profile: {}", customer);
 

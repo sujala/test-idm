@@ -7,16 +7,19 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.JAXBException;
 
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.Tenant;
 import org.openstack.docs.identity.api.v2.User;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 
 @Component
 public class DummyCloud20Service implements Cloud20Service{
@@ -112,13 +115,6 @@ public class DummyCloud20Service implements Cloud20Service{
     @Override
     public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken,
         String userId, String marker, Integer limit) throws IOException {
-        
-        return Response.status(Status.NOT_FOUND);
-    }
-
-    @Override
-    public ResponseBuilder updateUserCredential(HttpHeaders httpHeaders, String authToken,
-        String userId, String credentialType, String body) throws IOException {
         
         return Response.status(Status.NOT_FOUND);
     }
@@ -359,6 +355,21 @@ public class DummyCloud20Service implements Cloud20Service{
     @Override
     public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders,
         String authToken, String tenantId, String endpointId) {
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder updateUserPasswordCredentials(
+        HttpHeaders httpHeaders, String authToken, String userId,
+        String credentialType, PasswordCredentialsRequiredUsername creds)
+        throws IOException, JAXBException {
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder updateUserApiKeyCredentials(HttpHeaders httpHeaders,
+        String authToken, String userId, String credentialType,
+        ApiKeyCredentials creds) throws IOException, JAXBException {
         return Response.status(Status.NOT_FOUND);
     }
 

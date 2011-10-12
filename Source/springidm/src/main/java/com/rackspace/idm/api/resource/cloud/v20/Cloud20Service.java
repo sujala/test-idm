@@ -10,11 +10,13 @@ import javax.xml.bind.JAXBException;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.Tenant;
 import org.openstack.docs.identity.api.v2.User;
 
 import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 
 /**
  * Created by IntelliJ IDEA.
@@ -51,8 +53,6 @@ public interface Cloud20Service {
     ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body) throws IOException;
 
     ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit) throws IOException;
-
-    ResponseBuilder updateUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType, String body) throws IOException;
 
     ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) throws IOException;
 
@@ -136,4 +136,12 @@ public interface Cloud20Service {
 
     ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId,
         String endpointId) throws IOException;
+
+    ResponseBuilder updateUserPasswordCredentials(HttpHeaders httpHeaders,
+        String authToken, String userId, String credentialType,
+        PasswordCredentialsRequiredUsername creds) throws IOException, JAXBException;
+
+    ResponseBuilder updateUserApiKeyCredentials(HttpHeaders httpHeaders,
+        String authToken, String userId, String credentialType,
+        ApiKeyCredentials creds) throws IOException, JAXBException;
 }

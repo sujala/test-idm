@@ -61,8 +61,9 @@ public class ServiceTestsBase {
     }
 
     protected Customer getFakeCustomer() {
-        return new Customer(customerId, 
-            customerStatus);
+        Customer customer = new Customer();
+        customer.setRCN(customerId);
+        return customer;
     }
 
     protected User getFakeUser() {

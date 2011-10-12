@@ -40,7 +40,6 @@ public class UserConverter {
         user.setPersonId(jaxbUser.getPersonId());
         user.setPreferredLang(jaxbUser.getPrefLanguage());
         user.setRegion(jaxbUser.getRegion());
-        user.setSoftDeleted(jaxbUser.isSoftDeleted());
         user.setMaxLoginFailuresExceded(jaxbUser.isMaxLoginFailuresExceded());
         user.setUsername(jaxbUser.getUsername());
 
@@ -112,12 +111,6 @@ public class UserConverter {
         return toUserJaxb(user, true, true);
     }
 
-    public com.rackspace.api.idm.v1.User toUserWithOnlySoftDeletedJaxb(User user) {
-        com.rackspace.api.idm.v1.User returnedUser = objectFactory.createUser();
-        returnedUser.setSoftDeleted(user.isSoftDeleted());
-        return returnedUser;
-    }
-
     public com.rackspace.api.idm.v1.User toUserJaxbWithoutAnyAdditionalElements(
         User user) {
         return toUserJaxb(user, false, false);
@@ -140,7 +133,6 @@ public class UserConverter {
         returnedUser.setPrefLanguage(user.getPreferredLang());
         returnedUser.setRegion(user.getRegion());
         returnedUser.setUsername(user.getUsername());
-        returnedUser.setSoftDeleted(user.isSoftDeleted());
         returnedUser.setMaxLoginFailuresExceded(user.isMaxLoginFailuresExceded());
 
         try {

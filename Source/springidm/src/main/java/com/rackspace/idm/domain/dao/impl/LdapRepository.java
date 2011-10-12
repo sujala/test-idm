@@ -107,7 +107,6 @@ public abstract class LdapRepository {
     public static final String ATTR_GROUP_TYPE = "groupType";
     public static final String ATTR_INTERNAL_URL = "internalUrl";
     public static final String ATTR_LANG = "preferredLanguage";
-    public static final String ATTR_LOCKED = "locked";
     public static final String ATTR_MAIL = "rsMail";
     public static final String ATTR_MEMBER_OF = "rsGroupDN";
     public static final String ATTR_MIDDLE_NAME = "middleName";
@@ -140,10 +139,8 @@ public abstract class LdapRepository {
     public static final String ATTR_SEE_ALSO = "seeAlso";
     public static final String ATTR_SERVICE = "service";
     public static final String ATTR_SN = "rsSn";
-    public static final String ATTR_SOFT_DELETED = "softDeleted";
     public static final String ATTR_PASSWORD_ROTATION_ENABLED = "passwordRotationEnabled";
     public static final String ATTR_PASSWORD_ROTATION_DURATION = "passwordRotationDuration";
-    public static final String ATTR_STATUS = "status";
     public static final String ATTR_TENANT_ID = "tenantId";
     public static final String ATTR_TENANT_DISPLAY_NAME = "tenantDisplayName";
     public static final String ATTR_TIME_ZONE = "timeZone";
@@ -177,6 +174,9 @@ public abstract class LdapRepository {
     protected static final String USERS_BASE_DN = "ou=users,o=rackspace,dc=rackspace,dc=com";
     protected static final String RACKERS_BASE_DN = "ou=rackers,o=rackspace,dc=rackspace,dc=com";
     protected static final String NEXT_IDS_BASE_DN = "ou=nextIds,o=rackspace,dc=rackspace,dc=com";
+    protected static final String SOFT_DELETED_USERS_BASE_DN = "ou=users,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
+    protected static final String SOFT_DELETED_CUSTOMERS_BASE_DN = "ou=customers,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
+    protected static final String SOFT_DELETED_APPLICATIONS_BASE_DN = "ou=applications,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
 
     // Definitions for Contatiner Names
     protected static final String CONTAINER_DIRECT = "DIRECT TOKENS";
@@ -457,9 +457,6 @@ public abstract class LdapRepository {
         private final String baseDN;
 
         public LdapDnBuilder(String baseDN) {
-            if (StringUtils.isBlank(baseDN)) {
-                throw new IllegalArgumentException("baseDN cannot be empty");
-            }
             this.baseDN = baseDN;
             this.queryPairs = new ArrayList<QueryPair>();
         }

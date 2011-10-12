@@ -273,8 +273,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             return userNotFoundExceptionResponse(userId);
         }
 
-        gaUser.setSoftDeleted(true);
-        this.userService.updateUser(gaUser, false);
+        this.userService.softDeleteUser(gaUser);
 
         return Response.noContent();
     }
@@ -424,7 +423,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             return userNotFoundExceptionResponse(userId);
         }
 
-        gaUser.setLocked(!user.isEnabled());
+        gaUser.setEnabled(user.isEnabled());
 
         this.userService.updateUser(gaUser, false);
 
@@ -461,7 +460,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         gaUser.setMossoId(user.getMossoId());
         gaUser.setNastId(user.getNastId());
-        gaUser.setLocked(!user.isEnabled());
+        gaUser.setEnabled(user.isEnabled());
 
         this.userService.updateUser(gaUser, false);
 
