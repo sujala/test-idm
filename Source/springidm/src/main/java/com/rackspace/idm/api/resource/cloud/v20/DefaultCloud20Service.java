@@ -1167,7 +1167,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createCredential(userCreds);
 
-        } else if (credentialType.equals("apiKeyCredentials")) {
+        } else if (credentialType.equals("RAX-KSKEY:apiKeyCredentials")) {
             if (StringUtils.isBlank(user.getApiKey())) {
                 return notFoundExceptionResponse("User doesn't have api key credentials");
             }

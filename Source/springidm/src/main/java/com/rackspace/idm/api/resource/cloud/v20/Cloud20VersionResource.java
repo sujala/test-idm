@@ -338,6 +338,16 @@ public class Cloud20VersionResource {
     }
 
     @GET
+    @Path("users/{userId}/OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials")
+    public Response getUserCredentialKey(@Context HttpHeaders httpHeaders,
+        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @PathParam("userId") String userId,
+        @PathParam("credentialType") String credentialType) throws IOException {
+        return getCloud20Service().getUserCredential(httpHeaders, authToken,
+            userId, "RAX-KSKEY:apiKeyCredentials").build();
+    }
+    
+    @GET
     @Path("users/{userId}/OS-KSADM/credentials/{credentialType}")
     public Response getUserCredential(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
