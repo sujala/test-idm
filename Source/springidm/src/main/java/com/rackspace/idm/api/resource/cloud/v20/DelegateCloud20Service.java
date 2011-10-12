@@ -46,6 +46,12 @@ public class DelegateCloud20Service implements Cloud20Service {
     private DefaultCloud20Service defaultCloud20Service;
     @Autowired
     private DummyCloud20Service dummyCloud20Service;
+    
+    private Marshaller marshaller;
+    
+    public void setMarshaller(Marshaller marshaller) {
+        this.marshaller = marshaller;
+    }
 
     public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
         DelegateCloud20Service.OBJ_FACTORY = OBJ_FACTORY;
@@ -380,7 +386,8 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateUserPasswordCredentials(
         HttpHeaders httpHeaders, String authToken, String userId,
-        String credentialType, PasswordCredentialsRequiredUsername creds) throws JAXBException, IOException {
+        String credentialType, PasswordCredentialsRequiredUsername creds)
+        throws JAXBException, IOException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
             .updateUserPasswordCredentials(httpHeaders, authToken, userId,
                 credentialType, creds);
@@ -391,7 +398,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/credentials/" + credentialType;
-            String body = marshallObjectToString(OBJ_FACTORY.createPasswordCredentials(creds));
+            String body = marshallObjectToString(OBJ_FACTORY
+                .createPasswordCredentials(creds));
             return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
@@ -411,7 +419,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/credentials/" + credentialType;
-                String body = marshallObjectToString(OBJ_FACTORY_RAX_KSKEY.createApiKeyCredentials(creds));
+            String body = marshallObjectToString(OBJ_FACTORY_RAX_KSKEY
+                .createApiKeyCredentials(creds));
             return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
@@ -1164,9 +1173,11 @@ public class DelegateCloud20Service implements Cloud20Service {
 
         StringWriter sw = new StringWriter();
 
-        JAXBContext jaxbContext = JAXBContextResolver.get();
-        Marshaller marshaller = jaxbContext.createMarshaller();
-        marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
+        if (marshaller == null) {
+            JAXBContext jaxbContext = JAXBContextResolver.get();
+            marshaller = jaxbContext.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
+        }
 
         marshaller.marshal(jaxbObject, sw);
 
