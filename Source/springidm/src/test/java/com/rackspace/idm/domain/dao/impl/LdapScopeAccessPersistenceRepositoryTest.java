@@ -23,7 +23,6 @@ import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.DefinedPermission;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.GrantedPermission;
@@ -42,7 +41,6 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     String customerName = "DELETE_My_Name";
     String inum = "@!FFFF.FFFF.FFFF.FFFF!CCCC.CCCC";
     String iname = "@Rackspae.TESTING";
-    CustomerStatus status = CustomerStatus.ACTIVE;
     String seeAlso = "inum=@!FFFF.FFFF.FFFF.FFFF!CCCC.CCCC";
     String owner = "inum=@!FFFF.FFFF.FFFF.FFFF!CCCC.CCCC";
     String country = "USA";
@@ -88,7 +86,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         clientRepo = getClientRepo(connPools);
 
         try {
-            customer = addNewTestCustomer(customerId, customerName, inum, iname, status, seeAlso, owner, country);
+            customer = addNewTestCustomer(customerId, customerName, inum, iname, seeAlso, owner, country);
             client = addNewTestClient(clientId);
             client2 = addNewTestClient2(clientId2);
         } catch (Exception e) {
@@ -630,19 +628,18 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     }
 
     private Customer addNewTestCustomer(String customerId, String name, String inum, String iname,
-                                        CustomerStatus status, String seeAlso, String owner, String country) {
+                                         String seeAlso, String owner, String country) {
 
-        final Customer newCustomer = createTestCustomerInstance(customerId, status);
-        newCustomer.setSoftDeleted(softDeleted);
+        final Customer newCustomer = createTestCustomerInstance(customerId);
         newCustomer.setId(id);
         customerRepo.addCustomer(newCustomer);
         return newCustomer;
     }
 
-    private Customer createTestCustomerInstance(String customerId, CustomerStatus status) {
+    private Customer createTestCustomerInstance(String customerId) {
 
-        final Customer newCustomer = new Customer(customerId, status );
-        newCustomer.setSoftDeleted(softDeleted);
+        final Customer newCustomer = new Customer();
+        newCustomer.setRCN(customerId);
         return newCustomer;
     }
 
@@ -663,8 +660,6 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     private Application createTestClientInstance() {
         final Application newClient = new Application("DELETE_My_ClientId", ClientSecret.newInstance("DELETE_My_Client_Secret"),
                 "DELETE_My_Name", "RCN-123-456-789", ClientStatus.ACTIVE);
-        newClient.setLocked(false);
-        newClient.setSoftDeleted(false);
         return newClient;
     }
 

@@ -11,28 +11,17 @@ public class Customer implements Auditable {
     private String uniqueId = null;
     
     private String id = null;
-
-    // flag determines if the customer has been locked or unlocked.
-    private boolean lockStatusChanged = false;
     
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String RCN = null;
-    private CustomerStatus status = null;
 
-    private Boolean locked = null;
-    private Boolean softDeleted = null;
+    private Boolean enabled = null;
     
     private Integer passwordRotationDuration; // this is in days
     private Boolean passwordRotationEnabled = null;
 
     public Customer() {
-    }
-
-    public Customer(String customerId,
-        CustomerStatus status) {
-        this.RCN = customerId;
-        this.status = status;
     }
     
     public Boolean getPasswordRotationEnabled() {
@@ -49,14 +38,6 @@ public class Customer implements Auditable {
     
     public void setPasswordRotationDuration(Integer passwordRotationDuration) {
         this.passwordRotationDuration = passwordRotationDuration;
-    }
-
-    public Boolean getSoftDeleted() {
-        return softDeleted;
-    }
-
-    public void setSoftDeleted(Boolean softDeleted) {
-        this.softDeleted = softDeleted;
     }
 
     public String getUniqueId() {
@@ -87,45 +68,26 @@ public class Customer implements Auditable {
         this.id = id;
     }
 
-    public Boolean isLocked() {
-        return this.locked;
-    }
-
-    public void setLocked(Boolean isLocked) {
-    	if (this.locked != isLocked) {
-    		this.lockStatusChanged = true;
-    	}
-    	
-        this.locked = isLocked;
-    }
-
-    public CustomerStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(CustomerStatus status) {
-        if (status != null) {
-            this.status = status;
-        }
-    }
 
     public void setDefaults() {
-        this.status = CustomerStatus.ACTIVE;
-        this.locked = (this.locked == null ? false : this.locked);
-        this.softDeleted = false;
+        this.enabled = true;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result
-            + ((RCN == null) ? 0 : RCN.hashCode());
-        result = prime * result
-            + ((locked == null) ? 0 : locked.hashCode());
-        result = prime * result
-            + ((softDeleted == null) ? 0 : softDeleted.hashCode());
-        result = prime * result + ((status == null) ? 0 : status.hashCode());
+        result = prime * result + ((RCN == null) ? 0 : RCN.hashCode());
+        result = prime * result + ((enabled == null) ? 0 : enabled.hashCode());
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        result = prime
+            * result
+            + ((passwordRotationDuration == null) ? 0
+                : passwordRotationDuration.hashCode());
+        result = prime
+            * result
+            + ((passwordRotationEnabled == null) ? 0 : passwordRotationEnabled
+                .hashCode());
         result = prime * result
             + ((uniqueId == null) ? 0 : uniqueId.hashCode());
         return result;
@@ -150,21 +112,34 @@ public class Customer implements Auditable {
         } else if (!RCN.equals(other.RCN)) {
             return false;
         }
-        if (locked == null) {
-            if (other.locked != null) {
+        if (enabled == null) {
+            if (other.enabled != null) {
                 return false;
             }
-        } else if (!locked.equals(other.locked)) {
+        } else if (!enabled.equals(other.enabled)) {
             return false;
         }
-        if (softDeleted == null) {
-            if (other.softDeleted != null) {
+        if (id == null) {
+            if (other.id != null) {
                 return false;
             }
-        } else if (!softDeleted.equals(other.softDeleted)) {
+        } else if (!id.equals(other.id)) {
             return false;
         }
-        if (status != other.status) {
+        if (passwordRotationDuration == null) {
+            if (other.passwordRotationDuration != null) {
+                return false;
+            }
+        } else if (!passwordRotationDuration
+            .equals(other.passwordRotationDuration)) {
+            return false;
+        }
+        if (passwordRotationEnabled == null) {
+            if (other.passwordRotationEnabled != null) {
+                return false;
+            }
+        } else if (!passwordRotationEnabled
+            .equals(other.passwordRotationEnabled)) {
             return false;
         }
         if (uniqueId == null) {
@@ -172,19 +147,6 @@ public class Customer implements Auditable {
                 return false;
             }
         } else if (!uniqueId.equals(other.uniqueId)) {
-            return false;
-        }
-        if (passwordRotationEnabled != null) {
-            if (other.passwordRotationEnabled != null) {
-                if (passwordRotationEnabled != other.passwordRotationEnabled) {
-                    return false;
-                }
-            }
-            if (other.passwordRotationEnabled == null) {
-                return false;
-            }
-        }
-        if (passwordRotationDuration != other.passwordRotationDuration) {
             return false;
         }
         return true;
@@ -201,11 +163,11 @@ public class Customer implements Auditable {
         return String.format(format, getId(), RCN);
     }
 
-	public boolean isLockStatusChanged() {
-		return lockStatusChanged;
-	}
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
+    }
 
-	public void setLockStatusChanged(boolean lockStatusChanged) {
-		this.lockStatusChanged = lockStatusChanged;
-	}
+    public Boolean isEnabled() {
+        return enabled;
+    }
 }

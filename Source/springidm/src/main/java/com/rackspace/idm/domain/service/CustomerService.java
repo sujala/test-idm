@@ -17,4 +17,6 @@ public interface CustomerService {
 //    void softDeleteCustomer(String customerId);
 
     void updateCustomer(Customer customer);
+
+    void softDeleteCustomer(Customer customer);
 }

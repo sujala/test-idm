@@ -12,10 +12,10 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.exception.DuplicateException;
@@ -123,12 +123,14 @@ public class DefaultCustomerService implements CustomerService {
     public void updateCustomer(Customer customer) {
         logger.info("Updating Customer: {}", customer);
         this.customerDao.updateCustomer(customer);
-        
-        if (customer.isLockStatusChanged()) {
-        	//TODO: implement some rules
-        }
-        
         logger.info("Updated Customer: {}", customer);
+    }
+    
+    @Override
+    public void softDeleteCustomer(Customer customer) {
+        logger.debug("SoftDeleting Customer: {}", customer);
+        customerDao.softDeleteCustomer(customer);
+        logger.debug("SoftDeleted Customer: {}", customer);
     }
     
     /**

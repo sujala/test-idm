@@ -14,7 +14,6 @@ import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.exception.DuplicateClientGroupException;
@@ -207,7 +206,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         getLogger().debug("Search all clients");
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
@@ -237,7 +235,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_CLIENT_ID, clientId)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
@@ -260,7 +257,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_NAME, clientName)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
@@ -285,7 +281,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_CLIENT_ID, clientId)
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
@@ -426,7 +421,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
@@ -444,7 +438,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
         searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION);
-        searchBuilder.addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false));
         
         if (filters != null) {
         	for (FilterParam filter : filters) {
@@ -516,29 +509,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         audit.succeed();
         getLogger().info("Removed user {} from group {}", userUniqueId, group);
-    }
-
-    @Override
-    public void setClientsLockedFlagByCustomerId(String customerId,
-        boolean locked) {
-        Applications clients = this.findFirst100ByCustomerIdAndLock(customerId,
-            !locked);
-        String msg = String.format(
-            "Setting lock status to %s for %s clients under customer %s",
-            locked, clients.getTotalRecords(), customerId);
-        getLogger().debug(msg);
-        if (clients.getClients() != null && clients.getClients().size() > 0) {
-            for (Application client : clients.getClients()) {
-                client.setLocked(locked);
-                this.updateClient(client);
-            }
-        }
-        if (clients.getTotalRecords() > 0) {
-            getLogger().debug(
-                "Attempting lookup of additional users under customer {}.",
-                customerId);
-            this.setClientsLockedFlagByCustomerId(customerId, locked);
-        }
     }
 
     @Override
@@ -646,27 +616,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return clients;
     }
 
-    private Applications findFirst100ByCustomerIdAndLock(String customerId,
-        boolean isLocked) {
-        getLogger().debug("Doing search for customerId {}", customerId);
-
-        int limit = 100;
-        int offset = 0;
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_LOCKED, String.valueOf(isLocked))
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEAPPLICATION).build();
-
-        Applications clients = getMultipleClients(searchFilter, offset, limit);
-
-        getLogger().debug("Found Users - {}", clients);
-
-        return clients;
-    }
-
     private Attribute[] getAddAttributesForClientGroup(ClientGroup group) {
         List<Attribute> atts = new ArrayList<Attribute>();
 
@@ -712,31 +661,18 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             atts.add(new Attribute(ATTR_NAME, client.getName()));
         }
 
-        if (!StringUtils.isBlank(client.getOrgInum())) {
-            atts.add(new Attribute(ATTR_O, client.getOrgInum()));
-        }
-
         if (!StringUtils.isBlank(client.getRCN())) {
             atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, client
                 .getRCN()));
-        }
-
-        if (client.getStatus() != null) {
-            atts.add(new Attribute(ATTR_STATUS, client.getStatus().toString()));
         }
 
         if (!StringUtils.isBlank(client.getClientSecretObj().getValue())) {
             atts.add(new Attribute(ATTR_CLIENT_SECRET, client.getClientSecret()));
         }
 
-        if (client.isLocked() != null) {
-            atts.add(new Attribute(ATTR_LOCKED, String.valueOf(client
-                .isLocked())));
-        }
-
-        if (client.isSoftDeleted() != null) {
-            atts.add(new Attribute(ATTR_SOFT_DELETED, String.valueOf(client
-                .isSoftDeleted())));
+        if (client.isEnabled() != null) {
+            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(client
+                .isEnabled())));
         }
 
         if (!StringUtils.isBlank(client.getTitle())) {
@@ -776,23 +712,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         client.setOpenStackType(resultEntry
             .getAttributeValue(ATTR_OPENSTACK_TYPE));
 
-        String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
-        if (statusStr != null) {
-            client.setStatus(Enum.valueOf(ClientStatus.class,
-                statusStr.toUpperCase()));
-        }
-
-        String deleted = resultEntry.getAttributeValue(ATTR_SOFT_DELETED);
-        if (deleted != null) {
-            client.setSoftDeleted(resultEntry
-                .getAttributeValueAsBoolean(ATTR_SOFT_DELETED));
-        }
-
-        String locked = resultEntry.getAttributeValue(ATTR_LOCKED);
-        if (locked != null) {
-            client.setLocked(resultEntry
-                .getAttributeValueAsBoolean(ATTR_LOCKED));
-        }
+        client.setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
 
         client.setCallBackUrl(resultEntry.getAttributeValue(ATTR_CALLBACK_URL));
         client.setTitle(resultEntry.getAttributeValue(ATTR_TITLE));
@@ -872,6 +792,20 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         return client;
     }
+    
+    private Application getSingleSoftDeletedClient(Filter searchFilter) {
+        Application client = null;
+        SearchResultEntry entry = this.getSingleEntry(SOFT_DELETED_APPLICATIONS_BASE_DN,
+            SearchScope.SUB, searchFilter);
+
+        if (entry != null) {
+            client = getClient(entry);
+        }
+
+        getLogger().debug("Found Client - {}", client);
+
+        return client;
+    }
 
     List<Modification> getModifications(Application cOld, Application cNew) {
         List<Modification> mods = new ArrayList<Modification>();
@@ -885,21 +819,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
                 ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
         }
 
-        if (cNew.isLocked() != null && !cNew.isLocked().equals(cOld.isLocked())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_LOCKED,
-                String.valueOf(cNew.isLocked())));
-        }
-
-        if (cNew.getStatus() != null
-            && !cOld.getStatus().equals(cNew.getStatus())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_STATUS,
-                cNew.getStatus().toString()));
-        }
-
-        if (cNew.isSoftDeleted() != null
-            && cNew.isSoftDeleted() != cOld.isSoftDeleted()) {
-            mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_SOFT_DELETED, String.valueOf(cNew.isSoftDeleted())));
+        if (cNew.isEnabled() != null && !cNew.isEnabled().equals(cOld.isEnabled())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED,
+                String.valueOf(cNew.isEnabled())));
         }
 
         if (cNew.getTitle() != null) {
@@ -1234,5 +1156,98 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         Applications clients = getMultipleClients(searchFilter, 0, 400);
 
         return clients.getClients();
+    }
+    
+    @Override
+    public void softDeleteApplication(Application application) {
+        getLogger().info("SoftDeleting customer - {}", application.getRCN());
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            String oldDn = application.getUniqueId();
+            String newRdn = new LdapDnBuilder("").addAttribute(ATTR_CLIENT_ID, application.getClientId()).build();
+            String newDn = new LdapDnBuilder(SOFT_DELETED_APPLICATIONS_BASE_DN).addAttribute(ATTR_CLIENT_ID, application.getClientId()).build();
+            // Modify the Application
+            conn.modifyDN(oldDn, newRdn, false, SOFT_DELETED_APPLICATIONS_BASE_DN);
+            application.setUniqueId(newDn);
+            // Disable the Application
+            conn.modify(application.getUniqueId(), new Modification(
+                ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
+        } catch (LDAPException e) {
+            getLogger().error("Error soft deleting application", e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        getLogger().info("SoftDeleted application - {}", application.getRCN());
+    }
+    
+    @Override
+    public Application getSoftDeletedApplicationById(String id) {
+
+        getLogger().debug("Doing search for id " + id);
+        if (StringUtils.isBlank(id)) {
+            getLogger().error("Null or Empty id parameter");
+            throw new IllegalArgumentException("Null or Empty id parameter.");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_CLIENT_ID, id)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+            .build();
+
+        Application application = getSingleSoftDeletedClient(searchFilter);
+
+        getLogger().debug("Found User - {}", application);
+
+        return application;
+    }
+
+    @Override
+    public Application getSoftDeletedClientByName(String clientName) {
+
+        getLogger().debug("Doing search for application " + clientName);
+        if (StringUtils.isBlank(clientName)) {
+            getLogger().error("Null or Empty clientName parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty clientName parameter.");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_NAME, clientName)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+            .build();
+
+        Application application = getSingleSoftDeletedClient(searchFilter);
+
+        getLogger().debug("Found Application - {}", application);
+
+        return application;
+    }
+
+    @Override
+    public void unSoftDeleteApplication(Application application) {
+        getLogger().info("SoftDeleting user - {}", application);
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            String oldDn = application.getUniqueId();
+            String newRdn = new LdapDnBuilder("").addAttribute(ATTR_CLIENT_ID,
+                application.getClientId()).build();
+            String newDn = new LdapDnBuilder(APPLICATIONS_BASE_DN)
+            .addAttribute(ATTR_CLIENT_ID, application.getClientId()).build();
+            // Modify the User
+            conn.modifyDN(oldDn, newRdn, false, APPLICATIONS_BASE_DN);
+            application.setUniqueId(newDn);
+            // Enabled the User
+            conn.modify(application.getUniqueId(), new Modification(
+                ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
+        } catch (LDAPException e) {
+            getLogger().error("Error soft deleting application", e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        getLogger().info("SoftDeleted application - {}", application);
     }
 }

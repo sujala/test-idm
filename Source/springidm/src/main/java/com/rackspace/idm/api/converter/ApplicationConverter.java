@@ -21,14 +21,13 @@ public class ApplicationConverter {
         application.setClientId(jaxbClient.getClientId());
         application.setRCN(jaxbClient.getCustomerId());
         application.setName(jaxbClient.getName());
-        application.setSoftDeleted(jaxbClient.isSoftDeleted());
         application.setCallBackUrl(jaxbClient.getCallBackUrl());
         application.setTitle(jaxbClient.getTitle());
         application.setDescription(jaxbClient.getDescription());
         application.setScope(jaxbClient.getScope());
         
         if (jaxbClient.isEnabled() != null) {
-        	application.setLocked(!jaxbClient.isEnabled());
+        	application.setEnabled(jaxbClient.isEnabled());
         }
         
         if (jaxbClient.getSecretCredentials() != null
@@ -108,9 +107,8 @@ public class ApplicationConverter {
 
         returnedApplication.setClientId(client.getClientId());
         returnedApplication.setCustomerId(client.getRCN());
-        returnedApplication.setEnabled(!client.isLocked());
+        returnedApplication.setEnabled(client.isEnabled());
         returnedApplication.setName(client.getName());
-        returnedApplication.setSoftDeleted(client.isSoftDeleted());
         returnedApplication.setCallBackUrl(client.getCallBackUrl());
         returnedApplication.setTitle(client.getTitle());
         returnedApplication.setDescription(client.getDescription());

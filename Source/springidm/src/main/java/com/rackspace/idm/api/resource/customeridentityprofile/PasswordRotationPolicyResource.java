@@ -72,7 +72,7 @@ public class PasswordRotationPolicyResource extends ParentResource {
         com.rackspace.api.idm.v1.PasswordRotationPolicy jaxbPasswordRotationPolicy =
         	new com.rackspace.api.idm.v1.PasswordRotationPolicy();
         jaxbPasswordRotationPolicy.setDuration(customer.getPasswordRotationDuration() == null ? 0 : customer.getPasswordRotationDuration());
-        jaxbPasswordRotationPolicy.setEnabled(!customer.isLocked());
+        jaxbPasswordRotationPolicy.setEnabled(customer.isEnabled());
         
         logger.debug("Updated password rotation policy for customer {}", customerId);
         return Response.ok(jaxbPasswordRotationPolicy).build();
@@ -101,7 +101,7 @@ public class PasswordRotationPolicyResource extends ParentResource {
         //authorizationService.authorizeToken(token, uriInfo);
 
         com.rackspace.api.idm.v1.PasswordRotationPolicy passwordRotationPolicy 
-	     = (com.rackspace.api.idm.v1.PasswordRotationPolicy) holder.getEntity();
+	     = holder.getEntity();
 	
         //TODO: should probably put in some sort of converter
         Customer customer = this.customerService.loadCustomer(customerId);

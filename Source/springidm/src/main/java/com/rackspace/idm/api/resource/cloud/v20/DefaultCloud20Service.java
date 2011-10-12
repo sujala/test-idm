@@ -713,8 +713,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return notFoundExceptionResponse(errMsg);
         }
 
-        user.setSoftDeleted(true);
-        this.userService.updateUser(user, false);
+        this.userService.softDeleteUser(user);
 
         return Response.noContent();
     }

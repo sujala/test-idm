@@ -21,8 +21,7 @@ public class UserTest {
             "delete_my_firstname", "delete_my_middlename", "delete_my_lastname"), new UserLocale(
             Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd, "What is your favourite colur?",
             "Yellow. No, Blue! Arrrrgh!"), "USA", "MY DISPLAY NAME", "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE.5556",
-            "@Rackspace.TestCustomer*delete.me", "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE", "XXX", UserStatus.ACTIVE,
-            "RPN-111-222-333");
+            "@Rackspace.TestCustomer*delete.me", "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE", "XXX", "RPN-111-222-333");
         return newUser;
     }
 
@@ -114,7 +113,6 @@ public class UserTest {
         user1.setLocale(null);
         user1.setSecretAnswer(null);
         user1.setSecretQuestion(null);
-        user1.setStatus(null);
         user1.setTimeZoneObj(null);
 
         user2.setApiKey(null);
@@ -130,7 +128,6 @@ public class UserTest {
         user2.setLocale(null);
         user2.setSecretAnswer(null);
         user2.setSecretQuestion(null);
-        user2.setStatus(null);
         user2.setTimeZoneObj(null);
 
         Assert.assertTrue(user1.equals(user2));
@@ -221,12 +218,6 @@ public class UserTest {
         user2.setSecretQuestion(null);
         Assert.assertFalse(user2.equals(user1));
         user2.setSecretQuestion(user1.getSecretQuestion());
-
-        user2.setStatus(UserStatus.INACTIVE);
-        Assert.assertFalse(user1.equals(user2));
-        user2.setStatus(null);
-        Assert.assertFalse(user2.equals(user1));
-        user2.setStatus(user1.getStatus());
 
         user2.setTimeZoneObj(DateTimeZone.forID("America/Chicago"));
         Assert.assertFalse(user1.equals(user2));

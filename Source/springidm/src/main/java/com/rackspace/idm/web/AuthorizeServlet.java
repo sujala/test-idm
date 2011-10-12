@@ -77,7 +77,7 @@ public class AuthorizeServlet extends HttpServlet {
         }
 
         Application client = getClientService().getById(clientId);
-        if (client == null || client.isDisabled()) {
+        if (client == null || !client.isEnabled()) {
             setErrorResponse(response, redirectUri, UNAUTHORIZED_CLIENT);
             return;
         }
@@ -129,7 +129,7 @@ public class AuthorizeServlet extends HttpServlet {
         }
 
         Application client = getClientService().getById(clientId);
-        if (client == null || client.isDisabled()) {
+        if (client == null || !client.isEnabled()) {
             setErrorResponse(response, redirectUri, UNAUTHORIZED_CLIENT);
             return;
         }

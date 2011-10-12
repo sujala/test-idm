@@ -9,7 +9,6 @@ import org.apache.commons.lang.StringUtils;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
@@ -84,7 +83,6 @@ public class LdapCustomerRepository extends LdapRepository implements
         getLogger().debug("Getting all customers");
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEORGANIZATION).build();
 
@@ -102,6 +100,34 @@ public class LdapCustomerRepository extends LdapRepository implements
         return customers;
     }
 
+    @Override
+    public Customer getCustomerById(String id) {
+        getLogger().debug("Doing search for id {}", id);
+
+        if (StringUtils.isBlank(id)) {
+            String errMsg = "Null or Empty id paramter";
+            getLogger().error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
+
+        Customer customer = null;
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_ID, id)
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEORGANIZATION).build();
+
+        SearchResultEntry entry = this.getSingleEntry(CUSTOMERS_BASE_DN, SearchScope.ONE,
+            searchFilter);
+
+        if (entry != null) {
+            customer = getCustomer(entry);
+        }
+
+        getLogger().debug("Found customer - {}", customer);
+
+        return customer;
+    }
     
     @Override
     public Customer getCustomerByCustomerId(String customerId) {
@@ -117,7 +143,6 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_SOFT_DELETED, String.valueOf(false))
             .addEqualAttribute(ATTR_OBJECT_CLASS,
                 OBJECTCLASS_RACKSPACEORGANIZATION).build();
 
@@ -182,18 +207,9 @@ public class LdapCustomerRepository extends LdapRepository implements
                 .getRCN()));
         }
 
-        if (customer.getStatus() != null) {
-            atts.add(new Attribute(ATTR_STATUS, customer.getStatus().toString()));
-        }
-
-        if (customer.isLocked() != null) {
-            atts.add(new Attribute(ATTR_LOCKED, String.valueOf(customer
-                .isLocked())));
-        }
-
-        if (customer.getSoftDeleted() != null) {
-            atts.add(new Attribute(ATTR_SOFT_DELETED, String.valueOf(customer
-                .getSoftDeleted())));
+        if (customer.isEnabled() != null) {
+            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(customer
+                .isEnabled())));
         }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
@@ -213,23 +229,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         customer.setPasswordRotationEnabled(resultEntry
             .getAttributeValueAsBoolean(ATTR_PASSWORD_ROTATION_ENABLED));
 
-        String statusStr = resultEntry.getAttributeValue(ATTR_STATUS);
-        if (statusStr != null) {
-            customer.setStatus(Enum.valueOf(CustomerStatus.class,
-                statusStr.toUpperCase()));
-        }
-
-        String deleted = resultEntry.getAttributeValue(ATTR_SOFT_DELETED);
-        if (deleted != null) {
-            customer.setSoftDeleted(resultEntry
-                .getAttributeValueAsBoolean(ATTR_SOFT_DELETED));
-        }
-
-        String locked = resultEntry.getAttributeValue(ATTR_LOCKED);
-        if (locked != null) {
-            customer.setLocked(resultEntry
-                .getAttributeValueAsBoolean(ATTR_LOCKED));
-        }
+        customer.setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
 
         return customer;
     }
@@ -237,21 +237,9 @@ public class LdapCustomerRepository extends LdapRepository implements
     List<Modification> getModifications(Customer cOld, Customer cNew) {
         List<Modification> mods = new ArrayList<Modification>();
 
-        if (cNew.getStatus() != null
-            && !cNew.getStatus().equals(cOld.getStatus())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_STATUS,
-                cNew.getStatus().toString()));
-        }
-
-        if (cNew.isLocked() != null && cNew.isLocked() != cOld.isLocked()) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_LOCKED,
-                String.valueOf(cNew.isLocked())));
-        }
-
-        if (cNew.getSoftDeleted() != null
-            && cNew.getSoftDeleted() != cOld.getSoftDeleted()) {
-            mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_SOFT_DELETED, String.valueOf(cNew.getSoftDeleted())));
+        if (cNew.isEnabled() != null && cNew.isEnabled() != cOld.isEnabled()) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED,
+                String.valueOf(cNew.isEnabled())));
         }
 
         if (cNew.getPasswordRotationEnabled() != null
@@ -286,5 +274,110 @@ public class LdapCustomerRepository extends LdapRepository implements
             getAppConnPool().releaseConnection(conn);
         }
         return customerId;
+    }
+    
+    @Override
+    public void softDeleteCustomer(Customer customer) {
+        getLogger().info("SoftDeleting customer - {}", customer.getRCN());
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            String oldDn = customer.getUniqueId();
+            String newRdn = new LdapDnBuilder("").addAttribute(ATTR_ID, customer.getId()).build();
+            String newDn = new LdapDnBuilder(SOFT_DELETED_CUSTOMERS_BASE_DN).addAttribute(ATTR_ID, customer.getId()).build();
+            // Modify the customer
+            conn.modifyDN(oldDn, newRdn, false, SOFT_DELETED_CUSTOMERS_BASE_DN);
+            customer.setUniqueId(newDn);
+            // Disabled the customer
+            conn.modify(customer.getUniqueId(), new Modification(
+                ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
+        } catch (LDAPException e) {
+            getLogger().error("Error soft deleting customer", e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        getLogger().info("SoftDeleted customer - {}", customer.getRCN());
+    }
+    
+    @Override
+    public Customer getSoftDeletedCustomerById(String id) {
+
+        getLogger().debug("Doing search for id " + id);
+        if (StringUtils.isBlank(id)) {
+            getLogger().error("Null or Empty id parameter");
+            throw new IllegalArgumentException("Null or Empty id parameter.");
+        }
+
+        Customer customer = null;
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_ID, id)
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEORGANIZATION).build();
+
+        SearchResultEntry entry = this.getSingleEntry(SOFT_DELETED_CUSTOMERS_BASE_DN, SearchScope.ONE,
+            searchFilter);
+
+        if (entry != null) {
+            customer = getCustomer(entry);
+        }
+        
+        return customer;
+    }
+
+    @Override
+    public Customer getSoftDeletedUserByCustomerId(String customerId) {
+
+        getLogger().debug("Doing search for customerId " + customerId);
+        if (StringUtils.isBlank(customerId)) {
+            getLogger().error("Null or Empty customerId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty customerId parameter.");
+        }
+
+        Customer customer = null;
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+            .addEqualAttribute(ATTR_OBJECT_CLASS,
+                OBJECTCLASS_RACKSPACEORGANIZATION).build();
+
+        SearchResultEntry entry = this.getSingleEntry(SOFT_DELETED_CUSTOMERS_BASE_DN, SearchScope.ONE,
+            searchFilter);
+
+        if (entry != null) {
+            customer = getCustomer(entry);
+        }
+
+        getLogger().debug("Found customer - {}", customer);
+
+        return customer;
+    }
+
+    @Override
+    public void unSoftDeleteCustomer(Customer customer) {
+        getLogger().info("SoftDeleting customer - {}", customer);
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            String oldDn = customer.getUniqueId();
+            String newRdn = new LdapDnBuilder("").addAttribute(ATTR_ID,
+                customer.getId()).build();
+            String newDn = new LdapDnBuilder(CUSTOMERS_BASE_DN)
+            .addAttribute(ATTR_ID, customer.getId()).build();
+            // Modify the User
+            conn.modifyDN(oldDn, newRdn, false, CUSTOMERS_BASE_DN);
+            customer.setUniqueId(newDn);
+            // Enabled the User
+            conn.modify(customer.getUniqueId(), new Modification(
+                ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
+        } catch (LDAPException e) {
+            getLogger().error("Error soft deleting customer", e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        getLogger().info("SoftDeleted customer - {}", customer);
     }
 }

@@ -10,6 +10,11 @@ objectClass:top
 objectClass:organizationalUnit
 ou: internal
 
+dn: ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:organizationalUnit
+ou: softDeleted
+
 dn: ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass:top
 objectClass:organizationalUnit

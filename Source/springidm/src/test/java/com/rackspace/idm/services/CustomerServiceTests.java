@@ -128,8 +128,9 @@ public class CustomerServiceTests {
     }
 
     private Customer getFakeCustomer() {
-        return new Customer(customerId, 
-            customerStatus);
+        Customer customer = new Customer();
+        customer.setRCN(customerId);
+        return customer;
     }
     
     private User getFakeUser() {

@@ -1,18 +1,19 @@
 package com.rackspace.idm.domain.entity;
 
-import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.validation.MessageTexts;
-import com.rackspace.idm.validation.RegexPatterns;
+import java.util.List;
+import java.util.Locale;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.validator.constraints.Length;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-
-import java.util.List;
-import java.util.Locale;
+import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
 
 public class User implements Auditable {
     private static final long serialVersionUID = 1347677880811855274L;
@@ -37,11 +38,7 @@ public class User implements Auditable {
     private UserLocale preference = new UserLocale();
     private String country = null;
     private String displayName = null;
-    private Boolean locked = null;
     private String apiKey = null;
-    private UserStatus status = null;
-
-    private Boolean softDeleted = null;
     private String region = null;
     
     private String nastId = null;
@@ -83,7 +80,7 @@ public class User implements Auditable {
     public User(String username, String customerId, String email,
         UserHumanName name, UserLocale preference, UserCredential credential,
         String country, String displayName, String inum, String iname,
-        String orgInum, String apiKey, UserStatus status,
+        String orgInum, String apiKey,
         String personId) {
         this.username = username;
         this.customerId = customerId;
@@ -94,7 +91,6 @@ public class User implements Auditable {
         this.country = country;
         this.displayName = displayName;
         this.apiKey = apiKey;
-        this.status = status;
         this.personId = personId;
     }
     
@@ -160,14 +156,6 @@ public class User implements Auditable {
         }
     }
 
-    public Boolean isSoftDeleted() {
-        return softDeleted;
-    }
-
-    public void setSoftDeleted(Boolean softDeleted) {
-        this.softDeleted = softDeleted;
-    }
-
     public String getDisplayName() {
         if (StringUtils.isBlank(displayName)) {
             return (name.getFirstname() + " " + name.getLastname()).trim();
@@ -179,14 +167,6 @@ public class User implements Auditable {
         if (displayName != null) {
             this.displayName = displayName;
         }
-    }
-
-    public Boolean isLocked() {
-        return locked;
-    }
-
-    public void setLocked(Boolean isLocked) {
-        this.locked = isLocked;
     }
     
     public Boolean isEnabled() {
@@ -212,16 +192,6 @@ public class User implements Auditable {
     public void setApiKey(String apiKey) {
         if (apiKey != null) {
             this.apiKey = apiKey;
-        }
-    }
-
-    public UserStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(UserStatus status) {
-        if (status != null) {
-            this.status = status;
         }
     }
 
@@ -417,8 +387,6 @@ public class User implements Auditable {
             this.setTimeZone(GlobalConstants.USER_TIME_ZONE_DEFAULT);
         }
 
-        this.setLocked(false);
-        this.setSoftDeleted(false);
         this.setEnabled(true);
     }
 
@@ -488,7 +456,6 @@ public class User implements Auditable {
         if (displayName != null ? !displayName.equals(user.displayName) : user.displayName != null) return false;
         if (email != null ? !email.equals(user.email) : user.email != null) return false;
         if (id != null ? !id.equals(user.id) : user.id != null) return false;
-        if (locked != null ? !locked.equals(user.locked) : user.locked != null) return false;
         if (maxLoginFailuresExceded != null ? !maxLoginFailuresExceded.equals(user.maxLoginFailuresExceded) : user.maxLoginFailuresExceded != null)
             return false;
         if (mossoId != null ? !mossoId.equals(user.mossoId) : user.mossoId != null) return false;
@@ -498,10 +465,8 @@ public class User implements Auditable {
         if (preference != null ? !preference.equals(user.preference) : user.preference != null) return false;
         if (region != null ? !region.equals(user.region) : user.region != null) return false;
         if (secureId != null ? !secureId.equals(user.secureId) : user.secureId != null) return false;
-        if (softDeleted != null ? !softDeleted.equals(user.softDeleted) : user.softDeleted != null) return false;
         if (softDeletedTimestamp != null ? !softDeletedTimestamp.equals(user.softDeletedTimestamp) : user.softDeletedTimestamp != null)
             return false;
-        if (status != user.status) return false;
         if (uniqueId != null ? !uniqueId.equals(user.uniqueId) : user.uniqueId != null) return false;
         if (updated != null ? !updated.equals(user.updated) : user.updated != null) return false;
         if (username != null ? !username.equals(user.username) : user.username != null) return false;
@@ -522,10 +487,7 @@ public class User implements Auditable {
         result = 31 * result + (preference != null ? preference.hashCode() : 0);
         result = 31 * result + (country != null ? country.hashCode() : 0);
         result = 31 * result + (displayName != null ? displayName.hashCode() : 0);
-        result = 31 * result + (locked != null ? locked.hashCode() : 0);
         result = 31 * result + (apiKey != null ? apiKey.hashCode() : 0);
-        result = 31 * result + (status != null ? status.hashCode() : 0);
-        result = 31 * result + (softDeleted != null ? softDeleted.hashCode() : 0);
         result = 31 * result + (region != null ? region.hashCode() : 0);
         result = 31 * result + (nastId != null ? nastId.hashCode() : 0);
         result = 31 * result + (mossoId != null ? mossoId.hashCode() : 0);
@@ -596,13 +558,6 @@ public class User implements Auditable {
 
         public Builder setApiKey(String apiKey) {
             user.apiKey = apiKey;
-
-            return this;
-        }
-
-        public Builder setFlags(UserStatus status, boolean isLocked) {
-            user.status = status;
-            user.locked = isLocked;
 
             return this;
         }

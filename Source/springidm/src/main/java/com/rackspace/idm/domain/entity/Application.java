@@ -23,19 +23,14 @@ public class Application implements Auditable {
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     private String name = null;
-
-    private ClientStatus status = null;
     
     private String openStackType = null;
-
-    private String orgInum = null;
-    private Boolean locked = null;
-    private Boolean softDeleted = null;
     
     private String scope = null;
     private String callBackUrl = null;
     private String title = null;
     private String description = null;
+    private Boolean enabled = null;
 
     private List<TenantRole> roles = null;
     
@@ -48,7 +43,6 @@ public class Application implements Auditable {
         this.rcn = rcn;
         this.clientSecret = clientSecret;
         this.name = name;
-        this.status = status;
     }
 
     public void setUniqueId(String uniqueId) {
@@ -111,44 +105,8 @@ public class Application implements Auditable {
         }
     }
 
-    public String getOrgInum() {
-        return orgInum;
-    }
-
-    public void setOrgInum(String orgInum) {
-        if (orgInum != null) {
-            this.orgInum = orgInum;
-        }
-    }
-
     public String getName() {
         return name;
-    }
-
-    public ClientStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ClientStatus status) {
-        if (status != null) {
-            this.status = status;
-        }
-    }
-
-    public Boolean isSoftDeleted() {
-        return softDeleted;
-    }
-
-    public void setSoftDeleted(Boolean softDeleted) {
-        this.softDeleted = softDeleted;
-    }
-
-    public Boolean isLocked() {
-        return locked;
-    }
-
-    public void setLocked(Boolean isLocked) {
-        this.locked = isLocked;
     }
     
     public String getScope() {
@@ -184,17 +142,7 @@ public class Application implements Auditable {
     }
     
     public void setDefaults() {
-        this.setLocked(false);
-        this.setSoftDeleted(false);
-        this.setStatus(ClientStatus.ACTIVE);
-    }
-    
-    public boolean isDisabled() {
-        boolean disabled = false;
-        disabled = this.isLocked() == null ? disabled : disabled || this.isLocked().booleanValue();
-        disabled = this.isSoftDeleted() == null ? disabled : disabled || this.isSoftDeleted().booleanValue();
-        disabled = this.getStatus() == null ? disabled : disabled || this.getStatus().equals(ClientStatus.INACTIVE);
-        return disabled;
+        this.setEnabled(true);
     }
     
     public void copyChanges(Application modifiedClient) {
@@ -203,8 +151,8 @@ public class Application implements Auditable {
     		setRCN(modifiedClient.getRCN());
     	}
     	
-    	if (modifiedClient.isLocked() != null) {
-    		setLocked(modifiedClient.isLocked());
+    	if (modifiedClient.isEnabled() != null) {
+    		setEnabled(modifiedClient.isEnabled());
     	}
     	
         if (modifiedClient.getCallBackUrl() != null) {
@@ -223,51 +171,131 @@ public class Application implements Auditable {
             setTitle(modifiedClient.getTitle());
         }
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Application client = (Application) o;
-
-        if (callBackUrl != null ? !callBackUrl.equals(client.callBackUrl) : client.callBackUrl != null) return false;
-        if (clientId != null ? !clientId.equals(client.clientId) : client.clientId != null) return false;
-        if (clientSecret != null ? !clientSecret.equals(client.clientSecret) : client.clientSecret != null)
-            return false;
-        if (description != null ? !description.equals(client.description) : client.description != null) return false;
-        if (locked != null ? !locked.equals(client.locked) : client.locked != null) return false;
-        if (name != null ? !name.equals(client.name) : client.name != null) return false;
-        if (orgInum != null ? !orgInum.equals(client.orgInum) : client.orgInum != null) return false;
-        if (rcn != null ? !rcn.equals(client.rcn) : client.rcn != null) return false;
-        if (scope != null ? !scope.equals(client.scope) : client.scope != null) return false;
-        if (softDeleted != null ? !softDeleted.equals(client.softDeleted) : client.softDeleted != null) return false;
-        if (status != client.status) return false;
-        if (title != null ? !title.equals(client.title) : client.title != null) return false;
-        if (uniqueId != null ? !uniqueId.equals(client.uniqueId) : client.uniqueId != null) return false;
-
-        return true;
-    }
-
+    
     @Override
     public int hashCode() {
-        int result = clientSecret != null ? clientSecret.hashCode() : 0;
-        result = 31 * result + (uniqueId != null ? uniqueId.hashCode() : 0);
-        result = 31 * result + (clientId != null ? clientId.hashCode() : 0);
-        result = 31 * result + (rcn != null ? rcn.hashCode() : 0);
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (status != null ? status.hashCode() : 0);
-        result = 31 * result + (orgInum != null ? orgInum.hashCode() : 0);
-        result = 31 * result + (locked != null ? locked.hashCode() : 0);
-        result = 31 * result + (softDeleted != null ? softDeleted.hashCode() : 0);
-        result = 31 * result + (scope != null ? scope.hashCode() : 0);
-        result = 31 * result + (callBackUrl != null ? callBackUrl.hashCode() : 0);
-        result = 31 * result + (title != null ? title.hashCode() : 0);
-        result = 31 * result + (description != null ? description.hashCode() : 0);
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+            + ((callBackUrl == null) ? 0 : callBackUrl.hashCode());
+        result = prime * result
+            + ((clientId == null) ? 0 : clientId.hashCode());
+        result = prime * result
+            + ((clientSecret == null) ? 0 : clientSecret.hashCode());
+        result = prime * result
+            + ((description == null) ? 0 : description.hashCode());
+        result = prime * result + ((enabled == null) ? 0 : enabled.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result
+            + ((openStackType == null) ? 0 : openStackType.hashCode());
+        result = prime * result + ((rcn == null) ? 0 : rcn.hashCode());
+        result = prime * result + ((roles == null) ? 0 : roles.hashCode());
+        result = prime * result + ((scope == null) ? 0 : scope.hashCode());
+        result = prime * result + ((title == null) ? 0 : title.hashCode());
+        result = prime * result
+            + ((uniqueId == null) ? 0 : uniqueId.hashCode());
         return result;
     }
 
-    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Application other = (Application) obj;
+        if (callBackUrl == null) {
+            if (other.callBackUrl != null) {
+                return false;
+            }
+        } else if (!callBackUrl.equals(other.callBackUrl)) {
+            return false;
+        }
+        if (clientId == null) {
+            if (other.clientId != null) {
+                return false;
+            }
+        } else if (!clientId.equals(other.clientId)) {
+            return false;
+        }
+        if (clientSecret == null) {
+            if (other.clientSecret != null) {
+                return false;
+            }
+        } else if (!clientSecret.equals(other.clientSecret)) {
+            return false;
+        }
+        if (description == null) {
+            if (other.description != null) {
+                return false;
+            }
+        } else if (!description.equals(other.description)) {
+            return false;
+        }
+        if (enabled == null) {
+            if (other.enabled != null) {
+                return false;
+            }
+        } else if (!enabled.equals(other.enabled)) {
+            return false;
+        }
+        if (name == null) {
+            if (other.name != null) {
+                return false;
+            }
+        } else if (!name.equals(other.name)) {
+            return false;
+        }
+        if (openStackType == null) {
+            if (other.openStackType != null) {
+                return false;
+            }
+        } else if (!openStackType.equals(other.openStackType)) {
+            return false;
+        }
+        if (rcn == null) {
+            if (other.rcn != null) {
+                return false;
+            }
+        } else if (!rcn.equals(other.rcn)) {
+            return false;
+        }
+        if (roles == null) {
+            if (other.roles != null) {
+                return false;
+            }
+        } else if (!roles.equals(other.roles)) {
+            return false;
+        }
+        if (scope == null) {
+            if (other.scope != null) {
+                return false;
+            }
+        } else if (!scope.equals(other.scope)) {
+            return false;
+        }
+        if (title == null) {
+            if (other.title != null) {
+                return false;
+            }
+        } else if (!title.equals(other.title)) {
+            return false;
+        }
+        if (uniqueId == null) {
+            if (other.uniqueId != null) {
+                return false;
+            }
+        } else if (!uniqueId.equals(other.uniqueId)) {
+            return false;
+        }
+        return true;
+    }
+
     public List<TenantRole> getRoles() {
 		return roles;
 	}
@@ -285,5 +313,13 @@ public class Application implements Auditable {
     public String getAuditContext() {
         String format = "clientId=%s,customerId=%s";
         return String.format(format, getClientId(), getRCN());
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public Boolean isEnabled() {
+        return enabled;
     }
 }

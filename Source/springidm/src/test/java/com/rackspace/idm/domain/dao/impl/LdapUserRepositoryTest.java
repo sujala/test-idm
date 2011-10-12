@@ -25,8 +25,6 @@ import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserCredential;
 import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
-import com.rackspace.idm.domain.entity.UserStatus;
-import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
@@ -278,12 +276,11 @@ public class LdapUserRepositoryTest {
         Assert.assertNull(idontexist);
     }
 
+    @Ignore("need to redo tests with new soft delete method")
     @Test
     public void shouldAddDeleteRestoreUser() {
 
         User newUser = addNewTestUser();
-
-        newUser.setSoftDeleted(true);
 
         repo.updateUser(newUser, false);
 
@@ -294,8 +291,6 @@ public class LdapUserRepositoryTest {
         Assert.assertNotNull(deletedUser);
         Assert.assertNull(notFound);
 
-        deletedUser.setSoftDeleted(false);
-
         repo.updateUser(deletedUser, false);
 
         User restoredUser = repo.getUserByCustomerIdAndUsername(
@@ -305,19 +300,17 @@ public class LdapUserRepositoryTest {
         repo.deleteUser(newUser.getUsername());
     }
 
+    @Ignore("need to redo tests with new soft delete method")
     @Test
     public void shouldAddTimeStampWhenUserIsSoftDeleted() {
 
         User newUser = addNewTestUser();
-        newUser.setSoftDeleted(true);
 
         repo.updateUser(newUser, false);
 
         User softDeletedUser = repo.getUserByUsername(newUser.getUsername());
 
         Assert.assertNotNull(softDeletedUser.getSoftDeleteTimestamp());
-
-        softDeletedUser.setSoftDeleted(false);
 
         repo.updateUser(softDeletedUser, false);
 
@@ -503,31 +496,6 @@ public class LdapUserRepositoryTest {
         Assert.assertNotNull(checkuser);
         repo.deleteUser(newUser.getUsername());
     }
-
-    @Test
-    public void shouldSetAllUsersLocked() {
-        User newUser = addNewTestUser();
-        repo.setUsersLockedFlagByCustomerId(newUser.getCustomerId(), true);
-        User changedUser = repo.getUserByUsername(newUser.getUsername());        
-        repo.setUsersLockedFlagByCustomerId(newUser.getCustomerId(), false);
-        User ReChangedUser = repo.getUserByUsername(newUser.getUsername());
-        repo.deleteUser(newUser.getUsername());
-        
-        Assert.assertEquals(changedUser.isLocked(), true);
-        Assert.assertEquals(ReChangedUser.isLocked(), false);
-    }
-
-//    @Test
-//    public void shouldFindByCustomerID() {
-//        User user = addNewTestUser();
-//        Users users = repo.getUsersByCustomerId("RACKSPACE", 0, 200);
-//        repo.deleteUser(user.getUsername());
-//        Assert.assertTrue(users.getLimit() == 200);
-//        Assert.assertTrue(users.getOffset() == 0);
-//
-//        Assert.assertTrue(users.getTotalRecords() >= 1);
-//        Assert.assertTrue(users.getUsers().size() >= 1);
-//    }
     
     @Test
     public void shouldFindBySecureID() {
@@ -569,6 +537,21 @@ public class LdapUserRepositoryTest {
             repo.deleteUser(newUser.getUsername());
         }
     }
+    
+    @Test
+    public void shouldSoftDeleteUser() {
+        User newUser = addNewTestUser();
+        repo.softDeleteUser(newUser);
+        User notExists = repo.getUserById(newUser.getId());
+        User softDeleted = repo.getSoftDeletedUserById(newUser.getId());
+        repo.unSoftDeleteUser(softDeleted);
+        User exists = repo.getUserById(newUser.getId());
+        repo.deleteUser(newUser.getUsername());
+        
+        Assert.assertNull(notExists);
+        Assert.assertNotNull(softDeleted);
+        Assert.assertNotNull(exists);
+    }
 
     private User addNewTestUser() {
         User newUser = createTestUserInstance();
@@ -589,9 +572,7 @@ public class LdapUserRepositoryTest {
         newUser.setCountry("USA");
         newUser.setPersonId("RPN-111-222-333");
         newUser.setDisplayName("MY DISPLAY NAME");
-        newUser.setStatus(UserStatus.ACTIVE);
         newUser.setRegion("ORD");
-        newUser.setSoftDeleted(false);
         newUser.setDefaults();
         newUser.setNastId("TESTNASTID");
         newUser.setMossoId(88888);
@@ -608,8 +589,7 @@ public class LdapUserRepositoryTest {
                 "What is your favourite colur?", "Yellow. No, Blue! Arrrrgh!"),
             "USA", "MY DISPLAY NAME", "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE.5556",
             "@Rackspace.TestCustomer*delete.me",
-            "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE", "XXX", UserStatus.ACTIVE,
-            "RPN-111-222-333");
+            "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE", "XXX", "RPN-111-222-333");
         newUser.setDefaults();
         newUser.setId(id);
         return newUser;
@@ -626,7 +606,6 @@ public class LdapUserRepositoryTest {
         newUser.setCountry("USA");
         newUser.setPersonId("RPN-111-222-333");
         newUser.setDisplayName("MY DISPLAY NAME");
-        newUser.setStatus(UserStatus.ACTIVE);
         newUser.setDefaults();
         newUser.setId(id);
         return newUser;
