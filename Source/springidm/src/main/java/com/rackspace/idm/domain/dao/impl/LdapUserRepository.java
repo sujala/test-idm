@@ -483,7 +483,24 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
+        User user = null;
+        try {
+
+            SearchResultEntry entry = this.getSingleEntry(BASE_DN,
+                SearchScope.SUB, searchFilter);
+
+            if (entry != null) {
+                user = getUser(entry);
+            }
+
+        } catch (GeneralSecurityException e) {
+            getLogger().error("Encryption error", e);
+            throw new IllegalStateException(e);
+        } catch (InvalidCipherTextException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        }
+
         getLogger().debug("Unique user search attempt yielded: {}", user);
         return user == null;
     }

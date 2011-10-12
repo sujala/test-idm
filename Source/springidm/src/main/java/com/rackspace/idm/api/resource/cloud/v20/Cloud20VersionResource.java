@@ -24,6 +24,7 @@ import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.Tenant;
 import org.openstack.docs.identity.api.v2.User;
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 
@@ -316,18 +318,27 @@ public class Cloud20VersionResource {
     }
 
     @POST
-    @Path("users/{userId}/OS-KSADM/credentials/RAX-KSKEY:{credentialType}")
-    public Response updateUserCredential(@Context HttpHeaders httpHeaders,
+    @Path("users/{userId}/OS-KSADM/credentials/passwordCredentials")
+    public Response updateUserPasswordCredentials(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("userId") String userId,
-        @PathParam("credentialType") String credentialType, String body)
-        throws IOException {
-        return getCloud20Service().updateUserCredential(httpHeaders, authToken,
-            userId, credentialType, body).build();
+        @PathParam("userId") String userId, PasswordCredentialsRequiredUsername creds)
+        throws IOException, JAXBException {
+        return getCloud20Service().updateUserPasswordCredentials(httpHeaders, authToken,
+            userId, "passwordCredentials", creds).build();
+    }
+    
+    @POST
+    @Path("users/{userId}/OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials")
+    public Response updateUserApiKeyCredentials(@Context HttpHeaders httpHeaders,
+        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @PathParam("userId") String userId, ApiKeyCredentials creds)
+        throws IOException, JAXBException {
+        return getCloud20Service().updateUserApiKeyCredentials(httpHeaders, authToken,
+            userId, "RAX-KSKEY:apiKeyCredentials", creds).build();
     }
 
     @GET
-    @Path("users/{userId}/OS-KSADM/credentials/RAX-KSKEY:{credentialType}")
+    @Path("users/{userId}/OS-KSADM/credentials/{credentialType}")
     public Response getUserCredential(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId,
@@ -337,7 +348,7 @@ public class Cloud20VersionResource {
     }
 
     @DELETE
-    @Path("users/{userId}/OS-KSADM/credentials/RAX-KSKEY:{credentialType}")
+    @Path("users/{userId}/OS-KSADM/credentials/{credentialType}")
     public Response deleteUserCredential(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId,
