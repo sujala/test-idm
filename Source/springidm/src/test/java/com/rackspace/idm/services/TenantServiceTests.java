@@ -120,15 +120,21 @@ public class TenantServiceTests {
 
     @Test
     public void shouldAddTenantToExistingRole() {
+    	//setup
         TenantRole role = getTestSingleTenantRole();
         TenantRole role2 = getTestSingleTenantRole();
-        TenantRole combined = getTestMultipleTenantRole();
         role2.setTenantIds(new String[]{tenantId2});
-        EasyMock.expect(
-            mockTenantDao.getTenantRoleForParentById(null, role.getRoleRsId())).andReturn(role2);
+        
+        TenantRole combined = getTestMultipleTenantRole();
+        
+        EasyMock.expect(mockTenantDao.getTenantRoleForParentById(null, role.getRoleRsId())).andReturn(role2);
         mockTenantDao.updateTenantRole(EasyMock.eq(combined));
         EasyMock.replay(mockTenantDao);
+        
+        //execution
         tenantService.addTenantRole(null, role);
+        
+        //verification
         EasyMock.verify(mockTenantDao);
     }
 
@@ -281,7 +287,7 @@ public class TenantServiceTests {
         role.setRoleRsId(id);
         role.setClientId(clientId);
         role.setName(roleName);
-        role.setTenantIds(new String[]{tenantId1, tenantId2});
+        role.setTenantIds(new String[]{tenantId2, tenantId1});
         return role;
     }
     

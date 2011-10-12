@@ -125,17 +125,7 @@
 				<documentation>
 					<p>
 						A boolean which indicates if the application is
-						locked.
-					</p>
-				</documentation>
-			</annotation>
-		</attribute>
-		<attribute name="softDeleted" type="boolean" use="optional">
-			<annotation>
-				<documentation>
-					<p>
-						A boolean which indicates if the application has been
-						soft deleted.
+						enabled.
 					</p>
 				</documentation>
 			</annotation>

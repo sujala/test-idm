@@ -49,8 +49,6 @@ public class DefaultApplicationService implements ApplicationService {
     @Override
     public void add(Application client) {
         logger.debug("Adding Client: {}", client);
-        Customer customer = customerDao
-            .getCustomerByCustomerId(client.getRCN());
 
         Application existingApplication = clientDao.getClientByClientname(client.getName());
         if (existingApplication != null) {

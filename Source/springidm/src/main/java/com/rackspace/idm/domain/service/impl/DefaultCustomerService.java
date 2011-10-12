@@ -26,7 +26,6 @@ public class DefaultCustomerService implements CustomerService {
     private final ApplicationDao clientDao;
     private final CustomerDao customerDao;
     private final UserDao userDao;
-    private final TokenService oauthService;
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -36,10 +35,8 @@ public class DefaultCustomerService implements CustomerService {
         this.clientDao = clientDao;
         this.customerDao = customerDao;
         this.userDao = userDao;
-        this.oauthService = oauthService;
     }
 
-    
     @Override
     public void addCustomer(Customer customer) {
         logger.info("Adding Customer: {}", customer);
@@ -108,16 +105,6 @@ public class DefaultCustomerService implements CustomerService {
         
         return customer;
     }
-    
-//    @Override
-//    public void softDeleteCustomer(String customerId) {
-//        logger.info("Soft Deleting customer: {}", customerId);
-//        Customer customer = this.customerDao.getCustomerByCustomerId(customerId);
-//        customer.setSoftDeleted(true);
-//        this.customerDao.updateCustomer(customer);
-//        logger.info("Soft Deleted customer: {}", customerId);
-//    }
-
     
     @Override
     public void updateCustomer(Customer customer) {

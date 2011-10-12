@@ -1,5 +1,7 @@
 package com.rackspace.idm.services;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +28,7 @@ import com.rackspace.idm.exception.NotFoundException;
 public class CustomerServiceTests {
     CustomerService service;
 
-    ApplicationDao mockClientDao;
+    ApplicationDao applicationDao;
     CustomerDao mockCustomerDao;
     UserDao mockUserDao;
     TokenService mockTokenService;
@@ -46,13 +48,12 @@ public class CustomerServiceTests {
 
     @Before
     public void setUp() throws Exception {
-
-        mockClientDao = EasyMock.createMock(ApplicationDao.class);
+        applicationDao = EasyMock.createMock(ApplicationDao.class);
         mockCustomerDao = EasyMock.createMock(CustomerDao.class);
         mockUserDao = EasyMock.createMock(UserDao.class);
         mockTokenService = EasyMock.createMock(TokenService.class);
 
-        service = new DefaultCustomerService(mockClientDao, mockCustomerDao,
+        service = new DefaultCustomerService(applicationDao, mockCustomerDao,
             mockUserDao, mockTokenService);
     }
 
@@ -93,9 +94,9 @@ public class CustomerServiceTests {
         EasyMock.expect(mockUserDao.getAllUsers(EasyMock.anyObject(FilterParam[].class), EasyMock.eq(0), EasyMock.eq(100))).andReturn(getFakeUsers());
         mockUserDao.deleteUser(username);
         EasyMock.replay(mockUserDao);
-        EasyMock.expect(mockClientDao.getClientsByCustomerId(customerId, 0, 100)).andReturn(getFakeClients());
-        mockClientDao.deleteClient(EasyMock.anyObject(Application.class));
-        EasyMock.replay(mockClientDao);
+        EasyMock.expect(applicationDao.getClientsByCustomerId(customerId, 0, 100)).andReturn(getFakeClients());
+        applicationDao.deleteClient(EasyMock.anyObject(Application.class));
+        EasyMock.replay(applicationDao);
         service.deleteCustomer(customerId);
         EasyMock.verify(mockCustomerDao);
         EasyMock.verify(mockUserDao);
@@ -110,12 +111,32 @@ public class CustomerServiceTests {
 
     @Test
     public void shouldGetCustomer() {
+    	Customer fakeCustomer = getFakeCustomer();
         EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
-            .andReturn(getFakeCustomer());
+            .andReturn(fakeCustomer);
         EasyMock.replay(mockCustomerDao);
         Customer customer = service.getCustomer(customerId);
 
+        assertEquals(fakeCustomer, customer);
         EasyMock.verify(mockCustomerDao);
+    }
+    
+    @Test
+    public void shouldLoadCustomer() {
+    	Customer fakeCustomer = getFakeCustomer();
+        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId)).andReturn(fakeCustomer);
+        EasyMock.replay(mockCustomerDao);
+        Customer customer = service.loadCustomer(customerId);
+
+        assertEquals(fakeCustomer, customer);
+        EasyMock.verify(mockCustomerDao);
+    }
+    
+    @Test(expected=NotFoundException.class)
+    public void shouldThrowExceptionWhenLoadingNonExistentCustomer() {
+        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId)).andReturn(null);
+        EasyMock.replay(mockCustomerDao);
+        service.loadCustomer(customerId);
     }
 
     @Test
