@@ -6,28 +6,36 @@ import java.util.HashMap;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
 import org.apache.commons.configuration.Configuration;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.CredentialType;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
+import com.rackspace.idm.exception.BadRequestException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -351,11 +359,70 @@ public class DelegateCloud20Service implements Cloud20Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            
+            if (httpHeaders.getMediaType().isCompatible(
+                MediaType.APPLICATION_JSON_TYPE)) {
+                body = convertCredentialToXML(body);
+            } 
+            
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/credentials";
             return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
+    }
+    
+    private String convertCredentialToXML(String body) {
+        JSONParser parser = new JSONParser();
+        JAXBElement<? extends CredentialType> creds = null;
+        String xml = null;
+
+        try {
+            JSONObject obj = (JSONObject) parser.parse(body);
+
+            if (obj.containsKey("passwordCredentials")) {
+                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
+                    "passwordCredentials").toString());
+                PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
+                String username = obj3.get("username").toString();
+                String password = obj3.get("password").toString();
+                if (StringUtils.isBlank(username)) {
+                    throw new BadRequestException("username required");
+                }
+                if (StringUtils.isBlank(password)) {
+                    throw new BadRequestException("password required");
+                }
+                userCreds.setUsername(username);
+                userCreds.setPassword(password);
+                creds = OBJ_FACTORY.createPasswordCredentials(userCreds);
+
+            } else if (obj.containsKey("RAX-KSKEY:apiKeyCredentials")) {
+                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
+                    "RAX-KSKEY:apiKeyCredentials").toString());
+                ApiKeyCredentials userCreds = new ApiKeyCredentials();
+                String username = obj3.get("username").toString();
+                String apikey = obj3.get("apikey").toString();
+                if (StringUtils.isBlank(username)) {
+                    throw new BadRequestException("username required");
+                }
+                if (StringUtils.isBlank(apikey)) {
+                    throw new BadRequestException("apikey required");
+                }
+                userCreds.setUsername(username);
+                userCreds.setApiKey(apikey);
+                creds = OBJ_FACTORY_RAX_KSKEY.createApiKeyCredentials(userCreds);
+            } else {
+                throw new BadRequestException("unrecognized credential type");
+            }
+            xml = marshallObjectToString(creds);
+        } catch (ParseException e) {
+            throw new BadRequestException("malformed JSON");
+        } catch (JAXBException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        return xml;
     }
 
     @Override

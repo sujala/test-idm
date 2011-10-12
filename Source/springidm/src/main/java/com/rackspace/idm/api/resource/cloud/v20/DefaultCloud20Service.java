@@ -60,6 +60,7 @@ import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
@@ -981,8 +982,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private JAXBElement<? extends CredentialType> getXMLCredentials(String body) {
         JAXBElement<? extends CredentialType> cred = null;
         try {
-            JAXBContext context = JAXBContext
-                .newInstance("org.openstack.docs.identity.api.v2:com.rackspace.docs.identity.api.ext.rax_kskey.v1");
+            JAXBContext context = JAXBContextResolver.get();
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends CredentialType>) unmarshaller
                 .unmarshal(new StringReader(body));
@@ -1016,11 +1016,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 userCreds.setUsername(username);
                 userCreds.setPassword(password);
                 creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createCredential(userCreds);
+                    .createPasswordCredentials(userCreds);
 
-            } else if (obj.containsKey("apiKeyCredentials")) {
+            } else if (obj.containsKey("RAX-KSKEY:apiKeyCredentials")) {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                    "apiKeyCredentials").toString());
+                    "RAX-KSKEY:apiKeyCredentials").toString());
                 ApiKeyCredentials userCreds = new ApiKeyCredentials();
                 String username = obj3.get("username").toString();
                 String apikey = obj3.get("apikey").toString();
@@ -1032,8 +1032,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
                 userCreds.setUsername(username);
                 userCreds.setApiKey(apikey);
-                creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createCredential(userCreds);
+                creds = OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory()
+                    .createApiKeyCredentials(userCreds);
             } else {
                 throw new BadRequestException("unrecognized credential type");
             }
