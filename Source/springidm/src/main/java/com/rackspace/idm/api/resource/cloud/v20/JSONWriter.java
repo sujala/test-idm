@@ -19,7 +19,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
-import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.openstack.docs.identity.api.v2.CredentialListType;
 import org.openstack.docs.identity.api.v2.CredentialType;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
@@ -53,13 +52,7 @@ public class JSONWriter implements
         MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
         throws IOException, WebApplicationException {
 
-        if (object.getDeclaredType().isAssignableFrom(AuthenticationRequest.class)) {
-
-            AuthenticationRequest auth = (AuthenticationRequest) object.getValue();
-            String jsonText = JSONValue.toJSONString(getAuthenticationRequest(auth));
-            outputStream.write(jsonText.getBytes("UTF-8"));
-            
-        } else if (object.getDeclaredType().isAssignableFrom(EndpointTemplate.class)) {
+        if (object.getDeclaredType().isAssignableFrom(EndpointTemplate.class)) {
 
             EndpointTemplate template = (EndpointTemplate) object.getValue();
             String jsonText = JSONValue.toJSONString(getEndpointTemplate(template));
@@ -159,31 +152,6 @@ public class JSONWriter implements
         
         for (EndpointTemplate template : templateList.getEndpointTemplate()) {
             list.add(getEndpointTemplate(template));
-        }
-
-        return outer;
-    }
-    
-    @SuppressWarnings("unchecked")
-    private JSONObject getAuthenticationRequest(AuthenticationRequest auth) {
-        JSONObject outer = new JSONObject();
-        JSONObject inner = new JSONObject();
-        JSONObject creds = new JSONObject();
-
-        outer.put("auth", inner);
-        inner.put("tenantId", auth.getTenantId());
-        inner.put("tenantName", auth.getTenantName());
-        
-        if (auth.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
-            ApiKeyCredentials keyCreds = (ApiKeyCredentials) auth.getCredential().getValue();
-            inner.put("RAX-KSKEY:apiKeyCredentials", creds);
-            creds.put("username", keyCreds.getUsername());
-            creds.put("apiKey", keyCreds.getApiKey());
-        } else if (auth.getCredential().getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
-            PasswordCredentialsRequiredUsername passCreds = new PasswordCredentialsRequiredUsername();
-            inner.put("passwordCredentials", creds);
-            creds.put("username", passCreds.getUsername());
-            creds.put("password", passCreds.getPassword());
         }
 
         return outer;
