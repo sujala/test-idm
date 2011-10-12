@@ -31,7 +31,7 @@ import com.sun.jersey.api.json.JSONMarshaller;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class ApiKeyCredentialsJSONProvider implements
+public class JSONWriter implements
     MessageBodyWriter<JAXBElement<?>> {
 
     @Override
