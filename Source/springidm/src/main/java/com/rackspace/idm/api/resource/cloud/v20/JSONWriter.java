@@ -31,10 +31,10 @@ import com.sun.jersey.api.json.JSONMarshaller;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriter implements
-    MessageBodyWriter<JAXBElement<?>> {
+    MessageBodyWriter<Object> {
 
     @Override
-    public long getSize(JAXBElement<?> arg0, Class<?> arg1, Type arg2,
+    public long getSize(Object arg0, Class<?> arg1, Type arg2,
         Annotation[] arg3, MediaType arg4) {
         return -1;
     }
@@ -42,16 +42,17 @@ public class JSONWriter implements
     @Override
     public boolean isWriteable(Class<?> type, Type genericType,
         Annotation[] annotations, MediaType mediaType) {
-        return true;
+        return type==JAXBElement.class;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public void writeTo(JAXBElement<?> object, Class<?> type, Type genericType,
+    public void writeTo(Object element, Class<?> type, Type genericType,
         Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
         throws IOException, WebApplicationException {
 
+        JAXBElement<?> object = (JAXBElement<?>) element;
         if (object.getDeclaredType().isAssignableFrom(EndpointTemplate.class)) {
 
             EndpointTemplate template = (EndpointTemplate) object.getValue();

@@ -13,9 +13,7 @@ public class JAXBContextResolver implements ContextResolver<JAXBContext> {
     private static JAXBContext context;
 
     public JAXBContextResolver() throws Exception {
-        this.context = new JSONJAXBContext(
-            JSONConfiguration.natural().rootUnwrapping(false).build(),
-            "com.rackspace.api.idm.v1:com.rackspacecloud.docs.auth.api.v1:org.openstack.docs.common.api.v1:org.openstack.docs.compute.api.v1:org.openstack.docs.identity.api.v2:com.rackspace.docs.identity.api.ext.rax_ksadm.v1:com.rackspace.docs.identity.api.ext.rax_ksgrp.v1:com.rackspace.docs.identity.api.ext.rax_kskey.v1:org.openstack.docs.identity.api.ext.os_ksadm.v1:org.openstack.docs.identity.api.ext.os_kscatalog.v1:org.openstack.docs.identity.api.ext.os_ksec2.v1:org.w3._2005.atom");
+    	init();
     }
 
     @Override
@@ -24,6 +22,20 @@ public class JAXBContextResolver implements ContextResolver<JAXBContext> {
     }
     
     public static JAXBContext get() {
+    	if (context == null) {
+    		try {
+    			init();
+    		} catch (Throwable t) {
+    			t.printStackTrace();
+    		}
+    	}
     	return context;
+    }
+    
+    private static void init() throws Exception {
+	   context = new JSONJAXBContext(
+	            JSONConfiguration.natural().rootUnwrapping(false).build(),
+	            "com.rackspace.api.idm.v1:com.rackspacecloud.docs.auth.api.v1:org.openstack.docs.common.api.v1:org.openstack.docs.compute.api.v1:org.openstack.docs.identity.api.v2:com.rackspace.docs.identity.api.ext.rax_ksadm.v1:com.rackspace.docs.identity.api.ext.rax_ksgrp.v1:com.rackspace.docs.identity.api.ext.rax_kskey.v1:org.openstack.docs.identity.api.ext.os_ksadm.v1:org.openstack.docs.identity.api.ext.os_kscatalog.v1:org.openstack.docs.identity.api.ext.os_ksec2.v1:org.w3._2005.atom");
+
     }
 }
