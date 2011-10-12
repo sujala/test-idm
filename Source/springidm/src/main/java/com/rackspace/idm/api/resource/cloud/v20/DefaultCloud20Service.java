@@ -1,11 +1,34 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.idm.api.converter.cloudv20.*;
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.UserDisabledException;
+import org.apache.commons.configuration.Configuration;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.openstack.docs.common.api.v1.Extension;
+import org.openstack.docs.common.api.v1.Extensions;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
+import org.openstack.docs.identity.api.v2.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
@@ -19,66 +42,12 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
-
-import org.apache.commons.configuration.Configuration;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-import org.openstack.docs.common.api.v1.Extension;
-import org.openstack.docs.common.api.v1.Extensions;
-import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
-import org.openstack.docs.identity.api.v2.AuthenticateResponse;
-import org.openstack.docs.identity.api.v2.AuthenticationRequest;
-import org.openstack.docs.identity.api.v2.BadRequestFault;
-import org.openstack.docs.identity.api.v2.CredentialListType;
-import org.openstack.docs.identity.api.v2.CredentialType;
-import org.openstack.docs.identity.api.v2.EndpointList;
-import org.openstack.docs.identity.api.v2.ForbiddenFault;
-import org.openstack.docs.identity.api.v2.IdentityFault;
-import org.openstack.docs.identity.api.v2.ItemNotFoundFault;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
-import org.openstack.docs.identity.api.v2.Role;
-import org.openstack.docs.identity.api.v2.TenantConflictFault;
-import org.openstack.docs.identity.api.v2.UnauthorizedFault;
-import org.openstack.docs.identity.api.v2.UserDisabledFault;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
-
-import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.ServiceConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
-import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.UserDisabledException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -91,6 +60,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+	private UserGroupService userGroupService;
+
     @Autowired
     private AuthorizationService authorizationService;
     @Autowired
@@ -119,10 +92,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     private JAXBObjectFactories OBJ_FACTORIES;
     @Autowired
     private Configuration config;
-
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
     private JAXBElement<Extensions> currentExtensions;
+
     private HashMap<String, JAXBElement<Extension>> extensionMap;
 
     // Core Service Methods
@@ -229,7 +201,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
             .createAccess(auth));
     }
-
     @Override
     public ResponseBuilder listTenants(HttpHeaders httpHeaders,
         String authToken, String marker, Integer limit) throws IOException {
@@ -654,11 +625,21 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId)
-        throws IOException {
-        // TODO write me
-        throw new UnsupportedOperationException(
-            "not written -- com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.listUserGroups");
+    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId) throws IOException {
+        if(userId==null || userId.isEmpty()){
+            return Response.status(Status.BAD_REQUEST);
+        }
+        User user = this.userService.getUserById(userId);
+        if(user==null){
+            return Response.status(Status.NOT_FOUND);
+        }
+        Integer mossoId = user.getMossoId();
+        if(mossoId==null){
+            return Response.status(Status.NOT_FOUND);
+        }
+        List<Group> groups = this.userGroupService.getGroups(mossoId);
+
+        return Response.ok(groups);
     }
 
     @Override
@@ -681,8 +662,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         return Response.created(
             uriInfo.getRequestUriBuilder().path(user.getId()).build()).entity(
-            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(
-                this.userConverterCloudV20.toUser(userDO)));
+                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(
+                        this.userConverterCloudV20.toUser(userDO)));
     }
 
     @Override
@@ -1249,8 +1230,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.userService.updateUser(user, false);
 
         return Response.ok(OBJ_FACTORIES
-            .getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials(
-                creds));
+                .getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials(
+                        creds));
     }
 
     // KSADM Extension Tenant Methods
@@ -1280,8 +1261,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         return Response.created(
             uriInfo.getRequestUriBuilder().path(savedTenant.getTenantId())
                 .build()).entity(
-            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenant(
-                this.tenantConverterCloudV20.toTenant(savedTenant)));
+                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenant(
+                        this.tenantConverterCloudV20.toTenant(savedTenant)));
     }
 
     @Override
@@ -1314,7 +1295,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.tenantService.updateTenant(tenantDO);
 
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createTenant(this.tenantConverterCloudV20.toTenant(tenantDO)));
+                .createTenant(this.tenantConverterCloudV20.toTenant(tenantDO)));
     }
 
     @Override
@@ -1367,7 +1348,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         List<User> users = this.tenantService.getUsersForTenant(tenantId);
 
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createUsers(this.userConverterCloudV20.toUserList(users)));
+                .createUsers(this.userConverterCloudV20.toUserList(users)));
     }
 
     @Override
@@ -1400,7 +1381,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         List<User> users = this.tenantService.getUsersWithTenantRole(tenant,
-            role);
+                role);
 
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
             .createUsers(this.userConverterCloudV20.toUserList(users)));
@@ -1540,8 +1521,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createRoles(
-                this.roleConverterCloudV20.toRoleListFromClientRoles(roles)));
+                .createRoles(
+                        this.roleConverterCloudV20.toRoleListFromClientRoles(roles)));
     }
 
     @Override
@@ -1568,10 +1549,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         return Response.created(
             uriInfo.getRequestUriBuilder().path(clientRole.getId()).build())
             .entity(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createRole(
-                        this.roleConverterCloudV20
-                            .toRoleFromClientRole(clientRole)));
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                            .createRole(
+                                    this.roleConverterCloudV20
+                                            .toRoleFromClientRole(clientRole)));
     }
 
     @Override
@@ -1596,7 +1577,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createRole(this.roleConverterCloudV20.toRoleFromClientRole(role)));
+                .createRole(this.roleConverterCloudV20.toRoleFromClientRole(role)));
     }
 
     @Override
@@ -1643,8 +1624,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         List<Application> clients = this.clientService.getOpenStackServices();
 
         return Response.ok(OBJ_FACTORIES
-            .getOpenStackIdentityExtKsadmnV1Factory().createServices(
-                this.serviceConverterCloudV20.toServiceList(clients)));
+                .getOpenStackIdentityExtKsadmnV1Factory().createServices(
+                        this.serviceConverterCloudV20.toServiceList(clients)));
     }
 
     @Override
@@ -1673,8 +1654,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         return Response.created(
             uriInfo.getRequestUriBuilder().path(service.getId()).build())
             .entity(
-                OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory()
-                    .createService(service));
+                    OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory()
+                            .createService(service));
     }
 
     @Override
@@ -1699,8 +1680,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         return Response.ok(OBJ_FACTORIES
-            .getOpenStackIdentityExtKsadmnV1Factory().createService(
-                this.serviceConverterCloudV20.toService(client)));
+                .getOpenStackIdentityExtKsadmnV1Factory().createService(
+                        this.serviceConverterCloudV20.toService(client)));
     }
 
     @Override
@@ -1755,7 +1736,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.userService.updateUser(userDO, false);
 
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createUser(this.userConverterCloudV20.toUser(userDO)));
+                .createUser(this.userConverterCloudV20.toUser(userDO)));
     }
 
     private Response.ResponseBuilder userNotFoundExceptionResponse(
@@ -1767,8 +1748,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
-            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFound(
-                fault));
+                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFound(
+                        fault));
     }
 
     private Response.ResponseBuilder userDisabledExceptionResponse(
@@ -1781,7 +1762,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(
-                fault));
+                    fault));
     }
 
     private Response.ResponseBuilder notAuthenticatedExceptionResponse(
@@ -1794,7 +1775,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUnauthorized(
-                fault));
+                    fault));
     }
 
     private Response.ResponseBuilder forbiddenExceptionResponse(String errMsg) {
@@ -2132,5 +2113,13 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.tenantService.updateTenant(tenant);
 
         return Response.noContent();
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    public void setUserGroupService(UserGroupService userGroupService) {
+        this.userGroupService = userGroupService;
     }
 }
