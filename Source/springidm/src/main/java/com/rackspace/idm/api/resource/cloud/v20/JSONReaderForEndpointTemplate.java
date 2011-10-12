@@ -19,8 +19,6 @@ import org.json.simple.parser.ParseException;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.VersionForService;
 
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForEndpointTemplate implements
@@ -28,7 +26,7 @@ MessageBodyReader<EndpointTemplate> {
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
         Annotation[] annotations, MediaType mediaType) {
-        return type == ApiKeyCredentials.class;
+        return type == EndpointTemplate.class;
     }
 
     @Override
