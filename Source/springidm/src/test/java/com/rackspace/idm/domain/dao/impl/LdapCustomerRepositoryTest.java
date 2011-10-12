@@ -145,26 +145,25 @@ public class LdapCustomerRepositoryTest {
     @Test
     public void shouldGenerateModifications() {
 
-        Customer client = createTestCustomerInstance(customerId,
-            status );
-        Customer cClient = createTestCustomerInstance(customerId,
-            status);
-
+        Customer client = createTestCustomerInstance(customerId);
+        Customer cClient = createTestCustomerInstance(customerId);
+        cClient.setEnabled(false);
+        
         List<Modification> mods = repo.getModifications(client, cClient);
 
         Assert.assertEquals(1, mods.size());
-        Assert.assertEquals("INACTIVE", mods.get(0).getAttribute().getValue());
+        Assert.assertEquals(Boolean.FALSE.toString(), mods.get(0).getAttribute().getValue());
     }
 
     private Customer addNewTestCustomer(String customerId, String name,
         CustomerStatus status, String country) {
 
-        Customer newCustomer = createTestCustomerInstance(customerId, status);
+        Customer newCustomer = createTestCustomerInstance(customerId);
         repo.addCustomer(newCustomer);
         return newCustomer;
     }
 
-    private Customer createTestCustomerInstance(String customerId, CustomerStatus status) {
+    private Customer createTestCustomerInstance(String customerId) {
 
         Customer newCustomer = new Customer();
         newCustomer.setRCN(customerId);

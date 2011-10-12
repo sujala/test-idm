@@ -25,6 +25,7 @@ import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserCredential;
 import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
@@ -37,8 +38,6 @@ public class LdapUserRepositoryTest {
     String rackerId = "racker";
     
     String id = "XXXX";
-
-    private final String testCustomerDN = "o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,ou=customers,o=rackspace,dc=rackspace,dc=com";
 
     @BeforeClass
     public static void cleanUpData() {
@@ -416,14 +415,14 @@ public class LdapUserRepositoryTest {
             .getValue());
     }
 
-//    @Test
-//    @Ignore
-//    public void shouldRetrieveAllRecords() {
-//        User user = addNewTestUser();
-//        Users users = repo.getAllUsers(0, 100);
-//        repo.deleteUser(user.getUsername());
-//        Assert.assertTrue(users.getUsers().size() > 1);
-//    }
+    @Test
+    @Ignore
+    public void shouldRetrieveAllRecords() {
+        User user = addNewTestUser();
+        Users users = repo.getAllUsers(null, 0, 100);
+        repo.deleteUser(user.getUsername());
+        Assert.assertTrue(users.getUsers().size() > 1);
+    }
 
     @Test
     public void shouldAuthenticateForCorrectCredentials() {

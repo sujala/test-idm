@@ -24,6 +24,7 @@ import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
+import com.rackspace.idm.domain.entity.PasswordComplexityResult;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
@@ -37,6 +38,7 @@ import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.DuplicateUsernameException;
 
 public class UserServiceTests {
 
@@ -169,35 +171,24 @@ public class UserServiceTests {
     }
 
     @Test
-    public void shouldAddUserToExistingCustomer() throws DuplicateException {
+    public void shouldAddUser() throws DuplicateException {
+    	//setup
         final User user = getFakeUser();
         final Customer customer = getFakeCustomer();
         customer.setUniqueId(customerDN);
-        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
-        .andReturn(customer);
-        EasyMock.replay(mockCustomerDao);
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername()))
         .andReturn(true);
         EasyMock.expect(mockUserDao.getNextUserId()).andReturn(id);
-        mockUserDao.addUser((User) EasyMock.anyObject());
+        EasyMock.expect(mockPasswordComplexityService.checkPassword(user.getPassword())).andReturn(new PasswordComplexityResult());
+        mockUserDao.addUser(user);
         EasyMock.replay(mockUserDao);
+        EasyMock.replay(mockPasswordComplexityService);
+        
+        //executions
         userService.addUser(user);
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void shouldNotAddUserToNonExistentCustomer()
-    throws DuplicateException {
-        final User user = getFakeUser();
-        EasyMock.expect(mockCustomerDao.getCustomerByCustomerId(customerId))
-        .andReturn(null);
-        EasyMock.replay(mockCustomerDao);
-        EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername()))
-        .andReturn(true);
-        EasyMock.replay(mockUserDao);
-        userService.addUser(user);
-    }
-
-    @Test(expected = DuplicateException.class)
+    @Test(expected = DuplicateUsernameException.class)
     public void shouldNotAddDuplicateUser() throws DuplicateException {
         final User user = getFakeUser();
 

@@ -439,9 +439,9 @@ public class DefaultUserService implements UserService {
         validateUserEmailAddress(user);
         
         //TODO: We might restrict this to certain roles, so we might need a param passed in this method as well
-        if (!user.isEnabled()) {
-        	 oauthService.revokeAllTokensForUser(user.getUniqueId());
-        }
+//        if (!user.isEnabled()) {
+//        	 oauthService.revokeAllTokensForUser(user.getUniqueId());
+//        }
         
         this.userDao.updateUser(user, hasSelfUpdatedPassword);
         logger.info("Updated User: {}", user);
