@@ -24,6 +24,7 @@ import org.openstack.docs.identity.api.v2.CredentialType;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
@@ -31,10 +32,10 @@ import com.sun.jersey.api.json.JSONMarshaller;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriter implements
-    MessageBodyWriter<Object> {
+    MessageBodyWriter<JAXBElement<?>> {
 
     @Override
-    public long getSize(Object arg0, Class<?> arg1, Type arg2,
+    public long getSize(JAXBElement<?> arg0, Class<?> arg1, Type arg2,
         Annotation[] arg3, MediaType arg4) {
         return -1;
     }
@@ -42,18 +43,23 @@ public class JSONWriter implements
     @Override
     public boolean isWriteable(Class<?> type, Type genericType,
         Annotation[] annotations, MediaType mediaType) {
-        return type==JAXBElement.class;
+        return type == JAXBElement.class;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public void writeTo(Object element, Class<?> type, Type genericType,
+    public void writeTo(JAXBElement<?> object, Class<?> type, Type genericType,
         Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
         throws IOException, WebApplicationException {
+        
+        if (object.getDeclaredType().isAssignableFrom(SecretQA.class)) {
 
-        JAXBElement<?> object = (JAXBElement<?>) element;
-        if (object.getDeclaredType().isAssignableFrom(EndpointTemplate.class)) {
+            SecretQA secrets = (SecretQA) object.getValue();
+            String jsonText = JSONValue.toJSONString(getSecretQA(secrets));
+            outputStream.write(jsonText.getBytes("UTF-8"));
+            
+        } else if (object.getDeclaredType().isAssignableFrom(EndpointTemplate.class)) {
 
             EndpointTemplate template = (EndpointTemplate) object.getValue();
             String jsonText = JSONValue.toJSONString(getEndpointTemplate(template));
@@ -118,6 +124,17 @@ public class JSONWriter implements
         outer.put("passwordCredentials", inner);
         inner.put("username", creds.getUsername());
         inner.put("password", creds.getPassword());
+        return outer;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private JSONObject getSecretQA(SecretQA secrets) {
+        JSONObject outer = new JSONObject();
+        JSONObject inner = new JSONObject();
+
+        outer.put("RAX-KSQA:secretQA", inner);
+        inner.put("answer", secrets.getAnswer());
+        inner.put("question", secrets.getQuestion());
         return outer;
     }
     

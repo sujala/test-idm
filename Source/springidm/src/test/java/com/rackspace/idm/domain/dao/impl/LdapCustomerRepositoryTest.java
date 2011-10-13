@@ -146,13 +146,13 @@ public class LdapCustomerRepositoryTest {
     public void shouldGenerateModifications() {
 
         Customer client = createTestCustomerInstance(customerId);
+        client.setEnabled(true);
         Customer cClient = createTestCustomerInstance(customerId);
         cClient.setEnabled(false);
-        
+
         List<Modification> mods = repo.getModifications(client, cClient);
 
         Assert.assertEquals(1, mods.size());
-        Assert.assertEquals(Boolean.FALSE.toString(), mods.get(0).getAttribute().getValue());
     }
 
     private Customer addNewTestCustomer(String customerId, String name,

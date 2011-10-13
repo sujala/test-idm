@@ -1,34 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.idm.api.converter.cloudv20.*;
-import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.UserDisabledException;
-import org.apache.commons.configuration.Configuration;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-import org.openstack.docs.common.api.v1.Extension;
-import org.openstack.docs.common.api.v1.Extensions;
-import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
-import org.openstack.docs.identity.api.v2.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
@@ -42,12 +19,69 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+
+import org.apache.commons.configuration.Configuration;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.openstack.docs.common.api.v1.Extension;
+import org.openstack.docs.common.api.v1.Extensions;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
+import org.openstack.docs.identity.api.v2.AuthenticateResponse;
+import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.BadRequestFault;
+import org.openstack.docs.identity.api.v2.CredentialListType;
+import org.openstack.docs.identity.api.v2.CredentialType;
+import org.openstack.docs.identity.api.v2.EndpointList;
+import org.openstack.docs.identity.api.v2.ForbiddenFault;
+import org.openstack.docs.identity.api.v2.IdentityFault;
+import org.openstack.docs.identity.api.v2.ItemNotFoundFault;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
+import org.openstack.docs.identity.api.v2.Role;
+import org.openstack.docs.identity.api.v2.TenantConflictFault;
+import org.openstack.docs.identity.api.v2.UnauthorizedFault;
+import org.openstack.docs.identity.api.v2.UserDisabledFault;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
+
+import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.ServiceConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.config.JAXBContextResolver;
+import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.UserGroupService;
+import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.UserDisabledException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -962,8 +996,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private JAXBElement<? extends CredentialType> getXMLCredentials(String body) {
         JAXBElement<? extends CredentialType> cred = null;
         try {
-            JAXBContext context = JAXBContext
-                .newInstance("org.openstack.docs.identity.api.v2:com.rackspace.docs.identity.api.ext.rax_kskey.v1");
+            JAXBContext context = JAXBContextResolver.get();
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends CredentialType>) unmarshaller
                 .unmarshal(new StringReader(body));
@@ -997,11 +1030,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 userCreds.setUsername(username);
                 userCreds.setPassword(password);
                 creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createCredential(userCreds);
+                    .createPasswordCredentials(userCreds);
 
-            } else if (obj.containsKey("apiKeyCredentials")) {
+            } else if (obj.containsKey("RAX-KSKEY:apiKeyCredentials")) {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                    "apiKeyCredentials").toString());
+                    "RAX-KSKEY:apiKeyCredentials").toString());
                 ApiKeyCredentials userCreds = new ApiKeyCredentials();
                 String username = obj3.get("username").toString();
                 String apikey = obj3.get("apikey").toString();
@@ -1013,8 +1046,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
                 userCreds.setUsername(username);
                 userCreds.setApiKey(apikey);
-                creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createCredential(userCreds);
+                creds = OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory()
+                    .createApiKeyCredentials(userCreds);
             } else {
                 throw new BadRequestException("unrecognized credential type");
             }
@@ -1148,7 +1181,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createCredential(userCreds);
 
-        } else if (credentialType.equals("apiKeyCredentials")) {
+        } else if (credentialType.equals("RAX-KSKEY:apiKeyCredentials")) {
             if (StringUtils.isBlank(user.getApiKey())) {
                 return notFoundExceptionResponse("User doesn't have api key credentials");
             }

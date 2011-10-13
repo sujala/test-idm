@@ -33,6 +33,7 @@ import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -721,8 +722,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         boolean isAdmin) throws IOException {
         JAXBElement<? extends Credentials> cred = null;
         try {
-            JAXBContext context = JAXBContext
-                .newInstance("com.rackspacecloud.docs.auth.api.v1");
+            JAXBContext context = JAXBContextResolver.get();
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends Credentials>) unmarshaller
                 .unmarshal(new StringReader(body));
