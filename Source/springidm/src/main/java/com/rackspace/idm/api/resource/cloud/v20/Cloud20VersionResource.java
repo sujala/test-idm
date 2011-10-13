@@ -34,6 +34,7 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 
@@ -319,22 +320,25 @@ public class Cloud20VersionResource {
 
     @POST
     @Path("users/{userId}/OS-KSADM/credentials/passwordCredentials")
-    public Response updateUserPasswordCredentials(@Context HttpHeaders httpHeaders,
+    public Response updateUserPasswordCredentials(
+        @Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("userId") String userId, PasswordCredentialsRequiredUsername creds)
-        throws IOException, JAXBException {
-        return getCloud20Service().updateUserPasswordCredentials(httpHeaders, authToken,
-            userId, "passwordCredentials", creds).build();
+        @PathParam("userId") String userId,
+        PasswordCredentialsRequiredUsername creds) throws IOException,
+        JAXBException {
+        return getCloud20Service().updateUserPasswordCredentials(httpHeaders,
+            authToken, userId, "passwordCredentials", creds).build();
     }
-    
+
     @POST
     @Path("users/{userId}/OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials")
-    public Response updateUserApiKeyCredentials(@Context HttpHeaders httpHeaders,
+    public Response updateUserApiKeyCredentials(
+        @Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId, ApiKeyCredentials creds)
         throws IOException, JAXBException {
-        return getCloud20Service().updateUserApiKeyCredentials(httpHeaders, authToken,
-            userId, "RAX-KSKEY:apiKeyCredentials", creds).build();
+        return getCloud20Service().updateUserApiKeyCredentials(httpHeaders,
+            authToken, userId, "RAX-KSKEY:apiKeyCredentials", creds).build();
     }
 
     @GET
@@ -346,7 +350,7 @@ public class Cloud20VersionResource {
         return getCloud20Service().getUserCredential(httpHeaders, authToken,
             userId, "RAX-KSKEY:apiKeyCredentials").build();
     }
-    
+
     @GET
     @Path("users/{userId}/OS-KSADM/credentials/{credentialType}")
     public Response getUserCredential(@Context HttpHeaders httpHeaders,
@@ -376,7 +380,7 @@ public class Cloud20VersionResource {
         return getCloud20Service().deleteUserCredential(httpHeaders, authToken,
             userId, credentialType).build();
     }
-    
+
     @POST
     @Path("tenants")
     public Response addTenant(@Context HttpHeaders httpHeaders,
@@ -537,77 +541,96 @@ public class Cloud20VersionResource {
     public Response listEndpointTemplates(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @QueryParam("serviceId") String serviceId) throws IOException {
-        return getCloud20Service().listEndpointTemplates(httpHeaders, authToken, serviceId).build();
+        return getCloud20Service().listEndpointTemplates(httpHeaders,
+            authToken, serviceId).build();
     }
-    
+
     @POST
     @Path("OS-KSCATALOG/endpointTemplates")
     public Response addEndpointTemplate(@Context HttpHeaders httpHeaders,
-        @Context UriInfo uriInfo,
-        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken,
         EndpointTemplate endpoint) throws IOException, JAXBException {
         return getCloud20Service().addEndpointTemplate(httpHeaders, uriInfo,
             authToken, endpoint).build();
     }
-    
+
     @GET
     @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}")
     public Response getEndpointTemplate(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("endpointTemplateId") String endpointTemplateId) throws IOException {
-        return getCloud20Service().getEndpointTemplate(httpHeaders,
-            authToken, endpointTemplateId).build();
+        @PathParam("endpointTemplateId") String endpointTemplateId)
+        throws IOException {
+        return getCloud20Service().getEndpointTemplate(httpHeaders, authToken,
+            endpointTemplateId).build();
     }
-    
+
     @DELETE
     @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}")
     public Response deleteEndpointTemplate(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("endpointTemplateId") String enpdointTemplateId) throws IOException {
+        @PathParam("endpointTemplateId") String enpdointTemplateId)
+        throws IOException {
         return getCloud20Service().deleteEndpointTemplate(httpHeaders,
             authToken, enpdointTemplateId).build();
     }
-    
+
     @GET
     @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints")
     public Response listEndpoints(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantId) throws IOException {
-        return getCloud20Service().listEndpoints(httpHeaders,
-            authToken, tenantId).build();
+        return getCloud20Service().listEndpoints(httpHeaders, authToken,
+            tenantId).build();
     }
-    
+
     @POST
     @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints")
     public Response addEndpoint(@Context HttpHeaders httpHeaders,
-        @Context UriInfo uriInfo,
-        @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("tenantId") String tenantId,
-        EndpointTemplate endpoint) throws IOException, JAXBException {
-        return getCloud20Service().addEndpoint(httpHeaders,
-            authToken, tenantId, endpoint).build();
+        @Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @PathParam("tenantId") String tenantId, EndpointTemplate endpoint)
+        throws IOException, JAXBException {
+        return getCloud20Service().addEndpoint(httpHeaders, authToken,
+            tenantId, endpoint).build();
     }
-    
+
     @GET
     @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints/{endpointId}")
     public Response getEndpoint(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantId,
         @PathParam("endpointId") String endpointId) throws IOException {
-        return getCloud20Service().getEndpoint(httpHeaders,
-            authToken, tenantId, endpointId).build();
+        return getCloud20Service().getEndpoint(httpHeaders, authToken,
+            tenantId, endpointId).build();
     }
-    
+
     @DELETE
     @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints/{endpointId}")
     public Response deleteEndpoint(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantId,
         @PathParam("endpointId") String endpointId) throws IOException {
-        return getCloud20Service().deleteEndpoint(httpHeaders,
-            authToken, tenantId, endpointId).build();
+        return getCloud20Service().deleteEndpoint(httpHeaders, authToken,
+            tenantId, endpointId).build();
     }
-    
+
+    @GET
+    @Path("/users/{userId}/RAX-KSQA/secretqa")
+    public Response getSecretQA(@Context HttpHeaders httpHeaders,
+        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @PathParam("userId") String userId) throws IOException {
+        return getCloud20Service().getSecretQA(httpHeaders, authToken, userId)
+            .build();
+    }
+
+    @POST
+    @Path("/users/{userId}/RAX-KSQA/secretqa")
+    public Response updateSecretQA(@Context HttpHeaders httpHeaders,
+        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @PathParam("userId") String userId, SecretQA secrets)
+        throws IOException, JAXBException {
+        return getCloud20Service().updateSecretQA(httpHeaders, authToken,
+            userId, secrets).build();
+    }
 
     private Cloud20Service getCloud20Service() {
         if (config.getBoolean("useCloudAuth")) {

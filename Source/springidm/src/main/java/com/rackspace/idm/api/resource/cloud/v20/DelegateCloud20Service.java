@@ -33,6 +33,7 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.exception.BadRequestException;
@@ -54,9 +55,9 @@ public class DelegateCloud20Service implements Cloud20Service {
     private DefaultCloud20Service defaultCloud20Service;
     @Autowired
     private DummyCloud20Service dummyCloud20Service;
-    
+
     private Marshaller marshaller;
-    
+
     public void setMarshaller(Marshaller marshaller) {
         this.marshaller = marshaller;
     }
@@ -69,6 +70,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     private static org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory OBJ_FACTORY_OS_ADMIN_EXT = new org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory();
     private static org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory OBJ_FACTORY_OS_CATALOG = new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory();
     private static com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory OBJ_FACTORY_RAX_KSKEY = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory();
+    private static com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory OBJ_FACOTRY_SECRETQA = new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory();
 
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders,
@@ -213,13 +215,17 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId) throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud20Service().listUserGroups(httpHeaders, userId);
+    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId)
+        throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+            .listUserGroups(httpHeaders, userId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
-            String request = getCloudAuthV20Url() + "users/" + userId + "/RAX-KSGRP";
+            String request = getCloudAuthV20Url() + "users/" + userId
+                + "/RAX-KSGRP";
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
@@ -355,19 +361,19 @@ public class DelegateCloud20Service implements Cloud20Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
-            
+
             if (httpHeaders.getMediaType().isCompatible(
                 MediaType.APPLICATION_JSON_TYPE)) {
                 body = convertCredentialToXML(body);
-            } 
-            
+            }
+
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/credentials";
             return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
     }
-    
+
     private String convertCredentialToXML(String body) {
         JSONParser parser = new JSONParser();
         JAXBElement<? extends CredentialType> creds = null;
@@ -406,7 +412,8 @@ public class DelegateCloud20Service implements Cloud20Service {
                 }
                 userCreds.setUsername(username);
                 userCreds.setApiKey(apikey);
-                creds = OBJ_FACTORY_RAX_KSKEY.createApiKeyCredentials(userCreds);
+                creds = OBJ_FACTORY_RAX_KSKEY
+                    .createApiKeyCredentials(userCreds);
             } else {
                 throw new BadRequestException("unrecognized credential type");
             }
@@ -417,7 +424,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        
+
         return xml;
     }
 
@@ -1189,6 +1196,43 @@ public class DelegateCloud20Service implements Cloud20Service {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/OS-KSCATALOG/endpoints/" + endpointId;
             return cloudClient.delete(request, httpHeaders);
+        }
+        return serviceResponse;
+    }
+
+    @Override
+    public ResponseBuilder getSecretQA(HttpHeaders httpHeaders,
+        String authToken, String userId) throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+            .getSecretQA(httpHeaders, authToken, userId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "users/" + userId
+                + "/RAX-KSQA/secretqa/";
+            return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
+    }
+
+    @Override
+    public ResponseBuilder updateSecretQA(HttpHeaders httpHeaders,
+        String authToken, String userId, SecretQA secrets) throws IOException,
+        JAXBException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+            .updateSecretQA(httpHeaders, authToken, userId, secrets);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "users/" + userId
+                + "/RAX-KSQA/secretqa/";
+            String body = marshallObjectToString(OBJ_FACOTRY_SECRETQA
+                .createSecretQA(secrets));
+            return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
     }

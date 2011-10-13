@@ -17,6 +17,7 @@ import org.openstack.docs.identity.api.v2.User;
 
 import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 
 /**
  * Created by IntelliJ IDEA.
@@ -144,4 +145,10 @@ public interface Cloud20Service {
     ResponseBuilder updateUserApiKeyCredentials(HttpHeaders httpHeaders,
         String authToken, String userId, String credentialType,
         ApiKeyCredentials creds) throws IOException, JAXBException;
+
+    ResponseBuilder getSecretQA(HttpHeaders httpHeaders, String authToken,
+        String userId) throws IOException;
+
+    ResponseBuilder updateSecretQA(HttpHeaders httpHeaders, String authToken,
+        String userId, SecretQA secrets) throws IOException, JAXBException;
 }

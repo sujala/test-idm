@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 
 @Component
 public class DummyCloud20Service implements Cloud20Service{
@@ -370,6 +371,19 @@ public class DummyCloud20Service implements Cloud20Service{
     public ResponseBuilder updateUserApiKeyCredentials(HttpHeaders httpHeaders,
         String authToken, String userId, String credentialType,
         ApiKeyCredentials creds) throws IOException, JAXBException {
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder getSecretQA(HttpHeaders httpHeaders,
+        String authToken, String userId) throws IOException {
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder updateSecretQA(HttpHeaders httpHeaders,
+        String authToken, String userId, SecretQA secrets) throws IOException,
+        JAXBException {
         return Response.status(Status.NOT_FOUND);
     }
 
