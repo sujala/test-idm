@@ -1,19 +1,18 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
-
-import javax.ws.rs.core.MediaType;
-
+import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 
-import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
+import javax.ws.rs.core.MediaType;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
 
 /**
  * Created by IntelliJ IDEA.

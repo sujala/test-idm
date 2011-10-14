@@ -28,6 +28,16 @@
             <groupId>com.mosso.service</groupId>
             <artifactId>mosso-service-client</artifactId>
             <version>1.1.36</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jvnet.jaxb2_commons</groupId>
+                    <artifactId>jaxb2-basics</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.sun.xml.bind</groupId>
+                    <artifactId>jaxb-impl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.rackspace.cloud.servers</groupId>
@@ -218,7 +228,7 @@
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-json</artifactId>
-            <version>${jersey-release-version}</version>
+            <version>1.9.1</version>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey.contribs</groupId>
