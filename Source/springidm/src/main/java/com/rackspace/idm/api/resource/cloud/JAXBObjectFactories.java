@@ -16,11 +16,17 @@ public class JAXBObjectFactories {
     private final com.rackspace.docs.identity.api.ext.rax_ksadm.v1.ObjectFactory rackspaceIdentityExtKsadmV1Factory = new com.rackspace.docs.identity.api.ext.rax_ksadm.v1.ObjectFactory();
     private final com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory rackspaceIdentityExtKsgrpV1Factory = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory();
     private final com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory rackspaceIdentityExtKskeyV1Factory = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory();
+    private final com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory rackspaceIdentityExtKsqaV1Factory = new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory();
+    
     
     private final org.w3._2005.atom.ObjectFactory atomObjectFactory = new org.w3._2005.atom.ObjectFactory();
     
     private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory rackspaceCloudV1ObjectFactory = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
 
+    public com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory getRackspaceIdentityExtKsqaV1Factory() {
+        return rackspaceIdentityExtKsqaV1Factory;
+    }
+    
     public org.openstack.docs.common.api.v1.ObjectFactory getOpenStackCommonV1Factory() {
         return openStackCommonV1Factory;
     }

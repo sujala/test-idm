@@ -21,6 +21,7 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.configuration.Configuration;
+import org.joda.time.DateTime;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -52,6 +53,7 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
@@ -65,6 +67,7 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.HasAccessToken;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.Tenant;
@@ -80,8 +83,11 @@ import com.rackspace.idm.domain.service.UserGroupService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.exception.UserDisabledException;
+import com.sun.jersey.api.NotFoundException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -93,186 +99,806 @@ import com.rackspace.idm.exception.UserDisabledException;
 public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
-	private UserGroupService userGroupService;
-
+    private AuthConverterCloudV20 authConverterCloudV20;
     @Autowired
     private AuthorizationService authorizationService;
     @Autowired
-    private TenantService tenantService;
-    @Autowired
     private ApplicationService clientService;
+    @Autowired
+    private Configuration config;
+    @Autowired
+    private EndpointConverterCloudV20 endpointConverterCloudV20;
     @Autowired
     private EndpointService endpointService;
     @Autowired
+    private JAXBObjectFactories OBJ_FACTORIES;
+    @Autowired
+    private RoleConverterCloudV20 roleConverterCloudV20;
+    @Autowired
     private ScopeAccessService scopeAccessService;
     @Autowired
-    private AuthConverterCloudV20 authConverterCloudV20;
+    private ServiceConverterCloudV20 serviceConverterCloudV20;
+    @Autowired
+    private TenantConverterCloudV20 tenantConverterCloudV20;
+    @Autowired
+    private TenantService tenantService;
     @Autowired
     private TokenConverterCloudV20 tokenConverterCloudV20;
     @Autowired
     private UserConverterCloudV20 userConverterCloudV20;
     @Autowired
-    private EndpointConverterCloudV20 endpointConverterCloudV20;
+    private UserGroupService userGroupService;
     @Autowired
-    private TenantConverterCloudV20 tenantConverterCloudV20;
-    @Autowired
-    private ServiceConverterCloudV20 serviceConverterCloudV20;
-    @Autowired
-    private RoleConverterCloudV20 roleConverterCloudV20;
-    @Autowired
-    private JAXBObjectFactories OBJ_FACTORIES;
-    @Autowired
-    private Configuration config;
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private JAXBElement<Extensions> currentExtensions;
+    private UserService userService;
 
     private HashMap<String, JAXBElement<Extension>> extensionMap;
+    private JAXBElement<Extensions> currentExtensions;
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Override
+    public ResponseBuilder addEndpoint(HttpHeaders httpHeaders,
+        String authToken, String tenantId, EndpointTemplate endpoint) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Tenant tenant = checkAndGetTenant(tenantId);
+
+            CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpoint.getId());
+
+            tenant.addBaseUrlId(String.valueOf(endpoint.getId()));
+            this.tenantService.updateTenant(tenant);
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createEndpoint(
+                    this.endpointConverterCloudV20.toEndpoint(baseUrl)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
+        UriInfo uriInfo, String authToken, EndpointTemplate endpoint) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            CloudBaseUrl baseUrl = this.endpointConverterCloudV20
+                .toCloudBaseUrl(endpoint);
+
+            this.endpointService.addBaseUrl(baseUrl);
+
+            return Response.created(
+                uriInfo.getRequestUriBuilder()
+                    .path(String.valueOf(baseUrl.getBaseUrlId())).build())
+                .entity(
+                    OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory()
+                        .createEndpointTemplate(
+                            this.endpointConverterCloudV20
+                                .toEndpointTemplate(baseUrl)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo,
+        String authToken, Role role) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            ClientRole clientRole = new ClientRole();
+            clientRole.setClientId(role.getServiceId());
+            clientRole.setDescription(role.getDescription());
+            clientRole.setName(role.getName());
+
+            this.clientService.addClientRole(clientRole);
+
+            return Response
+                .created(
+                    uriInfo.getRequestUriBuilder().path(clientRole.getId())
+                        .build()).entity(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole(
+                        this.roleConverterCloudV20
+                            .toRoleFromClientRole(clientRole)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders,
+        String authToken, String tenantId, String userId, String roleId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Tenant tenant = checkAndGetTenant(tenantId);
+
+            User user = checkAndGetUser(userId);
+
+            ClientRole role = checkAndGetClientRole(roleId);
+
+            TenantRole tenantrole = new TenantRole();
+            tenantrole.setClientId(role.getClientId());
+            tenantrole.setRoleRsId(role.getId());
+            tenantrole.setUserId(user.getId());
+            tenantrole.setTenantIds(new String[]{tenant.getTenantId()});
+
+            this.tenantService.addTenantRoleToUser(user, tenantrole);
+
+            return Response.ok();
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo,
+        String authToken, Service service) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Application client = new Application();
+            client.setOpenStackType(service.getType());
+            client.setDescription(service.getDescription());
+            client.setName(service.getType());
+
+            this.clientService.add(client);
+
+            service.setId(client.getClientId());
+
+            return Response.created(
+                uriInfo.getRequestUriBuilder().path(service.getId()).build())
+                .entity(
+                    OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory()
+                        .createService(service));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    // KSADM Extension Tenant Methods
+    @Override
+    public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo,
+        String authToken, org.openstack.docs.identity.api.v2.Tenant tenant) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Tenant savedTenant = this.tenantConverterCloudV20
+                .toTenantDO(tenant);
+
+            this.tenantService.addTenant(savedTenant);
+
+            return Response.created(
+                uriInfo.getRequestUriBuilder().path(savedTenant.getTenantId())
+                    .build()).entity(
+                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenant(
+                    this.tenantConverterCloudV20.toTenant(savedTenant)));
+
+        } catch (DuplicateException de) {
+            return tenantConflictExceptionResponse(de.getMessage());
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo,
+        String authToken, org.openstack.docs.identity.api.v2.User user) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            User userDO = this.userConverterCloudV20.toUserDO(user);
+
+            this.userService.addUser(userDO);
+
+            return Response.created(
+                uriInfo.getRequestUriBuilder().path(user.getId()).build())
+                .entity(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(
+                        this.userConverterCloudV20.toUser(userDO)));
+
+        } catch (DuplicateException de) {
+            return userConflictExceptionResponse(de.getMessage());
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders,
+        String authToken, String userId, String body) throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            JAXBElement<? extends CredentialType> creds = null;
+
+            if (httpHeaders.getMediaType().isCompatible(
+                MediaType.APPLICATION_XML_TYPE)) {
+                creds = getXMLCredentials(body);
+            } else {
+                creds = getJSONCredentials(body);
+            }
+
+            String username = null;
+            String password = null;
+            String apiKey = null;
+
+            User user = null;
+
+            if (creds.getDeclaredType().isAssignableFrom(
+                PasswordCredentialsRequiredUsername.class)) {
+                PasswordCredentialsRequiredUsername userCreds = (PasswordCredentialsRequiredUsername) creds
+                    .getValue();
+                username = userCreds.getUsername();
+                password = userCreds.getPassword();
+                user = checkAndGetUser(userId);
+                if (!username.equals(user.getUsername())) {
+                    String errMsg = "User and UserId mis-matched";
+                    logger.warn(errMsg);
+                    throw new BadRequestException(errMsg);
+                }
+                user.setPassword(password);
+                this.userService.updateUser(user, false);
+            } else if (creds.getDeclaredType().isAssignableFrom(
+                ApiKeyCredentials.class)) {
+                ApiKeyCredentials userCreds = (ApiKeyCredentials) creds
+                    .getValue();
+                username = userCreds.getUsername();
+                apiKey = userCreds.getApiKey();
+                user = checkAndGetUser(userId);
+                if (!username.equals(user.getUsername())) {
+                    String errMsg = "User and UserId mis-matched";
+                    logger.warn(errMsg);
+                    throw new BadRequestException(errMsg);
+                }
+                user.setApiKey(apiKey);
+                this.userService.updateUser(user, false);
+            }
+
+            return Response.ok(creds).status(Status.CREATED);
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder addUserRole(HttpHeaders httpHeaders,
+        String authToken, String userId, String roleId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            User user = checkAndGetUser(userId);
+
+            ClientRole cRole = checkAndGetClientRole(roleId);
+
+            TenantRole role = new TenantRole();
+            role.setClientId(cRole.getClientId());
+            role.setRoleRsId(cRole.getId());
+
+            this.tenantService.addTenantRoleToUser(user, role);
+
+            return Response.ok();
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
 
     // Core Service Methods
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders,
         AuthenticationRequest authenticationRequest) throws IOException {
 
-        User user = null;
-        UserScopeAccess usa = null;
+        try {
+            User user = null;
+            UserScopeAccess usa = null;
 
-        if (authenticationRequest.getCredential().getDeclaredType()
-            .isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
+            if (authenticationRequest.getCredential().getDeclaredType()
+                .isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
 
-            PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest
-                .getCredential().getValue();
-            String username = creds.getUsername();
-            String password = creds.getPassword();
+                PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest
+                    .getCredential().getValue();
+                String username = creds.getUsername();
+                String password = creds.getPassword();
 
-            if (StringUtils.isBlank(username)) {
-                String errMsg = "Expecting username";
-                logger.warn(errMsg);
-                return badRequestExceptionResponse(errMsg);
-            }
+                if (StringUtils.isBlank(username)) {
+                    String errMsg = "Expecting username";
+                    logger.warn(errMsg);
+                    throw new BadRequestException(errMsg);
+                }
 
-            if (StringUtils.isBlank(password)) {
-                String errMsg = "Expecting password";
-                logger.warn(errMsg);
-                return badRequestExceptionResponse(errMsg);
-            }
+                if (StringUtils.isBlank(password)) {
+                    String errMsg = "Expecting password";
+                    logger.warn(errMsg);
+                    throw new BadRequestException(errMsg);
+                }
 
-            user = this.userService.getUser(username);
+                user = checkAndGetUserByName(username);
 
-            if (user == null) {
-                return userNotFoundExceptionResponse(username);
-            }
-
-            try {
                 usa = this.scopeAccessService
                     .getUserScopeAccessForClientIdByUsernameAndPassword(
                         username, password, getCloudAuthClientId());
-            } catch (NotAuthenticatedException nae) {
-                return notAuthenticatedExceptionResponse(username);
-            } catch (UserDisabledException ude) {
-                return userDisabledExceptionResponse(username);
-            } catch (Exception ex) {
-                return serviceExceptionResponse();
-            }
 
-        } else if (authenticationRequest.getCredential().getDeclaredType()
-            .isAssignableFrom(ApiKeyCredentials.class)) {
-            ApiKeyCredentials creds = (ApiKeyCredentials) authenticationRequest
-                .getCredential().getValue();
-            String username = creds.getUsername();
-            String key = creds.getApiKey();
+            } else if (authenticationRequest.getCredential().getDeclaredType()
+                .isAssignableFrom(ApiKeyCredentials.class)) {
+                ApiKeyCredentials creds = (ApiKeyCredentials) authenticationRequest
+                    .getCredential().getValue();
+                String username = creds.getUsername();
+                String key = creds.getApiKey();
 
-            if (StringUtils.isBlank(username)) {
-                String errMsg = "Expecting username";
-                logger.warn(errMsg);
-                return badRequestExceptionResponse(errMsg);
-            }
+                if (StringUtils.isBlank(username)) {
+                    String errMsg = "Expecting username";
+                    logger.warn(errMsg);
+                    throw new BadRequestException(errMsg);
+                }
 
-            if (StringUtils.isBlank(key)) {
-                String errMsg = "Expecting apiKey";
-                logger.warn(errMsg);
-                return badRequestExceptionResponse(errMsg);
-            }
+                if (StringUtils.isBlank(key)) {
+                    String errMsg = "Expecting apiKey";
+                    logger.warn(errMsg);
+                    throw new BadRequestException(errMsg);
+                }
 
-            user = this.userService.getUser(username);
+                user = checkAndGetUserByName(username);
 
-            if (user == null) {
-                return userNotFoundExceptionResponse(username);
-            }
-
-            try {
                 usa = this.scopeAccessService
                     .getUserScopeAccessForClientIdByUsernameAndApiCredentials(
                         username, key, getCloudAuthClientId());
-            } catch (NotAuthenticatedException nae) {
-                return notAuthenticatedExceptionResponse(username);
-            } catch (UserDisabledException ude) {
-                return userDisabledExceptionResponse(username);
-            } catch (Exception ex) {
-                return serviceExceptionResponse();
             }
+
+            List<TenantRole> roles = this.tenantService
+                .getTenantRolesForScopeAccess(usa);
+
+            if (!belongsTo(authenticationRequest.getTenantId(), roles)
+                && !belongsTo(authenticationRequest.getTenantName(), roles)) {
+
+                String errMsg = "User does not have access to tenant %s";
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
+            }
+
+            List<OpenstackEndpoint> endpoints = this.scopeAccessService
+                .getOpenstackEndpointsForScopeAccess(usa);
+
+            AuthenticateResponse auth = authConverterCloudV20
+                .toAuthenticationResponse(user, usa, roles, endpoints);
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createAccess(auth));
+
+        } catch (NotAuthenticatedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (UserDisabledException ude) {
+            return userDisabledExceptionResponse(ude.getMessage());
+        } catch (BadRequestException bre) {
+            return badRequestExceptionResponse(bre.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
         }
-
-        List<TenantRole> roles = this.tenantService
-            .getTenantRolesForScopeAccess(usa);
-
-        if (!belongsTo(authenticationRequest.getTenantId(), roles)
-            && !belongsTo(authenticationRequest.getTenantName(), roles)) {
-
-            String errMsg = "User does not have access to tenant %s";
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        List<OpenstackEndpoint> endpoints = this.scopeAccessService
-            .getOpenstackEndpointsForScopeAccess(usa);
-
-        AuthenticateResponse auth = authConverterCloudV20
-            .toAuthenticationResponse(user, usa, roles, endpoints);
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createAccess(auth));
-    }
-    @Override
-    public ResponseBuilder listTenants(HttpHeaders httpHeaders,
-        String authToken, String marker, Integer limit) throws IOException {
-
-        List<Tenant> tenants = new ArrayList<Tenant>();
-
-        ScopeAccess sa = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-
-        if (sa != null) {
-            tenants = this.tenantService
-                .getTenantsForScopeAccessByTenantRoles(sa);
-        }
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createTenants(this.tenantConverterCloudV20.toTenantList(tenants)));
     }
 
     @Override
-    public ResponseBuilder listExtensions(HttpHeaders httpHeaders)
-        throws IOException {
+    public ResponseBuilder checkToken(HttpHeaders httpHeaders,
+        String authToken, String tokenId, String belongsTo) throws IOException {
+
         try {
-            if (currentExtensions == null) {
-                JAXBContext jaxbContext = JAXBContext
-                    .newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
-                Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+            checkXAUTHTOKEN(authToken);
 
-                InputStream is = StringUtils.class
-                    .getResourceAsStream("/extensions.xml");
-                StreamSource ss = new StreamSource(is);
+            ScopeAccess sa = checkAndGetToken(tokenId);
 
-                currentExtensions = unmarshaller
-                    .unmarshal(ss, Extensions.class);
+            if (!StringUtils.isBlank(belongsTo)) {
+                UserScopeAccess usa = (UserScopeAccess) sa;
+                List<TenantRole> roles = this.tenantService
+                    .getTenantRolesForScopeAccess(usa);
+
+                if (!belongsTo(belongsTo, roles)) {
+                    throw new NotFoundException();
+                }
             }
 
-            return Response.ok(currentExtensions);
-        } catch (Exception e) {
-            // Return 500 error. Is WEB-IN/extensions.xml malformed?
+            return Response.ok();
+
+        } catch (NotAuthorizedException nae) {
+            return Response.ok().status(Status.UNAUTHORIZED);
+        } catch (ForbiddenException fe) {
+            return Response.ok().status(Status.FORBIDDEN);
+        } catch (NotFoundException nfe) {
+            return Response.ok().status(Status.NOT_FOUND);
+        } catch (Exception ex) {
+            return Response.ok().status(Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders,
+        String authToken, String tenantId, String endpointId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Tenant tenant = checkAndGetTenant(tenantId);
+
+            CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpointId);
+
+            tenant.removeBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+
+            this.tenantService.updateTenant(tenant);
+
+            return Response.noContent();
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, String endpointTemplateId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpointTemplateId);
+
+            this.endpointService.deleteBaseUrl(baseUrl.getBaseUrlId());
+
+            return Response.noContent();
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+
+    }
+
+    @Override
+    public ResponseBuilder deleteRole(HttpHeaders httpHeaders,
+        String authToken, String roleId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            ClientRole role = checkAndGetClientRole(roleId);
+
+            this.clientService.deleteClientRole(role);
+
+            return Response.noContent();
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders,
+        String authToken, String tenantId, String userId, String roleId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Tenant tenant = checkAndGetTenant(tenantId);
+
+            User user = checkAndGetUser(userId);
+
+            ClientRole role = checkAndGetClientRole(roleId);
+
+            TenantRole tenantrole = new TenantRole();
+            tenantrole.setClientId(role.getClientId());
+            tenantrole.setRoleRsId(role.getId());
+            tenantrole.setUserId(user.getId());
+            tenantrole.setTenantIds(new String[]{tenant.getTenantId()});
+
+            this.tenantService.deleteTenantRole(user.getUniqueId(), tenantrole);
+
+            return Response.noContent();
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder deleteService(HttpHeaders httpHeaders,
+        String authToken, String serviceId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Application client = checkAndGetApplication(serviceId);
+
+            this.clientService.delete(client.getClientId());
+
+            return Response.noContent();
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder deleteTenant(HttpHeaders httpHeaders,
+        String authToken, String tenantId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Tenant tenant = checkAndGetTenant(tenantId);
+
+            this.tenantService.deleteTenant(tenant.getTenantId());
+
+            return Response.noContent();
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder deleteUser(HttpHeaders httpHeaders,
+        String authToken, String userId) throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            User user = checkAndGetUser(userId);
+
+            this.userService.softDeleteUser(user);
+
+            return Response.noContent();
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders,
+        String authToken, String userId, String credentialType)
+        throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            if (!(credentialType.equals("passwordCredentials") || credentialType
+                .endsWith("apiKeyCredentials"))) {
+                throw new BadRequestException("unsupported credential type");
+            }
+
+            User user = checkAndGetUser(userId);
+
+            if (credentialType.equals("passwordCredentials")) {
+                user.setPassword("");
+            } else if (credentialType.equals("apiKeyCredentials")) {
+                user.setApiKey("");
+            }
+
+            this.userService.updateUser(user, false);
+
+            return Response.noContent();
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    // ====== END OF CORE METHODS
+
+    // ====== START KSADM Extension Methods
+
+    @Override
+    public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders,
+        String authToken, String userId, String roleId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            User user = checkAndGetUser(userId);
+
+            List<TenantRole> globalRoles = this.tenantService
+                .getGlobalRolesForUser(user);
+
+            TenantRole role = null;
+
+            for (TenantRole globalRole : globalRoles) {
+                if (globalRole.getRoleRsId().equals(roleId)) {
+                    role = globalRole;
+                }
+            }
+
+            if (role == null) {
+                String errMsg = String.format("Role %s not found for user %s",
+                    roleId, userId);
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
+            }
+
+            this.tenantService.deleteGlobalRole(role);
+
+            return Response.noContent();
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder getEndpoint(HttpHeaders httpHeaders,
+        String authToken, String tenantId, String endpointId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Tenant tenant = checkAndGetTenant(tenantId);
+
+            if (!tenant.containsBaseUrlId(endpointId)) {
+                String errMsg = String
+                    .format("Tenant %s does not have endpoint %s", tenantId,
+                        endpointId);
+                logger.warn(errMsg);
+                return notFoundExceptionResponse(errMsg);
+            }
+
+            CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpointId);
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createEndpoint(
+                    this.endpointConverterCloudV20.toEndpoint(baseUrl)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
+        String authToken, String endpointTemplateId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpointTemplateId);
+
+            return Response
+                .ok(OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory()
+                    .createEndpointTemplate(
+                        this.endpointConverterCloudV20
+                            .toEndpointTemplate(baseUrl)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
             return serviceExceptionResponse();
         }
     }
@@ -326,89 +952,986 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     }
 
+    @Override
+    public ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken,
+        String roleId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            ClientRole role = checkAndGetClientRole(roleId);
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createRole(
+                    this.roleConverterCloudV20.toRoleFromClientRole(role)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder getSecretQA(HttpHeaders httpHeaders,
+        String authToken, String userId) throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            User user = checkAndGetUser(userId);
+
+            SecretQA secrets = OBJ_FACTORIES
+                .getRackspaceIdentityExtKsqaV1Factory().createSecretQA();
+
+            secrets.setAnswer(user.getSecretAnswer());
+            secrets.setQuestion(user.getSecretQuestion());
+
+            return Response
+                .ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory()
+                    .createSecretQA(secrets));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder getService(HttpHeaders httpHeaders,
+        String authToken, String serviceId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Application client = checkAndGetApplication(serviceId);
+
+            return Response.ok(OBJ_FACTORIES
+                .getOpenStackIdentityExtKsadmnV1Factory().createService(
+                    this.serviceConverterCloudV20.toService(client)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    // Core Admin Tenant Methods
+    @Override
+    public ResponseBuilder getTenantById(HttpHeaders httpHeaders,
+        String authToken, String tenantsId) throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Tenant tenant = checkAndGetTenant(tenantsId);
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createTenant(this.tenantConverterCloudV20.toTenant(tenant)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder getTenantByName(HttpHeaders httpHeaders,
+        String authToken, String name) throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Tenant tenant = this.tenantService.getTenantByName(name);
+            if (tenant == null) {
+                String errMsg = String.format(
+                    "Tenant with id/name: '%s' was not found", name);
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
+            }
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createTenant(this.tenantConverterCloudV20.toTenant(tenant)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder getUserById(HttpHeaders httpHeaders,
+        String authToken, String userId) throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            User user = checkAndGetUser(userId);
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createUser(this.userConverterCloudV20.toUser(user)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    // Core Admin User Methods
+    @Override
+    public ResponseBuilder getUserByName(HttpHeaders httpHeaders,
+        String authToken, String name) throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            User user = this.userService.getUser(name);
+
+            if (user == null) {
+                String errMsg = String.format("User %s not found", name);
+                logger.warn(errMsg);
+                throw new NotFoundException("User not found");
+            }
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createUser(this.userConverterCloudV20.toUser(user)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder getUserCredential(HttpHeaders httpHeaders,
+        String authToken, String userId, String credentialType)
+        throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            if (!(credentialType.equals("passwordCredentials") || credentialType
+                .endsWith("apiKeyCredentials"))) {
+                throw new BadRequestException("unsupported credential type");
+            }
+
+            User user = checkAndGetUser(userId);
+
+            JAXBElement<? extends CredentialType> creds = null;
+
+            if (credentialType.equals("passwordCredentials")) {
+                if (StringUtils.isBlank(user.getPassword())) {
+                    throw new NotFoundException(
+                        "User doesn't have password credentials");
+                }
+                PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
+                userCreds.setPassword(user.getPassword());
+                userCreds.setUsername(user.getUsername());
+                creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                    .createCredential(userCreds);
+
+            } else if (credentialType.equals("RAX-KSKEY:apiKeyCredentials")) {
+                if (StringUtils.isBlank(user.getApiKey())) {
+                    throw new NotFoundException(
+                        "User doesn't have api key credentials");
+                }
+                ApiKeyCredentials userCreds = new ApiKeyCredentials();
+                userCreds.setApiKey(user.getApiKey());
+                userCreds.setUsername(user.getUsername());
+                creds = OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory()
+                    .createApiKeyCredentials(userCreds);
+            }
+
+            return Response.ok(creds);
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder getUserRole(HttpHeaders httpHeaders,
+        String authToken, String userId, String roleId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            User user = checkAndGetUser(userId);
+
+            List<TenantRole> globalRoles = this.tenantService
+                .getGlobalRolesForUser(user);
+
+            TenantRole role = null;
+
+            for (TenantRole globalRole : globalRoles) {
+                if (globalRole.getRoleRsId().equals(roleId)) {
+                    role = globalRole;
+                }
+            }
+
+            if (role == null) {
+                String errMsg = String.format("Role %s not found for user %s",
+                    roleId, userId);
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
+            }
+
+            ClientRole cRole = checkAndGetClientRole(roleId);
+
+            role.setDescription(cRole.getDescription());
+            role.setName(cRole.getName());
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createRole(this.roleConverterCloudV20.toRole(role)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder listCredentials(HttpHeaders httpHeaders,
+        String authToken, String userId, String marker, Integer limit)
+        throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            User user = checkAndGetUser(userId);
+
+            CredentialListType creds = OBJ_FACTORIES
+                .getOpenStackIdentityV2Factory().createCredentialListType();
+
+            if (!StringUtils.isBlank(user.getPassword())) {
+                PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
+                userCreds.setPassword(user.getPassword());
+                userCreds.setUsername(user.getUsername());
+                creds.getCredential().add(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                        .createPasswordCredentials(userCreds));
+            }
+
+            if (!StringUtils.isBlank(user.getApiKey())) {
+                ApiKeyCredentials userCreds = new ApiKeyCredentials();
+                userCreds.setApiKey(user.getApiKey());
+                userCreds.setUsername(user.getUsername());
+                creds.getCredential().add(
+                    OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory()
+                        .createApiKeyCredentials(userCreds));
+            }
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createCredentials(creds));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder listEndpoints(HttpHeaders httpHeaders,
+        String authToken, String tenantId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Tenant tenant = checkAndGetTenant(tenantId);
+
+            List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
+            for (String id : tenant.getBaseUrlIds()) {
+                Integer baseUrlId = Integer.parseInt(id);
+                baseUrls.add(this.endpointService.getBaseUrlById(baseUrlId));
+            }
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createEndpoints(
+                    this.endpointConverterCloudV20
+                        .toEndpointListFromBaseUrls(baseUrls)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders,
+        String authToken, String tokenId) throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            ScopeAccess sa = checkAndGetToken(tokenId);
+
+            List<OpenstackEndpoint> endpoints = this.scopeAccessService
+                .getOpenstackEndpointsForScopeAccess(sa);
+
+            EndpointList list = this.endpointConverterCloudV20
+                .toEndpointList(endpoints);
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createEndpoints(list));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
+        String authToken, String serviceId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            List<CloudBaseUrl> baseUrls = null;
+
+            if (StringUtils.isBlank(serviceId)) {
+                baseUrls = this.endpointService.getBaseUrls();
+            } else {
+                Application client = checkAndGetApplication(serviceId);
+                baseUrls = this.endpointService.getBaseUrlsByServiceId(client
+                    .getOpenStackType());
+            }
+
+            return Response.ok(OBJ_FACTORIES
+                .getOpenStackIdentityExtKscatalogV1Factory()
+                .createEndpointTemplates(
+                    this.endpointConverterCloudV20
+                        .toEndpointTemplateList(baseUrls)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder listExtensions(HttpHeaders httpHeaders)
+        throws IOException {
+        try {
+            if (currentExtensions == null) {
+                JAXBContext jaxbContext = JAXBContext
+                    .newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
+                Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+
+                InputStream is = StringUtils.class
+                    .getResourceAsStream("/extensions.xml");
+                StreamSource ss = new StreamSource(is);
+
+                currentExtensions = unmarshaller
+                    .unmarshal(ss, Extensions.class);
+            }
+
+            return Response.ok(currentExtensions);
+        } catch (Exception e) {
+            // Return 500 error. Is WEB-IN/extensions.xml malformed?
+            return serviceExceptionResponse();
+        }
+    }
+
+    // KSADM Extension Role Methods
+    @Override
+    public ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken,
+        String serviceId, String marker, Integer limit) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            List<ClientRole> roles = null;
+
+            if (StringUtils.isBlank(serviceId)) {
+                roles = this.clientService.getAllClientRoles(null);
+            } else {
+                roles = this.clientService.getClientRolesByClientId(serviceId);
+            }
+
+            return Response
+                .ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                    .createRoles(
+                        this.roleConverterCloudV20
+                            .toRoleListFromClientRoles(roles)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders,
+        String authToken, String tenantId, String marker, Integer limit) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            // TODO write me
+            return Response.status(Status.NOT_FOUND);
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders,
+        String authToken, String tenantsId, String userId) throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Tenant tenant = checkAndGetTenant(tenantsId);
+
+            User user = checkAndGetUser(userId);
+
+            List<TenantRole> roles = this.tenantService
+                .getTenantRolesForUserOnTenant(user, tenant);
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+
+    }
+
+    // KSADM Extension Role Methods
+    @Override
+    public ResponseBuilder listServices(HttpHeaders httpHeaders,
+        String authToken, String marker, Integer limit) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            List<Application> clients = this.clientService
+                .getOpenStackServices();
+
+            return Response.ok(OBJ_FACTORIES
+                .getOpenStackIdentityExtKsadmnV1Factory().createServices(
+                    this.serviceConverterCloudV20.toServiceList(clients)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder listTenants(HttpHeaders httpHeaders,
+        String authToken, String marker, Integer limit) throws IOException {
+
+        List<Tenant> tenants = new ArrayList<Tenant>();
+
+        ScopeAccess sa = this.scopeAccessService
+            .getScopeAccessByAccessToken(authToken);
+
+        if (sa != null) {
+            tenants = this.tenantService
+                .getTenantsForScopeAccessByTenantRoles(sa);
+        }
+
+        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createTenants(this.tenantConverterCloudV20.toTenantList(tenants)));
+    }
+
+    @Override
+    public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders,
+        String authToken, String userId) throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            User user = checkAndGetUser(userId);
+
+            List<TenantRole> roles = this.tenantService
+                .getGlobalRolesForUser(user);
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId)
+        throws IOException {
+        if (userId == null || userId.isEmpty()) {
+            return Response.status(Status.BAD_REQUEST);
+        }
+        User user = this.userService.getUserById(userId);
+        if (user == null) {
+            return Response.status(Status.NOT_FOUND);
+        }
+        Integer mossoId = user.getMossoId();
+        if (mossoId == null) {
+            return Response.status(Status.NOT_FOUND);
+        }
+        List<Group> groups = this.userGroupService.getGroups(mossoId);
+
+        return Response.ok(groups);
+    }
+
+    @Override
+    public ResponseBuilder listUserRoles(HttpHeaders httpHeaders,
+        String authToken, String userId, String serviceId) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            User user = checkAndGetUser(userId);
+
+            List<TenantRole> roles = this.tenantService
+                .getGlobalRolesForUser(user);
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    // KSADM Extension User methods
+    @Override
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken,
+        String marker, int limit) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            // TODO write me
+            return Response.status(Status.NOT_FOUND);
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders,
+        String authToken, String tenantId, String marker, Integer limit) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Tenant tenant = checkAndGetTenant(tenantId);
+
+            List<User> users = this.tenantService.getUsersForTenant(tenant
+                .getTenantId());
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createUsers(this.userConverterCloudV20.toUserList(users)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders,
+        String authToken, String tenantId, String roleId, String marker,
+        Integer limit) {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Tenant tenant = checkAndGetTenant(tenantId);
+
+            ClientRole role = checkAndGetClientRole(roleId);
+
+            List<User> users = this.tenantService.getUsersWithTenantRole(
+                tenant, role);
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createUsers(this.userConverterCloudV20.toUserList(users)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders,
+        String authToken, String userId, UserWithOnlyEnabled user)
+        throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            User userDO = checkAndGetUser(userId);
+
+            userDO.setEnabled(user.isEnabled());
+            this.userService.updateUser(userDO, false);
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createUser(this.userConverterCloudV20.toUser(userDO)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    public void setUserGroupService(UserGroupService userGroupService) {
+        this.userGroupService = userGroupService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    @Override
+    public ResponseBuilder updateSecretQA(HttpHeaders httpHeaders,
+        String authToken, String userId, SecretQA secrets) throws IOException,
+        JAXBException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            if (StringUtils.isBlank(secrets.getAnswer())) {
+                throw new BadRequestException("Excpeting answer");
+            }
+
+            if (StringUtils.isBlank(secrets.getQuestion())) {
+                throw new BadRequestException("Excpeting question");
+            }
+
+            User user = checkAndGetUser(userId);
+
+            user.setSecretAnswer(secrets.getAnswer());
+            user.setSecretQuestion(secrets.getQuestion());
+
+            this.userService.updateUser(user, false);
+
+            return Response
+                .ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory()
+                    .createSecretQA(secrets));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder updateTenant(HttpHeaders httpHeaders,
+        String authToken, String tenantId,
+        org.openstack.docs.identity.api.v2.Tenant tenant) throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            Tenant tenantDO = checkAndGetTenant(tenantId);
+
+            tenantDO.setDescription(tenant.getDescription());
+            tenantDO.setDisplayName(tenant.getDisplayName());
+            tenantDO.setEnabled(tenant.isEnabled());
+            tenantDO.setName(tenant.getName());
+
+            this.tenantService.updateTenant(tenantDO);
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createTenant(this.tenantConverterCloudV20.toTenant(tenantDO)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder updateUser(HttpHeaders httpHeaders,
+        String authToken, String userId,
+        org.openstack.docs.identity.api.v2.User user) throws IOException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            User retrievedUser = checkAndGetUser(userId);
+
+            User userDO = this.userConverterCloudV20.toUserDO(user);
+
+            retrievedUser.copyChanges(userDO);
+
+            this.userService.updateUser(retrievedUser, false);
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createUser(this.userConverterCloudV20.toUser(retrievedUser)));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder updateUserApiKeyCredentials(HttpHeaders httpHeaders,
+        String authToken, String userId, String credentialType,
+        ApiKeyCredentials creds) throws IOException, JAXBException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            if (StringUtils.isBlank(creds.getApiKey())) {
+                String errMsg = "Expecting apikey";
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
+            }
+
+            User user = checkAndGetUser(userId);
+
+            user.setApiKey(creds.getApiKey());
+            this.userService.updateUser(user, false);
+
+            return Response.ok(OBJ_FACTORIES
+                .getRackspaceIdentityExtKskeyV1Factory()
+                .createApiKeyCredentials(creds));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
+    @Override
+    public ResponseBuilder updateUserPasswordCredentials(
+        HttpHeaders httpHeaders, String authToken, String userId,
+        String credentialType, PasswordCredentialsRequiredUsername creds)
+        throws IOException, JAXBException {
+
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            if (creds.getPassword() == null) {
+                String errMsg = "Expecting password";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
+
+            User user = checkAndGetUser(userId);
+
+            user.setPassword(creds.getPassword());
+            this.userService.updateUser(user, false);
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createPasswordCredentials(creds));
+
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
+    }
+
     // Core Admin Token Methods
     @Override
     public ResponseBuilder validateToken(HttpHeaders httpHeaders,
         String authToken, String tokenId, String belongsTo) throws IOException {
 
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
+        try {
+            checkXAUTHTOKEN(authToken);
 
-        ScopeAccess sa = this.scopeAccessService
-            .getScopeAccessByAccessToken(tokenId);
+            ScopeAccess sa = checkAndGetToken(tokenId);
 
-        if (sa == null) {
-            String errMsg = String.format("Token %s not found", tokenId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse("Token not found");
-        }
+            AuthenticateResponse access = OBJ_FACTORIES
+                .getOpenStackIdentityV2Factory().createAuthenticateResponse();
 
-        AuthenticateResponse access = OBJ_FACTORIES
-            .getOpenStackIdentityV2Factory().createAuthenticateResponse();
+            access.setToken(this.tokenConverterCloudV20.toToken(sa));
 
-        access.setToken(this.tokenConverterCloudV20.toToken(sa));
+            if (sa instanceof UserScopeAccess) {
+                UserScopeAccess usa = (UserScopeAccess) sa;
+                User user = this.userService.getUser(usa.getUsername());
+                List<TenantRole> roles = this.tenantService
+                    .getTenantRolesForScopeAccess(usa);
+                if (roles != null && roles.size() > 0) {
+                    access.setUser(this.userConverterCloudV20
+                        .toUserForAuthenticateResponse(user, roles));
+                }
 
-        if (sa instanceof UserScopeAccess) {
-            UserScopeAccess usa = (UserScopeAccess) sa;
-            User user = this.userService.getUser(usa.getUsername());
-            List<TenantRole> roles = this.tenantService
-                .getTenantRolesForScopeAccess(usa);
-            if (roles != null && roles.size() > 0) {
-                access.setUser(this.userConverterCloudV20
-                    .toUserForAuthenticateResponse(user, roles));
+                if (!belongsTo(belongsTo, roles)) {
+                    String errMsg = String.format(
+                        "Token doesn't belong to Tenant with Id: '%s'",
+                        belongsTo);
+                    logger.warn(errMsg);
+                    throw new NotFoundException(errMsg);
+                }
             }
 
-            if (!belongsTo(belongsTo, roles)) {
-                String errMsg = String.format(
-                    "Token doesn't belong to Tenant with Id: '%s'", belongsTo);
-                logger.warn(errMsg);
-                return notFoundExceptionResponse(errMsg);
-            }
-        }
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createAccess(access));
 
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createAccess(access));
+        } catch (NotAuthorizedException nae) {
+            return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (ForbiddenException fe) {
+            return forbiddenExceptionResponse(fe.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (Exception ex) {
+            return serviceExceptionResponse();
+        }
     }
 
-    @Override
-    public ResponseBuilder checkToken(HttpHeaders httpHeaders,
-        String authToken, String tokenId, String belongsTo) throws IOException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            return Response.ok().status(Status.FORBIDDEN);
-        }
-
-        ScopeAccess sa = this.scopeAccessService
-            .getScopeAccessByAccessToken(tokenId);
-
-        if (sa == null || !(sa instanceof UserScopeAccess)) {
-            String errMsg = String.format("Token %s not found", tokenId);
-            logger.warn(errMsg);
-            return Response.ok().status(Status.NOT_FOUND);
-        }
-
-        if (!StringUtils.isBlank(belongsTo)) {
-            UserScopeAccess usa = (UserScopeAccess) sa;
-            List<TenantRole> roles = this.tenantService
-                .getTenantRolesForScopeAccess(usa);
-
-            if (!belongsTo(belongsTo, roles)) {
-                return Response.ok().status(Status.NOT_FOUND);
-            }
-        }
-
-        return Response.ok();
+    private Response.ResponseBuilder badRequestExceptionResponse(String message) {
+        BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createBadRequestFault();
+        fault.setCode(HttpServletResponse.SC_BAD_REQUEST);
+        fault.setMessage(message);
+        fault.setDetails(MDC.get(Audit.GUUID));
+        return Response.status(HttpServletResponse.SC_BAD_REQUEST).entity(
+            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
+                fault));
     }
 
     private boolean belongsTo(String belongsTo, List<TenantRole> roles) {
@@ -428,582 +1951,137 @@ public class DefaultCloud20Service implements Cloud20Service {
         return ok;
     }
 
-    @Override
-    public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders,
-        String authToken, String tokenId) throws IOException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
+    private Application checkAndGetApplication(String applicationId) {
+        Application application = this.clientService.getById(applicationId);
+        if (application == null) {
+            String errMsg = String
+                .format("Service %s not found", applicationId);
             logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
+            throw new NotFoundException(errMsg);
         }
+        return application;
+    }
 
+    private ClientRole checkAndGetClientRole(String id) {
+        ClientRole cRole = this.clientService.getClientRoleById(id);
+        if (cRole == null) {
+            String errMsg = String.format("Role %s not found", id);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        return cRole;
+    }
+
+    private CloudBaseUrl checkAndGetEndpointTemplate(int baseUrlId) {
+        CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseUrlId);
+        if (baseUrl == null) {
+            String errMsg = String.format("EnpointTemplate %s not found",
+                baseUrlId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        return baseUrl;
+    }
+    
+    private CloudBaseUrl checkAndGetEndpointTemplate(String id) {
+        Integer baseUrlId;
+        try {
+            baseUrlId = Integer.parseInt(id);
+        } catch (NumberFormatException nfe) {
+            String errMsg = String.format("EnpointTemplate %s not found", id);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        return checkAndGetEndpointTemplate(baseUrlId);
+    }
+
+    private Tenant checkAndGetTenant(String tenantId) {
+        Tenant tenant = this.tenantService.getTenant(tenantId);
+
+        if (tenant == null) {
+            String errMsg = String.format(
+                "Tenant with id/name: '%s' was not found", tenantId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        return tenant;
+    }
+
+    private ScopeAccess checkAndGetToken(String tokenId) {
         ScopeAccess sa = this.scopeAccessService
             .getScopeAccessByAccessToken(tokenId);
 
         if (sa == null) {
             String errMsg = String.format("Token %s not found", tokenId);
             logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
+            throw new NotFoundException("Token not found");
         }
 
-        List<OpenstackEndpoint> endpoints = this.scopeAccessService
-            .getOpenstackEndpointsForScopeAccess(sa);
-
-        EndpointList list = this.endpointConverterCloudV20
-            .toEndpointList(endpoints);
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createEndpoints(list));
+        return sa;
     }
 
-    // Core Admin User Methods
-    @Override
-    public ResponseBuilder getUserByName(HttpHeaders httpHeaders,
-        String authToken, String name) throws IOException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        User user = this.userService.getUser(name);
+    private User checkAndGetUser(String id) {
+        User user = this.userService.getUserById(id);
 
         if (user == null) {
-            String errMsg = String.format("User %s not found", name);
+            String errMsg = String.format("User %s not found", id);
             logger.warn(errMsg);
-            return notFoundExceptionResponse("User not found");
+            throw new NotFoundException("User not found");
         }
 
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createUser(this.userConverterCloudV20.toUser(user)));
+        return user;
     }
 
-    @Override
-    public ResponseBuilder getUserById(HttpHeaders httpHeaders,
-        String authToken, String userId) throws IOException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        User user = this.userService.getUserById(userId);
+    private User checkAndGetUserByName(String username) {
+        User user = this.userService.getUser(username);
 
         if (user == null) {
-            String errMsg = String.format("User %s not found", userId);
+            String errMsg = String.format("User %s not found", username);
             logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
+            throw new NotFoundException("User not found");
         }
 
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createUser(this.userConverterCloudV20.toUser(user)));
+        return user;
     }
 
-    @Override
-    public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders,
-        String authToken, String userId) throws IOException {
+    private void checkXAUTHTOKEN(String authToken) {
+        if (StringUtils.isBlank(authToken)) {
+            throw new NotAuthorizedException(
+                "No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+        }
 
         ScopeAccess authScopeAccess = this.scopeAccessService
             .getScopeAccessByAccessToken(authToken);
+        if (authScopeAccess == null
+            || ((HasAccessToken) authScopeAccess)
+                .isAccessTokenExpired(new DateTime())) {
+            throw new NotAuthorizedException(
+                "No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+        }
+
         boolean authorized = this.authorizationService
             .authorizeCloudAdmin(authScopeAccess);
         if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        User user = this.userService.getUserById(userId);
-
-        if (user == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        List<TenantRole> roles = this.tenantService.getGlobalRolesForUser(user);
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
-    }
-
-    // Core Admin Tenant Methods
-    @Override
-    public ResponseBuilder getTenantById(HttpHeaders httpHeaders,
-        String authToken, String tenantsId) throws IOException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Tenant tenant = this.tenantService.getTenant(tenantsId);
-
-        if (tenant == null) {
             String errMsg = String.format(
-                "Tenant with id/name: '%s' was not found", tenantsId);
+                "Token %s Forbidden from making this call", authToken);
             logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
+            throw new ForbiddenException(errMsg);
         }
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createTenant(this.tenantConverterCloudV20.toTenant(tenant)));
     }
 
-    @Override
-    public ResponseBuilder getTenantByName(HttpHeaders httpHeaders,
-        String authToken, String name) throws IOException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Tenant tenant = this.tenantService.getTenantByName(name);
-
-        if (tenant == null) {
-            String errMsg = String.format(
-                "Tenant with id/name: '%s' was not found", name);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createTenant(this.tenantConverterCloudV20.toTenant(tenant)));
+    private Response.ResponseBuilder forbiddenExceptionResponse(String errMsg) {
+        ForbiddenFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createForbiddenFault();
+        fault.setCode(HttpServletResponse.SC_FORBIDDEN);
+        fault.setMessage(errMsg);
+        fault.setDetails(MDC.get(Audit.GUUID));
+        return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(
+            OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createForbidden(fault));
     }
 
-    @Override
-    public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantsId, String userId) throws IOException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Tenant tenant = this.tenantService.getTenant(tenantsId);
-
-        if (tenant == null) {
-            String errMsg = String.format("Tenant %s not found", tenantsId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        User user = this.userService.getUserById(userId);
-
-        if (user == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        List<TenantRole> roles = this.tenantService
-            .getTenantRolesForUserOnTenant(user, tenant);
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
-
-    }
-
-    // ====== END OF CORE METHODS
-
-    // ====== START KSADM Extension Methods
-
-    // KSADM Extension User methods
-    @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken,
-        String marker, int limit) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        // TODO write me
-        return Response.status(Status.NOT_FOUND);
-    }
-
-    @Override
-    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId) throws IOException {
-        if(userId==null || userId.isEmpty()){
-            return Response.status(Status.BAD_REQUEST);
-        }
-        User user = this.userService.getUserById(userId);
-        if(user==null){
-            return Response.status(Status.NOT_FOUND);
-        }
-        Integer mossoId = user.getMossoId();
-        if(mossoId==null){
-            return Response.status(Status.NOT_FOUND);
-        }
-        List<Group> groups = this.userGroupService.getGroups(mossoId);
-
-        return Response.ok(groups);
-    }
-
-    @Override
-    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo,
-        String authToken, org.openstack.docs.identity.api.v2.User user) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        User userDO = this.userConverterCloudV20.toUserDO(user);
-
-        this.userService.addUser(userDO);
-
-        return Response.created(
-            uriInfo.getRequestUriBuilder().path(user.getId()).build()).entity(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(
-                        this.userConverterCloudV20.toUser(userDO)));
-    }
-
-    @Override
-    public ResponseBuilder updateUser(HttpHeaders httpHeaders,
-        String authToken, String userId,
-        org.openstack.docs.identity.api.v2.User user) throws IOException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        User retrievedUser = this.userService.getUserById(userId);
-
-        if (retrievedUser == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        User userDO = this.userConverterCloudV20.toUserDO(user);
-
-        retrievedUser.copyChanges(userDO);
-
-        this.userService.updateUser(retrievedUser, false);
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createUser(this.userConverterCloudV20.toUser(retrievedUser)));
-    }
-
-    @Override
-    public ResponseBuilder deleteUser(HttpHeaders httpHeaders,
-        String authToken, String userId) throws IOException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        User user = this.userService.getUserById(userId);
-
-        if (user == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        this.userService.softDeleteUser(user);
-
-        return Response.noContent();
-    }
-
-    @Override
-    public ResponseBuilder listUserRoles(HttpHeaders httpHeaders,
-        String authToken, String userId, String serviceId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        User user = this.userService.getUserById(userId);
-
-        if (user == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        List<TenantRole> roles = this.tenantService.getGlobalRolesForUser(user);
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
-    }
-
-    @Override
-    public ResponseBuilder addUserRole(HttpHeaders httpHeaders,
-        String authToken, String userId, String roleId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        User user = this.userService.getUserById(userId);
-        if (user == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        ClientRole cRole = this.clientService.getClientRoleById(roleId);
-        if (cRole == null) {
-            String errMsg = String.format("Role %s not found", roleId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        TenantRole role = new TenantRole();
-        role.setClientId(cRole.getClientId());
-        role.setRoleRsId(cRole.getId());
-
-        this.tenantService.addTenantRoleToUser(user, role);
-
-        return Response.ok();
-    }
-
-    @Override
-    public ResponseBuilder getUserRole(HttpHeaders httpHeaders,
-        String authToken, String userId, String roleId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        User user = this.userService.getUserById(userId);
-        if (user == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        List<TenantRole> globalRoles = this.tenantService
-            .getGlobalRolesForUser(user);
-
-        TenantRole role = null;
-
-        for (TenantRole globalRole : globalRoles) {
-            if (globalRole.getRoleRsId().equals(roleId)) {
-                role = globalRole;
-            }
-        }
-
-        if (role == null) {
-            String errMsg = String.format("Role %s not found for user %s",
-                roleId, userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        ClientRole cRole = this.clientService.getClientRoleById(roleId);
-
-        role.setDescription(cRole.getDescription());
-        role.setName(cRole.getName());
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createRole(this.roleConverterCloudV20.toRole(role)));
-    }
-
-    @Override
-    public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders,
-        String authToken, String userId, String roleId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        User user = this.userService.getUserById(userId);
-        if (user == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        List<TenantRole> globalRoles = this.tenantService
-            .getGlobalRolesForUser(user);
-
-        TenantRole role = null;
-
-        for (TenantRole globalRole : globalRoles) {
-            if (globalRole.getRoleRsId().equals(roleId)) {
-                role = globalRole;
-            }
-        }
-
-        if (role == null) {
-            String errMsg = String.format("Role %s not found for user %s",
-                roleId, userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        this.tenantService.deleteGlobalRole(role);
-
-        return Response.noContent();
-    }
-
-    @Override
-    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders,
-        String authToken, String userId, String body) throws IOException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        JAXBElement<? extends CredentialType> creds = null;
-
-        try {
-            if (httpHeaders.getMediaType().isCompatible(
-                MediaType.APPLICATION_XML_TYPE)) {
-                creds = getXMLCredentials(body);
-            } else {
-                creds = getJSONCredentials(body);
-            }
-        } catch (BadRequestException ex) {
-            return badRequestExceptionResponse(ex.getMessage());
-        }
-
-        String username = null;
-        String password = null;
-        String apiKey = null;
-
-        User user = null;
-
-        if (creds.getDeclaredType().isAssignableFrom(
-            PasswordCredentialsRequiredUsername.class)) {
-            PasswordCredentialsRequiredUsername userCreds = (PasswordCredentialsRequiredUsername) creds
-                .getValue();
-            username = userCreds.getUsername();
-            password = userCreds.getPassword();
-            user = this.userService.getUserById(userId);
-            if (user == null) {
-                String errMsg = String.format("User %s not found", userId);
-                logger.warn(errMsg);
-                return notFoundExceptionResponse(errMsg);
-            }
-            if (!username.equals(user.getUsername())) {
-                String errMsg = "User and UserId mis-matched";
-                logger.warn(errMsg);
-                return badRequestExceptionResponse(errMsg);
-            }
-            user.setPassword(password);
-            this.userService.updateUser(user, false);
-        } else if (creds.getDeclaredType().isAssignableFrom(
-            ApiKeyCredentials.class)) {
-            ApiKeyCredentials userCreds = (ApiKeyCredentials) creds.getValue();
-            username = userCreds.getUsername();
-            apiKey = userCreds.getApiKey();
-            user = this.userService.getUserById(userId);
-            if (user == null) {
-                String errMsg = String.format("User %s not found", userId);
-                logger.warn(errMsg);
-                return notFoundExceptionResponse(errMsg);
-            }
-            if (!username.equals(user.getUsername())) {
-                String errMsg = "User and UserId mis-matched";
-                logger.warn(errMsg);
-                return badRequestExceptionResponse(errMsg);
-            }
-            user.setApiKey(apiKey);
-            this.userService.updateUser(user, false);
-        }
-
-        return Response.ok(creds).status(Status.CREATED);
-    }
-
-    @SuppressWarnings("unchecked")
-    private JAXBElement<? extends CredentialType> getXMLCredentials(String body) {
-        JAXBElement<? extends CredentialType> cred = null;
-        try {
-            JAXBContext context = JAXBContextResolver.get();
-            Unmarshaller unmarshaller = context.createUnmarshaller();
-            cred = (JAXBElement<? extends CredentialType>) unmarshaller
-                .unmarshal(new StringReader(body));
-        } catch (JAXBException e) {
-            throw new BadRequestException();
-        }
-        return cred;
+    private String getCloudAuthClientId() {
+        return config.getString("cloudAuth.clientId");
     }
 
     private JAXBElement<? extends CredentialType> getJSONCredentials(
@@ -1057,745 +2135,18 @@ public class DefaultCloud20Service implements Cloud20Service {
         return creds;
     }
 
-    @Override
-    public ResponseBuilder listCredentials(HttpHeaders httpHeaders,
-        String authToken, String userId, String marker, Integer limit)
-        throws IOException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        User user = this.userService.getUserById(userId);
-        if (user == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        CredentialListType creds = OBJ_FACTORIES
-            .getOpenStackIdentityV2Factory().createCredentialListType();
-
-        if (!StringUtils.isBlank(user.getPassword())) {
-            PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
-            userCreds.setPassword(user.getPassword());
-            userCreds.setUsername(user.getUsername());
-            creds.getCredential().add(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createPasswordCredentials(userCreds));
-        }
-
-        if (!StringUtils.isBlank(user.getApiKey())) {
-            ApiKeyCredentials userCreds = new ApiKeyCredentials();
-            userCreds.setApiKey(user.getApiKey());
-            userCreds.setUsername(user.getUsername());
-            creds.getCredential().add(
-                OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory()
-                    .createApiKeyCredentials(userCreds));
-        }
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createCredentials(creds));
-    }
-
-    @Override
-    public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders,
-        String authToken, String userId, String credentialType)
-        throws IOException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        if (!(credentialType.equals("passwordCredentials") || credentialType
-            .endsWith("apiKeyCredentials"))) {
-            return badRequestExceptionResponse("unsupported credential type");
-        }
-
-        User user = this.userService.getUserById(userId);
-        if (user == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        if (credentialType.equals("passwordCredentials")) {
-            user.setPassword("");
-        } else if (credentialType.equals("apiKeyCredentials")) {
-            user.setApiKey("");
-        }
-
-        this.userService.updateUser(user, false);
-
-        return Response.noContent();
-    }
-
-    @Override
-    public ResponseBuilder getUserCredential(HttpHeaders httpHeaders,
-        String authToken, String userId, String credentialType)
-        throws IOException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        if (!(credentialType.equals("passwordCredentials") || credentialType
-            .endsWith("apiKeyCredentials"))) {
-            return badRequestExceptionResponse("unsupported credential type");
-        }
-
-        User user = this.userService.getUserById(userId);
-        if (user == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        JAXBElement<? extends CredentialType> creds = null;
-
-        if (credentialType.equals("passwordCredentials")) {
-            if (StringUtils.isBlank(user.getPassword())) {
-                return notFoundExceptionResponse("User doesn't have password credentials");
-            }
-            PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
-            userCreds.setPassword(user.getPassword());
-            userCreds.setUsername(user.getUsername());
-            creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                .createCredential(userCreds);
-
-        } else if (credentialType.equals("RAX-KSKEY:apiKeyCredentials")) {
-            if (StringUtils.isBlank(user.getApiKey())) {
-                return notFoundExceptionResponse("User doesn't have api key credentials");
-            }
-            ApiKeyCredentials userCreds = new ApiKeyCredentials();
-            userCreds.setApiKey(user.getApiKey());
-            userCreds.setUsername(user.getUsername());
-            creds = OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory()
-                .createApiKeyCredentials(userCreds);
-        }
-
-        return Response.ok(creds);
-    }
-
-    @Override
-    public ResponseBuilder updateUserPasswordCredentials(
-        HttpHeaders httpHeaders, String authToken, String userId,
-        String credentialType, PasswordCredentialsRequiredUsername creds)
-        throws IOException, JAXBException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        if (creds.getPassword() == null) {
-            String errMsg = "Expecting password";
-            logger.warn(errMsg);
-            return badRequestExceptionResponse(errMsg);
-        }
-
-        User user = this.userService.getUserById(userId);
-        if (user == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        user.setPassword(creds.getPassword());
-        this.userService.updateUser(user, false);
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createPasswordCredentials(creds));
-    }
-
-    @Override
-    public ResponseBuilder updateUserApiKeyCredentials(HttpHeaders httpHeaders,
-        String authToken, String userId, String credentialType,
-        ApiKeyCredentials creds) throws IOException, JAXBException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        if (StringUtils.isBlank(creds.getApiKey())) {
-            String errMsg = "Expecting apikey";
-            logger.warn(errMsg);
-            return badRequestExceptionResponse(errMsg);
-        }
-
-        User user = this.userService.getUserById(userId);
-        if (user == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        user.setApiKey(creds.getApiKey());
-        this.userService.updateUser(user, false);
-
-        return Response.ok(OBJ_FACTORIES
-                .getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials(
-                        creds));
-    }
-
-    // KSADM Extension Tenant Methods
-    @Override
-    public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo,
-        String authToken, org.openstack.docs.identity.api.v2.Tenant tenant) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Tenant savedTenant = this.tenantConverterCloudV20.toTenantDO(tenant);
+    @SuppressWarnings("unchecked")
+    private JAXBElement<? extends CredentialType> getXMLCredentials(String body) {
+        JAXBElement<? extends CredentialType> cred = null;
         try {
-            this.tenantService.addTenant(savedTenant);
-        } catch (DuplicateException de) {
-            return tenantConflictExceptionResponse(de.getMessage());
-        } catch (Exception ex) {
-            return serviceExceptionResponse();
+            JAXBContext context = JAXBContextResolver.get();
+            Unmarshaller unmarshaller = context.createUnmarshaller();
+            cred = (JAXBElement<? extends CredentialType>) unmarshaller
+                .unmarshal(new StringReader(body));
+        } catch (JAXBException e) {
+            throw new BadRequestException();
         }
-
-        return Response.created(
-            uriInfo.getRequestUriBuilder().path(savedTenant.getTenantId())
-                .build()).entity(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenant(
-                        this.tenantConverterCloudV20.toTenant(savedTenant)));
-    }
-
-    @Override
-    public ResponseBuilder updateTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantId,
-        org.openstack.docs.identity.api.v2.Tenant tenant) throws IOException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Tenant tenantDO = this.tenantService.getTenant(tenantId);
-        if (tenantDO == null) {
-            String errMsg = String.format("Tenant %s not found", tenantId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        tenantDO.setDescription(tenant.getDescription());
-        tenantDO.setDisplayName(tenant.getDisplayName());
-        tenantDO.setEnabled(tenant.isEnabled());
-        tenantDO.setName(tenant.getName());
-
-        this.tenantService.updateTenant(tenantDO);
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                .createTenant(this.tenantConverterCloudV20.toTenant(tenantDO)));
-    }
-
-    @Override
-    public ResponseBuilder deleteTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Tenant tenant = this.tenantService.getTenant(tenantId);
-        if (tenant == null) {
-            String errMsg = String.format("Tenant %s not found", tenantId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        this.tenantService.deleteTenant(tenantId);
-
-        return Response.noContent();
-    }
-
-    @Override
-    public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantId, String marker, Integer limit) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Tenant tenant = this.tenantService.getTenant(tenantId);
-        if (tenant == null) {
-            String errMsg = String.format("Tenant %s not found", tenantId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        List<User> users = this.tenantService.getUsersForTenant(tenantId);
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                .createUsers(this.userConverterCloudV20.toUserList(users)));
-    }
-
-    @Override
-    public ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantId, String roleId, String marker,
-        Integer limit) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Tenant tenant = this.tenantService.getTenant(tenantId);
-        if (tenant == null) {
-            String errMsg = String.format("Tenant %s not found", tenantId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        ClientRole role = this.clientService.getClientRoleById(roleId);
-        if (role == null) {
-            String errMsg = String.format("Role %s not found", roleId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        List<User> users = this.tenantService.getUsersWithTenantRole(tenant,
-                role);
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createUsers(this.userConverterCloudV20.toUserList(users)));
-    }
-
-    @Override
-    public ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantId, String marker, Integer limit) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        // TODO write me
-        return Response.status(Status.NOT_FOUND);
-    }
-
-    @Override
-    public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantId, String userId, String roleId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Tenant tenant = this.tenantService.getTenant(tenantId);
-        if (tenant == null) {
-            String errMsg = String.format("Tenant %s not found", tenantId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        User user = this.userService.getUserById(userId);
-        if (user == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        ClientRole role = this.clientService.getClientRoleById(roleId);
-        if (role == null) {
-            String errMsg = String.format("Role %s not found", roleId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        TenantRole tenantrole = new TenantRole();
-        tenantrole.setClientId(role.getClientId());
-        tenantrole.setRoleRsId(role.getId());
-        tenantrole.setUserId(user.getId());
-        tenantrole.setTenantIds(new String[]{tenant.getTenantId()});
-
-        this.tenantService.addTenantRoleToUser(user, tenantrole);
-
-        return Response.ok();
-    }
-
-    @Override
-    public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantId, String userId, String roleId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Tenant tenant = this.tenantService.getTenant(tenantId);
-        if (tenant == null) {
-            String errMsg = String.format("Tenant %s not found", tenantId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        User user = this.userService.getUserById(userId);
-        if (user == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        ClientRole role = this.clientService.getClientRoleById(roleId);
-        if (role == null) {
-            String errMsg = String.format("Role %s not found", roleId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        TenantRole tenantrole = new TenantRole();
-        tenantrole.setClientId(role.getClientId());
-        tenantrole.setRoleRsId(role.getId());
-        tenantrole.setUserId(user.getId());
-        tenantrole.setTenantIds(new String[]{tenant.getTenantId()});
-
-        this.tenantService.deleteTenantRole(user.getUniqueId(), tenantrole);
-
-        return Response.noContent();
-    }
-
-    // KSADM Extension Role Methods
-    @Override
-    public ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken,
-        String serviceId, String marker, Integer limit) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        List<ClientRole> roles = null;
-
-        if (StringUtils.isBlank(serviceId)) {
-            roles = this.clientService.getAllClientRoles(null);
-        } else {
-            roles = this.clientService.getClientRolesByClientId(serviceId);
-        }
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                .createRoles(
-                        this.roleConverterCloudV20.toRoleListFromClientRoles(roles)));
-    }
-
-    @Override
-    public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo,
-        String authToken, Role role) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        ClientRole clientRole = new ClientRole();
-        clientRole.setClientId(role.getServiceId());
-        clientRole.setDescription(role.getDescription());
-        clientRole.setName(role.getName());
-
-        this.clientService.addClientRole(clientRole);
-
-        return Response.created(
-            uriInfo.getRequestUriBuilder().path(clientRole.getId()).build())
-            .entity(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                            .createRole(
-                                    this.roleConverterCloudV20
-                                            .toRoleFromClientRole(clientRole)));
-    }
-
-    @Override
-    public ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken,
-        String roleId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        ClientRole role = this.clientService.getClientRoleById(roleId);
-        if (role == null) {
-            String errMsg = String.format("Role %s not found", roleId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                .createRole(this.roleConverterCloudV20.toRoleFromClientRole(role)));
-    }
-
-    @Override
-    public ResponseBuilder deleteRole(HttpHeaders httpHeaders,
-        String authToken, String roleId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        ClientRole role = this.clientService.getClientRoleById(roleId);
-        if (role == null) {
-            String errMsg = String.format("Role %s not found", roleId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        this.clientService.deleteClientRole(role);
-
-        return Response.noContent();
-    }
-
-    // KSADM Extension Role Methods
-    @Override
-    public ResponseBuilder listServices(HttpHeaders httpHeaders,
-        String authToken, String marker, Integer limit) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        List<Application> clients = this.clientService.getOpenStackServices();
-
-        return Response.ok(OBJ_FACTORIES
-                .getOpenStackIdentityExtKsadmnV1Factory().createServices(
-                        this.serviceConverterCloudV20.toServiceList(clients)));
-    }
-
-    @Override
-    public ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo,
-        String authToken, Service service) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Application client = new Application();
-        client.setOpenStackType(service.getType());
-        client.setDescription(service.getDescription());
-        client.setName(service.getType());
-
-        this.clientService.add(client);
-
-        service.setId(client.getClientId());
-
-        return Response.created(
-            uriInfo.getRequestUriBuilder().path(service.getId()).build())
-            .entity(
-                    OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory()
-                            .createService(service));
-    }
-
-    @Override
-    public ResponseBuilder getService(HttpHeaders httpHeaders,
-        String authToken, String serviceId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Application client = this.clientService.getById(serviceId);
-        if (client == null) {
-            String errMsg = String.format("Service %s not found", serviceId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        return Response.ok(OBJ_FACTORIES
-                .getOpenStackIdentityExtKsadmnV1Factory().createService(
-                        this.serviceConverterCloudV20.toService(client)));
-    }
-
-    @Override
-    public ResponseBuilder deleteService(HttpHeaders httpHeaders,
-        String authToken, String serviceId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Application client = this.clientService.getById(serviceId);
-        if (client == null) {
-            String errMsg = String.format("Service %s not found", serviceId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        this.clientService.delete(client.getClientId());
-
-        return Response.noContent();
-    }
-
-    @Override
-    public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders,
-        String authToken, String userId, UserWithOnlyEnabled user)
-        throws IOException {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        User userDO = this.userService.getUserById(userId);
-        if (userDO == null) {
-            String errMsg = String.format("User %s not found", userId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        userDO.setEnabled(user.isEnabled());
-        this.userService.updateUser(userDO, false);
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                .createUser(this.userConverterCloudV20.toUser(userDO)));
-    }
-
-    private Response.ResponseBuilder userNotFoundExceptionResponse(
-        String username) {
-        String errMsg = String.format("User %s not found", username);
-        ItemNotFoundFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createItemNotFoundFault();
-        fault.setCode(HttpServletResponse.SC_NOT_FOUND);
-        fault.setMessage(errMsg);
-        fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFound(
-                        fault));
-    }
-
-    private Response.ResponseBuilder userDisabledExceptionResponse(
-        String username) {
-        String errMsg = String.format("User %s is disabled", username);
-        UserDisabledFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createUserDisabledFault();
-        fault.setCode(HttpServletResponse.SC_FORBIDDEN);
-        fault.setMessage(errMsg);
-        fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(
-            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(
-                    fault));
+        return cred;
     }
 
     private Response.ResponseBuilder notAuthenticatedExceptionResponse(
@@ -1808,18 +2159,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUnauthorized(
-                    fault));
-    }
-
-    private Response.ResponseBuilder forbiddenExceptionResponse(String errMsg) {
-        ForbiddenFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createForbiddenFault();
-        fault.setCode(HttpServletResponse.SC_FORBIDDEN);
-        fault.setMessage(errMsg);
-        fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(
-            OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                .createForbidden(fault));
+                fault));
     }
 
     private Response.ResponseBuilder notFoundExceptionResponse(String message) {
@@ -1830,17 +2170,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFound(
-                fault));
-    }
-
-    private Response.ResponseBuilder badRequestExceptionResponse(String message) {
-        BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createBadRequestFault();
-        fault.setCode(HttpServletResponse.SC_BAD_REQUEST);
-        fault.setMessage(message);
-        fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_BAD_REQUEST).entity(
-            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
                 fault));
     }
 
@@ -1862,297 +2191,34 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setCode(HttpServletResponse.SC_CONFLICT);
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
+        return Response.status(HttpServletResponse.SC_CONFLICT).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenantConflict(
                 fault));
     }
 
-    private String getCloudAuthClientId() {
-        return config.getString("cloudAuth.clientId");
+    private Response.ResponseBuilder userConflictExceptionResponse(
+        String message) {
+        BadRequestFault fault = OBJ_FACTORIES
+            .getOpenStackIdentityV2Factory().createBadRequestFault();
+        fault.setCode(HttpServletResponse.SC_CONFLICT);
+        fault.setMessage(message);
+        fault.setDetails(MDC.get(Audit.GUUID));
+        return Response.status(HttpServletResponse.SC_CONFLICT).entity(
+            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
+                fault));
     }
 
-    @Override
-    public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
-        String authToken, String serviceId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        List<CloudBaseUrl> baseUrls = null;
-
-        if (StringUtils.isBlank(serviceId)) {
-            baseUrls = this.endpointService.getBaseUrls();
-        } else {
-            Application client = this.clientService.getById(serviceId);
-            if (client == null) {
-                String errMsg = String
-                    .format("Serivce %s not found", serviceId);
-                logger.warn(errMsg);
-                return notFoundExceptionResponse(errMsg);
-            }
-            baseUrls = this.endpointService.getBaseUrlsByServiceId(client
-                .getOpenStackType());
-        }
-
-        return Response
-            .ok(OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory()
-                .createEndpointTemplates(
-                    this.endpointConverterCloudV20
-                        .toEndpointTemplateList(baseUrls)));
+    private Response.ResponseBuilder userDisabledExceptionResponse(
+        String username) {
+        String errMsg = String.format("User %s is disabled", username);
+        UserDisabledFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createUserDisabledFault();
+        fault.setCode(HttpServletResponse.SC_FORBIDDEN);
+        fault.setMessage(errMsg);
+        fault.setDetails(MDC.get(Audit.GUUID));
+        return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(
+            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(
+                fault));
     }
 
-    @Override
-    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
-        UriInfo uriInfo, String authToken, EndpointTemplate endpoint) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        CloudBaseUrl baseUrl = this.endpointConverterCloudV20
-            .toCloudBaseUrl(endpoint);
-
-        this.endpointService.addBaseUrl(baseUrl);
-
-        return Response.created(
-            uriInfo.getRequestUriBuilder()
-                .path(String.valueOf(baseUrl.getBaseUrlId())).build())
-            .entity(
-                OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory()
-                    .createEndpointTemplate(
-                        this.endpointConverterCloudV20
-                            .toEndpointTemplate(baseUrl)));
-    }
-
-    @Override
-    public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
-        String authToken, String endpointTemplateId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Integer baseUrlId = Integer.parseInt(endpointTemplateId);
-
-        CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseUrlId);
-        if (baseUrl == null) {
-            String errMsg = String.format("EnpointTemplate %s not found",
-                baseUrlId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        return Response.ok(OBJ_FACTORIES
-            .getOpenStackIdentityExtKscatalogV1Factory()
-            .createEndpointTemplate(
-                this.endpointConverterCloudV20.toEndpointTemplate(baseUrl)));
-    }
-
-    @Override
-    public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders,
-        String authToken, String endpointTemplateId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Integer baseUrlId = Integer.parseInt(endpointTemplateId);
-
-        CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseUrlId);
-        if (baseUrl == null) {
-            String errMsg = String.format("EnpointTemplate %s not found",
-                baseUrlId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        this.endpointService.deleteBaseUrl(baseUrlId);
-
-        return Response.noContent();
-
-    }
-
-    @Override
-    public ResponseBuilder listEndpoints(HttpHeaders httpHeaders,
-        String authToken, String tenantId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Tenant tenant = this.tenantService.getTenant(tenantId);
-        if (tenant == null) {
-            String errMsg = String.format("Tenant %s not found", tenantId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
-        for (String id : tenant.getBaseUrlIds()) {
-            Integer baseUrlId = Integer.parseInt(id);
-            baseUrls.add(this.endpointService.getBaseUrlById(baseUrlId));
-        }
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createEndpoints(
-                this.endpointConverterCloudV20
-                    .toEndpointListFromBaseUrls(baseUrls)));
-    }
-
-    @Override
-    public ResponseBuilder addEndpoint(HttpHeaders httpHeaders,
-        String authToken, String tenantId, EndpointTemplate endpoint) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Tenant tenant = this.tenantService.getTenant(tenantId);
-        if (tenant == null) {
-            String errMsg = String.format("Tenant %s not found", tenantId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(endpoint
-            .getId());
-        if (baseUrl == null) {
-            String errMsg = String.format("EndpointTemplate %s not found",
-                endpoint.getId());
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        tenant.addBaseUrlId(String.valueOf(endpoint.getId()));
-        this.tenantService.updateTenant(tenant);
-
-        return Response
-            .ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint(
-                this.endpointConverterCloudV20.toEndpoint(baseUrl)));
-    }
-
-    @Override
-    public ResponseBuilder getEndpoint(HttpHeaders httpHeaders,
-        String authToken, String tenantId, String endpointId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Tenant tenant = this.tenantService.getTenant(tenantId);
-        if (tenant == null) {
-            String errMsg = String.format("Tenant %s not found", tenantId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        if (!tenant.containsBaseUrlId(endpointId)) {
-            String errMsg = String.format(
-                "Tenant %s does not have endpoint %s", tenantId, endpointId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        Integer baseUrlId = Integer.parseInt(endpointId);
-
-        CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseUrlId);
-        if (baseUrl == null) {
-            String errMsg = String.format("Endpoint %s not found", baseUrlId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        return Response
-            .ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint(
-                this.endpointConverterCloudV20.toEndpoint(baseUrl)));
-    }
-
-    @Override
-    public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders,
-        String authToken, String tenantId, String endpointId) {
-
-        ScopeAccess authScopeAccess = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
-        boolean authorized = this.authorizationService
-            .authorizeCloudAdmin(authScopeAccess);
-        if (!authorized) {
-            String errMsg = String.format("Token %s not authorized", authToken);
-            logger.warn(errMsg);
-            return forbiddenExceptionResponse(errMsg);
-        }
-
-        Tenant tenant = this.tenantService.getTenant(tenantId);
-        if (tenant == null) {
-            String errMsg = String.format("Tenant %s not found", tenantId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        Integer baseUrlId = Integer.parseInt(endpointId);
-
-        CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseUrlId);
-        if (baseUrl == null) {
-            String errMsg = String.format("EndpointTemplate %s not found",
-                baseUrlId);
-            logger.warn(errMsg);
-            return notFoundExceptionResponse(errMsg);
-        }
-
-        tenant.removeBaseUrlId(endpointId);
-
-        this.tenantService.updateTenant(tenant);
-
-        return Response.noContent();
-    }
-
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
-
-    public void setUserGroupService(UserGroupService userGroupService) {
-        this.userGroupService = userGroupService;
-    }
 }
