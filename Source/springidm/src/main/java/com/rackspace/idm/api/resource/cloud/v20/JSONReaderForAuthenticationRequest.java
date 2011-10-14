@@ -18,6 +18,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
+import org.openstack.docs.identity.api.v2.TokenForAuthenticationRequest;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 
@@ -62,6 +63,21 @@ public class JSONReaderForAuthenticationRequest implements
                 if (tenantName != null) {
                     auth.setTenantName(tenantName.toString());
                 }
+                
+                if (obj3.containsKey("token")) {
+                    JSONObject objToken = (JSONObject) parser.parse(obj3.get("token").toString());
+                    
+                    TokenForAuthenticationRequest token = new TokenForAuthenticationRequest();
+                    
+                    Object id = objToken.get("id");
+                    
+                    if (id != null) {
+                        token.setId(id.toString());
+                    }
+                    
+                    auth.setToken(token);
+                }
+                
                 JSONObject obj4;
                 if (obj3.containsKey("RAX-KSKEY:apiKeyCredentials")) {
                     obj4 = (JSONObject) parser.parse(obj3.get(

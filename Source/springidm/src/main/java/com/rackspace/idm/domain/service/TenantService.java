@@ -40,4 +40,5 @@ public interface TenantService {
     List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa);
     List<User> getUsersForTenant(String tenantId);
     List<User> getUsersWithTenantRole(Tenant tenant, ClientRole role);
+    List<TenantRole> getTenantRolesForTenant(String tenantId);
 }

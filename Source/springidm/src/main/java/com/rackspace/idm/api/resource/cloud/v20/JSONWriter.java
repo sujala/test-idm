@@ -17,6 +17,8 @@ import javax.xml.bind.JAXBException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
 import org.openstack.docs.identity.api.v2.CredentialListType;
@@ -53,7 +55,19 @@ public class JSONWriter implements
         MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
         throws IOException, WebApplicationException {
         
-        if (object.getDeclaredType().isAssignableFrom(SecretQA.class)) {
+        if (object.getDeclaredType().isAssignableFrom(Service.class)) {
+
+            Service service = (Service) object.getValue();
+            String jsonText = JSONValue.toJSONString(getService(service));
+            outputStream.write(jsonText.getBytes("UTF-8"));
+            
+        } else if (object.getDeclaredType().isAssignableFrom(ServiceList.class)) {
+
+            ServiceList services = (ServiceList) object.getValue();
+            String jsonText = JSONValue.toJSONString(getServiceList(services));
+            outputStream.write(jsonText.getBytes("UTF-8"));
+            
+        } else if (object.getDeclaredType().isAssignableFrom(SecretQA.class)) {
 
             SecretQA secrets = (SecretQA) object.getValue();
             String jsonText = JSONValue.toJSONString(getSecretQA(secrets));
@@ -135,6 +149,32 @@ public class JSONWriter implements
         outer.put("RAX-KSQA:secretQA", inner);
         inner.put("answer", secrets.getAnswer());
         inner.put("question", secrets.getQuestion());
+        return outer;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private JSONObject getService(Service service) {
+        JSONObject outer = new JSONObject();
+        JSONObject inner = new JSONObject();
+        
+        outer.put("OS-KSADM:service", inner);
+        inner.put("id", service.getId());
+        inner.put("type", service.getType());
+        inner.put("description", service.getDescription());
+        return outer;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private JSONObject getServiceList(ServiceList serviceList) {
+        JSONObject outer = new JSONObject();
+        JSONArray list = new JSONArray();
+
+        outer.put("OS-KSADM:services", list);
+        
+        for (Service service : serviceList.getService()) {
+            list.add(getService(service));
+        }
+
         return outer;
     }
     

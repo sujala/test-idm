@@ -209,6 +209,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             clientRole.setDescription(role.getDescription());
             clientRole.setName(role.getName());
 
+            // FIXME: We need to discuss this (Matt K)
+            if (StringUtils.isBlank(role.getServiceId())) {
+                clientRole.setClientId(getCloudAuthClientId());
+            } else {
+                clientRole.setClientId(role.getServiceId());
+            }
+
             this.clientService.addClientRole(clientRole);
 
             return Response
@@ -463,7 +470,26 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = null;
             UserScopeAccess usa = null;
 
-            if (authenticationRequest.getCredential().getDeclaredType()
+            if (authenticationRequest.getToken() != null
+                && !StringUtils.isBlank(authenticationRequest.getToken()
+                    .getId())) {
+                ScopeAccess sa = this.scopeAccessService
+                    .getScopeAccessByAccessToken(authenticationRequest
+                        .getToken().getId());
+
+                if (sa == null
+                    || ((HasAccessToken) sa)
+                        .isAccessTokenExpired(new DateTime())
+                    || !(sa instanceof UserScopeAccess)) {
+                    String errMsg = "Token not authenticated";
+                    logger.warn(errMsg);
+                    throw new NotAuthenticatedException(errMsg);
+
+                }
+                usa = (UserScopeAccess) sa;
+                user = this.checkAndGetUserByName(usa.getUsername());
+
+            } else if (authenticationRequest.getCredential().getDeclaredType()
                 .isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
 
                 PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest
@@ -1438,8 +1464,13 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             checkXAUTHTOKEN(authToken);
 
-            // TODO write me
-            return Response.status(Status.NOT_FOUND);
+            Tenant tenant = checkAndGetTenant(tenantId);
+
+            List<TenantRole> roles = this.tenantService
+                .getTenantRolesForTenant(tenant.getTenantId());
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
 
         } catch (NotAuthorizedException nae) {
             return notAuthenticatedExceptionResponse(nae.getMessage());
@@ -1982,7 +2013,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
         return baseUrl;
     }
-    
+
     private CloudBaseUrl checkAndGetEndpointTemplate(String id) {
         Integer baseUrlId;
         try {
@@ -2198,8 +2229,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     private Response.ResponseBuilder userConflictExceptionResponse(
         String message) {
-        BadRequestFault fault = OBJ_FACTORIES
-            .getOpenStackIdentityV2Factory().createBadRequestFault();
+        BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_CONFLICT);
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
@@ -2220,5 +2251,4 @@ public class DefaultCloud20Service implements Cloud20Service {
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(
                 fault));
     }
-
 }
