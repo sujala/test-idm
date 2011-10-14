@@ -622,7 +622,7 @@ public class Cloud20VersionResource {
             .build();
     }
 
-    @POST
+    @PUT
     @Path("/users/{userId}/RAX-KSQA/secretqa")
     public Response updateSecretQA(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
