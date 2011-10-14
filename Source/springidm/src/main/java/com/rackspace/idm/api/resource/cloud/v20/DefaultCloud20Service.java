@@ -479,7 +479,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 if (sa == null
                     || ((HasAccessToken) sa)
-                        .isAccessTokenExpired(new DateTime()) || !(sa instanceof UserScopeAccess)) {
+                        .isAccessTokenExpired(new DateTime())
+                    || !(sa instanceof UserScopeAccess)) {
                     String errMsg = "Token not authenticated";
                     logger.warn(errMsg);
                     throw new NotAuthenticatedException(errMsg);
@@ -487,7 +488,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
                 usa = (UserScopeAccess) sa;
                 user = this.checkAndGetUserByName(usa.getUsername());
-                
+
             } else if (authenticationRequest.getCredential().getDeclaredType()
                 .isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
 
@@ -1463,8 +1464,13 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             checkXAUTHTOKEN(authToken);
 
-            // TODO write me
-            return Response.status(Status.NOT_FOUND);
+            Tenant tenant = checkAndGetTenant(tenantId);
+
+            List<TenantRole> roles = this.tenantService
+                .getTenantRolesForTenant(tenant.getTenantId());
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
 
         } catch (NotAuthorizedException nae) {
             return notAuthenticatedExceptionResponse(nae.getMessage());
