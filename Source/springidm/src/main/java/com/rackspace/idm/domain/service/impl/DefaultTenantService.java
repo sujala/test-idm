@@ -110,7 +110,10 @@ public class DefaultTenantService implements TenantService {
             }
         }
         for (String tenantId : tenantIds) {
-            tenants.add(this.getTenant(tenantId));
+            Tenant tenant = this.getTenant(tenantId);
+            if (tenant != null) {
+                tenants.add(this.getTenant(tenantId));
+            }
         }
         logger.info("Got {} tenants", tenants.size());
         return tenants;
@@ -437,7 +440,7 @@ public class DefaultTenantService implements TenantService {
                 roleIds.add(role.getRoleRsId());
             }
         }
-        
+
         List<TenantRole> returnedRoles = new ArrayList<TenantRole>();
         for (String roleId : roleIds) {
             ClientRole cRole = this.clientDao.getClientRoleById(roleId);
