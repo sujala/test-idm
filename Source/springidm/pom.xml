@@ -920,12 +920,21 @@
             <name>eviwareRepository</name>
             <url>http://www.eviware.com/repository/maven2</url>
         </repository>
+        <!--<repository>-->
+            <!--<id>mosso</id>-->
+            <!--<name>mosso</name>-->
+            <!--<url>http://maven.mosso.com/content/groups/everything/</url>-->
+        <!--</repository>-->
         <repository>
-            <id>cloud</id>
-            <name>cloud</name>
+            <id>build3-groups</id>
+            <name>build3-groups</name>
+            <url>http://build3.sat1.core.rackspace.com:8091/nexus/content/groups/public/</url>
+        </repository>
+        <repository>
+            <id>build3-third-party</id>
+            <name>build3-third-party</name>
             <url>http://build3.sat1.core.rackspace.com:8091/nexus/content/repositories/thirdparty</url>
         </repository>
-
     </repositories>
     <pluginRepositories>
         <!-- SoapUI -->
