@@ -563,6 +563,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         } catch (NotAuthenticatedException nae) {
             return notAuthenticatedExceptionResponse(nae.getMessage());
+        } catch (NotFoundException nfe) {
+            return notFoundExceptionResponse(nfe.getMessage());
         } catch (UserDisabledException ude) {
             return userDisabledExceptionResponse(ude.getMessage());
         } catch (BadRequestException bre) {
@@ -1969,6 +1971,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         if (StringUtils.isBlank(belongsTo)) {
             return true;
+        }
+        
+        if (roles == null || roles.size() == 0) {
+            return false;
         }
 
         boolean ok = false;
