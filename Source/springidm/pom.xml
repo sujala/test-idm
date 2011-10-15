@@ -920,6 +920,11 @@
             <name>eviwareRepository</name>
             <url>http://www.eviware.com/repository/maven2</url>
         </repository>
+        <repository>
+            <id>cloud</id>
+            <name>cloud</name>
+            <url>http://build3.sat1.core.rackspace.com:8091/nexus/content/repositories/thirdparty</url>
+        </repository>
 
     </repositories>
     <pluginRepositories>
