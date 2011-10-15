@@ -111,7 +111,7 @@ public class DefaultTenantService implements TenantService {
         }
         for (String tenantId : tenantIds) {
             Tenant tenant = this.getTenant(tenantId);
-            if (tenant != null) {
+            if (tenant != null && tenant.isEnabled()) {
                 tenants.add(this.getTenant(tenantId));
             }
         }
