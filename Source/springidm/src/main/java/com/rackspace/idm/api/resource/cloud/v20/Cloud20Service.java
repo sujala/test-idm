@@ -151,4 +151,7 @@ public interface Cloud20Service {
 
     ResponseBuilder updateSecretQA(HttpHeaders httpHeaders, String authToken,
         String userId, SecretQA secrets) throws IOException, JAXBException;
+
+    ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders,
+        String authToken, String userId, String serviceId) throws IOException;
 }

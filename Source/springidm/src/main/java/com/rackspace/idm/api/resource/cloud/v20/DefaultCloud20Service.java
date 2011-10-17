@@ -67,6 +67,8 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.FilterParam;
+import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.HasAccessToken;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -192,19 +194,19 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             checkXAUTHTOKEN(authToken);
-            
+
             if (StringUtils.isBlank(role.getName())) {
                 String errMsg = "Expecting name";
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
-            
+
             if (StringUtils.isBlank(role.getServiceId())) {
                 String errMsg = "Expecting serviceId";
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
-            
+
             Application service = checkAndGetApplication(role.getServiceId());
 
             ClientRole clientRole = new ClientRole();
@@ -264,22 +266,23 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             checkXAUTHTOKEN(authToken);
-            
+
             // TODO: Uncomment when service is updated to include name
-//            if (StringUtils.isBlank(service.getName)) {
-//                String errMsg = "Expecting name";
-//                logger.warn(errMsg);
-//                throw new BadRequestException(errMsg);
-//            }
+            // if (StringUtils.isBlank(service.getName)) {
+            // String errMsg = "Expecting name";
+            // logger.warn(errMsg);
+            // throw new BadRequestException(errMsg);
+            // }
 
             Application client = new Application();
             client.setOpenStackType(service.getType());
             client.setDescription(service.getDescription());
             client.setName(service.getType());
-//            TODO: Uncomment when service is updated to include name and remove line above
-//            client.setName(service.getName());
+            // TODO: Uncomment when service is updated to include name and
+            // remove line above
+            // client.setName(service.getName());
             client.setRCN(getRackspaceCustomerId());
-            
+
             this.clientService.add(client);
 
             service.setId(client.getClientId());
@@ -303,13 +306,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             checkXAUTHTOKEN(authToken);
-            
+
             if (StringUtils.isBlank(tenant.getName())) {
                 String errMsg = "Expecting name";
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
-            
+
             // Our implmentation has the id and the name the same
             tenant.setId(tenant.getName());
 
@@ -337,7 +340,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             checkXAUTHTOKEN(authToken);
-            
+
             if (StringUtils.isBlank(user.getUsername())) {
                 String errorMsg = "Expecting username";
                 logger.warn(errorMsg);
@@ -1412,6 +1415,27 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder listUserGlobalRolesByServiceId(
+        HttpHeaders httpHeaders, String authToken, String userId,
+        String serviceId) throws IOException {
+        try {
+            checkXAUTHTOKEN(authToken);
+
+            User user = checkAndGetUser(userId);
+
+            List<TenantRole> roles = this.tenantService.getGlobalRolesForUser(
+                user, new FilterParam[]{new FilterParam(
+                    FilterParamName.APPLICATION_ID, serviceId)});
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
+
+        } catch (Exception ex) {
+            return exceptionResponse(ex);
+        }
+    }
+
+    @Override
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId)
         throws IOException {
         if (userId == null || userId.isEmpty()) {
@@ -1914,9 +1938,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
                 fault));
     }
-    
-    private Response.ResponseBuilder roleConflictExceptionResponse(
-        String errMsg) {
+
+    private Response.ResponseBuilder roleConflictExceptionResponse(String errMsg) {
         BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
             .createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_CONFLICT);
@@ -1926,7 +1949,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
                 fault));
     }
-    
+
     private Response.ResponseBuilder endpointTemplateConflictException(
         String errMsg) {
         BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
@@ -1953,7 +1976,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private String getCloudAuthClientId() {
         return config.getString("cloudAuth.clientId");
     }
-    
+
     private String getRackspaceCustomerId() {
         return config.getString("rackspace.customerId");
     }
@@ -2094,4 +2117,5 @@ public class DefaultCloud20Service implements Cloud20Service {
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(
                 fault));
     }
+
 }
