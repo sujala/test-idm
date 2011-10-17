@@ -1,35 +1,18 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import static org.junit.Assert.fail;
+import com.rackspace.idm.domain.config.LdapConfiguration;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.entity.*;
+import junit.framework.Assert;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
+import org.junit.*;
 
 import java.util.Date;
 import java.util.List;
 
-import junit.framework.Assert;
-
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.ClientStatus;
-import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.DefinedPermission;
-import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
-import com.rackspace.idm.domain.entity.GrantedPermission;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
-import com.rackspace.idm.domain.entity.Permission;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
+import static org.junit.Assert.fail;
 
 public class LdapScopeAccessPersistenceRepositoryTest {
     private LdapCustomerRepository customerRepo;
@@ -68,8 +51,12 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         final LdapConnectionPools pools = getConnPools();
         final LdapApplicationRepository cleanUpRepo = getClientRepo(pools);
         final Application deleteme = cleanUpRepo.getClientByClientId("XXX");
+        final Application deleteme2 = cleanUpRepo.getClientByClientId("YYY");
         if (deleteme != null) {
             cleanUpRepo.deleteClient(deleteme);
+        }
+        if (deleteme2 != null) {
+            cleanUpRepo.deleteClient(deleteme2);
         }
         pools.close();
     }
@@ -90,6 +77,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
             client = addNewTestClient(clientId);
             client2 = addNewTestClient2(clientId2);
         } catch (Exception e) {
+            System.out.println(e);
         }
     }
 

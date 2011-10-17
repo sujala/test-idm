@@ -112,8 +112,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     private EndpointConverterCloudV20 endpointConverterCloudV20;
     @Autowired
     private EndpointService endpointService;
+
     @Autowired
     private JAXBObjectFactories OBJ_FACTORIES;
+
     @Autowired
     private RoleConverterCloudV20 roleConverterCloudV20;
     @Autowired
@@ -132,10 +134,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     private UserGroupService userGroupService;
     @Autowired
     private UserService userService;
-
     private HashMap<String, JAXBElement<Extension>> extensionMap;
-    private JAXBElement<Extensions> currentExtensions;
 
+    private JAXBElement<Extensions> currentExtensions;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
@@ -2120,6 +2121,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(
                 fault));
+    }
+
+    public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
+        this.OBJ_FACTORIES = OBJ_FACTORIES;
     }
 
 }
