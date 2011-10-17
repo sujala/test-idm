@@ -85,6 +85,7 @@ import com.rackspace.idm.domain.service.UserGroupService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
@@ -359,6 +360,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         } catch (DuplicateException de) {
             return userConflictExceptionResponse(de.getMessage());
+        } catch (DuplicateUsernameException due) {
+            return userConflictExceptionResponse(due.getMessage());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1779,6 +1782,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return badRequestExceptionResponse(ex.getMessage());
         } else if (ex instanceof NotAuthorizedException) {
             return notAuthenticatedExceptionResponse(ex.getMessage());
+        } else if (ex instanceof NotAuthenticatedException) {
+            return notAuthenticatedExceptionResponse(ex.getMessage());
         } else if (ex instanceof ForbiddenException) {
             return forbiddenExceptionResponse(ex.getMessage());
         } else if (ex instanceof NotFoundException) {
@@ -1994,16 +1999,16 @@ public class DefaultCloud20Service implements Cloud20Service {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
                     "passwordCredentials").toString());
                 PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
-                String username = obj3.get("username").toString();
-                String password = obj3.get("password").toString();
-                if (StringUtils.isBlank(username)) {
+                Object username = obj3.get("username");
+                Object password = obj3.get("password");
+                if (username == null) {
                     throw new BadRequestException("username required");
                 }
-                if (StringUtils.isBlank(password)) {
+                if (password == null) {
                     throw new BadRequestException("password required");
                 }
-                userCreds.setUsername(username);
-                userCreds.setPassword(password);
+                userCreds.setUsername(username.toString());
+                userCreds.setPassword(password.toString());
                 creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                     .createPasswordCredentials(userCreds);
 
@@ -2011,16 +2016,16 @@ public class DefaultCloud20Service implements Cloud20Service {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
                     "RAX-KSKEY:apiKeyCredentials").toString());
                 ApiKeyCredentials userCreds = new ApiKeyCredentials();
-                String username = obj3.get("username").toString();
-                String apikey = obj3.get("apikey").toString();
-                if (StringUtils.isBlank(username)) {
+                Object username = obj3.get("username");
+                Object apikey = obj3.get("apiKey");
+                if (username == null) {
                     throw new BadRequestException("username required");
                 }
-                if (StringUtils.isBlank(apikey)) {
-                    throw new BadRequestException("apikey required");
+                if (apikey == null) {
+                    throw new BadRequestException("apiKey required");
                 }
-                userCreds.setUsername(username);
-                userCreds.setApiKey(apikey);
+                userCreds.setUsername(username.toString());
+                userCreds.setApiKey(apikey.toString());
                 creds = OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory()
                     .createApiKeyCredentials(userCreds);
             } else {
