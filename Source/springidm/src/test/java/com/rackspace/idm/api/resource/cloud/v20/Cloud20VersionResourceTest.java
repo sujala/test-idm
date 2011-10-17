@@ -80,6 +80,13 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
+    @Test
+    public void listUserGroups_returns200() throws Exception {
+        WebResource resource = resource().path("cloud/v2.0/users/1/RAX-KSGRP");
+        ClientResponse clientResponse = resource.accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
+        assertThat("response code", clientResponse.getStatus(), equalTo(200));
+    }
+
     @Ignore
     @Test
     public void authenticate_json_returns200() throws Exception {

@@ -43,6 +43,7 @@ public class DefaultUserGroupService implements UserGroupService {
             }
             return groups;
         } catch (CloudServersFault cloudServersFault) {
+            System.out.println(cloudServersFault);
             LOGGER.error("Unable to create client to Cloud Servers ESB service.");
             throw new ApiException(500,"An error was encountered while trying to connect to Cloud Servers.", "");
         } catch (UnauthorizedFault unauthorizedFault) {

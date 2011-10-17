@@ -1436,8 +1436,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId)
-        throws IOException {
+    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId) throws IOException {
         if (userId == null || userId.isEmpty()) {
             return Response.status(Status.BAD_REQUEST);
         }
