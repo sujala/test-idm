@@ -2,7 +2,6 @@
     {
       "username": "jqsmith",
       "customerId": "RCN-000-000-000",
-      "customerInum": "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE",
       "email": "john.smith@example.org",
       "personId": "RPN-111-111-111",
       "firstName": "John",
@@ -10,17 +9,12 @@
       "lastName": "Smith",
       "displayName": "John Smith",
       "prefLanguage": "US_en",
-      "inum": "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111",
-      "iname": "@Example.Smith*John",
       "region": "America/Chicago",
-      "status": "ACTIVE",
-      "locked": false,
-      "softDeleted": false
+      "enabled": true
     },
     {
       "username": "bmanderson",
       "customerId": "RCN-000-000-000",
-      "customerInum": "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE",
       "email": "bob.anderson@example.org",
       "personId": "RPN-111-111-222",
       "firstName": "Bob",
@@ -28,13 +22,9 @@
       "lastName": "Anderson",
       "displayName": "Bob Anderson",
       "prefLanguage": "US_en",
-      "inum": "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!2222",
-      "iname": "@Example.Anderson*Bob",
       "timeZone": "America/Chicago",
       "region": "SAT",
-      "status": "ACTIVE",
-      "locked": false,
-      "softDeleted": false
+      "enabeld": true
     }
   ],
   "totalRecords": 2,
