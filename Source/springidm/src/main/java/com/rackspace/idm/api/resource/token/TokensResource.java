@@ -123,7 +123,7 @@ public class TokensResource extends ParentResource {
         //TODO: Implement authorization rules
         //authorizationService.authorizeToken(token, uriInfo);
 
-        AuthData authData = authenticationService.validateAuthToken(tokenString);
+        AuthData authData = authenticationService.getAuthDataFromToken(tokenString);
        
         logger.debug("Validated Access Token: {}", tokenString);
 

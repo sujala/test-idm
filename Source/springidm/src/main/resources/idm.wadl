@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?xml-stylesheet type="text/xsl" href="xslt/wadl.xsl"?>
-
-
-   
-
 <!--*******************************************************--><!--         Import Common XML Entities                    --><!--                                                       --><!--     You can resolve the entites with xmllint          --><!--                                                       --><!--        xmllint -noent identity-admin.wadl             --><!--*******************************************************--><application xmlns="http://wadl.dev.java.net/2009/02"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xmlns:xsd="http://www.w3.org/2001/XMLSchema"

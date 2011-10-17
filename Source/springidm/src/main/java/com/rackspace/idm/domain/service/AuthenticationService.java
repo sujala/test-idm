@@ -9,5 +9,5 @@ public interface AuthenticationService {
 	
     AuthData authenticate(Credentials credentials);
     
-    AuthData validateAuthToken(String authToken);
+    AuthData getAuthDataFromToken(String authToken);
 }
