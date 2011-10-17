@@ -192,18 +192,25 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             checkXAUTHTOKEN(authToken);
+            
+            if (StringUtils.isBlank(role.getName())) {
+                String errMsg = "Expecting name";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
+            
+            if (StringUtils.isBlank(role.getServiceId())) {
+                String errMsg = "Expecting serviceId";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
+            
+            Application service = checkAndGetApplication(role.getServiceId());
 
             ClientRole clientRole = new ClientRole();
-            clientRole.setClientId(role.getServiceId());
+            clientRole.setClientId(service.getClientId());
             clientRole.setDescription(role.getDescription());
             clientRole.setName(role.getName());
-
-            // FIXME: We need to discuss this (Matt K)
-            if (StringUtils.isBlank(role.getServiceId())) {
-                clientRole.setClientId(getCloudAuthClientId());
-            } else {
-                clientRole.setClientId(role.getServiceId());
-            }
 
             this.clientService.addClientRole(clientRole);
 
@@ -261,7 +268,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             client.setOpenStackType(service.getType());
             client.setDescription(service.getDescription());
             client.setName(service.getType());
-
+            
             this.clientService.add(client);
 
             service.setId(client.getClientId());
@@ -1723,7 +1730,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         } else if (ex instanceof NotAuthorizedException) {
             return notAuthenticatedExceptionResponse(ex.getMessage());
         } else if (ex instanceof ForbiddenException) {
-            return notAuthenticatedExceptionResponse(ex.getMessage());
+            return forbiddenExceptionResponse(ex.getMessage());
         } else if (ex instanceof NotFoundException) {
             return notFoundExceptionResponse(ex.getMessage());
         } else {

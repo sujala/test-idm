@@ -14,7 +14,6 @@ public class AuthData {
 	private Racker racker;
 	private boolean isPasswordResetOnlyToken;
 	private DateTime passwordExpirationDate;
-	private int daysUntilPasswordExpiration;
 	
 	public String getAccessToken() {
 		return accessToken;
@@ -81,14 +80,6 @@ public class AuthData {
 	}
 	
 	public int getDaysUntilPasswordExpiration() {
-		return daysUntilPasswordExpiration;
-	}
-	
-	public void setDaysUntilPasswordExpiration(int daysUntilPasswordExpiration) {
-		this.daysUntilPasswordExpiration = daysUntilPasswordExpiration;
-	}
-	
-	public Integer getDaysToPasswordExpiry() {
 		if (passwordExpirationDate != null) {
 			DateTime today = new DateTime();
 			int daysToPasswordExpiry = passwordExpirationDate.getDayOfYear() - today.getDayOfYear();
@@ -97,6 +88,6 @@ public class AuthData {
 			}
 		}
 		
-		return null;
+		return 0;
 	}
 }

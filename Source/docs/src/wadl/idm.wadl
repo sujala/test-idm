@@ -32,241 +32,256 @@
         <resource id="serviceProfile" path="/">
             <method href="#getServiceProfile" /> 
             
-            <resource id="tokens" path="tokens">
-                <method href="#authenticate" />
+            <resource id="version" path="v1.0">
+                <method href="#getVersionInfo" /> 
                 
-                <resource id="token" path="{tokenId}">
-                    <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
-                        <doc>You need a valid token for access.</doc>
-                    </param>
-                    <param name="tokenId" style="template" type="xsd:string" required="true"/>
-                    <method href="#validateToken" />
-                    <method href="#revokeToken" />
+                <resource id="tokens" path="tokens">
+                    <method href="#authenticate" />
                     
-                    <resource id="tokenApplication" path="applications/{applicationId}">
-                        <param name="applicationId" style="template" type="xsd:string" required="true"/>
-                        <method href="#verifyTokenApplication" />
+                    <resource id="token" path="{tokenId}">
+                        <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
+                            <doc>You need a valid token for access.</doc>
+                        </param>
+                        <param name="tokenId" style="template" type="xsd:string" required="true"/>
+                        <method href="#validateToken" />
+                        <method href="#revokeToken" />
                         
-                        <resource id="tokenApplicationRole" path="roles/{roleId}">
-                            <param name="roleId" style="template" type="xsd:string" required="true"/>
-                            <method href="#verifyTokenApplicationRole" />
-                        </resource>
-                    </resource>
-                </resource>
-            </resource>  
-            
-            <!-- users resource -->
-            <resource id="users" path="users">
-                <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
-                    <doc>You need a valid token for access.</doc>
-                </param>
-                <method href="#getUsers" />
-                <method href="#addUser" />
-                
-                <resource id="user" path="{userId}">
-                    <param name="userId" style="template" type="xsd:string" required="true"/>
-                    <method href="#getUser" />
-                    <method href="#updateUser" />
-                    <method href="#deleteUser" />
-                    
-                    <resource id="userSecret" path="secret">
-                        <method href="#getUserSecret" />
-                        <method href="#setUserSecret" />
-                    </resource>
-                    
-                    <resource id="userPasswordCredentials" path="passwordcredentials">
-                        <method href="#getUserPasswordCredentials" />
-                        <method href="#setUserPasswordCredentials" />
-                        <method href="#resetUserPasswordCredentials" />
-                        
-                        <resource id="userPasswordRecoveryToken" path="recoverytoken">
-                            <method href="#getPasswordRecoveryToken" />
-                        </resource>
-                    </resource>
-                    
-                    <resource id="userDelegatedRefreshTokens" path="delegatedrefreshtokens">
-                        <method href="#getDelegatedRefreshTokens" />
-                        
-                        <resource id="delegatedRefreshToken" path="{tokenId}">
-                            <param name="tokenId" style="template" type="xsd:string" required="true"/>
-                            <method href="#getDelegatedRefreshToken" />
-                            <method href="#deleteDelegatedRefreshToken" />
-                        </resource>
-                    </resource>
-                    
-                    <resource id="userApplications" path="applications">
-                        <method href="#getUserApplications" />
-                        
-                        <resource id="userApplication" path="{applicationId}">
+                        <resource id="tokenApplication" path="applications/{applicationId}">
                             <param name="applicationId" style="template" type="xsd:string" required="true"/>
-                            <method href="#addUserApplication" />
-                            <method href="#deleteUserApplication" />
-                        </resource>
-                    </resource>
-                    
-                    <resource id="userRoles" path="roles">
-                        <method href="#getUserGlobalRoles" />
-                        
-                        <resource id="userRole" path="{roleId}">
-                            <param name="roleId" style="template" type="xsd:string" required="true"/>
-                            <method href="#addUserGlobalRole" />
-                            <method href="#deleteUserGlobalRole" />
-                        </resource>
-                    </resource>
-                    
-                    <resource id="userTenants" path="tenants">
-                        <resource id="userTenantsRoles" path="roles">
-                            <method href="#getUserTenantsRoles" />
-                        </resource>
-                        
-                        <resource id="userTenantRole" path="{tenantId}/roles/{roleId}">
-                            <param name="tenantId" style="template" type="xsd:string" required="true"/>
-                            <param name="roleId" style="template" type="xsd:string" required="true"/>
-                            <method href="#addUserTenantRole" />
-                            <method href="#deleteUserTenantRole" />
-                        </resource>
-                    </resource>
-                </resource>
-            </resource> 
-            
-            <!-- applications resource -->
-            <resource id="applications" path="applications">
-                <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
-                    <doc>You need a valid token for access.</doc>
-                </param>
-                <method href="#getApplications" />
-                <method href="#addApplication" />
-                
-                <resource id="application" path="{applicationId}">
-                    <param name="applicationId" style="template" type="xsd:string" required="true"/>
-                    <method href="#getApplication" />
-                    <method href="#updateApplication" />
-                    <method href="#deleteApplication" />
-                    
-                    <resource id="applicationSecretCredentials" path="secretcredentials">
-                        <method href="#resetApplicationSecretCredentials" />
-                    </resource>
-                    
-                    <resource id="applicationApplications" path="applications">
-                        <method href="#getApplicationApplications" />
-                        
-                        <resource id="applicationApplication" path="{provisionedApplicationId}">
-                            <param name="provisionedApplicationId" style="template" type="xsd:string" required="true"/>
-                            <method href="#addApplicationApplication" />
-                            <method href="#deleteApplicationApplication" />
+                            <method href="#verifyTokenApplication" />
                             
-                            <resource id="applicationApplicationRole" path="roles/{roleId}">
+                            <resource id="tokenApplicationRole" path="roles/{roleId}">
                                 <param name="roleId" style="template" type="xsd:string" required="true"/>
-                                <method href="#addApplicationApplicationRole" />
-                                <method href="#deleteApplicationApplicationRole" />
+                                <method href="#verifyTokenApplicationRole" />
                             </resource>
                         </resource>
                     </resource>
-                    
-                    <resource id="applicationRoles" path="roles">
-                        <method href="#getApplicationGlobalRoles" />
-                        
-                        <resource id="applicationRole" path="{roleId}">
-                            <param name="roleId" style="template" type="xsd:string" required="true"/>
-                            <method href="#addApplicationGlobalRole" />
-                            <method href="#deleteApplicationGlobalRole" />
-                        </resource>
-                    </resource>
-                    
-                    <resource id="applicationTenants" path="tenants">
-                        <resource id="applicationTenantsRoles" path="roles">
-                            <method href="#getApplicationTenantsRoles" />
-                        </resource>
-                        
-                        <resource id="applicationTenantRole" path="{tenantId}/roles/{roleId}">
-                            <param name="tenantId" style="template" type="xsd:string" required="true"/>
-                            <param name="roleId" style="template" type="xsd:string" required="true"/>
-                            <method href="#addApplicationTenantRole" />
-                            <method href="#deleteApplicationTenantRole" />
-                        </resource>
-                    </resource>
-                </resource>
-             </resource>
-     
-            <!-- roles resource -->
-            <resource id="roles" path="roles">
-                <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
-                    <doc>You need a valid token for access.</doc>
-                </param>
-                <method href="#getRoles" />
-                <method href="#addRole" />
+                </resource>  
                 
-                <resource id="role" path="{roleId}">
-                    <param name="roleId" style="template" type="xsd:string" required="true"/>
-                    <method href="#getRole" />
-                    <method href="#updateRole" />
-                    <method href="#deleteRole" />
-                </resource>
-            </resource>
-            
-            <!-- identity profiles resource -->
-            <resource id="identityProfiles" path="customeridentityprofiles">
-                <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
-                    <doc>You need a valid token for access.</doc>
-                </param>
-                
-                <resource id="identityProfile" path="{customerId}">
-                    <param name="customerId" style="template" type="xsd:string" required="true">
-                        <doc>This is the customer's RCN.</doc>
+                <!-- users resource -->
+                <resource id="users" path="users">
+                    <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
+                        <doc>You need a valid token for access.</doc>
                     </param>
-                    <method href="#addIdentityProfile" />
-                    <method href="#getIdentityProfile" />
-                    <method href="#deleteIdentityProfile" />
-                    <method href="#updateIdentityProfile" />
+                    <method href="#getUsers" />
+                    <method href="#addUser" />
                     
-                    <resource id="passwordRotationPolicy" path="passwordrotationpolicy">
-                        <method href="#getPasswordRotationPolicy" />
-                        <method href="#setPasswordRotationPolicy" />
+                    <resource id="user" path="{userId}">
+                        <param name="userId" style="template" type="xsd:string" required="true"/>
+                        <method href="#getUser" />
+                        <method href="#updateUser" />
+                        <method href="#deleteUser" />
+                        
+                        <resource id="userSecret" path="secret">
+                            <method href="#getUserSecret" />
+                            <method href="#setUserSecret" />
+                        </resource>
+                        
+                        <resource id="userPasswordCredentials" path="passwordcredentials">
+                            <method href="#getUserPasswordCredentials" />
+                            <method href="#setUserPasswordCredentials" />
+                            <method href="#resetUserPasswordCredentials" />
+                            
+                            <resource id="userPasswordRecoveryToken" path="recoverytoken">
+                                <method href="#getPasswordRecoveryToken" />
+                            </resource>
+                        </resource>
+                        
+                        <resource id="userDelegatedRefreshTokens" path="delegatedrefreshtokens">
+                            <method href="#getDelegatedRefreshTokens" />
+                            
+                            <resource id="delegatedRefreshToken" path="{tokenId}">
+                                <param name="tokenId" style="template" type="xsd:string" required="true"/>
+                                <method href="#getDelegatedRefreshToken" />
+                                <method href="#deleteDelegatedRefreshToken" />
+                            </resource>
+                        </resource>
+                        
+                        <resource id="userApplications" path="applications">
+                            <method href="#getUserApplications" />
+                            
+                            <resource id="userApplication" path="{applicationId}">
+                                <param name="applicationId" style="template" type="xsd:string" required="true"/>
+                                <method href="#addUserApplication" />
+                                <method href="#deleteUserApplication" />
+                            </resource>
+                        </resource>
+                        
+                        <resource id="userRoles" path="roles">
+                            <method href="#getUserGlobalRoles" />
+                            
+                            <resource id="userRole" path="{roleId}">
+                                <param name="roleId" style="template" type="xsd:string" required="true"/>
+                                <method href="#addUserGlobalRole" />
+                                <method href="#deleteUserGlobalRole" />
+                            </resource>
+                        </resource>
+                        
+                        <resource id="userTenants" path="tenants">
+                            <resource id="userTenantsRoles" path="roles">
+                                <method href="#getUserTenantsRoles" />
+                            </resource>
+                            
+                            <resource id="userTenantRole" path="{tenantId}/roles/{roleId}">
+                                <param name="tenantId" style="template" type="xsd:string" required="true"/>
+                                <param name="roleId" style="template" type="xsd:string" required="true"/>
+                                <method href="#addUserTenantRole" />
+                                <method href="#deleteUserTenantRole" />
+                            </resource>
+                        </resource>
                     </resource>
+                </resource> 
+                
+                <!-- applications resource -->
+                <resource id="applications" path="applications">
+                    <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
+                        <doc>You need a valid token for access.</doc>
+                    </param>
+                    <method href="#getApplications" />
+                    <method href="#addApplication" />
                     
-                    <resource id="identityProfileUsers" path="users">
-                        <method href="#getIdentityProfileUsers" />
+                    <resource id="application" path="{applicationId}">
+                        <param name="applicationId" style="template" type="xsd:string" required="true"/>
+                        <method href="#getApplication" />
+                        <method href="#updateApplication" />
+                        <method href="#deleteApplication" />
+                        
+                        <resource id="applicationSecretCredentials" path="secretcredentials">
+                            <method href="#resetApplicationSecretCredentials" />
+                        </resource>
+                        
+                        <resource id="applicationApplications" path="applications">
+                            <method href="#getApplicationApplications" />
+                            
+                            <resource id="applicationApplication" path="{provisionedApplicationId}">
+                                <param name="provisionedApplicationId" style="template" type="xsd:string" required="true"/>
+                                <method href="#addApplicationApplication" />
+                                <method href="#deleteApplicationApplication" />
+                                
+                                <resource id="applicationApplicationRole" path="roles/{roleId}">
+                                    <param name="roleId" style="template" type="xsd:string" required="true"/>
+                                    <method href="#addApplicationApplicationRole" />
+                                    <method href="#deleteApplicationApplicationRole" />
+                                </resource>
+                            </resource>
+                        </resource>
+                        
+                        <resource id="applicationRoles" path="roles">
+                            <method href="#getApplicationGlobalRoles" />
+                            
+                            <resource id="applicationRole" path="{roleId}">
+                                <param name="roleId" style="template" type="xsd:string" required="true"/>
+                                <method href="#addApplicationGlobalRole" />
+                                <method href="#deleteApplicationGlobalRole" />
+                            </resource>
+                        </resource>
+                        
+                        <resource id="applicationTenants" path="tenants">
+                            <resource id="applicationTenantsRoles" path="roles">
+                                <method href="#getApplicationTenantsRoles" />
+                            </resource>
+                            
+                            <resource id="applicationTenantRole" path="{tenantId}/roles/{roleId}">
+                                <param name="tenantId" style="template" type="xsd:string" required="true"/>
+                                <param name="roleId" style="template" type="xsd:string" required="true"/>
+                                <method href="#addApplicationTenantRole" />
+                                <method href="#deleteApplicationTenantRole" />
+                            </resource>
+                        </resource>
                     </resource>
+                 </resource>
+         
+                <!-- roles resource -->
+                <resource id="roles" path="roles">
+                    <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
+                        <doc>You need a valid token for access.</doc>
+                    </param>
+                    <method href="#getRoles" />
+                    <method href="#addRole" />
                     
-                    <resource id="identityProfileApplications" path="applications">
-                        <method href="#getIdentityProfileApplications" />
+                    <resource id="role" path="{roleId}">
+                        <param name="roleId" style="template" type="xsd:string" required="true"/>
+                        <method href="#getRole" />
+                        <method href="#updateRole" />
+                        <method href="#deleteRole" />
                     </resource>
                 </resource>
                 
-            </resource>
-            
-            <!-- password resources -->
-            <resource id="passwordRules" path="passwordrules">
-                <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
-                    <doc>You need a valid token for access.</doc>
-                </param>
+                <!-- identity profiles resource -->
+                <resource id="identityProfiles" path="customeridentityprofiles">
+                    <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
+                        <doc>You need a valid token for access.</doc>
+                    </param>
+                    
+                    <resource id="identityProfile" path="{customerId}">
+                        <param name="customerId" style="template" type="xsd:string" required="true">
+                            <doc>This is the customer's RCN.</doc>
+                        </param>
+                        <method href="#addIdentityProfile" />
+                        <method href="#getIdentityProfile" />
+                        <method href="#deleteIdentityProfile" />
+                        <method href="#updateIdentityProfile" />
+                        
+                        <resource id="passwordRotationPolicy" path="passwordrotationpolicy">
+                            <method href="#getPasswordRotationPolicy" />
+                            <method href="#setPasswordRotationPolicy" />
+                        </resource>
+                        
+                        <resource id="identityProfileUsers" path="users">
+                            <method href="#getIdentityProfileUsers" />
+                        </resource>
+                        
+                        <resource id="identityProfileApplications" path="applications">
+                            <method href="#getIdentityProfileApplications" />
+                        </resource>
+                    </resource>
+                    
+                </resource>
                 
-                <method href="#getPasswordRules" />
-                
-                <resource id="passwordValidation" path="validation">
-                    <method href="#validatePassword" />
+                <!-- password resources -->
+                <resource id="passwordRules" path="passwordrules">
+                    <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
+                        <doc>You need a valid token for access.</doc>
+                    </param>
+                    
+                    <method href="#getPasswordRules" />
+                    
+                    <resource id="passwordValidation" path="validation">
+                        <method href="#validatePassword" />
+                    </resource>
                 </resource>
             </resource>
-         </resource>
+       </resource>
     </resources>
     
     <!--*******************************************************-->
     <!--               All Methods                             -->
     <!--*******************************************************-->
     
-    <!-- Token methods -->
     <method name="GET" id="getServiceProfile">
         <doc xml:lang="EN" title="Version Details">
             <p xmlns="http://www.w3.org/1999/xhtml">
                 Returns detailed information about this service
             </p>
         </doc>
-         <response status="200 203">
-             <representation mediaType="application/json"/>
-             <representation mediaType="application/xml" element="sp:service-profile" />
-         </response>
+        <response status="200 203">
+            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="sp:service-profile" />
+        </response>
     </method>
     
+    <method name="GET" id="getVersionInfo">
+        <doc xml:lang="EN" title="Version Details">
+            <p xmlns="http://www.w3.org/1999/xhtml">
+                Returns detailed information about this version of the api
+            </p>
+        </doc>
+        <response status="200 203">
+            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="sp:contract" />
+        </response>
+    </method>
+    <!-- Token methods -->
     <method name="POST" id="authenticate">
         <doc xml:lang="EN" title="Authenticate">
             <xhtml:p class="shortdesc">

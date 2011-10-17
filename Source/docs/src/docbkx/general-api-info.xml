@@ -39,7 +39,7 @@
     <para> This Guide assumes the reader is familiar with RESTful web services, HTTP/1.1, and JSON
        and/or XML serialization formats. </para>
   
-    <section>
+    <section xml:id="request_response_types">
       <title>Request/Response Types</title>
       <para>The Global Auth API supports both the JSON and XML data serialization formats. The
         request format is specified using the <code>Content-Type</code> header and is required for
@@ -94,7 +94,7 @@
       </example>
     </section>
  
-    <section>
+    <section xml:id="contracts">
       <title>Contracts</title>
       <para>
         The Global Auth API uses a URI versioning scheme. The first element of the path contains the
@@ -170,7 +170,7 @@
       </example>
    </section>   
    
-    <section>
+    <section xml:id="faults">
       <title>Faults</title>
       <para>When an error occurs the system will return an HTTP error response code denoting the
         type of error. The system will also return additional information about the fault in the
@@ -277,7 +277,7 @@
         there&apos;s no interest in distinguishing between individual fault types. </para>
     </section>
   
-    <section>
+    <section xml:id="getting_started">
       <title>Getting Started</title>
       <para>The first step to using the Global Auth API is registering your application with Global
         Auth. The Global Auth Team will need the following information in order to register your

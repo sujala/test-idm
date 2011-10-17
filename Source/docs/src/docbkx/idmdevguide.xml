@@ -3,7 +3,9 @@
 <book xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink"
   xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:svg="http://www.w3.org/2000/svg"
   xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:html="http://www.w3.org/1999/xhtml"
-  xmlns:db="http://docbook.org/ns/docbook" version="5.0" status="draft">
+  xmlns:db="http://docbook.org/ns/docbook" version="5.0" status="draft"
+  xml:id="ga_developer_guide">
+  <?rax pdf.url="../idmdevguide.pdf"?>
   <title>Global Auth API Developer Guide</title>
   <info>
     <author>
@@ -47,19 +49,10 @@
       <title>Token Operations</title>
       <para>The operations described in this section allow service developers to get and validate access tokens.</para>
       <wadl:resources xmlns:wadl="http://wadl.dev.java.net/2009/02">
-        <wadl:resource href="idm.wadl#tokens" >
-          <wadl:method href="authenticate"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#token" >
-          <wadl:method href="validateToken"/>
-          <wadl:method href="revokeToken"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#tokenApplication" >
-          <wadl:method href="verifyTokenApplication"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#tokenApplicationRole" >
-          <wadl:method href="verifyTokenApplicationRole"/>
-        </wadl:resource>
+        <wadl:resource href="idm.wadl#tokens" />
+        <wadl:resource href="idm.wadl#token" />
+        <wadl:resource href="idm.wadl#tokenApplication" />
+        <wadl:resource href="idm.wadl#tokenApplicationRole"/>
       </wadl:resources>
     </section>
     
@@ -69,55 +62,19 @@
       <title>User Operations</title>
       <para>The operations described in this section allows service developers manage users.</para>
       <wadl:resources xmlns:wadl="http://wadl.dev.java.net/2009/02">
-        <wadl:resource href="idm.wadl#users" >
-          <wadl:method href="getUsers"/>
-          <wadl:method href="addUser"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#user" >
-          <wadl:method href="getUser"/>
-          <wadl:method href="updateUser"/>
-          <wadl:method href="deleteUser"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#userSecret" >
-          <wadl:method href="getUserSecret"/>
-          <wadl:method href="setUserSecret"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#userPasswordCredentials" >
-          <wadl:method href="getUserPasswordCredentials"/>
-          <wadl:method href="setUserPasswordCredentials"/>
-          <wadl:method href="resetUserPasswordCredentials"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#userPasswordRecoveryToken" >
-          <wadl:method href="getPasswordRecoveryToken"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#userDelegatedRefreshTokens" >
-          <wadl:method href="getDelegatedRefreshTokens"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#delegatedRefreshToken" >
-          <wadl:method href="getDelegatedRefreshToken"/>
-          <wadl:method href="deleteDelegatedRefreshToken"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#userApplications" >
-          <wadl:method href="getUserApplications"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#userApplication" >
-          <wadl:method href="addUserApplication"/>
-          <wadl:method href="deleteUserApplication"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#userTenantsRoles" >
-          <wadl:method href="getUserTenantsRoles"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#userTenantRole" >
-          <wadl:method href="addUserTenantRole"/>
-          <wadl:method href="deleteUserTenantRole"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#userRoles" >
-          <wadl:method href="getUserGlobalRoles"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#userRole" >
-          <wadl:method href="addUserGlobalRole"/>
-          <wadl:method href="deleteUserGlobalRole"/>
-        </wadl:resource>
+        <wadl:resource href="idm.wadl#users" />
+        <wadl:resource href="idm.wadl#user"/>
+        <wadl:resource href="idm.wadl#userSecret" />
+        <wadl:resource href="idm.wadl#userPasswordCredentials" />
+        <wadl:resource href="idm.wadl#userPasswordRecoveryToken" />
+        <wadl:resource href="idm.wadl#userDelegatedRefreshTokens" />
+        <wadl:resource href="idm.wadl#delegatedRefreshToken" />
+        <wadl:resource href="idm.wadl#userApplications" />
+        <wadl:resource href="idm.wadl#userApplication" />
+        <wadl:resource href="idm.wadl#userTenantsRoles" />
+        <wadl:resource href="idm.wadl#userTenantRole" />
+        <wadl:resource href="idm.wadl#userRoles" />
+        <wadl:resource href="idm.wadl#userRole" />
       </wadl:resources>
     </section>
     
@@ -127,49 +84,17 @@
       <title>Application Operations</title>
       <para>The operations described in this section allows service developers manage applications.</para>
       <wadl:resources xmlns:wadl="http://wadl.dev.java.net/2009/02">
-        <wadl:resource href="idm.wadl#applications" >
-          <wadl:method href="getApplications" />
-          <wadl:method href="addApplication"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#application" >
-          <wadl:method href="getApplication"/>
-          <wadl:method href="updateApplication"/>
-          <wadl:method href="deleteApplication"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#applicationSoftDeleted" >
-          <wadl:method href="softDeleteApplication"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#applicationSecretCredentials" >
-          <wadl:method href="resetApplicationSecretCredentials"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#applicationDefinedRoles" >
-          <wadl:method href="getApplicationDefinedRoles"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#applicationDefinedRole" >
-          <wadl:method href="addApplicationDefinedRole"/>
-          <wadl:method href="deleteApplicationDefinedRole"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#applicationApplications" >
-          <wadl:method href="getApplicationApplications"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#applicationApplication" >
-          <wadl:method href="addApplicationApplication"/>
-          <wadl:method href="deleteApplicationApplication"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#applicationTenantsRoles" >
-          <wadl:method href="getApplicationTenantsRoles"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#applicationTenantRole" >
-          <wadl:method href="addApplicationTenantRole"/>
-          <wadl:method href="deleteApplicationTenantRole"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#applicationRoles" >
-          <wadl:method href="getApplicationGlobalRoles"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#applicationRole" >
-          <wadl:method href="addApplicationGlobalRole"/>
-          <wadl:method href="deleteApplicationGlobalRole"/>
-        </wadl:resource>
+        <wadl:resource href="idm.wadl#applications" />
+        <wadl:resource href="idm.wadl#application"/>
+        <wadl:resource href="idm.wadl#applicationSecretCredentials"/>
+        <wadl:resource href="idm.wadl#applicationDefinedRoles" />
+        <wadl:resource href="idm.wadl#applicationDefinedRole" />
+        <wadl:resource href="idm.wadl#applicationApplications" />
+        <wadl:resource href="idm.wadl#applicationApplication"/>
+        <wadl:resource href="idm.wadl#applicationTenantsRoles" />
+        <wadl:resource href="idm.wadl#applicationTenantRole" />
+        <wadl:resource href="idm.wadl#applicationRoles" />
+        <wadl:resource href="idm.wadl#applicationRole"/>
       </wadl:resources>
     </section>
     
@@ -179,22 +104,10 @@
       <title>Customer Identity Profile Operations</title>
       <para>The operations described in this section allows service developers manage customer identity profiles.</para>
       <wadl:resources xmlns:wadl="http://wadl.dev.java.net/2009/02">
-        <wadl:resource href="idm.wadl#identityProfile" >
-          <wadl:method href="addIdentityProfile"/>
-          <wadl:method href="getIdentityProfile"/>
-          <wadl:method href="updateIdentityProfile"/>
-          <wadl:method href="deleteIdentityProfile"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#passwordRotationPolicy" >
-          <wadl:method href="getPasswordRotationPolicy"/>
-          <wadl:method href="setPasswordRotationPolicy"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#identityProfileUsers" >
-          <wadl:method href="getIdentityProfileUsers"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#identityProfileApplications" >
-          <wadl:method href="getIdentityProfileApplications"/>
-        </wadl:resource>
+        <wadl:resource href="idm.wadl#identityProfile" />
+        <wadl:resource href="idm.wadl#passwordRotationPolicy" />
+        <wadl:resource href="idm.wadl#identityProfileUsers" />
+        <wadl:resource href="idm.wadl#identityProfileApplications" />
       </wadl:resources>
     </section>
     
@@ -204,12 +117,8 @@
       <title>Password Operations</title>
       <para>The operations described in this section allows service developers manage password policies.</para>
       <wadl:resources xmlns:wadl="http://wadl.dev.java.net/2009/02">
-        <wadl:resource href="idm.wadl#passwordRules" >
-          <wadl:method href="getPasswordRules"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#passwordValidation" >
-          <wadl:method href="validatePassword"/>
-        </wadl:resource>
+        <wadl:resource href="idm.wadl#passwordRules" />
+        <wadl:resource href="idm.wadl#passwordValidation" />
       </wadl:resources>
     </section>
     
@@ -220,15 +129,8 @@
       <title>Role Operations</title>
       <para>The operations described in this section allows service developers manage roles.</para>
       <wadl:resources xmlns:wadl="http://wadl.dev.java.net/2009/02">
-        <wadl:resource href="idm.wadl#roles" >
-          <wadl:method href="getRoles"/>
-          <wadl:method href="addRole"/>
-        </wadl:resource>
-        <wadl:resource href="idm.wadl#role" >
-          <wadl:method href="getRole"/>
-          <wadl:method href="updateRole"/>
-          <wadl:method href="deleteRole"/>
-        </wadl:resource>
+        <wadl:resource href="idm.wadl#roles" />
+        <wadl:resource href="idm.wadl#role" />
       </wadl:resources>
     </section>
   </chapter>
