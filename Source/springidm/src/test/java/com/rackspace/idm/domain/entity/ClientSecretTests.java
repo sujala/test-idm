@@ -10,28 +10,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-import com.rackspace.idm.domain.entity.ClientSecret;
-
 public class ClientSecretTests {
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldNotAllowNullValueForExistingPassword() {
-        ClientSecret.existingInstance(null);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldNotAllowBlankValueForExistingPassword() {
-        ClientSecret.existingInstance(" ");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldNotAllowNullValueForNewPassword() {
-        ClientSecret.newInstance(null);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldNotAllowBlankValueForNewPassword() {
-        ClientSecret.newInstance(" ");
-    }
 
     @Test
     public void shouldReturnCorrectSecret() {

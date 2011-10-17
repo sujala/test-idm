@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import org.apache.commons.lang.StringUtils;
 
 public final class ClientSecret {
 
@@ -27,17 +26,15 @@ public final class ClientSecret {
     }
 
     public static ClientSecret existingInstance(String existingSecret) {
-        if (StringUtils.isBlank(existingSecret)) {
-            throw new IllegalArgumentException(NULL_OR_BLANK_ERROR);
-        }
         return new ClientSecret(existingSecret, false);
     }
 
     public static ClientSecret newInstance(String newSecret) {
-        if (StringUtils.isBlank(newSecret)) {
-            throw new IllegalArgumentException(NULL_OR_BLANK_ERROR);
-        }
         return new ClientSecret(newSecret, true);
+    }
+    
+    public ClientSecret toExisting() {
+        return new ClientSecret(value, false);
     }
 
     @Override

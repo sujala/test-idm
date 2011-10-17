@@ -1,12 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.joda.time.DateTimeZone;
 import org.junit.After;
 import org.junit.Assert;
@@ -215,9 +216,18 @@ public class LdapApplicationRepositoryTest {
         cClient.setClientSecretObj(ClientSecret
             .newInstance("changed_client_secret"));
 
-        List<Modification> mods = repo.getModifications(client, cClient);
+        List<Modification> mods = null;;
+        try {
+            mods = repo.getModifications(client, cClient);
+        } catch (InvalidCipherTextException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (GeneralSecurityException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
-        Assert.assertEquals(1, mods.size());
+        Assert.assertEquals(2, mods.size());
         Assert.assertEquals("changed_client_secret", mods.get(0).getAttribute()
             .getValue());
     }

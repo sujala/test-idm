@@ -478,22 +478,6 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     }
 
     @Override
-    public String getNextTenantId() {
-        String userId = null;
-        LDAPConnection conn = null;
-        try {
-            conn = getAppConnPool().getConnection();
-            userId = getNextId(conn, NEXT_TENANT_ID);
-        } catch (LDAPException e) {
-            getLogger().error("Error getting next tenantId", e);
-            throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
-        }
-        return userId;
-    }
-
-    @Override
     public List<TenantRole> getAllTenantRolesForTenant(String tenantId) {
         if (StringUtils.isBlank(tenantId)) {
             getLogger().error("Null or Empty tenantId parameter");

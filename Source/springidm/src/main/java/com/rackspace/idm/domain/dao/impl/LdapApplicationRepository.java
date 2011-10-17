@@ -1,10 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.bouncycastle.crypto.InvalidCipherTextException;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ApplicationDao;
@@ -19,6 +21,7 @@ import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.exception.DuplicateClientGroupException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Filter;
@@ -52,14 +55,25 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Audit audit = Audit.log(client).add();
 
-        Attribute[] attributes = getAddAttributesForClient(client);
-
-        String clientDN = new LdapDnBuilder(APPLICATIONS_BASE_DN).addAttribute(
-            ATTR_CLIENT_ID, client.getClientId()).build();
-
-        client.setUniqueId(clientDN);
-
-        addEntry(clientDN, attributes, audit);
+        Attribute[] attributes;
+        try {
+            attributes = getAddAttributesForClient(client);
+            String clientDN = new LdapDnBuilder(APPLICATIONS_BASE_DN).addAttribute(
+                ATTR_CLIENT_ID, client.getClientId()).build();
+            client.setUniqueId(clientDN);
+            addEntry(clientDN, attributes, audit);
+        } catch (GeneralSecurityException e) {
+            getLogger().error(e.getMessage());
+            audit.fail("encryption error");
+            throw new IllegalStateException(e);
+        } catch (InvalidCipherTextException e) {
+            getLogger().error(e.getMessage());
+            audit.fail("encryption error");
+            throw new IllegalStateException(e);
+        }
+        
+        // Now that it's in LDAP we'll set the password to the "existing" type
+        client.setClientSecretObj(client.getClientSecretObj().toExisting());
 
         audit.succeed();
 
@@ -530,16 +544,26 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
                 "There is no exisiting record for the given client instance.");
         }
 
-        List<Modification> mods = getModifications(oldClient, client);
+        Audit audit = Audit.log(client);
+        List<Modification> mods;
+        try {
+            mods = getModifications(oldClient, client);
+            if (client.equals(oldClient) || mods.size() < 1) {
+                // No changes!
+                return;
+            }
+            audit.modify(mods);
 
-        if (client.equals(oldClient) || mods.size() < 1) {
-            // No changes!
-            return;
+            updateEntry(oldClient.getUniqueId(), mods, audit);
+        } catch (GeneralSecurityException e) {
+            getLogger().error(e.getMessage());
+            audit.fail("encryption error");
+            throw new IllegalStateException(e);
+        } catch (InvalidCipherTextException e) {
+            getLogger().error(e.getMessage());
+            audit.fail("encryption error");
+            throw new IllegalStateException(e);
         }
-
-        Audit audit = Audit.log(client).modify(mods);
-
-        updateEntry(oldClient.getUniqueId(), mods, audit);
 
         audit.succeed();
         getLogger().debug("Updated client {}", client.getName());
@@ -642,7 +666,8 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return attributes;
     }
 
-    private Attribute[] getAddAttributesForClient(Application client) {
+    private Attribute[] getAddAttributesForClient(Application client) throws InvalidCipherTextException, GeneralSecurityException {
+        CryptHelper cryptHelper = CryptHelper.getInstance();
         List<Attribute> atts = new ArrayList<Attribute>();
 
         atts.add(new Attribute(ATTR_OBJECT_CLASS,
@@ -668,6 +693,8 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         if (!StringUtils.isBlank(client.getClientSecretObj().getValue())) {
             atts.add(new Attribute(ATTR_CLIENT_SECRET, client.getClientSecret()));
+            atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper
+                .encrypt(client.getClientSecret())));
         }
 
         if (client.isEnabled() != null) {
@@ -698,12 +725,24 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     }
 
     private Application getClient(SearchResultEntry resultEntry) {
+        CryptHelper cryptHelper = CryptHelper.getInstance();
         Application client = new Application();
         client.setUniqueId(resultEntry.getDN());
         client.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
-        ClientSecret secret = ClientSecret.existingInstance(resultEntry
-            .getAttributeValue(ATTR_CLIENT_SECRET));
-        client.setClientSecretObj(secret);
+        
+        try {
+            String ecryptedPwd = cryptHelper.decrypt(resultEntry
+                .getAttributeValueBytes(ATTR_CLEAR_PASSWORD));
+            ClientSecret secret = ClientSecret.existingInstance(ecryptedPwd);
+            client.setClientSecretObj(secret);
+        } catch (GeneralSecurityException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        } catch (InvalidCipherTextException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        }
+        
         client.setName(resultEntry.getAttributeValue(ATTR_NAME));
 
         client.setRCN(resultEntry
@@ -807,7 +846,8 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return client;
     }
 
-    List<Modification> getModifications(Application cOld, Application cNew) {
+    List<Modification> getModifications(Application cOld, Application cNew) throws InvalidCipherTextException, GeneralSecurityException {
+        CryptHelper cryptHelper = CryptHelper.getInstance();
         List<Modification> mods = new ArrayList<Modification>();
 
         if (cNew.getRCN() != null && !cNew.getRCN().equals(cOld.getRCN())) {
@@ -817,6 +857,8 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         if (cNew.getClientSecretObj().isNew()) {
             mods.add(new Modification(ModificationType.REPLACE,
                 ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
+            mods.add(new Modification(ModificationType.REPLACE,
+                ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(cNew.getClientSecretObj().getValue())));
         }
 
         if (cNew.isEnabled() != null && !cNew.isEnabled().equals(cOld.isEnabled())) {
