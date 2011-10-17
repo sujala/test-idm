@@ -86,8 +86,7 @@ import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
-import com.rackspace.idm.exception.UserDisabledException;
-import com.sun.jersey.api.NotFoundException;
+import com.rackspace.idm.exception.NotFoundException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -154,14 +153,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 .createEndpoint(
                     this.endpointConverterCloudV20.toEndpoint(baseUrl)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -186,14 +179,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                             this.endpointConverterCloudV20
                                 .toEndpointTemplate(baseUrl)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (DuplicateException dex) {
+            return endpointTemplateConflictException(dex.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -226,14 +215,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                         this.roleConverterCloudV20
                             .toRoleFromClientRole(clientRole)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (DuplicateException bre) {
+            return roleConflictExceptionResponse(bre.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -260,14 +245,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.ok();
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -293,18 +272,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                     OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory()
                         .createService(service));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
+        } catch (DuplicateException de) {
+            return serviceConflictExceptionResponse(de.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
-    // KSADM Extension Tenant Methods
     @Override
     public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo,
         String authToken, org.openstack.docs.identity.api.v2.Tenant tenant) {
@@ -325,14 +299,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         } catch (DuplicateException de) {
             return tenantConflictExceptionResponse(de.getMessage());
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -355,14 +323,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         } catch (DuplicateException de) {
             return userConflictExceptionResponse(de.getMessage());
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -394,6 +356,19 @@ public class DefaultCloud20Service implements Cloud20Service {
                     .getValue();
                 username = userCreds.getUsername();
                 password = userCreds.getPassword();
+
+                if (StringUtils.isBlank(username)) {
+                    String errMsg = "Excpecting username";
+                    logger.warn(errMsg);
+                    throw new BadRequestException(errMsg);
+                }
+
+                if (StringUtils.isBlank(password)) {
+                    String errMsg = "Excpecting password";
+                    logger.warn(errMsg);
+                    throw new BadRequestException(errMsg);
+                }
+
                 user = checkAndGetUser(userId);
                 if (!username.equals(user.getUsername())) {
                     String errMsg = "User and UserId mis-matched";
@@ -408,6 +383,19 @@ public class DefaultCloud20Service implements Cloud20Service {
                     .getValue();
                 username = userCreds.getUsername();
                 apiKey = userCreds.getApiKey();
+
+                if (StringUtils.isBlank(username)) {
+                    String errMsg = "Excpecting username";
+                    logger.warn(errMsg);
+                    throw new BadRequestException(errMsg);
+                }
+
+                if (StringUtils.isBlank(apiKey)) {
+                    String errMsg = "Excpecting apiKey";
+                    logger.warn(errMsg);
+                    throw new BadRequestException(errMsg);
+                }
+
                 user = checkAndGetUser(userId);
                 if (!username.equals(user.getUsername())) {
                     String errMsg = "User and UserId mis-matched";
@@ -420,14 +408,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.ok(creds).status(Status.CREATED);
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -450,14 +432,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.ok();
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -561,16 +537,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createAccess(auth));
 
-        } catch (NotAuthenticatedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
-        } catch (UserDisabledException ude) {
-            return userDisabledExceptionResponse(ude.getMessage());
-        } catch (BadRequestException bre) {
-            return badRequestExceptionResponse(bre.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -595,6 +563,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.ok();
 
+        } catch (BadRequestException bre) {
+            return badRequestExceptionResponse(bre.getMessage());
         } catch (NotAuthorizedException nae) {
             return Response.ok().status(Status.UNAUTHORIZED);
         } catch (ForbiddenException fe) {
@@ -623,14 +593,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.noContent();
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -647,14 +611,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.noContent();
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
 
     }
@@ -672,14 +630,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.noContent();
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -706,14 +658,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.noContent();
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -730,14 +676,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.noContent();
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -754,14 +694,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.noContent();
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -778,14 +712,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.noContent();
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -814,20 +742,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.noContent();
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
-
-    // ====== END OF CORE METHODS
-
-    // ====== START KSADM Extension Methods
 
     @Override
     public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders,
@@ -860,14 +778,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.noContent();
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -894,14 +806,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 .createEndpoint(
                     this.endpointConverterCloudV20.toEndpoint(baseUrl)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -920,14 +826,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                         this.endpointConverterCloudV20
                             .toEndpointTemplate(baseUrl)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -993,14 +893,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 .createRole(
                     this.roleConverterCloudV20.toRoleFromClientRole(role)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1023,14 +917,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 .ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory()
                     .createSecretQA(secrets));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1047,18 +935,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 .getOpenStackIdentityExtKsadmnV1Factory().createService(
                     this.serviceConverterCloudV20.toService(client)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
-    // Core Admin Tenant Methods
     @Override
     public ResponseBuilder getTenantById(HttpHeaders httpHeaders,
         String authToken, String tenantsId) throws IOException {
@@ -1071,14 +952,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createTenant(this.tenantConverterCloudV20.toTenant(tenant)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1100,14 +975,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createTenant(this.tenantConverterCloudV20.toTenant(tenant)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1123,18 +992,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createUser(this.userConverterCloudV20.toUser(user)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
-    // Core Admin User Methods
     @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders,
         String authToken, String name) throws IOException {
@@ -1153,14 +1015,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createUser(this.userConverterCloudV20.toUser(user)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1206,14 +1062,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.ok(creds);
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1252,14 +1102,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createRole(this.roleConverterCloudV20.toRole(role)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1297,14 +1141,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createCredentials(creds));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1328,14 +1166,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                     this.endpointConverterCloudV20
                         .toEndpointListFromBaseUrls(baseUrls)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1357,14 +1189,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createEndpoints(list));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1391,14 +1217,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                     this.endpointConverterCloudV20
                         .toEndpointTemplateList(baseUrls)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1426,7 +1246,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    // KSADM Extension Role Methods
     @Override
     public ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken,
         String serviceId, String marker, Integer limit) {
@@ -1448,14 +1267,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                         this.roleConverterCloudV20
                             .toRoleListFromClientRoles(roles)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1474,14 +1287,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1502,14 +1309,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
 
     }
@@ -1529,14 +1330,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 .getOpenStackIdentityExtKsadmnV1Factory().createServices(
                     this.serviceConverterCloudV20.toServiceList(clients)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1544,18 +1339,23 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listTenants(HttpHeaders httpHeaders,
         String authToken, String marker, Integer limit) throws IOException {
 
-        List<Tenant> tenants = new ArrayList<Tenant>();
+        try {
+            List<Tenant> tenants = new ArrayList<Tenant>();
 
-        ScopeAccess sa = this.scopeAccessService
-            .getScopeAccessByAccessToken(authToken);
+            ScopeAccess sa = this.scopeAccessService
+                .getScopeAccessByAccessToken(authToken);
 
-        if (sa != null) {
-            tenants = this.tenantService
-                .getTenantsForScopeAccessByTenantRoles(sa);
+            if (sa != null) {
+                tenants = this.tenantService
+                    .getTenantsForScopeAccessByTenantRoles(sa);
+            }
+
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                .createTenants(
+                    this.tenantConverterCloudV20.toTenantList(tenants)));
+        } catch (Exception ex) {
+            return exceptionResponse(ex);
         }
-
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createTenants(this.tenantConverterCloudV20.toTenantList(tenants)));
     }
 
     @Override
@@ -1573,14 +1373,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1618,14 +1412,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1640,14 +1428,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             // TODO write me
             return Response.status(Status.NOT_FOUND);
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1666,14 +1448,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createUsers(this.userConverterCloudV20.toUserList(users)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1695,14 +1471,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createUsers(this.userConverterCloudV20.toUserList(users)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1722,14 +1492,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createUser(this.userConverterCloudV20.toUser(userDO)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1768,14 +1532,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 .ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory()
                     .createSecretQA(secrets));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1799,14 +1557,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createTenant(this.tenantConverterCloudV20.toTenant(tenantDO)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1829,14 +1581,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createUser(this.userConverterCloudV20.toUser(retrievedUser)));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1849,12 +1595,23 @@ public class DefaultCloud20Service implements Cloud20Service {
             checkXAUTHTOKEN(authToken);
 
             if (StringUtils.isBlank(creds.getApiKey())) {
-                String errMsg = "Expecting apikey";
+                String errMsg = "Expecting apiKey";
                 logger.warn(errMsg);
-                throw new NotFoundException(errMsg);
+                throw new BadRequestException(errMsg);
+            }
+
+            if (StringUtils.isBlank(creds.getUsername())) {
+                String errMsg = "Expecting username";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
             }
 
             User user = checkAndGetUser(userId);
+            if (!creds.getUsername().equals(user.getUsername())) {
+                String errMsg = "User and UserId mis-matched";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
 
             user.setApiKey(creds.getApiKey());
             this.userService.updateUser(user, false);
@@ -1863,14 +1620,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 .getRackspaceIdentityExtKskeyV1Factory()
                 .createApiKeyCredentials(creds));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1883,13 +1634,24 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             checkXAUTHTOKEN(authToken);
 
-            if (creds.getPassword() == null) {
+            if (StringUtils.isBlank(creds.getPassword())) {
                 String errMsg = "Expecting password";
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
 
+            if (StringUtils.isBlank(creds.getUsername())) {
+                String errMsg = "Expecting username";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
+
             User user = checkAndGetUser(userId);
+            if (!creds.getUsername().equals(user.getUsername())) {
+                String errMsg = "User and UserId mis-matched";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
 
             user.setPassword(creds.getPassword());
             this.userService.updateUser(user, false);
@@ -1897,14 +1659,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createPasswordCredentials(creds));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1945,14 +1701,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                 .createAccess(access));
 
-        } catch (NotAuthorizedException nae) {
-            return notAuthenticatedExceptionResponse(nae.getMessage());
-        } catch (ForbiddenException fe) {
-            return forbiddenExceptionResponse(fe.getMessage());
-        } catch (NotFoundException nfe) {
-            return notFoundExceptionResponse(nfe.getMessage());
         } catch (Exception ex) {
-            return serviceExceptionResponse();
+            return exceptionResponse(ex);
         }
     }
 
@@ -1967,12 +1717,26 @@ public class DefaultCloud20Service implements Cloud20Service {
                 fault));
     }
 
+    private Response.ResponseBuilder exceptionResponse(Exception ex) {
+        if (ex instanceof BadRequestException) {
+            return badRequestExceptionResponse(ex.getMessage());
+        } else if (ex instanceof NotAuthorizedException) {
+            return notAuthenticatedExceptionResponse(ex.getMessage());
+        } else if (ex instanceof ForbiddenException) {
+            return notAuthenticatedExceptionResponse(ex.getMessage());
+        } else if (ex instanceof NotFoundException) {
+            return notFoundExceptionResponse(ex.getMessage());
+        } else {
+            return serviceExceptionResponse();
+        }
+    }
+
     private boolean belongsTo(String belongsTo, List<TenantRole> roles) {
 
         if (StringUtils.isBlank(belongsTo)) {
             return true;
         }
-        
+
         if (roles == null || roles.size() == 0) {
             return false;
         }
@@ -2104,6 +1868,42 @@ public class DefaultCloud20Service implements Cloud20Service {
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
+    }
+
+    private Response.ResponseBuilder serviceConflictExceptionResponse(
+        String errMsg) {
+        BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createBadRequestFault();
+        fault.setCode(HttpServletResponse.SC_CONFLICT);
+        fault.setMessage(errMsg);
+        fault.setDetails(MDC.get(Audit.GUUID));
+        return Response.status(HttpServletResponse.SC_CONFLICT).entity(
+            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
+                fault));
+    }
+    
+    private Response.ResponseBuilder roleConflictExceptionResponse(
+        String errMsg) {
+        BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createBadRequestFault();
+        fault.setCode(HttpServletResponse.SC_CONFLICT);
+        fault.setMessage(errMsg);
+        fault.setDetails(MDC.get(Audit.GUUID));
+        return Response.status(HttpServletResponse.SC_CONFLICT).entity(
+            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
+                fault));
+    }
+    
+    private Response.ResponseBuilder endpointTemplateConflictException(
+        String errMsg) {
+        BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createBadRequestFault();
+        fault.setCode(HttpServletResponse.SC_CONFLICT);
+        fault.setMessage(errMsg);
+        fault.setDetails(MDC.get(Audit.GUUID));
+        return Response.status(HttpServletResponse.SC_CONFLICT).entity(
+            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
+                fault));
     }
 
     private Response.ResponseBuilder forbiddenExceptionResponse(String errMsg) {
