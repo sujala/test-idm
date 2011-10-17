@@ -336,6 +336,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             checkXAUTHTOKEN(authToken);
+            
+            if (StringUtils.isBlank(user.getUsername())) {
+                String errorMsg = "Expecting username";
+                logger.warn(errorMsg);
+                throw new BadRequestException(errorMsg);
+            }
 
             User userDO = this.userConverterCloudV20.toUserDO(user);
 
