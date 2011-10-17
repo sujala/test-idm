@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.entity;
 
 import java.util.List;
 
-public class Racker implements Auditable {
+public class Racker extends User implements Auditable {
 
     private String uniqueId;
     private String rackerId;
