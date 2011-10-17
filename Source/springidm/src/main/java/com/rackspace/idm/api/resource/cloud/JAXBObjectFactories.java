@@ -13,7 +13,6 @@ public class JAXBObjectFactories {
     private final org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory openStackIdentityExtKscatalogV1Factory = new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory();
     private final org.openstack.docs.identity.api.ext.os_ksec2.v1.ObjectFactory openStackIdentityExtKsec2V1Factory = new org.openstack.docs.identity.api.ext.os_ksec2.v1.ObjectFactory();
     
-    private final com.rackspace.docs.identity.api.ext.rax_ksadm.v1.ObjectFactory rackspaceIdentityExtKsadmV1Factory = new com.rackspace.docs.identity.api.ext.rax_ksadm.v1.ObjectFactory();
     private final com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory rackspaceIdentityExtKsgrpV1Factory = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory();
     private final com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory rackspaceIdentityExtKskeyV1Factory = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory();
     private final com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory rackspaceIdentityExtKsqaV1Factory = new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory();
@@ -49,10 +48,6 @@ public class JAXBObjectFactories {
 
     public org.openstack.docs.identity.api.ext.os_ksec2.v1.ObjectFactory getOpenStackIdentityExtKsec2V1Factory() {
         return openStackIdentityExtKsec2V1Factory;
-    }
-
-    public com.rackspace.docs.identity.api.ext.rax_ksadm.v1.ObjectFactory getRackspaceIdentityExtKsadmV1Factory() {
-        return rackspaceIdentityExtKsadmV1Factory;
     }
 
     public com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory getRackspaceIdentityExtKsgrpV1Factory() {

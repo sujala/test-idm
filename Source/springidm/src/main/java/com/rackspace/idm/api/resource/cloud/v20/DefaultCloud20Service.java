@@ -50,7 +50,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -1538,7 +1537,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders,
-        String authToken, String userId, UserWithOnlyEnabled user)
+        String authToken, String userId, org.openstack.docs.identity.api.v2.User user)
         throws IOException {
 
         try {

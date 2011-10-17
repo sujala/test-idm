@@ -32,7 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
@@ -251,7 +250,7 @@ public class Cloud20VersionResource {
     @Path("users/{userId}/OS-KSADM/enabled")
     public Response setUserEnabled(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("userId") String userId, UserWithOnlyEnabled user)
+        @PathParam("userId") String userId, User user)
         throws IOException, JAXBException {
         return getCloud20Service().setUserEnabled(httpHeaders, authToken,
             userId, user).build();
