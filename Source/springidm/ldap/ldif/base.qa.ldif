@@ -63,12 +63,6 @@ objectClass:rsNextId
 cn: nextUserId
 rsId: 10000000
 
-dn: cn=nextTenantId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
-objectClass:top
-objectClass:rsNextId
-cn: nextTenantId
-rsId: 10000000
-
 dn: cn=nextRoleId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
 objectClass:top
 objectClass:rsNextId
@@ -389,10 +383,10 @@ objectClass: top
 objectClass: organizationalUnit
 ou: tenants
 
-dn: rsId=1,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+dn: rsId=90000,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: tenant
-rsId: 1
+rsId: 90000
 cn: 90000
 enabled: TRUE
 description: mkovacs test mosso tenant
@@ -400,10 +394,10 @@ tenantDisplayName: 90000-test
 baseUrlId: 15
 baseUrlId: 17
 
-dn: rsId=2,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+dn: rsId=KovacsNastId,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: tenant
-rsId: 2
+rsId: KovacsNastId
 cn: KovacsNastId
 enabled: TRUE
 description: mkovacs test mosso tenant
@@ -411,10 +405,10 @@ tenantDisplayName: KovacsNastId-test
 baseUrlId: 3
 baseUrlId: 11
 
-dn: rsId=3,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+dn: rsId=30000001,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: tenant
-rsId: 3
+rsId: 30000001
 cn: 30000001
 enabled: TRUE
 description: authuser1 test mosso tenant
@@ -422,10 +416,10 @@ tenantDisplayName: 30000001-test
 baseUrlId: 15
 baseUrlId: 17
 
-dn: rsId=4,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+dn: rsId=AuthUserNastId,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: tenant
-rsId: 4
+rsId: AuthUserNastId
 cn: AuthUserNastId
 enabled: TRUE
 description: authuser1 test mosso tenant
@@ -433,10 +427,10 @@ tenantDisplayName: AuthUserNastId-test
 baseUrlId: 3
 baseUrlId: 11
 
-dn: rsId=5,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+dn: rsId=MossoCloudFS_f3b094b3-0185-45bf-9608-a853456a3ef1,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: tenant
-rsId: 5
+rsId: MossoCloudFS_f3b094b3-0185-45bf-9608-a853456a3ef1
 cn: MossoCloudFS_f3b094b3-0185-45bf-9608-a853456a3ef1
 enabled: TRUE
 description: cmarin2 test tenant
@@ -444,10 +438,10 @@ tenantDisplayName: MossoCloudFS_f3b094b3-0185-45bf-9608-a853456a3ef1-test
 baseUrlId: 7
 baseUrlId: 11
 
-dn: rsId=6,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+dn: rsId=5701091,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: tenant
-rsId: 6
+rsId: 5701091
 cn: 5701091
 enabled: TRUE
 description: cmarin2 test tenant
@@ -486,6 +480,29 @@ rsId: 3
 
 ######################################## Applications #######################################
 
+dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+cn: cloudFiles
+openStackType: compute
+userPassword: 3156c75669c6587601b98685ddcb743a175fdb93
+clearPassword:: +Pwnxg/ymo/5umBy6DRzaXbIrOypvqc+Atn22Oy5e+gFAFBhveRYqBJLab7E/n2q
+enabled: TRUE
+RCN: RACKSPACE
+
+dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rack
+ space,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+cn: cloudServers
+openStackType: object-store
+userPassword: 198f0d3e20498e705d5a057aaccbd949343494a6
+clearPassword:: 9DgkWIIRcS8Bz3+UDkLNokL2aoeIdXZiMOcGg43gv44qnQNKa3TWXgJqz7Mv+mcg
+enabled: TRUE
+RCN: RACKSPACE
+
 dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsApplication
@@ -511,13 +528,12 @@ userPassword: password
 dn: clientId=ABCDEF,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsApplication
-cn: Rackspace Cloud Servers
-description: Rackspace Cloud Servers description...
+cn: Rackspace Misc Service
+description: Rackspace Misc Service description...
 RCN: RACKSPACE
 clientId: ABCDEF
 enabled: TRUE
-title: Rackspace Cloud Servers
-tokenScope: cloud_servers
+title: Rackspace Misc Service
 userPassword: password
 
 dn: clientId=GHIJKL,ou=applications,o=rackspace,dc=rackspace,dc=com
@@ -579,6 +595,16 @@ userPassword: password
 
 ######################################## Client Role Containers ############################
 
+dn: cn=CLIENT ROLES,clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: CLIENT ROLES
+
+dn: cn=CLIENT ROLES,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: CLIENT ROLES
+
 dn: cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsContainer
@@ -590,22 +616,6 @@ objectClass: rsContainer
 cn: CLIENT ROLES
 
 ######################################## Client Roles ######################################
-
-dn: rsId=3,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientRole
-rsId: 3
-cn: Super Admin
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-description: A role that allows a user/application full access to Global Auth
-
-dn: rsId=4,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientRole
-rsId: 4
-cn: Customer Admin
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-description: A Role that allows a user to Admin other users in his customer
 
 dn: rsId=1,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -623,10 +633,51 @@ cn: identity:default
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 description: A Role that allows a user access to keystone Service methods
 
+dn: rsId=3,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 3
+cn: Super Admin
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+description: A role that allows a user/application full access to Global Auth
+
+dn: rsId=4,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 4
+cn: Customer Admin
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+description: A Role that allows a user to Admin other users in his customer
+
+dn: rsId=5,cn=CLIENT ROLES,clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 5
+cn: compute:admin
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+description: A Role that allows a user access to keystone Service methods
+
+dn: rsId=6,cn=CLIENT ROLES,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 6
+cn: object-store:admin
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+description: A Role that allows a user access to keystone Service methods
 
 ######################################## ScopeAccesses Containers ##########################
 
 dn: cn=DIRECT TOKENS,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: DIRECT TOKENS
+
+dn: cn=DIRECT TOKENS,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: DIRECT TOKENS
+
+dn: cn=DIRECT TOKENS,clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsContainer
 cn: DIRECT TOKENS
@@ -672,6 +723,20 @@ objectClass: rsContainer
 cn: DIRECT TOKENS
 
 ######################################## ScopeAccesses #####################################
+
+dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,cn=DIRECT TOKENS,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: clientScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+
+dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,cn=DIRECT TOKENS,clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: clientScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 
 dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -1228,34 +1293,173 @@ clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 uid: cmarin3
 userRCN: RACKSPACE
 
-######################################## User Tenant Roles #######################################
+######################################## User Scope Accesses for Cloud Servers #######################################
 
-dn: roleRsId=2,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
+dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
-objectClass: tenantRole
-roleRsId: 2
-clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-tenantRsId: 1
-tenantRsId: 2
-userRsId: 1
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+uid: mkovacs
+userRCN: RACKSPACE
 
-dn: roleRsId=2,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=2,ou=users,o=rackspace,dc=rackspace,dc=com
+dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,cn=DIRECT TOKENS,rsId=2,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
-objectClass: tenantRole
-roleRsId: 2
-clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-tenantRsId: 3
-tenantRsId: 4
-userRsId: 2
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+uid: authuser1
+userRCN: RACKSPACE
 
-dn: roleRsId=2,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
+dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,cn=DIRECT TOKENS,rsId=3,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
-objectClass: tenantRole
-roleRsId: 2
-clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-tenantRsId: 5
-tenantRsId: 6
-userRsId: 104472
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+uid: huey
+userRCN: RACKSPACE
+
+dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,cn=DIRECT TOKENS,rsId=4,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+uid: testuser
+userRCN: RCN-111-111-111
+
+dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,cn=DIRECT TOKENS,rsId=5,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+uid: qauser
+userRCN: RCN-QATestingCustomer
+
+dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,cn=DIRECT TOKENS,rsId=6,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+uid: qaadmin
+userRCN: RCN-QATestingCustomer
+
+dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,cn=DIRECT TOKENS,rsId=7,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+uid: admin
+userRCN: RACKSPACE
+
+dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,cn=DIRECT TOKENS,rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+uid: cmarin2
+userRCN: RACKSPACE
+
+dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,cn=DIRECT TOKENS,rsId=104476,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+uid: cmarin3
+userRCN: RACKSPACE
+
+######################################## User Scope Accesses for Cloud Files #######################################
+
+dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+uid: mkovacs
+userRCN: RACKSPACE
+
+dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,cn=DIRECT TOKENS,rsId=2,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+uid: authuser1
+userRCN: RACKSPACE
+
+dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,cn=DIRECT TOKENS,rsId=3,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+uid: huey
+userRCN: RACKSPACE
+
+dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,cn=DIRECT TOKENS,rsId=4,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+uid: testuser
+userRCN: RCN-111-111-111
+
+dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,cn=DIRECT TOKENS,rsId=5,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+uid: qauser
+userRCN: RCN-QATestingCustomer
+
+dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,cn=DIRECT TOKENS,rsId=6,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+uid: qaadmin
+userRCN: RCN-QATestingCustomer
+
+dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,cn=DIRECT TOKENS,rsId=7,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+uid: admin
+userRCN: RACKSPACE
+
+dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,cn=DIRECT TOKENS,rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+uid: cmarin2
+userRCN: RACKSPACE
+
+dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,cn=DIRECT TOKENS,rsId=104476,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: userScopeAccess
+clientRCN: RACKSPACE
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+uid: cmarin3
+userRCN: RACKSPACE
+
+######################################## User Global Roles #######################################
 
 dn: roleRsId=1,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -1277,6 +1481,56 @@ objectClass: tenantRole
 roleRsId: 2
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 userRsId: 104476
+
+######################################## User Tenant Roles #######################################
+
+dn: roleRsId=5,clientId=6047d506862b81d6d99273b4853adfe81e0478c1,cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+roleRsId: 5
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+tenantRsId: 90000
+userRsId: 1
+
+dn: roleRsId=5,clientId=6047d506862b81d6d99273b4853adfe81e0478c1,cn=DIRECT TOKENS,rsId=2,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+roleRsId: 5
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+tenantRsId: 30000001
+userRsId: 2
+
+dn: roleRsId=5,clientId=6047d506862b81d6d99273b4853adfe81e0478c1,cn=DIRECT TOKENS,rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+roleRsId: 5
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+tenantRsId: 5701091
+userRsId: 104472
+
+dn: roleRsId=6,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,cn=DIRECT TOKENS,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+roleRsId: 6
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+tenantRsId: KovacsNastId
+userRsId: 1
+
+dn: roleRsId=6,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,cn=DIRECT TOKENS,rsId=2,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+roleRsId: 6
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+tenantRsId: AuthUserNastId
+userRsId: 2
+
+dn: roleRsId=6,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,cn=DIRECT TOKENS,rsId=104472,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: tenantRole
+roleRsId: 6
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+tenantRsId: MossoCloudFS_f3b094b3-0185-45bf-9608-a853456a3ef1
+userRsId: 104472
 
 ######################################## Permissions #######################################
 
