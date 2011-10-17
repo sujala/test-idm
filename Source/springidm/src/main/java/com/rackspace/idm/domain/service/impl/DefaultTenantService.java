@@ -1,28 +1,19 @@
 package com.rackspace.idm.domain.service.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
-
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
-import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DefaultTenantService implements TenantService {
 
@@ -112,7 +103,7 @@ public class DefaultTenantService implements TenantService {
         for (String tenantId : tenantIds) {
             Tenant tenant = this.getTenant(tenantId);
             if (tenant != null && tenant.isEnabled()) {
-                tenants.add(this.getTenant(tenantId));
+                tenants.add(tenant);
             }
         }
         logger.info("Got {} tenants", tenants.size());
