@@ -1,7 +1,5 @@
 package com.rackspace.idm.oauth;
 
-import java.util.Date;
-
 import junit.framework.Assert;
 
 import org.apache.commons.configuration.Configuration;
@@ -14,18 +12,15 @@ import org.junit.Test;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.AuthCredentials;
-import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.HasAccessToken;
-import com.rackspace.idm.domain.entity.OAuthGrantType;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserCredential;
 import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
@@ -38,9 +33,7 @@ import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultTokenService;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.InputValidator;
 

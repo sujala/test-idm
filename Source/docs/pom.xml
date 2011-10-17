@@ -132,10 +132,10 @@
                         <goals>
                             <goal>generate-webhelp</goal>
                         </goals>
-                        <phase>package</phase>
+                        <phase>generate-sources</phase>
                         <configuration>
                             <!-- These parameters only apply to webhelp -->
-                            <enableDisqus>1</enableDisqus>
+                            <enableDisqus>0</enableDisqus>
                             <disqusShortname>os-identitydevguide</disqusShortname>
                             <enableGoogleAnalytics>1</enableGoogleAnalytics>
                             <googleAnalyticsId>UA-17511903-6</googleAnalyticsId>
@@ -155,7 +155,7 @@
                             <postProcess>
                                 <!-- Copies the figures to the correct location for webhelp -->
                                 <copy todir="${basedir}/target/docbkx/webhelp/idmdevguide/figures">
-                                    <fileset dir="${basedir}/src/docbkx/img">
+                                    <fileset dir="${basedir}/src/img">
                                         <include name="**/*.svg" />
                                     </fileset>
                                 </copy>
@@ -175,7 +175,7 @@
                     <xincludeSupported>true</xincludeSupported>
                     <sourceDirectory>src/docbkx</sourceDirectory>
                     <includes>
-                        idmdevguide.xml
+                         idmdevguide.xml
                     </includes>
                     <profileSecurity>reviewer</profileSecurity>
                     <branding>rackspace</branding>

@@ -67,7 +67,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 	
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	public DefaultAuthenticationService(TokenService oauthService,
+	public DefaultAuthenticationService(TokenService tokenService,
 			AuthDao authDao, TenantService tenantService,
 			ScopeAccessService scopeAccessService,
 			ApplicationDao clientDao,
@@ -154,13 +154,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
 		if (scopeAccess instanceof PasswordResetScopeAccess) {
 			PasswordResetScopeAccess prsca = (PasswordResetScopeAccess) scopeAccess;
-			DateTime passwordExpirationDate = prsca
-					.getUserPasswordExpirationDate();
+			DateTime passwordExpirationDate = prsca.getUserPasswordExpirationDate();
 
 			authData.setPasswordResetOnlyToken(true);
 			authData.setPasswordExpirationDate(passwordExpirationDate);
-			authData.setDaysUntilPasswordExpiration(authData
-					.getDaysUntilPasswordExpiration());
 		}
 
 		setClient(scopeAccess, authData);
@@ -199,8 +196,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
 			authData.setUser(user);
 			authData.setPasswordExpirationDate(passwordExpirationDate);
-			authData.setDaysUntilPasswordExpiration(authData
-					.getDaysUntilPasswordExpiration());
 		}
 
 		if (scopeAccess instanceof DelegatedClientScopeAccess) {
