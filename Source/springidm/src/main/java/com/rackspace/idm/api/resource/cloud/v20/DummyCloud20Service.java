@@ -387,4 +387,11 @@ public class DummyCloud20Service implements Cloud20Service{
         return Response.status(Status.NOT_FOUND);
     }
 
+    @Override
+    public ResponseBuilder listUserGlobalRolesByServiceId(
+        HttpHeaders httpHeaders, String authToken, String userId,
+        String serviceId) throws IOException {
+        return Response.status(Status.NOT_FOUND);
+    }
+
 }

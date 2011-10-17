@@ -172,9 +172,15 @@ public class Cloud20VersionResource {
     @Path("users/{userId}/roles")
     public Response listUserGlobalRoles(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("userId") String userId) throws IOException {
-        return getCloud20Service().listUserGlobalRoles(httpHeaders, authToken,
-            userId).build();
+        @PathParam("userId") String userId,
+        @QueryParam("serviceId") String serviceId) throws IOException {
+        if (!StringUtils.isBlank(serviceId)) {
+            return getCloud20Service().listUserGlobalRolesByServiceId(httpHeaders,
+                authToken, userId, serviceId).build();
+        } else {
+            return getCloud20Service().listUserGlobalRoles(httpHeaders,
+                authToken, userId).build();
+        }
     }
 
     @GET
@@ -185,7 +191,7 @@ public class Cloud20VersionResource {
         @QueryParam("name") String name, @QueryParam("marker") String marker,
         @QueryParam("limit") Integer limit) throws IOException {
         // Note: getTenantByName only available to admin
-        if (name != null) {
+        if (!StringUtils.isBlank(name)) {
             return getCloud20Service().getTenantByName(httpHeaders, authToken,
                 name).build();
         } else {

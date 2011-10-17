@@ -290,6 +290,28 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder listUserGlobalRolesByServiceId(
+        HttpHeaders httpHeaders, String authToken, String userId,
+        String serviceId) throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+            .listUserGlobalRoles(httpHeaders, authToken, userId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "users/" + userId
+                + "/roles";
+
+            HashMap<String, Object> params = new HashMap<String, Object>();
+            params.put("serviceId", serviceId);
+            request = appendQueryParams(request, params);
+            return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
+    }
+
+    @Override
     public ResponseBuilder listTenants(HttpHeaders httpHeaders,
         String authToken, String marker, Integer limit) throws IOException {
 
@@ -660,7 +682,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
 
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/OS-KSADM/roles/" + roleId;
+                + "/roles/OS-KSADM/" + roleId;
             return cloudClient.put(request, httpHeaders, "");
         }
         return serviceResponse;
@@ -678,7 +700,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
 
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/OS-KSADM/roles/" + roleId;
+                + "/roles/OS-KSADM/" + roleId;
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
@@ -696,7 +718,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
 
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/OS-KSADM/roles/" + roleId;
+                + "/roles/OS-KSADM" + roleId;
             return cloudClient.delete(request, httpHeaders);
         }
         return serviceResponse;
@@ -777,7 +799,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
 
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
-                + "/OS-KSADM/roles";
+                + "/OS-KSADM/roles/";
 
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("marker", marker);
@@ -1299,4 +1321,5 @@ public class DelegateCloud20Service implements Cloud20Service {
             return defaultCloud20Service;
         }
     }
+
 }
