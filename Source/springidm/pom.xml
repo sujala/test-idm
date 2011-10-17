@@ -37,12 +37,22 @@
                     <groupId>com.sun.xml.bind</groupId>
                     <artifactId>jaxb-impl</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.apache.geronimo.specs</groupId>
+                    <artifactId>geronimo-servlet_2.5_spec</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
             <groupId>com.rackspace.cloud.servers</groupId>
             <artifactId>cloud-servers-client</artifactId>
             <version>1.1.5.4</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.geronimo.specs</groupId>
+                    <artifactId>geronimo-servlet_2.5_spec</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>commons-httpclient</groupId>
@@ -228,7 +238,7 @@
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-json</artifactId>
-            <version>1.9.1</version>
+            <version>1.1.5</version>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey.contribs</groupId>
@@ -921,9 +931,9 @@
             <url>http://www.eviware.com/repository/maven2</url>
         </repository>
         <!--<repository>-->
-            <!--<id>mosso</id>-->
-            <!--<name>mosso</name>-->
-            <!--<url>http://maven.mosso.com/content/groups/everything/</url>-->
+        <!--<id>mosso</id>-->
+        <!--<name>mosso</name>-->
+        <!--<url>http://maven.mosso.com/content/groups/everything/</url>-->
         <!--</repository>-->
         <repository>
             <id>build3-groups</id>
