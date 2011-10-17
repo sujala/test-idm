@@ -1,19 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-
-import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.MessageBodyWriter;
-import javax.ws.rs.ext.Provider;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.domain.config.JAXBContextResolver;
+import com.sun.jersey.api.json.JSONJAXBContext;
+import com.sun.jersey.api.json.JSONMarshaller;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -25,11 +18,18 @@ import org.openstack.docs.identity.api.v2.CredentialListType;
 import org.openstack.docs.identity.api.v2.CredentialType;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.sun.jersey.api.json.JSONJAXBContext;
-import com.sun.jersey.api.json.JSONMarshaller;
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.ext.MessageBodyWriter;
+import javax.ws.rs.ext.Provider;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
@@ -91,7 +91,13 @@ public class JSONWriter implements
             String jsonText = JSONValue.toJSONString(getApiKeyCredentials(creds));
             outputStream.write(jsonText.getBytes("UTF-8"));
             
-        } else if (object.getDeclaredType().isAssignableFrom(CredentialListType.class)) {
+        } else if (object.getDeclaredType().isAssignableFrom(Groups.class)) {
+
+            Groups groups = (Groups) object.getValue();
+            String jsonText = JSONValue.toJSONString(getGroups(groups));
+            outputStream.write(jsonText.getBytes("UTF-8"));
+
+        }else if (object.getDeclaredType().isAssignableFrom(CredentialListType.class)) {
             
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
@@ -151,6 +157,31 @@ public class JSONWriter implements
         inner.put("question", secrets.getQuestion());
         return outer;
     }
+
+    private JSONObject getGroups(Groups groups){
+        JSONObject outer = new JSONObject();
+        JSONArray list = new JSONArray();
+
+        outer.put("RAX-KSGRP:groups", list);
+
+        for (Group group : groups.getGroup()) {
+            list.add(getGroup(group));
+        }
+
+        return outer;
+    }
+
+    private JSONObject getGroup(Group group){
+        JSONObject outer = new JSONObject();
+        JSONObject inner = new JSONObject();
+
+        outer.put("RAX-KSGRP:group", inner);
+        inner.put("id", group.getId());
+        inner.put("description", group.getDescription());
+        inner.put("name", group.getName());
+        return outer;
+    }
+
     
     @SuppressWarnings("unchecked")
     private JSONObject getService(Service service) {

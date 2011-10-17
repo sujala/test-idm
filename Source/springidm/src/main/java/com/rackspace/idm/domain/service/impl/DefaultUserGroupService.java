@@ -5,6 +5,7 @@ import com.rackspace.cloud.service.servers.CloudServers;
 import com.rackspace.cloud.service.servers.CloudServersFault;
 import com.rackspace.cloud.service.servers.UnauthorizedFault;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.idm.domain.entity.ESBCloudServersFactory;
 import com.rackspace.idm.domain.service.UserGroupService;
 import com.rackspace.idm.exception.ApiException;
@@ -12,9 +13,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,9 +31,9 @@ public class DefaultUserGroupService implements UserGroupService {
     private CloudServers csClient;
 
     @Override
-    public List<Group> getGroups(Integer mossoAccountId) {
+    public Groups getGroups(Integer mossoAccountId) {
         try {
-            List<Group> groups = null;
+            Groups groups = null;
             csClient = esbCloudServersFactory.getCSClient(String.valueOf(mossoAccountId));
             LimitGroupType limitGroupType = csClient.getAPILimitsForAccount(mossoAccountId);
             if (limitGroupType != null) {
@@ -52,9 +50,9 @@ public class DefaultUserGroupService implements UserGroupService {
         }
     }
 
-    private List<Group> convertGroup(LimitGroupType limitGroupType) {
+    private Groups convertGroup(LimitGroupType limitGroupType) {
 
-        List<Group> groups = new ArrayList<Group>();
+        Groups groups = new Groups();
         Group group = new Group();
 
         group.setId(limitGroupType.getName());
@@ -64,7 +62,7 @@ public class DefaultUserGroupService implements UserGroupService {
             group.setDescription(limitGroupType.getDescription());
         }
 
-        groups.add(group);
+        groups.getGroup().add(group);
         return groups;
     }
 

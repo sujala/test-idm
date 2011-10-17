@@ -2,12 +2,10 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.cloud.servers.bean.LimitGroupType;
 import com.rackspace.cloud.service.servers.CloudServers;
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.idm.domain.entity.ESBCloudServersFactory;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
 
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -50,7 +48,7 @@ public class DefaultUserGroupServiceTest {
     @Test
     public void getGroups_returnsNonNullValue() throws Exception {
         when(csClient.getAPILimitsForAccount(123)).thenReturn(new LimitGroupType());
-        List<Group> groups = defaultUserGroupService.getGroups(123);
+        Groups groups = defaultUserGroupService.getGroups(123);
         assertThat("groups", groups, notNullValue());
     }
 }
