@@ -243,6 +243,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ClientRole role = checkAndGetClientRole(roleId);
 
             TenantRole tenantrole = new TenantRole();
+            tenantrole.setName(role.getName());
             tenantrole.setClientId(role.getClientId());
             tenantrole.setRoleRsId(role.getId());
             tenantrole.setUserId(user.getId());

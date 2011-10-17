@@ -269,7 +269,7 @@ public class Cloud20VersionResource {
     }
 
     @PUT
-    @Path("users/{userId}/OS-KSADM/roles/{roleId}")
+    @Path("users/{userId}/roles/OS-KSADM/{roleId}")
     public Response addUserRole(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId, @PathParam("roleId") String roleId)
@@ -279,7 +279,7 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    @Path("users/{userId}/OS-KSADM/roles/{roleId}")
+    @Path("users/{userId}/roles/OS-KSADM/{roleId}")
     public Response getUserRole(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId, @PathParam("roleId") String roleId)
@@ -289,7 +289,7 @@ public class Cloud20VersionResource {
     }
 
     @DELETE
-    @Path("users/{userId}/OS-KSADM/roles/{roleId}")
+    @Path("users/{userId}/roles/OS-KSADM/{roleId}")
     public Response deleteUserRole(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId, @PathParam("roleId") String roleId)
