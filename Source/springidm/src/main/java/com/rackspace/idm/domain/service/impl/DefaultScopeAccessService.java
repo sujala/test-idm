@@ -23,6 +23,7 @@ import com.rackspace.idm.domain.entity.DefinedPermission;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.DelegatedPermission;
 import com.rackspace.idm.domain.entity.FilterParam;
+import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.GrantedPermission;
 import com.rackspace.idm.domain.entity.HasAccessToken;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
@@ -36,7 +37,6 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -73,6 +73,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(
         ScopeAccess token) {
+        
+        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
 
         String parentUniqueId = null;
 
@@ -90,6 +92,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         List<TenantRole> roles = this.tenantDao
             .getTenantRolesByParent(parentUniqueId);
 
+        if (roles == null || roles.size() == 0) { 
+            return endpoints;
+        }
+        
         // Second get the tenants from each of those roles
         List<Tenant> tenants = new ArrayList<Tenant>();
         for (TenantRole role : roles) {
@@ -104,7 +110,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         // Third get the endppoints for each tenant
-        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
         for (Tenant tenant : tenants) {
             OpenstackEndpoint endpoint = this.endpointDao
                 .getOpenstackEndpointsForTenant(tenant);
