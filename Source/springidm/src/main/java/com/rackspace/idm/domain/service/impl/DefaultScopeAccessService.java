@@ -478,6 +478,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 PASSWORD_RESET_CLIENT_ID);
         if (prsa == null) {
             prsa = new PasswordResetScopeAccess();
+            prsa.setUserRsId(user.getId());
             prsa.setUsername(user.getUsername());
             prsa.setUserRCN(user.getCustomerId());
             prsa.setAccessTokenExp(new DateTime().plusSeconds(
@@ -885,6 +886,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             sa.setClientRCN(permission.getCustomerId());
             sa.setUsername(user.getUsername());
             sa.setUserRCN(user.getCustomerId());
+            sa.setUserRsId(user.getId());
             sa = (UserScopeAccess) this.addDirectScopeAccess(
                 user.getUniqueId(), sa);
         }

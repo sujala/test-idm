@@ -640,7 +640,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.9) = {
     subclass-of top
     kind = structural
     must-contain
-        clientId,
+        clientId
+    may-contain
         clientRCN
 };
 
@@ -669,8 +670,9 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.12) = {
     subclass-of scopeAccess
     kind = structural
     must-contain
-        uid
+        userRsId
     may-contain
+        uid,
     	userRCN,
         accessToken,
         accessTokenExp
@@ -696,8 +698,9 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.14) = {
     subclass-of scopeAccess
     kind = structural
     must-contain
-        uid
+        userRsId
     may-contain
+        uid,
         userRCN,
         accessToken,
         accessTokenExp,
@@ -755,8 +758,9 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.19) = {
     subclass-of scopeAccess
     kind = structural
     must-contain
-        uid
+        userRsId
     may-contain
+        uid,
      	userRCN,
         accessToken,
         accessTokenExp,
