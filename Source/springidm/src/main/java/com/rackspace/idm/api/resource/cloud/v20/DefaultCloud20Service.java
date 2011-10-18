@@ -353,7 +353,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.userService.addUser(userDO);
 
             return Response.created(
-                uriInfo.getRequestUriBuilder().path(user.getId()).build())
+                uriInfo.getRequestUriBuilder().path(userDO.getId()).build())
                 .entity(
                     OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(
                         this.userConverterCloudV20.toUser(userDO)));
@@ -1446,11 +1446,11 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
         User user = this.userService.getUserById(userId);
         if (user == null) {
-            return Response.status(Status.NOT_FOUND);
+            return notFoundExceptionResponse("user not found");
         }
         Integer mossoId = user.getMossoId();
         if (mossoId == null) {
-            return Response.status(Status.NOT_FOUND);
+            return notFoundExceptionResponse("user Mosso id not found");
         }
         Groups groups = this.userGroupService.getGroups(mossoId);
 
