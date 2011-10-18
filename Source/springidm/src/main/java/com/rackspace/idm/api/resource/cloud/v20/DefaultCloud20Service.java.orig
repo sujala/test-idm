@@ -355,10 +355,17 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.userService.addUser(userDO);
 
             return Response.created(
+<<<<<<< HEAD
+                    uriInfo.getRequestUriBuilder().path(user.getId()).build())
+                    .entity(
+                            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(
+                                    this.userConverterCloudV20.toUser(userDO)));
+=======
                 uriInfo.getRequestUriBuilder().path(userDO.getId()).build())
                 .entity(
                     OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(
                         this.userConverterCloudV20.toUser(userDO)));
+>>>>>>> 986e8d63eb5b7c023f871e6de2b0a7cabc3ab9aa
 
         } catch (DuplicateException de) {
             return userConflictExceptionResponse(de.getMessage());
@@ -1845,7 +1852,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private CloudBaseUrl checkAndGetEndpointTemplate(int baseUrlId) {
         CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseUrlId);
         if (baseUrl == null) {
-            String errMsg = String.format("EndpointTemplate %s not found",
+            String errMsg = String.format("EnpointTemplate %s not found",
                     baseUrlId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
@@ -1858,7 +1865,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             baseUrlId = Integer.parseInt(id);
         } catch (NumberFormatException nfe) {
-            String errMsg = String.format("EndpointTemplate %s not found", id);
+            String errMsg = String.format("EnpointTemplate %s not found", id);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }

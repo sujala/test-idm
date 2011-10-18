@@ -209,9 +209,9 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId)
+    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders,String authToken, String userId)
         throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud20Service().listUserGroups(httpHeaders, userId);
+        Response.ResponseBuilder serviceResponse = getCloud20Service().listUserGroups(httpHeaders, authToken, userId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
