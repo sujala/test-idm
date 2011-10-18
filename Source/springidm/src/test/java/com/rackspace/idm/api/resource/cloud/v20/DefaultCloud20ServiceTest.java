@@ -30,6 +30,7 @@ public class DefaultCloud20ServiceTest {
     private String userId = "id";
     private User user;
     private JAXBObjectFactories jaxbObjectFactories;
+
     @Before
     public void setUp() throws Exception {
         defaultCloud20Service = new DefaultCloud20Service();
@@ -42,7 +43,7 @@ public class DefaultCloud20ServiceTest {
         user = new User();
         user.setMossoId(123);
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new ObjectFactory());
-
+        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(new org.openstack.docs.identity.api.v2.ObjectFactory());
     }
 
     @Test
@@ -93,7 +94,8 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUserGroups_withValidUser_callsUserGroupService() throws Exception {
+    public void listUserGroups_withValidUser_callsUserGroupService
+            () throws Exception {
         when(userService.getUserById(userId)).thenReturn(user);
         defaultCloud20Service.listUserGroups(null, userId);
         verify(userGroupService).getGroups(user.getMossoId());
