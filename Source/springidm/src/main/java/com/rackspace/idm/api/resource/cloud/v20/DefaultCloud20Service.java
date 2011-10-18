@@ -354,7 +354,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.userService.addUser(userDO);
 
             return Response.created(
-                uriInfo.getRequestUriBuilder().path(user.getId()).build())
+                uriInfo.getRequestUriBuilder().path(userDO.getId()).build())
                 .entity(
                     OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(
                         this.userConverterCloudV20.toUser(userDO)));
