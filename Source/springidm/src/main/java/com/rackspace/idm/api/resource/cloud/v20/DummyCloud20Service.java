@@ -18,7 +18,6 @@ import org.openstack.docs.identity.api.v2.Tenant;
 import org.openstack.docs.identity.api.v2.User;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 
@@ -164,7 +163,7 @@ public class DummyCloud20Service implements Cloud20Service{
 
     @Override
     public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken,
-        String userId, UserWithOnlyEnabled user) throws IOException {
+        String userId, User user) throws IOException {
         
         return Response.status(Status.NOT_FOUND);
     }
@@ -384,6 +383,13 @@ public class DummyCloud20Service implements Cloud20Service{
     public ResponseBuilder updateSecretQA(HttpHeaders httpHeaders,
         String authToken, String userId, SecretQA secrets) throws IOException,
         JAXBException {
+        return Response.status(Status.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseBuilder listUserGlobalRolesByServiceId(
+        HttpHeaders httpHeaders, String authToken, String userId,
+        String serviceId) throws IOException {
         return Response.status(Status.NOT_FOUND);
     }
 

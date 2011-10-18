@@ -29,6 +29,7 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
@@ -800,38 +801,37 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         try {
             JSONObject obj = (JSONObject) parser.parse(jsonBody);
-
-            if (obj.containsKey("credentials")) {
+            if (obj.containsKey(JSONConstants.CREDENTIALS)) {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                    "credentials").toString());
+                    JSONConstants.CREDENTIALS).toString());
                 UserCredentials userCreds = new UserCredentials();
-                userCreds.setKey(obj3.get("key").toString());
-                userCreds.setUsername(obj3.get("username").toString());
+                userCreds.setKey(obj3.get(JSONConstants.KEY).toString());
+                userCreds.setUsername(obj3.get(JSONConstants.USERNAME).toString());
                 creds = OBJ_FACTORY.createCredentials(userCreds);
 
-            } else if (obj.containsKey("mossoCredentials")) {
+            } else if (obj.containsKey(JSONConstants.MOSSO_CREDENTIALS)) {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                    "mossoCredentials").toString());
+                    JSONConstants.MOSSO_CREDENTIALS).toString());
                 MossoCredentials mossoCreds = new MossoCredentials();
-                mossoCreds.setKey(obj3.get("key").toString());
-                mossoCreds.setMossoId(Integer.parseInt(obj3.get("mossoId")
+                mossoCreds.setKey(obj3.get(JSONConstants.KEY).toString());
+                mossoCreds.setMossoId(Integer.parseInt(obj3.get(JSONConstants.MOSSO_ID)
                     .toString()));
                 creds = OBJ_FACTORY.createMossoCredentials(mossoCreds);
 
-            } else if (obj.containsKey("nastCredentials")) {
+            } else if (obj.containsKey(JSONConstants.NAST_CREDENTIALS)) {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                    "nastCredentials").toString());
+                    JSONConstants.NAST_CREDENTIALS).toString());
                 NastCredentials nastCreds = new NastCredentials();
-                nastCreds.setKey(obj3.get("key").toString());
-                nastCreds.setNastId(obj3.get("nastId").toString());
+                nastCreds.setKey(obj3.get(JSONConstants.KEY).toString());
+                nastCreds.setNastId(obj3.get(JSONConstants.NAST_ID).toString());
                 creds = OBJ_FACTORY.createNastCredentials(nastCreds);
 
-            } else if (obj.containsKey("passwordCredentials")) {
+            } else if (obj.containsKey(JSONConstants.PASSWORD_CREDENTIALS)) {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                    "passwordCredentials").toString());
+                    JSONConstants.PASSWORD_CREDENTIALS).toString());
                 PasswordCredentials passwordCreds = new PasswordCredentials();
-                passwordCreds.setUsername(obj3.get("username").toString());
-                passwordCreds.setPassword(obj3.get("username").toString());
+                passwordCreds.setUsername(obj3.get(JSONConstants.USERNAME).toString());
+                passwordCreds.setPassword(obj3.get(JSONConstants.PASSWORD).toString());
                 creds = OBJ_FACTORY.createPasswordCredentials(passwordCreds);
 
             }

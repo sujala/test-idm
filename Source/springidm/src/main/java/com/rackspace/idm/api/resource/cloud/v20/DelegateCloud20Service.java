@@ -16,9 +16,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
 import org.apache.commons.configuration.Configuration;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
@@ -29,14 +26,11 @@ import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.docs.identity.api.ext.rax_ksadm.v1.UserWithOnlyEnabled;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.rackspace.idm.exception.BadRequestException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -217,15 +211,12 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId)
         throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listUserGroups(httpHeaders, userId);
+        Response.ResponseBuilder serviceResponse = getCloud20Service().listUserGroups(httpHeaders, userId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
-            String request = getCloudAuthV20Url() + "users/" + userId
-                + "/RAX-KSGRP";
+            String request = getCloudAuthV20Url() + "users/" + userId + "/RAX-KSGRP";
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
@@ -284,6 +275,28 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/roles";
+            return cloudClient.get(request, httpHeaders);
+        }
+        return serviceResponse;
+    }
+
+    @Override
+    public ResponseBuilder listUserGlobalRolesByServiceId(
+        HttpHeaders httpHeaders, String authToken, String userId,
+        String serviceId) throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service()
+            .listUserGlobalRoles(httpHeaders, authToken, userId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse
+            .clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
+            String request = getCloudAuthV20Url() + "users/" + userId
+                + "/roles";
+
+            HashMap<String, Object> params = new HashMap<String, Object>();
+            params.put("serviceId", serviceId);
+            request = appendQueryParams(request, params);
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
@@ -375,54 +388,25 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     private String convertCredentialToXML(String body) {
-        JSONParser parser = new JSONParser();
-        JAXBElement<? extends CredentialType> creds = null;
+        JAXBElement<? extends CredentialType> jaxbCreds = null;
         String xml = null;
 
+        CredentialType creds = JSONReaderForCredentialType
+            .checkAndGetCredentialsFromJSONString(body);
+
+        if (creds instanceof PasswordCredentialsRequiredUsername) {
+            PasswordCredentialsRequiredUsername userCreds = (PasswordCredentialsRequiredUsername) creds;
+            jaxbCreds = OBJ_FACTORY.createPasswordCredentials(userCreds);
+        } else if (creds instanceof ApiKeyCredentials) {
+            ApiKeyCredentials userCreds = (ApiKeyCredentials) creds;
+            jaxbCreds = OBJ_FACTORY_RAX_KSKEY
+                .createApiKeyCredentials(userCreds);
+        }
+
         try {
-            JSONObject obj = (JSONObject) parser.parse(body);
-
-            if (obj.containsKey("passwordCredentials")) {
-                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                    "passwordCredentials").toString());
-                PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
-                String username = obj3.get("username").toString();
-                String password = obj3.get("password").toString();
-                if (StringUtils.isBlank(username)) {
-                    throw new BadRequestException("username required");
-                }
-                if (StringUtils.isBlank(password)) {
-                    throw new BadRequestException("password required");
-                }
-                userCreds.setUsername(username);
-                userCreds.setPassword(password);
-                creds = OBJ_FACTORY.createPasswordCredentials(userCreds);
-
-            } else if (obj.containsKey("RAX-KSKEY:apiKeyCredentials")) {
-                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                    "RAX-KSKEY:apiKeyCredentials").toString());
-                ApiKeyCredentials userCreds = new ApiKeyCredentials();
-                String username = obj3.get("username").toString();
-                String apikey = obj3.get("apikey").toString();
-                if (StringUtils.isBlank(username)) {
-                    throw new BadRequestException("username required");
-                }
-                if (StringUtils.isBlank(apikey)) {
-                    throw new BadRequestException("apikey required");
-                }
-                userCreds.setUsername(username);
-                userCreds.setApiKey(apikey);
-                creds = OBJ_FACTORY_RAX_KSKEY
-                    .createApiKeyCredentials(userCreds);
-            } else {
-                throw new BadRequestException("unrecognized credential type");
-            }
-            xml = marshallObjectToString(creds);
-        } catch (ParseException e) {
-            throw new BadRequestException("malformed JSON");
+            xml = marshallObjectToString(jaxbCreds);
         } catch (JAXBException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new IllegalStateException("error marshalling creds");
         }
 
         return xml;
@@ -607,8 +591,8 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders,
-        String authToken, String userId, UserWithOnlyEnabled user)
-        throws IOException, JAXBException {
+        String authToken, String userId, User user) throws IOException,
+        JAXBException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
             .setUserEnabled(httpHeaders, authToken, userId, user);
         // We have to clone the ResponseBuilder from above because once we build
@@ -660,7 +644,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
 
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/OS-KSADM/roles/" + roleId;
+                + "/roles/OS-KSADM/" + roleId;
             return cloudClient.put(request, httpHeaders, "");
         }
         return serviceResponse;
@@ -678,7 +662,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
 
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/OS-KSADM/roles/" + roleId;
+                + "/roles/OS-KSADM/" + roleId;
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
@@ -696,7 +680,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
 
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/OS-KSADM/roles/" + roleId;
+                + "/roles/OS-KSADM" + roleId;
             return cloudClient.delete(request, httpHeaders);
         }
         return serviceResponse;
@@ -777,7 +761,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
 
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
-                + "/OS-KSADM/roles";
+                + "/OS-KSADM/roles/";
 
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("marker", marker);
@@ -1299,4 +1283,5 @@ public class DelegateCloud20Service implements Cloud20Service {
             return defaultCloud20Service;
         }
     }
+
 }

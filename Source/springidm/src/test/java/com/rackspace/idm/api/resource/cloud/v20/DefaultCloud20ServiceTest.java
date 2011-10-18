@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory;
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.UserGroupService;
 import com.rackspace.idm.domain.service.UserService;
@@ -8,7 +10,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -28,16 +29,20 @@ public class DefaultCloud20ServiceTest {
     private UserGroupService userGroupService;
     private String userId = "id";
     private User user;
-
+    private JAXBObjectFactories jaxbObjectFactories;
     @Before
     public void setUp() throws Exception {
         defaultCloud20Service = new DefaultCloud20Service();
         userService = mock(UserService.class);
         userGroupService = mock(UserGroupService.class);
+        jaxbObjectFactories = mock(JAXBObjectFactories.class);
         defaultCloud20Service.setUserService(userService);
         defaultCloud20Service.setUserGroupService(userGroupService);
+        defaultCloud20Service.setOBJ_FACTORIES(jaxbObjectFactories);
         user = new User();
         user.setMossoId(123);
+        when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new ObjectFactory());
+
     }
 
     @Test
@@ -73,10 +78,10 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUserGroups_withValidUser_returnsAList() throws Exception {
+    public void listUserGroups_withValidUser_returnsAJaxbElement() throws Exception {
         when(userService.getUserById(userId)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.listUserGroups(null, userId);
-        assertThat("code", responseBuilder.build().getEntity(), instanceOf(List.class));
+        assertThat("code", responseBuilder.build().getEntity(), instanceOf(javax.xml.bind.JAXBElement.class));
     }
 
     @Test
