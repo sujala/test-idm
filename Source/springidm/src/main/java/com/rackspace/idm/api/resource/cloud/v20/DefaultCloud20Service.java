@@ -889,8 +889,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             try {
                 if (currentExtensions == null) {
-                    JAXBContext jaxbContext = JAXBContext
-                        .newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
+                    JAXBContext jaxbContext = JAXBContextResolver.get();
                     Unmarshaller unmarshaller = jaxbContext
                         .createUnmarshaller();
                     InputStream is = StringUtils.class
@@ -1270,8 +1269,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         throws IOException {
         try {
             if (currentExtensions == null) {
-                JAXBContext jaxbContext = JAXBContext
-                    .newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
+                JAXBContext jaxbContext = JAXBContextResolver.get();
                 Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
                 InputStream is = StringUtils.class
