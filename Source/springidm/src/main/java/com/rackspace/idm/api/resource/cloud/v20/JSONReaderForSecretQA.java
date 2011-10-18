@@ -18,6 +18,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.JSONConstants;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
@@ -35,22 +36,28 @@ MessageBodyReader<SecretQA> {
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException, WebApplicationException {
 
-        String jsonBody = IOUtils.toString(inputStream, "UTF-8");
+        String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 
+        SecretQA secrets = getSecretQAFromJSONString(jsonBody);
+
+        return secrets;
+    }
+    
+    public static SecretQA getSecretQAFromJSONString(String jsonBody) {
         SecretQA secrets = new SecretQA();
 
         try {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
-            if (outer.containsKey("RAX-KSQA:secretQA")) {
+            if (outer.containsKey(JSONConstants.SECRET_QA)) {
                 JSONObject obj3;
 
                 obj3 = (JSONObject) parser.parse(outer.get(
-                    "RAX-KSQA:secretQA").toString());
+                    JSONConstants.SECRET_QA).toString());
                 
-                Object answer = obj3.get("answer");
-                Object question = obj3.get("question");
+                Object answer = obj3.get(JSONConstants.ANSWER);
+                Object question = obj3.get(JSONConstants.QUESTION);
 
                 if (answer != null) {
                     secrets.setAnswer(answer.toString());

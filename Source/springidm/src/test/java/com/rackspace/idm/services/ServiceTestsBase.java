@@ -49,6 +49,8 @@ public class ServiceTestsBase {
 
     String uniqueId = "uniqueId";
     
+    String userRsId = "userRsId";
+    
     @Test
     public void BlankTest() {}
 
@@ -101,6 +103,7 @@ public class ServiceTestsBase {
             .createNiceMock(UserScopeAccess.class);
         so.setClientId(clientId);
         so.setClientRCN(customerInum);
+        so.setUserRsId(userRsId);
         EasyMock.expect(
             so.isAccessTokenExpired(EasyMock.anyObject(DateTime.class)))
             .andReturn(true);

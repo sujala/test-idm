@@ -20,8 +20,8 @@ import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.validation.InputValidator;
@@ -79,6 +79,7 @@ public class UserApplicationResource extends ParentResource {
 
         //TODO: probably should be in the application service. Refactor when get chance
         UserScopeAccess sa = new UserScopeAccess();
+        sa.setUserRsId(user.getId());
         sa.setUsername(user.getUsername());
         sa.setUserRCN(user.getCustomerId());
         sa.setClientId(application.getClientId());

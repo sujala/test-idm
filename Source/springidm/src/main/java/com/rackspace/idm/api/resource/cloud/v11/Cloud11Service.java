@@ -26,7 +26,7 @@ public interface Cloud11Service {
     Response.ResponseBuilder adminAuthenticate(HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException;
     
     // User Methods  
-    Response.ResponseBuilder createUser(HttpHeaders httpHeaders, User user) throws IOException, JAXBException;
+    Response.ResponseBuilder createUser(HttpHeaders httpHeaders, UriInfo uriInfo, User user) throws IOException, JAXBException;
     Response.ResponseBuilder getUser(String userId, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder getUserFromMossoId(HttpServletRequest request, int mossoId, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder getUserFromNastId(HttpServletRequest request, String nastId, HttpHeaders httpHeaders) throws IOException;

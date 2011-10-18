@@ -39,6 +39,9 @@ public class DelegatedClientScopeAccess extends ScopeAccess implements HasAccess
     
     @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String username;
+    
+    @LDAPField(attribute=LdapRepository.ATTR_USER_RS_ID, objectClass=LdapRepository.OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    private String userRsId;
 
     @LDAPField(attribute=LdapRepository.ATTR_USER_RCN, objectClass=LdapRepository.OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String userRCN;
@@ -170,5 +173,13 @@ public class DelegatedClientScopeAccess extends ScopeAccess implements HasAccess
     public String getAuditContext() {
         final String format = "User(username=%s,customerId=%s)DelegatedToClient(clientId=%s,customerId=%s)";
         return String.format(format, this.getUsername(), this.getUserRCN(), this.getClientId(), this.getClientRCN());
+    }
+
+    public void setUserRsId(String userRsId) {
+        this.userRsId = userRsId;
+    }
+
+    public String getUserRsId() {
+        return userRsId;
     }
 }

@@ -16,11 +16,20 @@
 
     <extension name="Rackspace Keystone Group Extension"
         namespace="http://docs.rackspace.com/identity/api/ext/RAX-KSGROUP/v1.0"
-        alias="RAX-KSGRP-service" updated="2011-10-22T13:25:27-06:00">
+        alias="RAX-KSGRP" updated="2011-10-22T13:25:27-06:00">
         <description>Rackspace extensions to Keystone v2.0 API enabling
             groups.</description>
-        <atom:link rel="describedby" type="application/pdf"
-            href="https://github.com/openstack/keystone/raw/master/keystone/content/service/RAX-KSGRP-service-devguide.pdf" />
+        <atom:link rel="describedby" type="application/vnd.sun.wadl+xml"
+            href="https://raw.github.com/openstack/keystone/master/keystone/content/admin/OS-KSGRP-admin.wadl" />
+    </extension>
+    
+    <extension name="Rackspace Secret Question and Answer Extension"
+        namespace="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0"
+        alias="RAX-KSQA" updated="2011-10-22T13:25:27-06:00">
+        <description>Rackspace extensions to Keystone v2.0 API enabling
+            secret question and answer.</description>
+        <atom:link rel="describedby" type="application/vnd.sun.wadl+xml"
+            href="https://raw.github.com/openstack/keystone/master/keystone/content/admin/OS-KSQA-admin.wadl" />
     </extension>
 
     <extension name="OpenStack KSADM Extension"
@@ -37,7 +46,7 @@
 
     <extension name="OpenStack KSCATALOG Extension"
         namespace="http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0"
-        alias="OS-KSCATALOG-admin" updated="2011-10-22T13:25:27-06:00">
+        alias="OS-KSCATALOG" updated="2011-10-22T13:25:27-06:00">
         <description>OpenStack KSCATALOG Admin Extension to Keystone v2.0 API
             adds the capability to do CRUD on Endpoint Templates and Endpoints.
         </description>

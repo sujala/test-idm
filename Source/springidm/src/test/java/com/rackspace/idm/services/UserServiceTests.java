@@ -26,11 +26,13 @@ import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.PasswordComplexityResult;
 import com.rackspace.idm.domain.entity.Racker;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserCredential;
 import com.rackspace.idm.domain.entity.UserHumanName;
 import com.rackspace.idm.domain.entity.UserLocale;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -173,6 +175,7 @@ public class UserServiceTests {
     @Test
     public void shouldAddUser() throws DuplicateException {
     	//setup
+        final UserScopeAccess usa = getFakeUserScopeAccess();
         final User user = getFakeUser();
         final Customer customer = getFakeCustomer();
         customer.setUniqueId(customerDN);
@@ -181,8 +184,13 @@ public class UserServiceTests {
         EasyMock.expect(mockUserDao.getNextUserId()).andReturn(id);
         EasyMock.expect(mockPasswordComplexityService.checkPassword(user.getPassword())).andReturn(new PasswordComplexityResult());
         mockUserDao.addUser(user);
+        
+        EasyMock.expect(mockScopeAccessObjectDao.addDirectScopeAccess(EasyMock.anyObject(String.class), EasyMock.anyObject(ScopeAccess.class))).andReturn(getFakeUserScopeAccess());
+        EasyMock.expect(mockScopeAccessObjectDao.addDirectScopeAccess(EasyMock.anyObject(String.class), EasyMock.anyObject(ScopeAccess.class))).andReturn(getFakeUserScopeAccess());
+        
         EasyMock.replay(mockUserDao);
         EasyMock.replay(mockPasswordComplexityService);
+        EasyMock.replay(mockScopeAccessObjectDao);
         
         //executions
         userService.addUser(user);
@@ -629,6 +637,21 @@ public class UserServiceTests {
         final User user = new User(username, customerId, email, name, pref, cred);
         return user;
     }
+    
+    private UserScopeAccess getFakeUserScopeAccess() {
+        UserScopeAccess usa = new UserScopeAccess();
+        usa.setClientId(clientId);
+        usa.setClientRCN(clientRCN);
+        usa.setUsername(username);
+        usa.setUserRCN(userRCN);
+        usa.setUserRsId(userRsId);
+        return usa;
+    }
+    
+    String clientId = "clientId";
+    String clientRCN = "clientRCN";
+    String userRCN = "userRCN";
+    String userRsId = "userRsId";
 
     private Customer getFakeCustomer() {
         Customer customer = new Customer();

@@ -1,45 +1,28 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.StringUtils;
-import org.bouncycastle.crypto.InvalidCipherTextException;
-
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.Applications;
-import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
-import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.FilterParam;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.exception.DuplicateClientGroupException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.CryptHelper;
-import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.BindResult;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.LDAPConnection;
-import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.Modification;
-import com.unboundid.ldap.sdk.ModificationType;
-import com.unboundid.ldap.sdk.ResultCode;
-import com.unboundid.ldap.sdk.SearchResult;
-import com.unboundid.ldap.sdk.SearchResultEntry;
-import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import com.unboundid.ldap.sdk.persist.LDAPPersister;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
+import org.bouncycastle.crypto.InvalidCipherTextException;
+
+import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LdapApplicationRepository extends LdapRepository implements ApplicationDao {
 
     public LdapApplicationRepository(LdapConnectionPools connPools,
-        Configuration config) {
+                                     Configuration config) {
         super(connPools, config);
     }
 
@@ -59,7 +42,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         try {
             attributes = getAddAttributesForClient(client);
             String clientDN = new LdapDnBuilder(APPLICATIONS_BASE_DN).addAttribute(
-                ATTR_CLIENT_ID, client.getClientId()).build();
+                    ATTR_CLIENT_ID, client.getClientId()).build();
             client.setUniqueId(clientDN);
             addEntry(clientDN, attributes, audit);
         } catch (GeneralSecurityException e) {
@@ -71,7 +54,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             audit.fail("encryption error");
             throw new IllegalStateException(e);
         }
-        
+
         // Now that it's in LDAP we'll set the password to the "existing" type
         client.setClientSecretObj(client.getClientSecretObj().toExisting());
 
@@ -94,7 +77,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
 
         ClientGroup group = this.getClientGroup(clientGroup.getCustomerId(),
-            clientGroup.getClientId(), clientGroup.getName());
+                clientGroup.getClientId(), clientGroup.getName());
 
         if (group != null) {
             String errMsg = "Client Group already exists";
@@ -105,7 +88,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         Attribute[] atts = getAddAttributesForClientGroup(clientGroup);
 
         String groupDN = new LdapDnBuilder(clientUniqueId).addAttribute(
-            ATTR_NAME, clientGroup.getName()).build();
+                ATTR_NAME, clientGroup.getName()).build();
 
         clientGroup.setUniqueId(groupDN);
 
@@ -135,7 +118,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         List<Modification> mods = new ArrayList<Modification>();
         mods.add(new Modification(ModificationType.ADD, ATTR_MEMBER_OF, group
-            .getUniqueId()));
+                .getUniqueId()));
 
         Audit audit = Audit.log(group).modify(mods);
 
@@ -143,10 +126,10 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             getAppConnPool().modify(userUniqueId, mods);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error adding user to group {} - {}", group,
-                ldapEx);
+                    ldapEx);
 
             if (ldapEx.getResultCode().equals(
-                ResultCode.ATTRIBUTE_OR_VALUE_EXISTS)) {
+                    ResultCode.ATTRIBUTE_OR_VALUE_EXISTS)) {
                 audit.fail("User already in group");
                 throw new DuplicateException("User already in group");
             }
@@ -162,7 +145,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     @Override
     public ClientAuthenticationResult authenticate(String clientId,
-        String clientSecret) {
+                                                   String clientSecret) {
         BindResult result;
         Application client = getClientByClientId(clientId);
 
@@ -182,26 +165,28 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
                 return new ClientAuthenticationResult(client, false);
             }
             getLogger().error(
-                "Bind operation on clientId " + clientId + " failed.", e);
+                    "Bind operation on clientId " + clientId + " failed.", e);
             throw new IllegalStateException(e);
         }
 
         boolean isAuthenticated = ResultCode.SUCCESS.equals(result
-            .getResultCode());
+                .getResultCode());
         getLogger().debug("Client {} authenticated == {}", isAuthenticated);
         return new ClientAuthenticationResult(client, isAuthenticated);
     }
 
     @Override
     public void deleteClient(Application client) {
-        getLogger().info("Deleting client {}", client.getClientId());
+        if (client != null) {
+            getLogger().info("Deleting client {}", client.getClientId());
 
-        Audit audit = Audit.log(client).delete();
+            Audit audit = Audit.log(client).delete();
 
-        this.deleteEntryAndSubtree(client.getUniqueId(), audit);
+            this.deleteEntryAndSubtree(client.getUniqueId(), audit);
 
-        audit.succeed();
-        getLogger().info("Deleted client {}", client.getClientId());
+            audit.succeed();
+            getLogger().info("Deleted client {}", client.getClientId());
+        }
     }
 
     @Override
@@ -220,13 +205,13 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         getLogger().debug("Search all clients");
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS,
+                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         List<Application> clients = new ArrayList<Application>();
 
         List<SearchResultEntry> entries = this.getMultipleEntries(
-            APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, ATTR_NAME);
+                APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, ATTR_NAME);
 
         for (SearchResultEntry entry : entries) {
             clients.add(getClient(entry));
@@ -244,13 +229,13 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         if (StringUtils.isBlank(clientId)) {
             getLogger().error("Null or Empty clientId parameter");
             throw new IllegalArgumentException(
-                "Null or Empty clientId parameter.");
+                    "Null or Empty clientId parameter.");
         }
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_CLIENT_ID, clientId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addEqualAttribute(ATTR_CLIENT_ID, clientId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS,
+                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         Application client = getSingleClient(searchFilter);
 
@@ -266,13 +251,13 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         if (StringUtils.isBlank(clientName)) {
             getLogger().error("Null or Empty client name parameter");
             throw new IllegalArgumentException(
-                "Null or Empty client name parameter.");
+                    "Null or Empty client name parameter.");
         }
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_NAME, clientName)
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addEqualAttribute(ATTR_NAME, clientName)
+                .addEqualAttribute(ATTR_OBJECT_CLASS,
+                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         Application client = getSingleClient(searchFilter);
 
@@ -283,20 +268,20 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     @Override
     public Application getClientByCustomerIdAndClientId(String customerId,
-        String clientId) {
+                                                        String clientId) {
         getLogger().debug("Doing search for clientId {}", clientId);
 
         if (StringUtils.isBlank(clientId)) {
             getLogger().error("Null or Empty clientId parameter");
             throw new IllegalArgumentException(
-                "Null or Empty clientId parameter.");
+                    "Null or Empty clientId parameter.");
         }
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_CLIENT_ID, clientId)
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addEqualAttribute(ATTR_CLIENT_ID, clientId)
+                .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS,
+                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         Application client = getSingleClient(searchFilter);
 
@@ -315,9 +300,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_ID, id)
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addEqualAttribute(ATTR_ID, id)
+                .addEqualAttribute(ATTR_OBJECT_CLASS,
+                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         Application client = getSingleClient(searchFilter);
 
@@ -336,9 +321,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_TOKEN_SCOPE, scope)
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addEqualAttribute(ATTR_TOKEN_SCOPE, scope)
+                .addEqualAttribute(ATTR_OBJECT_CLASS,
+                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         Application client = getSingleClient(searchFilter);
 
@@ -349,19 +334,19 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     @Override
     public ClientGroup getClientGroup(String customerId, String clientId,
-        String groupName) {
+                                      String groupName) {
 
         ClientGroup group = null;
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_NAME, groupName)
-            .addEqualAttribute(ATTR_CLIENT_ID, clientId)
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP)
-            .build();
+                .addEqualAttribute(ATTR_NAME, groupName)
+                .addEqualAttribute(ATTR_CLIENT_ID, clientId)
+                .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP)
+                .build();
 
         SearchResultEntry entry = this.getSingleEntry(APPLICATIONS_BASE_DN,
-            SearchScope.SUB, searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
+                SearchScope.SUB, searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
 
         if (entry != null) {
             group = getClientGroup(entry);
@@ -377,10 +362,10 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         ClientGroup group = null;
 
         Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
-            ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
+                ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
 
         SearchResultEntry entry = this.getSingleEntry(uniqueId,
-            SearchScope.BASE, searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
+                SearchScope.BASE, searchFilter, ATTR_GROUP_SEARCH_ATTRIBUTES);
 
         if (entry != null) {
             group = getClientGroup(entry);
@@ -405,11 +390,11 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         String searchDN = client.getUniqueId();
 
         Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
-            ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
+                ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
 
         List<SearchResultEntry> entries = this.getMultipleEntries(searchDN,
-            SearchScope.ONE, searchFilter, ATTR_NAME,
-            ATTR_GROUP_SEARCH_ATTRIBUTES);
+                SearchScope.ONE, searchFilter, ATTR_NAME,
+                ATTR_GROUP_SEARCH_ATTRIBUTES);
 
         if (entries.size() > 0) {
             for (SearchResultEntry entry : entries) {
@@ -424,42 +409,42 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     @Override
     public Applications getClientsByCustomerId(String customerId, int offset,
-        int limit) {
+                                               int limit) {
         getLogger().debug("Doing search for customerId {}", customerId);
 
         if (StringUtils.isBlank(customerId)) {
             getLogger().error("Null or Empty customerId parameter");
             throw new IllegalArgumentException(
-                "Null or Empty customerId parameter.");
+                    "Null or Empty customerId parameter.");
         }
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS,
+                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         Applications clients = getMultipleClients(searchFilter, offset, limit);
 
         getLogger().debug("Found {} clients for customer {}",
-            clients.getTotalRecords(), customerId);
+                clients.getTotalRecords(), customerId);
 
         return clients;
     }
-    
+
     @Override
     public Applications getAllClients(FilterParam[] filters, int offset, int limit) {
         getLogger().debug("Getting all applications");
 
         LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
         searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION);
-        
+
         if (filters != null) {
-        	for (FilterParam filter : filters) {
-        		// can only filter on application name for now
-        		if (filter.getParam() == FilterParamName.APPLICATION_NAME) {
-        			searchBuilder.addEqualAttribute(ATTR_NAME, filter.getStrValue());
-        		}
-        	}
+            for (FilterParam filter : filters) {
+                // can only filter on application name for now
+                if (filter.getParam() == FilterParamName.APPLICATION_NAME) {
+                    searchBuilder.addEqualAttribute(ATTR_NAME, filter.getStrValue());
+                }
+            }
         }
 
         Filter searchFilter = searchBuilder.build();
@@ -476,12 +461,12 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     public boolean isUserInClientGroup(String username, String groupDN) {
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_UID, username)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .addEqualAttribute(ATTR_MEMBER_OF, groupDN).build();
+                .addEqualAttribute(ATTR_UID, username)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .addEqualAttribute(ATTR_MEMBER_OF, groupDN).build();
 
         SearchResultEntry entry = this.getSingleEntry(USERS_BASE_DN,
-            SearchScope.ONE, searchFilter, ATTR_NO_ATTRIBUTES);
+                SearchScope.ONE, searchFilter, ATTR_NO_ATTRIBUTES);
 
         return entry != null;
     }
@@ -493,19 +478,19 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         if (StringUtils.isBlank(userUniqueId)) {
             getLogger().error("Null user passed in or user uniqueId was blank");
             throw new IllegalArgumentException(
-                "Null user passed in or user uniqueId was blank");
+                    "Null user passed in or user uniqueId was blank");
         }
 
         if (group == null || StringUtils.isBlank(group.getUniqueId())) {
             getLogger().error(
-                "Null group passed in or group uniqueId was blank");
+                    "Null group passed in or group uniqueId was blank");
             throw new IllegalArgumentException(
-                "Null group passed in or group uniqueId was blank");
+                    "Null group passed in or group uniqueId was blank");
         }
 
         List<Modification> mods = new ArrayList<Modification>();
         mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER_OF,
-            group.getUniqueId()));
+                group.getUniqueId()));
 
         Audit audit = Audit.log(group).modify(mods);
         try {
@@ -513,7 +498,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         } catch (LDAPException ldapEx) {
             audit.fail(ldapEx.getMessage());
             getLogger().error("Error deleting user from group {} - {}", group,
-                ldapEx);
+                    ldapEx);
             if (ldapEx.getResultCode().equals(ResultCode.NO_SUCH_ATTRIBUTE)) {
                 audit.fail("User isn't in group");
                 throw new NotFoundException("User isn't in group");
@@ -531,9 +516,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         if (client == null || StringUtils.isBlank(client.getClientId())) {
             getLogger().error(
-                "Client instance is null or its clientId has no value");
+                    "Client instance is null or its clientId has no value");
             throw new IllegalArgumentException(
-                "Bad parameter: The Client instance either null or its clientName has no value.");
+                    "Bad parameter: The Client instance either null or its clientName has no value.");
         }
         String clientId = client.getClientId();
         Application oldClient = getClientByClientId(clientId);
@@ -541,7 +526,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         if (oldClient == null) {
             getLogger().error("No record found for client {}", clientId);
             throw new IllegalArgumentException(
-                "There is no exisiting record for the given client instance.");
+                    "There is no exisiting record for the given client instance.");
         }
 
         Audit audit = Audit.log(client);
@@ -575,13 +560,13 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         if (group == null || StringUtils.isBlank(group.getUniqueId())) {
             getLogger().error(
-                "ClientGroup instance is null or its uniqueId is blank.");
+                    "ClientGroup instance is null or its uniqueId is blank.");
             throw new IllegalArgumentException(
-                "Bad parameter: The Client instance is null or its uniqueId is blank.");
+                    "Bad parameter: The Client instance is null or its uniqueId is blank.");
         }
 
         ClientGroup oldGroup = this.getClientGroupByUniqueId(group
-            .getUniqueId());
+                .getUniqueId());
 
         if (group.getType().equalsIgnoreCase(oldGroup.getType())) {
             return;
@@ -593,7 +578,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             mods.add(new Modification(ModificationType.DELETE, ATTR_GROUP_TYPE));
         } else {
             mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_GROUP_TYPE, group.getType()));
+                    ATTR_GROUP_TYPE, group.getType()));
         }
 
         Audit audit = Audit.log(group).modify(mods);
@@ -609,9 +594,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         getLogger().debug("Search the scope accesses defined in the system.");
 
         Filter filter = new LdapSearchBuilder()
-            .addPresenceAttribute(ATTR_TOKEN_SCOPE)
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addPresenceAttribute(ATTR_TOKEN_SCOPE)
+                .addEqualAttribute(ATTR_OBJECT_CLASS,
+                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         LDAPConnection conn = null;
 
@@ -620,10 +605,10 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         try {
             conn = getAppConnPool().getConnection();
             final SearchResult searchResult = conn.search(APPLICATIONS_BASE_DN,
-                SearchScope.SUB, filter);
+                    SearchScope.SUB, filter);
 
             final List<SearchResultEntry> entries = searchResult
-                .getSearchEntries();
+                    .getSearchEntries();
 
             for (SearchResultEntry entry : entries) {
                 clients.add(getClient(entry));
@@ -644,11 +629,11 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         List<Attribute> atts = new ArrayList<Attribute>();
 
         atts.add(new Attribute(ATTR_OBJECT_CLASS,
-            ATTR_CLIENT_GROUP_OBJECT_CLASS_VALUES));
+                ATTR_CLIENT_GROUP_OBJECT_CLASS_VALUES));
 
         if (!StringUtils.isBlank(group.getCustomerId())) {
             atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, group
-                .getCustomerId()));
+                    .getCustomerId()));
         }
         if (!StringUtils.isBlank(group.getClientId())) {
             atts.add(new Attribute(ATTR_CLIENT_ID, group.getClientId()));
@@ -662,7 +647,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
         getLogger().debug("Found {} add attributes for client group {}.",
-            attributes.length, group);
+                attributes.length, group);
         return attributes;
     }
 
@@ -671,7 +656,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         List<Attribute> atts = new ArrayList<Attribute>();
 
         atts.add(new Attribute(ATTR_OBJECT_CLASS,
-            ATTR_CLIENT_OBJECT_CLASS_VALUES));
+                ATTR_CLIENT_OBJECT_CLASS_VALUES));
 
         if (!StringUtils.isBlank(client.getClientId())) {
             atts.add(new Attribute(ATTR_CLIENT_ID, client.getClientId()));
@@ -679,7 +664,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         if (!StringUtils.isBlank(client.getOpenStackType())) {
             atts.add(new Attribute(ATTR_OPENSTACK_TYPE, client
-                .getOpenStackType()));
+                    .getOpenStackType()));
         }
 
         if (!StringUtils.isBlank(client.getName())) {
@@ -688,18 +673,18 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         if (!StringUtils.isBlank(client.getRCN())) {
             atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, client
-                .getRCN()));
+                    .getRCN()));
         }
 
         if (!StringUtils.isBlank(client.getClientSecretObj().getValue())) {
             atts.add(new Attribute(ATTR_CLIENT_SECRET, client.getClientSecret()));
             atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper
-                .encrypt(client.getClientSecret())));
+                    .encrypt(client.getClientSecret())));
         }
 
         if (client.isEnabled() != null) {
             atts.add(new Attribute(ATTR_ENABLED, String.valueOf(client
-                .isEnabled())));
+                    .isEnabled())));
         }
 
         if (!StringUtils.isBlank(client.getTitle())) {
@@ -720,7 +705,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
         getLogger().debug("Found {} attributes for client {}.",
-            attributes.length, client);
+                attributes.length, client);
         return attributes;
     }
 
@@ -729,10 +714,10 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         Application client = new Application();
         client.setUniqueId(resultEntry.getDN());
         client.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
-        
+
         try {
             String ecryptedPwd = cryptHelper.decrypt(resultEntry
-                .getAttributeValueBytes(ATTR_CLEAR_PASSWORD));
+                    .getAttributeValueBytes(ATTR_CLEAR_PASSWORD));
             ClientSecret secret = ClientSecret.existingInstance(ecryptedPwd);
             client.setClientSecretObj(secret);
         } catch (GeneralSecurityException e) {
@@ -742,14 +727,14 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             getLogger().error(e.getMessage());
             throw new IllegalStateException(e);
         }
-        
+
         client.setName(resultEntry.getAttributeValue(ATTR_NAME));
 
         client.setRCN(resultEntry
-            .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
+                .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
 
         client.setOpenStackType(resultEntry
-            .getAttributeValue(ATTR_OPENSTACK_TYPE));
+                .getAttributeValue(ATTR_OPENSTACK_TYPE));
 
         client.setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
 
@@ -768,7 +753,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         clientGroup.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
         clientGroup.setName(resultEntry.getAttributeValue(ATTR_NAME));
         clientGroup.setCustomerId(resultEntry
-            .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
+                .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
         clientGroup.setType(resultEntry.getAttributeValue(ATTR_GROUP_TYPE));
         getLogger().debug("Materialized client group {}.", clientGroup);
 
@@ -776,30 +761,30 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     }
 
     private Applications getMultipleClients(Filter searchFilter, int offset,
-        int limit) {
+                                            int limit) {
 
         offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
         limit = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
         limit = limit > this.getLdapPagingLimitMax() ? this
-            .getLdapPagingLimitMax() : limit;
+                .getLdapPagingLimitMax() : limit;
 
         int contentCount = 0;
 
         List<Application> clientList = new ArrayList<Application>();
 
         List<SearchResultEntry> entries = this.getMultipleEntries(
-            APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, ATTR_NAME);
+                APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, ATTR_NAME);
 
         contentCount = entries.size();
 
         if (offset < contentCount) {
 
             int toIndex = offset + limit > contentCount ? contentCount : offset
-                + limit;
+                    + limit;
             int fromIndex = offset;
 
             List<SearchResultEntry> subList = entries.subList(fromIndex,
-                toIndex);
+                    toIndex);
 
             for (SearchResultEntry entry : subList) {
                 clientList.add(getClient(entry));
@@ -821,7 +806,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     private Application getSingleClient(Filter searchFilter) {
         Application client = null;
         SearchResultEntry entry = this.getSingleEntry(APPLICATIONS_BASE_DN,
-            SearchScope.SUB, searchFilter);
+                SearchScope.SUB, searchFilter);
 
         if (entry != null) {
             client = getClient(entry);
@@ -831,11 +816,11 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         return client;
     }
-    
+
     private Application getSingleSoftDeletedClient(Filter searchFilter) {
         Application client = null;
         SearchResultEntry entry = this.getSingleEntry(SOFT_DELETED_APPLICATIONS_BASE_DN,
-            SearchScope.SUB, searchFilter);
+                SearchScope.SUB, searchFilter);
 
         if (entry != null) {
             client = getClient(entry);
@@ -853,17 +838,17 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         if (cNew.getRCN() != null && !cNew.getRCN().equals(cOld.getRCN())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_CUSTOMER_NUMBER, cNew.getRCN()));
         }
-        
+
         if (cNew.getClientSecretObj().isNew()) {
             mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
+                    ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
             mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(cNew.getClientSecretObj().getValue())));
+                    ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(cNew.getClientSecretObj().getValue())));
         }
 
         if (cNew.isEnabled() != null && !cNew.isEnabled().equals(cOld.isEnabled())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED,
-                String.valueOf(cNew.isEnabled())));
+                    String.valueOf(cNew.isEnabled())));
         }
 
         if (cNew.getTitle() != null) {
@@ -871,39 +856,39 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
                 mods.add(new Modification(ModificationType.DELETE, ATTR_TITLE));
             } else if (!StringUtils.equals(cOld.getTitle(), cNew.getTitle())) {
                 mods.add(new Modification(ModificationType.REPLACE, ATTR_TITLE,
-                    cNew.getTitle()));
+                        cNew.getTitle()));
             }
         }
 
         if (cNew.getDescription() != null) {
             if (StringUtils.isBlank(cNew.getDescription())) {
                 mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_DESCRIPTION));
+                        ATTR_DESCRIPTION));
             } else if (!StringUtils.equals(cOld.getDescription(),
-                cNew.getDescription())) {
+                    cNew.getDescription())) {
                 mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_DESCRIPTION, cNew.getDescription()));
+                        ATTR_DESCRIPTION, cNew.getDescription()));
             }
         }
 
         if (cNew.getScope() != null) {
             if (StringUtils.isBlank(cNew.getScope())) {
                 mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_TOKEN_SCOPE));
+                        ATTR_TOKEN_SCOPE));
             } else if (!StringUtils.equals(cOld.getScope(), cNew.getScope())) {
                 mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_TOKEN_SCOPE, cNew.getScope()));
+                        ATTR_TOKEN_SCOPE, cNew.getScope()));
             }
         }
 
         if (cNew.getCallBackUrl() != null) {
             if (StringUtils.isBlank(cNew.getCallBackUrl())) {
                 mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_CALLBACK_URL));
+                        ATTR_CALLBACK_URL));
             } else if (!StringUtils.equals(cOld.getCallBackUrl(),
-                cNew.getCallBackUrl())) {
+                    cNew.getCallBackUrl())) {
                 mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_CALLBACK_URL, cNew.getCallBackUrl()));
+                        ATTR_CALLBACK_URL, cNew.getCallBackUrl()));
             }
         }
 
@@ -932,21 +917,21 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             conn = getAppConnPool().getConnection();
 
             SearchResultEntry entry = getContainer(conn, clientUniqueId,
-                CONTAINER_ROLES);
+                    CONTAINER_ROLES);
             if (entry == null) {
                 addContianer(conn, clientUniqueId, CONTAINER_ROLES);
                 entry = getContainer(conn, clientUniqueId, CONTAINER_ROLES);
             }
 
             final LDAPPersister<ClientRole> persister = LDAPPersister
-                .getInstance(ClientRole.class);
+                    .getInstance(ClientRole.class);
             persister.add(role, conn, entry.getDN());
             audit.succeed();
             getLogger().info("Added Client Role: {}", role);
         } catch (final LDAPException e) {
             if (e.getResultCode() == ResultCode.ENTRY_ALREADY_EXISTS) {
                 String errMsg = String.format("Tenant %s already exists",
-                    role.getName());
+                        role.getName());
                 getLogger().warn(errMsg);
                 throw new DuplicateException(errMsg);
             }
@@ -963,7 +948,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         if (role == null) {
             getLogger().error("Null or Empty Client Role parameter");
             throw new IllegalArgumentException(
-                "Null or Empty Client Role parameter.");
+                    "Null or Empty Client Role parameter.");
         }
         getLogger().debug("Deleting ClientRole: {}", role);
         final String dn = role.getUniqueId();
@@ -976,7 +961,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     @Override
     public ClientRole getClientRoleByClientIdAndRoleName(String clientId,
-        String roleName) {
+                                                         String roleName) {
         if (StringUtils.isBlank(clientId)) {
             String errmsg = "ClientId cannot be blank";
             getLogger().error(errmsg);
@@ -990,10 +975,10 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         getLogger().debug("Doing search for ClientRole " + roleName);
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_CLIENT_ID, clientId)
-            .addEqualAttribute(ATTR_NAME, roleName)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
-            .build();
+                .addEqualAttribute(ATTR_CLIENT_ID, clientId)
+                .addEqualAttribute(ATTR_NAME, roleName)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
+                .build();
 
         ClientRole role = null;
 
@@ -1018,9 +1003,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         getLogger().debug("Getting clientRoles for client {}", clientId);
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_CLIENT_ID, clientId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
-            .build();
+                .addEqualAttribute(ATTR_CLIENT_ID, clientId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
+                .build();
 
         List<ClientRole> roles = new ArrayList<ClientRole>();
         try {
@@ -1033,26 +1018,25 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         return roles;
     }
-    
+
     @Override
     public List<ClientRole> getAllClientRoles(FilterParam[] filters) {
         getLogger().debug("Getting all roles");
-        
+
         LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
         searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE);
-        
+
         if (filters != null) {
-        	for (FilterParam filter : filters) {
-        		// can only filter on applicationiId and rolename for now
-        		if (filter.getParam() == FilterParamName.ROLE_NAME) {
-        			searchBuilder.addEqualAttribute(ATTR_NAME, filter.getStrValue());
-        		}
-        		else if (filter.getParam() == FilterParamName.APPLICATION_ID) {
-        			searchBuilder.addEqualAttribute(ATTR_CLIENT_ID, filter.getStrValue());
-        		}
-        	}
+            for (FilterParam filter : filters) {
+                // can only filter on applicationiId and rolename for now
+                if (filter.getParam() == FilterParamName.ROLE_NAME) {
+                    searchBuilder.addEqualAttribute(ATTR_NAME, filter.getStrValue());
+                } else if (filter.getParam() == FilterParamName.APPLICATION_ID) {
+                    searchBuilder.addEqualAttribute(ATTR_CLIENT_ID, filter.getStrValue());
+                }
+            }
         }
-        
+
         Filter searchFilter = searchBuilder.build();
         List<ClientRole> roles = new ArrayList<ClientRole>();
         try {
@@ -1071,7 +1055,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         getLogger().debug("Getting all client roles");
         Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
-            ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE).build();
+                ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE).build();
 
         List<ClientRole> roles = new ArrayList<ClientRole>();
         try {
@@ -1098,9 +1082,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         try {
             conn = getAppConnPool().getConnection();
             final LDAPPersister<ClientRole> persister = LDAPPersister
-                .getInstance(ClientRole.class);
+                    .getInstance(ClientRole.class);
             List<Modification> modifications = persister.getModifications(role,
-                true);
+                    true);
             audit.modify(modifications);
             persister.modify(role, conn, null, true);
             getLogger().debug("Updated Client Role: {}", role);
@@ -1115,9 +1099,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     }
 
     private List<ClientRole> getMultipleClientRoles(String baseDN,
-        Filter searchFilter) throws LDAPPersistException {
+                                                    Filter searchFilter) throws LDAPPersistException {
         List<SearchResultEntry> entries = this.getMultipleEntries(baseDN,
-            SearchScope.SUB, searchFilter, ATTR_NAME);
+                SearchScope.SUB, searchFilter, ATTR_NAME);
 
         List<ClientRole> roles = new ArrayList<ClientRole>();
         for (SearchResultEntry entry : entries) {
@@ -1127,15 +1111,15 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     }
 
     private ClientRole getSingleClientRole(String baseDN, Filter searchFilter)
-        throws LDAPPersistException {
+            throws LDAPPersistException {
         SearchResultEntry entry = this.getSingleEntry(baseDN, SearchScope.SUB,
-            searchFilter);
+                searchFilter);
         ClientRole role = getClientRole(entry);
         return role;
     }
 
     private ClientRole getClientRole(SearchResultEntry entry)
-        throws LDAPPersistException {
+            throws LDAPPersistException {
         if (entry == null) {
             return null;
         }
@@ -1170,9 +1154,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         getLogger().debug("Doing search for ClientRole " + id);
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_ID, id)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
-            .build();
+                .addEqualAttribute(ATTR_ID, id)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
+                .build();
 
         ClientRole role = null;
 
@@ -1191,15 +1175,15 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     public List<Application> getOpenStackServices() {
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addPresenceAttribute(ATTR_OPENSTACK_TYPE)
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addPresenceAttribute(ATTR_OPENSTACK_TYPE)
+                .addEqualAttribute(ATTR_OBJECT_CLASS,
+                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         Applications clients = getMultipleClients(searchFilter, 0, 400);
 
         return clients.getClients();
     }
-    
+
     @Override
     public void softDeleteApplication(Application application) {
         getLogger().info("SoftDeleting customer - {}", application.getRCN());
@@ -1214,7 +1198,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             application.setUniqueId(newDn);
             // Disable the Application
             conn.modify(application.getUniqueId(), new Modification(
-                ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
+                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting application", e);
             throw new IllegalStateException(e);
@@ -1223,7 +1207,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
         getLogger().info("SoftDeleted application - {}", application.getRCN());
     }
-    
+
     @Override
     public Application getSoftDeletedApplicationById(String id) {
 
@@ -1234,9 +1218,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_CLIENT_ID, id)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
-            .build();
+                .addEqualAttribute(ATTR_CLIENT_ID, id)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+                .build();
 
         Application application = getSingleSoftDeletedClient(searchFilter);
 
@@ -1252,13 +1236,13 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         if (StringUtils.isBlank(clientName)) {
             getLogger().error("Null or Empty clientName parameter");
             throw new IllegalArgumentException(
-                "Null or Empty clientName parameter.");
+                    "Null or Empty clientName parameter.");
         }
 
         Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_NAME, clientName)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
-            .build();
+                .addEqualAttribute(ATTR_NAME, clientName)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+                .build();
 
         Application application = getSingleSoftDeletedClient(searchFilter);
 
@@ -1275,15 +1259,15 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             conn = getAppConnPool().getConnection();
             String oldDn = application.getUniqueId();
             String newRdn = new LdapDnBuilder("").addAttribute(ATTR_CLIENT_ID,
-                application.getClientId()).build();
+                    application.getClientId()).build();
             String newDn = new LdapDnBuilder(APPLICATIONS_BASE_DN)
-            .addAttribute(ATTR_CLIENT_ID, application.getClientId()).build();
+                    .addAttribute(ATTR_CLIENT_ID, application.getClientId()).build();
             // Modify the User
             conn.modifyDN(oldDn, newRdn, false, APPLICATIONS_BASE_DN);
             application.setUniqueId(newDn);
             // Enabled the User
             conn.modify(application.getUniqueId(), new Modification(
-                ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
+                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting application", e);
             throw new IllegalStateException(e);

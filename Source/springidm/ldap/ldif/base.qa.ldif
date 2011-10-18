@@ -1001,6 +1001,7 @@ preferredLanguage: en-us
 RCN: RACKSPACE
 rsId: 104472
 rsRegion: USA
+rsMossoId: 5701091
 enabled: TRUE
 timeZone: America/Chicago
 uid: cmarin2
@@ -1079,6 +1080,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RCN-QATestingCustomer
 clientId: QATESTCLIENT
+userRsId: 1
 uid: mkovacs
 userRCN: RACKSPACE
 
@@ -1088,6 +1090,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RCN-QATestingCustomer
 clientId: QATESTCLIENT
+userRsId: 2
 uid: authuser1
 userRCN: RACKSPACE
 
@@ -1097,6 +1100,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RCN-QATestingCustomer
 clientId: QATESTCLIENT
+userRsId: 3
 uid: huey
 userRCN: RACKSPACE
 
@@ -1106,6 +1110,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RCN-QATestingCustomer
 clientId: QATESTCLIENT
+userRsId: 4
 uid: testuser
 userRCN: RCN-111-111-111
 
@@ -1115,6 +1120,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RCN-QATestingCustomer
 clientId: QATESTCLIENT
+userRsId: 5
 uid: qauser
 userRCN: RCN-QATestingCustomer
 
@@ -1124,6 +1130,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RCN-QATestingCustomer
 clientId: QATESTCLIENT
+userRsId: 6
 uid: qaadmin
 userRCN: RCN-QATestingCustomer
 
@@ -1135,6 +1142,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 1
 uid: mkovacs
 userRCN: RACKSPACE
 
@@ -1144,6 +1152,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 2
 uid: authuser1
 userRCN: RACKSPACE
 
@@ -1153,6 +1162,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 3
 uid: huey
 userRCN: RACKSPACE
 
@@ -1162,6 +1172,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 4
 uid: testuser
 userRCN: RCN-111-111-111
 
@@ -1171,6 +1182,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 5
 uid: qauser
 userRCN: RCN-QATestingCustomer
 
@@ -1180,6 +1192,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 6
 uid: qaadmin
 userRCN: RCN-QATestingCustomer
 
@@ -1189,6 +1202,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 7
 uid: admin
 userRCN: RACKSPACE
 accessToken: 111222333444
@@ -1200,6 +1214,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 104472
 uid: cmarin2
 userRCN: RACKSPACE
 accessToken: XXXX
@@ -1211,6 +1226,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 104476
 uid: cmarin3
 userRCN: RACKSPACE
 accessToken: YYYY
@@ -1225,6 +1241,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+userRsId: 1
 uid: mkovacs
 userRCN: RACKSPACE
 
@@ -1234,6 +1251,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+userRsId: 2
 uid: authuser1
 userRCN: RACKSPACE
 
@@ -1243,6 +1261,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+userRsId: 3
 uid: huey
 userRCN: RACKSPACE
 
@@ -1252,6 +1271,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+userRsId: 4
 uid: testuser
 userRCN: RCN-111-111-111
 
@@ -1261,6 +1281,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+userRsId: 5
 uid: qauser
 userRCN: RCN-QATestingCustomer
 
@@ -1270,6 +1291,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+userRsId: 6
 uid: qaadmin
 userRCN: RCN-QATestingCustomer
 
@@ -1279,6 +1301,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+userRsId: 7
 uid: admin
 userRCN: RACKSPACE
 
@@ -1288,6 +1311,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+userRsId: 104472
 uid: cmarin2
 userRCN: RACKSPACE
 
@@ -1297,6 +1321,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+userRsId: 104476
 uid: cmarin3
 userRCN: RACKSPACE
 
@@ -1308,6 +1333,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+userRsId: 1
 uid: mkovacs
 userRCN: RACKSPACE
 
@@ -1317,6 +1343,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+userRsId: 2
 uid: authuser1
 userRCN: RACKSPACE
 
@@ -1326,6 +1353,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+userRsId: 3
 uid: huey
 userRCN: RACKSPACE
 
@@ -1335,6 +1363,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+userRsId: 4
 uid: testuser
 userRCN: RCN-111-111-111
 
@@ -1344,6 +1373,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+userRsId: 5
 uid: qauser
 userRCN: RCN-QATestingCustomer
 
@@ -1353,6 +1383,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+userRsId: 6
 uid: qaadmin
 userRCN: RCN-QATestingCustomer
 
@@ -1362,6 +1393,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+userRsId: 7
 uid: admin
 userRCN: RACKSPACE
 
@@ -1371,6 +1403,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+userRsId: 104472
 uid: cmarin2
 userRCN: RACKSPACE
 
@@ -1380,6 +1413,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+userRsId: 104476
 uid: cmarin3
 userRCN: RACKSPACE
 
@@ -1391,6 +1425,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+userRsId: 1
 uid: mkovacs
 userRCN: RACKSPACE
 
@@ -1400,6 +1435,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+userRsId: 2
 uid: authuser1
 userRCN: RACKSPACE
 
@@ -1409,6 +1445,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+userRsId: 3
 uid: huey
 userRCN: RACKSPACE
 
@@ -1418,6 +1455,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+userRsId: 4
 uid: testuser
 userRCN: RCN-111-111-111
 
@@ -1427,6 +1465,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+userRsId: 5
 uid: qauser
 userRCN: RCN-QATestingCustomer
 
@@ -1436,6 +1475,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+userRsId: 6
 uid: qaadmin
 userRCN: RCN-QATestingCustomer
 
@@ -1445,6 +1485,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+userRsId: 7
 uid: admin
 userRCN: RACKSPACE
 
@@ -1454,6 +1495,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+userRsId: 104472
 uid: cmarin2
 userRCN: RACKSPACE
 
@@ -1463,6 +1505,7 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientRCN: RACKSPACE
 clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+userRsId: 104476
 uid: cmarin3
 userRCN: RACKSPACE
 

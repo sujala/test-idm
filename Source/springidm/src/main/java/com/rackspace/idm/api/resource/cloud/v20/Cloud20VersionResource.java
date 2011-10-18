@@ -34,6 +34,7 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 
@@ -268,9 +269,9 @@ public class Cloud20VersionResource {
 
     @GET
     @Path("users/{userId}/RAX-KSGRP")
-    public Response listUserGroups(@Context HttpHeaders httpHeaders,
+    public Response listUserGroups(@Context HttpHeaders httpHeaders, @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId) throws IOException {
-        return getCloud20Service().listUserGroups(httpHeaders, userId).build();
+        return getCloud20Service().listUserGroups(httpHeaders,authToken, userId).build();
     }
 
     @PUT
@@ -324,7 +325,7 @@ public class Cloud20VersionResource {
     }
 
     @POST
-    @Path("users/{userId}/OS-KSADM/credentials/passwordCredentials")
+    @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.PASSWORD_CREDENTIALS)
     public Response updateUserPasswordCredentials(
         @Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
@@ -336,24 +337,24 @@ public class Cloud20VersionResource {
     }
 
     @POST
-    @Path("users/{userId}/OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials")
+    @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.APIKEY_CREDENTIALS)
     public Response updateUserApiKeyCredentials(
         @Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId, ApiKeyCredentials creds)
         throws IOException, JAXBException {
         return getCloud20Service().updateUserApiKeyCredentials(httpHeaders,
-            authToken, userId, "RAX-KSKEY:apiKeyCredentials", creds).build();
+            authToken, userId, JSONConstants.APIKEY_CREDENTIALS, creds).build();
     }
 
     @GET
-    @Path("users/{userId}/OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials")
+    @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.APIKEY_CREDENTIALS)
     public Response getUserCredentialKey(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId,
         @PathParam("credentialType") String credentialType) throws IOException {
         return getCloud20Service().getUserCredential(httpHeaders, authToken,
-            userId, "RAX-KSKEY:apiKeyCredentials").build();
+            userId, JSONConstants.APIKEY_CREDENTIALS).build();
     }
 
     @GET
@@ -367,13 +368,13 @@ public class Cloud20VersionResource {
     }
 
     @DELETE
-    @Path("users/{userId}/OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials")
+    @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.APIKEY_CREDENTIALS)
     public Response deleteUserKeyCredential(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId,
         @PathParam("credentialType") String credentialType) throws IOException {
         return getCloud20Service().deleteUserCredential(httpHeaders, authToken,
-            userId, "RAX-KSKEY:apiKeyCredentials").build();
+            userId, JSONConstants.APIKEY_CREDENTIALS).build();
     }
 
     @DELETE

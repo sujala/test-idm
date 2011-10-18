@@ -18,6 +18,17 @@ public class UserConverterCloudV11 {
         this.enpointConverterCloudV11 = enpointConverterCloudV11;
     }
     
+    public com.rackspace.idm.domain.entity.User toUserDO(com.rackspacecloud.docs.auth.api.v1.User user) {
+        
+        com.rackspace.idm.domain.entity.User userDO = new com.rackspace.idm.domain.entity.User();
+        userDO.setUsername(user.getId());
+        userDO.setMossoId(user.getMossoId());
+        userDO.setNastId(user.getNastId());
+        userDO.setApiKey(user.getKey());
+        userDO.setEnabled(user.isEnabled());
+        return userDO;
+    }
+    
     public com.rackspacecloud.docs.auth.api.v1.User toCloudV11User(User user, List<CloudEndpoint> endpoints) {
         
         com.rackspacecloud.docs.auth.api.v1.User jaxbUser = OBJ_FACTORY.createUser();

@@ -53,19 +53,19 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
 
     @Test
     public void getTenants__returns200() throws Exception {
-        String token = getAuthToken();
+        String token = getAuthToken("cmarin1", "Password1");
         WebResource resource = resource().path("cloud/v2.0/tenants");
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
-    private String getAuthToken() {
+    private String getAuthToken(String username, String password) {
         WebResource resource = resource().path("cloud/v2.0/tokens");
         ClientResponse clientResponse = resource
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML_TYPE)
                 .post(ClientResponse.class,
-                        "<auth xmlns=\"http://docs.openstack.org/identity/api/v2.0\"><passwordCredentials username=\"cmarin1\" password=\"Password1\"/></auth>");
+                        "<auth xmlns=\"http://docs.openstack.org/identity/api/v2.0\"><passwordCredentials username=\""+username+"\" password=\""+password+"\"/></auth>");
         return clientResponse.getEntity(AuthenticateResponse.class).getToken().getId();
     }
 
@@ -78,6 +78,23 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
                 .post(ClientResponse.class,
                         "<auth xmlns=\"http://docs.openstack.org/identity/api/v2.0\"><passwordCredentials username=\"cmarin1\" password=\"Password1\"/></auth>");
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
+    }
+
+    //works when forwarding, user id might be different in ga and ca
+    @Test
+    public void listUserGroups_returns200() throws Exception {
+        String token = getAuthToken("cmarin2", "Password1");
+        WebResource resource = resource().path("cloud/v2.0/users/104472/RAX-KSGRP");
+        ClientResponse clientResponse = resource.header("X-Auth-Token",token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
+        assertThat("response code", clientResponse.getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listUserGroups_invalidAuthToken_returns401() throws Exception {
+        String token = "invalid";
+        WebResource resource = resource().path("cloud/v2.0/users/104472/RAX-KSGRP");
+        ClientResponse clientResponse = resource.header("X-Auth-Token",token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
+        assertThat("response code", clientResponse.getStatus(), equalTo(401));
     }
 
     @Ignore

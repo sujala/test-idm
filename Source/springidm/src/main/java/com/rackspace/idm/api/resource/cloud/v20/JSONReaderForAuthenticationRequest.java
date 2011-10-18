@@ -21,6 +21,7 @@ import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.openstack.docs.identity.api.v2.TokenForAuthenticationRequest;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.idm.JSONConstants;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
@@ -42,20 +43,28 @@ public class JSONReaderForAuthenticationRequest implements
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException, WebApplicationException {
 
-        String jsonBody = IOUtils.toString(inputStream, "UTF-8");
+        String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 
+        AuthenticationRequest auth = getAuthenticationRequestFromJSONString(jsonBody);
+
+        return auth;
+    }
+
+    public static AuthenticationRequest getAuthenticationRequestFromJSONString(
+        String jsonBody) {
         AuthenticationRequest auth = new AuthenticationRequest();
 
         try {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
-            if (outer.containsKey("auth")) {
+            if (outer.containsKey(JSONConstants.AUTH)) {
                 JSONObject obj3;
 
-                obj3 = (JSONObject) parser.parse(outer.get("auth").toString());
-                Object tenantId = obj3.get("tenantId");
-                Object tenantName = obj3.get("tenantName");
+                obj3 = (JSONObject) parser.parse(outer.get(JSONConstants.AUTH)
+                    .toString());
+                Object tenantId = obj3.get(JSONConstants.TENANT_ID);
+                Object tenantName = obj3.get(JSONConstants.TENANT_NAME);
 
                 if (tenantId != null) {
                     auth.setTenantId(tenantId.toString());
@@ -63,56 +72,34 @@ public class JSONReaderForAuthenticationRequest implements
                 if (tenantName != null) {
                     auth.setTenantName(tenantName.toString());
                 }
-                
-                if (obj3.containsKey("token")) {
-                    JSONObject objToken = (JSONObject) parser.parse(obj3.get("token").toString());
-                    
+
+                if (obj3.containsKey(JSONConstants.TOKEN)) {
+                    JSONObject objToken = (JSONObject) parser.parse(obj3.get(
+                        JSONConstants.TOKEN).toString());
+
                     TokenForAuthenticationRequest token = new TokenForAuthenticationRequest();
-                    
-                    Object id = objToken.get("id");
-                    
+
+                    Object id = objToken.get(JSONConstants.ID);
+
                     if (id != null) {
                         token.setId(id.toString());
                     }
-                    
+
                     auth.setToken(token);
                 }
-                
-                JSONObject obj4;
-                if (obj3.containsKey("RAX-KSKEY:apiKeyCredentials")) {
-                    obj4 = (JSONObject) parser.parse(obj3.get(
-                        "RAX-KSKEY:apiKeyCredentials").toString());
 
-                    ApiKeyCredentials creds = new ApiKeyCredentials();
+                if (obj3.containsKey(JSONConstants.APIKEY_CREDENTIALS)) {
 
-                    Object username = obj4.get("username");
-                    Object apiKey = obj4.get("apiKey");
-
-                    if (username != null) {
-                        creds.setUsername(username.toString());
-                    }
-                    if (apiKey != null) {
-                        creds.setApiKey(apiKey.toString());
-                    }
+                    ApiKeyCredentials creds = JSONReaderForApiKeyCredentials
+                        .getApiKeyCredentialsFromJSONString(obj3.toString());
 
                     auth.setCredential(OBJ_FACTORY_API_KEY
                         .createApiKeyCredentials(creds));
 
-                } else if (obj3.containsKey("passwordCredentials")) {
-                    obj4 = (JSONObject) parser.parse(obj3.get(
-                        "passwordCredentials").toString());
+                } else if (obj3.containsKey(JSONConstants.PASSWORD_CREDENTIALS)) {
 
-                    PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername();
-
-                    Object username = obj4.get("username");
-                    Object password = obj4.get("password");
-
-                    if (username != null) {
-                        creds.setUsername(username.toString());
-                    }
-                    if (password != null) {
-                        creds.setPassword(password.toString());
-                    }
+                    PasswordCredentialsRequiredUsername creds = JSONReaderForPasswordCredentials
+                        .getPasswordCredentialsFromJSONString(obj3.toString());
 
                     auth.setCredential(OBJ_FACTORY_PASSWORD
                         .createPasswordCredentials(creds));
