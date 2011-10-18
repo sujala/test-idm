@@ -1,12 +1,19 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.sun.jersey.api.json.JSONJAXBContext;
-import com.sun.jersey.api.json.JSONMarshaller;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.ext.MessageBodyWriter;
+import javax.ws.rs.ext.Provider;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -18,18 +25,14 @@ import org.openstack.docs.identity.api.v2.CredentialListType;
 import org.openstack.docs.identity.api.v2.CredentialType;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 
-import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.MessageBodyWriter;
-import javax.ws.rs.ext.Provider;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.domain.config.JAXBContextResolver;
+import com.sun.jersey.api.json.JSONJAXBContext;
+import com.sun.jersey.api.json.JSONMarshaller;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
@@ -59,43 +62,43 @@ public class JSONWriter implements
 
             Service service = (Service) object.getValue();
             String jsonText = JSONValue.toJSONString(getService(service));
-            outputStream.write(jsonText.getBytes("UTF-8"));
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
             
         } else if (object.getDeclaredType().isAssignableFrom(ServiceList.class)) {
 
             ServiceList services = (ServiceList) object.getValue();
             String jsonText = JSONValue.toJSONString(getServiceList(services));
-            outputStream.write(jsonText.getBytes("UTF-8"));
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
             
         } else if (object.getDeclaredType().isAssignableFrom(SecretQA.class)) {
 
             SecretQA secrets = (SecretQA) object.getValue();
             String jsonText = JSONValue.toJSONString(getSecretQA(secrets));
-            outputStream.write(jsonText.getBytes("UTF-8"));
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
             
         } else if (object.getDeclaredType().isAssignableFrom(EndpointTemplate.class)) {
 
             EndpointTemplate template = (EndpointTemplate) object.getValue();
             String jsonText = JSONValue.toJSONString(getEndpointTemplate(template));
-            outputStream.write(jsonText.getBytes("UTF-8"));
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
             
         } else if (object.getDeclaredType().isAssignableFrom(EndpointTemplateList.class)) {
 
             EndpointTemplateList templates = (EndpointTemplateList) object.getValue();
             String jsonText = JSONValue.toJSONString(getEndpointTemplateList(templates));
-            outputStream.write(jsonText.getBytes("UTF-8"));
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
             
         } else if (object.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
 
             ApiKeyCredentials creds = (ApiKeyCredentials) object.getValue();
             String jsonText = JSONValue.toJSONString(getApiKeyCredentials(creds));
-            outputStream.write(jsonText.getBytes("UTF-8"));
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
             
         } else if (object.getDeclaredType().isAssignableFrom(Groups.class)) {
 
             Groups groups = (Groups) object.getValue();
             String jsonText = JSONValue.toJSONString(getGroups(groups));
-            outputStream.write(jsonText.getBytes("UTF-8"));
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
         }else if (object.getDeclaredType().isAssignableFrom(CredentialListType.class)) {
             
@@ -114,7 +117,7 @@ public class JSONWriter implements
             }
             
             String jsonText = JSONValue.toJSONString(outer);
-            outputStream.write(jsonText.getBytes("UTF-8"));
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
             
         } else {
             try {
@@ -130,9 +133,9 @@ public class JSONWriter implements
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
 
-        outer.put("RAX-KSKEY:apiKeyCredentials", inner);
-        inner.put("username", creds.getUsername());
-        inner.put("apiKey", creds.getApiKey());
+        outer.put(JSONConstants.APIKEY_CREDENTIALS, inner);
+        inner.put(JSONConstants.USERNAME, creds.getUsername());
+        inner.put(JSONConstants.API_KEY, creds.getApiKey());
         return outer;
     }
     
@@ -141,9 +144,9 @@ public class JSONWriter implements
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
 
-        outer.put("passwordCredentials", inner);
-        inner.put("username", creds.getUsername());
-        inner.put("password", creds.getPassword());
+        outer.put(JSONConstants.PASSWORD_CREDENTIALS, inner);
+        inner.put(JSONConstants.USERNAME, creds.getUsername());
+        inner.put(JSONConstants.PASSWORD, creds.getPassword());
         return outer;
     }
     
@@ -152,17 +155,18 @@ public class JSONWriter implements
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
 
-        outer.put("RAX-KSQA:secretQA", inner);
-        inner.put("answer", secrets.getAnswer());
-        inner.put("question", secrets.getQuestion());
+        outer.put(JSONConstants.SECRET_QA, inner);
+        inner.put(JSONConstants.ANSWER, secrets.getAnswer());
+        inner.put(JSONConstants.QUESTION, secrets.getQuestion());
         return outer;
     }
 
+    @SuppressWarnings("unchecked")
     private JSONObject getGroups(Groups groups){
         JSONObject outer = new JSONObject();
         JSONArray list = new JSONArray();
 
-        outer.put("RAX-KSGRP:groups", list);
+        outer.put(JSONConstants.GROUP, list);
 
         for (Group group : groups.getGroup()) {
             list.add(getGroup(group));
@@ -171,14 +175,15 @@ public class JSONWriter implements
         return outer;
     }
 
+    @SuppressWarnings("unchecked")
     private JSONObject getGroup(Group group){
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
 
-        outer.put("RAX-KSGRP:group", inner);
-        inner.put("id", group.getId());
-        inner.put("description", group.getDescription());
-        inner.put("name", group.getName());
+        outer.put(JSONConstants.GROUP, inner);
+        inner.put(JSONConstants.ID, group.getId());
+        inner.put(JSONConstants.DESCRIPTION, group.getDescription());
+        inner.put(JSONConstants.NAME, group.getName());
         return outer;
     }
 
@@ -188,10 +193,11 @@ public class JSONWriter implements
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
         
-        outer.put("OS-KSADM:service", inner);
-        inner.put("id", service.getId());
-        inner.put("type", service.getType());
-        inner.put("description", service.getDescription());
+        outer.put(JSONConstants.SERVICE, inner);
+        inner.put(JSONConstants.ID, service.getId());
+        inner.put(JSONConstants.NAME, service.getName());
+        inner.put(JSONConstants.TYPE, service.getType());
+        inner.put(JSONConstants.DESCRIPTION, service.getDescription());
         return outer;
     }
     
@@ -200,7 +206,7 @@ public class JSONWriter implements
         JSONObject outer = new JSONObject();
         JSONArray list = new JSONArray();
 
-        outer.put("OS-KSADM:services", list);
+        outer.put(JSONConstants.SERVICE, list);
         
         for (Service service : serviceList.getService()) {
             list.add(getService(service));
@@ -214,20 +220,20 @@ public class JSONWriter implements
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
 
-        outer.put("OS-KSCATALOG:endpointTemplate", inner);
-        inner.put("id", template.getId());
-        inner.put("adminURL", template.getAdminURL());
-        inner.put("internalURL", template.getInternalURL());
-        inner.put("name", template.getName());
-        inner.put("publicURL", template.getPublicURL());
-        inner.put("type", template.getType());
-        inner.put("region", template.getRegion());
-        inner.put("global", template.isGlobal());
-        inner.put("enabled", template.isEnabled());
+        outer.put(JSONConstants.ENDPOINT_TEMPLATE, inner);
+        inner.put(JSONConstants.ID, template.getId());
+        inner.put(JSONConstants.ADMIN_URL, template.getAdminURL());
+        inner.put(JSONConstants.INTERNAL_URL, template.getInternalURL());
+        inner.put(JSONConstants.NAME, template.getName());
+        inner.put(JSONConstants.PUBLIC_URL, template.getPublicURL());
+        inner.put(JSONConstants.TYPE, template.getType());
+        inner.put(JSONConstants.REGION, template.getRegion());
+        inner.put(JSONConstants.GLOBAL, template.isGlobal());
+        inner.put(JSONConstants.ENABLED, template.isEnabled());
         if (template.getVersion() != null) {
-            inner.put("versionId", template.getVersion().getId());
-            inner.put("versionInfo", template.getVersion().getInfo());
-            inner.put("versionList", template.getVersion().getList());
+            inner.put(JSONConstants.VERSION_ID, template.getVersion().getId());
+            inner.put(JSONConstants.VERSION_INFO, template.getVersion().getInfo());
+            inner.put(JSONConstants.VERSION_LIST, template.getVersion().getList());
         }
         return outer;
     }
@@ -237,7 +243,7 @@ public class JSONWriter implements
         JSONObject outer = new JSONObject();
         JSONArray list = new JSONArray();
 
-        outer.put("OS-KSCATALOG:endpointTemplates", list);
+        outer.put(JSONConstants.ENDPOINT_TEMPLATE, list);
         
         for (EndpointTemplate template : templateList.getEndpointTemplate()) {
             list.add(getEndpointTemplate(template));

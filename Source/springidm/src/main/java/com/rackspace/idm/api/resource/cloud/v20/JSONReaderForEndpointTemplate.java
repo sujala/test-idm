@@ -19,6 +19,8 @@ import org.json.simple.parser.ParseException;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.VersionForService;
 
+import com.rackspace.idm.JSONConstants;
+
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForEndpointTemplate implements
@@ -35,32 +37,38 @@ MessageBodyReader<EndpointTemplate> {
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException, WebApplicationException {
 
-        String jsonBody = IOUtils.toString(inputStream, "UTF-8");
+        String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 
+        EndpointTemplate template = getEndpointTemplateFromJSONString(jsonBody);
+
+        return template;
+    }
+    
+    public static EndpointTemplate getEndpointTemplateFromJSONString(String jsonBody) {
         EndpointTemplate template = new EndpointTemplate();
 
         try {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
-            if (outer.containsKey("OS-KSCATALOG:endpointTemplate")) {
+            if (outer.containsKey(JSONConstants.ENDPOINT_TEMPLATE)) {
                 JSONObject obj3;
 
                 obj3 = (JSONObject) parser.parse(outer.get(
-                    "OS-KSCATALOG:endpointTemplate").toString());
+                    JSONConstants.ENDPOINT_TEMPLATE).toString());
                 
-                Object id = obj3.get("id");
-                Object adminURL = obj3.get("adminURL");
-                Object internalURL = obj3.get("internalURL");
-                Object name = obj3.get("name");
-                Object publicURL = obj3.get("publicURL");
-                Object serviceType = obj3.get("type");
-                Object region = obj3.get("region");
-                Object global = obj3.get("global");
-                Object enabled = obj3.get("enabled");
-                Object versionId = obj3.get("versionId");
-                Object versionInfo = obj3.get("versionInfo");
-                Object versionList = obj3.get("versionList");
+                Object id = obj3.get(JSONConstants.ID);
+                Object adminURL = obj3.get(JSONConstants.ADMIN_URL);
+                Object internalURL = obj3.get(JSONConstants.INTERNAL_URL);
+                Object name = obj3.get(JSONConstants.NAME);
+                Object publicURL = obj3.get(JSONConstants.PUBLIC_URL);
+                Object serviceType = obj3.get(JSONConstants.TYPE);
+                Object region = obj3.get(JSONConstants.REGION);
+                Object global = obj3.get(JSONConstants.GLOBAL);
+                Object enabled = obj3.get(JSONConstants.ENABLED);
+                Object versionId = obj3.get(JSONConstants.VERSION_ID);
+                Object versionInfo = obj3.get(JSONConstants.VERSION_INFO);
+                Object versionList = obj3.get(JSONConstants.VERSION_LIST);
 
                 if (id != null) {
                     template.setId(Integer.parseInt(id.toString()));

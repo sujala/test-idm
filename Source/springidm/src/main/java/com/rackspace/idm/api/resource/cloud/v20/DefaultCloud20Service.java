@@ -23,9 +23,6 @@ import javax.xml.transform.stream.StreamSource;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
@@ -54,6 +51,7 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
@@ -269,20 +267,22 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             checkXAUTHTOKEN(authToken);
 
-            // TODO: Uncomment when service is updated to include name
-            // if (StringUtils.isBlank(service.getName)) {
-            // String errMsg = "Expecting name";
-            // logger.warn(errMsg);
-            // throw new BadRequestException(errMsg);
-            // }
+            if (StringUtils.isBlank(service.getName())) {
+                String errMsg = "Expecting name";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
+            
+            if (StringUtils.isBlank(service.getType())) {
+                String errMsg = "Expecting type";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
 
             Application client = new Application();
             client.setOpenStackType(service.getType());
             client.setDescription(service.getDescription());
-            client.setName(service.getType());
-            // TODO: Uncomment when service is updated to include name and
-            // remove line above
-            // client.setName(service.getName());
+            client.setName(service.getName());
             client.setRCN(getRackspaceCustomerId());
 
             this.clientService.add(client);
@@ -398,13 +398,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                 password = userCreds.getPassword();
 
                 if (StringUtils.isBlank(username)) {
-                    String errMsg = "Excpecting username";
+                    String errMsg = "Expecting username";
                     logger.warn(errMsg);
                     throw new BadRequestException(errMsg);
                 }
 
                 if (StringUtils.isBlank(password)) {
-                    String errMsg = "Excpecting password";
+                    String errMsg = "Expecting password";
                     logger.warn(errMsg);
                     throw new BadRequestException(errMsg);
                 }
@@ -425,13 +425,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                 apiKey = userCreds.getApiKey();
 
                 if (StringUtils.isBlank(username)) {
-                    String errMsg = "Excpecting username";
+                    String errMsg = "Expecting username";
                     logger.warn(errMsg);
                     throw new BadRequestException(errMsg);
                 }
 
                 if (StringUtils.isBlank(apiKey)) {
-                    String errMsg = "Excpecting apiKey";
+                    String errMsg = "Expecting apiKey";
                     logger.warn(errMsg);
                     throw new BadRequestException(errMsg);
                 }
@@ -765,16 +765,16 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             checkXAUTHTOKEN(authToken);
 
-            if (!(credentialType.equals("passwordCredentials") || credentialType
-                .endsWith("apiKeyCredentials"))) {
+            if (!(credentialType.equals(JSONConstants.PASSWORD_CREDENTIALS) || credentialType
+                .equals(JSONConstants.APIKEY_CREDENTIALS))) {
                 throw new BadRequestException("unsupported credential type");
             }
 
             User user = checkAndGetUser(userId);
 
-            if (credentialType.equals("passwordCredentials")) {
+            if (credentialType.equals(JSONConstants.PASSWORD_CREDENTIALS)) {
                 user.setPassword("");
-            } else if (credentialType.equals("apiKeyCredentials")) {
+            } else if (credentialType.equals(JSONConstants.APIKEY_CREDENTIALS)) {
                 user.setApiKey("");
             }
 
@@ -1068,8 +1068,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             checkXAUTHTOKEN(authToken);
 
-            if (!(credentialType.equals("passwordCredentials") || credentialType
-                .endsWith("apiKeyCredentials"))) {
+            if (!(credentialType.equals(JSONConstants.PASSWORD_CREDENTIALS) || credentialType
+                .equals(JSONConstants.APIKEY_CREDENTIALS))) {
                 throw new BadRequestException("unsupported credential type");
             }
 
@@ -1077,7 +1077,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             JAXBElement<? extends CredentialType> creds = null;
 
-            if (credentialType.equals("passwordCredentials")) {
+            if (credentialType.equals(JSONConstants.PASSWORD_CREDENTIALS)) {
                 if (StringUtils.isBlank(user.getPassword())) {
                     throw new NotFoundException(
                         "User doesn't have password credentials");
@@ -1088,7 +1088,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                     .createCredential(userCreds);
 
-            } else if (credentialType.equals("RAX-KSKEY:apiKeyCredentials")) {
+            } else if (credentialType.equals(JSONConstants.APIKEY_CREDENTIALS)) {
                 if (StringUtils.isBlank(user.getApiKey())) {
                     throw new NotFoundException(
                         "User doesn't have api key credentials");
@@ -1538,8 +1538,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders,
-        String authToken, String userId, org.openstack.docs.identity.api.v2.User user)
-        throws IOException {
+        String authToken, String userId,
+        org.openstack.docs.identity.api.v2.User user) throws IOException {
 
         try {
             checkXAUTHTOKEN(authToken);
@@ -1988,53 +1988,20 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     private JAXBElement<? extends CredentialType> getJSONCredentials(
         String jsonBody) {
+        
+        JAXBElement<? extends CredentialType> jaxbCreds = null;
+        
+        CredentialType creds = JSONReaderForCredentialType.checkAndGetCredentialsFromJSONString(jsonBody);
 
-        JSONParser parser = new JSONParser();
-        JAXBElement<? extends CredentialType> creds = null;
-
-        try {
-            JSONObject obj = (JSONObject) parser.parse(jsonBody);
-
-            if (obj.containsKey("passwordCredentials")) {
-                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                    "passwordCredentials").toString());
-                PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
-                Object username = obj3.get("username");
-                Object password = obj3.get("password");
-                if (username == null) {
-                    throw new BadRequestException("username required");
-                }
-                if (password == null) {
-                    throw new BadRequestException("password required");
-                }
-                userCreds.setUsername(username.toString());
-                userCreds.setPassword(password.toString());
-                creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createPasswordCredentials(userCreds);
-
-            } else if (obj.containsKey("RAX-KSKEY:apiKeyCredentials")) {
-                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                    "RAX-KSKEY:apiKeyCredentials").toString());
-                ApiKeyCredentials userCreds = new ApiKeyCredentials();
-                Object username = obj3.get("username");
-                Object apikey = obj3.get("apiKey");
-                if (username == null) {
-                    throw new BadRequestException("username required");
-                }
-                if (apikey == null) {
-                    throw new BadRequestException("apiKey required");
-                }
-                userCreds.setUsername(username.toString());
-                userCreds.setApiKey(apikey.toString());
-                creds = OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory()
-                    .createApiKeyCredentials(userCreds);
-            } else {
-                throw new BadRequestException("unrecognized credential type");
-            }
-        } catch (ParseException e) {
-            throw new BadRequestException("malformed JSON");
+        if (creds instanceof ApiKeyCredentials) {
+            jaxbCreds = OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory()
+            .createApiKeyCredentials((ApiKeyCredentials) creds);
+        } else if (creds instanceof PasswordCredentialsRequiredUsername) {
+            jaxbCreds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+            .createPasswordCredentials((PasswordCredentialsRequiredUsername) creds);
         }
-        return creds;
+
+        return jaxbCreds;
     }
 
     @SuppressWarnings("unchecked")
