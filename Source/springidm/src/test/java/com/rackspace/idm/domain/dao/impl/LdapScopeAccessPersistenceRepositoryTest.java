@@ -1,18 +1,35 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.entity.*;
-import junit.framework.Assert;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.junit.*;
+import static org.junit.Assert.fail;
 
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.Assert.fail;
+import junit.framework.Assert;
+
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.rackspace.idm.domain.config.LdapConfiguration;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.ClientScopeAccess;
+import com.rackspace.idm.domain.entity.ClientSecret;
+import com.rackspace.idm.domain.entity.ClientStatus;
+import com.rackspace.idm.domain.entity.Customer;
+import com.rackspace.idm.domain.entity.DefinedPermission;
+import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
+import com.rackspace.idm.domain.entity.GrantedPermission;
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
+import com.rackspace.idm.domain.entity.Permission;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 
 public class LdapScopeAccessPersistenceRepositoryTest {
     private LdapCustomerRepository customerRepo;
@@ -37,6 +54,8 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
     String accessToken = "YYYYYYY";
     String refreshToken = "ZZZZZZZ";
+    
+    String userId = "userId";
 
     Application                         client       = null;
     Application                         client2      = null;
@@ -124,6 +143,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         userScopeAccess.setAccessTokenExp(new Date());
         userScopeAccess.setUsername("username");
         userScopeAccess.setUserRCN("user RCN");
+        userScopeAccess.setUserRsId(userId);
         userScopeAccess.setRefreshTokenString(refreshToken);
         userScopeAccess.setRefreshTokenExp(new Date());
 
@@ -160,6 +180,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setAccessTokenExp(new Date());
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
+        sa.setUserRsId(userId);
         repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         final ScopeAccess scopeAccessObject = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(),
@@ -178,6 +199,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setAccessTokenExp(new Date());
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
+        sa.setUserRsId(userId);
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
@@ -208,6 +230,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setAccessTokenExp(new Date());
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
+        sa.setUserRsId(userId);
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
@@ -239,6 +262,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setAccessTokenExp(new Date());
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
+        sa.setUserRsId(userId);
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
@@ -264,6 +288,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setAccessTokenExp(new Date());
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
+        sa.setUserRsId(userId);
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
@@ -327,6 +352,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setAccessTokenExp(new Date());
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
+        sa.setUserRsId(userId);
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
@@ -352,6 +378,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setAccessTokenExp(new Date());
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
+        sa.setUserRsId(userId);
 
         sa = (PasswordResetScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
@@ -372,6 +399,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setAccessTokenExp(new Date());
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
+        sa.setUserRsId(userId);
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
@@ -406,6 +434,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setAccessTokenExp(new Date());
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
+        sa.setUserRsId(userId);
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
@@ -425,6 +454,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa1.setAccessTokenExp(new Date());
         sa1.setUsername("username");
         sa1.setUserRCN("user RCN");
+        sa1.setUserRsId(userId);
         sa1.setRefreshTokenString(refreshToken);
         sa1.setRefreshTokenExp(new Date());
 
@@ -437,6 +467,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa2.setAccessTokenExp(new Date());
         sa2.setUsername("username");
         sa2.setUserRCN("user RCN");
+        sa2.setUserRsId(userId);
         sa2.setRefreshTokenString(refreshToken);
         sa2.setRefreshTokenExp(new Date());
 
@@ -458,6 +489,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setAccessTokenExp(new Date());
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
+        sa.setUserRsId(userId);
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
@@ -491,6 +523,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setAccessTokenExp(new Date());
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
+        sa.setUserRsId(userId);
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
@@ -523,6 +556,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setAccessTokenExp(date);
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
+        sa.setUserRsId(userId);
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(date);
 
@@ -547,6 +581,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa.setAccessTokenExp(new Date());
         sa.setUsername("username");
         sa.setUserRCN("user RCN");
+        sa.setUserRsId(userId);
         sa.setRefreshTokenString(refreshToken);
         sa.setRefreshTokenExp(new Date());
 
