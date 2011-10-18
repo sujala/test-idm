@@ -45,6 +45,8 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.BaseUrlConflictException;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspacecloud.docs.auth.api.v1.AuthFault;
@@ -62,6 +64,7 @@ import com.rackspacecloud.docs.auth.api.v1.UserDisabledFault;
 import com.rackspacecloud.docs.auth.api.v1.UserType;
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled;
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey;
+import com.rackspacecloud.docs.auth.api.v1.UsernameConflictFault;
 
 @Component
 public class DefaultCloud11Service implements Cloud11Service {
@@ -131,7 +134,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
 
         ScopeAccess sa = this.scopeAccessService
-        .getScopeAccessByAccessToken(tokeId);
+            .getScopeAccessByAccessToken(tokeId);
 
         if (sa == null || !(sa instanceof UserScopeAccess)
             || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
@@ -162,7 +165,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                     user = this.userService.getUserByNastId(belongsTo);
                     break;
             }
-            
+
             if (user == null) {
                 return notAuthenticatedExceptionResponse("Username or api key invalid");
             }
@@ -170,7 +173,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (user.isDisabled()) {
                 return userDisabledExceptionResponse(user.getUsername());
             }
-            
+
             if (!user.getUsername().equals(usa.getUsername())) {
                 return notAuthenticatedExceptionResponse("Username or api key invalid");
             }
@@ -184,7 +187,8 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Override
     public ResponseBuilder adminAuthenticate(HttpServletResponse response,
         HttpHeaders httpHeaders, String body) throws IOException {
-        if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
+        if (httpHeaders.getMediaType().isCompatible(
+            MediaType.APPLICATION_XML_TYPE)) {
             return authenticateXML(response, httpHeaders, body, true);
         } else {
             return authenticateJSON(response, httpHeaders, body, true);
@@ -232,9 +236,52 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder createUser(HttpHeaders httpHeaders,
+    public Response.ResponseBuilder createUser(HttpHeaders httpHeaders, UriInfo uriInfo,
         com.rackspacecloud.docs.auth.api.v1.User user) throws IOException {
-        throw new IOException("Not Implemented");
+        try {
+
+            if (StringUtils.isBlank(user.getId())) {
+                String errorMsg = "Expecting username";
+                logger.warn(errorMsg);
+                throw new BadRequestException(errorMsg);
+            }
+            
+            if (user.getMossoId() == null) {
+                String errorMsg = "Expecting mossoId";
+                logger.warn(errorMsg);
+                throw new BadRequestException(errorMsg);
+            }
+
+            User userDO = this.userConverterCloudV11.toUserDO(user);
+            userDO.setEnabled(true);
+            
+            //TODO: Get Code From Carlos to get user's NastId
+            
+            this.userService.addUser(userDO);
+            
+            if (user.getBaseURLRefs() != null
+                && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
+                // If BaseUrlRefs were sent in then we're going to add the new list
+
+                // Add new list of baseUrls
+                for (BaseURLRef ref : user.getBaseURLRefs().getBaseURLRef()) {
+                    this.endpointService.addBaseUrlToUser(ref.getId(),
+                        ref.isV1Default(), userDO.getUsername());
+                }
+            }
+            
+            List<CloudEndpoint> endpoints = this.endpointService
+            .getEndpointsForUser(userDO.getUsername());
+
+            return Response.created(
+                uriInfo.getRequestUriBuilder().path(userDO.getId()).build())
+                .entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11User(userDO, endpoints)));
+
+        } catch (DuplicateException de) {
+            return usernameConflictExceptionResponse(de.getMessage());
+        } catch (DuplicateUsernameException due) {
+            return usernameConflictExceptionResponse(due.getMessage());
+        } 
     }
 
     @Override
@@ -501,12 +548,12 @@ public class DefaultCloud11Service implements Cloud11Service {
         String serviceName, HttpHeaders httpHeaders) throws IOException {
         CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseURLId);
 
-        if (baseUrl == null ) {
+        if (baseUrl == null) {
             return notFoundExceptionResponse(String.format(
                 "BaseUrlId %s not found", baseURLId));
         }
 
-        if (serviceName!=null && !serviceName.equals(baseUrl.getService())) {
+        if (serviceName != null && !serviceName.equals(baseUrl.getService())) {
             return notFoundExceptionResponse(String.format(
                 "BaseUrlId %s not found", baseURLId));
         }
@@ -521,7 +568,9 @@ public class DefaultCloud11Service implements Cloud11Service {
         List<CloudBaseUrl> baseUrls = this.endpointService.getBaseUrls();
 
         if (StringUtils.isEmpty(serviceName)) {
-            return Response.ok(OBJ_FACTORY.createBaseURLs(this.endpointConverterCloudV11.toBaseUrls(baseUrls)));
+            return Response.ok(OBJ_FACTORY
+                .createBaseURLs(this.endpointConverterCloudV11
+                    .toBaseUrls(baseUrls)));
         }
 
         List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
@@ -531,7 +580,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
         }
 
-        if(filteredBaseUrls.size()==0){
+        if (filteredBaseUrls.size() == 0) {
             return notFoundExceptionResponse("No matching Urls found");
         }
         return Response.ok(OBJ_FACTORY
@@ -637,10 +686,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                     .getValue();
                 String username = passCreds.getUsername();
                 String password = passCreds.getPassword();
-                if(StringUtils.isBlank(username)){
+                if (StringUtils.isBlank(username)) {
                     return badRequestExceptionResponse("Expecting username");
                 }
-                if(StringUtils.isBlank(password)){
+                if (StringUtils.isBlank(password)) {
                     return badRequestExceptionResponse("Expecting password");
                 }
                 user = this.userService.getUser(username);
@@ -701,7 +750,8 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
 
         try {
-            UserScopeAccess usa = this.scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(
+            UserScopeAccess usa = this.scopeAccessService
+                .getUserScopeAccessForClientIdByUsernameAndApiCredentials(
                     username, apiKey, getCloudAuthClientId());
             List<CloudEndpoint> endpoints = this.endpointService
                 .getEndpointsForUser(username);
@@ -777,6 +827,15 @@ public class DefaultCloud11Service implements Cloud11Service {
         return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
             OBJ_FACTORY.createItemNotFound(fault));
     }
+    
+    private Response.ResponseBuilder usernameConflictExceptionResponse(String message) {
+        UsernameConflictFault fault = OBJ_FACTORY.createUsernameConflictFault();
+        fault.setCode(HttpServletResponse.SC_CONFLICT);
+        fault.setMessage(message);
+        fault.setDetails(MDC.get(Audit.GUUID));
+        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
+            OBJ_FACTORY.createUsernameConflict(fault));
+    }
 
     private Response.ResponseBuilder redirect(HttpServletRequest request,
         String id) {
@@ -806,7 +865,8 @@ public class DefaultCloud11Service implements Cloud11Service {
                     JSONConstants.CREDENTIALS).toString());
                 UserCredentials userCreds = new UserCredentials();
                 userCreds.setKey(obj3.get(JSONConstants.KEY).toString());
-                userCreds.setUsername(obj3.get(JSONConstants.USERNAME).toString());
+                userCreds.setUsername(obj3.get(JSONConstants.USERNAME)
+                    .toString());
                 creds = OBJ_FACTORY.createCredentials(userCreds);
 
             } else if (obj.containsKey(JSONConstants.MOSSO_CREDENTIALS)) {
@@ -814,8 +874,8 @@ public class DefaultCloud11Service implements Cloud11Service {
                     JSONConstants.MOSSO_CREDENTIALS).toString());
                 MossoCredentials mossoCreds = new MossoCredentials();
                 mossoCreds.setKey(obj3.get(JSONConstants.KEY).toString());
-                mossoCreds.setMossoId(Integer.parseInt(obj3.get(JSONConstants.MOSSO_ID)
-                    .toString()));
+                mossoCreds.setMossoId(Integer.parseInt(obj3.get(
+                    JSONConstants.MOSSO_ID).toString()));
                 creds = OBJ_FACTORY.createMossoCredentials(mossoCreds);
 
             } else if (obj.containsKey(JSONConstants.NAST_CREDENTIALS)) {
@@ -830,8 +890,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                 JSONObject obj3 = (JSONObject) parser.parse(obj.get(
                     JSONConstants.PASSWORD_CREDENTIALS).toString());
                 PasswordCredentials passwordCreds = new PasswordCredentials();
-                passwordCreds.setUsername(obj3.get(JSONConstants.USERNAME).toString());
-                passwordCreds.setPassword(obj3.get(JSONConstants.PASSWORD).toString());
+                passwordCreds.setUsername(obj3.get(JSONConstants.USERNAME)
+                    .toString());
+                passwordCreds.setPassword(obj3.get(JSONConstants.PASSWORD)
+                    .toString());
                 creds = OBJ_FACTORY.createPasswordCredentials(passwordCreds);
 
             }
