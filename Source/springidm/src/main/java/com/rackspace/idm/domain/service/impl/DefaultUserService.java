@@ -100,11 +100,23 @@ public class DefaultUserService implements UserService {
         logger.info("Adding User Scope Access for Idm to user {}", user);
         UserScopeAccess usa = new UserScopeAccess();
         usa.setUsername(user.getUsername());
+        usa.setUserRsId(user.getId());
         usa.setUserRCN(user.getCustomerId());
         usa.setClientId(getIdmClientId());
         usa.setClientRCN(getRackspaceCustomerId());
         
         this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), usa);
+        
+        
+        UserScopeAccess cloudUsa = new UserScopeAccess();
+        cloudUsa.setUsername(user.getUsername());
+        cloudUsa.setUserRsId(user.getId());
+        cloudUsa.setUserRCN(user.getCustomerId());
+        cloudUsa.setClientId(getCloudAuthClientId());
+        cloudUsa.setClientRCN(getRackspaceCustomerId());
+        
+        this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), cloudUsa);
+        
         logger.info("Added User Scope Access for Idm to user {}", user);
     }
 
@@ -449,6 +461,10 @@ public class DefaultUserService implements UserService {
 
     private String getIdmClientId() {
         return config.getString("idm.clientId");
+    }
+    
+    private String getCloudAuthClientId() {
+        return config.getString("cloudAuth.clientId");
     }
     
     private String getRackspaceCustomerId() {
