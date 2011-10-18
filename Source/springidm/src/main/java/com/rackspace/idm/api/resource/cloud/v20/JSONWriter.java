@@ -106,7 +106,7 @@ public class JSONWriter implements
             JSONArray list = new JSONArray();
             
             CredentialListType credsList = (CredentialListType) object.getValue();
-            outer.put("credentials", list);
+            outer.put(JSONConstants.CREDENTIALS, list);
             
             for ( JAXBElement<? extends CredentialType> cred : credsList.getCredential()) {
                 if (cred.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
@@ -164,12 +164,14 @@ public class JSONWriter implements
     @SuppressWarnings("unchecked")
     private JSONObject getGroups(Groups groups){
         JSONObject outer = new JSONObject();
+        JSONObject inner = new JSONObject();
         JSONArray list = new JSONArray();
 
-        outer.put(JSONConstants.GROUP, list);
+        outer.put(JSONConstants.GROUPS, inner);
+        inner.put(JSONConstants.GROUP, list);
 
         for (Group group : groups.getGroup()) {
-            list.add(getGroup(group));
+            list.add(getGroupWithoutWrapper(group));
         }
 
         return outer;
@@ -178,12 +180,18 @@ public class JSONWriter implements
     @SuppressWarnings("unchecked")
     private JSONObject getGroup(Group group){
         JSONObject outer = new JSONObject();
-        JSONObject inner = new JSONObject();
 
-        outer.put(JSONConstants.GROUP, inner);
-        inner.put(JSONConstants.ID, group.getId());
-        inner.put(JSONConstants.DESCRIPTION, group.getDescription());
-        inner.put(JSONConstants.NAME, group.getName());
+        outer.put(JSONConstants.GROUP, getGroupWithoutWrapper(group));
+        return outer;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private JSONObject getGroupWithoutWrapper(Group group){
+        JSONObject outer = new JSONObject();
+
+        outer.put(JSONConstants.ID, group.getId());
+        outer.put(JSONConstants.DESCRIPTION, group.getDescription());
+        outer.put(JSONConstants.NAME, group.getName());
         return outer;
     }
 
@@ -191,25 +199,33 @@ public class JSONWriter implements
     @SuppressWarnings("unchecked")
     private JSONObject getService(Service service) {
         JSONObject outer = new JSONObject();
-        JSONObject inner = new JSONObject();
         
-        outer.put(JSONConstants.SERVICE, inner);
-        inner.put(JSONConstants.ID, service.getId());
-        inner.put(JSONConstants.NAME, service.getName());
-        inner.put(JSONConstants.TYPE, service.getType());
-        inner.put(JSONConstants.DESCRIPTION, service.getDescription());
+        outer.put(JSONConstants.SERVICE, getServiceWithoutWrapper(service));
+        return outer;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private JSONObject getServiceWithoutWrapper(Service service) {
+        JSONObject outer = new JSONObject();
+        
+        outer.put(JSONConstants.ID, service.getId());
+        outer.put(JSONConstants.NAME, service.getName());
+        outer.put(JSONConstants.TYPE, service.getType());
+        outer.put(JSONConstants.DESCRIPTION, service.getDescription());
         return outer;
     }
     
     @SuppressWarnings("unchecked")
     private JSONObject getServiceList(ServiceList serviceList) {
         JSONObject outer = new JSONObject();
+        JSONObject inner = new JSONObject();
         JSONArray list = new JSONArray();
 
-        outer.put(JSONConstants.SERVICE, list);
+        outer.put(JSONConstants.SERVICES, inner);
+        inner.put(JSONConstants.SERVICE, list);
         
         for (Service service : serviceList.getService()) {
-            list.add(getService(service));
+            list.add(getServiceWithoutWrapper(service));
         }
 
         return outer;
@@ -218,22 +234,29 @@ public class JSONWriter implements
     @SuppressWarnings("unchecked")
     private JSONObject getEndpointTemplate(EndpointTemplate template) {
         JSONObject outer = new JSONObject();
-        JSONObject inner = new JSONObject();
 
-        outer.put(JSONConstants.ENDPOINT_TEMPLATE, inner);
-        inner.put(JSONConstants.ID, template.getId());
-        inner.put(JSONConstants.ADMIN_URL, template.getAdminURL());
-        inner.put(JSONConstants.INTERNAL_URL, template.getInternalURL());
-        inner.put(JSONConstants.NAME, template.getName());
-        inner.put(JSONConstants.PUBLIC_URL, template.getPublicURL());
-        inner.put(JSONConstants.TYPE, template.getType());
-        inner.put(JSONConstants.REGION, template.getRegion());
-        inner.put(JSONConstants.GLOBAL, template.isGlobal());
-        inner.put(JSONConstants.ENABLED, template.isEnabled());
+        outer.put(JSONConstants.ENDPOINT_TEMPLATE, getEndpointTemplateWithoutWrapper(template));
+
+        return outer;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private JSONObject getEndpointTemplateWithoutWrapper(EndpointTemplate template) {
+        JSONObject outer = new JSONObject();
+
+        outer.put(JSONConstants.ID, template.getId());
+        outer.put(JSONConstants.ADMIN_URL, template.getAdminURL());
+        outer.put(JSONConstants.INTERNAL_URL, template.getInternalURL());
+        outer.put(JSONConstants.NAME, template.getName());
+        outer.put(JSONConstants.PUBLIC_URL, template.getPublicURL());
+        outer.put(JSONConstants.TYPE, template.getType());
+        outer.put(JSONConstants.REGION, template.getRegion());
+        outer.put(JSONConstants.GLOBAL, template.isGlobal());
+        outer.put(JSONConstants.ENABLED, template.isEnabled());
         if (template.getVersion() != null) {
-            inner.put(JSONConstants.VERSION_ID, template.getVersion().getId());
-            inner.put(JSONConstants.VERSION_INFO, template.getVersion().getInfo());
-            inner.put(JSONConstants.VERSION_LIST, template.getVersion().getList());
+            outer.put(JSONConstants.VERSION_ID, template.getVersion().getId());
+            outer.put(JSONConstants.VERSION_INFO, template.getVersion().getInfo());
+            outer.put(JSONConstants.VERSION_LIST, template.getVersion().getList());
         }
         return outer;
     }
@@ -241,9 +264,11 @@ public class JSONWriter implements
     @SuppressWarnings("unchecked")
     private JSONObject getEndpointTemplateList(EndpointTemplateList templateList) {
         JSONObject outer = new JSONObject();
+        JSONObject inner = new JSONObject();
         JSONArray list = new JSONArray();
 
-        outer.put(JSONConstants.ENDPOINT_TEMPLATE, list);
+        outer.put(JSONConstants.ENDPOINT_TEMPLATES, inner);
+        inner.put(JSONConstants.ENDPOINT_TEMPLATE, list);
         
         for (EndpointTemplate template : templateList.getEndpointTemplate()) {
             list.add(getEndpointTemplate(template));
