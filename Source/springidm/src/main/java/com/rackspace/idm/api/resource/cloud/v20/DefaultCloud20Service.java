@@ -1838,7 +1838,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private CloudBaseUrl checkAndGetEndpointTemplate(int baseUrlId) {
         CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseUrlId);
         if (baseUrl == null) {
-            String errMsg = String.format("EnpointTemplate %s not found",
+            String errMsg = String.format("EndpointTemplate %s not found",
                 baseUrlId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
@@ -1851,7 +1851,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             baseUrlId = Integer.parseInt(id);
         } catch (NumberFormatException nfe) {
-            String errMsg = String.format("EnpointTemplate %s not found", id);
+            String errMsg = String.format("EndpointTemplate %s not found", id);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
