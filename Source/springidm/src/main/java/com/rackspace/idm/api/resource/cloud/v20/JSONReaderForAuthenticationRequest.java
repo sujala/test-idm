@@ -90,22 +90,16 @@ public class JSONReaderForAuthenticationRequest implements
 
                 if (obj3.containsKey(JSONConstants.APIKEY_CREDENTIALS)) {
 
-                    String credsString = obj3.get(
-                        JSONConstants.APIKEY_CREDENTIALS).toString();
-
                     ApiKeyCredentials creds = JSONReaderForApiKeyCredentials
-                        .getApiKeyCredentialsFromJSONString(credsString);
+                        .getApiKeyCredentialsFromJSONString(obj3.toString());
 
                     auth.setCredential(OBJ_FACTORY_API_KEY
                         .createApiKeyCredentials(creds));
 
                 } else if (obj3.containsKey(JSONConstants.PASSWORD_CREDENTIALS)) {
 
-                    String credsString = obj3.get(
-                        JSONConstants.PASSWORD_CREDENTIALS).toString();
-
                     PasswordCredentialsRequiredUsername creds = JSONReaderForPasswordCredentials
-                        .getPasswordCredentialsFromJSONString(credsString);
+                        .getPasswordCredentialsFromJSONString(obj3.toString());
 
                     auth.setCredential(OBJ_FACTORY_PASSWORD
                         .createPasswordCredentials(creds));
