@@ -47,7 +47,7 @@ public class DummyCloud11Service implements Cloud11Service {
 	}
 
 	@Override
-	public ResponseBuilder createUser(HttpHeaders httpHeaders, User user)
+	public ResponseBuilder createUser(HttpHeaders httpHeaders, UriInfo uriInfo, User user)
 			throws IOException, JAXBException {
 		return Response.status(Status.NOT_FOUND);
 	}

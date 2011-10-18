@@ -213,10 +213,10 @@ public class Cloud11VersionResource {
     @POST
     @Path("users")
     public Response createUser(
-            @Context HttpHeaders httpHeaders,
+            @Context HttpHeaders httpHeaders, @Context UriInfo uriInfo,
             User user
     ) throws IOException, JAXBException {
-        return getCloud11Service().createUser(httpHeaders, user).build();
+        return getCloud11Service().createUser(httpHeaders, uriInfo, user).build();
     }
 
     @GET
