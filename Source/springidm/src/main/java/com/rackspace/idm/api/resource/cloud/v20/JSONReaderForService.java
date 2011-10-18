@@ -18,6 +18,8 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 
+import com.rackspace.idm.JSONConstants;
+
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForService implements MessageBodyReader<Service> {
@@ -33,24 +35,34 @@ public class JSONReaderForService implements MessageBodyReader<Service> {
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException, WebApplicationException {
 
-        String jsonBody = IOUtils.toString(inputStream, "UTF-8");
+        String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 
+        Service service = getServiceFromJSONString(jsonBody);
+
+        return service;
+    }
+    
+    public static Service getServiceFromJSONString(String jsonBody) {
         Service service = new Service();
 
         try {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
-            if (outer.containsKey("OS-KSADM:service")) {
+            if (outer.containsKey(JSONConstants.SERVICE)) {
                 JSONObject obj3;
 
-                obj3 = (JSONObject) parser.parse(outer.get("OS-KSADM:service")
+                obj3 = (JSONObject) parser.parse(outer.get(JSONConstants.SERVICE)
                     .toString());
 
-                Object desc = obj3.get("description");
-                Object id = obj3.get("id");
-                Object serviceType = obj3.get("type");
+                Object desc = obj3.get(JSONConstants.DESCRIPTION);
+                Object id = obj3.get(JSONConstants.ID);
+                Object name = obj3.get(JSONConstants.NAME);
+                Object serviceType = obj3.get(JSONConstants.TYPE);
 
+                if (name != null) {
+                    service.setName(name.toString());
+                }
                 if (desc != null) {
                     service.setDescription(desc.toString());
                 }

@@ -16,8 +16,11 @@ import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.exception.BadRequestException;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
@@ -36,21 +39,27 @@ public class JSONReaderForApiKeyCredentials implements
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException, WebApplicationException {
 
-        String jsonBody = IOUtils.toString(inputStream, "UTF-8");
+        String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 
+        ApiKeyCredentials creds = getApiKeyCredentialsFromJSONString(jsonBody);
+
+        return creds;
+    }
+    
+    public static ApiKeyCredentials getApiKeyCredentialsFromJSONString(String jsonBody) {
         ApiKeyCredentials creds = new ApiKeyCredentials();
 
         try {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
-            if (outer.containsKey("RAX-KSKEY:apiKeyCredentials")) {
+            if (outer.containsKey(JSONConstants.APIKEY_CREDENTIALS)) {
                 JSONObject obj3;
 
                 obj3 = (JSONObject) parser.parse(outer.get(
-                    "RAX-KSKEY:apiKeyCredentials").toString());
-                Object username = obj3.get("username");
-                Object apikey = obj3.get("apiKey");
+                    JSONConstants.APIKEY_CREDENTIALS).toString());
+                Object username = obj3.get(JSONConstants.USERNAME);
+                Object apikey = obj3.get(JSONConstants.API_KEY);
 
                 if (username != null) {
                     creds.setUsername(username.toString());
@@ -64,6 +73,17 @@ public class JSONReaderForApiKeyCredentials implements
             e.printStackTrace();
         }
 
+        return creds;
+    }
+    
+    public static ApiKeyCredentials checkAndGetApiKeyCredentialsFromJSONString(String jsonBody) {
+        ApiKeyCredentials creds = getApiKeyCredentialsFromJSONString(jsonBody);
+        if (StringUtils.isBlank(creds.getApiKey())) {
+            throw new BadRequestException("Expecting apiKey");
+        }
+        if (StringUtils.isBlank(creds.getUsername())) {
+            throw new BadRequestException("Expecting username");
+        }
         return creds;
     }
 }
