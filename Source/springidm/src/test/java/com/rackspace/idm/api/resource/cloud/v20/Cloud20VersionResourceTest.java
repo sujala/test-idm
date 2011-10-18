@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
@@ -81,13 +80,21 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
+    //works when forwarding, user id might be different in ga and ca
     @Test
     public void listUserGroups_returns200() throws Exception {
-        String token = getAuthToken("cmarin2","Password1");
+        String token = getAuthToken("cmarin2", "Password1");
         WebResource resource = resource().path("cloud/v2.0/users/104472/RAX-KSGRP");
         ClientResponse clientResponse = resource.header("X-Auth-Token",token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
-        Groups entity = clientResponse.getEntity(Groups.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listUserGroups_invalidAuthToken_returns401() throws Exception {
+        String token = "invalid";
+        WebResource resource = resource().path("cloud/v2.0/users/104472/RAX-KSGRP");
+        ClientResponse clientResponse = resource.header("X-Auth-Token",token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
+        assertThat("response code", clientResponse.getStatus(), equalTo(401));
     }
 
     @Ignore
