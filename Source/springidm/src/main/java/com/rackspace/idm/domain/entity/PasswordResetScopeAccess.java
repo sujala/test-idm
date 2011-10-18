@@ -29,6 +29,9 @@ HasAccessToken {
 
     @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_PASSWORDRESETSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
     private String username;
+    
+    @LDAPField(attribute=LdapRepository.ATTR_USER_RS_ID, objectClass=LdapRepository.OBJECTCLASS_PASSWORDRESETSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+    private String userRsId;
 
     @LDAPField(attribute=LdapRepository.ATTR_USER_RCN, objectClass=LdapRepository.OBJECTCLASS_PASSWORDRESETSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String userRCN;
@@ -113,5 +116,13 @@ HasAccessToken {
     public String getAuditContext() {
         final String format = "PasswordReset(username=%s)";
         return String.format(format, getUsername());
+    }
+
+    public void setUserRsId(String userRsId) {
+        this.userRsId = userRsId;
+    }
+
+    public String getUserRsId() {
+        return userRsId;
     }
 }
