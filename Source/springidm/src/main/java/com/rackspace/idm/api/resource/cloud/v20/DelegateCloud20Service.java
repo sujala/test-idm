@@ -211,15 +211,12 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String userId)
         throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listUserGroups(httpHeaders, userId);
+        Response.ResponseBuilder serviceResponse = getCloud20Service().listUserGroups(httpHeaders, userId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND) {
-            String request = getCloudAuthV20Url() + "users/" + userId
-                + "/RAX-KSGRP";
+            String request = getCloudAuthV20Url() + "users/" + userId + "/RAX-KSGRP";
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;

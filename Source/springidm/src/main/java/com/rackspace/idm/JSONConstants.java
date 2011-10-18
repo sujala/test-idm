@@ -36,5 +36,5 @@ public class JSONConstants {
     public static final String VERSION_ID = "versionId";
     public static final String VERSION_INFO = "versionInfo";
     public static final String VERSION_LIST = "versionList";
-    
+    public static final String GROUP = "RAX-KSGRP:group";
 }

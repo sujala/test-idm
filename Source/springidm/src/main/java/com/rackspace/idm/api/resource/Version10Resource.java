@@ -124,20 +124,6 @@ public class Version10Resource {
         return rolesResource;
     }
 
-//    @GET
-//    @Path("xsd/{fileName}")
-//    public Response getXSD(@PathParam("fileName") String fileName) {
-//        String xsdContent = apiDocService.getXsd(fileName);
-//        return Response.ok(xsdContent).build();
-//    }
-//
-//    @GET
-//    @Path("xslt/{fileName}")
-//    public Response getXSLT(@PathParam("fileName") String fileName) {
-//        String xsltContent = apiDocService.getXslt();
-//        return Response.ok(xsltContent).build();
-//    }
-
     @GET
     @Path("idm.wadl")
     public Response getWadl() {

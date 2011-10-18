@@ -25,6 +25,8 @@ import org.openstack.docs.identity.api.v2.CredentialListType;
 import org.openstack.docs.identity.api.v2.CredentialType;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
@@ -92,7 +94,13 @@ public class JSONWriter implements
             String jsonText = JSONValue.toJSONString(getApiKeyCredentials(creds));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
             
-        } else if (object.getDeclaredType().isAssignableFrom(CredentialListType.class)) {
+        } else if (object.getDeclaredType().isAssignableFrom(Groups.class)) {
+
+            Groups groups = (Groups) object.getValue();
+            String jsonText = JSONValue.toJSONString(getGroups(groups));
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+
+        }else if (object.getDeclaredType().isAssignableFrom(CredentialListType.class)) {
             
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
@@ -152,6 +160,33 @@ public class JSONWriter implements
         inner.put(JSONConstants.QUESTION, secrets.getQuestion());
         return outer;
     }
+
+    @SuppressWarnings("unchecked")
+    private JSONObject getGroups(Groups groups){
+        JSONObject outer = new JSONObject();
+        JSONArray list = new JSONArray();
+
+        outer.put(JSONConstants.GROUP, list);
+
+        for (Group group : groups.getGroup()) {
+            list.add(getGroup(group));
+        }
+
+        return outer;
+    }
+
+    @SuppressWarnings("unchecked")
+    private JSONObject getGroup(Group group){
+        JSONObject outer = new JSONObject();
+        JSONObject inner = new JSONObject();
+
+        outer.put(JSONConstants.GROUP, inner);
+        inner.put(JSONConstants.ID, group.getId());
+        inner.put(JSONConstants.DESCRIPTION, group.getDescription());
+        inner.put(JSONConstants.NAME, group.getName());
+        return outer;
+    }
+
     
     @SuppressWarnings("unchecked")
     private JSONObject getService(Service service) {

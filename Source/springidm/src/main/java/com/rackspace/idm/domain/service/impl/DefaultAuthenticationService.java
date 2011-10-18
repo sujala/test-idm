@@ -94,7 +94,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 	}
 
 	@Override
-	public AuthData validateAuthToken(String authToken) {
+	public AuthData getAuthDataFromToken(String authToken) {
 		ScopeAccess scopeAccess = this.scopeAccessService
 				.loadScopeAccessByAccessToken(authToken);
 
@@ -237,12 +237,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
 		}
 
 		if (trParam instanceof RackerCredentials) {
-			if (!isTrustedServer()) {
-				String msg = "Racker grantType forbidden on this server";
-				logger.warn(msg);
-				throw new ForbiddenException(msg);
-			}
-
 			if (StringUtils.isBlank(trParam.getUsername())) {
 				String msg = "username cannot be blank";
 				logger.warn(msg);
@@ -257,12 +251,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
 				throw new NotAuthenticatedException(message);
 			}
 
-			Racker racker = new Racker();
-			racker.setRackerId(uaResult.getUser().getUsername());
-			racker.setUniqueId(uaResult.getUser().getUniqueId());
-
 			RackerScopeAccess scopeAccess = this
-					.getAndUpdateRackerScopeAccessForClientId(racker, caResult
+					.getAndUpdateRackerScopeAccessForClientId((Racker)uaResult.getUser(), caResult
 							.getClient());
 			return scopeAccess;
 		}
@@ -315,11 +305,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
 			}
 
 			if (scopeAccess instanceof UserScopeAccess) {
-				String userId = ((UserScopeAccess) scopeAccess).getUsername();
-				User user = this.userDao.getUserById(userId);
+				String username = ((UserScopeAccess) scopeAccess).getUsername();
+				User user = this.userDao.getUserByUsername(username);
 				if (user == null || user.isDisabled()) {
-					String errMsg = String
-							.format("User %S is disabled", userId);
+					String errMsg = String.format("User %S is disabled", username);
 					logger.info(errMsg);
 					throw new UserDisabledException(errMsg);
 				}
@@ -356,8 +345,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
 			scopeAccess.setRefreshTokenString(this.generateToken());
 			scopeAccess.setAccessTokenString(this.generateToken());
-			scopeAccess.setAccessTokenExp(currentTime.plusSeconds(
-					this.getDefaultTokenExpirationSeconds()).toDate());
+			scopeAccess.setAccessTokenExp(currentTime.plusSeconds(this.getDefaultTokenExpirationSeconds()).toDate());
 			scopeAccess.setAuthCode(null);
 			scopeAccess.setAuthCodeExp(null);
 
@@ -528,8 +516,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
         return result;
     }
     
-    private UserAuthenticationResult authenticateRacker(String username,
-        String password) {
+    private UserAuthenticationResult authenticateRacker(String username, String password) {
         logger.debug("Authenticating Racker: {}", username);
         
         if (!isTrustedServer()) {
@@ -546,9 +533,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             this.userDao.addRacker(racker);
         }
         
-        User user = new User(username);
-        user.setUniqueId(racker.getUniqueId());
-        return new UserAuthenticationResult(user, authenticated);
+        return new UserAuthenticationResult(racker, authenticated);
     }
     
     private DateTime getUserPasswordExpirationDate(String userName) {
