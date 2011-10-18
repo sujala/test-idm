@@ -20,7 +20,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
 
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
@@ -48,7 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
@@ -466,6 +465,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             TenantRole role = new TenantRole();
             role.setClientId(cRole.getClientId());
+            role.setName(cRole.getName());
             role.setRoleRsId(cRole.getId());
 
             this.tenantService.addTenantRoleToUser(user, role);

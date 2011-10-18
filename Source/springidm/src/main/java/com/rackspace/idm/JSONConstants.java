@@ -11,6 +11,7 @@ public class JSONConstants {
     public static final String DESCRIPTION = "description";
     public static final String ENABLED = "enabled";
     public static final String ENDPOINT_TEMPLATE = "OS-KSCATALOG:endpointTemplate";
+    public static final String ENDPOINT_TEMPLATES = "OS-KSCATALOG:endpointTemplates";
     public static final String GLOBAL = "global";
     public static final String ID = "id";
     public static final String INTERNAL_URL = "internalURL";
@@ -27,6 +28,7 @@ public class JSONConstants {
     public static final String REGION = "region";
     public static final String SECRET_QA = "RAX-KSQA:secretQA";
     public static final String SERVICE = "OS-KSADM:service";
+    public static final String SERVICES = "OS-KSADM:services";
     public static final String TENANT_ID = "tenantId";
     public static final String TENANT_NAME = "tenantName";
     public static final String TOKEN = "token";
@@ -37,4 +39,5 @@ public class JSONConstants {
     public static final String VERSION_INFO = "versionInfo";
     public static final String VERSION_LIST = "versionList";
     public static final String GROUP = "RAX-KSGRP:group";
+    public static final String GROUPS = "RAX-KSGRP:groups";
 }
