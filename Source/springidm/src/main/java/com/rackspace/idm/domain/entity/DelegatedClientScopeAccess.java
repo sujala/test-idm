@@ -141,7 +141,7 @@ public class DelegatedClientScopeAccess extends ScopeAccess implements HasAccess
         this.authCodeExp = authCodeExp;
     }
     
-    @Override
+	@Override
     public boolean isAccessTokenExpired(DateTime time) {
         return StringUtils.isBlank(this.accessTokenString)
         || this.accessTokenExp == null

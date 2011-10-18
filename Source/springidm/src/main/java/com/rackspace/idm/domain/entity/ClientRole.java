@@ -12,6 +12,9 @@ import com.unboundid.ldap.sdk.persist.LDAPObject;
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE)
 public class ClientRole implements Auditable {
     
+	public static final String SUPER_ADMIN_ROLE = "3";
+	public static final String RACKER = "RackerVirtualRole";
+	
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
     

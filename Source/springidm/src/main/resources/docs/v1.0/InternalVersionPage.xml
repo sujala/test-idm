@@ -16,5 +16,5 @@
 
 	<atom:link rel="self" href="${baseUrl}v1.0" />
 	<atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="${baseUrl}v1.0/application.wadl" />
-	<atom:link rel="documentation" href="${baseUrl}/docs/v1.0/developerguide.pdf" />
+	<atom:link rel="describedby" href="${baseUrl}docs/v1.0/webdocs/index.html" />
 </contract>

@@ -132,7 +132,7 @@ public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasR
         this.userPasswordExpirationDate = userPasswordExpirationDate;
     }
 
-    @Override
+	@Override
     public boolean isAccessTokenExpired(DateTime time) {
         return StringUtils.isBlank(this.accessTokenString)
         || this.accessTokenExp == null
