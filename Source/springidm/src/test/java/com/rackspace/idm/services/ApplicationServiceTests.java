@@ -12,6 +12,7 @@ import org.junit.Test;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.Applications;
@@ -33,6 +34,7 @@ public class ApplicationServiceTests {
     ApplicationDao mockApplicationDao;
     CustomerDao mockCustomerDao;
     UserDao mockUserDao;
+    TenantDao mockTenantDao;
     ApplicationService clientService;
 
     String clientId = "ClientId";
@@ -74,9 +76,10 @@ public class ApplicationServiceTests {
         mockCustomerDao = EasyMock.createMock(CustomerDao.class);
         mockUserDao = EasyMock.createMock(UserDao.class);
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
+        mockTenantDao = EasyMock.createMock(TenantDao.class);
 
         clientService = new DefaultApplicationService(mockScopeAccessDao,
-            mockApplicationDao, mockCustomerDao, mockUserDao);
+            mockApplicationDao, mockCustomerDao, mockUserDao, mockTenantDao);
     }
 
     @Test
