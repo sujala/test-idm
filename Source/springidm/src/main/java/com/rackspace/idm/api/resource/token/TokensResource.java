@@ -123,7 +123,7 @@ public class TokensResource extends ParentResource {
         // Racker's, Rackspace Clients and Specific Clients are authorized
         //TODO: Implement authorization rules
         //authorizationService.authorizeToken(token, uriInfo);
-        authorizationService.authorize(authHeader, null, null);
+        //authorizationService.authorize(authHeader, null, null);
         
         AuthData authData = authenticationService.getAuthDataFromToken(tokenString);
        
