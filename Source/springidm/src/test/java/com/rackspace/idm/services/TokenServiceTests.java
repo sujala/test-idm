@@ -1,4 +1,4 @@
-package com.rackspace.idm.oauth;
+package com.rackspace.idm.services;
 
 import junit.framework.Assert;
 
@@ -27,7 +27,7 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.InputValidator;
 
-public class OAuthServiceTests {
+public class TokenServiceTests {
 
     UserService mockUserService;
     ApplicationService mockClientService;
@@ -196,173 +196,167 @@ public class OAuthServiceTests {
         Assert.assertFalse(isExpired);
     }
 
-
-    // @Test
-    // public void shouldRevokeToken() {
-    // EasyMock.expect(
-    // mockScopeAccessService.getAccessTokenByTokenString(tokenVal))
-    // .andReturn(getFakeAccessToken());
-    // EasyMock.expect(
-    // mockScopeAccessService.getAccessTokenByTokenString(requestorToken))
-    // .andReturn(getFakeClientAccessToken());
-    // mockScopeAccessService.delete(tokenVal);
-    // EasyMock.expectLastCall();
-    // EasyMock.expect(
-    // mockAuthorizationService
-    // .authorizeCustomerIdm(getFakeClientAccessToken())).andReturn(
-    // true);
-    //
-    // EasyMock.replay(mockScopeAccessService, mockRefreshTokenService,
-    // mockAuthorizationService);
-    //
-    // oauthService.revokeTokensLocally(requestorToken, tokenVal);
-    //
-    // EasyMock.verify(mockScopeAccessService, mockRefreshTokenService,
-    // mockAuthorizationService);
-    // }
-    //
-    // @Test
-    // public void shouldRevokeTokenForOwner() {
-    //
-    // AccessToken accessToken = getFakeAccessToken();
-    //
-    // EasyMock.expect(
-    // mockScopeAccessService.getAccessTokenByTokenString(tokenVal))
-    // .andReturn(accessToken);
-    //
-    // mockScopeAccessService.deleteAllForOwner(accessToken.getOwner());
-    // EasyMock.expectLastCall();
-    //
-    // EasyMock.expect(
-    // mockAuthorizationService.authorizeCustomerIdm(accessToken))
-    // .andReturn(true);
-    //
-    // EasyMock.replay(mockScopeAccessService, mockRefreshTokenService,
-    // mockAuthorizationService);
-    //
-    // TokenDeleteByType queryType = TokenDeleteByType.owner;
-    // oauthService.revokeTokensLocallyForOwnerOrCustomer(tokenVal, queryType,
-    // accessToken.getOwner());
-    //
-    // EasyMock.verify(mockScopeAccessService, mockRefreshTokenService,
-    // mockAuthorizationService);
-    // }
-    //
-    // @Test
-    // public void shouldRevokeTokenForCustomer() {
-    //
-    // oauthService = new DefaultOAuthService(mockUserService,
-    // mockClientService, mockScopeAccessService, mockRefreshTokenService,
-    // mockAuthorizationService, mockConfiguration, inputValidator);
-    //
-    // AccessToken accessToken = getFakeAccessToken();
-    //
-    // EasyMock.expect(
-    // mockScopeAccessService.getAccessTokenByTokenString(tokenVal))
-    // .andReturn(accessToken);
-    //
-    // EasyMock.expect(mockConfiguration.getInt("ldap.paging.limit.max"))
-    // .andReturn(1).atLeastOnce();
-    // EasyMock.replay(mockConfiguration);
-    //
-    // Users usersObj = new Users();
-    // List<User> users = new ArrayList<User>();
-    // User testUser = getFakeUser();
-    // users.add(testUser);
-    // usersObj.setUsers(users);
-    // usersObj.setTotalRecords(1);
-    // List<User> usersList = new ArrayList<User>();
-    // usersList.addAll(usersObj.getUsers());
-    //
-    // EasyMock.expect(mockUserService.getByCustomerId(customerId, 0, 1))
-    // .andReturn(usersObj).atLeastOnce();
-    // EasyMock.replay(mockUserService);
-    //
-    // Clients clientsObj = new Clients();
-    // List<Client> clients = new ArrayList<Client>();
-    // Client testClient = getTestClient();
-    // clients.add(testClient);
-    // clientsObj.setTotalRecords(1);
-    // clientsObj.setClients(clients);
-    // List<Client> clientsList = new ArrayList<Client>();
-    // clientsList.addAll(clientsObj.getClients());
-    //
-    // EasyMock.expect(mockClientService.getByCustomerId(customerId, 0, 1))
-    // .andReturn(clientsObj);
-    // EasyMock.replay(mockClientService);
-    //
-    // mockScopeAccessService.deleteAllForOwner(testUser.getUsername());
-    //
-    // mockScopeAccessService.deleteAllForOwner(testClient.getClientId());
-    //
-    // EasyMock.expectLastCall();
-    //
-    // EasyMock.expect(
-    // mockAuthorizationService.authorizeCustomerIdm(accessToken))
-    // .andReturn(true);
-    //
-    // EasyMock.replay(mockScopeAccessService, mockRefreshTokenService,
-    // mockAuthorizationService);
-    //
-    // TokenDeleteByType queryType = TokenDeleteByType.customer;
-    // oauthService.revokeTokensLocallyForOwnerOrCustomer(tokenVal, queryType,
-    // customerId);
-    //
-    // EasyMock.verify(mockScopeAccessService, mockRefreshTokenService,
-    // mockAuthorizationService);
-    // }
-    //
-    // @Test(expected = NotFoundException.class)
-    // public void shouldNotRevokeTokenForTokenNotFound() {
-    // EasyMock.expect(
-    // mockScopeAccessService.getAccessTokenByTokenString(tokenVal))
-    // .andReturn(null);
-    // EasyMock.expect(
-    // mockScopeAccessService.getAccessTokenByTokenString(requestorToken))
-    // .andReturn(getFakeAccessToken());
-    // mockScopeAccessService.delete(tokenVal);
-    // EasyMock.expectLastCall();
-    //
-    // EasyMock.expect(mockUserService.getUser(username)).andReturn(null);
-    // EasyMock.expect(mockClientService.getById(clientId)).andReturn(
-    // getTestClient());
-    //
-    // mockRefreshTokenService.deleteAllTokensForUser(username);
-    //
-    // EasyMock.replay(mockScopeAccessService, mockUserService,
-    // mockClientService, mockRefreshTokenService);
-    //
-    // oauthService.revokeTokensLocally(requestorToken, tokenVal);
-    //
-    // EasyMock.verify(mockScopeAccessService, mockUserService,
-    // mockClientService, mockRefreshTokenService);
-    // }
-    //
-    // @Test(expected = IllegalStateException.class)
-    // public void shouldNotRevokeTokenForTokenThatDoesNotExist() {
-    // EasyMock.expect(
-    // mockScopeAccessService.getAccessTokenByTokenString(tokenVal))
-    // .andReturn(getFakeAccessToken());
-    // EasyMock.expect(
-    // mockScopeAccessService.getAccessTokenByTokenString(requestorToken))
-    // .andReturn(null);
-    // mockScopeAccessService.delete(tokenVal);
-    // EasyMock.expectLastCall();
-    //
-    // EasyMock.expect(mockUserService.getUser(username)).andReturn(
-    // getFakeUser());
-    // EasyMock.expect(mockClientService.getById(clientId)).andReturn(null);
-    //
-    // mockRefreshTokenService.deleteAllTokensForUser(username);
-    //
-    // EasyMock.replay(mockScopeAccessService, mockUserService,
-    // mockClientService, mockRefreshTokenService);
-    //
-    // oauthService.revokeTokensLocally(requestorToken, tokenVal);
-    //
-    // EasyMock.verify(mockScopeAccessService, mockUserService,
-    // mockClientService, mockRefreshTokenService);
-    // }
+//	@Test
+//	public void shouldRevokeToken() {
+//		EasyMock.expect(mockScopeAccessService.getAccessTokenByTokenString(tokenVal)).andReturn(getFakeAccessToken());
+//		EasyMock.expect(mockScopeAccessService.getAccessTokenByTokenString(requestorToken)).andReturn(getFakeClientAccessToken());
+//		mockScopeAccessService.delete(tokenVal);
+//		EasyMock.expectLastCall();
+//
+//		EasyMock.replay(mockScopeAccessService, mockRefreshTokenService,
+//				mockAuthorizationService);
+//
+//		oauthService.revokeTokensLocally(requestorToken, tokenVal);
+//
+//		EasyMock.verify(mockScopeAccessService, mockRefreshTokenService,
+//				mockAuthorizationService);
+//	}
+//    
+//	@Test
+//	public void shouldRevokeTokenForOwner() {
+//
+//		AccessToken accessToken = getFakeAccessToken();
+//
+//		EasyMock.expect(
+//				mockScopeAccessService.getAccessTokenByTokenString(tokenVal))
+//				.andReturn(accessToken);
+//
+//		mockScopeAccessService.deleteAllForOwner(accessToken.getOwner());
+//		EasyMock.expectLastCall();
+//
+//		EasyMock.expect(
+//				mockAuthorizationService.authorizeCustomerIdm(accessToken))
+//				.andReturn(true);
+//
+//		EasyMock.replay(mockScopeAccessService, mockRefreshTokenService,
+//				mockAuthorizationService);
+//
+//		TokenDeleteByType queryType = TokenDeleteByType.owner;
+//		oauthService.revokeTokensLocallyForOwnerOrCustomer(tokenVal, queryType,
+//				accessToken.getOwner());
+//
+//		EasyMock.verify(mockScopeAccessService, mockRefreshTokenService,
+//				mockAuthorizationService);
+//	}
+//	
+//	@Test
+//	public void shouldRevokeTokenForCustomer() {
+//
+//		oauthService = new DefaultOAuthService(mockUserService,
+//				mockClientService, mockScopeAccessService,
+//				mockRefreshTokenService, mockAuthorizationService,
+//				mockConfiguration, inputValidator);
+//
+//		AccessToken accessToken = getFakeAccessToken();
+//
+//		EasyMock.expect(
+//				mockScopeAccessService.getAccessTokenByTokenString(tokenVal))
+//				.andReturn(accessToken);
+//
+//		EasyMock.expect(mockConfiguration.getInt("ldap.paging.limit.max"))
+//				.andReturn(1).atLeastOnce();
+//		EasyMock.replay(mockConfiguration);
+//
+//		Users usersObj = new Users();
+//		List<User> users = new ArrayList<User>();
+//		User testUser = getFakeUser();
+//		users.add(testUser);
+//		usersObj.setUsers(users);
+//		usersObj.setTotalRecords(1);
+//		List<User> usersList = new ArrayList<User>();
+//		usersList.addAll(usersObj.getUsers());
+//
+//		EasyMock.expect(mockUserService.getByCustomerId(customerId, 0, 1))
+//				.andReturn(usersObj).atLeastOnce();
+//		EasyMock.replay(mockUserService);
+//
+//		Clients clientsObj = new Clients();
+//		List<Client> clients = new ArrayList<Client>();
+//		Client testClient = getTestClient();
+//		clients.add(testClient);
+//		clientsObj.setTotalRecords(1);
+//		clientsObj.setClients(clients);
+//		List<Client> clientsList = new ArrayList<Client>();
+//		clientsList.addAll(clientsObj.getClients());
+//
+//		EasyMock.expect(mockClientService.getByCustomerId(customerId, 0, 1))
+//				.andReturn(clientsObj);
+//		EasyMock.replay(mockClientService);
+//
+//		mockScopeAccessService.deleteAllForOwner(testUser.getUsername());
+//
+//		mockScopeAccessService.deleteAllForOwner(testClient.getClientId());
+//
+//		EasyMock.expectLastCall();
+//
+//		EasyMock.expect(
+//				mockAuthorizationService.authorizeCustomerIdm(accessToken))
+//				.andReturn(true);
+//
+//		EasyMock.replay(mockScopeAccessService, mockRefreshTokenService,
+//				mockAuthorizationService);
+//
+//		TokenDeleteByType queryType = TokenDeleteByType.customer;
+//		oauthService.revokeTokensLocallyForOwnerOrCustomer(tokenVal, queryType,
+//				customerId);
+//
+//		EasyMock.verify(mockScopeAccessService, mockRefreshTokenService,
+//				mockAuthorizationService);
+//	}
+//
+//	@Test(expected = NotFoundException.class)
+//	public void shouldNotRevokeTokenForTokenNotFound() {
+//		EasyMock.expect(
+//				mockScopeAccessService.getAccessTokenByTokenString(tokenVal))
+//				.andReturn(null);
+//		EasyMock.expect(
+//				mockScopeAccessService
+//						.getAccessTokenByTokenString(requestorToken))
+//				.andReturn(getFakeAccessToken());
+//		mockScopeAccessService.delete(tokenVal);
+//		EasyMock.expectLastCall();
+//
+//		EasyMock.expect(mockUserService.getUser(username)).andReturn(null);
+//		EasyMock.expect(mockClientService.getById(clientId)).andReturn(
+//				getTestClient());
+//
+//		mockRefreshTokenService.deleteAllTokensForUser(username);
+//
+//		EasyMock.replay(mockScopeAccessService, mockUserService,
+//				mockClientService, mockRefreshTokenService);
+//
+//		oauthService.revokeTokensLocally(requestorToken, tokenVal);
+//
+//		EasyMock.verify(mockScopeAccessService, mockUserService,
+//				mockClientService, mockRefreshTokenService);
+//	}
+//
+//	@Test(expected = IllegalStateException.class)
+//	public void shouldNotRevokeTokenForTokenThatDoesNotExist() {
+//		EasyMock.expect(
+//				mockScopeAccessService.getAccessTokenByTokenString(tokenVal))
+//				.andReturn(getFakeAccessToken());
+//		EasyMock.expect(
+//				mockScopeAccessService
+//						.getAccessTokenByTokenString(requestorToken))
+//				.andReturn(null);
+//		mockScopeAccessService.delete(tokenVal);
+//		EasyMock.expectLastCall();
+//
+//		EasyMock.expect(mockUserService.getUser(username)).andReturn(
+//				getFakeUser());
+//		EasyMock.expect(mockClientService.getById(clientId)).andReturn(null);
+//
+//		mockRefreshTokenService.deleteAllTokensForUser(username);
+//
+//		EasyMock.replay(mockScopeAccessService, mockUserService,
+//				mockClientService, mockRefreshTokenService);
+//
+//		oauthService.revokeTokensLocally(requestorToken, tokenVal);
+//
+//		EasyMock.verify(mockScopeAccessService, mockUserService,
+//				mockClientService, mockRefreshTokenService);
+//	}
 
     private UserScopeAccess getFakeUserScopeAccess() {
         final UserScopeAccess usa = new UserScopeAccess();

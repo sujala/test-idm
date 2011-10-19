@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.token;
 
 import java.io.StringReader;
+import java.util.Arrays;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -122,7 +123,8 @@ public class TokensResource extends ParentResource {
         // Racker's, Rackspace Clients and Specific Clients are authorized
         //TODO: Implement authorization rules
         //authorizationService.authorizeToken(token, uriInfo);
-
+        authorizationService.authorize(authHeader, null, null);
+        
         AuthData authData = authenticationService.getAuthDataFromToken(tokenString);
        
         logger.debug("Validated Access Token: {}", tokenString);

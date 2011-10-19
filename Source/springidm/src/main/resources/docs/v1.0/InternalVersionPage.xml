@@ -10,11 +10,11 @@
 	<media-types>
 		<media-type base="application/xml" type="application/vnd.rackspace.idm-v1.0+xml">
 			<atom:link rel="describedby" type="application/xml"
-				href="${baseUrl}v1.0/docs/xsd/idmapi.xsd" />
+				href="${baseUrl}docs/v1.0/xsd/idmapi.xsd" />
 		</media-type>
 	</media-types>
 
 	<atom:link rel="self" href="${baseUrl}v1.0" />
-	<atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="${baseUrl}v1.0/application.wadl" />
-	<atom:link rel="documentation" href="${baseUrl}/docs/v1.0/developerguide.pdf" />
+	<atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="${baseUrl}v1.0/idm.wadl" />
+	<atom:link rel="describedby" href="${baseUrl}docs/v1.0/webdocs/index.html" />
 </contract>
