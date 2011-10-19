@@ -358,13 +358,12 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    @Path("users/{userId}/OS-KSADM/credentials/{credentialType}")
+    @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.PASSWORD_CREDENTIALS)
     public Response getUserCredential(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("userId") String userId,
-        @PathParam("credentialType") String credentialType) throws IOException {
+        @PathParam("userId") String userId) throws IOException {
         return getCloud20Service().getUserCredential(httpHeaders, authToken,
-            userId, credentialType).build();
+            userId, JSONConstants.PASSWORD_CREDENTIALS).build();
     }
 
     @DELETE
@@ -378,13 +377,12 @@ public class Cloud20VersionResource {
     }
 
     @DELETE
-    @Path("users/{userId}/OS-KSADM/credentials/{credentialType}")
+    @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.PASSWORD_CREDENTIALS)
     public Response deleteUserCredential(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("userId") String userId,
-        @PathParam("credentialType") String credentialType) throws IOException {
+        @PathParam("userId") String userId) throws IOException {
         return getCloud20Service().deleteUserCredential(httpHeaders, authToken,
-            userId, credentialType).build();
+            userId, JSONConstants.PASSWORD_CREDENTIALS).build();
     }
 
     @POST
