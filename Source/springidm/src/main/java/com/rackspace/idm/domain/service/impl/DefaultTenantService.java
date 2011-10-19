@@ -57,7 +57,21 @@ public class DefaultTenantService implements TenantService {
     @Override
     public void deleteTenant(String tenantId) {
         logger.info("Deleting Tenant {}", tenantId);
+        
+        // Delete all tenant roles for this tenant
+        List<TenantRole> roles = this.tenantDao.getAllTenantRolesForTenant(tenantId);
+        for (TenantRole role : roles) {
+            if (role.getTenantIds().length == 1) {
+                this.tenantDao.deleteTenantRole(role);
+            } else {
+                role.removeTenantId(tenantId);
+                this.tenantDao.updateTenantRole(role);
+            }
+        }
+        
+        // Then delete the tenant
         this.tenantDao.deleteTenant(tenantId);
+        
         logger.info("Added Tenant {}", tenantId);
     }
 

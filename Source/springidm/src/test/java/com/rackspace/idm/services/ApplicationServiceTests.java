@@ -12,10 +12,12 @@ import org.junit.Test;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Customer;
@@ -33,6 +35,7 @@ public class ApplicationServiceTests {
     ApplicationDao mockApplicationDao;
     CustomerDao mockCustomerDao;
     UserDao mockUserDao;
+    TenantDao mockTenantDao;
     ApplicationService clientService;
 
     String clientId = "ClientId";
@@ -74,9 +77,10 @@ public class ApplicationServiceTests {
         mockCustomerDao = EasyMock.createMock(CustomerDao.class);
         mockUserDao = EasyMock.createMock(UserDao.class);
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
+        mockTenantDao = EasyMock.createMock(TenantDao.class);
 
         clientService = new DefaultApplicationService(mockScopeAccessDao,
-            mockApplicationDao, mockCustomerDao, mockUserDao);
+            mockApplicationDao, mockCustomerDao, mockUserDao, mockTenantDao);
     }
 
     @Test
@@ -218,6 +222,9 @@ public class ApplicationServiceTests {
         EasyMock.expect(mockApplicationDao.getClientGroupsByClientId(clientId))
             .andReturn(getFakeClientGroupList());
         mockApplicationDao.deleteClientGroup(getFakeClientGroup());
+        
+        List<ClientRole> clientRoles = new ArrayList<ClientRole>();
+        EasyMock.expect(mockApplicationDao.getClientRolesByClientId(clientId)).andReturn(clientRoles);
 
         EasyMock.replay(mockApplicationDao, mockScopeAccessDao);
 

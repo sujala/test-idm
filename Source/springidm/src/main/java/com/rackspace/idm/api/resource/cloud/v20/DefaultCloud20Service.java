@@ -768,18 +768,23 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             checkXAUTHTOKEN(authToken);
 
-            if (!(credentialType.equals(JSONConstants.PASSWORD_CREDENTIALS) || credentialType
-                .equals(JSONConstants.APIKEY_CREDENTIALS))) {
+            if (credentialType.equals(JSONConstants.PASSWORD_CREDENTIALS)) {
+                IdentityFault fault = new IdentityFault();
+                fault.setCode(HttpServletResponse.SC_NOT_IMPLEMENTED);
+                fault.setMessage("Method not implemented");
+                return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                        .createIdentityFault(fault)).status(
+                    HttpServletResponse.SC_NOT_IMPLEMENTED);
+            }
+
+            if (!credentialType.equals(JSONConstants.APIKEY_CREDENTIALS)) {
                 throw new BadRequestException("unsupported credential type");
             }
 
             User user = checkAndGetUser(userId);
 
-            if (credentialType.equals(JSONConstants.PASSWORD_CREDENTIALS)) {
-                user.setPassword("");
-            } else if (credentialType.equals(JSONConstants.APIKEY_CREDENTIALS)) {
-                user.setApiKey("");
-            }
+            user.setApiKey("");
 
             this.userService.updateUser(user, false);
 
@@ -1464,7 +1469,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.ok(OBJ_FACTORIES
                 .getRackspaceIdentityExtKsgrpV1Factory().createGroups(groups));
-            
+
         } catch (Exception e) {
             return exceptionResponse(e);
         }

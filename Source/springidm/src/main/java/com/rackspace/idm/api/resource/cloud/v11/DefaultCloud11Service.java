@@ -149,12 +149,6 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         UserScopeAccess usa = (UserScopeAccess) sa;
 
-        if (!StringUtils.isBlank(belongsTo)
-            && !belongsTo.equals(usa.getUsername())) {
-            return notFoundExceptionResponse(String.format(
-                "token %s not found", tokeId));
-        }
-
         User user = null;
 
         if (!StringUtils.isBlank(belongsTo)) {

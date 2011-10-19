@@ -27,13 +27,13 @@
 	<contract version="v1.0" status="BETA">        
 	    <media-types>
 	      <media-type base="application/xml" type="application/vnd.rackspace.idm-v1.0+xml">
-	        <atom:link rel="describedby" type="application/xml" href="${baseUrl}v1.0/docs/xsd/idmapi.xsd" />
+	        <atom:link rel="describedby" type="application/xml" href="${baseUrl}docs/v1.0/xsd/idmapi.xsd" />
 	      </media-type>
 	    </media-types>
 	    
 	    <atom:link rel="self" href="${baseUrl}v1.0"/>
-	    <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="${baseUrl}v1.0/application.wadl" title="Wadl" />
-		<atom:link rel="documentation" href="${baseUrl}docs/v1.0/developerguide.pdf" title="Developer Guide"/>	
+	    <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="${baseUrl}v1.0/idm.wadl" title="Wadl" />
+		<atom:link rel="describedby" href="${baseUrl}docs/v1.0/webdocs/index.html" title="Developer Guide"/>	
 	</contract>
     
     <contracts serviceInterface="Cloud Auth">
@@ -45,7 +45,7 @@
     	<contract version="v1.1" status="BETA">        
     		<media-types>
     			<media-type base="application/xml" type="application/vnd.rackspace.cloudauth-v1.1+xml">
-    				<atom:link rel="describedby" type="application/xml" href="http://docs.rackspacecloud.com/auth/api/v1.1/xsd/" />
+    				<atom:link rel="describedby" type="application/xml" href="http://docs.rackspacecloud.com/auth/api/v1.1/xsd/" title="schema" />
     			</media-type>
     		</media-types>
     		
@@ -56,8 +56,8 @@
     	
     	<contract version="v2.0" status="CURRENT">        
     		<media-types>
-    			<media-type base="application/xml" type="application/vnd.rackspace.cloudauth-v1.1+xml">
-    				<atom:link rel="describedby" type="application/xml" href="http://docs.rackspacecloud.com/auth/api/v2.0/xsd/" />
+    			<media-type base="application/xml" type="application/vnd.rackspace.cloudauth-v2.0+xml">
+    				<atom:link rel="describedby" type="application/xml" href="http://docs.rackspacecloud.com/auth/api/v2.0/xsd/" title="schema" />
     			</media-type>
     		</media-types>
     		

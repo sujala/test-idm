@@ -17,10 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.resource.ParentResource;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.validation.InputValidator;
@@ -35,17 +33,12 @@ import com.sun.jersey.core.provider.EntityHolder;
 @Component
 public class UserSecretResource extends ParentResource {
 
-    private final ScopeAccessService scopeAccessService;
     private final UserService userService;
     private final AuthorizationService authorizationService;
 
     @Autowired
-    public UserSecretResource(ScopeAccessService scopeAccessService, UserService userService,
-        AuthorizationService authorizationService,
-        InputValidator inputValidator) {
-
+    public UserSecretResource(UserService userService, AuthorizationService authorizationService, InputValidator inputValidator) {
     	super(inputValidator);
-        this.scopeAccessService = scopeAccessService;
         this.userService = userService;
         this.authorizationService = authorizationService;
     }
@@ -58,16 +51,13 @@ public class UserSecretResource extends ParentResource {
      */
     @GET
     public Response getUserSecret(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("X-Auth-Token") String authHeader,
+        @HeaderParam("X-Auth-Token") String authToken,
         @PathParam("userId") String userId) {
 
+    	//authorizationService.authorize(authToken, Entity.createUserEntity(userId), new String[]{});
+    	
         getLogger().debug("Getting Secret Q&A for User: {}", userId);
-
-        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        // Only Specific Clients are authorized
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
-
+        
         // get user to update
         User user = this.userService.loadUser(userId);
 
@@ -88,20 +78,17 @@ public class UserSecretResource extends ParentResource {
      * @param userId userId
      */
     @PUT
-    public Response setUserSecret(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("X-Auth-Token") String authHeader, 
+    public Response setUserSecret(
+    	@HeaderParam("X-Auth-Token") String authToken, 
         @PathParam("userId") String userId, 
         EntityHolder<com.rackspace.api.idm.v1.Secret> holder) {
+        
+        //authorizationService.authorize(authToken, Entity.createUserEntity(userId), new String[]{});
         
     	validateRequestBody(holder);
 
         getLogger().debug("Updating Secret Q&A for User: {}", userId);
-
-        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
-
-        // get user to update
+        
         com.rackspace.api.idm.v1.Secret jaxbUserSecret = holder.getEntity(); 
         
         User user = this.userService.loadUser(userId);
