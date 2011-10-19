@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
@@ -17,6 +19,8 @@ import javax.xml.bind.JAXBException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.openstack.docs.common.api.v1.Extension;
+import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
@@ -24,6 +28,7 @@ import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
 import org.openstack.docs.identity.api.v2.CredentialListType;
 import org.openstack.docs.identity.api.v2.CredentialType;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
+import org.w3._2005.atom.Link;
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
@@ -58,7 +63,19 @@ public class JSONWriter implements
         MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
         throws IOException, WebApplicationException {
         
-        if (object.getDeclaredType().isAssignableFrom(Service.class)) {
+        if (object.getDeclaredType().isAssignableFrom(Extension.class)) {
+
+            Extension extension = (Extension) object.getValue();
+            String jsonText = JSONValue.toJSONString(getExtension(extension));
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+            
+        } else if (object.getDeclaredType().isAssignableFrom(Extensions.class)) {
+
+            Extensions extensions = (Extensions) object.getValue();
+            String jsonText = JSONValue.toJSONString(getExtensionList(extensions));
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+            
+        } else if (object.getDeclaredType().isAssignableFrom(Service.class)) {
 
             Service service = (Service) object.getValue();
             String jsonText = JSONValue.toJSONString(getService(service));
@@ -271,8 +288,75 @@ public class JSONWriter implements
         inner.put(JSONConstants.ENDPOINT_TEMPLATE, list);
         
         for (EndpointTemplate template : templateList.getEndpointTemplate()) {
-            list.add(getEndpointTemplate(template));
+            list.add(getEndpointTemplateWithoutWrapper(template));
         }
+
+        return outer;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private JSONObject getExtension(Extension extension) {
+        JSONObject outer = new JSONObject();
+        
+        outer.put(JSONConstants.EXTENSION, getExtensionWithoutWrapper(extension));
+
+        return outer;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private JSONObject getExtensionList(Extensions extensions) {
+        JSONObject outer = new JSONObject();
+        JSONObject inner = new JSONObject();
+        JSONArray list = new JSONArray();
+
+        outer.put(JSONConstants.EXTENSIONS, inner);
+        inner.put(JSONConstants.EXTENSION, list);
+        
+        for (Extension extension : extensions.getExtension()) {
+            list.add(getExtensionWithoutWrapper(extension));
+        }
+
+        return outer;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private JSONObject getExtensionWithoutWrapper(Extension extension) {
+        JSONObject outer = new JSONObject();
+        
+        outer.put(JSONConstants.NAME, extension.getName());
+        outer.put(JSONConstants.NAMESPACE, extension.getNamespace());
+        outer.put(JSONConstants.ALIAS, extension.getAlias());
+        outer.put(JSONConstants.UPDATED, extension.getUpdated());
+        outer.put(JSONConstants.DESCRIPTION, extension.getDescription());
+        
+        List<Link> links = new ArrayList<Link>();
+        
+        if (extension.getAny() != null && extension.getAny().size() > 0) {
+            for (Object obj : extension.getAny()) {
+                if (Object.class.isAssignableFrom(Link.class)) {
+                    links.add(((JAXBElement<Link>)obj).getValue());
+                }
+            }
+        }
+        
+        if (links.size() > 0) {
+            JSONArray list = new JSONArray();
+            outer.put(JSONConstants.LINKS, list);
+            for (Link link : links) {
+                list.add(getLinkWithoutWrapper(link));
+            }
+        }
+
+        return outer;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private JSONObject getLinkWithoutWrapper(Link link) {
+        JSONObject outer = new JSONObject();
+
+        outer.put(JSONConstants.REL, link.getRel());
+        outer.put(JSONConstants.TYPE, link.getType());
+        outer.put(JSONConstants.HREF, link.getHref());
 
         return outer;
     }

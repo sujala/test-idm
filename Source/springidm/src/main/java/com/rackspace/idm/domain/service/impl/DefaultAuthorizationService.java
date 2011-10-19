@@ -15,6 +15,7 @@ import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
+import com.rackspace.idm.domain.entity.Entity;
 import com.rackspace.idm.domain.entity.HasAccessToken;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
@@ -35,6 +36,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     private static String IDM_ADMIN_GROUP_DN = null;
     private static ClientRole CLOUD_ADMIN_ROLE = null;
+    private static ClientRole IDM_SUPER_ADMIN_ROLE = null;
 
     public DefaultAuthorizationService(ScopeAccessDao scopeAccessDao,
         ApplicationDao clientDao, TenantDao tenantDao, WadlTrie wadlTrie,
@@ -46,7 +48,72 @@ public class DefaultAuthorizationService implements AuthorizationService {
         this.config = config;
     }
 
+    
     @Override
+	public void authorize(String token, Entity object, String... authorizedRoles) 
+    		throws ForbiddenException {
+
+    	final ScopeAccess scopeAccess = scopeAccessDao.getScopeAccessByAccessToken(token.trim());
+    	
+    	// 1. if client has super admin role, grant access
+    	// 2. if client is the entity being modified, grant access
+    	// 3. if client has any of the authorized roles, grant access
+    	
+    	if (doesClientHaveSuperAdminRole(scopeAccess)) {
+    		return;
+    	}
+    	
+    	if (isClientTheEntityBeingAccessed(scopeAccess, object)) {
+    		return;
+    	}
+    
+    	//if (doesClientHaveAuthorizedRole(scopeAccess, ))
+    	
+    	//TODO: implement
+	}
+    
+    private boolean doesClientHaveAuthorizedRoles(ScopeAccess scopeAccess, String... authorizedRoles) {
+    	return false;
+    }
+    
+    private boolean doesClientHaveSuperAdminRole(ScopeAccess scopeAccess) {
+    	return this.tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, getIdmSuperAdminRole());
+    }
+    
+	private boolean isClientTheEntityBeingAccessed(ScopeAccess scopeAccess, Entity entity) {
+//		if (entity != null) {
+//			if (scopeAccess instanceof ClientScopeAccess) {
+//				ClientScopeAccess csa = (ClientScopeAccess) scopeAccess;
+//				return csa.getClientId().equals(entity.getEntityId()) && entity.getEntityType() == Entity.APPLICATION;
+//		    }
+//			 
+//			if (scopeAccess instanceof UserScopeAccess) {
+//				UserScopeAccess usa = (UserScopeAccess) scopeAccess;
+//				return usa.getUserId().equals(entity.getEntityId()) && entity.getEntityType() == Entity.USER;
+//			}
+//	
+//			if (scopeAccess instanceof DelegatedClientScopeAccess) {
+//				DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) scopeAccess;
+//				return dcsa.getUserId().equals(entity.getEntityId()) && entity.getEntityType() == Entity.USER;
+//			}
+//		}
+//		
+		return false;
+	}
+    
+    private boolean isClientThe(ScopeAccess scopeAccess, Entity entity) {
+    	return false;
+    }
+    
+    private ClientRole getIdmSuperAdminRole() {
+    	if (IDM_SUPER_ADMIN_ROLE == null) {
+    		IDM_SUPER_ADMIN_ROLE = this.clientDao.getClientRoleById(ClientRole.SUPER_ADMIN_ROLE);
+    	}
+    	
+    	return IDM_SUPER_ADMIN_ROLE;
+    }
+
+	@Override
     public boolean authorizeCloudAdmin(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as cloud admin", scopeAccess);
 

@@ -107,7 +107,7 @@ public class DefaultUserService implements UserService {
         
         this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), usa);
         
-        
+      //Every user by default has the cloud auth application provisioned for them
         UserScopeAccess cloudUsa = new UserScopeAccess();
         cloudUsa.setUsername(user.getUsername());
         cloudUsa.setUserRsId(user.getId());

@@ -94,7 +94,8 @@ public class UserResource extends ParentResource {
 
 		// TODO: Implement authorization rules
 		// authorizationService.authorizeToken(token, uriInfo);
-
+        //authroizationService.authorize(token, Entity.create(userId), "1");
+        
 		getLogger().debug("Getting User: {}", userId);
 		User user = this.userService.loadUser(userId);
 		getLogger().debug("Got User :{}", user);

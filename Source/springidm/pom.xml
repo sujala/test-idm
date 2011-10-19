@@ -1276,15 +1276,15 @@
                     <webResources>
                         <resource>
                             <directory>src/main/resources/xsd</directory>
-                            <targetPath>docs/xsd</targetPath>
+                            <targetPath>docs/v1.0/xsd</targetPath>
                         </resource>
                         <resource>
                             <directory>src/main/resources/xslt</directory>
-                            <targetPath>docs/xslt</targetPath>
+                            <targetPath>docs/v1.0/xslt</targetPath>
                         </resource>
                         <resource>
                             <directory>src/main/resources/xslt</directory>
-                            <targetPath>docs/xslt</targetPath>
+                            <targetPath>docs/v1.0/xslt</targetPath>
                         </resource>
                     </webResources>
                     <!--<warName>${artifactId}-${version}</warName> -->
