@@ -111,7 +111,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
         } else if (object.getDeclaredType().isAssignableFrom(
-            CredentialType.class)) {
+            CredentialType.class) || object.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
 
             CredentialType cred = (CredentialType) object.getValue();
 
