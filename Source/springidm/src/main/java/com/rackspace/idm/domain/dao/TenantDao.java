@@ -32,4 +32,5 @@ public interface TenantDao {
     List<TenantRole> getAllTenantRolesForTenantAndRole(String tenantId, String roleId);
     boolean doesScopeAccessHaveTenantRole(ScopeAccess scopeAccess,
         ClientRole role);
+    List<TenantRole> getAllTenantRolesForClientRole(ClientRole role);
 }

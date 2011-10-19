@@ -61,6 +61,22 @@ public class TenantServiceTests {
 
     @Test
     public void shouldDeleteTenant() {
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(getTestSingleTenantRole());
+        EasyMock.expect(mockTenantDao.getAllTenantRolesForTenant(tenantId1)).andReturn(roles);
+        mockTenantDao.deleteTenantRole(getTestSingleTenantRole());
+        mockTenantDao.deleteTenant(tenantId1);
+        EasyMock.replay(mockTenantDao);
+        tenantService.deleteTenant(tenantId1);
+        EasyMock.verify(mockTenantDao);
+    }
+    
+    @Test
+    public void shouldDeleteTenanWithMulitpleTenantRole() {
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(getTestMultipleTenantRole());
+        EasyMock.expect(mockTenantDao.getAllTenantRolesForTenant(tenantId1)).andReturn(roles);
+        mockTenantDao.updateTenantRole(EasyMock.anyObject(TenantRole.class));
         mockTenantDao.deleteTenant(tenantId1);
         EasyMock.replay(mockTenantDao);
         tenantService.deleteTenant(tenantId1);

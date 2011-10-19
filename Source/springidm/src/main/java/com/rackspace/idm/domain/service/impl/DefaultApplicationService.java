@@ -11,6 +11,7 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.Applications;
@@ -23,6 +24,7 @@ import com.rackspace.idm.domain.entity.DefinedPermission;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.exception.DuplicateException;
@@ -36,13 +38,15 @@ public class DefaultApplicationService implements ApplicationService {
     private final ApplicationDao clientDao;
     private final CustomerDao customerDao;
     private final UserDao userDao;
+    private final TenantDao tenantDao;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultApplicationService(ScopeAccessDao scopeAccessDao,
-        ApplicationDao clientDao, CustomerDao customerDao, UserDao userDao) {
+        ApplicationDao clientDao, CustomerDao customerDao, UserDao userDao, TenantDao tenantDao) {
         this.clientDao = clientDao;
         this.customerDao = customerDao;
         this.userDao = userDao;
+        this.tenantDao = tenantDao;
         this.scopeAccessDao = scopeAccessDao;
     }
 
@@ -96,6 +100,12 @@ public class DefaultApplicationService implements ApplicationService {
 
         for (ClientGroup group : groups) {
             clientDao.deleteClientGroup(group);
+        }
+        
+        List<ClientRole> roles = clientDao.getClientRolesByClientId(clientId);
+        
+        for (ClientRole role : roles) {
+            this.deleteClientRole(role);
         }
 
         clientDao.deleteClient(client);
@@ -648,6 +658,12 @@ public class DefaultApplicationService implements ApplicationService {
     @Override
     public void deleteClientRole(ClientRole role) {
         logger.info("Delete Client Role: {}", role);
+        
+        List<TenantRole> tenantRoles = this.tenantDao.getAllTenantRolesForClientRole(role);
+        for (TenantRole tenantRole : tenantRoles) {
+            this.tenantDao.deleteTenantRole(tenantRole);
+        }
+        
         this.clientDao.deleteClientRole(role);
         logger.info("Deleted Client Role: {}", role);
     }
