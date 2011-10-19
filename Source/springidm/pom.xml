@@ -1280,11 +1280,7 @@
                         </resource>
                         <resource>
                             <directory>src/main/resources/xslt</directory>
-                            <targetPath>docs/v1.0/xslt</targetPath>
-                        </resource>
-                        <resource>
-                            <directory>src/main/resources/xslt</directory>
-                            <targetPath>docs/v1.0/xslt</targetPath>
+                            <targetPath>docs/xslt</targetPath>
                         </resource>
                     </webResources>
                     <!--<warName>${artifactId}-${version}</warName> -->
