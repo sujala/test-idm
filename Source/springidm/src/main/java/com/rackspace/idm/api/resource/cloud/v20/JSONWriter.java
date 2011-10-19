@@ -41,8 +41,7 @@ import com.sun.jersey.api.json.JSONMarshaller;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriter implements
-    MessageBodyWriter<JAXBElement<?>> {
+public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
 
     @Override
     public long getSize(JAXBElement<?> arg0, Class<?> arg1, Type arg2,
@@ -62,80 +61,104 @@ public class JSONWriter implements
         Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
         throws IOException, WebApplicationException {
-        
+
         if (object.getDeclaredType().isAssignableFrom(Extension.class)) {
 
             Extension extension = (Extension) object.getValue();
             String jsonText = JSONValue.toJSONString(getExtension(extension));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            
+
         } else if (object.getDeclaredType().isAssignableFrom(Extensions.class)) {
 
             Extensions extensions = (Extensions) object.getValue();
-            String jsonText = JSONValue.toJSONString(getExtensionList(extensions));
+            String jsonText = JSONValue
+                .toJSONString(getExtensionList(extensions));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            
+
         } else if (object.getDeclaredType().isAssignableFrom(Service.class)) {
 
             Service service = (Service) object.getValue();
             String jsonText = JSONValue.toJSONString(getService(service));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            
+
         } else if (object.getDeclaredType().isAssignableFrom(ServiceList.class)) {
 
             ServiceList services = (ServiceList) object.getValue();
             String jsonText = JSONValue.toJSONString(getServiceList(services));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            
+
         } else if (object.getDeclaredType().isAssignableFrom(SecretQA.class)) {
 
             SecretQA secrets = (SecretQA) object.getValue();
             String jsonText = JSONValue.toJSONString(getSecretQA(secrets));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            
-        } else if (object.getDeclaredType().isAssignableFrom(EndpointTemplate.class)) {
+
+        } else if (object.getDeclaredType().isAssignableFrom(
+            EndpointTemplate.class)) {
 
             EndpointTemplate template = (EndpointTemplate) object.getValue();
-            String jsonText = JSONValue.toJSONString(getEndpointTemplate(template));
+            String jsonText = JSONValue
+                .toJSONString(getEndpointTemplate(template));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            
-        } else if (object.getDeclaredType().isAssignableFrom(EndpointTemplateList.class)) {
 
-            EndpointTemplateList templates = (EndpointTemplateList) object.getValue();
-            String jsonText = JSONValue.toJSONString(getEndpointTemplateList(templates));
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            
-        } else if (object.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
+        } else if (object.getDeclaredType().isAssignableFrom(
+            EndpointTemplateList.class)) {
 
-            ApiKeyCredentials creds = (ApiKeyCredentials) object.getValue();
-            String jsonText = JSONValue.toJSONString(getApiKeyCredentials(creds));
+            EndpointTemplateList templates = (EndpointTemplateList) object
+                .getValue();
+            String jsonText = JSONValue
+                .toJSONString(getEndpointTemplateList(templates));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            
+
+        } else if (object.getDeclaredType().isAssignableFrom(
+            CredentialType.class)) {
+
+            CredentialType cred = (CredentialType) object.getValue();
+
+            if (cred instanceof ApiKeyCredentials) {
+                ApiKeyCredentials creds = (ApiKeyCredentials) cred;
+                String jsonText = JSONValue
+                    .toJSONString(getApiKeyCredentials(creds));
+                outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+            } else {
+                PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) cred;
+                String jsonText = JSONValue
+                    .toJSONString(getPasswordCredentials(creds));
+                outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+            }
+
         } else if (object.getDeclaredType().isAssignableFrom(Groups.class)) {
 
             Groups groups = (Groups) object.getValue();
             String jsonText = JSONValue.toJSONString(getGroups(groups));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
-        }else if (object.getDeclaredType().isAssignableFrom(CredentialListType.class)) {
-            
+        } else if (object.getDeclaredType().isAssignableFrom(
+            CredentialListType.class)) {
+
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
-            
-            CredentialListType credsList = (CredentialListType) object.getValue();
+
+            CredentialListType credsList = (CredentialListType) object
+                .getValue();
             outer.put(JSONConstants.CREDENTIALS, list);
-            
-            for ( JAXBElement<? extends CredentialType> cred : credsList.getCredential()) {
-                if (cred.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
-                    list.add(getApiKeyCredentials((ApiKeyCredentials)cred.getValue()));
-                } else if (cred.getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)){
-                    list.add(getPasswordCredentials((PasswordCredentialsRequiredUsername)cred.getValue()));
+
+            for (JAXBElement<? extends CredentialType> cred : credsList
+                .getCredential()) {
+                if (cred.getDeclaredType().isAssignableFrom(
+                    ApiKeyCredentials.class)) {
+                    list.add(getApiKeyCredentials((ApiKeyCredentials) cred
+                        .getValue()));
+                } else if (cred.getDeclaredType().isAssignableFrom(
+                    PasswordCredentialsRequiredUsername.class)) {
+                    list.add(getPasswordCredentials((PasswordCredentialsRequiredUsername) cred
+                        .getValue()));
                 }
             }
-            
+
             String jsonText = JSONValue.toJSONString(outer);
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            
+
         } else {
             try {
                 getMarshaller().marshallToJSON(object, outputStream);
@@ -144,7 +167,7 @@ public class JSONWriter implements
             }
         }
     }
-    
+
     @SuppressWarnings("unchecked")
     private JSONObject getApiKeyCredentials(ApiKeyCredentials creds) {
         JSONObject outer = new JSONObject();
@@ -155,9 +178,10 @@ public class JSONWriter implements
         inner.put(JSONConstants.API_KEY, creds.getApiKey());
         return outer;
     }
-    
+
     @SuppressWarnings("unchecked")
-    private JSONObject getPasswordCredentials(PasswordCredentialsRequiredUsername creds) {
+    private JSONObject getPasswordCredentials(
+        PasswordCredentialsRequiredUsername creds) {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
 
@@ -166,7 +190,7 @@ public class JSONWriter implements
         inner.put(JSONConstants.PASSWORD, creds.getPassword());
         return outer;
     }
-    
+
     @SuppressWarnings("unchecked")
     private JSONObject getSecretQA(SecretQA secrets) {
         JSONObject outer = new JSONObject();
@@ -179,7 +203,7 @@ public class JSONWriter implements
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getGroups(Groups groups){
+    private JSONObject getGroups(Groups groups) {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
         JSONArray list = new JSONArray();
@@ -195,15 +219,15 @@ public class JSONWriter implements
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getGroup(Group group){
+    private JSONObject getGroup(Group group) {
         JSONObject outer = new JSONObject();
 
         outer.put(JSONConstants.GROUP, getGroupWithoutWrapper(group));
         return outer;
     }
-    
+
     @SuppressWarnings("unchecked")
-    private JSONObject getGroupWithoutWrapper(Group group){
+    private JSONObject getGroupWithoutWrapper(Group group) {
         JSONObject outer = new JSONObject();
 
         outer.put(JSONConstants.ID, group.getId());
@@ -212,26 +236,25 @@ public class JSONWriter implements
         return outer;
     }
 
-    
     @SuppressWarnings("unchecked")
     private JSONObject getService(Service service) {
         JSONObject outer = new JSONObject();
-        
+
         outer.put(JSONConstants.SERVICE, getServiceWithoutWrapper(service));
         return outer;
     }
-    
+
     @SuppressWarnings("unchecked")
     private JSONObject getServiceWithoutWrapper(Service service) {
         JSONObject outer = new JSONObject();
-        
+
         outer.put(JSONConstants.ID, service.getId());
         outer.put(JSONConstants.NAME, service.getName());
         outer.put(JSONConstants.TYPE, service.getType());
         outer.put(JSONConstants.DESCRIPTION, service.getDescription());
         return outer;
     }
-    
+
     @SuppressWarnings("unchecked")
     private JSONObject getServiceList(ServiceList serviceList) {
         JSONObject outer = new JSONObject();
@@ -240,25 +263,27 @@ public class JSONWriter implements
 
         outer.put(JSONConstants.SERVICES, inner);
         inner.put(JSONConstants.SERVICE, list);
-        
+
         for (Service service : serviceList.getService()) {
             list.add(getServiceWithoutWrapper(service));
         }
 
         return outer;
     }
-    
+
     @SuppressWarnings("unchecked")
     private JSONObject getEndpointTemplate(EndpointTemplate template) {
         JSONObject outer = new JSONObject();
 
-        outer.put(JSONConstants.ENDPOINT_TEMPLATE, getEndpointTemplateWithoutWrapper(template));
+        outer.put(JSONConstants.ENDPOINT_TEMPLATE,
+            getEndpointTemplateWithoutWrapper(template));
 
         return outer;
     }
-    
+
     @SuppressWarnings("unchecked")
-    private JSONObject getEndpointTemplateWithoutWrapper(EndpointTemplate template) {
+    private JSONObject getEndpointTemplateWithoutWrapper(
+        EndpointTemplate template) {
         JSONObject outer = new JSONObject();
 
         outer.put(JSONConstants.ID, template.getId());
@@ -272,12 +297,14 @@ public class JSONWriter implements
         outer.put(JSONConstants.ENABLED, template.isEnabled());
         if (template.getVersion() != null) {
             outer.put(JSONConstants.VERSION_ID, template.getVersion().getId());
-            outer.put(JSONConstants.VERSION_INFO, template.getVersion().getInfo());
-            outer.put(JSONConstants.VERSION_LIST, template.getVersion().getList());
+            outer.put(JSONConstants.VERSION_INFO, template.getVersion()
+                .getInfo());
+            outer.put(JSONConstants.VERSION_LIST, template.getVersion()
+                .getList());
         }
         return outer;
     }
-    
+
     @SuppressWarnings("unchecked")
     private JSONObject getEndpointTemplateList(EndpointTemplateList templateList) {
         JSONObject outer = new JSONObject();
@@ -286,23 +313,24 @@ public class JSONWriter implements
 
         outer.put(JSONConstants.ENDPOINT_TEMPLATES, inner);
         inner.put(JSONConstants.ENDPOINT_TEMPLATE, list);
-        
+
         for (EndpointTemplate template : templateList.getEndpointTemplate()) {
             list.add(getEndpointTemplateWithoutWrapper(template));
         }
 
         return outer;
     }
-    
+
     @SuppressWarnings("unchecked")
     private JSONObject getExtension(Extension extension) {
         JSONObject outer = new JSONObject();
-        
-        outer.put(JSONConstants.EXTENSION, getExtensionWithoutWrapper(extension));
+
+        outer.put(JSONConstants.EXTENSION,
+            getExtensionWithoutWrapper(extension));
 
         return outer;
     }
-    
+
     @SuppressWarnings("unchecked")
     private JSONObject getExtensionList(Extensions extensions) {
         JSONObject outer = new JSONObject();
@@ -311,34 +339,34 @@ public class JSONWriter implements
 
         outer.put(JSONConstants.EXTENSIONS, inner);
         inner.put(JSONConstants.EXTENSION, list);
-        
+
         for (Extension extension : extensions.getExtension()) {
             list.add(getExtensionWithoutWrapper(extension));
         }
 
         return outer;
     }
-    
+
     @SuppressWarnings("unchecked")
     private JSONObject getExtensionWithoutWrapper(Extension extension) {
         JSONObject outer = new JSONObject();
-        
+
         outer.put(JSONConstants.NAME, extension.getName());
         outer.put(JSONConstants.NAMESPACE, extension.getNamespace());
         outer.put(JSONConstants.ALIAS, extension.getAlias());
         outer.put(JSONConstants.UPDATED, extension.getUpdated());
         outer.put(JSONConstants.DESCRIPTION, extension.getDescription());
-        
+
         List<Link> links = new ArrayList<Link>();
-        
+
         if (extension.getAny() != null && extension.getAny().size() > 0) {
             for (Object obj : extension.getAny()) {
                 if (Object.class.isAssignableFrom(Link.class)) {
-                    links.add(((JAXBElement<Link>)obj).getValue());
+                    links.add(((JAXBElement<Link>) obj).getValue());
                 }
             }
         }
-        
+
         if (links.size() > 0) {
             JSONArray list = new JSONArray();
             outer.put(JSONConstants.LINKS, list);
@@ -349,7 +377,7 @@ public class JSONWriter implements
 
         return outer;
     }
-    
+
     @SuppressWarnings("unchecked")
     private JSONObject getLinkWithoutWrapper(Link link) {
         JSONObject outer = new JSONObject();
@@ -367,7 +395,7 @@ public class JSONWriter implements
         if (marshaller == null) {
             JSONJAXBContext context = (JSONJAXBContext) JAXBContextResolver
                 .get();
-                marshaller = context.createJSONMarshaller();
+            marshaller = context.createJSONMarshaller();
         }
         return marshaller;
     }
