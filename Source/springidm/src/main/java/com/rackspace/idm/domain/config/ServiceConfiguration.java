@@ -112,7 +112,7 @@ public class ServiceConfiguration {
     @Bean
     public ApplicationService clientService() {
         return new DefaultApplicationService(scopeAccessDao, clientDao, customerDao,
-            userRepo);
+            userRepo, tenantDao);
     }
 
     @Bean
