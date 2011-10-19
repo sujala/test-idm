@@ -101,6 +101,12 @@ public class DefaultApplicationService implements ApplicationService {
         for (ClientGroup group : groups) {
             clientDao.deleteClientGroup(group);
         }
+        
+        List<ClientRole> roles = clientDao.getClientRolesByClientId(clientId);
+        
+        for (ClientRole role : roles) {
+            this.deleteClientRole(role);
+        }
 
         clientDao.deleteClient(client);
         logger.debug("Deleted Client: {}", clientId);
