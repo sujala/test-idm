@@ -1,7 +1,10 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import java.util.List;
-
+import com.rackspace.idm.domain.config.LdapConfiguration;
+import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -10,11 +13,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
+import java.util.List;
 
 public class LdapTenantRepositoryTest {
     private LdapTenantRepository repo;
@@ -58,6 +57,12 @@ public class LdapTenantRepositoryTest {
     public void setUp() {
         connPools = getConnPools();
         repo = getRepo(connPools);
+        //cleanup before test
+        try{
+            repo.deleteTenant(tenantId);
+        }catch (Exception e){
+            System.out.println("failed to delete tenant");
+        }
     }
     
     @After
