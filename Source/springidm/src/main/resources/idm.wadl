@@ -2001,11 +2001,8 @@
                <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
                   <doc>You need a valid token for access.</doc>
                </param>
-               <resource id="identityProfile" path="{customerId}">
-                  <param name="customerId" style="template" type="xsd:string" required="true">
-                     <doc>This is the customer's RCN.</doc>
-                  </param>
-                  <method xmlns:rax="http://docs.rackspace.com/api" name="POST" rax:id="addIdentityProfile">
+
+                 <method xmlns:rax="http://docs.rackspace.com/api" name="POST" rax:id="addIdentityProfile">
                      <doc xml:lang="EN" title="Adds a Customer's Identity Profile">
                         <xhtml:p class="shortdesc">
                 Adds a customer's identity profile.
@@ -2050,6 +2047,11 @@
                         <representation mediaType="application/json"/>
                      </response>
                   </method>
+
+               <resource id="identityProfile" path="{customerId}">
+                  <param name="customerId" style="template" type="xsd:string" required="true">
+                     <doc>This is the customer's RCN.</doc>
+                  </param>
                   <method xmlns:rax="http://docs.rackspace.com/api" name="GET" rax:id="getIdentityProfile">
                      <doc xml:lang="EN" title="Get a Customer's Identity Profile">
                         <xhtml:p class="shortdesc">
