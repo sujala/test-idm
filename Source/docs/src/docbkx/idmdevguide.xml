@@ -104,6 +104,7 @@
       <title>Customer Identity Profile Operations</title>
       <para>The operations described in this section allows service developers manage customer identity profiles.</para>
       <wadl:resources xmlns:wadl="http://wadl.dev.java.net/2009/02">
+        <wadl:resource href="idm.wadl#identityProfiles" />
         <wadl:resource href="idm.wadl#identityProfile" />
         <wadl:resource href="idm.wadl#passwordRotationPolicy" />
         <wadl:resource href="idm.wadl#identityProfileUsers" />
