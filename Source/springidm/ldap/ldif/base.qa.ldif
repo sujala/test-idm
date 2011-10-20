@@ -83,11 +83,6 @@ objectClass: top
 objectClass: organizationalUnit
 ou: cloud
 
-dn: ou=services,ou=cloud,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: organizationalUnit
-ou: services
-
 dn: ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit

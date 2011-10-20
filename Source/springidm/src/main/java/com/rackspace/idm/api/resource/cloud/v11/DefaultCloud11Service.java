@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v11;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +18,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
+import com.rackspace.idm.util.NastFacade;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -79,6 +81,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     private final UserConverterCloudV11 userConverterCloudV11;
     private final UserService userService;
+
+    @Autowired
+    private NastFacade nastFacade;
 
     @Autowired
     public DefaultCloud11Service(Configuration config,
@@ -239,43 +244,43 @@ public class DefaultCloud11Service implements Cloud11Service {
                 logger.warn(errorMsg);
                 throw new BadRequestException(errorMsg);
             }
-            
+
             if (user.getMossoId() == null) {
                 String errorMsg = "Expecting mossoId";
                 logger.warn(errorMsg);
                 throw new BadRequestException(errorMsg);
             }
 
+            //TODO: Get Code From Carlos to get user's NastId
+            String nastId = nastFacade.addNastUser(user);
+            user.setNastId(nastId);
             User userDO = this.userConverterCloudV11.toUserDO(user);
             userDO.setEnabled(true);
-            
-            //TODO: Get Code From Carlos to get user's NastId
-            
+
+
             this.userService.addUser(userDO);
-            
-            if (user.getBaseURLRefs() != null
-                && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
+
+            if (user.getBaseURLRefs() != null && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
                 // If BaseUrlRefs were sent in then we're going to add the new list
 
                 // Add new list of baseUrls
                 for (BaseURLRef ref : user.getBaseURLRefs().getBaseURLRef()) {
-                    this.endpointService.addBaseUrlToUser(ref.getId(),
-                        ref.isV1Default(), userDO.getUsername());
+                    this.endpointService.addBaseUrlToUser(ref.getId(), ref.isV1Default(), userDO.getUsername());
                 }
             }
-            
-            List<CloudEndpoint> endpoints = this.endpointService
-            .getEndpointsForUser(userDO.getUsername());
 
-            return Response.created(
-                uriInfo.getRequestUriBuilder().path(userDO.getId()).build())
-                .entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11User(userDO, endpoints)));
+            List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userDO.getUsername());
+
+            String id = userDO.getId();
+            URI uri = uriInfo.getRequestUriBuilder().path(id).build();
+            com.rackspacecloud.docs.auth.api.v1.User cloud11User = this.userConverterCloudV11.toCloudV11User(userDO, endpoints);
+            return Response.created(uri).entity(OBJ_FACTORY.createUser(cloud11User));
 
         } catch (DuplicateException de) {
             return usernameConflictExceptionResponse(de.getMessage());
         } catch (DuplicateUsernameException due) {
             return usernameConflictExceptionResponse(due.getMessage());
-        } 
+        }
     }
 
     @Override
@@ -564,7 +569,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         if (StringUtils.isEmpty(serviceName)) {
             return Response.ok(OBJ_FACTORY
                 .createBaseURLs(this.endpointConverterCloudV11
-                    .toBaseUrls(baseUrls)));
+                        .toBaseUrls(baseUrls)));
         }
 
         List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
@@ -746,7 +751,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             UserScopeAccess usa = this.scopeAccessService
                 .getUserScopeAccessForClientIdByUsernameAndApiCredentials(
-                    username, apiKey, getCloudAuthClientId());
+                        username, apiKey, getCloudAuthClientId());
             List<CloudEndpoint> endpoints = this.endpointService
                 .getEndpointsForUser(username);
             return Response.ok(OBJ_FACTORY
@@ -821,7 +826,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
             OBJ_FACTORY.createItemNotFound(fault));
     }
-    
+
     private Response.ResponseBuilder usernameConflictExceptionResponse(String message) {
         UsernameConflictFault fault = OBJ_FACTORY.createUsernameConflictFault();
         fault.setCode(HttpServletResponse.SC_CONFLICT);
@@ -917,5 +922,9 @@ public class DefaultCloud11Service implements Cloud11Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
             OBJ_FACTORY.createItemNotFound(fault));
+    }
+
+    public void setNastFacade(NastFacade nastFacade) {
+        this.nastFacade = nastFacade;
     }
 }

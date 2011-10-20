@@ -15,6 +15,21 @@ objectClass:top
 objectClass:organizationalUnit
 ou: softDeleted
 
+dn: ou=users,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:organizationalUnit
+ou: users
+
+dn: ou=customers,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:organizationalUnit
+ou: customers
+
+dn: ou=applications,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:organizationalUnit
+ou: applications
+
 dn: ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass:top
 objectClass:organizationalUnit
@@ -48,12 +63,6 @@ objectClass:rsNextId
 cn: nextUserId
 rsId: 10000000
 
-dn: cn=nextTenantId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
-objectClass:top
-objectClass:rsNextId
-cn: nextTenantId
-rsId: 10000000
-
 dn: cn=nextRoleId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
 objectClass:top
 objectClass:rsNextId
@@ -73,11 +82,6 @@ dn: ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit
 ou: cloud
-
-dn: ou=services,ou=cloud,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: organizationalUnit
-ou: services
 
 dn: ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -102,7 +106,6 @@ objectClass: top
 objectClass: organizationalUnit
 ou: tenants
 
-
 ######################################## Admin User #######################################
 
 dn: cn=admin,ou=internal,dc=rackspace,dc=com
@@ -118,26 +121,44 @@ userPassword: qwerty
 dn: rsId=1,ou=customers,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsOrganization
-locked: FALSE
 RCN: RACKSPACE
 rsId: 1
-softDeleted: FALSE
-status: ACTIVE
 
 ######################################## Applications #######################################
+
+dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+cn: cloudFiles
+openStackType: compute
+userPassword: 3156c75669c6587601b98685ddcb743a175fdb93
+clearPassword:: +Pwnxg/ymo/5umBy6DRzaXbIrOypvqc+Atn22Oy5e+gFAFBhveRYqBJLab7E/n2q
+enabled: TRUE
+RCN: RACKSPACE
+
+dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rack
+ space,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+cn: cloudServers
+openStackType: object-store
+userPassword: 198f0d3e20498e705d5a057aaccbd949343494a6
+clearPassword:: 9DgkWIIRcS8Bz3+UDkLNokL2aoeIdXZiMOcGg43gv44qnQNKa3TWXgJqz7Mv+mcg
+enabled: TRUE
+RCN: RACKSPACE
 
 dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsApplication
 cn: Customer Idm
 description: Our description here ...
-locked: FALSE
 RCN: RACKSPACE
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-status: ACTIVE
+enabled: TRUE
 title: Rackspace User Management
 tokenScope: user_mgmt
-softDeleted: FALSE
 userPassword: password
 
 dn: clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
@@ -145,14 +166,22 @@ objectClass: top
 objectClass: rsApplication
 cn: Cloud Auth Service
 openStackType: identity
-locked: FALSE
 RCN: RACKSPACE
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-status: ACTIVE
-softDeleted: FALSE
+enabled: TRUE
 userPassword: password
 
 ######################################## Client Role Containers ############################
+
+dn: cn=CLIENT ROLES,clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: CLIENT ROLES
+
+dn: cn=CLIENT ROLES,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: CLIENT ROLES
 
 dn: cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -165,22 +194,6 @@ objectClass: rsContainer
 cn: CLIENT ROLES
 
 ######################################## Client Roles ######################################
-
-dn: rsId=3,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientRole
-rsId: 3
-cn: Super Admin
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-description: A role that allows a user/application full access to Global Auth
-
-dn: rsId=4,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: clientRole
-rsId: 4
-cn: Customer Admin
-clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
-description: A Role that allows a user to Admin other users in his customer
 
 dn: rsId=1,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -198,10 +211,51 @@ cn: identity:default
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 description: A Role that allows a user access to keystone Service methods
 
+dn: rsId=3,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 3
+cn: Super Admin
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+description: A role that allows a user/application full access to Global Auth
+
+dn: rsId=4,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 4
+cn: Customer Admin
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+description: A Role that allows a user to Admin other users in his customer
+
+dn: rsId=5,cn=CLIENT ROLES,clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 5
+cn: compute:admin
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+description: A Role that allows a user access to keystone Service methods
+
+dn: rsId=6,cn=CLIENT ROLES,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 6
+cn: object-store:admin
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+description: A Role that allows a user access to keystone Service methods
 
 ######################################## ScopeAccesses Containers ##########################
 
 dn: cn=DIRECT TOKENS,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: DIRECT TOKENS
+
+dn: cn=DIRECT TOKENS,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: DIRECT TOKENS
+
+dn: cn=DIRECT TOKENS,clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsContainer
 cn: DIRECT TOKENS
@@ -212,6 +266,20 @@ objectClass: rsContainer
 cn: DIRECT TOKENS
 
 ######################################## ScopeAccesses #####################################
+
+dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,cn=DIRECT TOKENS,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: clientScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+
+dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,cn=DIRECT TOKENS,clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: scopeAccess
+objectClass: clientScopeAccess
+clientRCN: RACKSPACE
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
 
 dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: top
