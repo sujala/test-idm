@@ -212,12 +212,13 @@
                     <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
                         <doc>You need a valid token for access.</doc>
                     </param>
-                    
+                   
+                    <method href="#addIdentityProfile" />
+ 
                     <resource id="identityProfile" path="{customerId}">
                         <param name="customerId" style="template" type="xsd:string" required="true">
                             <doc>This is the customer's RCN.</doc>
                         </param>
-                        <method href="#addIdentityProfile" />
                         <method href="#getIdentityProfile" />
                         <method href="#deleteIdentityProfile" />
                         <method href="#updateIdentityProfile" />
