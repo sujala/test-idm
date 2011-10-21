@@ -1146,7 +1146,7 @@
         &getFaults;
     </method>
     
-    <method name="POST" id="updateRole">
+    <method name="PUT" id="updateRole">
         <doc xml:lang="EN" title="Modify a Role">
             <xhtml:p class="shortdesc">
                 Modify an existing role.
@@ -1164,7 +1164,7 @@
         &commonFaults;
     </method>
     
-    <method name="POST" id="deleteRole">
+    <method name="DELETE" id="deleteRole">
         <doc xml:lang="EN" title="Delete a Role">
             <xhtml:p class="shortdesc">
                 Delete an existing role.
