@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.util.NastFacade;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
+import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -29,6 +30,7 @@ public class DefaultCloud11ServiceTest {
     NastFacade nastFacade;
     UserService userService;
     EndpointService endpointService;
+    Configuration config;
     UriInfo uriInfo;
     User user = new User();
 
@@ -38,6 +40,7 @@ public class DefaultCloud11ServiceTest {
         userService = mock(UserService.class);
         endpointService = mock(EndpointService.class);
         uriInfo = mock(UriInfo.class);
+        config = mock(Configuration.class);
         UriBuilderImpl uriBuilder = mock(UriBuilderImpl.class);
         when(uriBuilder.build()).thenReturn(new URI(""));
         when(uriBuilder.path("userId")).thenReturn(uriBuilder);
@@ -45,7 +48,8 @@ public class DefaultCloud11ServiceTest {
         com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
         user1.setId("userId");
         when(userConverterCloudV11.toUserDO(user)).thenReturn(user1);
-        defaultCloud11Service = new DefaultCloud11Service(null,null,endpointService,userService,null,userConverterCloudV11,null);
+        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
+        defaultCloud11Service = new DefaultCloud11Service(config,null,endpointService,userService,null,userConverterCloudV11,null);
         nastFacade = mock(NastFacade.class);
         defaultCloud11Service.setNastFacade(nastFacade);
     }
