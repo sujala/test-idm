@@ -207,7 +207,7 @@
 					</xsd:documentation>
 				</annotation>
 			</element>
-			<element name="passwordCredentials" type="idm:UserPasswordCredentials" minOccurs="0"
+			<element name="password" type="idm:UserPassword" minOccurs="0"
 				maxOccurs="1">
 				<annotation>
 					<xsd:documentation xml:lang="EN"
