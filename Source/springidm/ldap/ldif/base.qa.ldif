@@ -96,6 +96,110 @@ sn: auth
 uid: auth
 userPassword: auth123
 
+dn: cn=CarlosAdmin,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: CarlosAdmin
+sn: CarlosAdmin
+uid: CarlosAdmin
+userPassword: CAPassword01
+
+dn: cn=cloudfiles,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: cloudfiles
+sn: cloudfiles
+uid: cloudfiles
+userPassword: Ud2ack8hibJ5bje2lks
+
+dn: cn=compute,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: compute
+sn: compute
+uid: compute
+userPassword: Kis12t6EyRasaitA5fOa
+
+dn: cn=controlpanel,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: controlpanel
+sn: controlpanel
+uid: controlpanel
+userPassword: yonijtebkowIjLyft3
+
+dn: cn=dnaas,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: dnaas
+sn: dnaas
+uid: dnaas
+userPassword: eecOm2CarcEvadea123n
+
+dn: cn=ele,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: ele
+sn: ele
+uid: ele
+userPassword: uNZiP85aeRoTwo50Drubs
+
+dn: cn=lbaas,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: lbaas
+sn: lbaas
+uid: lbaas
+userPassword: e69jOjOdOa3t6au5evya
+
+dn: cn=reach,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: reach
+sn: reach
+uid: reach
+userPassword: Uns72azODinkY74NitWan
+
+dn: cn=rmiUser,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: rmiUser
+sn: rmiUser
+uid: rmiUser
+userPassword: rmiPassword
+
+dn: cn=xmlrpcUser,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: xmlrpcUser
+sn: xmlrpcUser
+uid: xmlrpcUser
+userPassword: rv8ktyrd65s5gkyt
+
+dn: cn=AuthAdmin,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: AuthAdmin
+sn: AuthAdmin
+uid: AuthAdmin
+userPassword: 0EY5xP8rH33TKdDeKHYtOaW3p
+
+dn: cn=TestAdmin,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: TestAdmin
+sn: TestAdmin
+uid: TestAdmin
+userPassword: Y83QYh0cWVrwj0JBCFqvDqpOQ
+
+dn: cn=CPAdmin,ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: CPAdmin
+sn: CPAdmin
+uid: CPAdmin
+userPassword: nee40ontOPeH35boyoSqUart
+
 dn: ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit
