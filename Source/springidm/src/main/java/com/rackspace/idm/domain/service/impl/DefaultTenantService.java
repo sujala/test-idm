@@ -321,6 +321,7 @@ public class DefaultTenantService implements TenantService {
             sa.setClientRCN(client.getRCN());
             sa.setUsername(user.getUsername());
             sa.setUserRCN(user.getCustomerId());
+            sa.setUserRsId(user.getId());
             sa = (UserScopeAccess) this.scopeAccessDao.addDirectScopeAccess(
                 user.getUniqueId(), sa);
         }
