@@ -1967,7 +1967,7 @@
                         <representation mediaType="application/json"/>
                      </response>
                   </method>
-                  <method xmlns:rax="http://docs.rackspace.com/api" name="POST" rax:id="deleteRole">
+                  <method xmlns:rax="http://docs.rackspace.com/api" name="DELETE" rax:id="deleteRole">
                      <doc xml:lang="EN" title="Delete a Role">
                         <xhtml:p class="shortdesc">
                 Delete an existing role.
@@ -4252,7 +4252,7 @@
          <representation mediaType="application/json"/>
       </response>
    </method>
-   <method name="POST" id="updateRole">
+   <method name="PUT" id="updateRole">
       <doc xml:lang="EN" title="Modify a Role">
          <xhtml:p class="shortdesc">
                 Modify an existing role.

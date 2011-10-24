@@ -1,0 +1,4 @@
+POST /v1.0/users HTTP/1.1
+Host: {host name TBD}
+Accept: application/xml
+X-Auth-Token: ab48a9efdfedb23ty3494
