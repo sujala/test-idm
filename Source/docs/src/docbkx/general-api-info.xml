@@ -112,8 +112,8 @@
           GET /v1.0/users HTTP/1.1
           Host: idm.api.rackspace.com
           Accept: application/xml
-          Authorization: Oauth ab48a9efdfedb23ty3494
-			  </literallayout>
+          Authorization: ab48a9efdfedb23ty3494
+	</literallayout>
       </example>
       
       <para>
