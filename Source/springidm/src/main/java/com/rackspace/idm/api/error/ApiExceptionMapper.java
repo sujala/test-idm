@@ -10,8 +10,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Variant;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Variant;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
@@ -23,26 +23,26 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.api.common.fault.v1.BadRequest;
+import com.rackspace.api.common.fault.v1.BadRequestFault;
 import com.rackspace.api.common.fault.v1.Detail;
 import com.rackspace.api.common.fault.v1.Fault;
-import com.rackspace.api.common.fault.v1.Forbidden;
-import com.rackspace.api.common.fault.v1.ItemNotFound;
-import com.rackspace.api.common.fault.v1.MethodNotAllowed;
+import com.rackspace.api.common.fault.v1.ForbiddenFault;
+import com.rackspace.api.common.fault.v1.ItemNotFoundFault;
+import com.rackspace.api.common.fault.v1.MethodNotAllowedFault;
 import com.rackspace.api.common.fault.v1.ServiceFault;
-import com.rackspace.api.common.fault.v1.ServiceUnavailable;
-import com.rackspace.api.common.fault.v1.Unauthorized;
-import com.rackspace.api.idm.v1.ApplicationNameConflict;
-import com.rackspace.api.idm.v1.BaseUrlIdConflict;
-import com.rackspace.api.idm.v1.ClientGroupConflict;
-import com.rackspace.api.idm.v1.CustomerIdConflict;
-import com.rackspace.api.idm.v1.NotProvisioned;
+import com.rackspace.api.common.fault.v1.ServiceUnavailableFault;
+import com.rackspace.api.common.fault.v1.UnauthorizedFault;
+import com.rackspace.api.idm.v1.ApplicationNameConflictFault;
+import com.rackspace.api.idm.v1.BaseUrlIdConflictFault;
+import com.rackspace.api.idm.v1.ClientGroupConflictFault;
+import com.rackspace.api.idm.v1.CustomerIdConflictFault;
+import com.rackspace.api.idm.v1.NotProvisionedFault;
 import com.rackspace.api.idm.v1.PasswordSelfUpdateTooSoonFault;
 import com.rackspace.api.idm.v1.PasswordValidationFault;
-import com.rackspace.api.idm.v1.PermissionIdConflict;
+import com.rackspace.api.idm.v1.PermisionIdConflictFault;
 import com.rackspace.api.idm.v1.StalePasswordFault;
-import com.rackspace.api.idm.v1.UserDisabled;
-import com.rackspace.api.idm.v1.UsernameConflict;
+import com.rackspace.api.idm.v1.UserDisabledFault;
+import com.rackspace.api.idm.v1.UsernameConflictFault;
 import com.rackspace.idm.ErrorMsg;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.exception.BadRequestException;
@@ -71,7 +71,7 @@ import com.rackspacecloud.docs.auth.api.v1.AuthFault;
 public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
     private final ResourceBundle faultMessageConfig;
     private final Logger logger = LoggerFactory.getLogger(ApiExceptionMapper.class);
-    private com.rackspacecloud.docs.auth.api.v1.ObjectFactory objectFactory = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
+    private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory objectFactory = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
 
     @Context
     private HttpHeaders headers;
@@ -90,28 +90,28 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         }
 
         if (e instanceof NotProvisionedException) {
-            return toResponse(new NotProvisioned(), e, 403);
+            return toResponse(new NotProvisionedFault(), e, 403);
         }
         if (e instanceof NumberFormatException) {
-            return toResponse(new BadRequest(), e, 400);
+            return toResponse(new BadRequestFault(), e, 400);
         }
         if (e instanceof PermissionConflictException) {
-            return toResponse(new PermissionIdConflict(), e, 409);
+            return toResponse(new PermisionIdConflictFault(), e, 409);
         }
         if (e instanceof BaseUrlConflictException) {
-            return toResponse(new BaseUrlIdConflict(), e, 409);
+            return toResponse(new BaseUrlIdConflictFault(), e, 409);
         }
         if (e instanceof DuplicateClientGroupException) {
-            return toResponse(new ClientGroupConflict(), e, 409);
+            return toResponse(new ClientGroupConflictFault(), e, 409);
         }
         if (e instanceof CustomerConflictException) {
-            return toResponse(new CustomerIdConflict(), e, 409);
+            return toResponse(new CustomerIdConflictFault(), e, 409);
         }
         if (e instanceof UserDisabledException) {
-            return toResponse(new UserDisabled(), e, 403);
+            return toResponse(new UserDisabledFault(), e, 403);
         }
         if (e instanceof BadRequestException) {
-            return toResponse(new BadRequest(), e, 400);
+            return toResponse(new BadRequestFault(), e, 400);
         }
         if (e instanceof PasswordValidationException) {
             return toResponse(new PasswordValidationFault(), e, 400);
@@ -123,29 +123,29 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             return toResponse(new StalePasswordFault(), e, 409);
         }
         if (e instanceof NotAuthenticatedException || e instanceof NotAuthorizedException) {
-            return toResponse(new Unauthorized(), e, 401);
+            return toResponse(new UnauthorizedFault(), e, 401);
         }
         if (e instanceof CloudAdminAuthorizationException) {
             return toResponse(new AuthFault(), e, 405);
         }
         if (e instanceof ForbiddenException) {
-            return toResponse(new Forbidden(), e, 403);
+            return toResponse(new ForbiddenFault(), e, 403);
         }
         if (e instanceof NotFoundException) {
-            return toResponse(new ItemNotFound(), e, 404);
+            return toResponse(new ItemNotFoundFault(), e, 404);
         }
         if (e instanceof com.sun.jersey.api.NotFoundException) {
             NotFoundException exp = new NotFoundException("Resource Not Found");
-            return toResponse(new ItemNotFound(), exp, 404);
+            return toResponse(new ItemNotFoundFault(), exp, 404);
         }
         if (e instanceof DuplicateUsernameException) {
-            return toResponse(new UsernameConflict(), e, 409);
+            return toResponse(new UsernameConflictFault(), e, 409);
         }
         if (e instanceof DuplicateClientException || e instanceof ClientConflictException) {
-            return toResponse(new ApplicationNameConflict(), e, 409);
+            return toResponse(new ApplicationNameConflictFault(), e, 409);
         }
         if (e instanceof ClassCastException) {
-            return toResponse(new BadRequest(), e, 400);
+            return toResponse(new BadRequestFault(), e, 400);
         }
         if (e instanceof IdmException) {
             return toResponse(new ServiceFault(), e, 500);
@@ -159,22 +159,22 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
                 // Common user errors
                 //
                 if (cause instanceof ClassCastException) {
-                    return toResponse(new BadRequest(), cause, 400);
+                    return toResponse(new BadRequestFault(), cause, 400);
                 }
             }
 
             switch (wae.getResponse().getStatus()) {
                 case 400:
-                    return toResponse(new BadRequest(), e.getCause(), 400);
+                    return toResponse(new BadRequestFault(), e.getCause(), 400);
                 case 401:
-                    return toResponse(new Unauthorized(), e.getCause(), 401);
+                    return toResponse(new UnauthorizedFault(), e.getCause(), 401);
                 case 403:
-                    return toResponse(new Forbidden(), e.getCause(), 403);
+                    return toResponse(new ForbiddenFault(), e.getCause(), 403);
                 case 404:
-                    return toResponse(new ItemNotFound(), e.getCause(), 404);
+                    return toResponse(new ItemNotFoundFault(), e.getCause(), 404);
                 case 405:
                     Exception exp = new Exception("Method Not Allowed");
-                    return toResponse(new MethodNotAllowed(), exp, 405);
+                    return toResponse(new MethodNotAllowedFault(), exp, 405);
                 case 406:
                     List<Variant> variants = new ArrayList<Variant>();
                     variants.add(new Variant(MediaType.APPLICATION_XML_TYPE, Locale.getDefault(), "UTF-8"));
@@ -183,9 +183,9 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
                 case 500:
                     return toResponse(new ServiceFault(), e.getCause(), 500);
                 case 503:
-                    return toResponse(new ServiceUnavailable(), e.getCause(), 503);
+                    return toResponse(new ServiceUnavailableFault(), e.getCause(), 503);
                 default:
-                    return toResponse(new ServiceUnavailable(), e.getCause(), wae.getResponse().getStatus());
+                    return toResponse(new ServiceUnavailableFault(), e.getCause(), wae.getResponse().getStatus());
             }
         }
 

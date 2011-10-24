@@ -3,6 +3,8 @@ package com.rackspace.idm.api.converter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.bind.JAXBElement;
+
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.TenantRole;
@@ -14,17 +16,17 @@ public class RolesConverter {
     public RolesConverter() {
     }
 
-    public com.rackspace.api.idm.v1.Roles toRoleJaxbFromClientRole(final List<ClientRole> clientRoles) {
+    public com.rackspace.api.idm.v1.RoleList toRoleJaxbFromClientRole(final List<ClientRole> clientRoles) {
     	// By default all lists should be paginated. No support for pagination for roles at this
     	// time, especially because of the data structure. So hacking here to conform to api.
-    	com.rackspace.api.idm.v1.Roles jaxbRoles = initializeRoles();
+    	com.rackspace.api.idm.v1.RoleList jaxbRoles = initializeRoles();
     	if (clientRoles != null) {
         	for (ClientRole clientRole : clientRoles) {
-        		jaxbRoles.getRoles().add(toRoleJaxbFromClientRole(clientRole));
+        		jaxbRoles.getRole().add(toRoleJaxbFromClientRole(clientRole));
         	}
         	
-        	jaxbRoles.setLimit(jaxbRoles.getRoles().size());
-        	jaxbRoles.setTotalRecords(jaxbRoles.getRoles().size());
+        	jaxbRoles.setLimit(jaxbRoles.getRole().size());
+        	jaxbRoles.setTotalRecords(jaxbRoles.getRole().size());
         }
     	
     	return jaxbRoles;
@@ -39,38 +41,38 @@ public class RolesConverter {
 		return jaxbRole;
     }
     
-    public com.rackspace.api.idm.v1.Roles toRoleJaxbFromTenantRole(final List<TenantRole> tenantRoles) {
+    public JAXBElement<com.rackspace.api.idm.v1.RoleList> toRoleJaxbFromTenantRole(final List<TenantRole> tenantRoles) {
     	// By default all lists should be paginated. No support for pagination for roles at this
     	// time, especially because of the data structure. So hacking here to conform to api.
-    	com.rackspace.api.idm.v1.Roles jaxbRoles = initializeRoles();
+    	com.rackspace.api.idm.v1.RoleList jaxbRoles = initializeRoles();
     	if (tenantRoles != null) {
         	for (TenantRole role : tenantRoles) {
-        		jaxbRoles.getRoles().addAll(toRoleJaxbFromTenantRole(role));
+        		jaxbRoles.getRole().addAll(toRoleJaxbFromTenantRole(role));
         	}
         	
-        	jaxbRoles.setLimit(jaxbRoles.getRoles().size());
-        	jaxbRoles.setTotalRecords(jaxbRoles.getRoles().size());
+        	jaxbRoles.setLimit(jaxbRoles.getRole().size());
+        	jaxbRoles.setTotalRecords(jaxbRoles.getRole().size());
         }
     	
-    	return jaxbRoles;
+    	return objectFactory.createRoles(jaxbRoles);
     }
     
-    public com.rackspace.api.idm.v1.Roles toRoleJaxbFromRoleString(final List<String> roles) {
+    public JAXBElement<com.rackspace.api.idm.v1.RoleList> toRoleJaxbFromRoleString(final List<String> roles) {
     	// By default all lists should be paginated. No support for pagination for roles at this
     	// time, especially because of the data structure. So hacking here to conform to api.
-    	com.rackspace.api.idm.v1.Roles jaxbRoles = initializeRoles();
+    	com.rackspace.api.idm.v1.RoleList jaxbRoles = initializeRoles();
      	if (roles != null) {
      		for (String role : roles) {
      	    	com.rackspace.api.idm.v1.Role jaxbRole = objectFactory.createRole();
 	    		jaxbRole.setName(role);
-	    		jaxbRoles.getRoles().add(jaxbRole);
+	    		jaxbRoles.getRole().add(jaxbRole);
      		}
      		
           	jaxbRoles.setLimit(roles.size());
         	jaxbRoles.setTotalRecords(roles.size());
      	}
      	
-     	return jaxbRoles;
+     	return objectFactory.createRoles(jaxbRoles);
     }
     
     public ClientRole toClientRole(com.rackspace.api.idm.v1.Role jaxbRole) {
@@ -111,8 +113,8 @@ public class RolesConverter {
 		return jaxbRole;
     }
     
-    private com.rackspace.api.idm.v1.Roles initializeRoles() {
-	    com.rackspace.api.idm.v1.Roles jaxbRoles = objectFactory.createRoles();
+    private com.rackspace.api.idm.v1.RoleList initializeRoles() {
+	    com.rackspace.api.idm.v1.RoleList jaxbRoles = objectFactory.createRoleList();
 		jaxbRoles.setOffset(0);
 		jaxbRoles.setLimit(0);
 		return jaxbRoles;

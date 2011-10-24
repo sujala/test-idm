@@ -1,5 +1,8 @@
 package com.rackspace.idm.api.converter;
 
+import javax.xml.bind.JAXBElement;
+
+import com.rackspace.api.idm.v1.IdentityProfile;
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.Customer;
 
@@ -10,12 +13,12 @@ public class CustomerConverter {
     public CustomerConverter() {
     }
 
-    public Customer toCustomerDO(com.rackspace.api.idm.v1.CustomerIdentityProfile jaxbCustomer) {
+    public Customer toCustomerDO(com.rackspace.api.idm.v1.IdentityProfile jaxbCustomer) {
 
         Customer customer = new Customer();
 
         customer.setId(jaxbCustomer.getId());
-        customer.setRCN(jaxbCustomer.getRcn());
+        customer.setRCN(jaxbCustomer.getCustomerId());
         if (jaxbCustomer.isEnabled() != null) {
             customer.setEnabled(jaxbCustomer.isEnabled());
         }
@@ -23,13 +26,13 @@ public class CustomerConverter {
         return customer;
     }
 
-    public com.rackspace.api.idm.v1.CustomerIdentityProfile toJaxbCustomer(Customer customer) {
+    public JAXBElement<com.rackspace.api.idm.v1.IdentityProfile> toJaxbCustomer(Customer customer) {
 
-        com.rackspace.api.idm.v1.CustomerIdentityProfile jaxbCustomer = objectFactory.createCustomerIdentityProfile();
+        IdentityProfile jaxbCustomer = objectFactory.createIdentityProfile();
         jaxbCustomer.setId(customer.getId());
-        jaxbCustomer.setRcn(customer.getRCN());
+        jaxbCustomer.setCustomerId(customer.getRCN());
         jaxbCustomer.setEnabled(customer.isEnabled());
 
-        return jaxbCustomer;
+        return objectFactory.createCustomerIdentityProfile(jaxbCustomer);
     }
 }

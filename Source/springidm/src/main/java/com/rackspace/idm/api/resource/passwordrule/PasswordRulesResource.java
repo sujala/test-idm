@@ -95,14 +95,12 @@ public class PasswordRulesResource {
         PasswordComplexityResult result = passwordComplexityService
             .checkPassword(password.getPassword());
 
-        com.rackspace.api.idm.v1.PasswordValidation jaxbValidation = passwordRulesConverter
-            .toPasswordValidationJaxb(result);
-
         logger
             .debug(
                 "Checked password {} against password complexity rules - isValid = {}",
                 result.isValidPassword());
 
-        return Response.ok(jaxbValidation).build();
+        return Response.ok(passwordRulesConverter
+            .toPasswordValidationJaxb(result)).build();
     }
 }

@@ -3,6 +3,7 @@ package com.rackspace.idm.api.converter;
 import java.util.Date;
 import java.util.List;
 
+import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 
@@ -19,7 +20,7 @@ public class TokenConverter {
     public TokenConverter() {
     }
 
-    public com.rackspace.api.idm.v1.Token toTokenJaxb(String tokenString,
+    public JAXBElement<com.rackspace.api.idm.v1.Token> toTokenJaxb(String tokenString,
         Date expiration) {
     	if (tokenString == null) {
     		return null;
@@ -42,7 +43,7 @@ public class TokenConverter {
             e.printStackTrace();
         }
 
-        return jaxbToken;
+        return of.createToken(jaxbToken);
     }
 
 //    public com.rackspace.api.idm.v1.Token toTokenJaxb(String tokenString,
@@ -93,27 +94,27 @@ public class TokenConverter {
         return jaxbToken;
     }
 
-    public com.rackspace.api.idm.v1.Tokens toTokensJaxb(
+    public JAXBElement<com.rackspace.api.idm.v1.TokenList> toTokensJaxb(
         List<DelegatedClientScopeAccess> scopeAccessList) {
-        com.rackspace.api.idm.v1.Tokens jaxbTokens = of.createTokens();
+        com.rackspace.api.idm.v1.TokenList jaxbTokens = of.createTokenList();
 
         for (DelegatedClientScopeAccess u : scopeAccessList) {
             com.rackspace.api.idm.v1.Token token = toTokenJaxb(
-                u.getRefreshTokenString(), u.getRefreshTokenExp());
-            jaxbTokens.getTokens().add(token);
+                u.getRefreshTokenString(), u.getRefreshTokenExp()).getValue();
+            jaxbTokens.getToken().add(token);
         }
-        return jaxbTokens;
+        return of.createTokens(jaxbTokens);
     }
 
-    public com.rackspace.api.idm.v1.DelegatedTokens toDelegatedTokensJaxb(
+    public JAXBElement<com.rackspace.api.idm.v1.DelegatedTokenList> toDelegatedTokensJaxb(
         List<DelegatedClientScopeAccess> scopeAccessList) {
-        com.rackspace.api.idm.v1.DelegatedTokens jaxbTokens = of
-            .createDelegatedTokens();
+        com.rackspace.api.idm.v1.DelegatedTokenList jaxbTokens = of
+            .createDelegatedTokenList();
 
         for (DelegatedClientScopeAccess u : scopeAccessList) {
             com.rackspace.api.idm.v1.DelegatedToken token = toDelegatedTokenJaxb(u, null);
-            jaxbTokens.getDelegatedTokens().add(token);
+            jaxbTokens.getDelegatedToken().add(token);
         }
-        return jaxbTokens;
+        return of.createDelegatedTokens(jaxbTokens);
     }
 }

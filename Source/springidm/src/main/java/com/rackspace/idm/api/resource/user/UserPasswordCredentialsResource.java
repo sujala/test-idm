@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.PasswordConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Password;
-import com.rackspace.idm.domain.entity.PasswordCredentials;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -92,7 +91,7 @@ public class UserPasswordCredentialsResource extends ParentResource {
         @Context UriInfo uriInfo,
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
-        EntityHolder<com.rackspace.api.idm.v1.PasswordCredentials> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.UserPassword> holder) {
         
     	validateRequestBody(holder);
     	
@@ -100,10 +99,14 @@ public class UserPasswordCredentialsResource extends ParentResource {
 
         //TODO: Implement authorization rules
         //authorizationService.authorizeToken(token, uriInfo);
-        com.rackspace.api.idm.v1.PasswordCredentials userCred = holder.getEntity();
-        PasswordCredentials passwordCredentialsDO = passwordConverter.toPasswordCredentialsDO(userCred);
+        
+        User user = this.userService.getUserById(userId);
+        
+        com.rackspace.api.idm.v1.UserPassword userCred = holder.getEntity();
 
-        userService.setUserPassword(userId, passwordCredentialsDO, token);
+        user.setPassword(userCred.getPassword());
+        
+        this.userService.updateUser(user, false);
 
         return Response.noContent().build();
     }

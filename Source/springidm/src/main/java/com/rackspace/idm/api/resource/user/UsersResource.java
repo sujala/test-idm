@@ -22,14 +22,13 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.resource.ParentResource;
-import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.validation.InputValidator;
-import com.sun.jersey.core.provider.EntityHolder;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -81,9 +80,8 @@ public class UsersResource extends ParentResource {
     	}
     	
     	Users users = this.userService.getAllUsers(filters, (offset == null ? -1 : offset), (limit == null ? -1 : limit));
-    	com.rackspace.api.idm.v1.Users returnedUsers = userConverter.toUserListJaxb(users);
     	
-    	return Response.ok(returnedUsers).build();
+    	return Response.ok(userConverter.toUserListJaxb(users)).build();
     }
 
     /**
@@ -96,13 +94,10 @@ public class UsersResource extends ParentResource {
     public Response addUser(@Context Request reqRuest,
         @Context UriInfo uriInfo,
         @HeaderParam("X-Auth-Token") String authHeader,
-        EntityHolder<com.rackspace.api.idm.v1.User> holder) {
+        com.rackspace.api.idm.v1.User holder) {
 
-    	validateRequestBody(holder);
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
 
-        com.rackspace.api.idm.v1.User jaxbUser = holder.getEntity();
+        com.rackspace.api.idm.v1.User jaxbUser = holder;
 
         User user = userConverter.toUserDO(jaxbUser);
         user.setDefaults();
@@ -112,9 +107,7 @@ public class UsersResource extends ParentResource {
 
         String locationUri = String.format("%s", user.getId());
 
-        jaxbUser = userConverter.toUserJaxb(user);
-
-        return Response.ok(jaxbUser).location(URI.create(locationUri)).status(HttpServletResponse.SC_CREATED).build();
+        return Response.ok(userConverter.toUserJaxb(user)).location(URI.create(locationUri)).status(HttpServletResponse.SC_CREATED).build();
     }
 
     @Path("{userId}")

@@ -25,8 +25,8 @@ import com.rackspace.idm.api.converter.RolesConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -95,10 +95,8 @@ public class RolesResource extends ParentResource {
     	}
     	
 		List<ClientRole> roles = applicationService.getAllClientRoles(filters.toArray(new FilterParam[]{}));
-
-		com.rackspace.api.idm.v1.Roles returnRoles = rolesConverter.toRoleJaxbFromClientRole(roles);
-
-		return Response.ok(returnRoles).build();
+		
+		return Response.ok(rolesConverter.toRoleJaxbFromClientRole(roles)).build();
 	}
 
 	/**

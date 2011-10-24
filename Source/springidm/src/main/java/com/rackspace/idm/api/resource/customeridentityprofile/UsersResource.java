@@ -18,8 +18,8 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.validation.InputValidator;
@@ -64,8 +64,7 @@ public class UsersResource extends ParentResource {
     	
     	//TODO: Implement Authorization rules
     	Users users = userService.getAllUsers(filters, (offset == null ? -1 : offset), (limit == null ? -1 : limit));
-    	com.rackspace.api.idm.v1.Users jaxbUsers = userConverter.toUserListJaxb(users);
     	
-    	return Response.ok(jaxbUsers).build();
+    	return Response.ok(userConverter.toUserListJaxb(users)).build();
     }
 }

@@ -23,10 +23,10 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.api.converter.RolesConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -94,10 +94,8 @@ public class UserTenantsResource extends ParentResource {
         User user = this.userService.loadUser(userId);        
        
         List<TenantRole> tenantRoles = this.tenantService.getTenantRolesForUser(user, filterBuilder.getFilters());
-        
-        com.rackspace.api.idm.v1.Roles returnRoles = rolesConverter.toRoleJaxbFromTenantRole(tenantRoles);
 
-        return Response.ok(returnRoles).build();
+        return Response.ok(rolesConverter.toRoleJaxbFromTenantRole(tenantRoles)).build();
     }
     
     /**
