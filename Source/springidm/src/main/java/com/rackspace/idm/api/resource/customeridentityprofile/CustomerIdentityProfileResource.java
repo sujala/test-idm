@@ -82,10 +82,8 @@ public class CustomerIdentityProfileResource extends ParentResource {
 
         Customer customer = this.customerService.loadCustomer(customerId);
 
-        com.rackspace.api.idm.v1.CustomerIdentityProfile jaxbCustomer = customerConverter.toJaxbCustomer(customer);
-
         getLogger().debug("Got Customer Identity Profile:{}", customer);
-        return Response.ok(jaxbCustomer).build();
+        return Response.ok(customerConverter.toJaxbCustomer(customer)).build();
     }
 
     /**
@@ -128,11 +126,11 @@ public class CustomerIdentityProfileResource extends ParentResource {
     	@Context UriInfo uriInfo,
         @PathParam("customerId") String customerId, 
         @HeaderParam("X-Auth-Token") String authHeader,
-        EntityHolder<com.rackspace.api.idm.v1.CustomerIdentityProfile> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.IdentityProfile> holder) {
     	
     	validateRequestBody(holder);
 
-        com.rackspace.api.idm.v1.CustomerIdentityProfile inputCustomer = holder.getEntity();
+        com.rackspace.api.idm.v1.IdentityProfile inputCustomer = holder.getEntity();
         getLogger().debug("Getting Customer Identity Profile: {}", customerId);
 
         ScopeAccess token = this.scopeAccessService

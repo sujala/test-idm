@@ -65,7 +65,7 @@ public class CustomerIdenityProfilesResource extends ParentResource {
     @POST
     public Response addCustomer(@Context UriInfo uriInfo, @Context Request request,
         @HeaderParam("X-Auth-Token") String authHeader, 
-        EntityHolder<com.rackspace.api.idm.v1.CustomerIdentityProfile> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.IdentityProfile> holder) {
     	
     	validateRequestBody(holder);
         
@@ -74,7 +74,7 @@ public class CustomerIdenityProfilesResource extends ParentResource {
         //TODO: Implement authorization rules
         //authorizationService.authorizeToken(token, uriInfo);
 
-        com.rackspace.api.idm.v1.CustomerIdentityProfile inputCustomer = holder.getEntity();
+        com.rackspace.api.idm.v1.IdentityProfile inputCustomer = holder.getEntity();
         Customer customer = customerConverter.toCustomerDO(inputCustomer);
         customer.setDefaults();
         validateDomainObject(customer);

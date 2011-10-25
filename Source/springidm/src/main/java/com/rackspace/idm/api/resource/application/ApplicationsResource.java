@@ -25,8 +25,8 @@ import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -91,9 +91,8 @@ public class ApplicationsResource extends ParentResource {
     	
     	//TODO: Filter application list based on current user if exposing to public
     	Applications applications = this.applicationService.getAllApplications(filters, (offset == null ? -1 : offset), (limit == null ? -1 : limit));
-    	com.rackspace.api.idm.v1.Applications jaxbApplications = this.applicationConverter.toClientListJaxb(applications);
     	
-    	return Response.ok(jaxbApplications).build();
+    	return Response.ok(this.applicationConverter.toClientListJaxb(applications)).build();
     }
 
     
@@ -123,12 +122,9 @@ public class ApplicationsResource extends ParentResource {
             applicationService.add(applicationDO);
             getLogger().info("Added Application: {}", applicationDO);
 
-            com.rackspace.api.idm.v1.Application returnedApplication 
-            			= applicationConverter.toClientJaxbWithPermissionsAndCredentials(applicationDO);
-
             String location = applicationDO.getClientId();
             
-            return Response.ok(returnedApplication).location(URI.create(location)).status(HttpServletResponse.SC_CREATED).build();
+            return Response.ok(applicationConverter.toClientJaxbWithPermissionsAndCredentials(applicationDO)).location(URI.create(location)).status(HttpServletResponse.SC_CREATED).build();
         } 
         catch (DuplicateException ex) {
             String errorMsg = ex.getMessage();

@@ -21,13 +21,6 @@
 			<xsdxt:link rev="index" href="password.xsd" />
 			<xsdxt:link rev="index" href="passwordRotationPolicy.xsd" />
 			<xsdxt:link rev="index" href="fault.xsd" />
-			   
-            <!--           
-                JAXB vendor extension to avoid having to use JAXBElement wrapper
-            -->
-            <jaxb:globalBindings>
-                <xjc:simple />
-            </jaxb:globalBindings>
 		</xsd:appinfo>
 		<xsd:documentation xml:lang="EN"
 			xmlns="http://www.w3.org/1999/xhtml">

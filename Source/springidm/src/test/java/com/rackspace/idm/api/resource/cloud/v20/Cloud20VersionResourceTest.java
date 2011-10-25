@@ -1,18 +1,19 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
+
+import javax.ws.rs.core.MediaType;
+
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 
-import javax.ws.rs.core.MediaType;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
 
 /**
  * Created by IntelliJ IDEA.
@@ -55,7 +56,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
     public void getTenants__returns200() throws Exception {
         String token = getAuthToken("cmarin1", "Password1");
         WebResource resource = resource().path("cloud/v2.0/tenants");
-        ClientResponse clientResponse = resource.header("X-Auth-Token", token).get(ClientResponse.class);
+        ClientResponse clientResponse = resource.header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 

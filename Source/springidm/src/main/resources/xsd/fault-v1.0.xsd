@@ -30,7 +30,7 @@ xmlns:xs="http://www.w3.org/2001/XMLSchema">
                 </xs:annotation>
             </xs:element>
             
-            <xs:element name="detail" type="fault:Detail" minOccurs="0">
+            <xs:element name="detail" type="xs:string" minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>Specifies the detail message of the fault</xs:documentation>
                 </xs:annotation>
@@ -104,16 +104,5 @@ xmlns:xs="http://www.w3.org/2001/XMLSchema">
         </xs:complexContent>
     </xs:complexType>
     
-    <xs:complexType name="Detail">
-        <xs:sequence>
-            <xs:element name="description" type="xs:string">
-                <xs:annotation>
-                    <xs:documentation>Specifies the display message of the fault</xs:documentation>
-                </xs:annotation>
-            </xs:element>
-            <xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
-        </xs:sequence>
-        <xs:anyAttribute namespace="##other" processContents="lax"/>
-    </xs:complexType>
       
 </xs:schema>

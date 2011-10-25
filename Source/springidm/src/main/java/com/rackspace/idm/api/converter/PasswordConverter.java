@@ -1,6 +1,9 @@
 package com.rackspace.idm.api.converter;
 
+import javax.xml.bind.JAXBElement;
+
 import com.rackspace.api.idm.v1.ObjectFactory;
+import com.rackspace.api.idm.v1.UserPasswordCredentials;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.PasswordCredentials;
 
@@ -11,17 +14,15 @@ public class PasswordConverter {
     public PasswordConverter() {
     }
 
-    public com.rackspace.api.idm.v1.PasswordCredentials toJaxb(Password password) {
-        com.rackspace.api.idm.v1.PasswordCredentials userCredentials = objectFactory.createPasswordCredentials();
+    public JAXBElement<com.rackspace.api.idm.v1.UserPassword> toJaxb(Password password) {
         com.rackspace.api.idm.v1.UserPassword userPassword = objectFactory.createUserPassword();
         
         userPassword.setPassword(password.getValue());
-        userCredentials.setCurrentPassword(userPassword);
 
-        return userCredentials;
+        return objectFactory.createUserPassword(userPassword);
     }
     
-    public PasswordCredentials toPasswordCredentialsDO(com.rackspace.api.idm.v1.PasswordCredentials passwordCredentials) {
+    public PasswordCredentials toPasswordCredentialsDO(UserPasswordCredentials passwordCredentials) {
     	PasswordCredentials passwordCredentialsDO = new PasswordCredentials();
     	passwordCredentialsDO.setCurrentPassword(toPasswordDO(passwordCredentials.getCurrentPassword()));
     	passwordCredentialsDO.setNewPassword(toPasswordDO(passwordCredentials.getNewPassword()));

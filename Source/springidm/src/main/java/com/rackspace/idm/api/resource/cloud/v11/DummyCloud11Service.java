@@ -23,37 +23,37 @@ import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey;
 public class DummyCloud11Service implements Cloud11Service {
 
 	@Override
-	public ResponseBuilder validateToken(String tokenId, String belongsTo,
+	public ResponseBuilder validateToken(HttpServletRequest request, String tokenId, String belongsTo,
 			String type, HttpHeaders httpHeaders) throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder revokeToken(String tokenId, HttpHeaders httpHeaders)
+	public ResponseBuilder revokeToken(HttpServletRequest request, String tokenId, HttpHeaders httpHeaders)
 			throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder authenticate(HttpServletResponse response,
+	public ResponseBuilder authenticate(HttpServletRequest request, HttpServletResponse response,
 			HttpHeaders httpHeaders, String body) throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder adminAuthenticate(HttpServletResponse response,
+	public ResponseBuilder adminAuthenticate(HttpServletRequest request, HttpServletResponse response,
 			HttpHeaders httpHeaders, String body) throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder createUser(HttpHeaders httpHeaders, UriInfo uriInfo, User user)
+	public ResponseBuilder createUser(HttpServletRequest request, HttpHeaders httpHeaders, UriInfo uriInfo, User user)
 			throws IOException, JAXBException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder getUser(String userId, HttpHeaders httpHeaders)
+	public ResponseBuilder getUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders)
 			throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
@@ -71,93 +71,93 @@ public class DummyCloud11Service implements Cloud11Service {
 	}
 
 	@Override
-	public ResponseBuilder deleteUser(String userId, HttpHeaders httpHeaders)
+	public ResponseBuilder deleteUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders)
 			throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder updateUser(String userId, HttpHeaders httpHeaders,
+	public ResponseBuilder updateUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders,
 			User user) throws IOException, JAXBException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder getUserEnabled(String userId, HttpHeaders httpHeaders)
+	public ResponseBuilder getUserEnabled(HttpServletRequest request, String userId, HttpHeaders httpHeaders)
 			throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder setUserEnabled(String userId,
+	public ResponseBuilder setUserEnabled(HttpServletRequest request, String userId,
 			UserWithOnlyEnabled user, HttpHeaders httpHeaders)
 			throws IOException, JAXBException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder getUserKey(String userId, HttpHeaders httpHeaders)
+	public ResponseBuilder getUserKey(HttpServletRequest request, String userId, HttpHeaders httpHeaders)
 			throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder setUserKey(String userId, HttpHeaders httpHeaders,
+	public ResponseBuilder setUserKey(HttpServletRequest request, String userId, HttpHeaders httpHeaders,
 			UserWithOnlyKey user) throws IOException, JAXBException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder getServiceCatalog(String userId,
+	public ResponseBuilder getServiceCatalog(HttpServletRequest request, String userId,
 			HttpHeaders httpHeaders) throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder getBaseURLRefs(String userId, HttpHeaders httpHeaders)
+	public ResponseBuilder getBaseURLRefs(HttpServletRequest request, String userId, HttpHeaders httpHeaders)
 			throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder addBaseURLRef(String userId,
+	public ResponseBuilder addBaseURLRef(HttpServletRequest request, String userId,
 			HttpHeaders httpHeaders, UriInfo uriInfo, BaseURLRef baseUrlRef)
 			throws IOException, JAXBException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder getBaseURLRef(String userId, String baseURLId,
+	public ResponseBuilder getBaseURLRef(HttpServletRequest request, String userId, String baseURLId,
 			HttpHeaders httpHeaders) throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder deleteBaseURLRef(String userId, String baseURLId,
+	public ResponseBuilder deleteBaseURLRef(HttpServletRequest request, String userId, String baseURLId,
 			HttpHeaders httpHeaders) throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder getUserGroups(String userId, HttpHeaders httpHeaders)
+	public ResponseBuilder getUserGroups(HttpServletRequest request, String userId, HttpHeaders httpHeaders)
 			throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder getBaseURLs(String serviceName,
+	public ResponseBuilder getBaseURLs(HttpServletRequest request, String serviceName,
 			HttpHeaders httpHeaders) throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder getBaseURLId(int baseURLId, String serviceName,
+	public ResponseBuilder getBaseURLId(HttpServletRequest request, int baseURLId, String serviceName,
 			HttpHeaders httpHeaders) throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder getEnabledBaseURL(String serviceName,
+	public ResponseBuilder getEnabledBaseURL(HttpServletRequest request, String serviceName,
 			HttpHeaders httpHeaders) throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
@@ -169,19 +169,19 @@ public class DummyCloud11Service implements Cloud11Service {
 	}
 
 	@Override
-	public ResponseBuilder migrate(String user, HttpHeaders httpHeaders,
+	public ResponseBuilder migrate(HttpServletRequest request, String user, HttpHeaders httpHeaders,
 			String body) throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder unmigrate(String user, HttpHeaders httpHeaders,
+	public ResponseBuilder unmigrate(HttpServletRequest request, String user, HttpHeaders httpHeaders,
 			String body) throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
 
 	@Override
-	public ResponseBuilder all(HttpHeaders httpHeaders, String body)
+	public ResponseBuilder all(HttpServletRequest request, HttpHeaders httpHeaders, String body)
 			throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}

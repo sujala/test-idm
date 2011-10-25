@@ -26,23 +26,23 @@ public class AuthConverter {
         this.userConverter = userConverter;
     }
 
-    public com.rackspace.api.idm.v1.Auth toAuthDataJaxb(AuthData authData) {
-        com.rackspace.api.idm.v1.Auth authJaxb = objectFactory.createAuth();
+    public com.rackspace.api.idm.v1.AuthData toAuthDataJaxb(AuthData authData) {
+        com.rackspace.api.idm.v1.AuthData authJaxb = objectFactory.createAuthData();
 
         com.rackspace.api.idm.v1.Token accessToken 
-        	= tokenConverter.toTokenJaxb(authData.getAccessToken(), authData.getAccessTokenExpiration());
+        	= tokenConverter.toTokenJaxb(authData.getAccessToken(), authData.getAccessTokenExpiration()).getValue();
     
         com.rackspace.api.idm.v1.Token refreshToken 
-    		= tokenConverter.toTokenJaxb(authData.getRefreshToken(), null);
+    		= tokenConverter.toTokenJaxb(authData.getRefreshToken(), null).getValue();
         
         com.rackspace.api.idm.v1.Application application
-        	= clientConverter.toApplicationJaxbFromApplication(authData.getApplication());
+        	= clientConverter.toApplicationJaxbFromApplication(authData.getApplication()).getValue();
         
         com.rackspace.api.idm.v1.User user
-    		= userConverter.toUserJaxbFromUser(authData.getUser());
+    		= userConverter.toUserJaxbFromUser(authData.getUser()).getValue();
         
         com.rackspace.api.idm.v1.Racker racker
-			= userConverter.toRackerJaxbFromRacker(authData.getRacker());
+			= userConverter.toRackerJaxbFromRacker(authData.getRacker()).getValue();
         
         authJaxb.setAccessToken(accessToken);
         authJaxb.setRefreshToken(refreshToken);

@@ -1,16 +1,22 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
-import org.openstack.docs.identity.api.v2.*;
+import java.io.IOException;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBException;
-import java.io.IOException;
+
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
+import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
+import org.openstack.docs.identity.api.v2.Role;
+import org.openstack.docs.identity.api.v2.Tenant;
+import org.openstack.docs.identity.api.v2.User;
+
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 
 /**
  * Created by IntelliJ IDEA.

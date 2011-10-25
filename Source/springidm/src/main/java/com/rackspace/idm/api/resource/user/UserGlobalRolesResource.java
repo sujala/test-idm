@@ -23,10 +23,10 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.api.converter.RolesConverter;
 import com.rackspace.idm.domain.entity.FilterParam;
+import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
@@ -91,10 +91,8 @@ public class UserGlobalRolesResource {
     	}
        
         List<TenantRole> tenantRoles = this.tenantService.getGlobalRolesForUser(user, filters);
-        
-        com.rackspace.api.idm.v1.Roles returnRoles = rolesConverter.toRoleJaxbFromTenantRole(tenantRoles);
 
-        return Response.ok(returnRoles).build();
+        return Response.ok(rolesConverter.toRoleJaxbFromTenantRole(tenantRoles)).build();
     }
     
     @Path("{roleId}")
