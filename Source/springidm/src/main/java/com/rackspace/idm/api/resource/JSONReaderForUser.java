@@ -25,14 +25,14 @@ import com.rackspace.idm.JSONConstants;
 public class JSONReaderForUser implements MessageBodyReader<User> {
 
     @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
-        MediaType mediaType) {
+    public boolean isReadable(Class<?> type, Type genericType,
+        Annotation[] annotations, MediaType mediaType) {
         return type == User.class;
     }
 
     @Override
-    public User readFrom(Class<User> type,
-        Type genericType, Annotation[] annotations, MediaType mediaType,
+    public User readFrom(Class<User> type, Type genericType,
+        Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException, WebApplicationException {
 
@@ -45,7 +45,7 @@ public class JSONReaderForUser implements MessageBodyReader<User> {
 
     public static User getUserFromJSONString(String jsonBody) {
         User user = new User();
-        
+
         try {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
@@ -53,9 +53,9 @@ public class JSONReaderForUser implements MessageBodyReader<User> {
             if (outer.containsKey(JSONConstants.USER)) {
                 JSONObject obj3;
 
-                obj3 = (JSONObject) parser.parse(outer.get(
-                    JSONConstants.USER).toString());
-                
+                obj3 = (JSONObject) parser.parse(outer.get(JSONConstants.USER)
+                    .toString());
+
                 Object id = obj3.get(JSONConstants.ID);
                 Object username = obj3.get(JSONConstants.USERNAME);
                 Object customerId = obj3.get(JSONConstants.CUSTOMER_ID);
@@ -68,11 +68,11 @@ public class JSONReaderForUser implements MessageBodyReader<User> {
                 Object preflang = obj3.get(JSONConstants.PREF_LANGUAGE);
                 Object country = obj3.get(JSONConstants.COUNTRY);
                 Object timeZone = obj3.get(JSONConstants.TIME_ZONE);
-                Object password = obj3.get(JSONConstants.PASSWORD);
+                Object passwordCredentials = obj3
+                    .get(JSONConstants.PASSWORD_CREDENTIALS);
                 Object secret = obj3.get(JSONConstants.SECRET);
                 Object enabled = obj3.get(JSONConstants.ENABLED);
-                
-                
+
                 if (id != null) {
                     user.setId(id.toString());
                 }
@@ -112,20 +112,22 @@ public class JSONReaderForUser implements MessageBodyReader<User> {
                 if (timeZone != null) {
                     user.setTimeZone(timeZone.toString());
                 }
-                if (password != null) {
-                    user.setPassword(JSONReaderForUserPassword.getUserPasswordFromJSONString(obj3.toString()));
+                if (passwordCredentials != null) {
+                    user.setPasswordCredentials(JSONReaderForPasswordCredentials
+                        .getUserPasswordCredentialsFromJSONString(obj3
+                            .toString()));
                 }
                 if (secret != null) {
-                    user.setSecret(JSONReaderForUserSecret.getUserSecretFromJSONString(obj3.toString()));
+                    user.setSecret(JSONReaderForUserSecret
+                        .getUserSecretFromJSONString(obj3.toString()));
                 }
-                
 
             }
         } catch (ParseException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        
+
         return user;
     }
 }

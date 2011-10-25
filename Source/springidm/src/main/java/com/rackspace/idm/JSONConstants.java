@@ -84,4 +84,6 @@ public class JSONConstants {
     public static final Object PASSWORD_ROTATION_POLICY = "passwordRotationPolicy";
     public static final Object DURATION = "duration";
     public static final Object APPLICATION_ID = "applicaitonId";
+    public static final Object NEW_PASSWORD = "newPassword";
+    public static final Object CURRENT_PASSWORD = "currentPassword";
 }

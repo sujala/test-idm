@@ -44,9 +44,9 @@ public class UserConverter {
         user.setMaxLoginFailuresExceded(jaxbUser.isMaxLoginFailuresExceded());
         user.setUsername(jaxbUser.getUsername());
 
-        if (jaxbUser.getPassword()!= null
-            && !StringUtils.isBlank(jaxbUser.getPassword().getPassword())) {
-            user.setPassword(jaxbUser.getPassword().getPassword());
+        if (jaxbUser.getPasswordCredentials().getCurrentPassword().getPassword()!= null
+            && !StringUtils.isBlank(jaxbUser.getPasswordCredentials().getCurrentPassword().getPassword())) {
+            user.setPassword(jaxbUser.getPasswordCredentials().getCurrentPassword().getPassword());
         }
 
         if (jaxbUser.getSecret() != null
@@ -160,7 +160,7 @@ public class UserConverter {
             com.rackspace.api.idm.v1.UserPassword password = objectFactory.createUserPassword();
             
             password.setPassword(user.getPasswordObj().getValue());
-            returnedUser.setPassword(password);
+            returnedUser.getPasswordCredentials().setCurrentPassword(password);
         }
 
         if (includeSecret && !StringUtils.isBlank(user.getSecretAnswer())

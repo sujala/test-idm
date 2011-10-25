@@ -22,17 +22,18 @@ import com.rackspace.idm.JSONConstants;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForUserPassword implements MessageBodyReader<UserPassword> {
-    
+public class JSONReaderForUserPassword implements
+    MessageBodyReader<UserPassword> {
+
     @Override
-    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
-        MediaType mediaType) {
+    public boolean isReadable(Class<?> type, Type genericType,
+        Annotation[] annotations, MediaType mediaType) {
         return type == UserPassword.class;
     }
 
     @Override
-    public UserPassword readFrom(Class<UserPassword> type,
-        Type genericType, Annotation[] annotations, MediaType mediaType,
+    public UserPassword readFrom(Class<UserPassword> type, Type genericType,
+        Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException, WebApplicationException {
 
@@ -42,10 +43,10 @@ public class JSONReaderForUserPassword implements MessageBodyReader<UserPassword
 
         return userPassword;
     }
-    
+
     public static UserPassword getUserPasswordFromJSONString(String jsonBody) {
         UserPassword userPassword = new UserPassword();
-        
+
         try {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
@@ -55,20 +56,41 @@ public class JSONReaderForUserPassword implements MessageBodyReader<UserPassword
 
                 obj3 = (JSONObject) parser.parse(outer.get(
                     JSONConstants.PASSWORD).toString());
-                
+
                 Object password = obj3.get(JSONConstants.PASSWORD);
-                
+
                 if (password != null) {
-                    userPassword.setPassword(obj3.get(JSONConstants.PASSWORD).toString());
+                    userPassword.setPassword(obj3.get(JSONConstants.PASSWORD)
+                        .toString());
                 }
-                
 
             }
         } catch (ParseException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        
+
+        return userPassword;
+    }
+
+    public static UserPassword getUserPasswordFromJSONStringWithoutWrapper(
+        String jsonBody) {
+        UserPassword userPassword = new UserPassword();
+
+        try {
+            JSONParser parser = new JSONParser();
+            JSONObject outer = (JSONObject) parser.parse(jsonBody);
+
+            Object password = outer.get(JSONConstants.PASSWORD);
+
+            if (password != null) {
+                userPassword.setPassword(password.toString());
+            }
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
         return userPassword;
     }
 }
