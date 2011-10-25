@@ -82,7 +82,7 @@ public class RootResource {
     	return Response.ok(responseXml).build();
     }
     
-    @Path("cloud/")
+    @Path("cloud")
     public CloudVersionsResource getCloudVersionsResource() {
         return cloudVersionsResource;
     }

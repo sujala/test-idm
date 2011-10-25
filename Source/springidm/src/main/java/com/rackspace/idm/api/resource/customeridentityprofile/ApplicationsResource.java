@@ -60,8 +60,7 @@ public class ApplicationsResource extends ParentResource {
     	//TODO: Implement authorization methods
     	
     	Applications applications = this.applicationService.getByCustomerId(customerId, (offset == null ? -1 : offset), (limit == null ? -1 : limit));
-    	com.rackspace.api.idm.v1.Applications jaxbApplications = applicationConverter.toClientListJaxb(applications);
     	
-    	return Response.ok(jaxbApplications).build();
+    	return Response.ok(applicationConverter.toClientListJaxb(applications)).build();
     }
 }

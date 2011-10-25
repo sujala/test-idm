@@ -18,16 +18,15 @@ import javax.ws.rs.core.UriInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.api.idm.v1.SecretCredentials;
+import com.rackspace.api.idm.v1.ApplicationSecretCredentials;
 import com.rackspace.idm.api.converter.ApplicationConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
@@ -47,6 +46,8 @@ public class ApplicationResource extends ParentResource {
     private final ApplicationConverter applicationConverter;
     private final ApplicationService applicationService;
     private final AuthorizationService authorizationService;
+    
+    private final com.rackspace.api.idm.v1.ObjectFactory objectFactory = new com.rackspace.api.idm.v1.ObjectFactory();
 
     @Autowired
     public ApplicationResource(
@@ -93,10 +94,8 @@ public class ApplicationResource extends ParentResource {
 
         getLogger().debug("Got Application: {}", application);
 
-        com.rackspace.api.idm.v1.Application returnedApplication = applicationConverter
-            .toClientJaxbWithoutPermissionsOrCredentials(application);
-
-        return Response.ok(returnedApplication).build();
+        return Response.ok(applicationConverter
+            .toClientJaxbWithoutPermissionsOrCredentials(application)).build();
     }
 
     /**
@@ -129,11 +128,9 @@ public class ApplicationResource extends ParentResource {
         this.applicationService.updateClient(application);
         
         getLogger().info("Udpated application: {}", applicationId);
-        
-        com.rackspace.api.idm.v1.Application returnedApplication = applicationConverter
-        	.toClientJaxbWithoutPermissionsOrCredentials(application);
 
-        return Response.ok(returnedApplication).build();
+        return Response.ok(applicationConverter
+            .toClientJaxbWithoutPermissionsOrCredentials(application)).build();
     }
     
     /**
@@ -191,10 +188,10 @@ public class ApplicationResource extends ParentResource {
               getLogger().debug("Got Application: {}", application);
               
               ClientSecret clientSecret = applicationService.resetClientSecret(application);
-              SecretCredentials applicationCredentials = new SecretCredentials();
+              ApplicationSecretCredentials applicationCredentials = new ApplicationSecretCredentials();
               applicationCredentials.setClientSecret(clientSecret.getValue());
 
-              return Response.ok(applicationCredentials).build();
+              return Response.ok(objectFactory).build();
               
         } catch (IllegalStateException e) {
             String errorMsg = String.format(

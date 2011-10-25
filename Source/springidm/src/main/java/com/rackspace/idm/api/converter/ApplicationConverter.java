@@ -1,8 +1,10 @@
 package com.rackspace.idm.api.converter;
 
+import javax.xml.bind.JAXBElement;
+
 import org.apache.commons.lang.StringUtils;
 
-import com.rackspace.api.idm.v1.Applications;
+import com.rackspace.api.idm.v1.ApplicationList;
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.Application;
 
@@ -40,47 +42,47 @@ public class ApplicationConverter {
         return application;
     }
 
-    public com.rackspace.api.idm.v1.Application toClientJaxbWithoutPermissionsOrCredentials(
+    public JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxbWithoutPermissionsOrCredentials(
         Application client) {
         return toClientJaxb(client, false);
     }
 
-    public com.rackspace.api.idm.v1.Application toClientJaxbWithPermissionsAndCredentials(
+    public JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxbWithPermissionsAndCredentials(
         Application client) {
         return toClientJaxb(client, true);
     }
 
-    public Applications toClientListJaxb(com.rackspace.idm.domain.entity.Applications clients) {
+    public JAXBElement<ApplicationList> toClientListJaxb(com.rackspace.idm.domain.entity.Applications clients) {
         if (clients == null || clients.getClients() == null) {
             return null;
         }
 
-        Applications returnedClients = objectFactory.createApplications();
+        ApplicationList returnedClients = objectFactory.createApplicationList();
 
         for (Application client : clients.getClients()) {
-            returnedClients.getApplications().add(
-                toClientJaxbWithoutPermissionsOrCredentials(client));
+            returnedClients.getApplication().add(
+                toClientJaxbWithoutPermissionsOrCredentials(client).getValue());
         }
         
         returnedClients.setLimit(clients.getLimit());
         returnedClients.setOffset(clients.getOffset());
         returnedClients.setTotalRecords(clients.getTotalRecords());
 
-        return returnedClients;
+        return objectFactory.createApplications(returnedClients);
     }
     
     /**
      * converts the application list, but only displays minimum amount of data. More detailed information
      * should be retrieved directly from teh resource
      */
-    public Applications toApplicationJaxbMin(com.rackspace.idm.domain.entity.Applications applications) {
+    public ApplicationList toApplicationJaxbMin(com.rackspace.idm.domain.entity.Applications applications) {
         if (applications == null) {
             return null;
         }
 
-        Applications returnedClients = objectFactory.createApplications();
+        ApplicationList returnedClients = objectFactory.createApplicationList();
         for (Application client : applications.getClients()) {
-            returnedClients.getApplications().add(toClientJaxbMin(client));
+            returnedClients.getApplication().add(toClientJaxbMin(client).getValue());
         }
         
         returnedClients.setLimit(applications.getLimit());
@@ -90,7 +92,7 @@ public class ApplicationConverter {
         return returnedClients;
     }
 
-    private com.rackspace.api.idm.v1.Application toClientJaxbMin(Application application) {
+    private JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxbMin(Application application) {
         
     	com.rackspace.api.idm.v1.Application returnedApplication = objectFactory.createApplication();
 
@@ -99,9 +101,9 @@ public class ApplicationConverter {
         returnedApplication.setName(application.getName());
         returnedApplication.setDescription(application.getDescription());
 
-        return returnedApplication;
+        return objectFactory.createApplication(returnedApplication);
     }
-    private com.rackspace.api.idm.v1.Application toClientJaxb(Application client, boolean includeCredentials) {
+    private JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxb(Application client, boolean includeCredentials) {
        
     	com.rackspace.api.idm.v1.Application returnedApplication = objectFactory.createApplication();
 
@@ -117,27 +119,27 @@ public class ApplicationConverter {
         if (includeCredentials && client.getClientSecretObj() != null
             && !StringUtils.isBlank(client.getClientSecret())) {
 
-            com.rackspace.api.idm.v1.SecretCredentials creds = objectFactory
-                .createSecretCredentials();
+            com.rackspace.api.idm.v1.ApplicationSecretCredentials creds = objectFactory
+                .createApplicationSecretCredentials();
 
             creds.setClientSecret(client.getClientSecret());
             returnedApplication.setSecretCredentials(creds);
         }
 
-        return returnedApplication;
+        return objectFactory.createApplication(returnedApplication);
     }
 
-    public com.rackspace.api.idm.v1.Application toClientJaxbFromClient(
+    public JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxbFromClient(
         String clientId, String customerId) {
         com.rackspace.api.idm.v1.Application returnedClient = objectFactory.createApplication();
 
         returnedClient.setClientId(clientId);
         returnedClient.setCustomerId(customerId);
 
-        return returnedClient;
+        return objectFactory.createApplication(returnedClient);
     }
     
-    public com.rackspace.api.idm.v1.Application toApplicationJaxbFromApplication(Application client) {
+    public JAXBElement<com.rackspace.api.idm.v1.Application> toApplicationJaxbFromApplication(Application client) {
     	if (client == null) {
     		return null;
     	}
@@ -146,8 +148,8 @@ public class ApplicationConverter {
         jaxbApplication.setClientId(client.getClientId());
         jaxbApplication.setCustomerId(client.getRCN());
         jaxbApplication.setName(client.getName());
-        jaxbApplication.setRoles(rolesConverter.toRoleJaxbFromTenantRole(client.getRoles()));
+        jaxbApplication.setRoles(rolesConverter.toRoleJaxbFromTenantRole(client.getRoles()).getValue());
 
-        return jaxbApplication;
+        return objectFactory.createApplication(jaxbApplication);
     }   
 }

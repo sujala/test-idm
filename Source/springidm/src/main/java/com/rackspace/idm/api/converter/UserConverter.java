@@ -2,6 +2,7 @@ package com.rackspace.idm.api.converter;
 
 import java.util.List;
 
+import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 
@@ -58,24 +59,24 @@ public class UserConverter {
         return user;
     }
 
-    public com.rackspace.api.idm.v1.Users toUserListJaxb(Users users) {
+    public JAXBElement<com.rackspace.api.idm.v1.UserList> toUserListJaxb(Users users) {
 
         if (users == null || users.getUsers() == null) {
             return null;
         }
 
-        com.rackspace.api.idm.v1.Users userlist = objectFactory.createUsers();
+        com.rackspace.api.idm.v1.UserList userlist = objectFactory.createUserList();
 
         for (User user : users.getUsers()) {
-            userlist.getUsers().add(
-                toUserJaxbWithoutAnyAdditionalElements(user));
+            userlist.getUser().add(
+                toUserJaxbWithoutAnyAdditionalElements(user).getValue());
         }
 
         userlist.setLimit(users.getLimit());
         userlist.setOffset(users.getOffset());
         userlist.setTotalRecords(users.getTotalRecords());
 
-        return userlist;
+        return objectFactory.createUsers(userlist);
     }
 
     public com.rackspace.api.idm.v1.Racker toRackerJaxb(String rackerId) {
@@ -84,39 +85,39 @@ public class UserConverter {
         return returnedRacker;
     }
     
-    public com.rackspace.api.idm.v1.Racker toRackerJaxb(Racker racker) {
+    public JAXBElement<com.rackspace.api.idm.v1.Racker> toRackerJaxb(Racker racker) {
         com.rackspace.api.idm.v1.Racker returnedRacker = objectFactory.createRacker();
         returnedRacker.setId(racker.getRackerId());
         if (racker.getRackerRoles() != null && racker.getRackerRoles().size() > 0) {
-            returnedRacker.setRoles(toRackerRolesJaxb(racker.getRackerRoles()));
+            returnedRacker.setRoles(toRackerRolesJaxb(racker.getRackerRoles()).getValue());
         }
-        return returnedRacker;
+        return objectFactory.createRacker(returnedRacker);
     }
 
-    public com.rackspace.api.idm.v1.Roles toRackerRolesJaxb(
+    public JAXBElement<com.rackspace.api.idm.v1.RoleList> toRackerRolesJaxb(
         List<String> roles) {
-        com.rackspace.api.idm.v1.Roles returnedRoles = objectFactory
-            .createRoles();
+        com.rackspace.api.idm.v1.RoleList returnedRoles = objectFactory
+            .createRoleList();
         for (String role : roles) {
             if (!StringUtils.isEmpty(role)) {
                 Role rackerRole = objectFactory.createRole();
                 rackerRole.setName(role);
-                returnedRoles.getRoles().add(rackerRole);
+                returnedRoles.getRole().add(rackerRole);
             }
         }
-        return returnedRoles;
+        return objectFactory.createRoles(returnedRoles);
     }
 
-    public com.rackspace.api.idm.v1.User toUserJaxb(User user) {
+    public JAXBElement<com.rackspace.api.idm.v1.User> toUserJaxb(User user) {
         return toUserJaxb(user, true, true);
     }
 
-    public com.rackspace.api.idm.v1.User toUserJaxbWithoutAnyAdditionalElements(
+    public JAXBElement<com.rackspace.api.idm.v1.User> toUserJaxbWithoutAnyAdditionalElements(
         User user) {
         return toUserJaxb(user, false, false);
     }
 
-    private com.rackspace.api.idm.v1.User toUserJaxb(User user,
+    private JAXBElement<com.rackspace.api.idm.v1.User> toUserJaxb(User user,
         boolean includePassword, boolean includeSecret) {
         com.rackspace.api.idm.v1.User returnedUser = objectFactory.createUser();
         returnedUser.setId(user.getId());
@@ -165,26 +166,26 @@ public class UserConverter {
         if (includeSecret && !StringUtils.isBlank(user.getSecretAnswer())
             && !StringUtils.isBlank(user.getSecretQuestion())) {
 
-            com.rackspace.api.idm.v1.Secret secret = objectFactory.createSecret();
+            com.rackspace.api.idm.v1.UserSecret secret = objectFactory.createUserSecret();
 
             secret.setSecretAnswer(user.getSecretAnswer());
             secret.setSecretQuestion(user.getSecretQuestion());
             returnedUser.setSecret(secret);
         }
 
-        return returnedUser;
+        return objectFactory.createUser(returnedUser);
     }
 
-    public com.rackspace.api.idm.v1.User toUserJaxbFromUser(String username,
+    public JAXBElement<com.rackspace.api.idm.v1.User> toUserJaxbFromUser(String username,
         String customerId) {
         com.rackspace.api.idm.v1.User returnedUser = objectFactory.createUser();
         returnedUser.setUsername(username);
         returnedUser.setCustomerId(customerId);
 
-        return returnedUser;
+        return objectFactory.createUser(returnedUser);
     }
     
-    public com.rackspace.api.idm.v1.User toUserJaxbFromUser(User user) {
+    public JAXBElement<com.rackspace.api.idm.v1.User> toUserJaxbFromUser(User user) {
     	if (user == null) {
     		return null;
     	}
@@ -192,20 +193,20 @@ public class UserConverter {
         com.rackspace.api.idm.v1.User jaxbUser = objectFactory.createUser();
         jaxbUser.setUsername(user.getUsername());
         jaxbUser.setCustomerId(user.getCustomerId());
-        jaxbUser.setRoles(rolesConverter.toRoleJaxbFromTenantRole(user.getRoles()));
+        jaxbUser.setRoles(rolesConverter.toRoleJaxbFromTenantRole(user.getRoles()).getValue());
 
-        return jaxbUser;
+        return objectFactory.createUser(jaxbUser);
     }
 
-    public com.rackspace.api.idm.v1.Racker toRackerJaxbFromRacker(Racker racker) {
+    public JAXBElement<com.rackspace.api.idm.v1.Racker> toRackerJaxbFromRacker(Racker racker) {
     	if (racker == null) {
     		return null;
     	}
     	
         com.rackspace.api.idm.v1.Racker jaxbRacker = objectFactory.createRacker();
         jaxbRacker.setUsername(racker.getRackerId());
-        jaxbRacker.setRoles(rolesConverter.toRoleJaxbFromRoleString(racker.getRackerRoles()));
+        jaxbRacker.setRoles(rolesConverter.toRoleJaxbFromRoleString(racker.getRackerRoles()).getValue());
 
-        return jaxbRacker;
+        return objectFactory.createRacker(jaxbRacker);
     }
 }

@@ -35,6 +35,8 @@ public class UserSecretResource extends ParentResource {
 
     private final UserService userService;
     private final AuthorizationService authorizationService;
+    
+    private final com.rackspace.api.idm.v1.ObjectFactory of = new com.rackspace.api.idm.v1.ObjectFactory();
 
     @Autowired
     public UserSecretResource(UserService userService, AuthorizationService authorizationService, InputValidator inputValidator) {
@@ -61,13 +63,13 @@ public class UserSecretResource extends ParentResource {
         // get user to update
         User user = this.userService.loadUser(userId);
 
-        com.rackspace.api.idm.v1.Secret secret = new com.rackspace.api.idm.v1.Secret();
+        com.rackspace.api.idm.v1.UserSecret secret = new com.rackspace.api.idm.v1.UserSecret();
         secret.setSecretAnswer(user.getSecretAnswer());
         secret.setSecretQuestion(user.getSecretQuestion());
 
         getLogger().debug("Got Secret Q&A for user: {}", user);
 
-        return Response.ok(secret).build();
+        return Response.ok(of.createSecret(secret)).build();
     }
 
     /**
@@ -81,7 +83,7 @@ public class UserSecretResource extends ParentResource {
     public Response setUserSecret(
     	@HeaderParam("X-Auth-Token") String authToken, 
         @PathParam("userId") String userId, 
-        EntityHolder<com.rackspace.api.idm.v1.Secret> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.UserSecret> holder) {
         
         //authorizationService.authorize(authToken, Entity.createUserEntity(userId), new String[]{});
         
@@ -89,7 +91,7 @@ public class UserSecretResource extends ParentResource {
 
         getLogger().debug("Updating Secret Q&A for User: {}", userId);
         
-        com.rackspace.api.idm.v1.Secret jaxbUserSecret = holder.getEntity(); 
+        com.rackspace.api.idm.v1.UserSecret jaxbUserSecret = holder.getEntity(); 
         
         User user = this.userService.loadUser(userId);
         user.setSecretQuestion(jaxbUserSecret.getSecretQuestion());
@@ -106,7 +108,7 @@ public class UserSecretResource extends ParentResource {
     protected void validateRequestBody(EntityHolder<?> holder) {
     	super.validateRequestBody(holder);
     	
-    	com.rackspace.api.idm.v1.Secret userSecret = (com.rackspace.api.idm.v1.Secret) holder.getEntity();
+    	com.rackspace.api.idm.v1.UserSecret userSecret = (com.rackspace.api.idm.v1.UserSecret) holder.getEntity();
     	String errMsg = "";
         if (StringUtils.isBlank(userSecret.getSecretQuestion())) {
             errMsg = "Secret Question cannot be blank. ";

@@ -1,11 +1,9 @@
 package com.rackspace.idm.api.filter;
 
-import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,12 +14,9 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.exception.CloudAdminAuthorizationException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
@@ -42,8 +37,6 @@ public class AuthenticationFilter implements ContainerRequestFilter,
 
     private ApplicationContext springCtx;
     private ScopeAccessService scopeAccessService;
-
-    private LdapCloudAdminRepository ldapCloudAdminRepository;
 
     public AuthenticationFilter() {
     }
@@ -74,16 +67,6 @@ public class AuthenticationFilter implements ContainerRequestFilter,
 
         // Skip token authentication for cloud resources
         if (path.startsWith("cloud")) {
-            if(path.matches("cloud/v1.0.*$") || path.matches("cloud/v2.0.*$") || path.matches("cloud/v1.1/auth") ||
-                    path.matches("cloud/v1.1$") || path.matches("cloud/v1.1/$")  ){
-                return  request;
-            }
-            //hack until auth changes behavior for  unauthorized users for get requests
-            else if ("GET".equals(method)) {
-                authenticateCloudAdminUserForGetRequests(request);
-            } else {
-                authenticateCloudAdminUser(request);
-            }
             return request;
         }
 
@@ -132,37 +115,6 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         throw new NotAuthenticatedException("Authentication Failed.");
     }
 
-    private void authenticateCloudAdminUser(ContainerRequest request) {
-        String authHeader = request.getHeaderValue(HttpHeaders.AUTHORIZATION);
-        Map<String, String> stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
-        if (stringStringMap == null) {
-            throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
-        } else {
-            boolean authenticated = getLdapCloudAdminRepository().authenticate(stringStringMap.get("username"), stringStringMap.get("password"));
-            if (!authenticated) {
-                throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
-            }
-        }
-    }
-
-    private void authenticateCloudAdminUserForGetRequests(ContainerRequest request) {
-        String authHeader = request.getHeaderValue(HttpHeaders.AUTHORIZATION);
-        Map<String, String> stringStringMap = null;
-        try {
-            stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
-        } catch (CloudAdminAuthorizationException e) {
-            throw new NotAuthorizedException("Cloud admin user authorization Failed.");
-        }
-        if (stringStringMap == null) {
-            throw new NotAuthorizedException("Cloud admin user authorization Failed.");
-        } else {
-            boolean authenticated = getLdapCloudAdminRepository().authenticate(stringStringMap.get("username"), stringStringMap.get("password"));
-            if (!authenticated) {
-                throw new NotAuthorizedException("Cloud admin user authorization Failed.");
-            }
-        }
-    }
-
     @Override
     public void setApplicationContext(ApplicationContext applicationContext)
             throws BeansException {
@@ -175,13 +127,5 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         }
 
         return scopeAccessService;
-    }
-
-    private LdapCloudAdminRepository getLdapCloudAdminRepository() {
-        if (ldapCloudAdminRepository == null) {
-            ldapCloudAdminRepository = springCtx.getBean(LdapCloudAdminRepository.class);
-        }
-
-        return ldapCloudAdminRepository;
     }
 }

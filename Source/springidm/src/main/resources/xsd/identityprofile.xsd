@@ -75,7 +75,7 @@
 				</xsd:documentation>
 			</annotation>
 		</attribute>
-		<attribute name="rcn" type="string" use="required">
+		<attribute name="customerId" type="string" use="required">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
@@ -91,16 +91,6 @@
 					xmlns="http://www.w3.org/1999/xhtml">
 					<p>
 						A boolean indicating if the customer is enabled.
-                    </p>
-				</xsd:documentation>
-			</annotation>
-		</attribute>
-		<attribute name="softDeleted" type="boolean" use="optional">
-			<annotation>
-				<xsd:documentation xml:lang="EN"
-					xmlns="http://www.w3.org/1999/xhtml">
-					<p>
-						A boolean indicating if the customer has been soft deleted.
                     </p>
 				</xsd:documentation>
 			</annotation>
