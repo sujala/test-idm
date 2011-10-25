@@ -175,7 +175,9 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
             List<Modification> modifications = persister.getModifications(
                 tenant, true);
             audit.modify(modifications);
-            persister.modify(tenant, conn, null, true);
+            if (modifications.size() > 0) {
+                persister.modify(tenant, conn, null, true);
+            }
             getLogger().debug("Updated Tenant: {}", tenant);
             audit.succeed();
         } catch (final LDAPException e) {
@@ -228,7 +230,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
         if (role == null) {
             String errmsg = "Null instance of TenantRole was passed";
-            getLogger().error(errmsg); 
+            getLogger().error(errmsg);
             throw new IllegalArgumentException(errmsg);
         }
 
@@ -344,15 +346,17 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     }
 
     @Override
-	public List<TenantRole> getTenantRolesForUser(User user, FilterParam[] filters) {
-    	return getTenantRolesForClient(user.getUniqueId(), filters);
-	}
+    public List<TenantRole> getTenantRolesForUser(User user,
+        FilterParam[] filters) {
+        return getTenantRolesForClient(user.getUniqueId(), filters);
+    }
 
     @Override
-	public List<TenantRole> getTenantRolesForApplication(Application application, FilterParam[] filters) {
-    	 return getTenantRolesForClient(application.getUniqueId(), filters);
-	}
-    
+    public List<TenantRole> getTenantRolesForApplication(
+        Application application, FilterParam[] filters) {
+        return getTenantRolesForClient(application.getUniqueId(), filters);
+    }
+
     @Override
     public List<TenantRole> getTenantRolesByParentAndClientId(
         String parentUniqueId, String clientId) {
@@ -384,27 +388,31 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
         return roles;
     }
-    
-	private List<TenantRole> getTenantRolesForClient(String uniqueParentClientId, FilterParam[] filters) {
-   	 getLogger().debug("Getting tenantRoles");
-   	 
+
+    private List<TenantRole> getTenantRolesForClient(
+        String uniqueParentClientId, FilterParam[] filters) {
+        getLogger().debug("Getting tenantRoles");
+
         LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
-        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE);
-        
+        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS,
+            OBJECTCLASS_TENANT_ROLE);
+
         if (filters != null) {
-        	for (FilterParam filter : filters) {
-        		// can only filter on tenantId and applicationId for now
-        		if (filter.getParam() == FilterParamName.APPLICATION_ID) {
-        			searchBuilder.addEqualAttribute(ATTR_CLIENT_ID, filter.getStrValue());
-        		}
-        		else if (filter.getParam() == FilterParamName.TENANT_ID) {
-        			searchBuilder.addEqualAttribute(ATTR_TENANT_RS_ID, filter.getStrValue());
-        		}
-        	}
+            for (FilterParam filter : filters) {
+                // can only filter on tenantId and applicationId for now
+                if (filter.getParam() == FilterParamName.APPLICATION_ID) {
+                    searchBuilder.addEqualAttribute(ATTR_CLIENT_ID,
+                        filter.getStrValue());
+                } else if (filter.getParam() == FilterParamName.TENANT_ID) {
+                    searchBuilder.addEqualAttribute(ATTR_TENANT_RS_ID,
+                        filter.getStrValue());
+                }
+            }
         }
-        
-        String dn = new LdapDnBuilder(uniqueParentClientId).addAttribute(ATTR_NAME, CONTAINER_DIRECT).build();
-   	 
+
+        String dn = new LdapDnBuilder(uniqueParentClientId).addAttribute(
+            ATTR_NAME, CONTAINER_DIRECT).build();
+
         Filter searchFilter = searchBuilder.build();
         List<TenantRole> roles = new ArrayList<TenantRole>();
         try {
@@ -416,7 +424,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         getLogger().debug("Got {} Tenant Roles", roles.size());
 
         return roles;
-	}
+    }
 
     private List<TenantRole> getMultipleTenantRoles(String parentUniqueId,
         Filter searchFilter) throws LDAPPersistException {
@@ -501,13 +509,12 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
         return roles;
     }
-    
+
     @Override
     public List<TenantRole> getAllTenantRolesForClientRole(ClientRole role) {
         if (role == null) {
             getLogger().error("Null or Empty role parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty role parameter.");
+            throw new IllegalArgumentException("Null or Empty role parameter.");
         }
 
         getLogger().debug("Getting tenantRoles by client role");
@@ -526,15 +533,16 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
         return roles;
     }
-    
+
     @Override
-    public List<TenantRole> getAllTenantRolesForTenantAndRole(String tenantId, String roleId) {
+    public List<TenantRole> getAllTenantRolesForTenantAndRole(String tenantId,
+        String roleId) {
         if (StringUtils.isBlank(tenantId)) {
             getLogger().error("Null or Empty tenantId parameter");
             throw new IllegalArgumentException(
                 "Null or Empty tenantId parameter.");
         }
-        
+
         if (StringUtils.isBlank(roleId)) {
             getLogger().error("Null or Empty roleId parameter");
             throw new IllegalArgumentException(
@@ -558,7 +566,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
         return roles;
     }
-    
+
     @Override
     public boolean doesScopeAccessHaveTenantRole(ScopeAccess scopeAccess,
         ClientRole role) {
@@ -575,7 +583,8 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
             throw new IllegalStateException();
         }
 
-        TenantRole exists = this.getTenantRoleForParentById(parentDn, role.getId());
+        TenantRole exists = this.getTenantRoleForParentById(parentDn,
+            role.getId());
 
         boolean hasRole = exists != null;
         getLogger().debug("Does Scope Access Have Tenant Role: {}", hasRole);
