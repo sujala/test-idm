@@ -81,6 +81,7 @@ import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserGroupService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -183,6 +184,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                             this.endpointConverterCloudV20
                                 .toEndpointTemplate(baseUrl)));
 
+        } catch (BaseUrlConflictException buce) {
+            return endpointTemplateConflictException(buce.getMessage());
         } catch (DuplicateException dex) {
             return endpointTemplateConflictException(dex.getMessage());
         } catch (Exception ex) {
