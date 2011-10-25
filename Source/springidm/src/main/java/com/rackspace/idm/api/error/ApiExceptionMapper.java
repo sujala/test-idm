@@ -10,12 +10,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Variant;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import org.apache.commons.lang.StringUtils;
 import org.omg.CORBA.portable.ApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.api.common.fault.v1.BadRequestFault;
-import com.rackspace.api.common.fault.v1.Detail;
-import com.rackspace.api.common.fault.v1.Fault;
 import com.rackspace.api.common.fault.v1.ForbiddenFault;
 import com.rackspace.api.common.fault.v1.ItemNotFoundFault;
 import com.rackspace.api.common.fault.v1.MethodNotAllowedFault;
@@ -43,7 +39,6 @@ import com.rackspace.api.idm.v1.PermisionIdConflictFault;
 import com.rackspace.api.idm.v1.StalePasswordFault;
 import com.rackspace.api.idm.v1.UserDisabledFault;
 import com.rackspace.api.idm.v1.UsernameConflictFault;
-import com.rackspace.idm.ErrorMsg;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.BaseUrlConflictException;
@@ -70,8 +65,11 @@ import com.rackspacecloud.docs.auth.api.v1.AuthFault;
 @Provider
 public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
     private final ResourceBundle faultMessageConfig;
-    private final Logger logger = LoggerFactory.getLogger(ApiExceptionMapper.class);
-    private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory objectFactory = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
+    private final Logger logger = LoggerFactory
+        .getLogger(ApiExceptionMapper.class);
+    private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory cloud_of = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
+    private final com.rackspace.api.common.fault.v1.ObjectFactory rax_of = new com.rackspace.api.common.fault.v1.ObjectFactory();
+    private final com.rackspace.api.idm.v1.ObjectFactory ga_of = new com.rackspace.api.idm.v1.ObjectFactory();
 
     @Context
     private HttpHeaders headers;
@@ -89,66 +87,186 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             e = thrown.getCause();
         }
 
+        String detail = MDC.get(Audit.GUUID);
+
         if (e instanceof NotProvisionedException) {
-            return toResponse(new NotProvisionedFault(), e, 403);
+            NotProvisionedFault fault = new NotProvisionedFault();
+            fault.setCode(403);
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+
+            return Response.ok(ga_of.createNotProvisioned(fault)).status(403)
+                .build();
         }
-        if (e instanceof NumberFormatException) {
-            return toResponse(new BadRequestFault(), e, 400);
+
+        if (e instanceof NumberFormatException
+            || e instanceof BadRequestException
+            || e instanceof ClassCastException) {
+            BadRequestFault fault = new BadRequestFault();
+            fault.setCode(400);
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+
+            return Response.ok(rax_of.createBadRequest(fault)).status(400)
+                .build();
         }
+
         if (e instanceof PermissionConflictException) {
-            return toResponse(new PermisionIdConflictFault(), e, 409);
+            PermisionIdConflictFault fault = new PermisionIdConflictFault();
+            fault.setCode(409);
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+
+            return Response.ok(ga_of.createPermissionIdConflict(fault))
+                .status(409).build();
         }
+
         if (e instanceof BaseUrlConflictException) {
-            return toResponse(new BaseUrlIdConflictFault(), e, 409);
+            BaseUrlIdConflictFault fault = new BaseUrlIdConflictFault();
+            fault.setCode(409);
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+
+            return Response.ok(ga_of.createBaseUrlIdConflict(fault))
+                .status(409).build();
         }
         if (e instanceof DuplicateClientGroupException) {
-            return toResponse(new ClientGroupConflictFault(), e, 409);
+            ClientGroupConflictFault fault = new ClientGroupConflictFault();
+            fault.setCode(409);
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+
+            return Response.ok(ga_of.createClientGroupConflict(fault))
+                .status(409).build();
         }
+
         if (e instanceof CustomerConflictException) {
-            return toResponse(new CustomerIdConflictFault(), e, 409);
+            CustomerIdConflictFault fault = new CustomerIdConflictFault();
+            fault.setCode(409);
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+
+            return Response.ok(ga_of.createCustomerIdConflict(fault))
+                .status(409).build();
         }
+
         if (e instanceof UserDisabledException) {
-            return toResponse(new UserDisabledFault(), e, 403);
+            UserDisabledFault fault = new UserDisabledFault();
+            fault.setCode(403);
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+
+            return Response.ok(ga_of.createUserDisabled(fault)).status(403)
+                .build();
         }
-        if (e instanceof BadRequestException) {
-            return toResponse(new BadRequestFault(), e, 400);
-        }
+
         if (e instanceof PasswordValidationException) {
-            return toResponse(new PasswordValidationFault(), e, 400);
+            PasswordValidationFault fault = new PasswordValidationFault();
+            fault.setCode(400);
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+
+            return Response.ok(ga_of.createPasswordValidationFault(fault))
+                .status(400).build();
         }
+
         if (e instanceof PasswordSelfUpdateTooSoonException) {
-            return toResponse(new PasswordSelfUpdateTooSoonFault(), e, 409);
+            PasswordSelfUpdateTooSoonFault fault = new PasswordSelfUpdateTooSoonFault();
+            fault.setCode(409);
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+
+            return Response
+                .ok(ga_of.createPasswordSelfUpdateTooSoonFault(fault))
+                .status(409).build();
         }
+
         if (e instanceof StalePasswordException) {
-            return toResponse(new StalePasswordFault(), e, 409);
+            StalePasswordFault fault = new StalePasswordFault();
+            fault.setCode(409);
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+
+            return Response.ok(ga_of.createStalePasswordFault(fault))
+                .status(409).build();
         }
-        if (e instanceof NotAuthenticatedException || e instanceof NotAuthorizedException) {
-            return toResponse(new UnauthorizedFault(), e, 401);
+
+        if (e instanceof NotAuthenticatedException
+            || e instanceof NotAuthorizedException) {
+            UnauthorizedFault fault = new UnauthorizedFault();
+            fault.setCode(401);
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+
+            return Response.ok(rax_of.createUnauthorized(fault)).status(401)
+                .build();
         }
+        
         if (e instanceof CloudAdminAuthorizationException) {
-            return toResponse(new AuthFault(), e, 405);
+            AuthFault afault = new AuthFault();
+            afault.setCode(405);
+            afault.setMessage(e.getMessage());
+            afault.setDetails(detail);
+            return Response.ok(cloud_of.createAuthFault(afault)).build();
         }
+        
         if (e instanceof ForbiddenException) {
-            return toResponse(new ForbiddenFault(), e, 403);
+            ForbiddenFault fault = new ForbiddenFault();
+            fault.setCode(403);
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+
+            return Response.ok(rax_of.createForbidden(fault)).status(403)
+                .build();
         }
+
         if (e instanceof NotFoundException) {
-            return toResponse(new ItemNotFoundFault(), e, 404);
+            ItemNotFoundFault fault = new ItemNotFoundFault();
+            fault.setCode(404);
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+
+            return Response.ok(rax_of.createItemNotFound(fault)).status(404)
+                .build();
         }
         if (e instanceof com.sun.jersey.api.NotFoundException) {
-            NotFoundException exp = new NotFoundException("Resource Not Found");
-            return toResponse(new ItemNotFoundFault(), exp, 404);
+            ItemNotFoundFault fault = new ItemNotFoundFault();
+            fault.setCode(404);
+            fault.setMessage("Resource Not Found");
+            fault.setDetail(detail);
+
+            return Response.ok(rax_of.createItemNotFound(fault)).status(404)
+                .build();
         }
+
         if (e instanceof DuplicateUsernameException) {
-            return toResponse(new UsernameConflictFault(), e, 409);
+            UsernameConflictFault fault = new UsernameConflictFault();
+            fault.setCode(409);
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+
+            return Response.ok(ga_of.createUsernameConflict(fault)).status(409)
+                .build();
         }
-        if (e instanceof DuplicateClientException || e instanceof ClientConflictException) {
-            return toResponse(new ApplicationNameConflictFault(), e, 409);
+
+        if (e instanceof DuplicateClientException
+            || e instanceof ClientConflictException) {
+            ApplicationNameConflictFault fault = new ApplicationNameConflictFault();
+            fault.setCode(409);
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+
+            return Response.ok(ga_of.createApplicationNameConflict(fault))
+                .status(409).build();
         }
-        if (e instanceof ClassCastException) {
-            return toResponse(new BadRequestFault(), e, 400);
-        }
+
         if (e instanceof IdmException) {
-            return toResponse(new ServiceFault(), e, 500);
+            ServiceFault fault = new ServiceFault();
+            fault.setCode(500);
+            fault.setDetail(detail);
+
+            return Response.ok(rax_of.createServiceFault(fault)).status(500)
+                .build();
         }
         if (e instanceof WebApplicationException) {
             WebApplicationException wae = (WebApplicationException) e;
@@ -159,106 +277,102 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
                 // Common user errors
                 //
                 if (cause instanceof ClassCastException) {
-                    return toResponse(new BadRequestFault(), cause, 400);
+                    BadRequestFault fault = new BadRequestFault();
+                    fault.setCode(400);
+                    fault.setMessage(e.getMessage());
+                    fault.setDetail(detail);
+
+                    return Response.ok(rax_of.createBadRequest(fault))
+                        .status(400).build();
                 }
             }
 
             switch (wae.getResponse().getStatus()) {
                 case 400:
-                    return toResponse(new BadRequestFault(), e.getCause(), 400);
+                    BadRequestFault fault = new BadRequestFault();
+                    fault.setCode(400);
+                    fault.setMessage(wae.getMessage());
+                    fault.setDetail(detail);
+
+                    return Response.ok(rax_of.createBadRequest(fault))
+                        .status(400).build();
                 case 401:
-                    return toResponse(new UnauthorizedFault(), e.getCause(), 401);
+                    UnauthorizedFault ufault = new UnauthorizedFault();
+                    ufault.setCode(401);
+                    ufault.setMessage(wae.getMessage());
+                    ufault.setDetail(detail);
+
+                    return Response.ok(rax_of.createUnauthorized(ufault))
+                        .status(401).build();
                 case 403:
-                    return toResponse(new ForbiddenFault(), e.getCause(), 403);
+                    ForbiddenFault ffault = new ForbiddenFault();
+                    ffault.setCode(403);
+                    ffault.setMessage(wae.getMessage());
+                    ffault.setDetail(detail);
+
+                    return Response.ok(rax_of.createForbidden(ffault))
+                        .status(403).build();
                 case 404:
-                    return toResponse(new ItemNotFoundFault(), e.getCause(), 404);
+                    ItemNotFoundFault ifault = new ItemNotFoundFault();
+                    ifault.setCode(404);
+                    ifault.setMessage(wae.getMessage());
+                    ifault.setDetail(detail);
+
+                    return Response.ok(rax_of.createItemNotFound(ifault))
+                        .status(404).build();
                 case 405:
-                    Exception exp = new Exception("Method Not Allowed");
-                    return toResponse(new MethodNotAllowedFault(), exp, 405);
+                    MethodNotAllowedFault mfault = new MethodNotAllowedFault();
+                    mfault.setCode(405);
+                    mfault.setMessage(wae.getMessage());
+                    mfault.setDetail(detail);
+
+                    return Response.ok(rax_of.createMethodNotAllowed(mfault))
+                        .status(405).build();
                 case 406:
                     List<Variant> variants = new ArrayList<Variant>();
-                    variants.add(new Variant(MediaType.APPLICATION_XML_TYPE, Locale.getDefault(), "UTF-8"));
-                    variants.add(new Variant(MediaType.APPLICATION_JSON_TYPE, Locale.getDefault(), "UTF-8"));
+                    variants.add(new Variant(MediaType.APPLICATION_XML_TYPE,
+                        Locale.getDefault(), "UTF-8"));
+                    variants.add(new Variant(MediaType.APPLICATION_JSON_TYPE,
+                        Locale.getDefault(), "UTF-8"));
                     return Response.notAcceptable(variants).build();
                 case 500:
-                    return toResponse(new ServiceFault(), e.getCause(), 500);
+                    ServiceFault sfault = new ServiceFault();
+                    sfault.setCode(500);
+                    sfault.setMessage(wae.getMessage());
+                    sfault.setDetail(detail);
+
+                    return Response.ok(rax_of.createServiceFault(sfault))
+                        .status(500).build();
                 case 503:
-                    return toResponse(new ServiceUnavailableFault(), e.getCause(), 503);
+                    ServiceUnavailableFault sufault = new ServiceUnavailableFault();
+                    sufault.setCode(503);
+                    sufault.setMessage(wae.getMessage());
+                    sufault.setDetail(detail);
+
+                    return Response
+                        .ok(rax_of.createServiceUnavailable(sufault))
+                        .status(503).build();
                 default:
-                    return toResponse(new ServiceUnavailableFault(), e.getCause(), wae.getResponse().getStatus());
+                    ServiceUnavailableFault sufault2 = new ServiceUnavailableFault();
+                    sufault2.setCode(503);
+                    sufault2.setMessage(wae.getMessage());
+                    sufault2.setDetail(detail);
+
+                    return Response
+                        .ok(rax_of.createServiceUnavailable(sufault2))
+                        .status(503).build();
             }
         }
 
-        logger.error(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
-        return toResponse(new ServiceFault(), new Exception("Server Error"), 500);
-    }
+        logger.error(e.getCause() == null ? e.getMessage() : e.getCause()
+            .getMessage());
 
-    private Response toResponse(Fault fault, Throwable t, int code) {
-        fault.setCode(code);
+        ServiceFault sfault = new ServiceFault();
+        sfault.setCode(500);
+        sfault.setMessage("Server Error");
+        sfault.setDetail(detail);
 
-        String msg = null;
-        String dtl = null;
-        String faultClassName = fault.getClass().getSimpleName();
-        try {
-            msg = faultMessageConfig.getString(faultClassName + ".msg");
-        } catch (Exception e) {
-            // Unable to load the message or details! Most likey no entry has
-            // been made
-            logger.error("Could not load fault message resource for {}:\n{}", faultClassName, e);
-        }
-
-        if (StringUtils.isBlank(msg)) {
-            if (t == null) {
-                msg = ErrorMsg.SERVER_ERROR;
-            } else if (StringUtils.isBlank(t.getMessage())) {
-                msg = faultClassName;
-            } else {
-                msg = t.getMessage();
-            }
-        }
-
-        dtl = MDC.get(Audit.GUUID);
-
-        fault.setMessage(msg);
-        
-        Detail detail = new Detail();
-        detail.setDescription(dtl);
-        fault.setDetail(detail);
-
-        ResponseBuilder builder = Response.status(code).entity(fault);
-        return builder.build();
-    }
-
-    private Response toResponse(AuthFault fault, Throwable t, int code) {
-        fault.setCode(code);
-
-        String msg = null;
-        String dtl = null;
-        String faultClassName = fault.getClass().getSimpleName();
-        try {
-            msg = faultMessageConfig.getString(faultClassName + ".msg");
-        } catch (Exception e) {
-            // Unable to load the message or details! Most likey no entry has
-            // been made
-            logger.error("Could not load fault message resource for {}:\n{}", faultClassName, e);
-        }
-
-        if (StringUtils.isBlank(msg)) {
-            if (t == null) {
-                msg = ErrorMsg.SERVER_ERROR;
-            } else if (StringUtils.isBlank(t.getMessage())) {
-                msg = faultClassName;
-            } else {
-                msg = t.getMessage();
-            }
-        }
-
-        dtl = MDC.get(Audit.GUUID);
-
-        fault.setMessage(msg);
-        fault.setDetails(dtl);
-
-        ResponseBuilder builder = Response.status(code).entity(objectFactory.createAuthFault(fault));
-        return builder.build();
+        return Response.ok(rax_of.createServiceFault(sfault)).status(500)
+            .build();
     }
 }
