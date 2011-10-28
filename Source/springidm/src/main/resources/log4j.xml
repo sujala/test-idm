@@ -33,7 +33,7 @@
 
 	<!-- Application Loggers -->
 	<logger name="com.rackspace.idm">
-		<level value="debug" />
+		<level value="info" />
 	</logger>
 	
 	<logger name="audit" additivity="false">
@@ -58,12 +58,12 @@
 	</logger>
 	
 	<logger name="org.jboss.resteasy.springmvc">
-		<level value="debug" />
+		<level value="info" />
 	</logger>
 
 	<!-- Root Logger -->
 	<root>
-		<priority value="debug" />
+		<priority value="info" />
 		<appender-ref ref="file" />
 	</root>
 

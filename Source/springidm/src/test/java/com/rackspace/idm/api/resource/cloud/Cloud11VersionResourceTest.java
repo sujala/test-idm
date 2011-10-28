@@ -74,14 +74,6 @@ public class Cloud11VersionResourceTest extends AbstractAroundClassJerseyTest {
     }
 
     @Test
-    public void getUser_withInvalidUser_returns200() {
-        WebResource resource = resource().path("cloud/v1.1/users/user01");
-        ClientResponse clientResponse = resource.header("Authorization", "Basic YXV0aDphdXRoMTIz")
-                .get(ClientResponse.class);
-        assertThat("response code", clientResponse.getStatus(), equalTo(200));
-    }
-
-    @Test
     public void authenticate_withInvalidUser_returns401() {
         WebResource resource = resource().path("cloud/v1.1/auth");
         ClientResponse clientResponse = resource
@@ -91,10 +83,16 @@ public class Cloud11VersionResourceTest extends AbstractAroundClassJerseyTest {
     }
 
     @Test
+    public void getUser_withValidUser_returns200() {
+        WebResource resource = resource().path("cloud/v1.1/users/user01");
+        ClientResponse clientResponse = resource.header("Authorization", "Basic YXV0aDphdXRoMTIz").get(ClientResponse.class);
+        assertThat("response code", clientResponse.getStatus(), equalTo(200));
+    }
+
+    @Test
     public void getUser_withInvalidUser_returns404() {
         WebResource resource = resource().path("cloud/v1.1/users/a1b2c3");
-        ClientResponse clientResponse = resource.header("Authorization", "Basic YXV0aDphdXRoMTIz")
-                .get(ClientResponse.class);
+        ClientResponse clientResponse = resource.header("Authorization", "Basic YXV0aDphdXRoMTIz").get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(404));
     }
 

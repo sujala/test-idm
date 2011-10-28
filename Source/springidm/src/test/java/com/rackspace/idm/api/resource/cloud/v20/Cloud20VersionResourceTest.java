@@ -1,19 +1,18 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
-
-import javax.ws.rs.core.MediaType;
-
+import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 
-import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
+import javax.ws.rs.core.MediaType;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
 
 /**
  * Created by IntelliJ IDEA.
@@ -123,9 +122,17 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
 
     //This functionality is not implemented in cloud auth
     @Test
-    public void listEndpointTemplates_returns404() throws Exception {
+    public void listEndpointTemplates_returns200() throws Exception {
+        String token = getAuthToken("cmarin2", "Password1");
+        WebResource resource = resource().path("cloud/v2.0/OS-KSCATALOG/endpointTemplates");
+        ClientResponse clientResponse = resource.header("X-Auth-Token", token).get(ClientResponse.class);
+        assertThat("response code", clientResponse.getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listEndpointTemplates_returns401() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/OS-KSCATALOG/endpointTemplates");
         ClientResponse clientResponse = resource.get(ClientResponse.class);
-        assertThat("response code", clientResponse.getStatus(), equalTo(404));
+        assertThat("response code", clientResponse.getStatus(), equalTo(401));
     }
 }
