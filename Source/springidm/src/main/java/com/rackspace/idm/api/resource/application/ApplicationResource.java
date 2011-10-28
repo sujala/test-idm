@@ -191,7 +191,7 @@ public class ApplicationResource extends ParentResource {
               ApplicationSecretCredentials applicationCredentials = new ApplicationSecretCredentials();
               applicationCredentials.setClientSecret(clientSecret.getValue());
 
-              return Response.ok(objectFactory).build();
+              return Response.ok(objectFactory.createSecretCredentials(applicationCredentials)).build();
               
         } catch (IllegalStateException e) {
             String errorMsg = String.format(

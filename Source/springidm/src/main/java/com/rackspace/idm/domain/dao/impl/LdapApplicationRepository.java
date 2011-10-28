@@ -1,23 +1,40 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
+import org.bouncycastle.crypto.InvalidCipherTextException;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.Applications;
+import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
+import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.ClientSecret;
+import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.exception.DuplicateClientGroupException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.CryptHelper;
-import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.Attribute;
+import com.unboundid.ldap.sdk.BindResult;
+import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.LDAPConnection;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.Modification;
+import com.unboundid.ldap.sdk.ModificationType;
+import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.ldap.sdk.SearchResult;
+import com.unboundid.ldap.sdk.SearchResultEntry;
+import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import com.unboundid.ldap.sdk.persist.LDAPPersister;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.StringUtils;
-import org.bouncycastle.crypto.InvalidCipherTextException;
-
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class LdapApplicationRepository extends LdapRepository implements ApplicationDao {
 
@@ -533,7 +550,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         List<Modification> mods;
         try {
             mods = getModifications(oldClient, client);
-            if (client.equals(oldClient) || mods.size() < 1) {
+            if (mods.size() < 1) {
                 // No changes!
                 return;
             }
