@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.token;
 
 import java.io.StringReader;
-import java.util.Arrays;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -17,6 +16,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Unmarshaller;
 
 import org.slf4j.Logger;
@@ -93,10 +93,10 @@ public class TokensResource extends ParentResource {
     	Unmarshaller unmarshaller = context.createUnmarshaller();
     	StringReader reader = new StringReader(holder.getEntity());
     	
-    	com.rackspace.api.idm.v1.Credentials creds 
-    		= (com.rackspace.api.idm.v1.Credentials) unmarshaller.unmarshal(reader);
+    	JAXBElement<? extends com.rackspace.api.idm.v1.Credentials> creds 
+    		= (JAXBElement<? extends com.rackspace.api.idm.v1.Credentials>) unmarshaller.unmarshal(reader);
     	
-    	Credentials credentialsDO = credentialsConverter.toCredentialsDO(creds);
+    	Credentials credentialsDO = credentialsConverter.toCredentialsDO(creds.getValue());
         
     	AuthData authData = authenticationService.authenticate(credentialsDO);
            
