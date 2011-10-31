@@ -157,10 +157,14 @@ public class UserConverter {
 
         if (includePassword && user.getPasswordObj() != null
             && !StringUtils.isBlank(user.getPasswordObj().getValue())) {
+            
+            com.rackspace.api.idm.v1.UserPasswordCredentials pc = objectFactory.createUserPasswordCredentials();
             com.rackspace.api.idm.v1.UserPassword password = objectFactory.createUserPassword();
             
             password.setPassword(user.getPasswordObj().getValue());
-            returnedUser.getPasswordCredentials().setCurrentPassword(password);
+            pc.setCurrentPassword(password);
+            
+            returnedUser.setPasswordCredentials(pc);
         }
 
         if (includeSecret && !StringUtils.isBlank(user.getSecretAnswer())
