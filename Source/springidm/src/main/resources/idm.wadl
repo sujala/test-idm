@@ -659,10 +659,7 @@
                            <xhtml:p class="shortdesc">
                 Reset a user's password credentials.
             </xhtml:p>
-                           <examples xmlns="http://docs.rackspace.com/api" title="Reset User Credential Response">
-                              <example href="../formattedsamples/user_credentials.xml" language="xml"/>
-                              <example href="../formattedsamples/user_credentials.json" language="javascript"/>
-                           </examples>
+                
                         </doc>
                         <response status="200">
                            <representation mediaType="application/xml" element="idm:passwordCredentials"/>

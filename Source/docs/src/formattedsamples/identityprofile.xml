@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 <customerIdentityProfile xmlns="http://idm.api.rackspace.com/v1.0"
-    softDeleted="false" 
     enabled="false" 
-    rcn="RCN-123-549-034" />
+    customerId="RCN-123-549-034" />
     

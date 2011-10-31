@@ -2,5 +2,5 @@
 
 <customerIdentityProfile xmlns="http://idm.api.rackspace.com/v1.0"
     enabled="true" 
-    rcn="RCN-123-549-034" />
+    customerId="RCN-123-549-034" />
     

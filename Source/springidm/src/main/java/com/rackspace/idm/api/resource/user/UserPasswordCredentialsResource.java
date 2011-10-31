@@ -91,7 +91,7 @@ public class UserPasswordCredentialsResource extends ParentResource {
         @Context UriInfo uriInfo,
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
-        EntityHolder<com.rackspace.api.idm.v1.UserPassword> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.UserPasswordCredentials> holder) {
         
     	validateRequestBody(holder);
     	
@@ -102,14 +102,15 @@ public class UserPasswordCredentialsResource extends ParentResource {
         
         User user = this.userService.getUserById(userId);
         
-        com.rackspace.api.idm.v1.UserPassword userCred = holder.getEntity();
+        com.rackspace.api.idm.v1.UserPasswordCredentials userCred = holder.getEntity();
 
-        user.setPassword(userCred.getPassword());
+        user.setPassword(userCred.getCurrentPassword().getPassword());
         
         this.userService.updateUser(user, false);
 
         return Response.noContent().build();
     }
+    
     /**
      * Resets a user's password credentials.
      *
