@@ -11,21 +11,23 @@
 		</layout>
 	</appender>
 
-	<appender name="file" class="org.apache.log4j.RollingFileAppender">
-		<param name="File" value="/var/log/idm/idm.log" />
-		<param name="Append" value="true" />
-		<param name="MaxFileSize" value="20MB" />
-		<param name="MaxBackupIndex" value="1" />
+    <!--<appender name="file" class="org.apache.log4j.-->
+
+	<appender name="file" class="org.apache.log4j.rolling.RollingFileAppender">
+        <rollingPolicy class="org.apache.log4j.rolling.TimeBasedRollingPolicy">
+            <param name="fileNamePattern" value="/var/log/idm/id/var/log/idm/idm.log.%d.zip"/>
+            <param name="activeFileName" value="/var/log/idm/idm.log"/>
+        </rollingPolicy>
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z} %-5p [%c] %m %X{GUUID} %n"/>
 		</layout>
 	</appender>
 	
-	<appender name="audit" class="org.apache.log4j.RollingFileAppender">
-		<param name="File" value="/var/log/idm/audit.log" />
-		<param name="Append" value="true" />
-		<param name="MaxFileSize" value="20MB" />
-		<param name="MaxBackupIndex" value="9999" />
+	<appender name="audit" class="org.apache.log4j.rolling.RollingFileAppender">
+        <rollingPolicy class="org.apache.log4j.rolling.TimeBasedRollingPolicy">
+            <param name="fileNamePattern" value="/var/log/idm/audit.log.%d.zip"/>
+            <param name="activeFileName" value="/var/log/idm/audit.log.log"/>
+        </rollingPolicy>
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss z} %m %n"/>
 		</layout>
