@@ -22,23 +22,19 @@ public class RolesConverter {
         com.rackspace.api.idm.v1.RoleList jaxbRoles = initializeRoles();
         if (clientRoles != null) {
             for (ClientRole clientRole : clientRoles) {
-                jaxbRoles.getRole().add(toRoleJaxbFromClientRole(clientRole));
+                jaxbRoles.getRole().add(toRoleJaxb(clientRole));
             }
             
             jaxbRoles.setLimit(jaxbRoles.getRole().size());
             jaxbRoles.setTotalRecords(jaxbRoles.getRole().size());
-           }
+        }
         
         return objectFactory.createRoles(jaxbRoles);
-       }
+    }
     
-    public com.rackspace.api.idm.v1.Role toRoleJaxbFromClientRole(final ClientRole clientRole) {
-    	com.rackspace.api.idm.v1.Role jaxbRole = objectFactory.createRole();
-    	jaxbRole.setId(clientRole.getId());
-		jaxbRole.setApplicationId(clientRole.getClientId());
-		jaxbRole.setName(clientRole.getName());
-		jaxbRole.setDescription(clientRole.getDescription());
-		return jaxbRole;
+    public JAXBElement<com.rackspace.api.idm.v1.Role> toRoleJaxbFromClientRole(final ClientRole clientRole) {
+    	com.rackspace.api.idm.v1.Role role = toRoleJaxb(clientRole);
+    	return objectFactory.createRole(role);
     }
     
     public JAXBElement<com.rackspace.api.idm.v1.RoleList> toRoleJaxbFromTenantRole(final List<TenantRole> tenantRoles) {
@@ -82,6 +78,15 @@ public class RolesConverter {
     	clientRole.setDescription(jaxbRole.getDescription());
     	clientRole.setId(jaxbRole.getId());
     	return clientRole;
+    }
+    
+    com.rackspace.api.idm.v1.Role toRoleJaxb(final ClientRole clientRole) {
+    	com.rackspace.api.idm.v1.Role jaxbRole = objectFactory.createRole();
+    	jaxbRole.setId(clientRole.getId());
+		jaxbRole.setApplicationId(clientRole.getClientId());
+		jaxbRole.setName(clientRole.getName());
+		jaxbRole.setDescription(clientRole.getDescription());
+		return jaxbRole;
     }
     
     List<com.rackspace.api.idm.v1.Role> toRoleJaxbFromTenantRole(final TenantRole tenantRole) {

@@ -9,6 +9,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBElement;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -73,7 +74,7 @@ public class RoleResource extends ParentResource {
 
 		ClientRole clientRole = applicationService.getClientRoleById(roleId); 
 		
-		com.rackspace.api.idm.v1.Role jaxbRole = rolesConverter.toRoleJaxbFromClientRole(clientRole);
+		JAXBElement<com.rackspace.api.idm.v1.Role> jaxbRole = rolesConverter.toRoleJaxbFromClientRole(clientRole);
 
 		return Response.ok(jaxbRole).build();
 	}
