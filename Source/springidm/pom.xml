@@ -20,6 +20,7 @@
 
         <!-- Default location for project properties file -->
         <idm.properties.location>${basedir}/target/config/DEV</idm.properties.location>
+        <log4j.location>${basedir}/target/config</log4j.location>
 
     </properties>
 
@@ -397,6 +398,24 @@
                                         </resource>
                                         <resource>
                                             <directory>${basedir}/src/main/config/DEV</directory>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                             <execution>
+                                <id>copy-dev-log4j</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${basedir}/target/config</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${basedir}/src/main/config</directory>
+                                            <includes>
+                                                <include>log4j.xml</include>
+                                            </includes>
                                         </resource>
                                     </resources>
                                 </configuration>
@@ -1117,6 +1136,7 @@
                     <path>/${artifactId}</path>
                     <systemProperties>
                         <idm.properties.location>${idm.properties.location}</idm.properties.location>
+                        <log4j.location>${log4j.location}</log4j.location>
                     </systemProperties>
                 </configuration>
             </plugin>
