@@ -16,21 +16,21 @@ public class RolesConverter {
     public RolesConverter() {
     }
 
-    public com.rackspace.api.idm.v1.RoleList toRoleJaxbFromClientRole(final List<ClientRole> clientRoles) {
-    	// By default all lists should be paginated. No support for pagination for roles at this
-    	// time, especially because of the data structure. So hacking here to conform to api.
-    	com.rackspace.api.idm.v1.RoleList jaxbRoles = initializeRoles();
-    	if (clientRoles != null) {
-        	for (ClientRole clientRole : clientRoles) {
-        		jaxbRoles.getRole().add(toRoleJaxbFromClientRole(clientRole));
-        	}
-        	
-        	jaxbRoles.setLimit(jaxbRoles.getRole().size());
-        	jaxbRoles.setTotalRecords(jaxbRoles.getRole().size());
-        }
-    	
-    	return jaxbRoles;
-    }
+    public JAXBElement<com.rackspace.api.idm.v1.RoleList> toRoleJaxbFromClientRole(final List<ClientRole> clientRoles) {
+        // By default all lists should be paginated. No support for pagination for roles at this
+        // time, especially because of the data structure. So hacking here to conform to api.
+        com.rackspace.api.idm.v1.RoleList jaxbRoles = initializeRoles();
+        if (clientRoles != null) {
+            for (ClientRole clientRole : clientRoles) {
+                jaxbRoles.getRole().add(toRoleJaxbFromClientRole(clientRole));
+            }
+            
+            jaxbRoles.setLimit(jaxbRoles.getRole().size());
+            jaxbRoles.setTotalRecords(jaxbRoles.getRole().size());
+           }
+        
+        return objectFactory.createRoles(jaxbRoles);
+       }
     
     public com.rackspace.api.idm.v1.Role toRoleJaxbFromClientRole(final ClientRole clientRole) {
     	com.rackspace.api.idm.v1.Role jaxbRole = objectFactory.createRole();

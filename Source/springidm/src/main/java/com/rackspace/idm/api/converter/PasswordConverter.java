@@ -14,12 +14,14 @@ public class PasswordConverter {
     public PasswordConverter() {
     }
 
-    public JAXBElement<com.rackspace.api.idm.v1.UserPassword> toJaxb(Password password) {
-        com.rackspace.api.idm.v1.UserPassword userPassword = objectFactory.createUserPassword();
+    public JAXBElement<com.rackspace.api.idm.v1.UserPasswordCredentials> toJaxb(Password password) {
+        com.rackspace.api.idm.v1.UserPasswordCredentials userPassword = objectFactory.createUserPasswordCredentials();
+        com.rackspace.api.idm.v1.UserPassword currentPassword = objectFactory.createUserPassword();
         
-        userPassword.setPassword(password.getValue());
-
-        return objectFactory.createUserPassword(userPassword);
+        currentPassword.setPassword(password.getValue());
+        userPassword.setCurrentPassword(currentPassword);
+        
+        return objectFactory.createPasswordCredentials(userPassword);
     }
     
     public PasswordCredentials toPasswordCredentialsDO(UserPasswordCredentials passwordCredentials) {

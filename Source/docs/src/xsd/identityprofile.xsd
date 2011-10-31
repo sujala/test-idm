@@ -75,7 +75,7 @@
 				</xsd:documentation>
 			</annotation>
 		</attribute>
-		<attribute name="rcn" type="string" use="required">
+		<attribute name="customerId" type="string" use="required">
 			<annotation>
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
