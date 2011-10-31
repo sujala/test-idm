@@ -10,7 +10,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
@@ -19,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.resource.cloud.CloudClient;
+import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspacecloud.docs.auth.api.v1.BaseURL;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
 import com.rackspacecloud.docs.auth.api.v1.ObjectFactory;
@@ -638,9 +638,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     private String marshallObjectToString(Object jaxbObject)
         throws JAXBException {
 
-        JAXBContext jaxbContext = JAXBContext
-            .newInstance("com.rackspacecloud.docs.auth.api.v1");
-        Marshaller marshaller = jaxbContext.createMarshaller();
+        Marshaller marshaller = JAXBContextResolver.get().createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
         StringWriter sw = new StringWriter();
 

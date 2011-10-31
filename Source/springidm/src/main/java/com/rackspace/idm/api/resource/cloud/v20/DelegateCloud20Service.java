@@ -10,7 +10,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -49,12 +48,6 @@ public class DelegateCloud20Service implements Cloud20Service {
     private DefaultCloud20Service defaultCloud20Service;
     @Autowired
     private DummyCloud20Service dummyCloud20Service;
-
-    private Marshaller marshaller;
-
-    public void setMarshaller(Marshaller marshaller) {
-        this.marshaller = marshaller;
-    }
 
     public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
         DelegateCloud20Service.OBJ_FACTORY = OBJ_FACTORY;
@@ -1263,12 +1256,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         throws JAXBException {
 
         StringWriter sw = new StringWriter();
-
-        if (marshaller == null) {
-            JAXBContext jaxbContext = JAXBContextResolver.get();
-            marshaller = jaxbContext.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
-        }
+        
+        Marshaller marshaller = JAXBContextResolver.get().createMarshaller();
 
         marshaller.marshal(jaxbObject, sw);
 

@@ -49,7 +49,6 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service = new DelegateCloud20Service();
         delegateCloud20Service.setDummyCloud20Service(dummyCloud20Service);
         delegateCloud20Service.setCloudClient(cloudClient);
-        delegateCloud20Service.setMarshaller(marshaller);
         when(config.getString("cloudAuth20url")).thenReturn(url);
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(disabled);
         delegateCloud20Service.setConfig(config);

@@ -389,14 +389,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         return outer;
     }
 
-    private JSONMarshaller marshaller;
-
     private JSONMarshaller getMarshaller() throws JAXBException {
-        if (marshaller == null) {
-            JSONJAXBContext context = (JSONJAXBContext) JAXBContextResolver
-                .get();
-            marshaller = context.createJSONMarshaller();
-        }
-        return marshaller;
+        return ((JSONJAXBContext) JAXBContextResolver.get()).createJSONMarshaller();
     }
 }
