@@ -104,7 +104,7 @@ public class UserPasswordCredentialsResource extends ParentResource {
         
         com.rackspace.api.idm.v1.UserPasswordCredentials userCred = holder.getEntity();
 
-        user.setPassword(userCred.getCurrentPassword().getPassword());
+        user.setPassword(userCred.getNewPassword().getPassword());
         
         this.userService.updateUser(user, false);
 
