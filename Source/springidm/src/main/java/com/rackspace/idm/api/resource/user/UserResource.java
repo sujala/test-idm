@@ -161,7 +161,7 @@ public class UserResource extends ParentResource {
 
 		User user = this.userService.loadUser(userId);
 		
-		this.userService.deleteUser(user);
+		this.userService.softDeleteUser(user);
 
 		getLogger().debug("Deleted User: {}", user);
 
