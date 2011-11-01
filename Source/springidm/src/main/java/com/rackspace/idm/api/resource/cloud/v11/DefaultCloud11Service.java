@@ -928,7 +928,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         return authenticateResponse(cred, httpHeaders, response, body);
     }
 
-    private Response.ResponseBuilder authenticateResponse(
+    Response.ResponseBuilder authenticateResponse(
         JAXBElement<? extends Credentials> cred, HttpHeaders httpHeaders,
         HttpServletResponse response, String body) throws IOException {
 
@@ -941,6 +941,10 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             String username = userCreds.getUsername();
             String apiKey = userCreds.getKey();
+
+            if(username==null){
+                return badRequestExceptionResponse("username cannot be null");
+            }
 
             User user = this.userService.getUser(username);
 

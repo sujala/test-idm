@@ -1,26 +1,31 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.net.URI;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.UriInfo;
-
+import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
+import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.util.NastFacade;
+import com.rackspacecloud.docs.auth.api.v1.Credentials;
+import com.rackspacecloud.docs.auth.api.v1.User;
+import com.rackspacecloud.docs.auth.api.v1.UserCredentials;
+import com.sun.jersey.api.uri.UriBuilderImpl;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mortbay.jetty.HttpHeaders;
 
-import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
-import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.util.NastFacade;
-import com.rackspacecloud.docs.auth.api.v1.User;
-import com.sun.jersey.api.uri.UriBuilderImpl;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.JAXBElement;
+import javax.xml.namespace.QName;
+import java.net.URI;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by IntelliJ IDEA.
@@ -71,5 +76,12 @@ public class DefaultCloud11ServiceTest {
         user.setMossoId(123);
         defaultCloud11Service.createUser(request, null,uriInfo, user);
         Mockito.verify(nastFacade).addNastUser(user);
+    }
+
+    @Test
+    public void authenticateResponse_usernameIsNull_returns400() throws Exception {
+        JAXBElement<Credentials> cred = new JAXBElement<Credentials>(new QName(""),Credentials.class,new UserCredentials());
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(cred, null, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 }
