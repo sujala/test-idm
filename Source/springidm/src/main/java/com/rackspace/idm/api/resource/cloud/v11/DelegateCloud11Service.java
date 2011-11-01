@@ -309,24 +309,15 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder createUser(HttpServletRequest request,
-        HttpHeaders httpHeaders, UriInfo uriInfo, User user)
-        throws IOException, JAXBException {
+    public Response.ResponseBuilder createUser(HttpServletRequest request, HttpHeaders httpHeaders, UriInfo uriInfo,
+                                               User user) throws IOException, JAXBException {
 
-        Response.ResponseBuilder serviceResponse = getCloud11Service()
-            .createUser(request, httpHeaders, uriInfo, user);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
-
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
-            String body = this.marshallObjectToString(OBJ_FACTORY
-                .createUser(user));
-            return cloudClient.post(getCloudAuthV11Url().concat("users"),
-                httpHeaders, body);
+        if(config.getBoolean("useCloudAuth")){
+            String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
+            return cloudClient.post(getCloudAuthV11Url().concat("users"), httpHeaders, body);
         }
+        
+        Response.ResponseBuilder serviceResponse = getCloud11Service().createUser(request, httpHeaders, uriInfo, user);
         return serviceResponse;
 
     }
