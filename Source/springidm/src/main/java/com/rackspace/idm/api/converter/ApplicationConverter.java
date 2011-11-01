@@ -1,12 +1,11 @@
 package com.rackspace.idm.api.converter;
 
-import javax.xml.bind.JAXBElement;
-
-import org.apache.commons.lang.StringUtils;
-
 import com.rackspace.api.idm.v1.ApplicationList;
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.Application;
+import org.apache.commons.lang.StringUtils;
+
+import javax.xml.bind.JAXBElement;
 
 public class ApplicationConverter {
 
@@ -75,12 +74,12 @@ public class ApplicationConverter {
      * converts the application list, but only displays minimum amount of data. More detailed information
      * should be retrieved directly from teh resource
      */
-    public ApplicationList toApplicationJaxbMin(com.rackspace.idm.domain.entity.Applications applications) {
+    public JAXBElement<com.rackspace.api.idm.v1.ApplicationList> toApplicationJaxbMin(com.rackspace.idm.domain.entity.Applications applications) {
         if (applications == null) {
             return null;
         }
 
-        ApplicationList returnedClients = objectFactory.createApplicationList();
+        com.rackspace.api.idm.v1.ApplicationList returnedClients = objectFactory.createApplicationList();
         for (Application client : applications.getClients()) {
             returnedClients.getApplication().add(toClientJaxbMin(client).getValue());
         }
@@ -89,7 +88,7 @@ public class ApplicationConverter {
         returnedClients.setOffset(applications.getOffset());
         returnedClients.setTotalRecords(applications.getTotalRecords());
 
-        return returnedClients;
+        return objectFactory.createApplications(returnedClients);
     }
 
     private JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxbMin(Application application) {
