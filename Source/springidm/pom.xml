@@ -393,6 +393,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -414,6 +415,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -435,6 +437,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -456,6 +459,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -477,6 +481,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -498,6 +503,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -519,6 +525,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -540,6 +547,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -561,6 +569,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -583,6 +592,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -604,6 +614,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -626,6 +637,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -647,6 +659,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -669,6 +682,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -690,6 +704,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -712,6 +727,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -733,6 +749,7 @@
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
+                                                <include>log4j.xml</include>
                                             </includes>
                                         </resource>
                                         <resource>
