@@ -68,7 +68,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
     }
 
     @Test
-    public void getTenants_badToken__returns400() throws Exception {
+    public void getTenants_badToken__returns401() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/tenants");
         ClientResponse clientResponse = resource.header("X-Auth-Token", "bad").accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(401));
