@@ -296,7 +296,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND ||
+                clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tenants";
 
             HashMap<String, Object> params = new HashMap<String, Object>();

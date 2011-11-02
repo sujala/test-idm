@@ -1,8 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory;
+import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -13,6 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -36,6 +39,7 @@ public class DefaultCloud20ServiceTest {
     private JAXBObjectFactories jaxbObjectFactories;
     private ScopeAccessService scopeAccessService;
     private AuthorizationService authorizationService;
+    private TenantConverterCloudV20 tenantConverterCloudV20;
     private String authToken = "token";
 
     @Before
@@ -47,11 +51,13 @@ public class DefaultCloud20ServiceTest {
         jaxbObjectFactories = mock(JAXBObjectFactories.class);
         scopeAccessService = mock(ScopeAccessService.class);
         authorizationService = mock(AuthorizationService.class);
+        tenantConverterCloudV20 = mock(TenantConverterCloudV20.class);
         defaultCloud20Service.setUserService(userService);
         defaultCloud20Service.setUserGroupService(userGroupService);
         defaultCloud20Service.setOBJ_FACTORIES(jaxbObjectFactories);
         defaultCloud20Service.setScopeAccessService(scopeAccessService);
         defaultCloud20Service.setAuthorizationService(authorizationService);
+        defaultCloud20Service.setTenantConverterCloudV20(tenantConverterCloudV20);
         user = new User();
         user.setMossoId(123);
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new ObjectFactory());
@@ -111,11 +117,17 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUserGroups_withValidUser_callsUserGroupService
-            () throws Exception {
+    public void listUserGroups_withValidUser_callsUserGroupService () throws Exception {
         when(userService.getUserById(userId)).thenReturn(user);
         spy.listUserGroups(null, authToken, userId);
         verify(userGroupService).getGroups(user.getMossoId());
     }
 
+    @Test
+    public void listTenants_invalidToken_returns401() throws Exception {
+        when(scopeAccessService.getAccessTokenByAuthHeader("bad")).thenReturn(null);
+        when(tenantConverterCloudV20.toTenantList(org.mockito.Matchers.<List<Tenant>>any())).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.listTenants(null, "bad", null, 1);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
 }
