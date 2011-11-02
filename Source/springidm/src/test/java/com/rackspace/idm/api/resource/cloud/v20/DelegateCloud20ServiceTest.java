@@ -1,29 +1,23 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import static org.hamcrest.CoreMatchers.anyOf;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.util.HashMap;
-
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-
+import com.rackspace.idm.api.resource.cloud.CloudClient;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 
-import com.rackspace.idm.api.resource.cloud.CloudClient;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import java.io.IOException;
+import java.util.HashMap;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -112,5 +106,26 @@ public class DelegateCloud20ServiceTest {
         String updatedRequest = delegateCloud20Service.appendQueryParams(request, params);
 
         assertThat("appendQueryParams", updatedRequest, equalTo("http://localhost/echo?param=value"));
+    }
+
+    @Test
+    public void listExtensions_useCloudAuthIsTrue_callsCloudClient() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        delegateCloud20Service.listExtensions(null);
+        verify(cloudClient).get(url+"extensions",null);
+    }
+
+    @Test
+    public void listExtensions_callsConfigUseCloudAuth() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        delegateCloud20Service.listExtensions(null);
+        verify(config).getBoolean("useCloudAuth");
+    }
+
+    @Test
+    public void listExtensions_useCloudAuthIsFalse_callsCloudClient() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        delegateCloud20Service.listExtensions(null);
+        verify(cloudClient,times(0)).get(url,null);
     }
 }

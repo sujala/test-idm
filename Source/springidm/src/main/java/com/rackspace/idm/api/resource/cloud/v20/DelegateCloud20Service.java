@@ -142,34 +142,25 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listExtensions(HttpHeaders httpHeaders)
-        throws IOException {
-
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listExtensions(httpHeaders);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
-            String request = getCloudAuthV20Url() + "extensions";
+    public ResponseBuilder listExtensions(HttpHeaders httpHeaders) throws IOException {
+        if(config.getBoolean("useCloudAuth")){
+             String request = getCloudAuthV20Url() + "extensions";
             return cloudClient.get(request, httpHeaders);
         }
+        Response.ResponseBuilder serviceResponse = getCloud20Service().listExtensions(httpHeaders);
         return serviceResponse;
-
     }
 
     @Override
     public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias)
         throws IOException {
 
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .getExtension(httpHeaders, alias);
+        Response.ResponseBuilder serviceResponse = getCloud20Service().getExtension(httpHeaders, alias);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
+        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND ||
+                clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "extensions/" + alias;
             return cloudClient.get(request, httpHeaders);
         }
