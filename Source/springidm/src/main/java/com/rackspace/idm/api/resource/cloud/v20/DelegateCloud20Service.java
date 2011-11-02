@@ -44,21 +44,22 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Autowired
     private Configuration config;
+
     @Autowired
     private DefaultCloud20Service defaultCloud20Service;
+
     @Autowired
     private DummyCloud20Service dummyCloud20Service;
-
     public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
         DelegateCloud20Service.OBJ_FACTORY = OBJ_FACTORY;
     }
 
     private static org.openstack.docs.identity.api.v2.ObjectFactory OBJ_FACTORY = new org.openstack.docs.identity.api.v2.ObjectFactory();
+
     private static org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory OBJ_FACTORY_OS_ADMIN_EXT = new org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory();
     private static org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory OBJ_FACTORY_OS_CATALOG = new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory();
     private static com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory OBJ_FACTORY_RAX_KSKEY = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory();
     private static com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory OBJ_FACOTRY_SECRETQA = new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory();
-
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders,
         AuthenticationRequest authenticationRequest) throws IOException,
@@ -1295,7 +1296,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         throws JAXBException {
 
         StringWriter sw = new StringWriter();
-        
+
         Marshaller marshaller = JAXBContextResolver.get().createMarshaller();
 
         marshaller.marshal(jaxbObject, sw);
@@ -1310,6 +1311,10 @@ public class DelegateCloud20Service implements Cloud20Service {
         } else {
             return defaultCloud20Service;
         }
+    }
+
+    public void setDefaultCloud20Service(DefaultCloud20Service defaultCloud20Service) {
+        this.defaultCloud20Service = defaultCloud20Service;
     }
 
 }

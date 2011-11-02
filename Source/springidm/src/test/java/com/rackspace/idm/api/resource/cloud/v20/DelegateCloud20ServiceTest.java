@@ -29,6 +29,7 @@ public class DelegateCloud20ServiceTest {
 
     DummyCloud20Service dummyCloud20Service;
     DelegateCloud20Service delegateCloud20Service;
+    DefaultCloud20Service defaultCloud20Service = mock(DefaultCloud20Service.class);
     CloudClient cloudClient = mock(CloudClient.class);
     HttpHeaders httpHeaders = mock(HttpHeaders.class);
     Marshaller marshaller = mock(Marshaller.class);
@@ -43,6 +44,7 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service = new DelegateCloud20Service();
         delegateCloud20Service.setDummyCloud20Service(dummyCloud20Service);
         delegateCloud20Service.setCloudClient(cloudClient);
+        delegateCloud20Service.setDefaultCloud20Service(defaultCloud20Service);
         when(config.getString("cloudAuth20url")).thenReturn(url);
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(disabled);
         delegateCloud20Service.setConfig(config);
@@ -146,7 +148,9 @@ public class DelegateCloud20ServiceTest {
 
     @Test
     public void listTenants_useCloudAuthIsFalse_returns200() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
         when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        when(defaultCloud20Service.listTenants(null,"token",null,null)).thenReturn(Response.ok());
         Response.ResponseBuilder responseBuilder = delegateCloud20Service.listTenants(null, "token", null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
