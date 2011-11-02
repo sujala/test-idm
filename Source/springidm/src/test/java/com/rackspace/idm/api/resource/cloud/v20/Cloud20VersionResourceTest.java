@@ -53,10 +53,25 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
 
     @Test
     public void getTenants__returns200() throws Exception {
+        String token = getAuthToken("cmarin3", "Password1");
+        WebResource resource = resource().path("cloud/v2.0/tenants");
+        ClientResponse clientResponse = resource.header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
+        assertThat("response code", clientResponse.getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getTenants_admin__returns200() throws Exception {
         String token = getAuthToken("cmarin4", "Password1");
         WebResource resource = resource().path("cloud/v2.0/tenants");
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getTenants_badToken__returns400() throws Exception {
+        WebResource resource = resource().path("cloud/v2.0/tenants");
+        ClientResponse clientResponse = resource.header("X-Auth-Token", "bad").accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
+        assertThat("response code", clientResponse.getStatus(), equalTo(401));
     }
 
     private String getAuthToken(String username, String password) {
