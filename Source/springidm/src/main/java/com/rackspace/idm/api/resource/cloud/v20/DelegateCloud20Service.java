@@ -301,12 +301,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit)
             throws IOException {
 
-        Response.ResponseBuilder serviceResponse = getCloud20Service().listTenants(httpHeaders, authToken, marker, limit);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if (config.getBoolean("useCloudAuth")) {
             String request = getCloudAuthV20Url() + "tenants";
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("marker", marker);
@@ -314,6 +309,8 @@ public class DelegateCloud20Service implements Cloud20Service {
             request = appendQueryParams(request, params);
             return cloudClient.get(request, httpHeaders);
         }
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service().listTenants(httpHeaders, authToken, marker, limit);
         return serviceResponse;
     }
 

@@ -67,11 +67,12 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
+    //call gets forwarded and cloud auth returns 200 with an empty tenant list
     @Test
-    public void getTenants_badToken__returns401() throws Exception {
+    public void getTenants_badToken_returns200() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/tenants");
         ClientResponse clientResponse = resource.header("X-Auth-Token", "bad").accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
-        assertThat("response code", clientResponse.getStatus(), equalTo(401));
+        assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
     private String getAuthToken(String username, String password) {
@@ -144,10 +145,11 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
+    //call gets forwarded to cloud and it is not implemented in cloud
     @Test
-    public void listEndpointTemplates_returns401() throws Exception {
+    public void listEndpointTemplates_returns404() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/OS-KSCATALOG/endpointTemplates");
         ClientResponse clientResponse = resource.get(ClientResponse.class);
-        assertThat("response code", clientResponse.getStatus(), equalTo(401));
+        assertThat("response code", clientResponse.getStatus(), equalTo(404));
     }
 }

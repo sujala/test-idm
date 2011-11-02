@@ -128,4 +128,19 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.listExtensions(null);
         verify(cloudClient,times(0)).get(url,null);
     }
+
+
+   @Test
+    public void listTenants_useCloudAuthIsTrue_callsCloudClient() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        delegateCloud20Service.listTenants(null, "token",null, null);
+        verify(cloudClient).get(url+"tenants",null);
+    }
+
+    @Test
+    public void listTenants_useCloudAuthIsFalse_doesntCallCloudClient() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        delegateCloud20Service.listTenants(null, "token",null, null);
+        verify(cloudClient,times(0)).get(url+"tenants",null);
+    }
 }
