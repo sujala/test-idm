@@ -2041,13 +2041,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         return cred;
     }
 
-    private Response.ResponseBuilder notAuthenticatedExceptionResponse(
-        String username) {
-        String errMsg = String.format("User %s not authenticated", username);
-        UnauthorizedFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createUnauthorizedFault();
+    private Response.ResponseBuilder notAuthenticatedExceptionResponse(String message) {
+        UnauthorizedFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUnauthorizedFault();
         fault.setCode(HttpServletResponse.SC_UNAUTHORIZED);
-        fault.setMessage(errMsg);
+        fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(
             OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUnauthorized(
@@ -2055,8 +2052,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     private Response.ResponseBuilder notFoundExceptionResponse(String message) {
-        ItemNotFoundFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createItemNotFoundFault();
+        ItemNotFoundFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFoundFault();
         fault.setCode(HttpServletResponse.SC_NOT_FOUND);
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
