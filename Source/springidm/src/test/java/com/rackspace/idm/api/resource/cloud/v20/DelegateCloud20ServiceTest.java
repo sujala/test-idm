@@ -133,7 +133,7 @@ public class DelegateCloud20ServiceTest {
    @Test
     public void listTenants_useCloudAuthIsTrue_callsCloudClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
-        delegateCloud20Service.listTenants(null, "token",null, null);
+        delegateCloud20Service.listTenants(null, "token", null, null);
         verify(cloudClient).get(url+"tenants",null);
     }
 
@@ -142,5 +142,12 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean("useCloudAuth")).thenReturn(false);
         delegateCloud20Service.listTenants(null, "token",null, null);
         verify(cloudClient,times(0)).get(url+"tenants",null);
+    }
+
+    @Test
+    public void listTenants_useCloudAuthIsFalse_returns200() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.listTenants(null, "token", null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 }
