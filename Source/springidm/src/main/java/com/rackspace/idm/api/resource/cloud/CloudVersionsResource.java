@@ -1,10 +1,13 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import java.io.IOException;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -29,6 +32,7 @@ import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 @Component
 public class CloudVersionsResource {
     
+	private final CloudClient cloudClient;
     private final Cloud10VersionResource cloud10VersionResource;
     private final Cloud11VersionResource cloud11VersionResource;
     private final Cloud20VersionResource cloud20VersionResource;
@@ -44,25 +48,23 @@ public class CloudVersionsResource {
     public CloudVersionsResource(Cloud10VersionResource cloud10VersionResource,
     Cloud11VersionResource cloud11VersionResource,
     Cloud20VersionResource cloud20VersionResource, Configuration config,
-    CloudContractDescriptionBuilder cloudContractDescriptionBuilder) {
+    CloudContractDescriptionBuilder cloudContractDescriptionBuilder, CloudClient cloudClient) {
         this.cloud10VersionResource = cloud10VersionResource;
         this.cloud11VersionResource = cloud11VersionResource;
         this.cloud20VersionResource = cloud20VersionResource;
         this.config = config;
         this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
+        this.cloudClient = cloudClient;
     }
     
-    @GET
     public Response getInternalCloudVersionsInfo() {
     	final String responseXml = cloudContractDescriptionBuilder.buildInternalRootPage(uriInfo);
     	return Response.ok(responseXml).build();
     }
 
     @GET
-    @Path("public")
-    public Response getPublicCloudVersionsInfo() {
-    	final String responseXml = cloudContractDescriptionBuilder.buildPublicRootPage(uriInfo);
-    	return Response.ok(responseXml).build();
+    public Response getPublicCloudVersionsInfo(@Context HttpHeaders httpHeaders) throws IOException {
+    	return cloudClient.get(getCloudAuthBaseUrl(), httpHeaders).build();
     }
     
     @Path("v1.0")
@@ -78,5 +80,13 @@ public class CloudVersionsResource {
     @Path("v2.0")
     public Cloud20VersionResource getCloud20VersionResource() {
             return cloud20VersionResource;
+    }
+    
+    private String getCloudAuthBaseUrl() {
+        String url = config.getString("cloudAuth20url");
+        
+        // the url is in the form https://auth.staging.us.ccp.rackspace.net/v2.0/
+        // we want to strip off the trailing /2.0/ to get the root resource
+        return url.substring(0, url.indexOf("v2.0"));
     }
 }
