@@ -84,4 +84,11 @@ public class DefaultCloud11ServiceTest {
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(cred, null, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
+
+    @Test
+    public void getUserGroups_notAuthorized_returns401() throws Exception {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getUserGroups(request, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
 }

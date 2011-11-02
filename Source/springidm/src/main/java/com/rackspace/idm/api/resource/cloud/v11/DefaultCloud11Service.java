@@ -582,7 +582,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder getUserGroups(HttpServletRequest request, String userID, HttpHeaders httpHeaders)
             throws IOException {
         try {
-            authenticateCloudAdminUser(request);
+            authenticateCloudAdminUserForGetRequests(request);
 
             if (org.tuckey.web.filters.urlrewrite.utils.StringUtils.isBlank(userID)) {
                 String errMsg = "Expecting userId";
@@ -1214,8 +1214,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     private void authenticateCloudAdminUser(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        Map<String, String> stringStringMap = authHeaderHelper
-                .parseBasicParams(authHeader);
+        Map<String, String> stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
         if (stringStringMap == null) {
             throw new CloudAdminAuthorizationException(
                     "Cloud admin user authorization Failed.");
