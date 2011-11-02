@@ -53,7 +53,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
 
     @Test
     public void getTenants__returns200() throws Exception {
-        String token = getAuthToken("cmarin1", "Password1");
+        String token = getAuthToken("cmarin4", "Password1");
         WebResource resource = resource().path("cloud/v2.0/tenants");
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));

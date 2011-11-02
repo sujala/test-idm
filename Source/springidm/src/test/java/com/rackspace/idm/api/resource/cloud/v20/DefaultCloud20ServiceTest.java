@@ -111,11 +111,15 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUserGroups_withValidUser_callsUserGroupService
-            () throws Exception {
+    public void listUserGroups_withValidUser_callsUserGroupService () throws Exception {
         when(userService.getUserById(userId)).thenReturn(user);
         spy.listUserGroups(null, authToken, userId);
         verify(userGroupService).getGroups(user.getMossoId());
     }
 
+    @Test
+    public void listTenants_invalidToken_returns401() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.listTenants(null, "bad", null, 1);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
 }

@@ -1385,22 +1385,20 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listTenants(HttpHeaders httpHeaders,
-        String authToken, String marker, Integer limit) throws IOException {
+    public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit)
+            throws IOException {
 
         try {
+            checkXAUTHTOKEN(authToken);
             List<Tenant> tenants = new ArrayList<Tenant>();
 
-            ScopeAccess sa = this.scopeAccessService
-                .getScopeAccessByAccessToken(authToken);
+            ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
 
             if (sa != null) {
-                tenants = this.tenantService
-                    .getTenantsForScopeAccessByTenantRoles(sa);
+                tenants = this.tenantService.getTenantsForScopeAccessByTenantRoles(sa);
             }
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                .createTenants(
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenants(
                     this.tenantConverterCloudV20.toTenantList(tenants)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
