@@ -9,6 +9,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.idm.domain.entity.ESBCloudServersFactory;
 import com.rackspace.idm.domain.service.UserGroupService;
 import com.rackspace.idm.exception.ApiException;
+import com.rackspacecloud.docs.auth.api.v1.GroupsList;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,10 +51,46 @@ public class DefaultUserGroupService implements UserGroupService {
         }
     }
 
+    @Override
+    public GroupsList getGroupList(Integer mossoAccountId) {
+        try {
+            GroupsList groups = null;
+            csClient = esbCloudServersFactory.getCSClient(String.valueOf(mossoAccountId));
+            LimitGroupType limitGroupType = csClient.getAPILimitsForAccount(mossoAccountId);
+            if (limitGroupType != null) {
+                groups = convertGroupToGroupList(limitGroupType);
+            }
+            return groups;
+        } catch (CloudServersFault cloudServersFault) {
+            System.out.println(cloudServersFault);
+            LOGGER.error("Unable to create client to Cloud Servers ESB service.");
+            throw new ApiException(500,"An error was encountered while trying to connect to Cloud Servers.", "");
+        } catch (UnauthorizedFault unauthorizedFault) {
+            LOGGER.error("Unable to create client to Cloud Servers ESB service.");
+            throw new ApiException(500,"An error was encountered while trying to connect to Cloud Servers.", "");
+        }
+    }
+
     private Groups convertGroup(LimitGroupType limitGroupType) {
 
         Groups groups = new Groups();
         Group group = new Group();
+
+        group.setId(limitGroupType.getName());
+
+        final String groupDescription = limitGroupType.getDescription();
+        if (StringUtils.isNotEmpty(groupDescription)) {
+            group.setDescription(limitGroupType.getDescription());
+        }
+
+        groups.getGroup().add(group);
+        return groups;
+    }
+
+    private GroupsList convertGroupToGroupList(LimitGroupType limitGroupType) {
+
+        GroupsList groups = new GroupsList();
+        com.rackspacecloud.docs.auth.api.v1.Group group = new com.rackspacecloud.docs.auth.api.v1.Group();
 
         group.setId(limitGroupType.getName());
 

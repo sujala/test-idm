@@ -1,9 +1,7 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
-
-import java.util.List;
+import com.rackspacecloud.docs.auth.api.v1.GroupsList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,4 +11,5 @@ import java.util.List;
  */
 public interface UserGroupService {
     Groups getGroups(Integer mossoAccountId);
+    GroupsList getGroupList(Integer mossoAccountId);
 }

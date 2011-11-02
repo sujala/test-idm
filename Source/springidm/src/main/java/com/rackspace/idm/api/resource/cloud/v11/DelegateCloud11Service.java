@@ -582,16 +582,14 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder getUserGroups(HttpServletRequest request,
-        String userId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder getUserGroups(HttpServletRequest request, String userId, HttpHeaders httpHeaders)
+            throws IOException {
 
-        Response.ResponseBuilder serviceResponse = getCloud11Service()
-            .getUserGroups(request, userId, httpHeaders);
+        Response.ResponseBuilder serviceResponse = getCloud11Service().getUserGroups(request, userId, httpHeaders);
 
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
 
         if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
             || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {

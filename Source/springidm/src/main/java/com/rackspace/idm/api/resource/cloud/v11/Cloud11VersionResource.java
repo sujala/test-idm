@@ -349,10 +349,8 @@ public class Cloud11VersionResource {
 
     @GET
     @Path("users/{userId}/groups")
-    public Response getUserGroups(@Context HttpServletRequest request, 
-            @PathParam("userId") String userId,
-            @Context HttpHeaders httpHeaders
-    ) throws IOException {
+    public Response getUserGroups(@Context HttpServletRequest request, @PathParam("userId") String userId,
+            @Context HttpHeaders httpHeaders) throws IOException {
         userId = Encoder.encode(userId);
         return getCloud11Service().getUserGroups(request, userId, httpHeaders).build();
     }
