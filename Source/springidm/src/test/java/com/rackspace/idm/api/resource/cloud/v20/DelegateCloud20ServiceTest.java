@@ -154,4 +154,67 @@ public class DelegateCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = delegateCloud20Service.listTenants(null, "token", null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
+
+    @Test
+    public void validateToken_defaultServiceReturns404_callsClient() throws Exception {
+        when(defaultCloud20Service.validateToken(null,null,null,null)).thenReturn(Response.status(404));
+        delegateCloud20Service.validateToken(null,null,"tokenId",null);
+        verify(cloudClient).get(url+"tokens/tokenId",null);
+    }
+
+    @Test
+    public void validateToken_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.validateToken(null,null,null,null)).thenReturn(Response.status(401));
+        delegateCloud20Service.validateToken(null,null,null,null);
+        verify(cloudClient).get(url+"tokens/"+null,null);
+    }
+
+    @Test
+    public void validateToken_checkToken401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.checkToken(null,null,null,null)).thenReturn(Response.status(401));
+        delegateCloud20Service.checkToken(null,null,null,null);
+        verify(cloudClient).get(url+"tokens/"+null,null);
+    }
+
+    @Test
+    public void validateToken_checkToken404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.checkToken(null,null,null,null)).thenReturn(Response.status(404));
+        delegateCloud20Service.checkToken(null,null,null,null);
+        verify(cloudClient).get(url+"tokens/"+null,null);
+    }
+
+    @Test
+    public void listEndpointsForToken_checkToken401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.listEndpointsForToken(null,null,null)).thenReturn(Response.status(401));
+        delegateCloud20Service.listEndpointsForToken(null,null,null);
+        verify(cloudClient).get(url+"tokens/"+null+"/endpoints",null);
+    }
+
+    @Test
+    public void listEndpointsForToken_checkToken404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.listEndpointsForToken(null,null,null)).thenReturn(Response.status(404));
+        delegateCloud20Service.listEndpointsForToken(null,null,null);
+        verify(cloudClient).get(url+"tokens/"+null+"/endpoints",null);
+    }
+
+    @Test
+    public void getExtension_checkToken401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.getExtension(null,null)).thenReturn(Response.status(401));
+        delegateCloud20Service.getExtension(null,null);
+        verify(cloudClient).get(url+"extensions/"+null,null);
+    }
+
+    @Test
+    public void getExtension_checkToken404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.getExtension(null,null)).thenReturn(Response.status(404));
+        delegateCloud20Service.getExtension(null,null);
+        verify(cloudClient).get(url+"extensions/"+null,null);
+    }
 }
