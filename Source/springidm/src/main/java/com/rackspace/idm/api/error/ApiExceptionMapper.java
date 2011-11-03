@@ -207,7 +207,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             afault.setCode(405);
             afault.setMessage(e.getMessage());
             afault.setDetails(detail);
-            return Response.ok(cloud_of.createAuthFault(afault)).build();
+            return Response.ok(cloud_of.createAuthFault(afault)).status(405).build();
         }
         
         if (e instanceof ForbiddenException) {
