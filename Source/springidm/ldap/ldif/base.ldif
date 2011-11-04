@@ -137,6 +137,17 @@ clearPassword:: +Pwnxg/ymo/5umBy6DRzaXbIrOypvqc+Atn22Oy5e+gFAFBhveRYqBJLab7E/n2q
 enabled: TRUE
 RCN: RACKSPACE
 
+dn: clientId=ede4e319bce2c8ac9b56c14e5eaed96ae981bff6,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+clientId: ede4e319bce2c8ac9b56c14e5eaed96ae981bff6
+cn: Quattro
+userPassword: 740cec0f99cf0ab650cf9453ea2bf46d56bb5ad1
+clearPassword:: uGXpS1T02j3sj/pVv2E1gAcPBfJ5Sb7bf5QRXLOxesPG0WH2oE2sTQ8CMoEXpb0f
+description: Quattro Jungledisk Client
+enabled: TRUE
+RCN: RACKSPACE
+
 dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rack
  space,dc=rackspace,dc=com
 objectClass: top
