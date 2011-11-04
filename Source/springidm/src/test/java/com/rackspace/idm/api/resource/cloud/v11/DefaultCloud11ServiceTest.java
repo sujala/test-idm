@@ -24,8 +24,7 @@ import java.net.URI;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -36,6 +35,7 @@ import static org.mockito.Mockito.when;
 public class DefaultCloud11ServiceTest {
 
     DefaultCloud11Service defaultCloud11Service;
+    DefaultCloud11Service spy;
     UserConverterCloudV11 userConverterCloudV11;
     LdapCloudAdminRepository ldapCloudAdminRepository;
     NastFacade nastFacade;
@@ -45,6 +45,8 @@ public class DefaultCloud11ServiceTest {
     UriInfo uriInfo;
     User user = new User();
     HttpServletRequest request;
+    String token = "token";
+
 
     @Before
     public void setUp() throws Exception {
@@ -68,6 +70,8 @@ public class DefaultCloud11ServiceTest {
         defaultCloud11Service = new DefaultCloud11Service(config,null,endpointService,userService,null,userConverterCloudV11,null, ldapCloudAdminRepository);
         nastFacade = mock(NastFacade.class);
         defaultCloud11Service.setNastFacade(nastFacade);
+        spy = spy(defaultCloud11Service);
+
     }
 
     @Test
@@ -91,4 +95,143 @@ public class DefaultCloud11ServiceTest {
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.getUserGroups(request, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
     }
+
+    @Test
+    public void revokeToken_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.revokeToken(request,null,null);
+        verify(spy).authenticateCloudAdminUser(request);
+    }
+
+    @Test
+    public void validateToken_isAdminCall_callAuthenticateCloudAdminUserForGetRequest() throws Exception {
+        spy.validateToken(request,null,null,null,null);
+        verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void adminAuthenticate_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.adminAuthenticate(request,null,null,null);
+        verify(spy).authenticateCloudAdminUser(request);
+    }
+
+    @Test
+    public void addBaserUrlRef_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.addBaseURLRef(request,null,null,null,null);
+        verify(spy).authenticateCloudAdminUser(request);
+    }
+
+    @Test
+    public void createUser_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.createUser(request,null,null,null);
+        verify(spy).authenticateCloudAdminUser(request);
+    }
+
+    @Test
+    public void deleteBaseUrlRef_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.deleteBaseURLRef(request,null,null,null);
+        verify(spy).authenticateCloudAdminUser(request);
+    }
+
+    @Test
+    public void deleteUser_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.deleteUser(request,null,null);
+        verify(spy).authenticateCloudAdminUser(request);
+    }
+
+    @Test
+    public void getBaseUrlRef_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.getBaseURLRef(request,null,null,null);
+        verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void getBaseUrlRefs_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.getBaseURLRefs(request,null,null);
+        verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void getServiceCatalog_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.getServiceCatalog(request,null,null);
+        verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void getUser_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.getUser(request,null,null);
+        verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void getUserEnabled_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.getUserEnabled(request,null,null);
+        verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void getUserFromMossoId_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.getUserFromMossoId(request,0,null);
+        verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void getUserFromNastId_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.getUserFromNastId(request,null,null);
+        verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void getUserGroups_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.getUserGroups(request,null,null);
+        verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void getUserKey_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.getUserKey(request,null,null);
+        verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void setUserEnabled_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.setUserEnabled(request,null,null,null);
+        verify(spy).authenticateCloudAdminUser(request);
+    }
+
+    @Test
+    public void setUserKey_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.setUserKey(request,null,null,null);
+        verify(spy).authenticateCloudAdminUser(request);
+    }
+
+    @Test
+    public void updateUser_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.updateUser(request,null,null,null);
+        verify(spy).authenticateCloudAdminUser(request);
+    }
+
+    @Test
+    public void getBaseURLId_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.getBaseURLId(request,0,null,null);
+        verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void getBaseURLs_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.getBaseURLs(request,null,null);
+        verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void getEnabledBaseURL_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.getEnabledBaseURL(request,null,null);
+        verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void addBaseURL_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+        spy.addBaseURL(request,null,null);
+        verify(spy).authenticateCloudAdminUser(request);
+    }
+
 }

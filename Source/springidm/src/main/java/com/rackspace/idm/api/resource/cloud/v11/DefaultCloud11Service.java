@@ -1188,7 +1188,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.nastFacade = nastFacade;
     }
 
-    private void authenticateCloudAdminUserForGetRequests(
+    void authenticateCloudAdminUserForGetRequests(
             HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         Map<String, String> stringStringMap = null;
@@ -1212,7 +1212,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    private void authenticateCloudAdminUser(HttpServletRequest request) {
+    void authenticateCloudAdminUser(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         Map<String, String> stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
         if (stringStringMap == null) {
