@@ -252,39 +252,30 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders,
-        String authToken, String userId) throws IOException {
+    public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
 
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listUserGlobalRoles(httpHeaders, authToken, userId);
+        Response.ResponseBuilder serviceResponse = getCloud20Service().listUserGlobalRoles(httpHeaders, authToken, userId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            String request = getCloudAuthV20Url() + "users/" + userId
-                + "/roles";
+            String request = getCloudAuthV20Url() + "users/" + userId + "/roles";
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
     }
 
     @Override
-    public ResponseBuilder listUserGlobalRolesByServiceId(
-        HttpHeaders httpHeaders, String authToken, String userId,
+    public ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders, String authToken, String userId,
         String serviceId) throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listUserGlobalRoles(httpHeaders, authToken, userId);
+        Response.ResponseBuilder serviceResponse = getCloud20Service().listUserGlobalRolesByServiceId(httpHeaders, authToken, userId,serviceId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            String request = getCloudAuthV20Url() + "users/" + userId
-                + "/roles";
-
+            String request = getCloudAuthV20Url() + "users/" + userId + "/roles";
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("serviceId", serviceId);
             request = appendQueryParams(request, params);

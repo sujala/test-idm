@@ -304,64 +304,144 @@ public class DelegateCloud20ServiceTest {
     @Test
     public void getEndpoint_defaultServiceReturns401_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.getEndpoint(null, null, null,null)).thenReturn(Response.status(401));
-        delegateCloud20Service.getEndpoint(null, null, null,null);
+        when(defaultCloud20Service.getEndpoint(null, null, null, null)).thenReturn(Response.status(401));
+        delegateCloud20Service.getEndpoint(null, null, null, null);
         verify(cloudClient).get(url+"tenants/null/"+"OS-KSCATALOG/endpoints/null",null);
     }
 
     @Test
     public void getEndpoint_defaultServiceReturns404_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.getEndpoint(null, null, null,null)).thenReturn(Response.status(404));
-        delegateCloud20Service.getEndpoint(null, null, null,null);
+        when(defaultCloud20Service.getEndpoint(null, null, null, null)).thenReturn(Response.status(404));
+        delegateCloud20Service.getEndpoint(null, null, null, null);
         verify(cloudClient).get(url+"tenants/null/"+"OS-KSCATALOG/endpoints/null",null);
     }
 
     @Test
     public void deleteEndpoint_defaultServiceReturns401_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteEndpoint(null, null, null,null)).thenReturn(Response.status(401));
-        delegateCloud20Service.deleteEndpoint(null, null, null,null);
-        verify(cloudClient).delete(url+"tenants/null/"+"OS-KSCATALOG/endpoints/null",null);
+        when(defaultCloud20Service.deleteEndpoint(null, null, null, null)).thenReturn(Response.status(401));
+        delegateCloud20Service.deleteEndpoint(null, null, null, null);
+        verify(cloudClient).delete(url + "tenants/null/" + "OS-KSCATALOG/endpoints/null", null);
     }
 
     @Test
     public void deleteEndpoint_defaultServiceReturns404_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteEndpoint(null, null, null,null)).thenReturn(Response.status(404));
-        delegateCloud20Service.deleteEndpoint(null, null, null,null);
-        verify(cloudClient).delete(url+"tenants/null/"+"OS-KSCATALOG/endpoints/null",null);
+        when(defaultCloud20Service.deleteEndpoint(null, null, null, null)).thenReturn(Response.status(404));
+        delegateCloud20Service.deleteEndpoint(null, null, null, null);
+        verify(cloudClient).delete(url + "tenants/null/" + "OS-KSCATALOG/endpoints/null", null);
     }
 
     @Test
     public void getSecretQA_defaultServiceReturns401_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.getSecretQA( null, null,null)).thenReturn(Response.status(401));
-        delegateCloud20Service.getSecretQA( null, null,null);
+        when(defaultCloud20Service.getSecretQA(null, null, null)).thenReturn(Response.status(401));
+        delegateCloud20Service.getSecretQA(null, null, null);
         verify(cloudClient).get(url+"users/null/RAX-KSQA/secretqa/",null);
     }
 
     @Test
     public void getSecretQA_defaultServiceReturns404_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.getSecretQA( null, null,null)).thenReturn(Response.status(404));
-        delegateCloud20Service.getSecretQA( null, null,null);
+        when(defaultCloud20Service.getSecretQA(null, null, null)).thenReturn(Response.status(404));
+        delegateCloud20Service.getSecretQA(null, null, null);
         verify(cloudClient).get(url+"users/null/RAX-KSQA/secretqa/",null);
     }
 
     @Test
     public void updateSecretQA_defaultServiceReturns401_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.updateSecretQA( null,null, null,null)).thenReturn(Response.status(401));
-        delegateCloud20Service.updateSecretQA( null,null, null,null);
-        verify(cloudClient).post(url+"users/null/RAX-KSQA/secretqa/",null,"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns13:secretQA xsi:nil=\"true\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>");
+        when(defaultCloud20Service.updateSecretQA(null, null, null, null)).thenReturn(Response.status(401));
+        delegateCloud20Service.updateSecretQA(null, null, null, null);
+        verify(cloudClient).post(url + "users/null/RAX-KSQA/secretqa/", null, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns13:secretQA xsi:nil=\"true\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>");
     }
 
     @Test
     public void updateSecretQA_defaultServiceReturns404_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.updateSecretQA( null,null, null,null)).thenReturn(Response.status(404));
-        delegateCloud20Service.updateSecretQA(null, null, null,null);
-        verify(cloudClient).post(url+"users/null/RAX-KSQA/secretqa/",null,"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns13:secretQA xsi:nil=\"true\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>");
+        when(defaultCloud20Service.updateSecretQA(null, null, null, null)).thenReturn(Response.status(404));
+        delegateCloud20Service.updateSecretQA(null, null, null, null);
+        verify(cloudClient).post(url + "users/null/RAX-KSQA/secretqa/", null, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns13:secretQA xsi:nil=\"true\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>");
+    }
+
+    @Test
+    public void listUsers_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.listUsers( null, null, null,0)).thenReturn(Response.status(401));
+        delegateCloud20Service.listUsers(null, null, null, 0);
+        verify(cloudClient).get(url + "users?limit=0", null);
+    }
+
+    @Test
+    public void listUsers_defaultServiceReturns404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.listUsers( null, null, null,0)).thenReturn(Response.status(404));
+        delegateCloud20Service.listUsers(null, null, null, 0);
+        verify(cloudClient).get(url + "users?limit=0", null);
+    }
+
+    @Test
+    public void getUserByName_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.getUserByName( null, null,null)).thenReturn(Response.status(401));
+        delegateCloud20Service.getUserByName( null, null, null);
+        verify(cloudClient).get(url + "users", null);
+    }
+
+    @Test
+    public void getUserByName_defaultServiceReturns404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.getUserByName( null, null, null)).thenReturn(Response.status(404));
+        delegateCloud20Service.getUserByName(null, null, null);
+        verify(cloudClient).get(url + "users", null);
+    }
+
+    @Test
+    public void getUserById_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.getUserById( null, null,null)).thenReturn(Response.status(401));
+        delegateCloud20Service.getUserById( null, null, null);
+        verify(cloudClient).get(url + "users/null", null);
+    }
+
+    @Test
+    public void getUserById_defaultServiceReturns404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.getUserById( null, null, null)).thenReturn(Response.status(404));
+        delegateCloud20Service.getUserById(null, null, null);
+        verify(cloudClient).get(url + "users/null", null);
+    }
+
+    @Test
+    public void listUserGlobalRoles_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.listUserGlobalRoles( null,null, null)).thenReturn(Response.status(401));
+        delegateCloud20Service.listUserGlobalRoles( null,null, null);
+        verify(cloudClient).get(url + "users/null/roles", null);
+    }
+
+    @Test
+    public void listUserGlobalRoles_defaultServiceReturns404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.listUserGlobalRoles( null,null, null)).thenReturn(Response.status(404));
+        delegateCloud20Service.listUserGlobalRoles(null, null, null);
+        verify(cloudClient).get(url + "users/null/roles", null);
+    }
+
+    @Test
+    public void listUserGlobalRolesByServiceId_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.listUserGlobalRolesByServiceId( null,null, null,null)).thenReturn(Response.status(401));
+        delegateCloud20Service.listUserGlobalRolesByServiceId( null,null, null, null);
+        verify(cloudClient).get(url + "users/null/roles", null);
+    }
+
+    @Test
+    public void listUserGlobalRolesByServiceId_defaultServiceReturns404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.listUserGlobalRolesByServiceId( null,null, null, null)).thenReturn(Response.status(404));
+        delegateCloud20Service.listUserGlobalRolesByServiceId(null, null, null, null);
+        verify(cloudClient).get(url + "users/null/roles", null);
     }
 }
