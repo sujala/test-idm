@@ -44,21 +44,22 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Autowired
     private Configuration config;
+
     @Autowired
     private DefaultCloud20Service defaultCloud20Service;
+
     @Autowired
     private DummyCloud20Service dummyCloud20Service;
-
     public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
         DelegateCloud20Service.OBJ_FACTORY = OBJ_FACTORY;
     }
 
     private static org.openstack.docs.identity.api.v2.ObjectFactory OBJ_FACTORY = new org.openstack.docs.identity.api.v2.ObjectFactory();
+
     private static org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory OBJ_FACTORY_OS_ADMIN_EXT = new org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory();
     private static org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory OBJ_FACTORY_OS_CATALOG = new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory();
     private static com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory OBJ_FACTORY_RAX_KSKEY = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory();
     private static com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory OBJ_FACOTRY_SECRETQA = new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory();
-
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders,
         AuthenticationRequest authenticationRequest) throws IOException,
@@ -70,7 +71,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String body = marshallObjectToString(OBJ_FACTORY
                 .createAuth(authenticationRequest));
             return cloudClient.post(getCloudAuthV20Url() + "tokens",
@@ -80,25 +82,21 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder validateToken(HttpHeaders httpHeaders,
-        String authToken, String tokenId, String belongsTo) throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .validateToken(httpHeaders, authToken, tokenId, belongsTo);
+    public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)
+            throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service().validateToken(httpHeaders, authToken, tokenId, belongsTo);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tokens/" + tokenId;
-
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("belongsTo", belongsTo);
             request = appendQueryParams(request, params);
-
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
-
     }
 
     @Override
@@ -110,7 +108,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tokens/" + tokenId;
 
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -132,7 +131,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tokens/" + tokenId
                 + "/endpoints";
             return cloudClient.get(request, httpHeaders);
@@ -159,8 +159,9 @@ public class DelegateCloud20Service implements Cloud20Service {
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND ||
-                clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND ||
+                status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "extensions/" + alias;
             return cloudClient.get(request, httpHeaders);
         }
@@ -177,7 +178,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             // TODO: Implement routing to DefaultCloud20Service
 
             String request = getCloudAuthV20Url() + "users";
@@ -199,7 +201,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/RAX-KSGRP";
             return cloudClient.get(request, httpHeaders);
         }
@@ -216,7 +219,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users";
 
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -239,7 +243,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId;
             return cloudClient.get(request, httpHeaders);
         }
@@ -256,7 +261,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/roles";
             return cloudClient.get(request, httpHeaders);
@@ -274,7 +280,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/roles";
 
@@ -287,26 +294,19 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listTenants(HttpHeaders httpHeaders,
-        String authToken, String marker, Integer limit) throws IOException {
+    public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit)
+            throws IOException {
 
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listTenants(httpHeaders, authToken, marker, limit);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND ||
-                clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        if (config.getBoolean("useCloudAuth")) {
             String request = getCloudAuthV20Url() + "tenants";
-
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("marker", marker);
             params.put("limit", limit);
             request = appendQueryParams(request, params);
-
             return cloudClient.get(request, httpHeaders);
         }
+
+        Response.ResponseBuilder serviceResponse = getCloud20Service().listTenants(httpHeaders, authToken, marker, limit);
         return serviceResponse;
     }
 
@@ -320,7 +320,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tenants";
 
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -342,7 +343,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantsId;
             return cloudClient.get(request, httpHeaders);
         }
@@ -358,7 +360,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             if (httpHeaders.getMediaType().isCompatible(
                 MediaType.APPLICATION_JSON_TYPE)) {
@@ -408,7 +411,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/credentials";
 
@@ -434,7 +438,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/credentials/" + credentialType;
             String body = marshallObjectToString(OBJ_FACTORY
@@ -455,7 +460,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/credentials/" + credentialType;
             String body = marshallObjectToString(OBJ_FACTORY_RAX_KSKEY
@@ -476,7 +482,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/credentials/" + credentialType;
 
@@ -496,7 +503,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/credentials/" + credentialType;
             return cloudClient.delete(request, httpHeaders);
@@ -513,7 +521,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/users/" + userId + "/roles";
             return cloudClient.get(request, httpHeaders);
@@ -530,7 +539,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users";
             String body = marshallObjectToString(OBJ_FACTORY.createUser(user));
             return cloudClient.post(request, httpHeaders, body);
@@ -548,7 +558,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "users/" + userId;
             String body = marshallObjectToString(OBJ_FACTORY.createUser(user));
@@ -566,7 +577,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "users/" + userId;
             return cloudClient.delete(request, httpHeaders);
@@ -584,7 +596,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/enabled";
@@ -603,7 +616,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/OS-KSADM/roles";
@@ -626,7 +640,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/roles/OS-KSADM/" + roleId;
@@ -644,7 +659,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/roles/OS-KSADM/" + roleId;
@@ -662,7 +678,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/roles/OS-KSADM" + roleId;
@@ -682,7 +699,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "tenants";
             String body = marshallObjectToString(OBJ_FACTORY
@@ -704,7 +722,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "tenants/" + tenantId;
             String body = marshallObjectToString(OBJ_FACTORY
@@ -724,7 +743,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "tenants/" + tenantId;
             return cloudClient.delete(request, httpHeaders);
@@ -743,7 +763,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/OS-KSADM/roles/";
@@ -770,7 +791,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/users";
@@ -797,7 +819,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/users";
@@ -824,7 +847,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
@@ -845,7 +869,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
@@ -864,7 +889,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "OS-KSADM/roles";
 
@@ -889,7 +915,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "OS-KSADM/roles";
             String body = marshallObjectToString(OBJ_FACTORY.createRole(role));
@@ -908,7 +935,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "OS-KSADM/roles/" + roleId;
             return cloudClient.get(request, httpHeaders);
@@ -926,7 +954,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "OS-KSADM/roles/" + roleId;
             return cloudClient.delete(request, httpHeaders);
@@ -944,7 +973,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "OS-KSADM/services";
 
@@ -968,7 +998,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "OS-KSADM/services";
             String body = marshallObjectToString(OBJ_FACTORY_OS_ADMIN_EXT
@@ -988,7 +1019,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "OS-KSADM/services/"
                 + serviceId;
@@ -1007,7 +1039,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "OS-KSADM/services/"
                 + serviceId;
             return cloudClient.delete(request, httpHeaders);
@@ -1025,7 +1058,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url()
                 + "OS-KSCATALOG/endpointTemplates";
 
@@ -1049,7 +1083,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url()
                 + "OS-KSCATALOG/endpointTemplates";
             String body = marshallObjectToString(OBJ_FACTORY_OS_CATALOG
@@ -1069,7 +1104,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url()
                 + "OS-KSCATALOG/endpointTemplates/" + endpointTemplateId;
             return cloudClient.get(request, httpHeaders);
@@ -1087,7 +1123,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url()
                 + "OS-KSCATALOG/endpointTemplates/" + endpointTemplateId;
             return cloudClient.delete(request, httpHeaders);
@@ -1104,7 +1141,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/OS-KSCATALOG/endpoints";
             return cloudClient.get(request, httpHeaders);
@@ -1123,7 +1161,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/OS-KSCATALOG/endpoints";
             String body = marshallObjectToString(OBJ_FACTORY_OS_CATALOG
@@ -1143,7 +1182,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/OS-KSCATALOG/endpoints/" + endpointId;
             return cloudClient.get(request, httpHeaders);
@@ -1161,7 +1201,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
                 + "/OS-KSCATALOG/endpoints/" + endpointId;
             return cloudClient.delete(request, httpHeaders);
@@ -1178,7 +1219,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/RAX-KSQA/secretqa/";
             return cloudClient.get(request, httpHeaders);
@@ -1196,7 +1238,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId
                 + "/RAX-KSQA/secretqa/";
             String body = marshallObjectToString(OBJ_FACOTRY_SECRETQA
@@ -1248,7 +1291,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         throws JAXBException {
 
         StringWriter sw = new StringWriter();
-        
+
         Marshaller marshaller = JAXBContextResolver.get().createMarshaller();
 
         marshaller.marshal(jaxbObject, sw);
@@ -1263,6 +1306,10 @@ public class DelegateCloud20Service implements Cloud20Service {
         } else {
             return defaultCloud20Service;
         }
+    }
+
+    public void setDefaultCloud20Service(DefaultCloud20Service defaultCloud20Service) {
+        this.defaultCloud20Service = defaultCloud20Service;
     }
 
 }

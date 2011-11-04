@@ -78,8 +78,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             HashMap<String, String> queryParams = new HashMap<String, String>();
             queryParams.put("belongsTo", belongsTo);
             queryParams.put("type", type);
@@ -98,8 +99,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             return cloudClient.post(getCloudAuthV11Url().concat("auth"), httpHeaders, body);
         }
         return serviceResponse;
@@ -116,8 +118,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
         int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             return cloudClient.post(getCloudAuthV11Url().concat("auth-admin"),
                 httpHeaders, body);
         }
@@ -134,8 +135,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             return cloudClient.delete(
                 getCloudAuthV11Url().concat("token/" + tokenId), httpHeaders);
         }
@@ -152,8 +154,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             return cloudClient.get(
                 getCloudAuthV11Url().concat("mosso/" + mossoId), httpHeaders);
         }
@@ -170,8 +173,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             return cloudClient.get(getCloudAuthV11Url()
                 .concat("nast/" + nastId), httpHeaders);
         }
@@ -187,8 +191,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             HashMap<String, String> queryParams = new HashMap<String, String>();
             queryParams.put("serviceName", serviceName);
             String path = getCloudAuthV11Url().concat(
@@ -211,8 +216,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             HashMap<String, String> queryParams = new HashMap<String, String>();
             queryParams.put("serviceName", serviceName);
             String path = getCloudAuthV11Url().concat(
@@ -234,8 +240,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             HashMap<String, String> queryParams = new HashMap<String, String>();
             queryParams.put("serviceName", serviceName);
             String path = getCloudAuthV11Url().concat(
@@ -257,8 +264,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String path = "migration/" + user + "/migrate";
             return cloudClient.post(getCloudAuthV11Url().concat(path),
                 httpHeaders, body);
@@ -278,8 +286,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String path = "migration/" + user + "/unmigrate";
             return cloudClient.post(getCloudAuthV11Url().concat(path),
                 httpHeaders, body);
@@ -299,8 +308,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String path = "migration/all";
             return cloudClient.post(getCloudAuthV11Url().concat(path),
                 httpHeaders, body);
@@ -330,8 +340,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             serviceResponse = cloudClient.get(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
         }
         return serviceResponse;
@@ -347,8 +358,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             return cloudClient.delete(
                 getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
         }
@@ -366,8 +378,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String body = this.marshallObjectToString(OBJ_FACTORY
                 .createUser(user));
             return cloudClient.put(
@@ -388,8 +401,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String path = "users/" + userId + "/enabled";
             return cloudClient.get(getCloudAuthV11Url().concat(path),
                 httpHeaders);
@@ -409,8 +423,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String path = "users/" + userId + "/enabled";
             String body = this.marshallObjectToString(OBJ_FACTORY
                 .createUser(user));
@@ -430,8 +445,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String path = "users/" + userId + "/key";
             return cloudClient.get(getCloudAuthV11Url().concat(path),
                 httpHeaders);
@@ -450,8 +466,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String body = this.marshallObjectToString(OBJ_FACTORY
                 .createUser(user));
             String path = "users/" + userId + "/key";
@@ -474,8 +491,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String path = "users/" + userId + "/serviceCatalog";
             return cloudClient.get(getCloudAuthV11Url().concat(path),
                 httpHeaders);
@@ -494,8 +512,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String path = "users/" + userId + "/baseURLRefs";
             return cloudClient.get(getCloudAuthV11Url().concat(path),
                 httpHeaders);
@@ -522,8 +541,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String body = this.marshallObjectToString(OBJ_FACTORY
                 .createBaseURLRef(baseUrlRef));
             String path = "users/" + userId + "/baseURLRefs";
@@ -544,8 +564,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String path = "users/" + userId + "/baseURLRefs/" + baseURLId;
             return cloudClient.get(getCloudAuthV11Url().concat(path),
                 httpHeaders);
@@ -564,8 +585,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
             .clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String path = "users/" + userId + "/baseURLRefs/" + baseURLId;
             return cloudClient.delete(getCloudAuthV11Url().concat(path),
                 httpHeaders);
@@ -591,8 +613,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
 
-        if (clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_NOT_FOUND
-            || clonedServiceResponse.build().getStatus() == HttpServletResponse.SC_UNAUTHORIZED) {
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND
+            || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String path = "users/" + userId + "/groups";
             return cloudClient.get(getCloudAuthV11Url().concat(path),
                 httpHeaders);
