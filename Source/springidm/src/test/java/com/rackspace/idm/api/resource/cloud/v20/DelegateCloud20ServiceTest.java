@@ -8,6 +8,7 @@ import org.mockito.Matchers;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -38,8 +39,8 @@ public class DelegateCloud20ServiceTest {
     String url = "url";
     Boolean disabled = true;
     String body = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns12:endpointTemplate xsi:nil=\"true\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>";
-
-
+    String bodyPassword = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns7:passwordCredentials xsi:nil=\"true\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>";
+    String bodyApiCredentials = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns8:apiKeyCredentials xsi:nil=\"true\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>";
     @Before
     public void setUp() throws IOException, JAXBException {
         dummyCloud20Service = new DummyCloud20Service();
@@ -444,4 +445,154 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.listUserGlobalRolesByServiceId(null, null, null, null);
         verify(cloudClient).get(url + "users/null/roles", null);
     }
+
+    @Test
+    public void getTenantByName_defaultServiceReturns404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.getTenantByName(null, null, null)).thenReturn(Response.status(404));
+        delegateCloud20Service.getTenantByName(null, null, null);
+        verify(cloudClient).get(url + "tenants", null);
+    }
+
+    @Test
+    public void getTenantByName_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.getTenantByName(null, null, null)).thenReturn(Response.status(401));
+        delegateCloud20Service.getTenantByName(null, null, null);
+        verify(cloudClient).get(url + "tenants", null);
+    }
+
+    @Test
+    public void getTenantById_defaultServiceReturns404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.getTenantById(null, null, null)).thenReturn(Response.status(404));
+        delegateCloud20Service.getTenantById(null, null, null);
+        verify(cloudClient).get(url + "tenants/null", null);
+    }
+
+    @Test
+    public void getTenantById_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.getTenantById(null, null, null)).thenReturn(Response.status(401));
+        delegateCloud20Service.getTenantById(null, null, null);
+        verify(cloudClient).get(url + "tenants/null", null);
+    }
+
+    @Test
+    public void addUserCredential_defaultServiceReturns404_callsClient() throws Exception {
+        HttpHeaders httpHeaders = mock(HttpHeaders.class);
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.addUserCredential(httpHeaders, null,null, null)).thenReturn(Response.status(404));
+        delegateCloud20Service.addUserCredential(httpHeaders, null,null, null);
+        verify(cloudClient).post(url + "users/null/OS-KSADM/credentials", httpHeaders,null);
+    }
+
+    @Test
+    public void addUserCredential_defaultServiceReturns401_callsClient() throws Exception {
+        HttpHeaders httpHeaders = mock(HttpHeaders.class);
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.addUserCredential(httpHeaders, null,null, null)).thenReturn(Response.status(401));
+        delegateCloud20Service.addUserCredential(httpHeaders, null,null, null);
+        verify(cloudClient).post(url + "users/null/OS-KSADM/credentials", httpHeaders,null);
+    }
+
+    @Test
+    public void listCredentials_defaultServiceReturns404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.listCredentials(null, null, null,null,0)).thenReturn(Response.status(404));
+        delegateCloud20Service.listCredentials(null, null, null,null,0);
+        verify(cloudClient).get(url + "users/null/OS-KSADM/credentials?limit=0", null);
+    }
+
+    @Test
+    public void listCredentials_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.listCredentials(null, null, null,null,0)).thenReturn(Response.status(401));
+        delegateCloud20Service.listCredentials(null,null, null, null,0);
+        verify(cloudClient).get(url + "users/null/OS-KSADM/credentials?limit=0", null);
+    }
+
+    @Test
+    public void updateUserPasswordCredentials_defaultServiceReturns404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.updateUserPasswordCredentials(null, null,null,null, null)).thenReturn(Response.status(404));
+        delegateCloud20Service.updateUserPasswordCredentials(null, null,null,null, null);
+        verify(cloudClient).post(url + "users/null/OS-KSADM/credentials/null", null,bodyPassword);
+    }
+
+    @Test
+    public void updateUserPasswordCredentials_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.updateUserPasswordCredentials(null,null,null, null, null)).thenReturn(Response.status(401));
+        delegateCloud20Service.updateUserPasswordCredentials(null,null,null, null, null);
+        verify(cloudClient).post(url + "users/null/OS-KSADM/credentials/null", null,bodyPassword);
+    }
+
+    @Test
+    public void updateUserApiKeyCredentials_defaultServiceReturns404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.updateUserApiKeyCredentials(null, null,null,null, null)).thenReturn(Response.status(404));
+        delegateCloud20Service.updateUserApiKeyCredentials(null, null,null,null, null);
+        verify(cloudClient).post(url + "users/null/OS-KSADM/credentials/null", null,bodyApiCredentials);
+    }
+
+    @Test
+    public void updateUserApiKeyCredentials_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.updateUserApiKeyCredentials(null,null,null, null, null)).thenReturn(Response.status(401));
+        delegateCloud20Service.updateUserApiKeyCredentials(null,null,null, null, null);
+        verify(cloudClient).post(url + "users/null/OS-KSADM/credentials/null", null,bodyApiCredentials);
+    }
+
+    @Test
+    public void getUserCredential_defaultServiceReturns404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.getUserCredential(null, null, null,null)).thenReturn(Response.status(404));
+        delegateCloud20Service.getUserCredential(null, null, null,null);
+        verify(cloudClient).get(url + "users/null/OS-KSADM/credentials/null", null);
+    }
+
+    @Test
+    public void getUserCredential_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.getUserCredential(null, null, null,null)).thenReturn(Response.status(401));
+        delegateCloud20Service.getUserCredential(null,null, null, null);
+        verify(cloudClient).get(url + "users/null/OS-KSADM/credentials/null", null);
+    }
+
+    @Test
+    public void deleteUserCredential_defaultServiceReturns404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.deleteUserCredential(null, null, null,null)).thenReturn(Response.status(404));
+        delegateCloud20Service.deleteUserCredential(null, null, null,null);
+        verify(cloudClient).delete(url + "users/null/OS-KSADM/credentials/null", null);
+    }
+
+    @Test
+    public void deleteUserCredential_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.deleteUserCredential(null, null, null,null)).thenReturn(Response.status(401));
+        delegateCloud20Service.deleteUserCredential(null,null, null, null);
+        verify(cloudClient).delete(url + "users/null/OS-KSADM/credentials/null", null);
+    }
+
+    @Test
+    public void listRolesForUserOnTenant_defaultServiceReturns404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.listRolesForUserOnTenant(null, null, null,null)).thenReturn(Response.status(404));
+        delegateCloud20Service.listRolesForUserOnTenant(null, null, null,null);
+        verify(cloudClient).get(url + "tenants/null/users/null/roles", null);
+    }
+
+    @Test
+    public void listRolesForUserOnTenant_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.listRolesForUserOnTenant(null, null, null,null)).thenReturn(Response.status(401));
+        delegateCloud20Service.listRolesForUserOnTenant(null, null, null,null);
+        verify(cloudClient).get(url + "tenants/null/users/null/roles", null);
+    }
+
+    
 }

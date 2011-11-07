@@ -353,14 +353,10 @@ public class DelegateCloud20Service implements Cloud20Service {
             .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-
-            if (httpHeaders.getMediaType().isCompatible(
-                MediaType.APPLICATION_JSON_TYPE)) {
+            if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
                 body = convertCredentialToXML(body);
             }
-
-            String request = getCloudAuthV20Url() + "users/" + userId
-                + "/OS-KSADM/credentials";
+            String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials";
             return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
@@ -418,23 +414,17 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder updateUserPasswordCredentials(
-        HttpHeaders httpHeaders, String authToken, String userId,
-        String credentialType, PasswordCredentialsRequiredUsername creds)
-        throws JAXBException, IOException {
+    public ResponseBuilder updateUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId,
+        String credentialType, PasswordCredentialsRequiredUsername creds) throws JAXBException, IOException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .updateUserPasswordCredentials(httpHeaders, authToken, userId,
-                credentialType, creds);
+            .updateUserPasswordCredentials(httpHeaders, authToken, userId, credentialType, creds);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            String request = getCloudAuthV20Url() + "users/" + userId
-                + "/OS-KSADM/credentials/" + credentialType;
-            String body = marshallObjectToString(OBJ_FACTORY
-                .createPasswordCredentials(creds));
+            String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials/" + credentialType;
+            String body = marshallObjectToString(OBJ_FACTORY.createPasswordCredentials(creds));
             return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
