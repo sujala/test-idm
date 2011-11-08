@@ -716,4 +716,20 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.getUserRole(null, null, userId, roleId);
         verify(cloudClient).get(url +"users/" + userId + "/roles/OS-KSADM/"+roleId,null);
     }
+
+    @Test
+    public void deleteUserRole_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.deleteUserRole(null, null, userId, roleId)).thenReturn(Response.status(401));
+        delegateCloud20Service.deleteUserRole(null, null, userId, roleId);
+        verify(cloudClient).delete(url + "users/" + userId + "/roles/OS-KSADM/"+roleId,null);
+    }
+
+    @Test
+    public void deleteUserRole_defaultServiceReturns404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.deleteUserRole(null, null, userId, roleId)).thenReturn(Response.status(404));
+        delegateCloud20Service.deleteUserRole(null, null, userId, roleId);
+        verify(cloudClient).delete(url +"users/" + userId + "/roles/OS-KSADM/"+roleId,null);
+    }
 }

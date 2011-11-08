@@ -638,7 +638,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/roles/OS-KSADM" + roleId;
+                + "/roles/OS-KSADM/" + roleId;
             return cloudClient.delete(request, httpHeaders);
         }
         return serviceResponse;
