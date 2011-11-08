@@ -1,18 +1,16 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory;
+import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.UserGroupService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.*;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
+import org.openstack.docs.identity.api.v2.Role;
 
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -34,45 +32,98 @@ public class DefaultCloud20ServiceTest {
     private DefaultCloud20Service spy;
     private UserService userService;
     private UserGroupService userGroupService;
-    private String userId = "id";
-    private User user;
     private JAXBObjectFactories jaxbObjectFactories;
     private ScopeAccessService scopeAccessService;
     private AuthorizationService authorizationService;
+    private TenantService tenantService;
+    private EndpointService endpointService;
+    private ApplicationService clientService;
     private TenantConverterCloudV20 tenantConverterCloudV20;
+    private EndpointConverterCloudV20 endpointConverterCloudV20;
     private String authToken = "token";
+    private EndpointTemplate endpointTemplate;
+    private String userId = "id";
+    private User user;
+    private Tenant tenant;
+    private String tenantId = "tenantId";
+    private CloudBaseUrl baseUrl;
+    private Role role = new Role();
 
     @Before
     public void setUp() throws Exception {
         defaultCloud20Service = new DefaultCloud20Service();
 
+        //mocks
         userService = mock(UserService.class);
         userGroupService = mock(UserGroupService.class);
         jaxbObjectFactories = mock(JAXBObjectFactories.class);
         scopeAccessService = mock(ScopeAccessService.class);
         authorizationService = mock(AuthorizationService.class);
         tenantConverterCloudV20 = mock(TenantConverterCloudV20.class);
+        endpointConverterCloudV20 = mock(EndpointConverterCloudV20.class);
+        tenantService = mock(TenantService.class);
+        endpointService = mock(EndpointService.class);
+        clientService = mock(ApplicationService.class);
+
+        //setting mocks
         defaultCloud20Service.setUserService(userService);
         defaultCloud20Service.setUserGroupService(userGroupService);
         defaultCloud20Service.setOBJ_FACTORIES(jaxbObjectFactories);
         defaultCloud20Service.setScopeAccessService(scopeAccessService);
         defaultCloud20Service.setAuthorizationService(authorizationService);
         defaultCloud20Service.setTenantConverterCloudV20(tenantConverterCloudV20);
+        defaultCloud20Service.setEndpointConverterCloudV20(endpointConverterCloudV20);
+        defaultCloud20Service.setTenantService(tenantService);
+        defaultCloud20Service.setEndpointService(endpointService);
+        defaultCloud20Service.setClientService(clientService);
+
+        //fields
         user = new User();
         user.setMossoId(123);
+        role.setId("roleId");
+        role.setName("roleName");
+        role.setServiceId("role-ServiceId");
+        ScopeAccess scopeAccess = new ScopeAccess();
+
+        //stubbing
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new ObjectFactory());
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(new org.openstack.docs.identity.api.v2.ObjectFactory());
-        ScopeAccess scopeAccess = new ScopeAccess();
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
         when(authorizationService.authorizeCloudAdmin(scopeAccess)).thenReturn(true);
+        when(endpointService.getBaseUrlById(101)).thenReturn(new CloudBaseUrl());
+        when(clientService.getById(role.getServiceId())).thenReturn(new Application());
+
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(authToken);
+        endpointTemplate = new EndpointTemplate();
+        endpointTemplate.setId(101);
+        tenant = mock(Tenant.class);
+    }
+
+    @Test
+    public void addEndpoint_callsTenantService_updateTenant() throws Exception {
+        when(tenantService.getTenant(tenantId)).thenReturn(tenant);
+        spy.addEndpoint(null,authToken,tenantId, endpointTemplate);
+        verify(tenantService).updateTenant(tenant);
+    }
+
+    @Test
+    public void addEndpointTemplate_callsEndpointService_addBaseUrl() throws Exception {
+        when(endpointConverterCloudV20.toCloudBaseUrl(endpointTemplate)).thenReturn(baseUrl);
+        spy.addEndpointTemplate(null,null,authToken,endpointTemplate);
+        verify(endpointService).addBaseUrl(baseUrl);
     }
 
     @Test
     public void getGroupList_callsUserService() throws Exception {
         spy.listUserGroups(null,authToken, userId);
         verify(userService).getUserById(userId);
+    }
+
+    @Test
+    public void addRole_callsClientService_addClientRole() throws Exception {
+        spy.addRole(null,null,authToken, role);
+        verify(clientService).addClientRole(any(ClientRole.class));
     }
 
     @Test

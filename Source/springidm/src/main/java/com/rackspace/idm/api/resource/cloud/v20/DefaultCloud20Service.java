@@ -106,12 +106,15 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private ApplicationService clientService;
+
     @Autowired
     private Configuration config;
     @Autowired
     private EndpointConverterCloudV20 endpointConverterCloudV20;
+
     @Autowired
     private EndpointService endpointService;
+
     @Autowired
     private JAXBObjectFactories OBJ_FACTORIES;
 
@@ -120,7 +123,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private ScopeAccessService scopeAccessService;
-
     @Autowired
     private ServiceConverterCloudV20 serviceConverterCloudV20;
 
@@ -129,61 +131,44 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private TenantService tenantService;
+
     @Autowired
     private TokenConverterCloudV20 tokenConverterCloudV20;
+
     @Autowired
     private UserConverterCloudV20 userConverterCloudV20;
+
     @Autowired
     private UserGroupService userGroupService;
+
     @Autowired
     private UserService userService;
     private HashMap<String, JAXBElement<Extension>> extensionMap;
     private JAXBElement<Extensions> currentExtensions;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     @Override
-    public ResponseBuilder addEndpoint(HttpHeaders httpHeaders,
-                                       String authToken, String tenantId, EndpointTemplate endpoint) {
-
+    public ResponseBuilder addEndpoint(HttpHeaders httpHeaders,String authToken, String tenantId, EndpointTemplate endpoint) {
         try {
             checkXAUTHTOKEN(authToken);
-
             Tenant tenant = checkAndGetTenant(tenantId);
-
             CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpoint.getId());
-
             tenant.addBaseUrlId(String.valueOf(endpoint.getId()));
             this.tenantService.updateTenant(tenant);
-
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createEndpoint(
-                            this.endpointConverterCloudV20.toEndpoint(baseUrl)));
-
+                    .createEndpoint(endpointConverterCloudV20.toEndpoint(baseUrl)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
-
     @Override
-    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
-                                               UriInfo uriInfo, String authToken, EndpointTemplate endpoint) {
-
+    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, EndpointTemplate endpoint) {
         try {
             checkXAUTHTOKEN(authToken);
-
-            CloudBaseUrl baseUrl = this.endpointConverterCloudV20
-                    .toCloudBaseUrl(endpoint);
-
+            CloudBaseUrl baseUrl = this.endpointConverterCloudV20.toCloudBaseUrl(endpoint);
             this.endpointService.addBaseUrl(baseUrl);
-
-            return Response.created(
-                    uriInfo.getRequestUriBuilder()
-                            .path(String.valueOf(baseUrl.getBaseUrlId())).build())
-                    .entity(
-                            OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory()
-                                    .createEndpointTemplate(
-                                            this.endpointConverterCloudV20
-                                                    .toEndpointTemplate(baseUrl)));
-
+            return Response.created(uriInfo.getRequestUriBuilder().path(String.valueOf(baseUrl.getBaseUrlId())).build())
+                    .entity(OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory()
+                                    .createEndpointTemplate(this.endpointConverterCloudV20.toEndpointTemplate(baseUrl)));
         } catch (BaseUrlConflictException buce) {
             return endpointTemplateConflictException(buce.getMessage());
         } catch (DuplicateException dex) {
@@ -194,8 +179,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo,
-                                   String authToken, Role role) {
+    public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) {
 
         try {
             checkXAUTHTOKEN(authToken);
@@ -219,15 +203,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             clientRole.setDescription(role.getDescription());
             clientRole.setName(role.getName());
 
-            this.clientService.addClientRole(clientRole);
+            clientService.addClientRole(clientRole);
 
-            return Response
-                    .created(
-                            uriInfo.getRequestUriBuilder().path(clientRole.getId())
-                                    .build()).entity(
-                            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole(
-                                    this.roleConverterCloudV20
-                                            .toRoleFromClientRole(clientRole)));
+            return Response.created(uriInfo.getRequestUriBuilder().path(clientRole.getId()).build())
+                    .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole(roleConverterCloudV20.toRoleFromClientRole(clientRole)));
 
         } catch (DuplicateException bre) {
             return roleConflictExceptionResponse(bre.getMessage());
@@ -235,7 +214,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionResponse(ex);
         }
     }
-
     @Override
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders,
                                                   String authToken, String tenantId, String userId, String roleId) {
@@ -1856,11 +1834,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         return cRole;
     }
 
-    private CloudBaseUrl checkAndGetEndpointTemplate(int baseUrlId) {
+    CloudBaseUrl checkAndGetEndpointTemplate(int baseUrlId) {
         CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseUrlId);
         if (baseUrl == null) {
-            String errMsg = String.format("EndpointTemplate %s not found",
-                    baseUrlId);
+            String errMsg = String.format("EndpointTemplate %s not found", baseUrlId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
@@ -1879,7 +1856,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         return checkAndGetEndpointTemplate(baseUrlId);
     }
 
-    private Tenant checkAndGetTenant(String tenantId) {
+    Tenant checkAndGetTenant(String tenantId) {
         Tenant tenant = this.tenantService.getTenant(tenantId);
 
         if (tenant == null) {
@@ -2112,13 +2089,28 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.scopeAccessService = scopeAccessService;
     }
 
-    public void setAuthorizationService(
-            AuthorizationService authorizationService) {
+    public void setAuthorizationService(AuthorizationService authorizationService) {
         this.authorizationService = authorizationService;
     }
 
     public void setTenantConverterCloudV20(TenantConverterCloudV20 tenantConverterCloudV20) {
         this.tenantConverterCloudV20 = tenantConverterCloudV20;
+    }
+
+    public void setTenantService(TenantService tenantService) {
+        this.tenantService = tenantService;
+    }
+
+    public void setEndpointService(EndpointService endpointService) {
+        this.endpointService = endpointService;
+    }
+
+    public void setEndpointConverterCloudV20(EndpointConverterCloudV20 endpointConverterCloudV20) {
+        this.endpointConverterCloudV20 = endpointConverterCloudV20;
+    }
+
+    public void setClientService(ApplicationService clientService) {
+        this.clientService = clientService;
     }
 
 }
