@@ -798,4 +798,20 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.listRolesForTenant(null, null, tenantId, null,0);
         verify(cloudClient).get(url +"tenants/"+tenantId + "/OS-KSADM/roles?limit=0",null);
     }
+
+    @Test
+    public void listUsersWithRoleForTenant_defaultServiceReturns401_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.listUsersWithRoleForTenant(null, null, tenantId,roleId, null,0)).thenReturn(Response.status(401));
+        delegateCloud20Service.listUsersWithRoleForTenant(null, null, tenantId,roleId, null,0);
+        verify(cloudClient).get(url + "tenants/"+tenantId+"/users?limit=0&roleId="+roleId,null);
+    }
+
+    @Test
+    public void listUsersWithRoleForTenant_defaultServiceReturns404_callsClient() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
+        when(defaultCloud20Service.listUsersWithRoleForTenant(null, null, tenantId,roleId, null,0)).thenReturn(Response.status(404));
+        delegateCloud20Service.listUsersWithRoleForTenant(null, null, tenantId,roleId, null,0);
+        verify(cloudClient).get(url +"tenants/"+tenantId +"/users?limit=0&roleId="+roleId,null);
+    }
 }
