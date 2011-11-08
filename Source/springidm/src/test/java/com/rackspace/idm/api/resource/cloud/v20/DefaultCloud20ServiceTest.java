@@ -47,7 +47,9 @@ public class DefaultCloud20ServiceTest {
     private Tenant tenant;
     private String tenantId = "tenantId";
     private CloudBaseUrl baseUrl;
-    private Role role = new Role();
+    private Role role;
+    private TenantRole tenantRole;
+    private ClientRole clientRole;
 
     @Before
     public void setUp() throws Exception {
@@ -80,10 +82,22 @@ public class DefaultCloud20ServiceTest {
         //fields
         user = new User();
         user.setMossoId(123);
+        role = new Role();
         role.setId("roleId");
         role.setName("roleName");
         role.setServiceId("role-ServiceId");
+        tenantRole = new TenantRole();
+        tenantRole.setClientId("clientId");
+        tenantRole.setUserId(userId);
         ScopeAccess scopeAccess = new ScopeAccess();
+        tenant = new Tenant();
+        tenant.setTenantId(tenantId);
+        tenant.setBaseUrlIds(new String[]{});
+        clientRole = new ClientRole();
+        clientRole.setClientId("clientId");
+        clientRole.setId("clientRoleId");
+        endpointTemplate = new EndpointTemplate();
+        endpointTemplate.setId(101);
 
         //stubbing
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new ObjectFactory());
@@ -92,17 +106,23 @@ public class DefaultCloud20ServiceTest {
         when(authorizationService.authorizeCloudAdmin(scopeAccess)).thenReturn(true);
         when(endpointService.getBaseUrlById(101)).thenReturn(new CloudBaseUrl());
         when(clientService.getById(role.getServiceId())).thenReturn(new Application());
+        when(clientService.getClientRoleById(role.getId())).thenReturn(clientRole);
+        when(tenantService.getTenant(tenantId)).thenReturn(tenant);
+        when(userService.getUserById(userId)).thenReturn(user);
 
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(authToken);
-        endpointTemplate = new EndpointTemplate();
-        endpointTemplate.setId(101);
-        tenant = mock(Tenant.class);
+    }
+
+
+    @Test
+    public void addRolesToUserOnTenant_callsTenantService_addTenantRoleToUser() throws Exception {
+        spy.addRolesToUserOnTenant(null,authToken,tenantId,userId,role.getId());
+        verify(tenantService).addTenantRoleToUser(any(User.class), any(TenantRole.class));
     }
 
     @Test
     public void addEndpoint_callsTenantService_updateTenant() throws Exception {
-        when(tenantService.getTenant(tenantId)).thenReturn(tenant);
         spy.addEndpoint(null,authToken,tenantId, endpointTemplate);
         verify(tenantService).updateTenant(tenant);
     }
@@ -128,6 +148,7 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listUserGroups_withUserNotFound_returns404() throws Exception {
+        when(userService.getUserById(userId)).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.listUserGroups(null,authToken, userId);
         assertThat("code", responseBuilder.build().getStatus(), equalTo(404));
     }

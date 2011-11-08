@@ -214,9 +214,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionResponse(ex);
         }
     }
+    
     @Override
-    public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders,
-                                                  String authToken, String tenantId, String userId, String roleId) {
+    public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
 
         try {
             checkXAUTHTOKEN(authToken);
