@@ -5,12 +5,16 @@ import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
+import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
-import org.openstack.docs.identity.api.v2.Role;
+import org.openstack.docs.identity.api.v2.*;
 
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -30,6 +34,7 @@ public class DefaultCloud20ServiceTest {
 
     private DefaultCloud20Service defaultCloud20Service;
     private DefaultCloud20Service spy;
+    private Configuration config;
     private UserService userService;
     private UserGroupService userGroupService;
     private JAXBObjectFactories jaxbObjectFactories;
@@ -50,6 +55,8 @@ public class DefaultCloud20ServiceTest {
     private Role role;
     private TenantRole tenantRole;
     private ClientRole clientRole;
+    private Service service;
+    private org.openstack.docs.identity.api.v2.Tenant tenantOS;
 
     @Before
     public void setUp() throws Exception {
@@ -66,6 +73,7 @@ public class DefaultCloud20ServiceTest {
         tenantService = mock(TenantService.class);
         endpointService = mock(EndpointService.class);
         clientService = mock(ApplicationService.class);
+        config = mock(Configuration.class);
 
         //setting mocks
         defaultCloud20Service.setUserService(userService);
@@ -78,6 +86,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setTenantService(tenantService);
         defaultCloud20Service.setEndpointService(endpointService);
         defaultCloud20Service.setClientService(clientService);
+        defaultCloud20Service.setConfig(config);
 
         //fields
         user = new User();
@@ -98,6 +107,13 @@ public class DefaultCloud20ServiceTest {
         clientRole.setId("clientRoleId");
         endpointTemplate = new EndpointTemplate();
         endpointTemplate.setId(101);
+        service=new Service();
+        service.setName("serviceName");
+        service.setId("serviceId");
+        service.setType("serviceType");
+        tenantOS = new org.openstack.docs.identity.api.v2.Tenant();
+        tenantOS.setId("tenantName");
+        tenantOS.setName("tenantName");
 
         //stubbing
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new ObjectFactory());
@@ -109,11 +125,79 @@ public class DefaultCloud20ServiceTest {
         when(clientService.getClientRoleById(role.getId())).thenReturn(clientRole);
         when(tenantService.getTenant(tenantId)).thenReturn(tenant);
         when(userService.getUserById(userId)).thenReturn(user);
+        when(config.getString("rackspace.customerId")).thenReturn(null);
 
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(authToken);
     }
 
+    @Test
+    public void addTenant_callsTenantService_addTenant() throws Exception {
+        spy.addTenant(null,null,authToken,tenantOS);
+        verify(tenantService).addTenant(any(Tenant.class));
+    }
+
+    @Test
+    public void addTenant_callsTenantConverterCloudV20_toTenantDO() throws Exception {
+        spy.addTenant(null,null,authToken,tenantOS);
+        verify(tenantConverterCloudV20).toTenantDO(tenantOS);
+    }
+
+    @Test
+    public void addTenant_withNullTenantName_returns400() throws Exception {
+        tenantOS.setName(null);
+        Response.ResponseBuilder responseBuilder = spy.addTenant(null, null, authToken, tenantOS);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addService_callsClientService_add() throws Exception {
+        spy.addService(null,null,authToken, service);
+        verify(clientService).add(any(Application.class));
+    }
+
+    @Test
+    public void addService_withNullService_returns400() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.addService(null, null, authToken, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addService_withNullServiceType_returns400() throws Exception {
+        service.setType(null);
+        Response.ResponseBuilder responseBuilder = spy.addService(null, null, authToken, service);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addService_withNullName_returns400() throws Exception {
+        service.setName(null);
+        Response.ResponseBuilder responseBuilder = spy.addService(null, null, authToken, service);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addRole_roleWithNullName_returns400() throws Exception {
+        Role role1 = new Role();
+        role1.setName(null);
+        Response.ResponseBuilder responseBuilder = spy.addRole(null, null, authToken, role1);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addRole_nullRole_returns400() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.addRole(null, null, authToken, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addRole_roleWithNullServiceId_returns400() throws Exception {
+        Role role1 = new Role();
+        role1.setName("roleName");
+        role1.setServiceId(null);
+        Response.ResponseBuilder responseBuilder = spy.addRole(null, null, authToken, role1);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
 
     @Test
     public void addRolesToUserOnTenant_callsTenantService_addTenantRoleToUser() throws Exception {

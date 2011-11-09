@@ -109,9 +109,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private Configuration config;
+
     @Autowired
     private EndpointConverterCloudV20 endpointConverterCloudV20;
-
     @Autowired
     private EndpointService endpointService;
 
@@ -123,9 +123,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private ScopeAccessService scopeAccessService;
+
     @Autowired
     private ServiceConverterCloudV20 serviceConverterCloudV20;
-
     @Autowired
     private TenantConverterCloudV20 tenantConverterCloudV20;
 
@@ -143,6 +143,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private UserService userService;
+
     private HashMap<String, JAXBElement<Extension>> extensionMap;
     private JAXBElement<Extensions> currentExtensions;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -177,12 +178,17 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionResponse(ex);
         }
     }
-
     @Override
     public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) {
 
         try {
             checkXAUTHTOKEN(authToken);
+
+            if (role ==null) {
+                String errMsg = "role cannot be null";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
 
             if (StringUtils.isBlank(role.getName())) {
                 String errMsg = "Expecting name";
@@ -214,7 +220,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionResponse(ex);
         }
     }
-    
+
     @Override
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
 
@@ -244,18 +250,19 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo,
-                                      String authToken, Service service) {
-
+    public ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Service service) {
         try {
             checkXAUTHTOKEN(authToken);
-
+            if(service==null){
+                String errMsg = "service cannot be null";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
             if (StringUtils.isBlank(service.getName())) {
                 String errMsg = "Expecting name";
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
-
             if (StringUtils.isBlank(service.getType())) {
                 String errMsg = "Expecting type";
                 logger.warn(errMsg);
@@ -269,9 +276,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             client.setRCN(getRackspaceCustomerId());
 
             this.clientService.add(client);
-
             service.setId(client.getClientId());
-
             return Response.created(
                     uriInfo.getRequestUriBuilder().path(service.getId()).build())
                     .entity(
@@ -286,8 +291,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo,
-                                     String authToken, org.openstack.docs.identity.api.v2.Tenant tenant) {
+    public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken,
+                                     org.openstack.docs.identity.api.v2.Tenant tenant) {
 
         try {
             checkXAUTHTOKEN(authToken);
@@ -301,16 +306,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             // Our implmentation has the id and the name the same
             tenant.setId(tenant.getName());
 
-            Tenant savedTenant = this.tenantConverterCloudV20
-                    .toTenantDO(tenant);
+            Tenant savedTenant = this.tenantConverterCloudV20.toTenantDO(tenant);
 
             this.tenantService.addTenant(savedTenant);
 
-            return Response.created(
-                    uriInfo.getRequestUriBuilder().path(savedTenant.getTenantId())
-                            .build()).entity(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenant(
-                            this.tenantConverterCloudV20.toTenant(savedTenant)));
+            return Response.created(uriInfo.getRequestUriBuilder().path(savedTenant.getTenantId()).build())
+                    .entity( OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                            .createTenant(this.tenantConverterCloudV20.toTenant(savedTenant)));
 
         } catch (DuplicateException de) {
             return tenantConflictExceptionResponse(de.getMessage());
@@ -2111,6 +2113,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setClientService(ApplicationService clientService) {
         this.clientService = clientService;
+    }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
     }
 
 }
