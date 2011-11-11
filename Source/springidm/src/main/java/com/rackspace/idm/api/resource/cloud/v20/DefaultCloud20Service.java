@@ -489,7 +489,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 }
                 usa = (UserScopeAccess) sa;
-                user = this.checkAndGetUserByName(usa.getUsername());
+                user = this.checkAndGetUser(usa.getUserRsId());
 
             } else if (authenticationRequest.getCredential().getDeclaredType()
                     .isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
@@ -1742,7 +1742,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (sa instanceof UserScopeAccess) {
                 UserScopeAccess usa = (UserScopeAccess) sa;
-                User user = this.userService.getUser(usa.getUsername());
+                User user = this.userService.getUserById(usa.getUserRsId());
                 List<TenantRole> roles = this.tenantService
                         .getTenantRolesForScopeAccess(usa);
                 if (roles != null && roles.size() > 0) {

@@ -17,12 +17,12 @@ import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ApplicationDao;
+import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.AuthData;
 import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.AuthData;
 import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.Credentials;
@@ -305,8 +305,9 @@ public class DefaultAuthenticationService implements AuthenticationService {
 			}
 
 			if (scopeAccess instanceof UserScopeAccess) {
-				String username = ((UserScopeAccess) scopeAccess).getUsername();
-				User user = this.userDao.getUserByUsername(username);
+			    String username = ((UserScopeAccess) scopeAccess).getUsername();
+				String userId = ((UserScopeAccess) scopeAccess).getUserRsId();
+				User user = this.userDao.getUserById(userId);
 				if (user == null || user.isDisabled()) {
 					String errMsg = String.format("User %S is disabled", username);
 					logger.info(errMsg);
