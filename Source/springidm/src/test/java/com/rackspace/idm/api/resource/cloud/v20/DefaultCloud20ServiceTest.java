@@ -3,10 +3,9 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
@@ -14,7 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
-import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.Role;
 
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -43,6 +42,7 @@ public class DefaultCloud20ServiceTest {
     private TenantService tenantService;
     private EndpointService endpointService;
     private ApplicationService clientService;
+    private UserConverterCloudV20 userConverterCloudV20;
     private TenantConverterCloudV20 tenantConverterCloudV20;
     private EndpointConverterCloudV20 endpointConverterCloudV20;
     private String authToken = "token";
@@ -57,6 +57,7 @@ public class DefaultCloud20ServiceTest {
     private ClientRole clientRole;
     private Service service;
     private org.openstack.docs.identity.api.v2.Tenant tenantOS;
+    private org.openstack.docs.identity.api.v2.User userOS;
 
     @Before
     public void setUp() throws Exception {
@@ -68,6 +69,7 @@ public class DefaultCloud20ServiceTest {
         jaxbObjectFactories = mock(JAXBObjectFactories.class);
         scopeAccessService = mock(ScopeAccessService.class);
         authorizationService = mock(AuthorizationService.class);
+        userConverterCloudV20 = mock(UserConverterCloudV20.class);
         tenantConverterCloudV20 = mock(TenantConverterCloudV20.class);
         endpointConverterCloudV20 = mock(EndpointConverterCloudV20.class);
         tenantService = mock(TenantService.class);
@@ -81,6 +83,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setOBJ_FACTORIES(jaxbObjectFactories);
         defaultCloud20Service.setScopeAccessService(scopeAccessService);
         defaultCloud20Service.setAuthorizationService(authorizationService);
+        defaultCloud20Service.setUserConverterCloudV20(userConverterCloudV20);
         defaultCloud20Service.setTenantConverterCloudV20(tenantConverterCloudV20);
         defaultCloud20Service.setEndpointConverterCloudV20(endpointConverterCloudV20);
         defaultCloud20Service.setTenantService(tenantService);
@@ -114,6 +117,9 @@ public class DefaultCloud20ServiceTest {
         tenantOS = new org.openstack.docs.identity.api.v2.Tenant();
         tenantOS.setId("tenantName");
         tenantOS.setName("tenantName");
+        userOS = new org.openstack.docs.identity.api.v2.User();
+        userOS.setId("userName");
+        userOS.setUsername("username");
 
         //stubbing
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new ObjectFactory());
@@ -126,9 +132,22 @@ public class DefaultCloud20ServiceTest {
         when(tenantService.getTenant(tenantId)).thenReturn(tenant);
         when(userService.getUserById(userId)).thenReturn(user);
         when(config.getString("rackspace.customerId")).thenReturn(null);
+        when(userConverterCloudV20.toUserDO(userOS)).thenReturn(user);
 
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(authToken);
+    }
+
+    @Test
+    public void addUser_callsUserConverter_toUserDOMethod() throws Exception {
+        spy.addUser(null,null,authToken, userOS);
+        verify(userConverterCloudV20).toUserDO(userOS);
+    }
+
+    @Test
+    public void addUser_callsUserService_addUserMethod() throws Exception {
+        spy.addUser(null,null,authToken, userOS);
+        verify(userService).addUser(user);
     }
 
     @Test

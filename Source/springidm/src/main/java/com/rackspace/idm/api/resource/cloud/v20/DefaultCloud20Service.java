@@ -145,6 +145,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private UserService userService;
 
     private HashMap<String, JAXBElement<Extension>> extensionMap;
+
     private JAXBElement<Extensions> currentExtensions;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     @Override
@@ -220,7 +221,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionResponse(ex);
         }
     }
-
     @Override
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
 
@@ -311,7 +311,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.tenantService.addTenant(savedTenant);
 
             return Response.created(uriInfo.getRequestUriBuilder().path(savedTenant.getTenantId()).build())
-                    .entity( OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                    .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                             .createTenant(this.tenantConverterCloudV20.toTenant(savedTenant)));
 
         } catch (DuplicateException de) {
@@ -2117,6 +2117,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setConfig(Configuration config) {
         this.config = config;
+    }
+
+    public void setUserConverterCloudV20(UserConverterCloudV20 userConverterCloudV20) {
+        this.userConverterCloudV20 = userConverterCloudV20;
     }
 
 }
