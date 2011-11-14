@@ -1,58 +1,31 @@
 package com.rackspace.idm.domain.service.impl;
 
-import static com.rackspace.idm.domain.entity.OAuthGrantType.AUTHORIZATION_CODE;
-import static com.rackspace.idm.domain.entity.OAuthGrantType.CLIENT_CREDENTIALS;
-import static com.rackspace.idm.domain.entity.OAuthGrantType.PASSWORD;
-import static com.rackspace.idm.domain.entity.OAuthGrantType.REFRESH_TOKEN;
-
-import java.util.List;
-import java.util.UUID;
-
-import javax.validation.groups.Default;
-
+import com.rackspace.idm.api.error.ApiError;
+import com.rackspace.idm.domain.dao.ApplicationDao;
+import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.CustomerDao;
+import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.AuthenticationService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.TokenService;
+import com.rackspace.idm.exception.*;
+import com.rackspace.idm.validation.AuthorizationCodeCredentialsCheck;
+import com.rackspace.idm.validation.BasicCredentialsCheck;
+import com.rackspace.idm.validation.InputValidator;
+import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.AuthData;
-import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
-import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.Credentials;
-import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
-import com.rackspace.idm.domain.entity.HasAccessToken;
-import com.rackspace.idm.domain.entity.HasRefreshToken;
-import com.rackspace.idm.domain.entity.OAuthGrantType;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
-import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.entity.RackerCredentials;
-import com.rackspace.idm.domain.entity.RackerScopeAccess;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.AuthenticationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.TokenService;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.NotProvisionedException;
-import com.rackspace.idm.exception.UserDisabledException;
-import com.rackspace.idm.validation.AuthorizationCodeCredentialsCheck;
-import com.rackspace.idm.validation.BasicCredentialsCheck;
-import com.rackspace.idm.validation.InputValidator;
-import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
+import javax.validation.groups.Default;
+import java.util.List;
+import java.util.UUID;
+
+import static com.rackspace.idm.domain.entity.OAuthGrantType.*;
 
 public class DefaultAuthenticationService implements AuthenticationService {
 
@@ -282,24 +255,17 @@ public class DefaultAuthenticationService implements AuthenticationService {
 				return prsa;
 			}
 
-			UserScopeAccess usa = this.getAndUpdateUserScopeAccessForClientId(
-					uaResult.getUser(), caResult.getClient());
+			UserScopeAccess usa = this.getAndUpdateUserScopeAccessForClientId(uaResult.getUser(), caResult.getClient());
 			usa.setUserPasswordExpirationDate(rotationDate);
 			return usa;
 		}
 
 		if (REFRESH_TOKEN == grantType) {
-
-			ScopeAccess scopeAccess = this.scopeAccessService
-					.getScopeAccessByRefreshToken(trParam.getRefreshToken());
+			ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByRefreshToken(trParam.getRefreshToken());
 			if (scopeAccess == null
-					|| ((HasRefreshToken) scopeAccess)
-							.isRefreshTokenExpired(currentTime)
-					|| !scopeAccess.getClientId().equalsIgnoreCase(
-							caResult.getClient().getClientId())) {
-				final String msg = String.format(
-						"Unauthorized Refresh Token: %s", trParam
-								.getRefreshToken());
+                    || ((HasRefreshToken) scopeAccess).isRefreshTokenExpired(currentTime)
+					|| !scopeAccess.getClientId().equalsIgnoreCase(caResult.getClient().getClientId())) {
+				final String msg = String.format("Unauthorized Refresh Token: %s", trParam.getRefreshToken());
 				logger.warn(msg);
 				throw new NotAuthenticatedException(msg);
 			}

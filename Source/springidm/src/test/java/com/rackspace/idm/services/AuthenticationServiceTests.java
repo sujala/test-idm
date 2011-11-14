@@ -1,9 +1,16 @@
 package com.rackspace.idm.services;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import com.rackspace.idm.domain.dao.ApplicationDao;
+import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.CustomerDao;
+import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.service.impl.DefaultAuthenticationService;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.UserDisabledException;
+import com.rackspace.idm.util.AuthHeaderHelper;
+import com.rackspace.idm.validation.InputValidator;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.easymock.EasyMock;
@@ -12,43 +19,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.AuthCredentials;
-import com.rackspace.idm.domain.entity.AuthData;
-import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
-import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.ClientStatus;
-import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.Password;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
-import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.entity.RackerCredentials;
-import com.rackspace.idm.domain.entity.RackerScopeAccess;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.UserCredential;
-import com.rackspace.idm.domain.entity.UserHumanName;
-import com.rackspace.idm.domain.entity.UserLocale;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.AuthenticationService;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.TokenService;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.domain.service.impl.DefaultAuthenticationService;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.UserDisabledException;
-import com.rackspace.idm.util.AuthHeaderHelper;
-import com.rackspace.idm.validation.InputValidator;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class AuthenticationServiceTests {
 
@@ -278,7 +251,7 @@ public class AuthenticationServiceTests {
 		
 		EasyMock.expect(mockApplicationDao.authenticate(clientId, clientSecret)).andReturn(caResult);
 		EasyMock.expect(mockScopeAccessService.getScopeAccessByRefreshToken(refreshTokenVal)).andReturn(getFakeUserScopeAccess());
-		EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
+		EasyMock.expect(mockUserDao.getUserById(username)).andReturn(user);
 		mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
 
 		EasyMock.replay(mockApplicationDao, mockUserDao, mockScopeAccessService);
@@ -347,7 +320,7 @@ public class AuthenticationServiceTests {
 		
 		EasyMock.expect(mockApplicationDao.authenticate(clientId, clientSecret)).andReturn(caResult);
 		EasyMock.expect(mockScopeAccessService.getScopeAccessByRefreshToken(refreshTokenVal)).andReturn(usa);
-		EasyMock.expect(mockUserDao.getUserByUsername(username)).andReturn(user);
+		EasyMock.expect(mockUserDao.getUserById(username)).andReturn(user);
 		mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
 
 		EasyMock.replay(mockApplicationDao, mockUserDao, mockScopeAccessService);
@@ -446,6 +419,7 @@ public class AuthenticationServiceTests {
 		usa.setUserRCN(customerId);
 		usa.setClientId(clientId);
 		usa.setClientRCN(customerId);
+        usa.setUserRsId(username);
 		return usa;
 	}
 
