@@ -101,6 +101,7 @@ public class DefaultCloud20ServiceTest {
         tenantRole = new TenantRole();
         tenantRole.setClientId("clientId");
         tenantRole.setUserId(userId);
+        tenantRole.setRoleRsId("tenantRoleId");
         ScopeAccess scopeAccess = new ScopeAccess();
         tenant = new Tenant();
         tenant.setTenantId(tenantId);
@@ -129,6 +130,7 @@ public class DefaultCloud20ServiceTest {
         when(endpointService.getBaseUrlById(101)).thenReturn(new CloudBaseUrl());
         when(clientService.getById(role.getServiceId())).thenReturn(new Application());
         when(clientService.getClientRoleById(role.getId())).thenReturn(clientRole);
+        when(clientService.getClientRoleById(tenantRole.getRoleRsId())).thenReturn(clientRole);
         when(tenantService.getTenant(tenantId)).thenReturn(tenant);
         when(userService.getUserById(userId)).thenReturn(user);
         when(config.getString("rackspace.customerId")).thenReturn(null);
@@ -136,6 +138,19 @@ public class DefaultCloud20ServiceTest {
 
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(authToken);
+    }
+
+    @Test
+    public void addUserRole_callsTenantService_addTenantRoleToUserMethod() throws Exception {
+        spy.addUserRole(null,authToken,userId,tenantRole.getRoleRsId());
+        verify(tenantService).addTenantRoleToUser(any(User.class), any(TenantRole.class));
+    }
+
+    @Test
+    public void addUser_withUserMissingUsername_returns400() throws Exception {
+        userOS.setUsername(null);
+        Response.ResponseBuilder responseBuilder = spy.addUser(null, null, authToken, userOS);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
     @Test

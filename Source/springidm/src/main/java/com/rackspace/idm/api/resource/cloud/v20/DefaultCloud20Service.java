@@ -439,23 +439,17 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUserRole(HttpHeaders httpHeaders,
-                                       String authToken, String userId, String roleId) {
+    public ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) {
 
         try {
             checkXAUTHTOKEN(authToken);
-
             User user = checkAndGetUser(userId);
-
             ClientRole cRole = checkAndGetClientRole(roleId);
-
             TenantRole role = new TenantRole();
             role.setClientId(cRole.getClientId());
             role.setName(cRole.getName());
             role.setRoleRsId(cRole.getId());
-
             this.tenantService.addTenantRoleToUser(user, role);
-
             return Response.ok();
 
         } catch (Exception ex) {
