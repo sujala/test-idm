@@ -58,6 +58,8 @@ public class DefaultCloud20ServiceTest {
     private Service service;
     private org.openstack.docs.identity.api.v2.Tenant tenantOS;
     private org.openstack.docs.identity.api.v2.User userOS;
+    private CloudBaseUrl cloudBaseUrl;
+    private Application application;
 
     @Before
     public void setUp() throws Exception {
@@ -121,14 +123,19 @@ public class DefaultCloud20ServiceTest {
         userOS = new org.openstack.docs.identity.api.v2.User();
         userOS.setId("userName");
         userOS.setUsername("username");
+        cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setBaseUrlId(101);
+        application = new Application();
+        application.setClientId("clientId");
 
         //stubbing
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new ObjectFactory());
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(new org.openstack.docs.identity.api.v2.ObjectFactory());
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
         when(authorizationService.authorizeCloudAdmin(scopeAccess)).thenReturn(true);
-        when(endpointService.getBaseUrlById(101)).thenReturn(new CloudBaseUrl());
-        when(clientService.getById(role.getServiceId())).thenReturn(new Application());
+        when(endpointService.getBaseUrlById(101)).thenReturn(cloudBaseUrl);
+        when(clientService.getById(role.getServiceId())).thenReturn(application);
+        when(clientService.getById("clientId")).thenReturn(application);
         when(clientService.getClientRoleById(role.getId())).thenReturn(clientRole);
         when(clientService.getClientRoleById(tenantRole.getRoleRsId())).thenReturn(clientRole);
         when(tenantService.getTenant(tenantId)).thenReturn(tenant);
@@ -138,6 +145,36 @@ public class DefaultCloud20ServiceTest {
 
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(authToken);
+    }
+
+    @Test
+    public void deleteService_callsClientService_deleteMethod() throws Exception {
+        spy.deleteService(null,authToken,"clientId");
+        verify(clientService).delete("clientId");
+    }
+
+    @Test
+    public void deleteRoleFromUserOnTenant_callsTenantService_deleteTenantRoleMethod() throws Exception {
+        spy.deleteRoleFromUserOnTenant(null,authToken,tenantId,userId,role.getId());
+        verify(tenantService).deleteTenantRole(anyString(),any(TenantRole.class));
+    }
+
+    @Test
+    public void deleteRole_callsClientService_deleteClientRoleMethod() throws Exception {
+        spy.deleteRole(null,authToken,role.getId());
+        verify(clientService).deleteClientRole(any(ClientRole.class));
+    }
+
+    @Test
+    public void deleteEndpointTemplate_callsEndpointService_deleteBaseUrlMethod() throws Exception {
+        spy.deleteEndpointTemplate(null,authToken,"101");
+        verify(endpointService).deleteBaseUrl(101);
+    }
+
+    @Test
+    public void deleteEndpoint_callsTenantService_updateTenantMethod() throws Exception {
+        spy.deleteEndpoint(null,authToken,tenantId,"101");
+        verify(tenantService).updateTenant(any(Tenant.class));
     }
 
     @Test
