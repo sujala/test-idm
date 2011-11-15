@@ -4,7 +4,7 @@ package com.rackspace.idm.domain.entity;
 public class UppercaseRule extends PasswordRule{
     private static final int RULE_ID = 2;
     private static final String RULE_NAME = "Uppercase Rule";
-    private static final String RULE_MESSAGE = "The password must contain an uppercase charater";
+    private static final String RULE_MESSAGE = "The password must contain an uppercase character";
 
     public UppercaseRule() {
         super(RULE_ID, RULE_NAME, RULE_MESSAGE);

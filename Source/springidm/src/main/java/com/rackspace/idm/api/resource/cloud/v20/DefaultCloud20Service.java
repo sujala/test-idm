@@ -145,6 +145,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private UserService userService;
 
     private HashMap<String, JAXBElement<Extension>> extensionMap;
+
     private JAXBElement<Extensions> currentExtensions;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     @Override
@@ -220,7 +221,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionResponse(ex);
         }
     }
-
     @Override
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
 
@@ -311,7 +311,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.tenantService.addTenant(savedTenant);
 
             return Response.created(uriInfo.getRequestUriBuilder().path(savedTenant.getTenantId()).build())
-                    .entity( OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                    .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                             .createTenant(this.tenantConverterCloudV20.toTenant(savedTenant)));
 
         } catch (DuplicateException de) {
@@ -439,25 +439,18 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUserRole(HttpHeaders httpHeaders,
-                                       String authToken, String userId, String roleId) {
+    public ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) {
 
         try {
             checkXAUTHTOKEN(authToken);
-
             User user = checkAndGetUser(userId);
-
             ClientRole cRole = checkAndGetClientRole(roleId);
-
             TenantRole role = new TenantRole();
             role.setClientId(cRole.getClientId());
             role.setName(cRole.getName());
             role.setRoleRsId(cRole.getId());
-
             this.tenantService.addTenantRoleToUser(user, role);
-
             return Response.ok();
-
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -603,85 +596,57 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders,
-                                          String authToken, String tenantId, String endpointId) {
-
+    public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders,String authToken, String tenantId, String endpointId){
         try {
             checkXAUTHTOKEN(authToken);
-
             Tenant tenant = checkAndGetTenant(tenantId);
-
             CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpointId);
-
             tenant.removeBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
-
-            this.tenantService.updateTenant(tenant);
-
+            tenantService.updateTenant(tenant);
             return Response.noContent();
-
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders,
-                                                  String authToken, String endpointTemplateId) {
-
+    public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId){
         try {
             checkXAUTHTOKEN(authToken);
-
             CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpointTemplateId);
-
             this.endpointService.deleteBaseUrl(baseUrl.getBaseUrlId());
-
             return Response.noContent();
-
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
-
     }
 
     @Override
-    public ResponseBuilder deleteRole(HttpHeaders httpHeaders,
-                                      String authToken, String roleId) {
-
+    public ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) {
         try {
             checkXAUTHTOKEN(authToken);
-
             ClientRole role = checkAndGetClientRole(roleId);
-
             this.clientService.deleteClientRole(role);
-
             return Response.noContent();
-
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders,
-                                                      String authToken, String tenantId, String userId, String roleId) {
-
+    public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId,
+                                                      String userId, String roleId) {
         try {
             checkXAUTHTOKEN(authToken);
-
             Tenant tenant = checkAndGetTenant(tenantId);
-
             User user = checkAndGetUser(userId);
-
             ClientRole role = checkAndGetClientRole(roleId);
-
             TenantRole tenantrole = new TenantRole();
             tenantrole.setClientId(role.getClientId());
             tenantrole.setRoleRsId(role.getId());
             tenantrole.setUserId(user.getId());
             tenantrole.setTenantIds(new String[]{tenant.getTenantId()});
-
             this.tenantService.deleteTenantRole(user.getUniqueId(), tenantrole);
-
             return Response.noContent();
 
         } catch (Exception ex) {
@@ -690,18 +655,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteService(HttpHeaders httpHeaders,
-                                         String authToken, String serviceId) {
-
+    public ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId) {
         try {
             checkXAUTHTOKEN(authToken);
-
             Application client = checkAndGetApplication(serviceId);
-
             this.clientService.delete(client.getClientId());
-
             return Response.noContent();
-
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1818,8 +1777,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private Application checkAndGetApplication(String applicationId) {
         Application application = this.clientService.getById(applicationId);
         if (application == null) {
-            String errMsg = String
-                    .format("Service %s not found", applicationId);
+            String errMsg = String.format("Service %s not found", applicationId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
@@ -2117,6 +2075,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setConfig(Configuration config) {
         this.config = config;
+    }
+
+    public void setUserConverterCloudV20(UserConverterCloudV20 userConverterCloudV20) {
+        this.userConverterCloudV20 = userConverterCloudV20;
     }
 
 }
