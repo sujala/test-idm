@@ -6,21 +6,27 @@ import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.exception.BaseUrlConflictException;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
-import org.openstack.docs.identity.api.v2.Role;
+import org.openstack.docs.identity.api.v2.*;
 
 import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBElement;
 import java.util.List;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -95,6 +101,8 @@ public class DefaultCloud20ServiceTest {
 
         //fields
         user = new User();
+        user.setUsername(userId);
+        user.setId(userId);
         user.setMossoId(123);
         role = new Role();
         role.setId("roleId");
@@ -145,6 +153,96 @@ public class DefaultCloud20ServiceTest {
 
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(authToken);
+    }
+
+    @Test
+    public void updateUserPasswordCredentials_withNullPassword_returns400() throws Exception {
+        PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername();
+        creds.setUsername("username");
+        Response.ResponseBuilder responseBuilder = spy.updateUserPasswordCredentials(null, authToken, userId, null, creds);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void updateUserPasswordCredentials_withNullUsername_returns400() throws Exception {
+        PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername();
+        creds.setUsername(null);
+        creds.setPassword("foo");
+        Response.ResponseBuilder responseBuilder = spy.updateUserPasswordCredentials(null, authToken, userId, null, creds);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void updateUserPasswordCredentials_withValidCredentials_callsUserService_updateUserMethod() throws Exception {
+        PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername();
+        creds.setUsername(userId);
+        creds.setPassword("foo");
+        spy.updateUserPasswordCredentials(null, authToken, userId, null, creds);
+        verify(userService).updateUser(user, false);
+    }
+
+    @Test
+    public void deleteUser_callsUserService_softDeleteUserMethod() throws Exception {
+        spy.deleteUser(null,authToken,userId);
+        verify(userService).softDeleteUser(any(User.class));
+    }
+
+    @Test
+    public void addEndpopintTemplate_endPointServiceThrowsBaseUrlConflictException_returns409() throws Exception {
+        doThrow(new BaseUrlConflictException()).when(endpointService).addBaseUrl(any(CloudBaseUrl.class));
+        Response.ResponseBuilder responseBuilder = spy.addEndpointTemplate(null, null, authToken, endpointTemplate);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
+    }
+
+    @Test
+    public void userDisabledExceptionResponse_setsMessage() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.userDisabledExceptionResponse("userName");
+        JAXBElement<UserDisabledFault> jaxbElement =((JAXBElement<UserDisabledFault>)(responseBuilder.build().getEntity()));
+        assertThat("message", jaxbElement.getValue().getMessage(), equalTo("User userName is disabled"));
+    }
+
+    @Test
+    public void userDisabledExceptionResponse_returns403() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.userDisabledExceptionResponse("responseMessage");
+        assertThat("message", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void tenantConflictExceptionResponse_setsMessage() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.tenantConflictExceptionResponse("responseMessage");
+        JAXBElement<TenantConflictFault> jaxbElement =((JAXBElement<TenantConflictFault>)(responseBuilder.build().getEntity()));
+        assertThat("message", jaxbElement.getValue().getMessage(), equalTo("responseMessage"));
+    }
+
+    @Test
+    public void tenantConflictExceptionResponse_returns409() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.tenantConflictExceptionResponse("responseMessage");
+        assertThat("message", responseBuilder.build().getStatus(), equalTo(409));
+    }
+
+    @Test
+    public void userConflictExceptionResponse_setsMessage() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.userConflictExceptionResponse("responseMessage");
+        JAXBElement<BadRequestFault> jaxbElement =((JAXBElement<BadRequestFault>)(responseBuilder.build().getEntity()));
+        assertThat("message", jaxbElement.getValue().getMessage(), equalTo("responseMessage"));
+    }
+
+    @Test
+    public void userConflictExceptionResponse_returns409() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.userConflictExceptionResponse("responseMessage");
+        assertThat("message", responseBuilder.build().getStatus(), equalTo(409));
+    }
+
+    @Test
+    public void exceptionResponse_withForbiddenException_403() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.exceptionResponse(new ForbiddenException());
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void exceptionResponse_withNotAuthenticatedException_401() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.exceptionResponse(new NotAuthenticatedException());
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
     }
 
     @Test
