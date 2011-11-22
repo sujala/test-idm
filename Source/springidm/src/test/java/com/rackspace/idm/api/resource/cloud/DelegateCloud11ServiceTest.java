@@ -1,8 +1,10 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import com.rackspace.idm.api.resource.cloud.v11.CredentialUnmarshaller;
 import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service;
 import com.rackspace.idm.api.resource.cloud.v11.DelegateCloud11Service;
 import com.rackspacecloud.docs.auth.api.v1.User;
+import com.rackspacecloud.docs.auth.api.v1.UserCredentials;
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import org.apache.commons.configuration.Configuration;
@@ -13,6 +15,8 @@ import org.mockito.internal.verification.VerificationModeFactory;
 import org.mortbay.jetty.HttpHeaders;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -34,11 +38,16 @@ public class DelegateCloud11ServiceTest {
     CloudClient cloudClient;
     Marshaller marshaller;
     HttpServletRequest request;
+    private CredentialUnmarshaller credentialUnmarshaller;
+    private String jsonBody = "{\"credentials\":{\"username\":\"user\",\"key\":\"key\"}}";
+    private javax.ws.rs.core.HttpHeaders httpHeaders = mock(javax.ws.rs.core.HttpHeaders.class);
 
     @Before
     public void setUp() throws JAXBException {
         delegateCloud11Service = new DelegateCloud11Service();
         defaultCloud11Service = mock(DefaultCloud11Service.class);
+        credentialUnmarshaller = mock(CredentialUnmarshaller.class);
+        delegateCloud11Service.setCredentialUnmarshaller(credentialUnmarshaller);
         delegateCloud11Service.setDefaultCloud11Service(defaultCloud11Service);
         OBJ_FACTORY = mock(com.rackspacecloud.docs.auth.api.v1.ObjectFactory.class);
         DelegateCloud11Service.setOBJ_FACTORY(OBJ_FACTORY);
@@ -49,8 +58,18 @@ public class DelegateCloud11ServiceTest {
         marshaller = mock(Marshaller.class);
         delegateCloud11Service.setMarshaller(marshaller);
         when(config.getString("cloudAuth11url")).thenReturn("url");
+        when(httpHeaders.getMediaType()).thenReturn(new MediaType("application/json",null));
         request = mock(HttpServletRequest.class);
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
+    }
+
+    @Test
+    public void authenticate_withJsonBody_callsCredentialUnmarshaller() throws Exception {
+        JAXBElement jaxbElement= new JAXBElement<UserCredentials>(QName.valueOf("foo"),UserCredentials.class, new UserCredentials());
+        when(defaultCloud11Service.authenticate(null,null,httpHeaders, jsonBody)).thenReturn(Response.status(404));
+        when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
+        delegateCloud11Service.authenticate(null, null, httpHeaders, jsonBody);
+        verify(credentialUnmarshaller).unmarshallCredentialsFromJSON(jsonBody);
     }
 
     @Test

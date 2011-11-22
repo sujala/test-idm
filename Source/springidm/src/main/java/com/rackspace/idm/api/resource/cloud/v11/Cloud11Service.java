@@ -22,7 +22,7 @@ public interface Cloud11Service {
     Response.ResponseBuilder revokeToken(HttpServletRequest request, String tokenId, HttpHeaders httpHeaders) throws IOException;
 
     // Authenticate Methods
-    Response.ResponseBuilder authenticate(HttpServletRequest request, HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException;
+    Response.ResponseBuilder authenticate(HttpServletRequest request, HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException, JAXBException;
     Response.ResponseBuilder adminAuthenticate(HttpServletRequest request, HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException;
     
     // User Methods  

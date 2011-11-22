@@ -7,46 +7,32 @@ import java.util.HashMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
+import com.rackspacecloud.docs.auth.api.v1.*;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.rackspacecloud.docs.auth.api.v1.BaseURL;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
-import com.rackspacecloud.docs.auth.api.v1.ObjectFactory;
-import com.rackspacecloud.docs.auth.api.v1.User;
-import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled;
-import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey;
 
 @Component
 public class DelegateCloud11Service implements Cloud11Service {
 
-    public void setCloudClient(CloudClient cloudClient) {
-        this.cloudClient = cloudClient;
-    }
-
     @Autowired
     private CloudClient cloudClient;
 
-    public void setConfig(Configuration config) {
-        this.config = config;
-    }
+    @Autowired
+    private CredentialUnmarshaller credentialUnmarshaller;
 
     @Autowired
     private Configuration config;
-
-    public void setDefaultCloud11Service(
-        DefaultCloud11Service defaultCloud11Service) {
-        this.defaultCloud11Service = defaultCloud11Service;
-    }
 
     @Autowired
     private DefaultCloud11Service defaultCloud11Service;
@@ -54,18 +40,9 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Autowired
     private DummyCloud11Service dummyCloud11Service;
 
-    public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
-        DelegateCloud11Service.OBJ_FACTORY = OBJ_FACTORY;
-    }
-
     private static com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
 
-    public void setMarshaller(Marshaller marshaller) {
-    }
-
-    public DelegateCloud11Service() throws JAXBException {
-
-    }
+    public DelegateCloud11Service() throws JAXBException {}
 
     @Override
     public Response.ResponseBuilder validateToken(HttpServletRequest request,
@@ -93,34 +70,33 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder authenticate(HttpServletRequest request, HttpServletResponse response,
-                                                 HttpHeaders httpHeaders, String body) throws IOException {
+                                                 HttpHeaders httpHeaders, String body) throws IOException, JAXBException {
 
         Response.ResponseBuilder serviceResponse = getCloud11Service().authenticate(request, response, httpHeaders, body);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
         int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND
-            || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+            if (!httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)){
+                 body = marshallObjectToString(credentialUnmarshaller.unmarshallCredentialsFromJSON(body));
+            }
             return cloudClient.post(getCloudAuthV11Url().concat("auth"), httpHeaders, body);
         }
         return serviceResponse;
     }
 
     @Override
-    public Response.ResponseBuilder adminAuthenticate(
-        HttpServletRequest request, HttpServletResponse response,
+    public Response.ResponseBuilder adminAuthenticate(HttpServletRequest request, HttpServletResponse response,
         HttpHeaders httpHeaders, String body) throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud11Service()
-            .adminAuthenticate(request, response, httpHeaders, body);
+
+        Response.ResponseBuilder serviceResponse = getCloud11Service().adminAuthenticate(request, response, httpHeaders, body);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            return cloudClient.post(getCloudAuthV11Url().concat("auth-admin"),
-                httpHeaders, body);
+            return cloudClient.post(getCloudAuthV11Url().concat("auth-admin"), httpHeaders, body);
         }
         return serviceResponse;
     }
@@ -326,7 +302,7 @@ public class DelegateCloud11Service implements Cloud11Service {
             String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
             return cloudClient.post(getCloudAuthV11Url().concat("users"), httpHeaders, body);
         }
-        
+
         Response.ResponseBuilder serviceResponse = getCloud11Service().createUser(request, httpHeaders, uriInfo, user);
         return serviceResponse;
 
@@ -663,5 +639,29 @@ public class DelegateCloud11Service implements Cloud11Service {
 
         return sw.toString();
 
+    }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
+
+    public void setCredentialUnmarshaller(CredentialUnmarshaller credentialUnmarshaller) {
+        this.credentialUnmarshaller = credentialUnmarshaller;
+    }
+
+    public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
+        DelegateCloud11Service.OBJ_FACTORY = OBJ_FACTORY;
+    }
+
+    public void setCloudClient(CloudClient cloudClient) {
+        this.cloudClient = cloudClient;
+    }
+
+    public void setDefaultCloud11Service(
+            DefaultCloud11Service defaultCloud11Service) {
+        this.defaultCloud11Service = defaultCloud11Service;
+    }
+
+    public void setMarshaller(Marshaller marshaller) {
     }
 }

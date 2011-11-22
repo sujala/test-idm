@@ -1,0 +1,65 @@
+package com.rackspace.idm.api.resource.cloud.v11;
+
+import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspacecloud.docs.auth.api.v1.*;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.springframework.stereotype.Component;
+
+import javax.xml.bind.JAXBElement;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: Hector
+ * Date: 11/22/11
+ * Time: 12:20 AM
+ */
+@Component
+public class CredentialUnmarshaller {
+
+    private static final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
+
+    public JAXBElement<? extends Credentials> unmarshallCredentialsFromJSON(String jsonBody) {
+
+           JSONParser parser = new JSONParser();
+           JAXBElement<? extends Credentials> creds = null;
+
+           try {
+               JSONObject obj = (JSONObject) parser.parse(jsonBody);
+               if (obj.containsKey(JSONConstants.CREDENTIALS)) {
+                   JSONObject obj3 = (JSONObject) parser.parse(obj.get(JSONConstants.CREDENTIALS).toString());
+                   UserCredentials userCreds = new UserCredentials();
+                   userCreds.setKey(obj3.get(JSONConstants.KEY).toString());
+                   userCreds.setUsername(obj3.get(JSONConstants.USERNAME).toString());
+                   creds = OBJ_FACTORY.createCredentials(userCreds);
+
+               } else if (obj.containsKey(JSONConstants.MOSSO_CREDENTIALS)) {
+                   JSONObject obj3 = (JSONObject) parser.parse(obj.get(JSONConstants.MOSSO_CREDENTIALS).toString());
+                   MossoCredentials mossoCreds = new MossoCredentials();
+                   mossoCreds.setKey(obj3.get(JSONConstants.KEY).toString());
+                   mossoCreds.setMossoId(Integer.parseInt(obj3.get(JSONConstants.MOSSO_ID).toString()));
+                   creds = OBJ_FACTORY.createMossoCredentials(mossoCreds);
+
+               } else if (obj.containsKey(JSONConstants.NAST_CREDENTIALS)) {
+                   JSONObject obj3 = (JSONObject) parser.parse(obj.get(JSONConstants.NAST_CREDENTIALS).toString());
+                   NastCredentials nastCreds = new NastCredentials();
+                   nastCreds.setKey(obj3.get(JSONConstants.KEY).toString());
+                   nastCreds.setNastId(obj3.get(JSONConstants.NAST_ID).toString());
+                   creds = OBJ_FACTORY.createNastCredentials(nastCreds);
+
+               } else if (obj.containsKey(JSONConstants.PASSWORD_CREDENTIALS)) {
+                   JSONObject obj3 = (JSONObject) parser.parse(obj.get(JSONConstants.PASSWORD_CREDENTIALS).toString());
+                   PasswordCredentials passwordCreds = new PasswordCredentials();
+                   passwordCreds.setUsername(obj3.get(JSONConstants.USERNAME).toString());
+                   passwordCreds.setPassword(obj3.get(JSONConstants.PASSWORD).toString());
+                   creds = OBJ_FACTORY.createPasswordCredentials(passwordCreds);
+               }
+           } catch (ParseException e) {
+               throw new BadRequestException("malformed JSON");
+           }
+           return creds;
+       }
+
+}

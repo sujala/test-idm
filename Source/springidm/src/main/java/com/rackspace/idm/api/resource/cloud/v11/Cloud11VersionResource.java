@@ -78,7 +78,7 @@ public class Cloud11VersionResource {
     @POST
     @Path("auth")
     public Response authenticate(@Context HttpServletRequest request, @Context HttpServletResponse response, @Context HttpHeaders httpHeaders, String body)
-            throws IOException {
+            throws IOException, JAXBException {
         return getCloud11Service().authenticate(request, response, httpHeaders, body).build();
     }
     // this is not my fault, I promise
