@@ -73,6 +73,15 @@ public class DelegateCloud11ServiceTest {
     }
 
     @Test
+    public void adminAuthenticate_withJsonBody_callsCredentialUnmarshaller() throws Exception {
+        JAXBElement jaxbElement= new JAXBElement<UserCredentials>(QName.valueOf("foo"),UserCredentials.class, new UserCredentials());
+        when(defaultCloud11Service.adminAuthenticate(null,null,httpHeaders, jsonBody)).thenReturn(Response.status(404));
+        when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
+        delegateCloud11Service.adminAuthenticate(null, null, httpHeaders, jsonBody);
+        verify(credentialUnmarshaller).unmarshallCredentialsFromJSON(jsonBody);
+    }
+
+    @Test
     public void setUserEnabled_callsOBJ_FACTORY_createUser() throws Exception {
         UserWithOnlyEnabled user = new UserWithOnlyEnabled();
         user.setEnabled(true);

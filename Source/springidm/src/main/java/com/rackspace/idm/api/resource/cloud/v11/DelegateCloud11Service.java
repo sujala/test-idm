@@ -88,7 +88,7 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder adminAuthenticate(HttpServletRequest request, HttpServletResponse response,
-        HttpHeaders httpHeaders, String body) throws IOException {
+        HttpHeaders httpHeaders, String body) throws IOException, JAXBException {
 
         Response.ResponseBuilder serviceResponse = getCloud11Service().adminAuthenticate(request, response, httpHeaders, body);
         // We have to clone the ResponseBuilder from above because once we build
@@ -96,6 +96,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+            if (!httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)){
+                 body = marshallObjectToString(credentialUnmarshaller.unmarshallCredentialsFromJSON(body));
+            }
             return cloudClient.post(getCloudAuthV11Url().concat("auth-admin"), httpHeaders, body);
         }
         return serviceResponse;

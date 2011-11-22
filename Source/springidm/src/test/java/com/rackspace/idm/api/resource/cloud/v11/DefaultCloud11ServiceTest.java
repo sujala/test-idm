@@ -85,7 +85,7 @@ public class DefaultCloud11ServiceTest {
     @Test
     public void authenticateResponse_usernameIsNull_returns400() throws Exception {
         JAXBElement<Credentials> cred = new JAXBElement<Credentials>(new QName(""),Credentials.class,new UserCredentials());
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(cred, null, null, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(cred, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 

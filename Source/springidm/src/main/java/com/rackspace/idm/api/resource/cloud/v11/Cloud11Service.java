@@ -23,7 +23,7 @@ public interface Cloud11Service {
 
     // Authenticate Methods
     Response.ResponseBuilder authenticate(HttpServletRequest request, HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException, JAXBException;
-    Response.ResponseBuilder adminAuthenticate(HttpServletRequest request, HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException;
+    Response.ResponseBuilder adminAuthenticate(HttpServletRequest request, HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException, JAXBException;
     
     // User Methods  
     Response.ResponseBuilder createUser(HttpServletRequest request, HttpHeaders httpHeaders, UriInfo uriInfo, User user) throws IOException, JAXBException;

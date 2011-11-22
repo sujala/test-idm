@@ -1,11 +1,32 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
+import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
+import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.config.JAXBContextResolver;
+import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.UserGroupService;
+import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.*;
+import com.rackspace.idm.util.AuthHeaderHelper;
+import com.rackspace.idm.util.NastFacade;
+import com.rackspacecloud.docs.auth.api.v1.*;
+import com.rackspacecloud.docs.auth.api.v1.Credentials;
+import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
+import com.sun.jersey.server.wadl.generators.resourcedoc.xhtml.Elements;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -18,49 +39,12 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
-import com.rackspace.idm.domain.service.UserGroupService;
-import com.rackspacecloud.docs.auth.api.v1.*;
-import com.rackspacecloud.docs.auth.api.v1.ObjectFactory;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
-import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
-import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
-import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.BaseUrlConflictException;
-import com.rackspace.idm.exception.CloudAdminAuthorizationException;
-import com.rackspace.idm.exception.DuplicateUsernameException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.NotAuthorizedException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.UserDisabledException;
-import com.rackspace.idm.util.AuthHeaderHelper;
-import com.rackspace.idm.util.NastFacade;
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class DefaultCloud11Service implements Cloud11Service {
@@ -83,6 +67,9 @@ public class DefaultCloud11Service implements Cloud11Service {
     private NastFacade nastFacade;
     @Autowired
     private UserGroupService userGroupService;
+
+    @Autowired
+    private CredentialUnmarshaller credentialUnmarshaller;
 
     @Autowired
     public DefaultCloud11Service(Configuration config,
@@ -203,16 +190,12 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     // Authenticate Methods
     @Override
-    public ResponseBuilder adminAuthenticate(HttpServletRequest request,
-                                             HttpServletResponse response, HttpHeaders httpHeaders, String body)
+    public ResponseBuilder adminAuthenticate(HttpServletRequest request, HttpServletResponse response, HttpHeaders httpHeaders, String body)
             throws IOException {
 
         try {
-
             authenticateCloudAdminUser(request);
-
-            if (httpHeaders.getMediaType().isCompatible(
-                    MediaType.APPLICATION_XML_TYPE)) {
+            if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
                 return authenticateXML(response, httpHeaders, body, true);
             } else {
                 return authenticateJSON(response, httpHeaders, body, true);
@@ -940,32 +923,53 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    private Response.ResponseBuilder authenticateJSON(
-            HttpServletResponse response, HttpHeaders httpHeaders, String body,
-            boolean isAdmin) throws IOException {
+    private Response.ResponseBuilder authenticateJSON(HttpServletResponse response, HttpHeaders httpHeaders, String body,
+                                                      boolean isAdmin) throws IOException {
+
         JAXBElement<? extends Credentials> cred = null;
 
-        cred = unmarshallCredentialsFromJSON(body);
+        cred = credentialUnmarshaller.unmarshallCredentialsFromJSON(body);
 
         if (isAdmin) {
             adminAuthenticateResponse(cred, httpHeaders, response, body);
         }
-        return authenticateResponse(cred, httpHeaders, response, body);
+        return authenticateResponse(cred, response);
     }
 
-    Response.ResponseBuilder authenticateResponse(
-            JAXBElement<? extends Credentials> cred, HttpHeaders httpHeaders,
-            HttpServletResponse response, String body) throws IOException {
+    @SuppressWarnings("unchecked")
+    private Response.ResponseBuilder authenticateXML(HttpServletResponse response, HttpHeaders httpHeaders, String body,
+                                                     boolean isAdmin) throws IOException {
+
+        JAXBElement<? extends Credentials> cred = null;
+        try {
+            JAXBContext context = JAXBContextResolver.get();
+            Unmarshaller unmarshaller = context.createUnmarshaller();
+            cred = (JAXBElement<? extends Credentials>) unmarshaller.unmarshal(new StringReader(body));
+        } catch (JAXBException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        if (isAdmin) {
+            return adminAuthenticateResponse(cred, httpHeaders, response, body);
+        }
+        return authenticateResponse(cred, response);
+    }
+
+    Response.ResponseBuilder authenticateResponse(JAXBElement<? extends Credentials> cred, HttpServletResponse response) throws IOException {
 
         try {
-            if (!(cred.getValue() instanceof UserCredentials)) {
-                handleRedirect(response, "cloud/auth-admin");
+            Credentials value = cred.getValue();
+            String username = null;
+            String apiKey = null;
+
+            if (value instanceof UserCredentials) {
+                UserCredentials userCreds = (UserCredentials) value;
+                username = userCreds.getUsername();
+                apiKey = userCreds.getKey();
             }
-
-            UserCredentials userCreds = (UserCredentials) cred.getValue();
-
-            String username = userCreds.getUsername();
-            String apiKey = userCreds.getKey();
+            else if(value instanceof PasswordCredentials){
+                username = ((PasswordCredentials) value).getUsername();
+            }
 
             if (username == null) {
                 return badRequestExceptionResponse("username cannot be null");
@@ -978,37 +982,13 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            UserScopeAccess usa = this.scopeAccessService
-                    .getUserScopeAccessForClientIdByUsernameAndApiCredentials(
-                            username, apiKey, getCloudAuthClientId());
-            List<CloudEndpoint> endpoints = this.endpointService
-                    .getEndpointsForUser(username);
-            return Response.ok(OBJ_FACTORY
-                    .createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(
-                            usa, endpoints)));
+            UserScopeAccess usa =
+                    scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, apiKey, getCloudAuthClientId());
+            List<CloudEndpoint> endpoints = endpointService.getEndpointsForUser(username);
+            return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private Response.ResponseBuilder authenticateXML(
-            HttpServletResponse response, HttpHeaders httpHeaders, String body,
-            boolean isAdmin) throws IOException {
-        JAXBElement<? extends Credentials> cred = null;
-        try {
-            JAXBContext context = JAXBContextResolver.get();
-            Unmarshaller unmarshaller = context.createUnmarshaller();
-            cred = (JAXBElement<? extends Credentials>) unmarshaller
-                    .unmarshal(new StringReader(body));
-        } catch (JAXBException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        if (isAdmin) {
-            return adminAuthenticateResponse(cred, httpHeaders, response, body);
-        }
-        return authenticateResponse(cred, httpHeaders, response, body);
     }
 
     private Response.ResponseBuilder badRequestExceptionResponse(String message) {
@@ -1081,57 +1061,6 @@ public class DefaultCloud11Service implements Cloud11Service {
                 .entity(OBJ_FACTORY.createAuthFault(fault));
     }
 
-    private JAXBElement<? extends Credentials> unmarshallCredentialsFromJSON(
-            String jsonBody) {
-
-        JSONParser parser = new JSONParser();
-        JAXBElement<? extends Credentials> creds = null;
-
-        try {
-            JSONObject obj = (JSONObject) parser.parse(jsonBody);
-            if (obj.containsKey(JSONConstants.CREDENTIALS)) {
-                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                        JSONConstants.CREDENTIALS).toString());
-                UserCredentials userCreds = new UserCredentials();
-                userCreds.setKey(obj3.get(JSONConstants.KEY).toString());
-                userCreds.setUsername(obj3.get(JSONConstants.USERNAME)
-                        .toString());
-                creds = OBJ_FACTORY.createCredentials(userCreds);
-
-            } else if (obj.containsKey(JSONConstants.MOSSO_CREDENTIALS)) {
-                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                        JSONConstants.MOSSO_CREDENTIALS).toString());
-                MossoCredentials mossoCreds = new MossoCredentials();
-                mossoCreds.setKey(obj3.get(JSONConstants.KEY).toString());
-                mossoCreds.setMossoId(Integer.parseInt(obj3.get(
-                        JSONConstants.MOSSO_ID).toString()));
-                creds = OBJ_FACTORY.createMossoCredentials(mossoCreds);
-
-            } else if (obj.containsKey(JSONConstants.NAST_CREDENTIALS)) {
-                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                        JSONConstants.NAST_CREDENTIALS).toString());
-                NastCredentials nastCreds = new NastCredentials();
-                nastCreds.setKey(obj3.get(JSONConstants.KEY).toString());
-                nastCreds.setNastId(obj3.get(JSONConstants.NAST_ID).toString());
-                creds = OBJ_FACTORY.createNastCredentials(nastCreds);
-
-            } else if (obj.containsKey(JSONConstants.PASSWORD_CREDENTIALS)) {
-                JSONObject obj3 = (JSONObject) parser.parse(obj.get(
-                        JSONConstants.PASSWORD_CREDENTIALS).toString());
-                PasswordCredentials passwordCreds = new PasswordCredentials();
-                passwordCreds.setUsername(obj3.get(JSONConstants.USERNAME)
-                        .toString());
-                passwordCreds.setPassword(obj3.get(JSONConstants.PASSWORD)
-                        .toString());
-                creds = OBJ_FACTORY.createPasswordCredentials(passwordCreds);
-
-            }
-        } catch (ParseException e) {
-            throw new BadRequestException("malformed JSON");
-        }
-        return creds;
-    }
-
     private Response.ResponseBuilder userDisabledExceptionResponse(
             String username) {
         String errMsg = String.format("User %s is disabled", username);
@@ -1188,8 +1117,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.nastFacade = nastFacade;
     }
 
-    void authenticateCloudAdminUserForGetRequests(
-            HttpServletRequest request) {
+    void authenticateCloudAdminUserForGetRequests(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         Map<String, String> stringStringMap = null;
         try {
@@ -1227,5 +1155,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                         "Cloud admin user authorization Failed.");
             }
         }
+    }
+
+    public void setCredentialUnmarshaller(CredentialUnmarshaller credentialUnmarshaller) {
+        this.credentialUnmarshaller = credentialUnmarshaller;
     }
 }
