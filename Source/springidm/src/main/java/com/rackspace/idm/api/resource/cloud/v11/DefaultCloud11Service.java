@@ -961,29 +961,43 @@ public class DefaultCloud11Service implements Cloud11Service {
             Credentials value = cred.getValue();
             String username = null;
             String apiKey = null;
+            User user = null;
+            UserScopeAccess usa = null;
 
             if (value instanceof UserCredentials) {
                 UserCredentials userCreds = (UserCredentials) value;
                 username = userCreds.getUsername();
                 apiKey = userCreds.getKey();
-            }
-            else if(value instanceof PasswordCredentials){
+                user = userService.getUser(username);
+                if (username == null) {
+                    return badRequestExceptionResponse("username cannot be null");
+                }
+                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, apiKey, getCloudAuthClientId());
+            } else if (value instanceof PasswordCredentials) {
                 username = ((PasswordCredentials) value).getUsername();
+                String password = ((PasswordCredentials) value).getPassword();
+                user = userService.getUser(username);
+
+                if (username == null) {
+                    return badRequestExceptionResponse("username cannot be null");
+                }
+                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username,password,getCloudAuthClientId());
+            } else if (value instanceof MossoCredentials) {
+                Integer mossoId = ((MossoCredentials) value).getMossoId();
+                String key = ((MossoCredentials) value).getKey();
+                if (mossoId == null) {
+                    return badRequestExceptionResponse("mossoId cannot be null");
+                }
+                user = userService.getUserByMossoId(mossoId);
+                usa = scopeAccessService.getUserScopeAccessForClientIdByMossoIdAndApiCredentials(mossoId,key,getCloudAuthClientId());
             }
 
-            if (username == null) {
-                return badRequestExceptionResponse("username cannot be null");
-            }
-
-            User user = this.userService.getUser(username);
 
             if (user == null) {
                 String errMsg = String.format("User %s not found", username);
                 throw new NotFoundException(errMsg);
             }
 
-            UserScopeAccess usa =
-                    scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, apiKey, getCloudAuthClientId());
             List<CloudEndpoint> endpoints = endpointService.getEndpointsForUser(username);
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)));
         } catch (Exception ex) {

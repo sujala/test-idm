@@ -3,11 +3,10 @@ package com.rackspace.idm.api.resource.cloud.v11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.util.NastFacade;
-import com.rackspacecloud.docs.auth.api.v1.Credentials;
-import com.rackspacecloud.docs.auth.api.v1.User;
-import com.rackspacecloud.docs.auth.api.v1.UserCredentials;
+import com.rackspacecloud.docs.auth.api.v1.*;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
@@ -46,6 +45,7 @@ public class DefaultCloud11ServiceTest {
     User user = new User();
     HttpServletRequest request;
     String token = "token";
+    private ScopeAccessService scopeAccessService;
 
 
     @Before
@@ -54,6 +54,7 @@ public class DefaultCloud11ServiceTest {
         ldapCloudAdminRepository = mock(LdapCloudAdminRepository.class);
         when(ldapCloudAdminRepository.authenticate("auth", "auth123")).thenReturn(true);
         userService = mock(UserService.class);
+        scopeAccessService = mock(ScopeAccessService.class);
         endpointService = mock(EndpointService.class);
         uriInfo = mock(UriInfo.class);
         config = mock(Configuration.class);
@@ -67,11 +68,67 @@ public class DefaultCloud11ServiceTest {
         user1.setId("userId");
         when(userConverterCloudV11.toUserDO(user)).thenReturn(user1);
         when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
-        defaultCloud11Service = new DefaultCloud11Service(config,null,endpointService,userService,null,userConverterCloudV11,null, ldapCloudAdminRepository);
+        defaultCloud11Service = new DefaultCloud11Service(config,scopeAccessService,endpointService,userService,null,userConverterCloudV11,null, ldapCloudAdminRepository);
         nastFacade = mock(NastFacade.class);
         defaultCloud11Service.setNastFacade(nastFacade);
         spy = spy(defaultCloud11Service);
+    }
 
+    @Test
+    public void authenticateResponse_withMossoCredentials_callsUserService_getUserByMossoId() throws Exception {
+        JAXBElement<MossoCredentials> credentials =
+                new JAXBElement<MossoCredentials>(QName.valueOf("foo"),MossoCredentials.class,new MossoCredentials());
+        defaultCloud11Service.authenticateResponse(credentials, null);
+        verify(userService).getUserByMossoId(anyInt());
+    }
+
+    @Test
+    public void authenticateResponse_withMossoCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByMossoIdAndApiCredentials() throws Exception {
+        MossoCredentials mossoCredentials = new MossoCredentials();
+        mossoCredentials.setMossoId(1);
+        JAXBElement<MossoCredentials> credentials =
+                new JAXBElement<MossoCredentials>(QName.valueOf("foo"),MossoCredentials.class, mossoCredentials);
+        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        defaultCloud11Service.authenticateResponse(credentials, null);
+        verify(scopeAccessService).getUserScopeAccessForClientIdByMossoIdAndApiCredentials(anyInt(),anyString(),anyString());
+    }
+
+    @Test
+    public void authenticateResponse_withUserCredentials_callsUserService_getUser() throws Exception {
+        JAXBElement<UserCredentials> credentials =
+                new JAXBElement<UserCredentials>(QName.valueOf("foo"),UserCredentials.class,new UserCredentials());
+        defaultCloud11Service.authenticateResponse(credentials, null);
+        verify(userService).getUser(null);
+    }
+
+    @Test
+    public void authenticateResponse_withUserCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByUsernameAndApiCredentials() throws Exception {
+        UserCredentials userCredentials = new UserCredentials();
+        userCredentials.setUsername("foo");
+        JAXBElement<UserCredentials> credentials =
+                new JAXBElement<UserCredentials>(QName.valueOf("foo"),UserCredentials.class, userCredentials);
+        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        defaultCloud11Service.authenticateResponse(credentials, null);
+        verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    public void authenticateResponse_withPasswordCredentials_callsUserService_getUser() throws Exception {
+        JAXBElement<PasswordCredentials> credentials =
+                new JAXBElement<PasswordCredentials>(QName.valueOf("foo"),PasswordCredentials.class,new PasswordCredentials());
+        defaultCloud11Service.authenticateResponse(credentials, null);
+        verify(userService).getUser(null);
+    }
+
+    @Test
+    public void authenticateResponse_withPasswordCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByUsernameAndPassword() throws Exception {
+        PasswordCredentials passwordCredentials = new PasswordCredentials();
+        passwordCredentials.setUsername("foo");
+        JAXBElement<PasswordCredentials> credentials =
+                new JAXBElement<PasswordCredentials>(QName.valueOf("foo"),PasswordCredentials.class, passwordCredentials);
+        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        defaultCloud11Service.authenticateResponse(credentials, null);
+        verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndPassword(anyString(),anyString(),anyString());
     }
 
     @Test
