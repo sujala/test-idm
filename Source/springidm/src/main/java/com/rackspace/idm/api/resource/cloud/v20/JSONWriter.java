@@ -99,16 +99,33 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         } else if (object.getDeclaredType().isAssignableFrom(EndpointTemplate.class)) {
 
             EndpointTemplate template = (EndpointTemplate) object.getValue();
-            String jsonText = JSONValue
-                .toJSONString(getEndpointTemplate(template));
+            String jsonText = JSONValue.toJSONString(getEndpointTemplate(template));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
         } else if (object.getDeclaredType().isAssignableFrom(EndpointTemplateList.class)) {
-
-            EndpointTemplateList templates = (EndpointTemplateList) object
-                .getValue();
-            String jsonText = JSONValue
-                .toJSONString(getEndpointTemplateList(templates));
+            JSONObject endpointTemplate = new JSONObject();
+            JSONArray endpoints = new JSONArray();
+            endpointTemplate.put(JSONConstants.ENDPOINT_TEMPLATES, endpoints);
+            EndpointTemplateList templateList = (EndpointTemplateList)object.getValue();
+            for(EndpointTemplate template : templateList.getEndpointTemplate()){
+                JSONObject templateItem = new JSONObject();
+                templateItem.put(JSONConstants.REGION, template.getRegion());
+                templateItem.put(JSONConstants.ID, template.getId());
+                templateItem.put(JSONConstants.ENABLED, template.isEnabled());
+                templateItem.put(JSONConstants.PUBLIC_URL, template.getPublicURL());
+                templateItem.put(JSONConstants.GLOBAL, template.isGlobal());
+                templateItem.put(JSONConstants.NAME, template.getName());
+                templateItem.put(JSONConstants.ADMIN_URL, template.getAdminURL());
+                templateItem.put(JSONConstants.TYPE, template.getType());
+                templateItem.put(JSONConstants.INTERNAL_URL, template.getInternalURL());
+                if(template.getVersion() != null){
+                    templateItem.put(JSONConstants.VERSION_ID, template.getVersion().getId());
+                    templateItem.put(JSONConstants.VERSION_INFO, template.getVersion().getInfo());
+                    templateItem.put(JSONConstants.VERSION_LIST, template.getVersion().getList());
+                }
+                endpoints.add(templateItem);
+            }
+            String jsonText = JSONValue.toJSONString(endpointTemplate);
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
         } else if (object.getDeclaredType().isAssignableFrom(
@@ -118,13 +135,11 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
 
             if (cred instanceof ApiKeyCredentials) {
                 ApiKeyCredentials creds = (ApiKeyCredentials) cred;
-                String jsonText = JSONValue
-                    .toJSONString(getApiKeyCredentials(creds));
+                String jsonText = JSONValue.toJSONString(getApiKeyCredentials(creds));
                 outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
             } else {
                 PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) cred;
-                String jsonText = JSONValue
-                    .toJSONString(getPasswordCredentials(creds));
+                String jsonText = JSONValue.toJSONString(getPasswordCredentials(creds));
                 outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
             }
 
@@ -139,20 +154,17 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
 
-            CredentialListType credsList = (CredentialListType) object
-                .getValue();
+            CredentialListType credsList = (CredentialListType) object.getValue();
             outer.put(JSONConstants.CREDENTIALS, list);
 
             for (JAXBElement<? extends CredentialType> cred : credsList
                 .getCredential()) {
                 if (cred.getDeclaredType().isAssignableFrom(
                     ApiKeyCredentials.class)) {
-                    list.add(getApiKeyCredentials((ApiKeyCredentials) cred
-                        .getValue()));
+                    list.add(getApiKeyCredentials((ApiKeyCredentials) cred.getValue()));
                 } else if (cred.getDeclaredType().isAssignableFrom(
                     PasswordCredentialsRequiredUsername.class)) {
-                    list.add(getPasswordCredentials((PasswordCredentialsRequiredUsername) cred
-                        .getValue()));
+                    list.add(getPasswordCredentials((PasswordCredentialsRequiredUsername) cred.getValue()));
                 }
             }
 
@@ -205,15 +217,21 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
 
             BaseURLList baseList = (BaseURLList)object.getValue();
 
+            //ToDo: CloudBaseUrl
             for (BaseURL url : baseList.getBaseURL()){
                 JSONObject baseURL = new JSONObject();
                 baseURL.put(JSONConstants.ENABLED, url.isEnabled());
                 baseURL.put(JSONConstants.DEFAULT, url.isDefault());
+                if(url.getInternalURL() != null)
                 baseURL.put(JSONConstants.INTERNAL_URL, url.getInternalURL());
-                baseURL.put(JSONConstants.PUBLIC_URL, url.getPublicURL());
-                baseURL.put(JSONConstants.REGION, url.getRegion());
-                baseURL.put(JSONConstants.SERVICE_NAME, url.getServiceName());
-                baseURL.put(JSONConstants.USER_TYPE, url.getUserType().value());
+                if(url.getPublicURL() != null)
+                    baseURL.put(JSONConstants.PUBLIC_URL, url.getPublicURL());
+                if(url.getRegion() != null)
+                    baseURL.put(JSONConstants.REGION, url.getRegion());
+                if(url.getServiceName() != null)
+                    baseURL.put(JSONConstants.SERVICE_NAME, url.getServiceName());
+                if(url.getUserType() != null)
+                    baseURL.put(JSONConstants.USER_TYPE, url.getUserType().name());
                 baseURL.put(JSONConstants.ID, url.getId());
                 list.add(baseURL);
             }
