@@ -1,31 +1,16 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.dao.EndpointDao;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.exception.NotFoundException;
+import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.dao.EndpointDao;
-import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
-import com.rackspace.idm.domain.entity.EndPoints;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.exception.NotFoundException;
-import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.LDAPResult;
-import com.unboundid.ldap.sdk.LDAPSearchException;
-import com.unboundid.ldap.sdk.Modification;
-import com.unboundid.ldap.sdk.ModificationType;
-import com.unboundid.ldap.sdk.ResultCode;
-import com.unboundid.ldap.sdk.SearchResult;
-import com.unboundid.ldap.sdk.SearchResultEntry;
-import com.unboundid.ldap.sdk.SearchScope;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class LdapEndpointRepository extends LdapRepository implements
     EndpointDao {
@@ -69,6 +54,10 @@ public class LdapEndpointRepository extends LdapRepository implements
 
         if (!StringUtils.isBlank(baseUrl.getPublicUrl())) {
             atts.add(new Attribute(ATTR_PUBLIC_URL, baseUrl.getPublicUrl()));
+        }
+
+        if (!StringUtils.isBlank(baseUrl.getName())) {
+            atts.add(new Attribute(ATTR_NAME, baseUrl.getName()));
         }
 
         if (!StringUtils.isBlank(baseUrl.getRegion())) {
@@ -425,19 +414,15 @@ public class LdapEndpointRepository extends LdapRepository implements
         CloudBaseUrl baseUrl = new CloudBaseUrl();
         baseUrl.setUniqueId(resultEntry.getDN());
         baseUrl.setAdminUrl(resultEntry.getAttributeValue(ATTR_ADMIN_URL));
-        baseUrl.setBaseUrlId(resultEntry
-            .getAttributeValueAsInteger(ATTR_ID));
-        baseUrl
-            .setBaseUrlType(resultEntry.getAttributeValue(ATTR_BASEURL_TYPE));
+        baseUrl.setBaseUrlId(resultEntry.getAttributeValueAsInteger(ATTR_ID));
+        baseUrl.setBaseUrlType(resultEntry.getAttributeValue(ATTR_BASEURL_TYPE));
         baseUrl.setDef(resultEntry.getAttributeValueAsBoolean(ATTR_DEF));
-        baseUrl
-            .setInternalUrl(resultEntry.getAttributeValue(ATTR_INTERNAL_URL));
+        baseUrl.setInternalUrl(resultEntry.getAttributeValue(ATTR_INTERNAL_URL));
         baseUrl.setPublicUrl(resultEntry.getAttributeValue(ATTR_PUBLIC_URL));
         baseUrl.setRegion(resultEntry.getAttributeValue(ATTR_REGION));
         baseUrl.setService(resultEntry.getAttributeValue(ATTR_SERVICE));
-        baseUrl
-            .setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
-        
+        baseUrl.setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
+        baseUrl.setName(resultEntry.getAttributeValue(ATTR_NAME));
         baseUrl.setOpenstackType(resultEntry.getAttributeValue(ATTR_OPENSTACK_TYPE));
         baseUrl.setVersionId(resultEntry.getAttributeValue(ATTR_VERSION_ID));
         baseUrl.setVersionInfo(resultEntry.getAttributeValue(ATTR_VERSION_INFO));
