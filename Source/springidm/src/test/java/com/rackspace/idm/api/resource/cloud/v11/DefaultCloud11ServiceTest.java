@@ -75,6 +75,27 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void authenticateResponse_withNastCredentials_callsUserService_getUserByNastId() throws Exception {
+        NastCredentials nastCredentials = new NastCredentials();
+        nastCredentials.setNastId("nastId");
+        JAXBElement<NastCredentials> credentials =
+                new JAXBElement<NastCredentials>(QName.valueOf("foo"),NastCredentials.class, nastCredentials);
+        defaultCloud11Service.authenticateResponse(credentials, null);
+        verify(userService).getUserByNastId("nastId");
+    }
+
+    @Test
+    public void authenticateResponse_withNastCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByNastIdAndApiCredentials() throws Exception {
+        NastCredentials nastCredentials = new NastCredentials();
+        nastCredentials.setNastId("nastId");
+        JAXBElement<NastCredentials> credentials =
+                new JAXBElement<NastCredentials>(QName.valueOf("foo"),NastCredentials.class, nastCredentials);
+        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        defaultCloud11Service.authenticateResponse(credentials, null);
+        verify(scopeAccessService).getUserScopeAccessForClientIdByNastIdAndApiCredentials(anyString(), anyString(), anyString());
+    }
+
+    @Test
     public void authenticateResponse_withMossoCredentials_callsUserService_getUserByMossoId() throws Exception {
         JAXBElement<MossoCredentials> credentials =
                 new JAXBElement<MossoCredentials>(QName.valueOf("foo"),MossoCredentials.class,new MossoCredentials());
@@ -90,7 +111,7 @@ public class DefaultCloud11ServiceTest {
                 new JAXBElement<MossoCredentials>(QName.valueOf("foo"),MossoCredentials.class, mossoCredentials);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
         defaultCloud11Service.authenticateResponse(credentials, null);
-        verify(scopeAccessService).getUserScopeAccessForClientIdByMossoIdAndApiCredentials(anyInt(),anyString(),anyString());
+        verify(scopeAccessService).getUserScopeAccessForClientIdByMossoIdAndApiCredentials(anyInt(), anyString(), anyString());
     }
 
     @Test

@@ -18,7 +18,6 @@ import com.rackspace.idm.util.NastFacade;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
-import com.sun.jersey.server.wadl.generators.resourcedoc.xhtml.Elements;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -960,19 +959,19 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             Credentials value = cred.getValue();
             String username = null;
-            String apiKey = null;
             User user = null;
             UserScopeAccess usa = null;
 
+            String cloudAuthClientId = getCloudAuthClientId();
             if (value instanceof UserCredentials) {
                 UserCredentials userCreds = (UserCredentials) value;
                 username = userCreds.getUsername();
-                apiKey = userCreds.getKey();
+                String apiKey = userCreds.getKey();
                 user = userService.getUser(username);
                 if (username == null) {
                     return badRequestExceptionResponse("username cannot be null");
                 }
-                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, apiKey, getCloudAuthClientId());
+                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, apiKey, cloudAuthClientId);
             } else if (value instanceof PasswordCredentials) {
                 username = ((PasswordCredentials) value).getUsername();
                 String password = ((PasswordCredentials) value).getPassword();
@@ -981,7 +980,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 if (username == null) {
                     return badRequestExceptionResponse("username cannot be null");
                 }
-                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username,password,getCloudAuthClientId());
+                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username,password, cloudAuthClientId);
             } else if (value instanceof MossoCredentials) {
                 Integer mossoId = ((MossoCredentials) value).getMossoId();
                 String key = ((MossoCredentials) value).getKey();
@@ -989,7 +988,15 @@ public class DefaultCloud11Service implements Cloud11Service {
                     return badRequestExceptionResponse("mossoId cannot be null");
                 }
                 user = userService.getUserByMossoId(mossoId);
-                usa = scopeAccessService.getUserScopeAccessForClientIdByMossoIdAndApiCredentials(mossoId,key,getCloudAuthClientId());
+                usa = scopeAccessService.getUserScopeAccessForClientIdByMossoIdAndApiCredentials(mossoId,key, cloudAuthClientId);
+            }else if(value instanceof NastCredentials){
+                String nastId = ((NastCredentials) value).getNastId();
+                String key = ((NastCredentials) value).getKey();
+                if(nastId == null){
+                    return badRequestExceptionResponse("nastId cannot be null");
+                }
+                user = userService.getUserByNastId(nastId);
+                usa = scopeAccessService.getUserScopeAccessForClientIdByNastIdAndApiCredentials(nastId,key, cloudAuthClientId);
             }
 
 
