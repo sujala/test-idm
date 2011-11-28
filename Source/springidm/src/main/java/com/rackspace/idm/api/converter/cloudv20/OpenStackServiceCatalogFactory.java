@@ -1,15 +1,14 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import java.util.List;
-
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import org.apache.commons.lang.StringUtils;
 import org.openstack.docs.identity.api.v2.EndpointForService;
 import org.openstack.docs.identity.api.v2.ServiceCatalog;
 import org.openstack.docs.identity.api.v2.ServiceForCatalog;
 import org.openstack.docs.identity.api.v2.VersionForService;
 
-import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import java.util.List;
 
 
 public class OpenStackServiceCatalogFactory {
@@ -40,20 +39,20 @@ public class OpenStackServiceCatalogFactory {
             version.setInfo(baseUrl.getVersionInfo());
             version.setList(baseUrl.getVersionList());
             
-            EndpointForService endpoint = new EndpointForService();
+            EndpointForService endpointItem = new EndpointForService();
             
-            endpoint.setAdminURL(baseUrl.getAdminUrl());
-            endpoint.setInternalURL(baseUrl.getInternalUrl());
-            endpoint.setPublicURL(baseUrl.getPublicUrl());
-            endpoint.setTenantId(endpoint.getTenantId());
-            endpoint.setRegion(baseUrl.getRegion());
+            endpointItem.setAdminURL(baseUrl.getAdminUrl());
+            endpointItem.setInternalURL(baseUrl.getInternalUrl());
+            endpointItem.setPublicURL(baseUrl.getPublicUrl());
+            endpointItem.setTenantId(endPoint.getTenantId());
+            endpointItem.setRegion(baseUrl.getRegion());
             if (!StringUtils.isBlank(version.getId())) {
-                endpoint.setVersion(version);
+                endpointItem.setVersion(version);
             }
             
-            setEndpointUrls(endpoint, endPoint.getTenantName());
+            setEndpointUrls(endpointItem, endPoint.getTenantName());
             
-            currentService.getEndpoint().add(endpoint);
+            currentService.getEndpoint().add(endpointItem);
         }
     }
 

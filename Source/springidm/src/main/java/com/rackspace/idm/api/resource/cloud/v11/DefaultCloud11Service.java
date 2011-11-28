@@ -244,8 +244,11 @@ public class DefaultCloud11Service implements Cloud11Service {
                         "BaseUrl %s not found", baseUrlRef.getId()));
             }
 
-            this.endpointService.addBaseUrlToUser(baseUrl.getBaseUrlId(),
-                    baseUrlRef.isV1Default(), userId);
+            if (!baseUrl.getEnabled()) {
+                throw new BadRequestException(String.format("Attempted to add a disabled BaseURL!"));
+            }
+
+            this.endpointService.addBaseUrlToUser(baseUrl.getBaseUrlId(), baseUrlRef.isV1Default(), userId);
 
             return Response
                     .status(Response.Status.CREATED)

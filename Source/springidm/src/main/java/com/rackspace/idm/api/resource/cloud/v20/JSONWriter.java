@@ -1,21 +1,15 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.MessageBodyWriter;
-import javax.ws.rs.ext.Provider;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.domain.config.JAXBContextResolver;
+import com.rackspacecloud.docs.auth.api.v1.BaseURL;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
+import com.sun.jersey.api.json.JSONJAXBContext;
+import com.sun.jersey.api.json.JSONMarshaller;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -25,19 +19,23 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
-import org.openstack.docs.identity.api.v2.CredentialListType;
-import org.openstack.docs.identity.api.v2.CredentialType;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
+import org.openstack.docs.identity.api.v2.*;
 import org.w3._2005.atom.Link;
 
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.sun.jersey.api.json.JSONJAXBContext;
-import com.sun.jersey.api.json.JSONMarshaller;
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.ext.MessageBodyWriter;
+import javax.ws.rs.ext.Provider;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
@@ -82,9 +80,14 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
         } else if (object.getDeclaredType().isAssignableFrom(ServiceList.class)) {
-
-            ServiceList services = (ServiceList) object.getValue();
-            String jsonText = JSONValue.toJSONString(getServiceList(services));
+            JSONObject outer = new JSONObject();
+            JSONArray list = new JSONArray();
+            ServiceList serviceList = (ServiceList)object.getValue();
+            for (Service service : serviceList.getService()){
+                list.add(getServiceWithoutWrapper(service));
+            }
+            outer.put(JSONConstants.SERVICES, list);
+            String jsonText = JSONValue.toJSONString(outer);
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
         } else if (object.getDeclaredType().isAssignableFrom(SecretQA.class)) {
@@ -93,16 +96,14 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             String jsonText = JSONValue.toJSONString(getSecretQA(secrets));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
-        } else if (object.getDeclaredType().isAssignableFrom(
-            EndpointTemplate.class)) {
+        } else if (object.getDeclaredType().isAssignableFrom(EndpointTemplate.class)) {
 
             EndpointTemplate template = (EndpointTemplate) object.getValue();
             String jsonText = JSONValue
                 .toJSONString(getEndpointTemplate(template));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
-        } else if (object.getDeclaredType().isAssignableFrom(
-            EndpointTemplateList.class)) {
+        } else if (object.getDeclaredType().isAssignableFrom(EndpointTemplateList.class)) {
 
             EndpointTemplateList templates = (EndpointTemplateList) object
                 .getValue();
@@ -133,8 +134,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             String jsonText = JSONValue.toJSONString(getGroups(groups));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
-        } else if (object.getDeclaredType().isAssignableFrom(
-            CredentialListType.class)) {
+        } else if (object.getDeclaredType().isAssignableFrom(CredentialListType.class)) {
 
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
@@ -159,6 +159,69 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             String jsonText = JSONValue.toJSONString(outer);
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
+        } else if (object.getDeclaredType().isAssignableFrom(RoleList.class)) {
+            JSONObject outer = new JSONObject();
+            JSONArray list = new JSONArray();
+
+            RoleList roleList = (RoleList)object.getValue();
+
+            for (Role role : roleList.getRole()){
+                list.add(getRole(role));
+            }
+            outer.put(JSONConstants.ROLES, list);
+
+            String jsonText = JSONValue.toJSONString(outer);
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+
+        } else if (object.getDeclaredType().isAssignableFrom(UserList.class)) {
+            JSONObject outer = new JSONObject();
+            JSONArray list = new JSONArray();
+
+            UserList userList = (UserList)object.getValue();
+
+            for (User user : userList.getUser()){
+                list.add(getUser(user));
+            }
+            outer.put(JSONConstants.USERS, list);
+
+            String jsonText = JSONValue.toJSONString(outer);
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+
+        } else if (object.getDeclaredType().isAssignableFrom(AuthenticateResponse.class)) {
+            JSONObject outer = new JSONObject();
+            JSONObject access = new JSONObject();
+            AuthenticateResponse authenticateResponse = (AuthenticateResponse)object.getValue();
+            access.put(JSONConstants.TOKEN, getToken(authenticateResponse.getToken()));
+            access.put(JSONConstants.SERVICECATALOG, getServiceCatalog(authenticateResponse.getServiceCatalog()));
+            access.put(JSONConstants.USER, getTokenUser(authenticateResponse.getUser()));
+            outer.put(JSONConstants.ACCESS, access);
+
+            String jsonText = JSONValue.toJSONString(outer);
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+
+        } else if (object.getDeclaredType().isAssignableFrom(BaseURLList.class)) {
+            JSONObject outer = new JSONObject();
+            JSONArray list = new JSONArray();
+
+            BaseURLList baseList = (BaseURLList)object.getValue();
+
+            for (BaseURL url : baseList.getBaseURL()){
+                JSONObject baseURL = new JSONObject();
+                baseURL.put(JSONConstants.ENABLED, url.isEnabled());
+                baseURL.put(JSONConstants.DEFAULT, url.isDefault());
+                baseURL.put(JSONConstants.INTERNAL_URL, url.getInternalURL());
+                baseURL.put(JSONConstants.PUBLIC_URL, url.getPublicURL());
+                baseURL.put(JSONConstants.REGION, url.getRegion());
+                baseURL.put(JSONConstants.SERVICE_NAME, url.getServiceName());
+                baseURL.put(JSONConstants.USER_TYPE, url.getUserType().value());
+                baseURL.put(JSONConstants.ID, url.getId());
+                list.add(baseURL);
+            }
+            outer.put(JSONConstants.BASE_URLS, list);
+
+
+            String jsonText = JSONValue.toJSONString(outer);
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
         } else {
             try {
                 getMarshaller().marshallToJSON(object, outputStream);
@@ -166,6 +229,65 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                 e.printStackTrace();
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private JSONObject getTokenUser(UserForAuthenticateResponse user){
+        JSONObject userInner = new JSONObject();
+        userInner.put(JSONConstants.ID, user.getId());
+        userInner.put(JSONConstants.NAME, user.getName());
+
+        JSONArray roleInner = new JSONArray();
+        userInner.put(JSONConstants.ROLES, roleInner);
+        RoleList roleList = user.getRoles();
+        for (Role role : roleList.getRole()){
+            roleInner.add(getRole(role));
+        }
+        return userInner;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private JSONArray getServiceCatalog(ServiceCatalog serviceCatalog){
+        JSONArray serviceInner = new JSONArray();
+        for(ServiceForCatalog service : serviceCatalog.getService()){
+            JSONObject catalogItem = new JSONObject();
+            catalogItem.put(JSONConstants.ENDPOINTS, getEndpointsForCatalog(service.getEndpoint()));
+            catalogItem.put(JSONConstants.NAME, service.getName());
+            catalogItem.put(JSONConstants.TYPE, service.getType());
+            serviceInner.add(catalogItem);
+        }
+        return serviceInner;        
+    }
+
+    @SuppressWarnings("unchecked")
+    private JSONObject getToken(Token token){
+        JSONObject tokenInner = new JSONObject();
+        tokenInner.put(JSONConstants.ID, token.getId());
+        tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
+        return tokenInner;
+    }
+
+    @SuppressWarnings("unchecked")
+    private JSONArray getEndpointsForCatalog(List<EndpointForService> endpoints){
+        JSONArray endpointList = new JSONArray();
+        for(EndpointForService endpoint : endpoints){
+                JSONObject endpointItem = new JSONObject();
+                endpointItem.put(JSONConstants.TENANT_ID, endpoint.getTenantId());
+                endpointItem.put(JSONConstants.PUBLIC_URL, endpoint.getPublicURL());
+                endpointItem.put(JSONConstants.INTERNAL_URL, endpoint.getInternalURL());
+                endpointItem.put(JSONConstants.REGION, endpoint.getRegion());
+
+                JSONObject version = new JSONObject();
+                if(endpoint.getVersion() != null){
+                    version.put(JSONConstants.VERSION_INFO, endpoint.getVersion().getInfo());
+                    version.put(JSONConstants.VERSION_LIST, endpoint.getVersion().getList());
+                    version.put(JSONConstants.VERSION_ID, endpoint.getVersion().getId());
+                }
+                endpointItem.put(JSONConstants.VERSION_ID, version);
+
+                endpointList.add(endpointItem);
+            }
+        return endpointList;
     }
 
     @SuppressWarnings("unchecked")
@@ -199,6 +321,27 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         outer.put(JSONConstants.SECRET_QA, inner);
         inner.put(JSONConstants.ANSWER, secrets.getAnswer());
         inner.put(JSONConstants.QUESTION, secrets.getQuestion());
+        return outer;
+    }
+
+    @SuppressWarnings("unchecked")
+    private JSONObject getUser(User user) {
+        JSONObject outer = new JSONObject();
+        outer.put(JSONConstants.ID, user.getId());
+        outer.put(JSONConstants.USERNAME, user.getUsername());
+        outer.put(JSONConstants.EMAIL, user.getEmail());
+        outer.put(JSONConstants.ENABLED, user.isEnabled());
+
+        return outer;
+    }
+
+    @SuppressWarnings("unchecked")
+    private JSONObject getRole(Role role) {
+        JSONObject outer = new JSONObject();
+        outer.put(JSONConstants.ID, role.getId());
+        outer.put(JSONConstants.DESCRIPTION, role.getDescription());
+        outer.put(JSONConstants.NAME, role.getName());
+
         return outer;
     }
 
@@ -239,7 +382,6 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     @SuppressWarnings("unchecked")
     private JSONObject getService(Service service) {
         JSONObject outer = new JSONObject();
-
         outer.put(JSONConstants.SERVICE, getServiceWithoutWrapper(service));
         return outer;
     }
@@ -247,7 +389,6 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     @SuppressWarnings("unchecked")
     private JSONObject getServiceWithoutWrapper(Service service) {
         JSONObject outer = new JSONObject();
-
         outer.put(JSONConstants.ID, service.getId());
         outer.put(JSONConstants.NAME, service.getName());
         outer.put(JSONConstants.TYPE, service.getType());
@@ -262,7 +403,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         JSONArray list = new JSONArray();
 
         outer.put(JSONConstants.SERVICES, inner);
-        inner.put(JSONConstants.SERVICE, list);
+        //inner.put(JSONConstants.SERVICE, list);
 
         for (Service service : serviceList.getService()) {
             list.add(getServiceWithoutWrapper(service));

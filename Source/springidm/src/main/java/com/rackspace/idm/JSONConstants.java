@@ -2,17 +2,23 @@ package com.rackspace.idm;
 
 public class JSONConstants {
 
+    public static final String ACCESS = "access";
     public static final String ADMIN_URL = "adminURL";
     public static final String ALIAS = "alias";
     public static final String ANSWER = "answer";
     public static final String API_KEY = "apiKey";
     public static final String APIKEY_CREDENTIALS = "RAX-KSKEY:apiKeyCredentials";
     public static final String AUTH = "auth";
+    public static final Object BASE_URL_REF = "baseURLRef";
+    public static final Object BASE_URL_REFS = "baseURLRefs";
+    public static final Object BASE_URLS = "baseURLs";
     public static final String CREDENTIALS = "credentials";
     public static final String DESCRIPTION = "description";
     public static final String ENABLED = "enabled";
     public static final String ENDPOINT_TEMPLATE = "OS-KSCATALOG:endpointTemplate";
     public static final String ENDPOINT_TEMPLATES = "OS-KSCATALOG:endpointTemplates";
+    public static final String ENDPOINTS = "endpoints";
+    public static final String EXPIRES = "expires";
     public static final String EXTENSION = "extension";
     public static final String EXTENSIONS = "extensions";
     public static final String GLOBAL = "global";
@@ -36,6 +42,7 @@ public class JSONConstants {
     public static final String REGION = "region";
     public static final String REL = "rel";
     public static final String SECRET_QA = "RAX-KSQA:secretQA";
+    public static final String SERVICECATALOG = "serviceCatalog";
     public static final String SERVICE = "OS-KSADM:service";
     public static final String SERVICES = "OS-KSADM:services";
     public static final String TENANT_ID = "tenantId";
@@ -44,6 +51,7 @@ public class JSONConstants {
     public static final String TYPE = "type";
     public static final String UPDATED = "updated";
     public static final String USER = "user";
+    public static final String USERS = "users";
     public static final String USERNAME = "username";
     public static final String UTF_8 = "UTF-8";
     public static final String VERSION_ID = "versionId";
@@ -65,9 +73,8 @@ public class JSONConstants {
     public static final Object DISPLAY_NAME_CLOUD = "display-name";
     public static final Object TENANT = "tenant";
     public static final Object ROLE = "role";
+    public static final Object ROLES = "roles";
     public static final Object SERVICE_ID = "serviceId";
-    public static final Object BASE_URL_REF = "baseURLRef";
-    public static final Object BASE_URL_REFS = "baseURLRefs";
     public static final Object V1_DEFAULT = "v1Default";
     public static final Object USER_TYPE = "userType";
     public static final Object SERVICE_NAME = "serviceName";
