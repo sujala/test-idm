@@ -862,30 +862,27 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
 
             if (cred.getValue() instanceof MossoCredentials) {
-                MossoCredentials mossoCreds = (MossoCredentials) cred
-                        .getValue();
+                MossoCredentials mossoCreds = (MossoCredentials) cred.getValue();
                 int mossoId = mossoCreds.getMossoId();
                 String apiKey = mossoCreds.getKey();
+                if(apiKey==null || apiKey.length()==0){
+                    return badRequestExceptionResponse("Expecting apiKey");
+                }
                 user = this.userService.getUserByMossoId(mossoId);
                 if (user == null) {
-                    return notFoundExceptionResponse(String.format(
-                            "User with MossoId %s not found", mossoId));
+                    return notFoundExceptionResponse(String.format("User with MossoId %s not found", mossoId));
                 }
-                usa = this.scopeAccessService
-                        .getUserScopeAccessForClientIdByMossoIdAndApiCredentials(
-                                mossoId, apiKey, getCloudAuthClientId());
+                usa = scopeAccessService.getUserScopeAccessForClientIdByMossoIdAndApiCredentials(mossoId, apiKey, getCloudAuthClientId());
             } else if (cred.getValue() instanceof NastCredentials) {
                 NastCredentials nastCreds = (NastCredentials) cred.getValue();
                 String nastId = nastCreds.getNastId();
                 String apiKey = nastCreds.getKey();
                 user = this.userService.getUserByNastId(nastId);
                 if (user == null) {
-                    return notFoundExceptionResponse(String.format(
-                            "User with NastId %s not found", nastId));
+                    return notFoundExceptionResponse(String.format("User with NastId %s not found", nastId));
                 }
                 usa = this.scopeAccessService
-                        .getUserScopeAccessForClientIdByNastIdAndApiCredentials(
-                                nastId, apiKey, getCloudAuthClientId());
+                        .getUserScopeAccessForClientIdByNastIdAndApiCredentials(nastId, apiKey, getCloudAuthClientId());
             } else {
                 PasswordCredentials passCreds = (PasswordCredentials) cred
                         .getValue();
@@ -967,38 +964,42 @@ public class DefaultCloud11Service implements Cloud11Service {
                 UserCredentials userCreds = (UserCredentials) value;
                 username = userCreds.getUsername();
                 String apiKey = userCreds.getKey();
-                user = userService.getUser(username);
-                if (username == null) {
-                    return badRequestExceptionResponse("username cannot be null");
+                if (apiKey == null || apiKey.length()==0) {
+                    return badRequestExceptionResponse("Expecting apiKey");
                 }
+                if (username == null || username.length()==0) {
+                    return badRequestExceptionResponse("Expecting username");
+                }
+                user = userService.getUser(username);
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, apiKey, cloudAuthClientId);
             } else if (value instanceof PasswordCredentials) {
                 username = ((PasswordCredentials) value).getUsername();
                 String password = ((PasswordCredentials) value).getPassword();
-                user = userService.getUser(username);
-
-                if (username == null) {
-                    return badRequestExceptionResponse("username cannot be null");
+                if (password == null || password.length()==0) {
+                    return badRequestExceptionResponse("Expecting password");
                 }
+                if (username == null || username.length()==0) {
+                    return badRequestExceptionResponse("Expecting username");
+                }
+                user = userService.getUser(username);
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username,password, cloudAuthClientId);
             } else if (value instanceof MossoCredentials) {
                 Integer mossoId = ((MossoCredentials) value).getMossoId();
                 String key = ((MossoCredentials) value).getKey();
                 if (mossoId == null) {
-                    return badRequestExceptionResponse("mossoId cannot be null");
+                    return badRequestExceptionResponse("Expecting mosso id");
                 }
                 user = userService.getUserByMossoId(mossoId);
                 usa = scopeAccessService.getUserScopeAccessForClientIdByMossoIdAndApiCredentials(mossoId,key, cloudAuthClientId);
             }else if(value instanceof NastCredentials){
                 String nastId = ((NastCredentials) value).getNastId();
                 String key = ((NastCredentials) value).getKey();
-                if(nastId == null){
-                    return badRequestExceptionResponse("nastId cannot be null");
+                if(nastId == null || nastId.length()==0){
+                    return badRequestExceptionResponse("Expecting nast id");
                 }
                 user = userService.getUserByNastId(nastId);
                 usa = scopeAccessService.getUserScopeAccessForClientIdByNastIdAndApiCredentials(nastId,key, cloudAuthClientId);
             }
-
 
             if (user == null) {
                 String errMsg = String.format("User %s not found", username);

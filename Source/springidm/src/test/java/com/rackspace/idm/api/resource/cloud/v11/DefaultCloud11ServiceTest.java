@@ -68,10 +68,68 @@ public class DefaultCloud11ServiceTest {
         user1.setId("userId");
         when(userConverterCloudV11.toUserDO(user)).thenReturn(user1);
         when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
-        defaultCloud11Service = new DefaultCloud11Service(config,scopeAccessService,endpointService,userService,null,userConverterCloudV11,null, ldapCloudAdminRepository);
+        defaultCloud11Service = new DefaultCloud11Service(config, scopeAccessService, endpointService, userService, null, userConverterCloudV11, null, ldapCloudAdminRepository);
         nastFacade = mock(NastFacade.class);
         defaultCloud11Service.setNastFacade(nastFacade);
         spy = spy(defaultCloud11Service);
+    }
+
+    @Test
+    public void authenticateResponse_withNastCredentials_withEmptyUsername_returns400() throws Exception {
+        NastCredentials nastCredentials = new NastCredentials();
+        nastCredentials.setNastId("");
+        JAXBElement<NastCredentials> credentials =
+                new JAXBElement<NastCredentials>(QName.valueOf("foo"), NastCredentials.class, nastCredentials);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void authenticateResponse_withPasswordCredentials_withEmptyUsername_returns400() throws Exception {
+        PasswordCredentials passwordCredentials = new PasswordCredentials();
+        passwordCredentials.setUsername("");
+        JAXBElement<PasswordCredentials> credentials =
+                new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void authenticateResponse_withPasswordCredentials_withNullPasswordAndUsername_returns400() throws Exception {
+        PasswordCredentials passwordCredentials = new PasswordCredentials();
+        JAXBElement<PasswordCredentials> credentials =
+                new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void authenticateResponse_withCredentials_withNoApiKey_returns400() throws Exception {
+        UserCredentials userCredentials = new UserCredentials();
+        JAXBElement<UserCredentials> credentials =
+                new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void authenticateResponse_withPasswordCredentials_withEmptyPassword_returns400() throws Exception {
+        PasswordCredentials passwordCredentials = new PasswordCredentials();
+        passwordCredentials.setPassword("");
+        JAXBElement<PasswordCredentials> credentials =
+                new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void authenticateResponse_withUserCredentials_withEmptyUsername_returns400() throws Exception {
+        UserCredentials userCredentials = new UserCredentials();
+        userCredentials.setUsername("");
+        JAXBElement<UserCredentials> credentials =
+                new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
     @Test
@@ -79,7 +137,7 @@ public class DefaultCloud11ServiceTest {
         NastCredentials nastCredentials = new NastCredentials();
         nastCredentials.setNastId("nastId");
         JAXBElement<NastCredentials> credentials =
-                new JAXBElement<NastCredentials>(QName.valueOf("foo"),NastCredentials.class, nastCredentials);
+                new JAXBElement<NastCredentials>(QName.valueOf("foo"), NastCredentials.class, nastCredentials);
         defaultCloud11Service.authenticateResponse(credentials, null);
         verify(userService).getUserByNastId("nastId");
     }
@@ -89,7 +147,7 @@ public class DefaultCloud11ServiceTest {
         NastCredentials nastCredentials = new NastCredentials();
         nastCredentials.setNastId("nastId");
         JAXBElement<NastCredentials> credentials =
-                new JAXBElement<NastCredentials>(QName.valueOf("foo"),NastCredentials.class, nastCredentials);
+                new JAXBElement<NastCredentials>(QName.valueOf("foo"), NastCredentials.class, nastCredentials);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
         defaultCloud11Service.authenticateResponse(credentials, null);
         verify(scopeAccessService).getUserScopeAccessForClientIdByNastIdAndApiCredentials(anyString(), anyString(), anyString());
@@ -98,7 +156,7 @@ public class DefaultCloud11ServiceTest {
     @Test
     public void authenticateResponse_withMossoCredentials_callsUserService_getUserByMossoId() throws Exception {
         JAXBElement<MossoCredentials> credentials =
-                new JAXBElement<MossoCredentials>(QName.valueOf("foo"),MossoCredentials.class,new MossoCredentials());
+                new JAXBElement<MossoCredentials>(QName.valueOf("foo"), MossoCredentials.class, new MossoCredentials());
         defaultCloud11Service.authenticateResponse(credentials, null);
         verify(userService).getUserByMossoId(anyInt());
     }
@@ -108,7 +166,7 @@ public class DefaultCloud11ServiceTest {
         MossoCredentials mossoCredentials = new MossoCredentials();
         mossoCredentials.setMossoId(1);
         JAXBElement<MossoCredentials> credentials =
-                new JAXBElement<MossoCredentials>(QName.valueOf("foo"),MossoCredentials.class, mossoCredentials);
+                new JAXBElement<MossoCredentials>(QName.valueOf("foo"), MossoCredentials.class, mossoCredentials);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
         defaultCloud11Service.authenticateResponse(credentials, null);
         verify(scopeAccessService).getUserScopeAccessForClientIdByMossoIdAndApiCredentials(anyInt(), anyString(), anyString());
@@ -116,18 +174,22 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void authenticateResponse_withUserCredentials_callsUserService_getUser() throws Exception {
+        UserCredentials userCredentials = new UserCredentials();
+        userCredentials.setUsername("username");
+        userCredentials.setKey("key");
         JAXBElement<UserCredentials> credentials =
-                new JAXBElement<UserCredentials>(QName.valueOf("foo"),UserCredentials.class,new UserCredentials());
+                new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
         defaultCloud11Service.authenticateResponse(credentials, null);
-        verify(userService).getUser(null);
+        verify(userService).getUser("username");
     }
 
     @Test
     public void authenticateResponse_withUserCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByUsernameAndApiCredentials() throws Exception {
         UserCredentials userCredentials = new UserCredentials();
         userCredentials.setUsername("foo");
+        userCredentials.setKey("key");
         JAXBElement<UserCredentials> credentials =
-                new JAXBElement<UserCredentials>(QName.valueOf("foo"),UserCredentials.class, userCredentials);
+                new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
         defaultCloud11Service.authenticateResponse(credentials, null);
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString());
@@ -135,34 +197,38 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void authenticateResponse_withPasswordCredentials_callsUserService_getUser() throws Exception {
+        PasswordCredentials passwordCredentials = new PasswordCredentials();
+        passwordCredentials.setUsername("username");
+        passwordCredentials.setPassword("pass");
         JAXBElement<PasswordCredentials> credentials =
-                new JAXBElement<PasswordCredentials>(QName.valueOf("foo"),PasswordCredentials.class,new PasswordCredentials());
+                new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
         defaultCloud11Service.authenticateResponse(credentials, null);
-        verify(userService).getUser(null);
+        verify(userService).getUser("username");
     }
 
     @Test
     public void authenticateResponse_withPasswordCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByUsernameAndPassword() throws Exception {
         PasswordCredentials passwordCredentials = new PasswordCredentials();
         passwordCredentials.setUsername("foo");
+        passwordCredentials.setPassword("pass");
         JAXBElement<PasswordCredentials> credentials =
-                new JAXBElement<PasswordCredentials>(QName.valueOf("foo"),PasswordCredentials.class, passwordCredentials);
+                new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
         defaultCloud11Service.authenticateResponse(credentials, null);
-        verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndPassword(anyString(),anyString(),anyString());
+        verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndPassword(anyString(), anyString(), anyString());
     }
 
     @Test
     public void createUser_callsNastFacade() throws Exception {
         user.setId("userId");
         user.setMossoId(123);
-        defaultCloud11Service.createUser(request, null,uriInfo, user);
+        defaultCloud11Service.createUser(request, null, uriInfo, user);
         Mockito.verify(nastFacade).addNastUser(user);
     }
 
     @Test
     public void authenticateResponse_usernameIsNull_returns400() throws Exception {
-        JAXBElement<Credentials> cred = new JAXBElement<Credentials>(new QName(""),Credentials.class,new UserCredentials());
+        JAXBElement<Credentials> cred = new JAXBElement<Credentials>(new QName(""), Credentials.class, new UserCredentials());
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(cred, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
@@ -176,139 +242,139 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void revokeToken_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.revokeToken(request,null,null);
+        spy.revokeToken(request, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
 
     @Test
     public void validateToken_isAdminCall_callAuthenticateCloudAdminUserForGetRequest() throws Exception {
-        spy.validateToken(request,null,null,null,null);
+        spy.validateToken(request, null, null, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void adminAuthenticate_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.adminAuthenticate(request,null,null,null);
+        spy.adminAuthenticate(request, null, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
 
     @Test
     public void addBaserUrlRef_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.addBaseURLRef(request,null,null,null,null);
+        spy.addBaseURLRef(request, null, null, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
 
     @Test
     public void createUser_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.createUser(request,null,null,null);
+        spy.createUser(request, null, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
 
     @Test
     public void deleteBaseUrlRef_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.deleteBaseURLRef(request,null,null,null);
+        spy.deleteBaseURLRef(request, null, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
 
     @Test
     public void deleteUser_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.deleteUser(request,null,null);
+        spy.deleteUser(request, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
 
     @Test
     public void getBaseUrlRef_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.getBaseURLRef(request,null,null,null);
+        spy.getBaseURLRef(request, null, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void getBaseUrlRefs_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.getBaseURLRefs(request,null,null);
+        spy.getBaseURLRefs(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void getServiceCatalog_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.getServiceCatalog(request,null,null);
+        spy.getServiceCatalog(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void getUser_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.getUser(request,null,null);
+        spy.getUser(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void getUserEnabled_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.getUserEnabled(request,null,null);
+        spy.getUserEnabled(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void getUserFromMossoId_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.getUserFromMossoId(request,0,null);
+        spy.getUserFromMossoId(request, 0, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void getUserFromNastId_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.getUserFromNastId(request,null,null);
+        spy.getUserFromNastId(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void getUserGroups_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.getUserGroups(request,null,null);
+        spy.getUserGroups(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void getUserKey_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.getUserKey(request,null,null);
+        spy.getUserKey(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void setUserEnabled_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.setUserEnabled(request,null,null,null);
+        spy.setUserEnabled(request, null, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
 
     @Test
     public void setUserKey_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.setUserKey(request,null,null,null);
+        spy.setUserKey(request, null, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
 
     @Test
     public void updateUser_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.updateUser(request,null,null,null);
+        spy.updateUser(request, null, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
 
     @Test
     public void getBaseURLId_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.getBaseURLId(request,0,null,null);
+        spy.getBaseURLId(request, 0, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void getBaseURLs_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.getBaseURLs(request,null,null);
+        spy.getBaseURLs(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void getEnabledBaseURL_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.getEnabledBaseURL(request,null,null);
+        spy.getEnabledBaseURL(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void addBaseURL_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.addBaseURL(request,null,null);
+        spy.addBaseURL(request, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
 
