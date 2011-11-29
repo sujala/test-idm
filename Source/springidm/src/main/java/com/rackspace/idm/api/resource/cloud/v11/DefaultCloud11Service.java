@@ -754,8 +754,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder getBaseURLs(HttpServletRequest request,
-                                                String serviceName, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder getBaseURLs(HttpServletRequest request, String serviceName, HttpHeaders httpHeaders) throws IOException {
 
         try {
             authenticateCloudAdminUserForGetRequests(request);
@@ -763,14 +762,13 @@ public class DefaultCloud11Service implements Cloud11Service {
             List<CloudBaseUrl> baseUrls = this.endpointService.getBaseUrls();
 
             if (StringUtils.isEmpty(serviceName)) {
-                return Response.ok(OBJ_FACTORY
-                        .createBaseURLs(this.endpointConverterCloudV11
-                                .toBaseUrls(baseUrls)));
+                return Response.ok(OBJ_FACTORY.createBaseURLs(this.endpointConverterCloudV11.toBaseUrls(baseUrls)));
             }
 
             List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
             for (CloudBaseUrl url : baseUrls) {
-                if (url.getService().equals(serviceName)) {
+                String service = url.getService();
+                if (service !=null && service.equals(serviceName)) {
                     filteredBaseUrls.add(url);
                 }
             }
@@ -778,9 +776,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (filteredBaseUrls.size() == 0) {
                 return notFoundExceptionResponse("No matching Urls found");
             }
-            return Response.ok(OBJ_FACTORY
-                    .createBaseURLs(this.endpointConverterCloudV11
-                            .toBaseUrls(filteredBaseUrls)));
+            return Response.ok(OBJ_FACTORY.createBaseURLs(this.endpointConverterCloudV11.toBaseUrls(filteredBaseUrls)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -884,35 +880,27 @@ public class DefaultCloud11Service implements Cloud11Service {
                 if (user == null) {
                     return notFoundExceptionResponse(String.format("User with NastId %s not found", nastId));
                 }
-                usa = this.scopeAccessService
-                        .getUserScopeAccessForClientIdByNastIdAndApiCredentials(nastId, apiKey, getCloudAuthClientId());
+                usa = scopeAccessService.getUserScopeAccessForClientIdByNastIdAndApiCredentials(nastId, apiKey, getCloudAuthClientId());
             } else {
-                PasswordCredentials passCreds = (PasswordCredentials) cred
-                        .getValue();
+                PasswordCredentials passCreds = (PasswordCredentials) cred.getValue();
                 String username = passCreds.getUsername();
                 String password = passCreds.getPassword();
-                if (StringUtils.isBlank(username)) {
-                    return badRequestExceptionResponse("Expecting username");
-                }
                 if (StringUtils.isBlank(password)) {
                     return badRequestExceptionResponse("Expecting password");
                 }
+                if (StringUtils.isBlank(username)) {
+                    return badRequestExceptionResponse("Expecting username");
+                }
                 user = this.userService.getUser(username);
                 if (user == null) {
-                    String errMsg = String
-                            .format("User %s not found", username);
+                    String errMsg = String.format("User %s not found", username);
                     throw new NotFoundException(errMsg);
                 }
-                usa = this.scopeAccessService
-                        .getUserScopeAccessForClientIdByUsernameAndPassword(
-                                username, password, getCloudAuthClientId());
+                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
             }
 
-            List<CloudEndpoint> endpoints = this.endpointService
-                    .getEndpointsForUser(user.getUsername());
-            return Response.ok(OBJ_FACTORY
-                    .createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(
-                            usa, endpoints)));
+            List<CloudEndpoint> endpoints = endpointService.getEndpointsForUser(user.getUsername());
+            return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)));
         } catch (NotAuthenticatedException nae) {
             return notAuthenticatedExceptionResponse(user.getUsername());
         } catch (UserDisabledException ude) {

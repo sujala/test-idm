@@ -29,7 +29,7 @@ public class CredentialUnmarshaller {
         try {
             JSONObject obj = (JSONObject) parser.parse(jsonBody);
             if (obj.containsKey(JSONConstants.CREDENTIALS)) {
-                JSONObject obj3 = (JSONObject) parser.parse((String) (obj.get(JSONConstants.CREDENTIALS)));
+                JSONObject obj3 = (JSONObject) parser.parse(obj.get(JSONConstants.CREDENTIALS).toString());
                 UserCredentials userCreds = new UserCredentials();
                 userCreds.setKey((String) (obj3.get(JSONConstants.KEY)));
                 userCreds.setUsername((String) (obj3.get(JSONConstants.USERNAME)));
@@ -46,14 +46,14 @@ public class CredentialUnmarshaller {
                 creds = OBJ_FACTORY.createMossoCredentials(mossoCreds);
 
             } else if (obj.containsKey(JSONConstants.NAST_CREDENTIALS)) {
-                JSONObject obj3 = (JSONObject) parser.parse((String) (obj.get(JSONConstants.NAST_CREDENTIALS)));
+                JSONObject obj3 = (JSONObject) parser.parse(obj.get(JSONConstants.NAST_CREDENTIALS).toString());
                 NastCredentials nastCreds = new NastCredentials();
                 nastCreds.setKey((String) (obj3.get(JSONConstants.KEY)));
                 nastCreds.setNastId((String) (obj3.get(JSONConstants.NAST_ID)));
                 creds = OBJ_FACTORY.createNastCredentials(nastCreds);
 
             } else if (obj.containsKey(JSONConstants.PASSWORD_CREDENTIALS)) {
-                JSONObject obj3 = (JSONObject) parser.parse((String) (obj.get(JSONConstants.PASSWORD_CREDENTIALS)));
+                JSONObject obj3 = (JSONObject) parser.parse(obj.get(JSONConstants.PASSWORD_CREDENTIALS).toString());
                 PasswordCredentials passwordCreds = new PasswordCredentials();
                 passwordCreds.setUsername((String) (obj3.get(JSONConstants.USERNAME)));
                 passwordCreds.setPassword((String) (obj3.get(JSONConstants.PASSWORD)));
