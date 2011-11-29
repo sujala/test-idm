@@ -23,43 +23,46 @@ public class CredentialUnmarshaller {
 
     public JAXBElement<? extends Credentials> unmarshallCredentialsFromJSON(String jsonBody) {
 
-           JSONParser parser = new JSONParser();
-           JAXBElement<? extends Credentials> creds = null;
+        JSONParser parser = new JSONParser();
+        JAXBElement<? extends Credentials> creds = null;
 
-           try {
-               JSONObject obj = (JSONObject) parser.parse(jsonBody);
-               if (obj.containsKey(JSONConstants.CREDENTIALS)) {
-                   JSONObject obj3 = (JSONObject) parser.parse(obj.get(JSONConstants.CREDENTIALS).toString());
-                   UserCredentials userCreds = new UserCredentials();
-                   userCreds.setKey((String)(obj3.get(JSONConstants.KEY)));
-                   userCreds.setUsername((String)(obj3.get(JSONConstants.USERNAME)));
-                   creds = OBJ_FACTORY.createCredentials(userCreds);
+        try {
+            JSONObject obj = (JSONObject) parser.parse(jsonBody);
+            if (obj.containsKey(JSONConstants.CREDENTIALS)) {
+                JSONObject obj3 = (JSONObject) parser.parse((String) (obj.get(JSONConstants.CREDENTIALS)));
+                UserCredentials userCreds = new UserCredentials();
+                userCreds.setKey((String) (obj3.get(JSONConstants.KEY)));
+                userCreds.setUsername((String) (obj3.get(JSONConstants.USERNAME)));
+                creds = OBJ_FACTORY.createCredentials(userCreds);
 
-               } else if (obj.containsKey(JSONConstants.MOSSO_CREDENTIALS)) {
-                   JSONObject obj3 = (JSONObject) parser.parse(obj.get(JSONConstants.MOSSO_CREDENTIALS).toString());
-                   MossoCredentials mossoCreds = new MossoCredentials();
-                   mossoCreds.setKey((String)(obj3.get(JSONConstants.KEY)));
-                   mossoCreds.setMossoId(Integer.parseInt((String)(obj3.get(JSONConstants.MOSSO_ID))));
-                   creds = OBJ_FACTORY.createMossoCredentials(mossoCreds);
+            } else if (obj.containsKey(JSONConstants.MOSSO_CREDENTIALS)) {
+                JSONObject obj3 = (JSONObject) parser.parse(obj.get(JSONConstants.MOSSO_CREDENTIALS).toString());
+                MossoCredentials mossoCreds = new MossoCredentials();
+                mossoCreds.setKey((String) (obj3.get(JSONConstants.KEY)));
+                Object mossoId = obj3.get(JSONConstants.MOSSO_ID);
+                if (mossoId != null) {
+                    mossoCreds.setMossoId(Integer.parseInt(mossoId.toString()));
+                }
+                creds = OBJ_FACTORY.createMossoCredentials(mossoCreds);
 
-               } else if (obj.containsKey(JSONConstants.NAST_CREDENTIALS)) {
-                   JSONObject obj3 = (JSONObject) parser.parse(obj.get(JSONConstants.NAST_CREDENTIALS).toString());
-                   NastCredentials nastCreds = new NastCredentials();
-                   nastCreds.setKey((String)(obj3.get(JSONConstants.KEY)));
-                   nastCreds.setNastId((String)(obj3.get(JSONConstants.NAST_ID)));
-                   creds = OBJ_FACTORY.createNastCredentials(nastCreds);
+            } else if (obj.containsKey(JSONConstants.NAST_CREDENTIALS)) {
+                JSONObject obj3 = (JSONObject) parser.parse((String) (obj.get(JSONConstants.NAST_CREDENTIALS)));
+                NastCredentials nastCreds = new NastCredentials();
+                nastCreds.setKey((String) (obj3.get(JSONConstants.KEY)));
+                nastCreds.setNastId((String) (obj3.get(JSONConstants.NAST_ID)));
+                creds = OBJ_FACTORY.createNastCredentials(nastCreds);
 
-               } else if (obj.containsKey(JSONConstants.PASSWORD_CREDENTIALS)) {
-                   JSONObject obj3 = (JSONObject) parser.parse(obj.get(JSONConstants.PASSWORD_CREDENTIALS).toString());
-                   PasswordCredentials passwordCreds = new PasswordCredentials();
-                   passwordCreds.setUsername((String)(obj3.get(JSONConstants.USERNAME)));
-                   passwordCreds.setPassword((String)(obj3.get(JSONConstants.PASSWORD)));
-                   creds = OBJ_FACTORY.createPasswordCredentials(passwordCreds);
-               }
-           } catch (ParseException e) {
-               throw new BadRequestException("malformed JSON");
-           }
-           return creds;
-       }
+            } else if (obj.containsKey(JSONConstants.PASSWORD_CREDENTIALS)) {
+                JSONObject obj3 = (JSONObject) parser.parse((String) (obj.get(JSONConstants.PASSWORD_CREDENTIALS)));
+                PasswordCredentials passwordCreds = new PasswordCredentials();
+                passwordCreds.setUsername((String) (obj3.get(JSONConstants.USERNAME)));
+                passwordCreds.setPassword((String) (obj3.get(JSONConstants.PASSWORD)));
+                creds = OBJ_FACTORY.createPasswordCredentials(passwordCreds);
+            }
+        } catch (ParseException e) {
+            throw new BadRequestException("malformed JSON");
+        }
+        return creds;
+    }
 
 }

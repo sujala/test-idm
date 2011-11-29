@@ -930,7 +930,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         cred = credentialUnmarshaller.unmarshallCredentialsFromJSON(body);
 
         if (isAdmin) {
-            adminAuthenticateResponse(cred, httpHeaders, response, body);
+            return adminAuthenticateResponse(cred, httpHeaders, response, body);
         }
         return authenticateResponse(cred, response);
     }
