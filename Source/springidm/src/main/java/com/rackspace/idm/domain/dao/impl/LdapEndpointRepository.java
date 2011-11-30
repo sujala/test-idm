@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
@@ -133,15 +134,15 @@ public class LdapEndpointRepository extends LdapRepository implements
         }
 
         String newEndpoint = def ? "+" : "-";
-        newEndpoint = newEndpoint + String.valueOf(baseUrlId);
+        newEndpoint =  newEndpoint + String.valueOf(baseUrlId);
 
         EndPoints oldEndpoints = this.getRawEndpointsForUser(username);
 
         List<String> endpoints = new ArrayList<String>();
 
         for (String s : oldEndpoints.getEndpoints()) {
-            if (s.equals(newEndpoint)) {
-                return;
+            if (s.equals("-"+String.valueOf(baseUrlId))|| s.equals("+"+String.valueOf(baseUrlId))) {
+                throw new BaseUrlConflictException("Attempt to add existing BaseURL!");
             }
             endpoints.add(s);
         }
@@ -152,26 +153,21 @@ public class LdapEndpointRepository extends LdapRepository implements
 
         String[] points = endpoints.toArray(new String[endpoints.size()]);
 
-        mods.add(new Modification(ModificationType.REPLACE, ATTR_ENDPOINT,
-            points));
+        mods.add(new Modification(ModificationType.REPLACE, ATTR_ENDPOINT, points));
 
         LDAPResult result = null;
         try {
             result = getAppConnPool().modify(oldEndpoints.getUserDN(), mods);
-            getLogger()
-                .info("Added baseUlr {} to user {}", baseUrlId, username);
+            getLogger().info("Added baseUlr {} to user {}", baseUrlId, username);
         } catch (LDAPException ldapEx) {
-            getLogger().error("Error updating user {} endpoints - {}",
-                username, ldapEx);
+            getLogger().error("Error updating user {} endpoints - {}", username, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            getLogger().error("Error updating user {} endpoints - {}",
-                username, result.getResultCode());
-            throw new IllegalArgumentException(String.format(
-                "LDAP error encountered when updating user %s endpoints - %s",
-                username, result.getResultCode().toString()));
+            getLogger().error("Error updating user {} endpoints - {}", username, result.getResultCode());
+            throw new IllegalArgumentException(
+                    String.format("LDAP error encountered when updating user %s endpoints - %s",username, result.getResultCode().toString()));
         }
         getLogger().debug("Adding baseUlr {} to user {}", baseUrlId, username);
     }
@@ -186,18 +182,15 @@ public class LdapEndpointRepository extends LdapRepository implements
             ATTR_ID, String.valueOf(baseUrlId)).build();
 
         try {
-            result = getAppConnPool().delete(
-                String.format(baseUrlDN, baseUrlId));
+            result = getAppConnPool().delete(String.format(baseUrlDN, baseUrlId));
             getLogger().info("Deleted baseUrl - {}", baseUrlId);
         } catch (LDAPException ldapEx) {
-            getLogger().error("Error deleting baseUlr {} - {}", baseUrlId,
-                ldapEx);
+            getLogger().error("Error deleting baseUlr {} - {}", baseUrlId, ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            getLogger().error("Error deleting baseUrl {} - {}", baseUrlId,
-                result.getResultCode());
+            getLogger().error("Error deleting baseUrl {} - {}", baseUrlId, result.getResultCode());
             throw new IllegalStateException(String.format(
                 "LDAP error encountered when deleting baseUrl: %s - %s",
                 baseUrlId, result.getResultCode().toString()));

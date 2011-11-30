@@ -39,12 +39,12 @@ public class AuthConverterCloudV11 {
         return auth;
     }
 
-    public FullToken toCloudV11TokenJaxb(UserScopeAccess usa) {
+    public FullToken toCloudV11TokenJaxb(UserScopeAccess usa, String requestUrl) {
         FullToken token = OBJ_FACTORY.createFullToken();
 
         token.setId(usa.getAccessTokenString());
         token.setUserId(usa.getUsername());
-        token.setUserURL(String.format(getCloudUserRefString(), usa.getUsername()));
+        token.setUserURL(requestUrl + "users/" + usa.getUsername());
 
         try {
             if (usa.getAccessTokenExp() != null) {

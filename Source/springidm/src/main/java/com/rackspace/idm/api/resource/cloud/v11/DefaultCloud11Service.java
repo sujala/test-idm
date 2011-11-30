@@ -167,7 +167,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
             }
 
-            return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa)));
+            String requestURL = request.getRequestURL().toString();
+            String versionBaseUrl = requestURL.substring(0,requestURL.lastIndexOf("/token/")+1);
+            return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa,versionBaseUrl)));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -208,15 +210,13 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     // User Methods
     @Override
-    public Response.ResponseBuilder addBaseURLRef(HttpServletRequest request,
-                                                  String userId, HttpHeaders httpHeaders, UriInfo uriInfo,
-                                                  BaseURLRef baseUrlRef) throws IOException {
+    public Response.ResponseBuilder addBaseURLRef(HttpServletRequest request, String userId, HttpHeaders httpHeaders,
+                                                  UriInfo uriInfo, BaseURLRef baseUrlRef) throws IOException {
 
         try {
             authenticateCloudAdminUser(request);
 
             User user = userService.getUser(userId);
-
             if (user == null) {
                 String errMsg = String.format("User %s not found", userId);
                 throw new NotFoundException(errMsg);
@@ -442,7 +442,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
 
-            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11User(user,endpoints)));
+            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11User(user, endpoints)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -537,11 +537,15 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            GroupsList groups = this.userGroupService.getGroupList(mossoId);
+            GroupsList groups = userGroupService.getGroupList(mossoId);
             return Response.ok(OBJ_FACTORY.createGroups(groups));
 
-        } catch (Exception e) {
+        } catch (NotFoundException e) {
             return exceptionResponse(e);
+        } catch (NotAuthorizedException e){
+            return exceptionResponse(e);
+        } catch (Exception e){
+            return  exceptionResponse(e);
         }
     }
 
@@ -950,8 +954,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    private Response.ResponseBuilder notAuthenticatedExceptionResponse(String username) {
-        String errMsg = String.format("User %s not authenticated", username);
+    private Response.ResponseBuilder notAuthenticatedExceptionResponse(String errMsg) {
         UnauthorizedFault fault = OBJ_FACTORY.createUnauthorizedFault();
         fault.setCode(HttpServletResponse.SC_UNAUTHORIZED);
         fault.setMessage(errMsg);
@@ -1044,16 +1047,16 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
         } catch (CloudAdminAuthorizationException e) {
-            throw new NotAuthorizedException("Cloud admin user authorization Failed.");
+            throw new NotAuthorizedException("You are not authorized to access this resource.");
         }
         if (stringStringMap == null) {
-            throw new NotAuthorizedException("Cloud admin user authorization Failed.");
+            throw new NotAuthorizedException("You are not authorized to access this resource.");
         } else {
             boolean authenticated = ldapCloudAdminRepository.authenticate(
                     stringStringMap.get("username"),
                     stringStringMap.get("password"));
             if (!authenticated) {
-                throw new NotAuthorizedException("Cloud admin user authorization Failed.");
+                throw new NotAuthorizedException("You are not authorized to access this resource.");
             }
         }
     }
