@@ -90,20 +90,16 @@ public class DefaultCloud11Service implements Cloud11Service {
     // Token Methods
 
     @Override
-    public Response.ResponseBuilder revokeToken(HttpServletRequest request,
-                                                String tokenId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder revokeToken(HttpServletRequest request, String tokenId, HttpHeaders httpHeaders) throws IOException {
 
         try {
 
             authenticateCloudAdminUser(request);
 
-            ScopeAccess sa = this.scopeAccessService
-                    .getScopeAccessByAccessToken(tokenId);
+            ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(tokenId);
 
-            if (sa == null || !(sa instanceof UserScopeAccess)
-                    || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
-                throw new NotFoundException(String.format("token %s not found",
-                        tokenId));
+            if (sa == null || !(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
+                throw new NotFoundException(String.format("token %s not found", tokenId));
             }
 
             UserScopeAccess usa = (UserScopeAccess) sa;
@@ -117,8 +113,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder validateToken(HttpServletRequest request,
-                                                  String tokeId, String belongsTo, String type, HttpHeaders httpHeaders)
+    public Response.ResponseBuilder validateToken(HttpServletRequest request, String tokeId, String belongsTo, String type, HttpHeaders httpHeaders)
             throws IOException {
 
         try {
@@ -136,13 +131,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                 userType = UserType.CLOUD;
             }
 
-            ScopeAccess sa = this.scopeAccessService
-                    .getScopeAccessByAccessToken(tokeId);
+            ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(tokeId);
 
-            if (sa == null || !(sa instanceof UserScopeAccess)
-                    || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
-                throw new NotFoundException(String.format("token %s not found",
-                        tokeId));
+            if (sa == null || !(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
+                throw new NotFoundException(String.format("token %s not found", tokeId));
             }
 
             UserScopeAccess usa = (UserScopeAccess) sa;
@@ -155,8 +147,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                         user = this.userService.getUser(belongsTo);
                         break;
                     case MOSSO:
-                        user = this.userService.getUserByMossoId(Integer
-                                .parseInt(belongsTo));
+                        user = this.userService.getUserByMossoId(Integer.parseInt(belongsTo));
                         break;
                     case NAST:
                         user = this.userService.getUserByNastId(belongsTo);
@@ -164,8 +155,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
 
                 if (user == null) {
-                    throw new NotAuthorizedException(
-                            "Username or api key invalid");
+                    throw new NotAuthorizedException("Username or api key invalid");
                 }
 
                 if (user.isDisabled()) {
@@ -173,14 +163,11 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
 
                 if (!user.getUsername().equals(usa.getUsername())) {
-                    throw new NotAuthorizedException(
-                            "Username or api key invalid");
+                    throw new NotAuthorizedException("Username or api key invalid");
                 }
             }
 
-            return Response.ok(OBJ_FACTORY
-                    .createToken(this.authConverterCloudV11
-                            .toCloudV11TokenJaxb(usa)));
+            return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa)));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -205,8 +192,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder authenticate(HttpServletRequest request,
-                                                 HttpServletResponse response, HttpHeaders httpHeaders, String body)
+    public Response.ResponseBuilder authenticate(HttpServletRequest request, HttpServletResponse response, HttpHeaders httpHeaders, String body)
             throws IOException {
 
         try {
@@ -236,12 +222,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            CloudBaseUrl baseUrl = this.endpointService
-                    .getBaseUrlById(baseUrlRef.getId());
+            CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseUrlRef.getId());
 
             if (baseUrl == null) {
-                throw new NotFoundException(String.format(
-                        "BaseUrl %s not found", baseUrlRef.getId()));
+                throw new NotFoundException(String.format("BaseUrl %s not found", baseUrlRef.getId()));
             }
 
             if (!baseUrl.getEnabled()) {
@@ -252,10 +236,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             return Response
                     .status(Response.Status.CREATED)
-                    .header(
-                            "Location",
-                            uriInfo.getRequestUriBuilder().path(userId).build()
-                                    .toString())
+                    .header("Location", uriInfo.getRequestUriBuilder().path(userId).build().toString())
                     .entity(OBJ_FACTORY.createBaseURLRef(baseUrlRef));
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -291,8 +272,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             this.userService.addUser(userDO);
 
-            if (user.getBaseURLRefs() != null
-                    && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
+            if (user.getBaseURLRefs() != null  && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
                 // If BaseUrlRefs were sent in then we're going to add the new
                 // list
 
@@ -303,24 +283,19 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
             }
 
-            List<CloudEndpoint> endpoints = this.endpointService
-                    .getEndpointsForUser(userDO.getUsername());
+            List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userDO.getUsername());
 
             String id = userDO.getId();
             URI uri = uriInfo.getRequestUriBuilder().path(id).build();
-            com.rackspacecloud.docs.auth.api.v1.User cloud11User = this.userConverterCloudV11
-                    .toCloudV11User(userDO, endpoints);
-            return Response.created(uri).entity(
-                    OBJ_FACTORY.createUser(cloud11User));
-
+            com.rackspacecloud.docs.auth.api.v1.User cloud11User = userConverterCloudV11.toCloudV11User(userDO, endpoints);
+            return Response.created(uri).entity(OBJ_FACTORY.createUser(cloud11User));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public Response.ResponseBuilder deleteBaseURLRef(
-            HttpServletRequest request, String userId, String baseURLId,
+    public Response.ResponseBuilder deleteBaseURLRef(HttpServletRequest request, String userId, String baseURLId,
             HttpHeaders httpHeaders) throws IOException {
 
         try {
@@ -340,8 +315,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(id);
 
             if (baseUrl == null) {
-                return notFoundExceptionResponse(String.format(
-                        "BaseUrlId %s not found for user %s", id, userId));
+                return notFoundExceptionResponse(String.format("BaseUrlId %s not found for user %s", id, userId));
             }
 
             this.endpointService.removeBaseUrlFromUser(id, userId);
@@ -398,13 +372,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                     userId, id);
 
             if (endpoint == null) {
-                return notFoundExceptionResponse(String.format(
-                        "BaseUrlId %s not found for user %s", id, userId));
+                return notFoundExceptionResponse(String.format("BaseUrlId %s not found for user %s", id, userId));
             }
 
-            return Response.ok(OBJ_FACTORY
-                    .createBaseURLRef(this.endpointConverterCloudV11
-                            .toBaseUrlRef(endpoint)));
+            return Response.ok(OBJ_FACTORY.createBaseURLRef(this.endpointConverterCloudV11.toBaseUrlRef(endpoint)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -425,20 +396,16 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            List<CloudEndpoint> endpoints = this.endpointService
-                    .getEndpointsForUser(userId);
+            List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
 
-            return Response.ok(OBJ_FACTORY
-                    .createBaseURLRefs(this.endpointConverterCloudV11
-                            .toBaseUrlRefs(endpoints)));
+            return Response.ok(OBJ_FACTORY.createBaseURLRefs(this.endpointConverterCloudV11.toBaseUrlRefs(endpoints)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public Response.ResponseBuilder getServiceCatalog(
-            HttpServletRequest request, String userId, HttpHeaders httpHeaders)
+    public Response.ResponseBuilder getServiceCatalog(HttpServletRequest request, String userId, HttpHeaders httpHeaders)
             throws IOException {
 
         try {
@@ -451,20 +418,16 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            List<CloudEndpoint> endpoints = this.endpointService
-                    .getEndpointsForUser(userId);
+            List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
 
-            return Response.ok(OBJ_FACTORY
-                    .createServiceCatalog(this.endpointConverterCloudV11
-                            .toServiceCatalog(endpoints)));
+            return Response.ok(OBJ_FACTORY.createServiceCatalog(this.endpointConverterCloudV11.toServiceCatalog(endpoints)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public Response.ResponseBuilder getUser(HttpServletRequest request,
-                                            String userId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder getUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
 
         try {
 
@@ -477,20 +440,16 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            List<CloudEndpoint> endpoints = this.endpointService
-                    .getEndpointsForUser(userId);
+            List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
 
-            return Response.ok(OBJ_FACTORY
-                    .createUser(this.userConverterCloudV11.toCloudV11User(user,
-                            endpoints)));
+            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11User(user,endpoints)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public Response.ResponseBuilder getUserEnabled(HttpServletRequest request,
-                                                   String userId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder getUserEnabled(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
 
         try {
 
@@ -503,17 +462,14 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            return Response.ok(OBJ_FACTORY
-                    .createUser(this.userConverterCloudV11
-                            .toCloudV11UserWithOnlyEnabled(user)));
+            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyEnabled(user)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public Response.ResponseBuilder getUserFromMossoId(
-            HttpServletRequest request, int mossoId, HttpHeaders httpHeaders)
+    public Response.ResponseBuilder getUserFromMossoId(HttpServletRequest request, int mossoId, HttpHeaders httpHeaders)
             throws IOException {
 
         try {
@@ -522,8 +478,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             User user = this.userService.getUserByMossoId(mossoId);
             if (user == null) {
-                throw new NotFoundException(String.format(
-                        "User with MossoId %s not found", mossoId));
+                throw new NotFoundException(String.format("User with MossoId %s not found", mossoId));
             }
             return redirect(request, user.getUsername());
         } catch (Exception ex) {
@@ -542,8 +497,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             User user = this.userService.getUserByNastId(nastId);
             if (user == null) {
-                throw new NotFoundException(String.format(
-                        "User with NastId %s not found", nastId));
+                throw new NotFoundException(String.format("User with NastId %s not found", nastId));
             }
             return redirect(request, user.getUsername());
         } catch (Exception ex) {
@@ -592,8 +546,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder getUserKey(HttpServletRequest request,
-                                               String userId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder getUserKey(HttpServletRequest request,String userId, HttpHeaders httpHeaders) throws IOException {
 
         try {
             authenticateCloudAdminUserForGetRequests(request);
@@ -605,17 +558,14 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            return Response.ok(OBJ_FACTORY
-                    .createUser(this.userConverterCloudV11
-                            .toCloudV11UserWithOnlyKey(user)));
+            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyKey(user)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public Response.ResponseBuilder setUserEnabled(HttpServletRequest request,
-                                                   String userId, UserWithOnlyEnabled user, HttpHeaders httpHeaders)
+    public Response.ResponseBuilder setUserEnabled(HttpServletRequest request, String userId, UserWithOnlyEnabled user, HttpHeaders httpHeaders)
             throws IOException {
 
         try {
@@ -633,17 +583,14 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             this.userService.updateUser(gaUser, false);
 
-            return Response.ok(OBJ_FACTORY
-                    .createUser(this.userConverterCloudV11
-                            .toCloudV11UserWithOnlyEnabled(gaUser)));
+            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyEnabled(gaUser)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public Response.ResponseBuilder setUserKey(HttpServletRequest request,
-                                               String userId, HttpHeaders httpHeaders, UserWithOnlyKey user)
+    public Response.ResponseBuilder setUserKey(HttpServletRequest request, String userId, HttpHeaders httpHeaders, UserWithOnlyKey user)
             throws IOException {
 
         try {
@@ -659,17 +606,14 @@ public class DefaultCloud11Service implements Cloud11Service {
             gaUser.setApiKey(user.getKey());
             this.userService.updateUser(gaUser, false);
 
-            return Response.ok(OBJ_FACTORY
-                    .createUser(this.userConverterCloudV11
-                            .toCloudV11UserWithOnlyKey(gaUser)));
+            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyKey(gaUser)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public Response.ResponseBuilder updateUser(HttpServletRequest request,
-                                               String userId, HttpHeaders httpHeaders,
+    public Response.ResponseBuilder updateUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders,
                                                com.rackspacecloud.docs.auth.api.v1.User user) throws IOException {
 
         try {
@@ -688,8 +632,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             this.userService.updateUser(gaUser, false);
 
-            if (user.getBaseURLRefs() != null
-                    && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
+            if (user.getBaseURLRefs() != null && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
                 // If BaseUrlRefs were sent in then we're going to clear out the
                 // old
                 // endpoints
@@ -710,12 +653,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
             }
 
-            List<CloudEndpoint> endpoints = this.endpointService
-                    .getEndpointsForUser(userId);
+            List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
 
-            return Response.ok(OBJ_FACTORY
-                    .createUser(this.userConverterCloudV11.toCloudV11User(gaUser,
-                            endpoints)));
+            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11User(gaUser, endpoints)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -724,30 +664,23 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     // BaseURL Methods
     @Override
-    public Response.ResponseBuilder getBaseURLId(HttpServletRequest request,
-                                                 int baseURLId, String serviceName, HttpHeaders httpHeaders)
+    public Response.ResponseBuilder getBaseURLId(HttpServletRequest request, int baseURLId, String serviceName, HttpHeaders httpHeaders)
             throws IOException {
 
         try {
             authenticateCloudAdminUserForGetRequests(request);
 
-            CloudBaseUrl baseUrl = this.endpointService
-                    .getBaseUrlById(baseURLId);
+            CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseURLId);
 
             if (baseUrl == null) {
-                throw new NotFoundException(String.format(
-                        "BaseUrlId %s not found", baseURLId));
+                throw new NotFoundException(String.format("BaseUrlId %s not found", baseURLId));
             }
 
-            if (serviceName != null
-                    && !serviceName.equals(baseUrl.getService())) {
-                throw new NotFoundException(String.format(
-                        "BaseUrlId %s not found", baseURLId));
+            if (serviceName != null && !serviceName.equals(baseUrl.getService())) {
+                throw new NotFoundException(String.format("BaseUrlId %s not found", baseURLId));
             }
 
-            return Response.ok(OBJ_FACTORY
-                    .createBaseURL(this.endpointConverterCloudV11
-                            .toBaseUrl(baseUrl)));
+            return Response.ok(OBJ_FACTORY.createBaseURL(this.endpointConverterCloudV11.toBaseUrl(baseUrl)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -783,8 +716,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder getEnabledBaseURL(
-            HttpServletRequest request, String serviceName, HttpHeaders httpHeaders)
+    public Response.ResponseBuilder getEnabledBaseURL(HttpServletRequest request, String serviceName, HttpHeaders httpHeaders)
             throws IOException {
 
         try {
@@ -799,29 +731,19 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
             }
 
-            return Response.ok(OBJ_FACTORY
-                    .createBaseURLs(this.endpointConverterCloudV11
-                            .toBaseUrls(filteredBaseUrls)));
+            return Response.ok(OBJ_FACTORY.createBaseURLs(this.endpointConverterCloudV11.toBaseUrls(filteredBaseUrls)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public ResponseBuilder addBaseURL(HttpServletRequest request,
-                                      HttpHeaders httpHeaders, BaseURL baseUrl) {
+    public ResponseBuilder addBaseURL(HttpServletRequest request, HttpHeaders httpHeaders, BaseURL baseUrl) {
 
         try {
-
             authenticateCloudAdminUser(request);
-
-            this.endpointService.addBaseUrl(this.endpointConverterCloudV11
-                    .toBaseUrlDO(baseUrl));
-
-            return Response.status(HttpServletResponse.SC_CREATED).header(
-                    "Location",
-                    request.getContextPath() + "/baseUrls/" + baseUrl.getId());
-
+            this.endpointService.addBaseUrl(this.endpointConverterCloudV11.toBaseUrlDO(baseUrl));
+            return Response.status(HttpServletResponse.SC_CREATED).header("Location", request.getContextPath() + "/baseUrls/" + baseUrl.getId());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -829,28 +751,24 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     // Migration Methods
     @Override
-    public Response.ResponseBuilder all(HttpServletRequest request,
-                                        HttpHeaders httpHeaders, String body) throws IOException {
+    public Response.ResponseBuilder all(HttpServletRequest request, HttpHeaders httpHeaders, String body) throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public Response.ResponseBuilder migrate(HttpServletRequest request,
-                                            String user, HttpHeaders httpHeaders, String body) throws IOException {
+    public Response.ResponseBuilder migrate(HttpServletRequest request, String user, HttpHeaders httpHeaders, String body) throws IOException {
         throw new IOException("Not Implemented");
     }
 
     @Override
-    public Response.ResponseBuilder unmigrate(HttpServletRequest request,
-                                              String user, HttpHeaders httpHeaders, String body) throws IOException {
+    public Response.ResponseBuilder unmigrate(HttpServletRequest request, String user, HttpHeaders httpHeaders, String body)
+            throws IOException {
         throw new IOException("Not Implemented");
     }
 
     // Private Methods
-    private Response.ResponseBuilder adminAuthenticateResponse(
-            JAXBElement<? extends Credentials> cred, HttpHeaders httpHeaders,
-            HttpServletResponse response, String body) throws IOException {
-
+    private Response.ResponseBuilder adminAuthenticateResponse(JAXBElement<? extends Credentials> cred, HttpServletResponse response)
+            throws IOException {
         if (cred.getValue() instanceof UserCredentials) {
             handleRedirect(response, "cloud/auth");
         }
@@ -859,7 +777,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         UserScopeAccess usa = null;
 
         try {
-
             if (cred.getValue() instanceof MossoCredentials) {
                 MossoCredentials mossoCreds = (MossoCredentials) cred.getValue();
                 int mossoId = mossoCreds.getMossoId();
@@ -871,6 +788,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                 if (user == null) {
                     return notFoundExceptionResponse(String.format("User with MossoId %s not found", mossoId));
                 }
+                if(user.isDisabled()){
+                    throw new UserDisabledException(user.getMossoId().toString());
+                }
                 usa = scopeAccessService.getUserScopeAccessForClientIdByMossoIdAndApiCredentials(mossoId, apiKey, getCloudAuthClientId());
             } else if (cred.getValue() instanceof NastCredentials) {
                 NastCredentials nastCreds = (NastCredentials) cred.getValue();
@@ -879,6 +799,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                 user = this.userService.getUserByNastId(nastId);
                 if (user == null) {
                     return notFoundExceptionResponse(String.format("User with NastId %s not found", nastId));
+                }
+                if(user.isDisabled()){
+                    throw new UserDisabledException(user.getNastId());
                 }
                 usa = scopeAccessService.getUserScopeAccessForClientIdByNastIdAndApiCredentials(nastId, apiKey, getCloudAuthClientId());
             } else {
@@ -896,15 +819,15 @@ public class DefaultCloud11Service implements Cloud11Service {
                     String errMsg = String.format("User %s not found", username);
                     throw new NotFoundException(errMsg);
                 }
+                if(user.isDisabled()){
+                    throw new UserDisabledException("User " + username + " is not enabled.");
+                }
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
             }
-
             List<CloudEndpoint> endpoints = endpointService.getEndpointsForUser(user.getUsername());
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)));
         } catch (NotAuthenticatedException nae) {
             return notAuthenticatedExceptionResponse(user.getUsername());
-        } catch (UserDisabledException ude) {
-            return userDisabledExceptionResponse(user.getUsername());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -918,7 +841,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         cred = credentialUnmarshaller.unmarshallCredentialsFromJSON(body);
 
         if (isAdmin) {
-            return adminAuthenticateResponse(cred, httpHeaders, response, body);
+            return adminAuthenticateResponse(cred, response);
         }
         return authenticateResponse(cred, response);
     }
@@ -937,7 +860,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             e.printStackTrace();
         }
         if (isAdmin) {
-            return adminAuthenticateResponse(cred, httpHeaders, response, body);
+            return adminAuthenticateResponse(cred, response);
         }
         return authenticateResponse(cred, response);
     }
@@ -949,7 +872,6 @@ public class DefaultCloud11Service implements Cloud11Service {
             String username = null;
             User user = null;
             UserScopeAccess usa = null;
-
             String cloudAuthClientId = getCloudAuthClientId();
             if (value instanceof UserCredentials) {
                 UserCredentials userCreds = (UserCredentials) value;
@@ -1009,8 +931,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         fault.setCode(HttpServletResponse.SC_BAD_REQUEST);
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_BAD_REQUEST).entity(
-                OBJ_FACTORY.createBadRequest(fault));
+        return Response.status(HttpServletResponse.SC_BAD_REQUEST).entity(OBJ_FACTORY.createBadRequest(fault));
     }
 
     private boolean isNastEnabled() {
@@ -1029,15 +950,13 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    private Response.ResponseBuilder notAuthenticatedExceptionResponse(
-            String username) {
+    private Response.ResponseBuilder notAuthenticatedExceptionResponse(String username) {
         String errMsg = String.format("User %s not authenticated", username);
         UnauthorizedFault fault = OBJ_FACTORY.createUnauthorizedFault();
         fault.setCode(HttpServletResponse.SC_UNAUTHORIZED);
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(
-                OBJ_FACTORY.createUnauthorized(fault));
+        return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(OBJ_FACTORY.createUnauthorized(fault));
     }
 
     private Response.ResponseBuilder notFoundExceptionResponse(String message) {
@@ -1045,44 +964,34 @@ public class DefaultCloud11Service implements Cloud11Service {
         fault.setCode(HttpServletResponse.SC_NOT_FOUND);
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
-                OBJ_FACTORY.createItemNotFound(fault));
+        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(OBJ_FACTORY.createItemNotFound(fault));
     }
 
-    private Response.ResponseBuilder usernameConflictExceptionResponse(
-            String message) {
+    private Response.ResponseBuilder usernameConflictExceptionResponse(String message) {
         UsernameConflictFault fault = OBJ_FACTORY.createUsernameConflictFault();
         fault.setCode(HttpServletResponse.SC_CONFLICT);
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
-                OBJ_FACTORY.createUsernameConflict(fault));
+        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(OBJ_FACTORY.createUsernameConflict(fault));
     }
 
-    private Response.ResponseBuilder redirect(HttpServletRequest request,
-                                              String id) {
-
-        return Response.status(Response.Status.MOVED_PERMANENTLY).header(
-                "Location", request.getContextPath() + "/users/" + id);
+    private Response.ResponseBuilder redirect(HttpServletRequest request, String id) {
+        return Response.status(Response.Status.MOVED_PERMANENTLY).header("Location", request.getContextPath() + "/users/" + id);
     }
 
     private Response.ResponseBuilder serviceExceptionResponse() {
         AuthFault fault = OBJ_FACTORY.createAuthFault();
         fault.setCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
-                .entity(OBJ_FACTORY.createAuthFault(fault));
+        return Response.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).entity(OBJ_FACTORY.createAuthFault(fault));
     }
 
-    private Response.ResponseBuilder userDisabledExceptionResponse(
-            String username) {
-        String errMsg = String.format("User %s is disabled", username);
+    private Response.ResponseBuilder userDisabledExceptionResponse(String message) {
         UserDisabledFault fault = OBJ_FACTORY.createUserDisabledFault();
         fault.setCode(HttpServletResponse.SC_FORBIDDEN);
-        fault.setMessage(errMsg);
+        fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(
-                OBJ_FACTORY.createUserDisabled(fault));
+        return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(OBJ_FACTORY.createUserDisabled(fault));
     }
 
     private Response.ResponseBuilder exceptionResponse(Exception ex) {
@@ -1122,8 +1031,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         fault.setCode(HttpServletResponse.SC_UNAUTHORIZED);
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_METHOD_NOT_ALLOWED)
-                .entity(OBJ_FACTORY.createBadRequest(fault));
+        return Response.status(HttpServletResponse.SC_METHOD_NOT_ALLOWED).entity(OBJ_FACTORY.createBadRequest(fault));
     }
 
     public void setNastFacade(NastFacade nastFacade) {
@@ -1136,19 +1044,16 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
         } catch (CloudAdminAuthorizationException e) {
-            throw new NotAuthorizedException(
-                    "Cloud admin user authorization Failed.");
+            throw new NotAuthorizedException("Cloud admin user authorization Failed.");
         }
         if (stringStringMap == null) {
-            throw new NotAuthorizedException(
-                    "Cloud admin user authorization Failed.");
+            throw new NotAuthorizedException("Cloud admin user authorization Failed.");
         } else {
             boolean authenticated = ldapCloudAdminRepository.authenticate(
                     stringStringMap.get("username"),
                     stringStringMap.get("password"));
             if (!authenticated) {
-                throw new NotAuthorizedException(
-                        "Cloud admin user authorization Failed.");
+                throw new NotAuthorizedException("Cloud admin user authorization Failed.");
             }
         }
     }
@@ -1157,15 +1062,13 @@ public class DefaultCloud11Service implements Cloud11Service {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         Map<String, String> stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
         if (stringStringMap == null) {
-            throw new CloudAdminAuthorizationException(
-                    "Cloud admin user authorization Failed.");
+            throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
         } else {
             boolean authenticated = ldapCloudAdminRepository.authenticate(
                     stringStringMap.get("username"),
                     stringStringMap.get("password"));
             if (!authenticated) {
-                throw new CloudAdminAuthorizationException(
-                        "Cloud admin user authorization Failed.");
+                throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
             }
         }
     }

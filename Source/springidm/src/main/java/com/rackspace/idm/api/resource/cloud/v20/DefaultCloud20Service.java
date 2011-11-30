@@ -1815,50 +1815,40 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    private Response.ResponseBuilder serviceConflictExceptionResponse(
-            String errMsg) {
-        BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                .createBadRequestFault();
+    private Response.ResponseBuilder serviceConflictExceptionResponse(String errMsg) {
+        BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_CONFLICT);
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_CONFLICT).entity(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
-                        fault));
+        return Response.status(HttpServletResponse.SC_CONFLICT)
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
     }
 
     private Response.ResponseBuilder roleConflictExceptionResponse(String errMsg) {
-        BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                .createBadRequestFault();
+        BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_CONFLICT);
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_CONFLICT).entity(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
-                        fault));
+        return Response.status(HttpServletResponse.SC_CONFLICT)
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
     }
 
-    private Response.ResponseBuilder endpointTemplateConflictException(
-            String errMsg) {
-        BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                .createBadRequestFault();
+    private Response.ResponseBuilder endpointTemplateConflictException(String errMsg) {
+        BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_CONFLICT);
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_CONFLICT).entity(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
-                        fault));
+        return Response.status(HttpServletResponse.SC_CONFLICT)
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
     }
 
     private Response.ResponseBuilder forbiddenExceptionResponse(String errMsg) {
-        ForbiddenFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                .createForbiddenFault();
+        ForbiddenFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createForbiddenFault();
         fault.setCode(HttpServletResponse.SC_FORBIDDEN);
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                        .createForbidden(fault));
+        return Response.status(HttpServletResponse.SC_FORBIDDEN)
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createForbidden(fault));
     }
 
     private String getCloudAuthClientId() {
@@ -1874,16 +1864,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         JAXBElement<? extends CredentialType> jaxbCreds = null;
 
-        CredentialType creds = JSONReaderForCredentialType
-                .checkAndGetCredentialsFromJSONString(jsonBody);
+        CredentialType creds = JSONReaderForCredentialType.checkAndGetCredentialsFromJSONString(jsonBody);
 
         if (creds instanceof ApiKeyCredentials) {
             jaxbCreds = OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory()
                     .createApiKeyCredentials((ApiKeyCredentials) creds);
         } else if (creds instanceof PasswordCredentialsRequiredUsername) {
             jaxbCreds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createPasswordCredentials(
-                            (PasswordCredentialsRequiredUsername) creds);
+                    .createPasswordCredentials((PasswordCredentialsRequiredUsername) creds);
         }
 
         return jaxbCreds;
@@ -1908,9 +1896,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setCode(HttpServletResponse.SC_UNAUTHORIZED);
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUnauthorized(
-                        fault));
+        return Response.status(HttpServletResponse.SC_UNAUTHORIZED)
+                .entity( OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUnauthorized(fault));
     }
 
     private Response.ResponseBuilder notFoundExceptionResponse(String message) {
@@ -1918,9 +1905,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setCode(HttpServletResponse.SC_NOT_FOUND);
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFound(
-                        fault));
+        return Response.status(HttpServletResponse.SC_NOT_FOUND)
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFound(fault));
     }
 
     private Response.ResponseBuilder serviceExceptionResponse() {
@@ -1936,8 +1922,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setCode(HttpServletResponse.SC_CONFLICT);
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_CONFLICT).entity(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenantConflict(fault));
+        return Response.status(HttpServletResponse.SC_CONFLICT)
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenantConflict(fault));
     }
 
     Response.ResponseBuilder userConflictExceptionResponse(String message) {
@@ -1945,19 +1931,17 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setCode(HttpServletResponse.SC_CONFLICT);
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_CONFLICT).entity(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
+        return Response.status(HttpServletResponse.SC_CONFLICT)
+                .entity( OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
     }
 
-    Response.ResponseBuilder userDisabledExceptionResponse(String username) {
-        String errMsg = String.format("User %s is disabled", username);
-        UserDisabledFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                .createUserDisabledFault();
+    Response.ResponseBuilder userDisabledExceptionResponse(String message) {
+        UserDisabledFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabledFault();
         fault.setCode(HttpServletResponse.SC_FORBIDDEN);
-        fault.setMessage(errMsg);
+        fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(fault));
+        return Response.status(HttpServletResponse.SC_FORBIDDEN).
+                entity( OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(fault));
     }
 
     public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {

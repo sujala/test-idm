@@ -1,10 +1,16 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
+import com.rackspace.idm.exception.StalePasswordException;
+import com.rackspace.idm.exception.UserDisabledException;
+import com.rackspace.idm.util.CryptHelper;
+import com.unboundid.ldap.sdk.*;
+import com.unboundid.util.StaticUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -13,34 +19,10 @@ import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
 
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.domain.entity.Password;
-import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
-import com.rackspace.idm.exception.StalePasswordException;
-import com.rackspace.idm.exception.UserDisabledException;
-import com.rackspace.idm.util.CryptHelper;
-import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.BindResult;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.LDAPConnection;
-import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.Modification;
-import com.unboundid.ldap.sdk.ModificationType;
-import com.unboundid.ldap.sdk.ResultCode;
-import com.unboundid.ldap.sdk.SearchRequest;
-import com.unboundid.ldap.sdk.SearchResult;
-import com.unboundid.ldap.sdk.SearchResultEntry;
-import com.unboundid.ldap.sdk.SearchScope;
-import com.unboundid.util.StaticUtils;
+import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public class LdapUserRepository extends LdapRepository implements UserDao {
 
@@ -62,8 +44,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalArgumentException(errmsg);
         }
 
-        String userDN = new LdapDnBuilder(RACKERS_BASE_DN).addAttribute(
-            ATTR_RACKER_ID, racker.getRackerId()).build();
+        String userDN = new LdapDnBuilder(RACKERS_BASE_DN).addAttribute(ATTR_RACKER_ID, racker.getRackerId()).build();
 
         racker.setUniqueId(userDN);
 
@@ -118,8 +99,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public UserAuthenticationResult authenticate(String username,
-        String password) {
+    public UserAuthenticationResult authenticate(String username, String password) {
         getLogger().debug("Authenticating User {}", username);
         if (StringUtils.isBlank(username)) {
             String errmsg = "Null or Empty username parameter";
@@ -133,8 +113,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public UserAuthenticationResult authenticateByAPIKey(String username,
-        String apiKey) {
+    public UserAuthenticationResult authenticateByAPIKey(String username, String apiKey) {
         getLogger().debug("Authenticating User {} by API Key ", username);
         if (StringUtils.isBlank(username)) {
             String errmsg = "Null or Empty username parameter";
@@ -148,8 +127,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public UserAuthenticationResult authenticateByMossoIdAndAPIKey(int mossoId,
-        String apiKey) {
+    public UserAuthenticationResult authenticateByMossoIdAndAPIKey(int mossoId, String apiKey) {
         getLogger().info("Authenticating User with MossoId {}", mossoId);
 
         User user = getUserByMossoId(mossoId);
@@ -177,8 +155,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Deleting racker - {}", rackerId);
         if (StringUtils.isBlank(rackerId)) {
             getLogger().error("Null or Empty rackerId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty rackerId parameter.");
+            throw new IllegalArgumentException("Null or Empty rackerId parameter.");
         }
 
         Audit audit = Audit.log(rackerId).delete();
@@ -214,8 +191,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Deleting username - {}", username);
         if (StringUtils.isBlank(username)) {
             getLogger().error("Null or Empty username parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty username parameter.");
+            throw new IllegalArgumentException("Null or Empty username parameter.");
         }
 
         Audit audit = Audit.log(username).delete();
@@ -239,8 +215,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Getting GroupIds for User {}", username);
         if (StringUtils.isBlank(username)) {
             getLogger().error("Null or Empty username parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty username parameter.");
+            throw new IllegalArgumentException("Null or Empty username parameter.");
         }
 
         String[] groupIds = null;
@@ -290,22 +265,17 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public User getUserByCustomerIdAndUsername(String customerId,
-        String username) {
+    public User getUserByCustomerIdAndUsername(String customerId, String username) {
 
-        getLogger().debug(
-            "LdapUserRepository.findUser() - customerId: {}, username: {} ",
-            customerId, username);
+        getLogger().debug("LdapUserRepository.findUser() - customerId: {}, username: {} ", customerId, username);
 
         if (StringUtils.isBlank(customerId)) {
             getLogger().error("Null or Empty customerId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty customerId parameter.");
+            throw new IllegalArgumentException("Null or Empty customerId parameter.");
         }
         if (StringUtils.isBlank(username)) {
             getLogger().error("Null or Empty username parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty username parameter.");
+            throw new IllegalArgumentException("Null or Empty username parameter.");
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -406,8 +376,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Doing User search by secureId " + secureId);
         if (StringUtils.isBlank(secureId)) {
             getLogger().error("Null or Empty secureId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty secureId parameter.");
+            throw new IllegalArgumentException("Null or Empty secureId parameter.");
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -429,8 +398,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Doing search for username " + username);
         if (StringUtils.isBlank(username)) {
             getLogger().error("Null or Empty username parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty username parameter.");
+            throw new IllegalArgumentException("Null or Empty username parameter.");
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -450,25 +418,21 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Getting all users");
 
         LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
-        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS,
-            OBJECTCLASS_RACKSPACEPERSON);
+        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON);
 
         if (filterParams != null) {
             for (FilterParam filter : filterParams) {
                 // can only filter on rcn and username for now
                 if (filter.getParam() == FilterParamName.RCN) {
-                    searchBuilder.addEqualAttribute(
-                        ATTR_RACKSPACE_CUSTOMER_NUMBER, filter.getStrValue());
+                    searchBuilder.addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, filter.getStrValue());
                 } else if (filter.getParam() == FilterParamName.USERNAME) {
-                    searchBuilder.addEqualAttribute(ATTR_UID,
-                        filter.getStrValue());
+                    searchBuilder.addEqualAttribute(ATTR_UID, filter.getStrValue());
                 }
             }
         }
 
         Filter searchFilter = searchBuilder.build();
-        Users users = getMultipleUsers(searchFilter,
-            ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
+        Users users = getMultipleUsers(searchFilter,  ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
 
         getLogger().debug("Found Users - {}", users);
 
@@ -485,9 +449,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         User user = null;
         try {
-
-            SearchResultEntry entry = this.getSingleEntry(BASE_DN,
-                SearchScope.SUB, searchFilter);
+            SearchResultEntry entry = this.getSingleEntry(BASE_DN, SearchScope.SUB, searchFilter);
 
             if (entry != null) {
                 user = getUser(entry);
@@ -530,8 +492,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         } catch (LDAPException ldapEx) {
             throwIfStalePassword(ldapEx, audit);
 
-            getLogger().error("Error updating user {} - {}",
-                user.getUsername(), ldapEx);
+            getLogger().error("Error updating user {} - {}", user.getUsername(), ldapEx);
             audit.fail("Error updating user");
             throw new IllegalStateException(ldapEx);
         } catch (GeneralSecurityException e) {
@@ -592,8 +553,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Found {} Users", userList.size());
 
         List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER_OF,
-            group.getUniqueId()));
+        mods.add(new Modification(ModificationType.DELETE, ATTR_MEMBER_OF, group.getUniqueId()));
 
         Audit audit = null;
         for (User user : userList) {
@@ -613,30 +573,23 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     private void throwIfEmptyOldUser(User oldUser, User user)
         throws IllegalArgumentException {
         if (oldUser == null) {
-            getLogger()
-                .error("No record found for user {}", user.getUsername());
-            throw new IllegalArgumentException(
-                "There is no exisiting record for the given User instance. Has the userName been changed?");
+            getLogger().error("No record found for user {}", user.getUsername());
+            throw new IllegalArgumentException("There is no exisiting record for the given User instance. Has the userName been changed?");
         }
     }
 
-    private void throwIfEmptyUsername(User user)
-        throws IllegalArgumentException {
+    private void throwIfEmptyUsername(User user) throws IllegalArgumentException {
         if (user == null || StringUtils.isBlank(user.getUsername())) {
-            getLogger().error(
-                "User instance is null or its userName has no value");
-            throw new IllegalArgumentException(
-                "Bad parameter: The User instance either null or its userName has no value.");
+            getLogger().error("User instance is null or its userName has no value");
+            throw new IllegalArgumentException("Bad parameter: The User instance either null or its userName has no value.");
         }
     }
 
-    private void throwIfStalePassword(LDAPException ldapEx, Audit audit)
-        throws StalePasswordException {
+    private void throwIfStalePassword(LDAPException ldapEx, Audit audit) throws StalePasswordException {
         if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
             && STALE_PASSWORD_MESSAGE.equals(ldapEx.getMessage())) {
             audit.fail(STALE_PASSWORD_MESSAGE);
-            throw new StalePasswordException(
-                "Past 10 passwords for the user cannot be re-used.");
+            throw new StalePasswordException("Past 10 passwords for the user cannot be re-used.");
         }
     }
 
@@ -649,29 +602,24 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             String failureMessage = "User Authentication Failed: %s";
 
             if (user.isMaxLoginFailuresExceded()) {
-                failureMessage = String.format(failureMessage,
-                    "User locked due to max login failures limit exceded");
+                failureMessage = String.format(failureMessage, "User locked due to max login failures limit exceded");
             } else if (user.isDisabled()) {
-                failureMessage = String.format(failureMessage,
-                    "User is Disabled");
+                failureMessage = String.format(failureMessage, "User is Disabled");
             } else {
-                failureMessage = String.format(failureMessage,
-                    "Incorrect Credentials");
+                failureMessage = String.format(failureMessage, "Incorrect Credentials");
             }
 
             audit.fail(failureMessage);
         }
     }
 
-    private UserAuthenticationResult authenticateByPassword(User user,
-        String password) {
+    private UserAuthenticationResult authenticateByPassword(User user, String password) {
         if (user == null) {
             return new UserAuthenticationResult(null, false);
         }
 
         boolean authenticated = bindUser(user, password);
-        UserAuthenticationResult authResult = validateUserStatus(user,
-            authenticated);
+        UserAuthenticationResult authResult = validateUserStatus(user, authenticated);
         getLogger().debug("Authenticated User by password");
 
         addAuditLogForAuthentication(user, authenticated);
@@ -679,18 +627,15 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return authResult;
     }
 
-    private UserAuthenticationResult authenticateUserByApiKey(User user,
-        String apiKey) {
+    private UserAuthenticationResult authenticateUserByApiKey(User user, String apiKey) {
 
         if (user == null) {
             return new UserAuthenticationResult(null, false);
         }
 
-        boolean authenticated = !StringUtils.isBlank(user.getApiKey())
-            && user.getApiKey().equals(apiKey);
+        boolean authenticated = !StringUtils.isBlank(user.getApiKey())  && user.getApiKey().equals(apiKey);
 
-        UserAuthenticationResult authResult = validateUserStatus(user,
-            authenticated);
+        UserAuthenticationResult authResult = validateUserStatus(user, authenticated);
         getLogger().debug("Authenticated User by API Key - {}", authResult);
 
         addAuditLogForAuthentication(user, authenticated);
@@ -702,8 +647,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Authenticating user {}", user.getUsername());
 
         if (user == null || user.getUniqueId() == null) {
-            throw new IllegalStateException(
-                "User cannot be null and must have a unique Id");
+            throw new IllegalStateException("User cannot be null and must have a unique Id");
         }
 
         BindResult result;
@@ -711,15 +655,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             result = getBindConnPool().bind(user.getUniqueId(), password);
         } catch (LDAPException e) {
             if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
-                getLogger().info(
-                    "Invalid login attempt by user {} with password {}.",
-                    user.getUsername(), password);
+                getLogger().info("Invalid login attempt by user {} with password {}.",user.getUsername(), password);
                 return false;
             }
-            getLogger()
-                .error(
-                    "Bind operation on username " + user.getUsername()
-                        + " failed.", e);
+            getLogger().error("Bind operation on username " + user.getUsername() + " failed.", e);
             throw new IllegalStateException(e);
         }
 
@@ -1035,17 +974,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
-    private UserAuthenticationResult validateUserStatus(User user,
-        boolean isAuthenticated) {
+    private UserAuthenticationResult validateUserStatus(User user, boolean isAuthenticated) {
         if (isAuthenticated && user.isDisabled()) {
-            String errMsg = String.format("User %s is disabled.",
-                user.getUsername());
-            getLogger().error(errMsg);
-            throw new UserDisabledException(errMsg);
+            getLogger().error(user.getUsername());
+            throw new UserDisabledException(user.getUsername());
         }
-        getLogger().debug("User {} authenticated == {}", user.getUsername(),
-            isAuthenticated);
-
+        getLogger().debug("User {} authenticated == {}", user.getUsername(), isAuthenticated);
         return new UserAuthenticationResult(user, isAuthenticated);
     }
 
