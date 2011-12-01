@@ -970,12 +970,12 @@ public class DefaultCloud11Service implements Cloud11Service {
         return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(OBJ_FACTORY.createItemNotFound(fault));
     }
 
-    private Response.ResponseBuilder usernameConflictExceptionResponse(String message) {
+    Response.ResponseBuilder usernameConflictExceptionResponse(String message) {
         UsernameConflictFault fault = OBJ_FACTORY.createUsernameConflictFault();
         fault.setCode(HttpServletResponse.SC_CONFLICT);
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
-        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(OBJ_FACTORY.createUsernameConflict(fault));
+        return Response.status(HttpServletResponse.SC_CONFLICT).entity(OBJ_FACTORY.createUsernameConflict(fault));
     }
 
     private Response.ResponseBuilder redirect(HttpServletRequest request, String id) {
