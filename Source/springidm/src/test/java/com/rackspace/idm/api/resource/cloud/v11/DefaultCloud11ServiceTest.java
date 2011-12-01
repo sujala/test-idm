@@ -75,6 +75,12 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void usernameConflictExceptionResponse_returns409() throws Exception {
+        Response.ResponseBuilder builder = defaultCloud11Service.usernameConflictExceptionResponse("foo");
+        assertThat("response code", builder.build().getStatus(), equalTo(409));
+    }
+
+    @Test
     public void authenticateResponse_withNastCredentials_withEmptyUsername_returns400() throws Exception {
         NastCredentials nastCredentials = new NastCredentials();
         nastCredentials.setNastId("");
