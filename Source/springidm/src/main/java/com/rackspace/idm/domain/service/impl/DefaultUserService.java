@@ -1,45 +1,25 @@
 package com.rackspace.idm.domain.service.impl;
 
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.PasswordComplexityService;
+import com.rackspace.idm.domain.service.TokenService;
+import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.*;
+import com.rackspace.idm.util.HashHelper;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.Applications;
-import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.Password;
-import com.rackspace.idm.domain.entity.PasswordComplexityResult;
-import com.rackspace.idm.domain.entity.PasswordCredentials;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
-import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.PasswordComplexityService;
-import com.rackspace.idm.domain.service.TokenService;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.DuplicateUsernameException;
-import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.PasswordValidationException;
-import com.rackspace.idm.util.HashHelper;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DefaultUserService implements UserService {
 
@@ -88,6 +68,7 @@ public class DefaultUserService implements UserService {
         
         validateUserEmailAddress(user);
         validateUsername(user);
+        validateMossoId(user.getMossoId());
         setPasswordIfNecessary(user);
         
         user.setEnabled(true);
@@ -398,7 +379,7 @@ public class DefaultUserService implements UserService {
         return userDao.isUsernameUnique(username);
     }
 
-    
+
     @Override
     public Password resetUserPassword(User user) {
         Password newPassword = Password.generateRandom(false); // Would the user
@@ -493,11 +474,16 @@ public class DefaultUserService implements UserService {
     private void validateUsername(User user) {
     	boolean isUsernameUnique = userDao.isUsernameUnique(user.getUsername());
     	if (!isUsernameUnique) {
-    		logger.warn("Couldn't add user {} because username already taken",
-    				user);
-    		throw new DuplicateUsernameException(String.format(
-    		  	"Username %s already exists", user.getUsername()));
+    		logger.warn("Couldn't add user {} because username already taken", user);
+    		throw new DuplicateUsernameException(String.format("Username %s already exists", user.getUsername()));
 	 	}
+    }
+
+    void validateMossoId(int mossoId){
+        User userByMossoId = userDao.getUserByMossoId(mossoId);
+        if(userByMossoId!=null){
+            throw new BadRequestException("User with Mosso Account ID: "+ mossoId+ " already exists.");
+        }
     }
     
     @Override

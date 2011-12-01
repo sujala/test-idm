@@ -1,11 +1,12 @@
 package com.rackspace.idm.services;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-
+import com.rackspace.idm.domain.dao.*;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.service.impl.DefaultUserService;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.DuplicateUsernameException;
 import junit.framework.Assert;
-
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -15,32 +16,9 @@ import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.Password;
-import com.rackspace.idm.domain.entity.PasswordComplexityResult;
-import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.UserCredential;
-import com.rackspace.idm.domain.entity.UserHumanName;
-import com.rackspace.idm.domain.entity.UserLocale;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.PasswordComplexityService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TokenService;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.domain.service.impl.DefaultUserService;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.DuplicateUsernameException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public class UserServiceTests {
 
@@ -179,8 +157,8 @@ public class UserServiceTests {
         final User user = getFakeUser();
         final Customer customer = getFakeCustomer();
         customer.setUniqueId(customerDN);
-        EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername()))
-        .andReturn(true);
+        EasyMock.expect(mockUserDao.getUserByMossoId(1)).andReturn(null);
+        EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername())).andReturn(true);
         EasyMock.expect(mockUserDao.getNextUserId()).andReturn(id);
         EasyMock.expect(mockPasswordComplexityService.checkPassword(user.getPassword())).andReturn(new PasswordComplexityResult());
         mockUserDao.addUser(user);
@@ -630,11 +608,10 @@ public class UserServiceTests {
     private User getFakeUser() {
 
         final UserHumanName name = new UserHumanName(firstname, middlename, lastname);
-        final UserLocale pref = new UserLocale(new Locale(preferredLang),
-                DateTimeZone.forID(timeZone));
-        final UserCredential cred = new UserCredential(userpass, secretQuestion,
-                secretAnswer);
+        final UserLocale pref = new UserLocale(new Locale(preferredLang), DateTimeZone.forID(timeZone));
+        final UserCredential cred = new UserCredential(userpass, secretQuestion,  secretAnswer);
         final User user = new User(username, customerId, email, name, pref, cred);
+        user.setMossoId(1);
         return user;
     }
     
