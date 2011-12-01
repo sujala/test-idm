@@ -294,15 +294,11 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                 endpointItem.put(JSONConstants.PUBLIC_URL, endpoint.getPublicURL());
                 endpointItem.put(JSONConstants.INTERNAL_URL, endpoint.getInternalURL());
                 endpointItem.put(JSONConstants.REGION, endpoint.getRegion());
-
-                JSONObject version = new JSONObject();
                 if(endpoint.getVersion() != null){
-                    version.put(JSONConstants.VERSION_INFO, endpoint.getVersion().getInfo());
-                    version.put(JSONConstants.VERSION_LIST, endpoint.getVersion().getList());
-                    version.put(JSONConstants.VERSION_ID, endpoint.getVersion().getId());
+                    endpointItem.put(JSONConstants.VERSION_INFO, endpoint.getVersion().getInfo());
+                    endpointItem.put(JSONConstants.VERSION_LIST, endpoint.getVersion().getList());
+                    endpointItem.put(JSONConstants.VERSION_ID, endpoint.getVersion().getId());
                 }
-                endpointItem.put(JSONConstants.VERSION_ID, version);
-
                 endpointList.add(endpointItem);
             }
         return endpointList;
@@ -312,7 +308,6 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     private JSONObject getApiKeyCredentials(ApiKeyCredentials creds) {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
-
         outer.put(JSONConstants.APIKEY_CREDENTIALS, inner);
         inner.put(JSONConstants.USERNAME, creds.getUsername());
         inner.put(JSONConstants.API_KEY, creds.getApiKey());
@@ -324,7 +319,6 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         PasswordCredentialsRequiredUsername creds) {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
-
         outer.put(JSONConstants.PASSWORD_CREDENTIALS, inner);
         inner.put(JSONConstants.USERNAME, creds.getUsername());
         inner.put(JSONConstants.PASSWORD, creds.getPassword());
@@ -335,7 +329,6 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     private JSONObject getSecretQA(SecretQA secrets) {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
-
         outer.put(JSONConstants.SECRET_QA, inner);
         inner.put(JSONConstants.ANSWER, secrets.getAnswer());
         inner.put(JSONConstants.QUESTION, secrets.getQuestion());
@@ -349,7 +342,6 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         outer.put(JSONConstants.USERNAME, user.getUsername());
         outer.put(JSONConstants.EMAIL, user.getEmail());
         outer.put(JSONConstants.ENABLED, user.isEnabled());
-
         return outer;
     }
 
@@ -359,7 +351,6 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         outer.put(JSONConstants.ID, role.getId());
         outer.put(JSONConstants.DESCRIPTION, role.getDescription());
         outer.put(JSONConstants.NAME, role.getName());
-
         return outer;
     }
 
@@ -368,21 +359,17 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
         JSONArray list = new JSONArray();
-
         outer.put(JSONConstants.GROUPS, inner);
         inner.put(JSONConstants.GROUP, list);
-
         for (Group group : groups.getGroup()) {
             list.add(getGroupWithoutWrapper(group));
         }
-
         return outer;
     }
 
     @SuppressWarnings("unchecked")
     private JSONObject getGroup(Group group) {
         JSONObject outer = new JSONObject();
-
         outer.put(JSONConstants.GROUP, getGroupWithoutWrapper(group));
         return outer;
     }
@@ -390,7 +377,6 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     @SuppressWarnings("unchecked")
     private JSONObject getGroupWithoutWrapper(Group group) {
         JSONObject outer = new JSONObject();
-
         outer.put(JSONConstants.ID, group.getId());
         outer.put(JSONConstants.DESCRIPTION, group.getDescription());
         outer.put(JSONConstants.NAME, group.getName());
@@ -419,24 +405,19 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
         JSONArray list = new JSONArray();
-
         outer.put(JSONConstants.SERVICES, inner);
         //inner.put(JSONConstants.SERVICE, list);
-
         for (Service service : serviceList.getService()) {
             list.add(getServiceWithoutWrapper(service));
         }
-
         return outer;
     }
 
     @SuppressWarnings("unchecked")
     private JSONObject getEndpointTemplate(EndpointTemplate template) {
         JSONObject outer = new JSONObject();
-
         outer.put(JSONConstants.ENDPOINT_TEMPLATE,
             getEndpointTemplateWithoutWrapper(template));
-
         return outer;
     }
 
@@ -444,7 +425,6 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     private JSONObject getEndpointTemplateWithoutWrapper(
         EndpointTemplate template) {
         JSONObject outer = new JSONObject();
-
         outer.put(JSONConstants.ID, template.getId());
         outer.put(JSONConstants.ADMIN_URL, template.getAdminURL());
         outer.put(JSONConstants.INTERNAL_URL, template.getInternalURL());
@@ -469,24 +449,18 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
         JSONArray list = new JSONArray();
-
         outer.put(JSONConstants.ENDPOINT_TEMPLATES, inner);
         inner.put(JSONConstants.ENDPOINT_TEMPLATE, list);
-
         for (EndpointTemplate template : templateList.getEndpointTemplate()) {
             list.add(getEndpointTemplateWithoutWrapper(template));
         }
-
         return outer;
     }
 
     @SuppressWarnings("unchecked")
     private JSONObject getExtension(Extension extension) {
         JSONObject outer = new JSONObject();
-
-        outer.put(JSONConstants.EXTENSION,
-            getExtensionWithoutWrapper(extension));
-
+        outer.put(JSONConstants.EXTENSION, getExtensionWithoutWrapper(extension));
         return outer;
     }
 
@@ -495,14 +469,11 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
         JSONArray list = new JSONArray();
-
         outer.put(JSONConstants.EXTENSIONS, inner);
         inner.put(JSONConstants.EXTENSION, list);
-
         for (Extension extension : extensions.getExtension()) {
             list.add(getExtensionWithoutWrapper(extension));
         }
-
         return outer;
     }
 
@@ -540,11 +511,9 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     @SuppressWarnings("unchecked")
     private JSONObject getLinkWithoutWrapper(Link link) {
         JSONObject outer = new JSONObject();
-
         outer.put(JSONConstants.REL, link.getRel());
         outer.put(JSONConstants.TYPE, link.getType());
         outer.put(JSONConstants.HREF, link.getHref());
-
         return outer;
     }
 
