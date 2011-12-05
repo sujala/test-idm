@@ -73,6 +73,17 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                 .toJSONString(getExtensionList(extensions));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
+        } else if (object.getDeclaredType().isAssignableFrom(Tenants.class)) {
+            JSONObject outer = new JSONObject();
+            JSONArray list = new JSONArray();
+            Tenants tenants = (Tenants)object.getValue();
+            for (Tenant tenant : tenants.getTenant()){
+                list.add(getTenantWithoutWrapper(tenant));
+            }
+            outer.put(JSONConstants.TENANTS, list);
+            String jsonText = JSONValue.toJSONString(outer);
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+
         } else if (object.getDeclaredType().isAssignableFrom(Service.class)) {
 
             Service service = (Service) object.getValue();
@@ -263,7 +274,19 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         }
         return userInner;
     }
-    
+
+    @SuppressWarnings("unchecked")
+    private JSONObject getTenantWithoutWrapper(Tenant tenant){
+        JSONObject userInner = new JSONObject();
+        userInner.put(JSONConstants.ID, tenant.getId());
+        userInner.put(JSONConstants.NAME, tenant.getName());
+        userInner.put(JSONConstants.DESCRIPTION, tenant.getDescription());
+        //userInner.put(JSONConstants.DISPLAY_NAME, tenant.getDisplayName());
+        //userInner.put(JSONConstants.CREATED, tenant.getCreated().toString());
+        userInner.put(JSONConstants.ENABLED, tenant.isEnabled());
+        return userInner;
+    }
+
     @SuppressWarnings("unchecked")
     private JSONArray getServiceCatalog(ServiceCatalog serviceCatalog){
         JSONArray serviceInner = new JSONArray();

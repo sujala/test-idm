@@ -12,6 +12,7 @@ public class JSONConstants {
     public static final Object BASE_URL_REF = "baseURLRef";
     public static final Object BASE_URL_REFS = "baseURLRefs";
     public static final Object BASE_URLS = "baseURLs";
+    public static final String CREATED = "created";
     public static final String CREDENTIALS = "credentials";
     public static final String DESCRIPTION = "description";
     public static final String ENABLED = "enabled";
@@ -45,6 +46,8 @@ public class JSONConstants {
     public static final String SERVICECATALOG = "serviceCatalog";
     public static final String SERVICE = "OS-KSADM:service";
     public static final String SERVICES = "OS-KSADM:services";
+    public static final Object TENANT = "tenant";
+    public static final String TENANTS = "tenants";
     public static final String TENANT_ID = "tenantId";
     public static final String TENANT_NAME = "tenantName";
     public static final String TOKEN = "token";
@@ -71,7 +74,6 @@ public class JSONConstants {
     public static final String SECRET_QUESTION = "secretQuestion";
     public static final String SECRET_ANSWER = "secretAnswer";
     public static final Object DISPLAY_NAME_CLOUD = "display-name";
-    public static final Object TENANT = "tenant";
     public static final Object ROLE = "role";
     public static final Object ROLES = "roles";
     public static final Object SERVICE_ID = "serviceId";
