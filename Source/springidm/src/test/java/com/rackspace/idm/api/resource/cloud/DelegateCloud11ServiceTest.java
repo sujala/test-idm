@@ -12,6 +12,7 @@ import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
+import org.mockito.internal.verification.VerificationModeFactory;
 import org.mortbay.jetty.HttpHeaders;
 
 import javax.servlet.http.HttpServletRequest;
@@ -94,13 +95,31 @@ public class DelegateCloud11ServiceTest {
     }
 
     @Test
-    public void createUser_GAKeystoneDisabledFlagSetToTrue_clientGetsCalled() throws Exception {
+    public void createUser_useCloudAuthFlagSetToTrue_callsConfigGetBoolean() throws Exception {
         User user = new User();
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(true);
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(OBJ_FACTORY.createUser(user)).thenReturn(new JAXBElement<User>(new QName(""), User.class, user));
+        delegateCloud11Service.createUser(null,null,null, user);
+        verify(config).getBoolean("useCloudAuth");
+    }
+
+    @Test
+    public void createUser_useCloudAuthFlagSetToTrue_clientGetsCalled() throws Exception {
+        User user = new User();
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
         when(config.getString("cloudAuth11url")).thenReturn("");
-        when(defaultCloud11Service.createUser(null,null,null,user)).thenReturn(Response.status(401));
         when(OBJ_FACTORY.createUser(user)).thenReturn(new JAXBElement<User>(new QName(""), User.class, user));
         delegateCloud11Service.createUser(null, null, null, user);
         verify(cloudClient).post("users",null,"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>< xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\"/>");
+    }
+
+    @Test
+    public void createUser_useCloudAuthFlagSetToFalse_clientDoesNotGetCalled() throws Exception {
+        User user = new User();
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        when(config.getString("cloudAuth11url")).thenReturn("");
+        when(OBJ_FACTORY.createUser(user)).thenReturn(new JAXBElement<User>(new QName(""), User.class, user));
+        delegateCloud11Service.createUser(null,null,null, user);
+        verify(cloudClient, VerificationModeFactory.times(0)).post(anyString(),Matchers.<javax.ws.rs.core.HttpHeaders>anyObject(),anyString());
     }
 }
