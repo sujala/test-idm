@@ -296,16 +296,12 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder createUser(HttpServletRequest request, HttpHeaders httpHeaders, UriInfo uriInfo,
                                                User user) throws IOException, JAXBException {
 
-        Response.ResponseBuilder serviceResponse = getCloud11Service().createUser(request, httpHeaders, uriInfo, user);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if(config.getBoolean("useCloudAuth")){
             String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
             return cloudClient.post(getCloudAuthV11Url().concat("users"), httpHeaders, body);
         }
+
+        Response.ResponseBuilder serviceResponse = getCloud11Service().createUser(request, httpHeaders, uriInfo, user);
         return serviceResponse;
     }
 
@@ -326,43 +322,32 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder deleteUser(HttpServletRequest request,
-        String userId, HttpHeaders httpHeaders) throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud11Service()
-            .deleteUser(request, userId, httpHeaders);
+    public Response.ResponseBuilder deleteUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud11Service().deleteUser(request, userId, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
 
         int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND
-            || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            return cloudClient.delete(
-                getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+            return cloudClient.delete(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
         }
         return serviceResponse;
     }
 
     @Override
-    public Response.ResponseBuilder updateUser(HttpServletRequest request,
-        String userId, HttpHeaders httpHeaders, User user) throws IOException,
-        JAXBException {
-        Response.ResponseBuilder serviceResponse = getCloud11Service()
-            .updateUser(request, userId, httpHeaders, user);
+    public Response.ResponseBuilder updateUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders,
+                                               User user) throws IOException, JAXBException {
+
+        Response.ResponseBuilder serviceResponse = getCloud11Service().updateUser(request, userId, httpHeaders, user);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
 
         int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND
-            || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            String body = this.marshallObjectToString(OBJ_FACTORY
-                .createUser(user));
-            return cloudClient.put(
-                getCloudAuthV11Url().concat("users/" + userId), httpHeaders,
-                body);
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+            String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
+            return cloudClient.put(getCloudAuthV11Url().concat("users/" + userId), httpHeaders, body);
         }
         return serviceResponse;
     }
