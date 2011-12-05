@@ -1,7 +1,8 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import java.util.List;
-
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
 import org.openstack.docs.identity.api.v2.Endpoint;
@@ -12,9 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import java.util.List;
 
 @Component
 public class EndpointConverterCloudV20 {
@@ -51,9 +50,7 @@ public class EndpointConverterCloudV20 {
                 version.setId(baseUrl.getVersionId());
                 version.setInfo(baseUrl.getVersionInfo());
                 version.setList(baseUrl.getVersionList());
-
-                Endpoint endpoint = OBJ_FACTORIES
-                    .getOpenStackIdentityV2Factory().createEndpoint();
+                Endpoint endpoint = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint();
                 endpoint.setAdminURL(baseUrl.getAdminUrl());
                 endpoint.setId(baseUrl.getBaseUrlId());
                 endpoint.setInternalURL(baseUrl.getInternalUrl());
@@ -84,8 +81,7 @@ public class EndpointConverterCloudV20 {
             version.setInfo(baseUrl.getVersionInfo());
             version.setList(baseUrl.getVersionList());
 
-            Endpoint endpoint = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                .createEndpoint();
+            Endpoint endpoint = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint();
             endpoint.setAdminURL(baseUrl.getAdminUrl());
             endpoint.setId(baseUrl.getBaseUrlId());
             endpoint.setInternalURL(baseUrl.getInternalUrl());
@@ -109,9 +105,7 @@ public class EndpointConverterCloudV20 {
         version.setInfo(baseUrl.getVersionInfo());
         version.setList(baseUrl.getVersionList());
 
-        EndpointTemplate template = OBJ_FACTORIES
-            .getOpenStackIdentityExtKscatalogV1Factory()
-            .createEndpointTemplate();
+        EndpointTemplate template = OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory().createEndpointTemplate();
         template.setAdminURL(baseUrl.getAdminUrl());
         template.setEnabled(baseUrl.getEnabled());
         template.setGlobal(baseUrl.getGlobal());
@@ -151,8 +145,7 @@ public class EndpointConverterCloudV20 {
         version.setInfo(baseUrl.getVersionInfo());
         version.setList(baseUrl.getVersionList());
 
-        Endpoint endpoint = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createEndpoint();
+        Endpoint endpoint = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint();
         endpoint.setAdminURL(baseUrl.getAdminUrl());
         endpoint.setId(baseUrl.getBaseUrlId());
         endpoint.setInternalURL(baseUrl.getInternalUrl());
