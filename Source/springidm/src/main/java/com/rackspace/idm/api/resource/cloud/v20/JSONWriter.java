@@ -484,7 +484,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         outer.put(JSONConstants.NAME, extension.getName());
         outer.put(JSONConstants.NAMESPACE, extension.getNamespace());
         outer.put(JSONConstants.ALIAS, extension.getAlias());
-        outer.put(JSONConstants.UPDATED, extension.getUpdated());
+        outer.put(JSONConstants.UPDATED, extension.getUpdated().toString());
         outer.put(JSONConstants.DESCRIPTION, extension.getDescription());
 
         List<Link> links = new ArrayList<Link>();
@@ -511,7 +511,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     @SuppressWarnings("unchecked")
     private JSONObject getLinkWithoutWrapper(Link link) {
         JSONObject outer = new JSONObject();
-        outer.put(JSONConstants.REL, link.getRel());
+        outer.put(JSONConstants.REL, link.getRel().toString());
         outer.put(JSONConstants.TYPE, link.getType());
         outer.put(JSONConstants.HREF, link.getHref());
         return outer;
