@@ -995,10 +995,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private void handleAuthenticationFailure(String username,
         final UserAuthenticationResult result) {
         if (!result.isAuthenticated()) {
-            String errorMessage = String.format("User %s not authenticated.",
+            String errorMessage = String.format("Invalid username or password.",
                 username);
             logger.warn(errorMessage);
-            throw new NotAuthenticatedException();
+            throw new NotAuthenticatedException(errorMessage);
         }
     }
 }
