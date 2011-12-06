@@ -1,11 +1,32 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.converter.cloudv20.*;
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.config.JAXBContextResolver;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.exception.*;
+import org.apache.commons.configuration.Configuration;
+import org.joda.time.DateTime;
+import org.openstack.docs.common.api.v1.Extension;
+import org.openstack.docs.common.api.v1.Extensions;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
+import org.openstack.docs.identity.api.v2.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
@@ -19,75 +40,12 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
-
-import org.apache.commons.configuration.Configuration;
-import org.joda.time.DateTime;
-import org.openstack.docs.common.api.v1.Extension;
-import org.openstack.docs.common.api.v1.Extensions;
-import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
-import org.openstack.docs.identity.api.v2.AuthenticateResponse;
-import org.openstack.docs.identity.api.v2.AuthenticationRequest;
-import org.openstack.docs.identity.api.v2.BadRequestFault;
-import org.openstack.docs.identity.api.v2.CredentialListType;
-import org.openstack.docs.identity.api.v2.CredentialType;
-import org.openstack.docs.identity.api.v2.EndpointList;
-import org.openstack.docs.identity.api.v2.ForbiddenFault;
-import org.openstack.docs.identity.api.v2.IdentityFault;
-import org.openstack.docs.identity.api.v2.ItemNotFoundFault;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
-import org.openstack.docs.identity.api.v2.Role;
-import org.openstack.docs.identity.api.v2.TenantConflictFault;
-import org.openstack.docs.identity.api.v2.UnauthorizedFault;
-import org.openstack.docs.identity.api.v2.UserDisabledFault;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
-
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.ServiceConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
-import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.domain.entity.HasAccessToken;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.UserGroupService;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.BaseUrlConflictException;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.DuplicateUsernameException;
-import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.NotAuthorizedException;
-import com.rackspace.idm.exception.NotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -1269,11 +1227,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit)
             throws IOException {
         try {
-            ScopeAccess access = this.scopeAccessService.getAccessTokenByAuthHeader(authToken);
-            if (access == null) {
-                throw new NotAuthorizedException("Not authorized");
-            }
             List<Tenant> tenants = new ArrayList<Tenant>();
+
+            ScopeAccess access = this.scopeAccessService.getAccessTokenByAuthHeader(authToken);
+            if (access == null) { // ToDo: Send an empty list, it's what Cloud does.
+                return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenants(
+                    this.tenantConverterCloudV20.toTenantList(tenants)));
+                //throw new NotAuthorizedException("Not authorized");
+            }
 
             ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
 

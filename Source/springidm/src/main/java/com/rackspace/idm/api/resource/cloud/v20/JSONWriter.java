@@ -73,6 +73,17 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                 .toJSONString(getExtensionList(extensions));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
+        } else if (object.getDeclaredType().isAssignableFrom(Tenants.class)) {
+            JSONObject outer = new JSONObject();
+            JSONArray list = new JSONArray();
+            Tenants tenants = (Tenants)object.getValue();
+            for (Tenant tenant : tenants.getTenant()){
+                list.add(getTenantWithoutWrapper(tenant));
+            }
+            outer.put(JSONConstants.TENANTS, list);
+            String jsonText = JSONValue.toJSONString(outer);
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+
         } else if (object.getDeclaredType().isAssignableFrom(Service.class)) {
 
             Service service = (Service) object.getValue();
@@ -100,6 +111,30 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
 
             EndpointTemplate template = (EndpointTemplate) object.getValue();
             String jsonText = JSONValue.toJSONString(getEndpointTemplate(template));
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+
+        } else if (object.getDeclaredType().isAssignableFrom(EndpointList.class)) {
+            JSONObject outerList = new JSONObject();
+            JSONArray endpoints = new JSONArray();
+            EndpointList endpointList = (EndpointList)object.getValue();
+            outerList.put(JSONConstants.ENDPOINTS, endpoints);
+            for(Endpoint endpoint : endpointList.getEndpoint()){
+                JSONObject endpointItem = new JSONObject();
+                endpointItem.put(JSONConstants.REGION, endpoint.getRegion());
+                endpointItem.put(JSONConstants.ID, endpoint.getId());
+                endpointItem.put(JSONConstants.PUBLIC_URL, endpoint.getPublicURL());
+                //templateItem.put(JSONConstants.NAME, endpoint.getName());
+                endpointItem.put(JSONConstants.ADMIN_URL, endpoint.getAdminURL());
+                endpointItem.put(JSONConstants.TYPE, endpoint.getType());
+                endpointItem.put(JSONConstants.INTERNAL_URL, endpoint.getInternalURL());
+                if(endpoint.getVersion() != null){
+                    endpointItem.put(JSONConstants.VERSION_ID, endpoint.getVersion().getId());
+                    endpointItem.put(JSONConstants.VERSION_INFO, endpoint.getVersion().getInfo());
+                    endpointItem.put(JSONConstants.VERSION_LIST, endpoint.getVersion().getList());
+                }
+                endpoints.add(endpointItem);
+            }
+            String jsonText = JSONValue.toJSONString(outerList);
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
         } else if (object.getDeclaredType().isAssignableFrom(EndpointTemplateList.class)) {
@@ -263,16 +298,30 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         }
         return userInner;
     }
-    
+
+    @SuppressWarnings("unchecked")
+    private JSONObject getTenantWithoutWrapper(Tenant tenant){
+        JSONObject userInner = new JSONObject();
+        userInner.put(JSONConstants.ID, tenant.getId());
+        userInner.put(JSONConstants.NAME, tenant.getName());
+        userInner.put(JSONConstants.DESCRIPTION, tenant.getDescription());
+        //userInner.put(JSONConstants.DISPLAY_NAME, tenant.getDisplayName());
+        //userInner.put(JSONConstants.CREATED, tenant.getCreated().toString());
+        userInner.put(JSONConstants.ENABLED, tenant.isEnabled());
+        return userInner;
+    }
+
     @SuppressWarnings("unchecked")
     private JSONArray getServiceCatalog(ServiceCatalog serviceCatalog){
         JSONArray serviceInner = new JSONArray();
-        for(ServiceForCatalog service : serviceCatalog.getService()){
-            JSONObject catalogItem = new JSONObject();
-            catalogItem.put(JSONConstants.ENDPOINTS, getEndpointsForCatalog(service.getEndpoint()));
-            catalogItem.put(JSONConstants.NAME, service.getName());
-            catalogItem.put(JSONConstants.TYPE, service.getType());
-            serviceInner.add(catalogItem);
+        if(serviceCatalog != null) {
+            for(ServiceForCatalog service : serviceCatalog.getService()){
+                JSONObject catalogItem = new JSONObject();
+                catalogItem.put(JSONConstants.ENDPOINTS, getEndpointsForCatalog(service.getEndpoint()));
+                catalogItem.put(JSONConstants.NAME, service.getName());
+                catalogItem.put(JSONConstants.TYPE, service.getType());
+                serviceInner.add(catalogItem);
+            }
         }
         return serviceInner;        
     }

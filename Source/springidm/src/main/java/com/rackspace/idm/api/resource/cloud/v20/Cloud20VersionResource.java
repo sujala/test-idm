@@ -1,42 +1,22 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import java.io.IOException;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HEAD;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import javax.xml.bind.JAXBException;
-
-import org.apache.commons.configuration.Configuration;
-import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
-import org.openstack.docs.identity.api.v2.AuthenticationRequest;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
-import org.openstack.docs.identity.api.v2.Role;
-import org.openstack.docs.identity.api.v2.Tenant;
-import org.openstack.docs.identity.api.v2.User;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
-
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
+import org.apache.commons.configuration.Configuration;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
+import org.openstack.docs.identity.api.v2.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
 
 /**
  * Cloud Auth 2.0 API Versions
@@ -178,8 +158,7 @@ public class Cloud20VersionResource {
             return getCloud20Service().listUserGlobalRolesByServiceId(httpHeaders,
                 authToken, userId, serviceId).build();
         } else {
-            return getCloud20Service().listUserGlobalRoles(httpHeaders,
-                authToken, userId).build();
+            return getCloud20Service().listUserGlobalRoles(httpHeaders, authToken, userId).build();
         }
     }
 
@@ -192,8 +171,7 @@ public class Cloud20VersionResource {
         @QueryParam("limit") Integer limit) throws IOException {
         // Note: getTenantByName only available to admin
         if (!StringUtils.isBlank(name)) {
-            return getCloud20Service().getTenantByName(httpHeaders, authToken,
-                name).build();
+            return getCloud20Service().getTenantByName(httpHeaders, authToken, name).build();
         } else {
             return getCloud20Service().listTenants(httpHeaders, authToken,
                 marker, limit).build();
@@ -215,8 +193,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantId,
         @PathParam("userId") String userId) throws IOException {
-        return getCloud20Service().listRolesForUserOnTenant(httpHeaders,
-            authToken, tenantId, userId).build();
+        return getCloud20Service().listRolesForUserOnTenant(httpHeaders, authToken, tenantId, userId).build();
     }
 
     @POST
@@ -224,8 +201,7 @@ public class Cloud20VersionResource {
     public Response addUser(@Context HttpHeaders httpHeaders,
         @Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken,
         User user) throws IOException, JAXBException {
-        return getCloud20Service().addUser(httpHeaders, uriInfo, authToken,
-            user).build();
+        return getCloud20Service().addUser(httpHeaders, uriInfo, authToken, user).build();
     }
 
     @POST
@@ -234,8 +210,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId, User user) throws IOException,
         JAXBException {
-        return getCloud20Service().updateUser(httpHeaders, authToken, userId,
-            user).build();
+        return getCloud20Service().updateUser(httpHeaders, authToken, userId, user).build();
     }
 
     @DELETE
@@ -243,8 +218,7 @@ public class Cloud20VersionResource {
     public Response deleteUser(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId) throws IOException {
-        return getCloud20Service().deleteUser(httpHeaders, authToken, userId)
-            .build();
+        return getCloud20Service().deleteUser(httpHeaders, authToken, userId).build();
     }
 
     @PUT
@@ -253,8 +227,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId, User user)
         throws IOException, JAXBException {
-        return getCloud20Service().setUserEnabled(httpHeaders, authToken,
-            userId, user).build();
+        return getCloud20Service().setUserEnabled(httpHeaders, authToken, userId, user).build();
     }
 
     @GET
@@ -263,8 +236,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId,
         @QueryParam("serviceId") String serviceId) throws IOException {
-        return getCloud20Service().listUserRoles(httpHeaders, authToken,
-            userId, serviceId).build();
+        return getCloud20Service().listUserRoles(httpHeaders, authToken, userId, serviceId).build();
     }
 
     @GET
@@ -280,8 +252,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId, @PathParam("roleId") String roleId)
         throws IOException {
-        return getCloud20Service().addUserRole(httpHeaders, authToken, userId,
-            roleId).build();
+        return getCloud20Service().addUserRole(httpHeaders, authToken, userId, roleId).build();
     }
 
     @GET
@@ -290,8 +261,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId, @PathParam("roleId") String roleId)
         throws IOException {
-        return getCloud20Service().getUserRole(httpHeaders, authToken, userId,
-            roleId).build();
+        return getCloud20Service().getUserRole(httpHeaders, authToken, userId, roleId).build();
     }
 
     @DELETE
@@ -300,8 +270,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId, @PathParam("roleId") String roleId)
         throws IOException {
-        return getCloud20Service().deleteUserRole(httpHeaders, authToken,
-            userId, roleId).build();
+        return getCloud20Service().deleteUserRole(httpHeaders, authToken, userId, roleId).build();
     }
 
     @POST
@@ -309,8 +278,7 @@ public class Cloud20VersionResource {
     public Response addUserCredential(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId, String body) throws IOException {
-        return getCloud20Service().addUserCredential(httpHeaders, authToken,
-            userId, body).build();
+        return getCloud20Service().addUserCredential(httpHeaders, authToken, userId, body).build();
     }
 
     @GET
@@ -320,8 +288,7 @@ public class Cloud20VersionResource {
         @PathParam("userId") String userId,
         @QueryParam("marker") String marker, @QueryParam("limit") Integer limit)
         throws IOException {
-        return getCloud20Service().listCredentials(httpHeaders, authToken,
-            userId, marker, limit).build();
+        return getCloud20Service().listCredentials(httpHeaders, authToken, userId, marker, limit).build();
     }
 
     @POST
