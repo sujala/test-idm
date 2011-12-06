@@ -61,16 +61,13 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         throws IOException, WebApplicationException {
 
         if (object.getDeclaredType().isAssignableFrom(Extension.class)) {
-
             Extension extension = (Extension) object.getValue();
             String jsonText = JSONValue.toJSONString(getExtension(extension));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
         } else if (object.getDeclaredType().isAssignableFrom(Extensions.class)) {
-
             Extensions extensions = (Extensions) object.getValue();
-            String jsonText = JSONValue
-                .toJSONString(getExtensionList(extensions));
+            String jsonText = JSONValue.toJSONString(getExtensionList(extensions));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
         } else if (object.getDeclaredType().isAssignableFrom(Tenants.class)) {
@@ -518,8 +515,8 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
         JSONArray list = new JSONArray();
-        outer.put(JSONConstants.EXTENSIONS, inner);
-        inner.put(JSONConstants.EXTENSION, list);
+        outer.put(JSONConstants.EXTENSIONS, list);
+        //inner.put(JSONConstants.EXTENSION, list);
         for (Extension extension : extensions.getExtension()) {
             list.add(getExtensionWithoutWrapper(extension));
         }
