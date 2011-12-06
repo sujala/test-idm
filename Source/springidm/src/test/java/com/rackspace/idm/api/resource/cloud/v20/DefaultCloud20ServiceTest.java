@@ -15,6 +15,7 @@ import com.rackspace.idm.exception.NotAuthenticatedException;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
@@ -24,9 +25,9 @@ import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 import java.util.List;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -448,12 +449,19 @@ public class DefaultCloud20ServiceTest {
         verify(userGroupService).getGroups(user.getMossoId());
     }
 
-    @Test
+    @Ignore
     public void listTenants_invalidToken_returns401() throws Exception {
         when(scopeAccessService.getAccessTokenByAuthHeader("bad")).thenReturn(null);
         when(tenantConverterCloudV20.toTenantList(org.mockito.Matchers.<List<Tenant>>any())).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.listTenants(null, "bad", null, 1);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+    @Test
+    public void listTenants_invalidToken_returnsEmptyList() throws Exception {
+        when(scopeAccessService.getAccessTokenByAuthHeader("bad")).thenReturn(null);
+        when(tenantConverterCloudV20.toTenantList(org.mockito.Matchers.<List<Tenant>>any())).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.listTenants(null, "bad", null, 1);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
