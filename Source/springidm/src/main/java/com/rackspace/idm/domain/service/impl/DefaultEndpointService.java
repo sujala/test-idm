@@ -1,16 +1,15 @@
 package com.rackspace.idm.domain.service.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.exception.BaseUrlConflictException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DefaultEndpointService implements EndpointService {
 
@@ -56,7 +55,33 @@ public class DefaultEndpointService implements EndpointService {
         logger.debug("Getting baseurls");
         return this.endpointDao.getBaseUrls();
     }
-    
+
+    @Override
+    public List<CloudBaseUrl> getGlobalBaseUrls() {
+        logger.debug("Getting global baseurls");
+        List<CloudBaseUrl> baseUrls = endpointDao.getBaseUrls();
+        List<CloudBaseUrl> globalBaseUrls = new ArrayList<CloudBaseUrl>();
+        for(CloudBaseUrl baseURL: baseUrls){
+            if(baseURL.getGlobal()){
+                globalBaseUrls.add(baseURL);
+            }
+        }
+        return globalBaseUrls;
+    }
+
+    @Override
+    public List<CloudBaseUrl> getDefaultBaseUrls() {
+        logger.debug("Getting default baseurls");
+        List<CloudBaseUrl> baseUrls = endpointDao.getBaseUrls();
+        List<CloudBaseUrl> defaultBaseUrls = new ArrayList<CloudBaseUrl>();
+        for(CloudBaseUrl baseURL: baseUrls){
+            if(baseURL.getDef()){
+                defaultBaseUrls.add(baseURL);
+            }
+        }
+        return defaultBaseUrls;
+    }
+
     @Override
     public CloudBaseUrl getBaseUrlById(int baseUrlId) {
         logger.debug("Getting baserul {}", baseUrlId);
