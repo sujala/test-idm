@@ -38,4 +38,13 @@ public class UserValidatorTest {
         user.setId("");
         userValidator.validate(user);
     }
+
+    @Test
+    public void validate_validUser() throws Exception {
+        User user = new User();
+        user.setNastId("nastId");
+        user.setMossoId(1);
+        user.setKey("key");
+        userValidator.validate(user);
+    }
 }

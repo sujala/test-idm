@@ -14,16 +14,20 @@ import org.springframework.stereotype.Component;
 public class UserValidator {
 
     static final String USER_ID_EMPTY_MSG = "User Id Cannot be empty.";
+    static final String USER_ID_NULL_MSG = "User ID can not be null.";
 
     public void validate(User user) {
         if (user == null) {
-            throw new BadRequestException("User can not be null");
-        }
-        if (user.getId() == null) {
-            throw new BadRequestException(USER_ID_EMPTY_MSG);
-        }
-        if (user.getId().isEmpty()) {
-            throw new BadRequestException(USER_ID_EMPTY_MSG);
+            throw new BadRequestException(USER_ID_NULL_MSG);
+        } else if (user.getNastId() != null && user.getKey() != null) {
+            //no op
+        } else {
+            if (user.getId() == null) {
+                throw new BadRequestException(USER_ID_NULL_MSG);
+            }
+            if (user.getId().isEmpty()) {
+                throw new BadRequestException(USER_ID_EMPTY_MSG);
+            }
         }
     }
 }
