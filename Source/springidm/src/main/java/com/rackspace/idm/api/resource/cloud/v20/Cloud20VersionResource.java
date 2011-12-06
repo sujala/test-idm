@@ -77,8 +77,7 @@ public class Cloud20VersionResource {
     public Response authenticate(@Context HttpHeaders httpHeaders,
         AuthenticationRequest authenticationRequest) throws IOException,
         JAXBException {
-        return getCloud20Service().authenticate(httpHeaders,
-            authenticationRequest).build();
+        return getCloud20Service().authenticate(httpHeaders, authenticationRequest).build();
     }
 
     @GET
