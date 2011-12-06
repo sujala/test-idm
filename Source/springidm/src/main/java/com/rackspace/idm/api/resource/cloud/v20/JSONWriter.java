@@ -290,12 +290,14 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     @SuppressWarnings("unchecked")
     private JSONArray getServiceCatalog(ServiceCatalog serviceCatalog){
         JSONArray serviceInner = new JSONArray();
-        for(ServiceForCatalog service : serviceCatalog.getService()){
-            JSONObject catalogItem = new JSONObject();
-            catalogItem.put(JSONConstants.ENDPOINTS, getEndpointsForCatalog(service.getEndpoint()));
-            catalogItem.put(JSONConstants.NAME, service.getName());
-            catalogItem.put(JSONConstants.TYPE, service.getType());
-            serviceInner.add(catalogItem);
+        if(serviceCatalog != null) {
+            for(ServiceForCatalog service : serviceCatalog.getService()){
+                JSONObject catalogItem = new JSONObject();
+                catalogItem.put(JSONConstants.ENDPOINTS, getEndpointsForCatalog(service.getEndpoint()));
+                catalogItem.put(JSONConstants.NAME, service.getName());
+                catalogItem.put(JSONConstants.TYPE, service.getType());
+                serviceInner.add(catalogItem);
+            }
         }
         return serviceInner;        
     }
