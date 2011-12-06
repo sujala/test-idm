@@ -867,7 +867,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             Tenant tenant = this.tenantService.getTenantByName(name);
             if (tenant == null) {
-                String errMsg = String.format("Tenant with id/name: '%s' was not found", name);
+                String errMsg = String.format("Tenant with id/name: '%s' was not found.", name);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
@@ -1712,7 +1712,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         if (tenant == null) {
             String errMsg = String.format(
-                    "Tenant with id/name: '%s' was not found", tenantId);
+                    "Tenant with id/name: '%s' was not found.", tenantId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
@@ -1748,9 +1748,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         User user = this.userService.getUser(username);
 
         if (user == null) {
-            String errMsg = String.format("User %s not found", username);
+            String errMsg = String.format("User '%s' not found.", username);
             logger.warn(errMsg);
-            throw new NotFoundException("User not found");
+            throw new NotFoundException(errMsg);
         }
 
         return user;

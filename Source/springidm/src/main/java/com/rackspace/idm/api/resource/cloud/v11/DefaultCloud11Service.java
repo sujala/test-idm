@@ -629,7 +629,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             User gaUser = userService.getUser(userId);
 
             if (gaUser == null) {
-                String errMsg = String.format("User %s not found", userId);
+                String errMsg = "User not found: " + userId;
                 throw new NotFoundException(errMsg);
             }
 
