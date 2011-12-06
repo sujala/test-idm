@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.util.NastFacade;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.sun.jersey.api.uri.UriBuilderImpl;
@@ -36,6 +37,7 @@ public class DefaultCloud11ServiceTest {
     DefaultCloud11Service defaultCloud11Service;
     DefaultCloud11Service spy;
     UserConverterCloudV11 userConverterCloudV11;
+    UserValidator userValidator;
     LdapCloudAdminRepository ldapCloudAdminRepository;
     NastFacade nastFacade;
     UserService userService;
@@ -59,6 +61,7 @@ public class DefaultCloud11ServiceTest {
         uriInfo = mock(UriInfo.class);
         config = mock(Configuration.class);
         request = mock(HttpServletRequest.class);
+        userValidator = mock(UserValidator.class);
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
         UriBuilderImpl uriBuilder = mock(UriBuilderImpl.class);
         when(uriBuilder.build()).thenReturn(new URI(""));
@@ -71,6 +74,7 @@ public class DefaultCloud11ServiceTest {
         defaultCloud11Service = new DefaultCloud11Service(config, scopeAccessService, endpointService, userService, null, userConverterCloudV11, null, ldapCloudAdminRepository);
         nastFacade = mock(NastFacade.class);
         defaultCloud11Service.setNastFacade(nastFacade);
+        defaultCloud11Service.setUserValidator(userValidator);
         spy = spy(defaultCloud11Service);
     }
 
@@ -322,6 +326,19 @@ public class DefaultCloud11ServiceTest {
     public void getUserFromMossoId_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
         spy.getUserFromMossoId(request, 0, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void updateUser_callsValidateUser() throws Exception {
+        spy.updateUser(request,null,null,null);
+        verify(userValidator).validate(null);
+    }
+
+    @Test
+    public void updateUser_whenValidatorThrowsBadRequestException_returns400() throws Exception {
+        doThrow(new BadRequestException("test exception")).when(userValidator).validate(null);
+        Response.ResponseBuilder responseBuilder = spy.updateUser(request, null, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
     @Test

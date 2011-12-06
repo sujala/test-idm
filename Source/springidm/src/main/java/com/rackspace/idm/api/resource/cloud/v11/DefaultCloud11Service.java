@@ -71,6 +71,9 @@ public class DefaultCloud11Service implements Cloud11Service {
     private CredentialUnmarshaller credentialUnmarshaller;
 
     @Autowired
+    private UserValidator userValidator;
+
+    @Autowired
     public DefaultCloud11Service(Configuration config,
                                  ScopeAccessService scopeAccessService, EndpointService endpointService,
                                  UserService userService, AuthConverterCloudV11 authConverterCloudV11,
@@ -622,7 +625,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         try {
             authenticateCloudAdminUser(request);
-
+            userValidator.validate(user);
             User gaUser = userService.getUser(userId);
 
             if (gaUser == null) {
@@ -1078,5 +1081,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     public void setCredentialUnmarshaller(CredentialUnmarshaller credentialUnmarshaller) {
         this.credentialUnmarshaller = credentialUnmarshaller;
+    }
+
+    public void setUserValidator(UserValidator userValidator) {
+        this.userValidator = userValidator;
     }
 }
