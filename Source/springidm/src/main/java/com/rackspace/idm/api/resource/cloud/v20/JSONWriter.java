@@ -113,6 +113,30 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             String jsonText = JSONValue.toJSONString(getEndpointTemplate(template));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
+        } else if (object.getDeclaredType().isAssignableFrom(EndpointList.class)) {
+            JSONObject outerList = new JSONObject();
+            JSONArray endpoints = new JSONArray();
+            EndpointList endpointList = (EndpointList)object.getValue();
+            outerList.put(JSONConstants.ENDPOINTS, endpoints);
+            for(Endpoint endpoint : endpointList.getEndpoint()){
+                JSONObject endpointItem = new JSONObject();
+                endpointItem.put(JSONConstants.REGION, endpoint.getRegion());
+                endpointItem.put(JSONConstants.ID, endpoint.getId());
+                endpointItem.put(JSONConstants.PUBLIC_URL, endpoint.getPublicURL());
+                //templateItem.put(JSONConstants.NAME, endpoint.getName());
+                endpointItem.put(JSONConstants.ADMIN_URL, endpoint.getAdminURL());
+                endpointItem.put(JSONConstants.TYPE, endpoint.getType());
+                endpointItem.put(JSONConstants.INTERNAL_URL, endpoint.getInternalURL());
+                if(endpoint.getVersion() != null){
+                    endpointItem.put(JSONConstants.VERSION_ID, endpoint.getVersion().getId());
+                    endpointItem.put(JSONConstants.VERSION_INFO, endpoint.getVersion().getInfo());
+                    endpointItem.put(JSONConstants.VERSION_LIST, endpoint.getVersion().getList());
+                }
+                endpoints.add(endpointItem);
+            }
+            String jsonText = JSONValue.toJSONString(outerList);
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+
         } else if (object.getDeclaredType().isAssignableFrom(EndpointTemplateList.class)) {
             JSONObject endpointTemplate = new JSONObject();
             JSONArray endpoints = new JSONArray();
