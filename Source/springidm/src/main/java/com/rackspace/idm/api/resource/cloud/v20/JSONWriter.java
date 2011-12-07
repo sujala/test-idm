@@ -8,6 +8,8 @@ import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspacecloud.docs.auth.api.v1.BaseURL;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
 import org.json.simple.JSONArray;
@@ -176,7 +178,6 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             }
 
         } else if (object.getDeclaredType().isAssignableFrom(Groups.class)) {
-
             Groups groups = (Groups) object.getValue();
             String jsonText = JSONValue.toJSONString(getGroups(groups));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
@@ -248,30 +249,43 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             JSONArray list = new JSONArray();
 
             BaseURLList baseList = (BaseURLList)object.getValue();
-
-            //ToDo: CloudBaseUrl
             for (BaseURL url : baseList.getBaseURL()){
-                JSONObject baseURL = new JSONObject();
-                baseURL.put(JSONConstants.ENABLED, url.isEnabled());
-                baseURL.put(JSONConstants.DEFAULT, url.isDefault());
-                if(url.getInternalURL() != null)
-                baseURL.put(JSONConstants.INTERNAL_URL, url.getInternalURL());
-                if(url.getPublicURL() != null)
-                    baseURL.put(JSONConstants.PUBLIC_URL, url.getPublicURL());
-                if(url.getRegion() != null)
-                    baseURL.put(JSONConstants.REGION, url.getRegion());
-                if(url.getServiceName() != null)
-                    baseURL.put(JSONConstants.SERVICE_NAME, url.getServiceName());
-                if(url.getUserType() != null)
-                    baseURL.put(JSONConstants.USER_TYPE, url.getUserType().name());
-                baseURL.put(JSONConstants.ID, url.getId());
-                list.add(baseURL);
+                list.add(getBaseUrlList(url));
             }
             outer.put(JSONConstants.BASE_URLS, list);
 
 
             String jsonText = JSONValue.toJSONString(outer);
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+
+        // Version 1.1 specific
+        } else if (object.getDeclaredType().isAssignableFrom(com.rackspacecloud.docs.auth.api.v1.User.class)) {
+            com.rackspacecloud.docs.auth.api.v1.User user = (com.rackspacecloud.docs.auth.api.v1.User)object.getValue();
+            JSONObject outer = new JSONObject();
+            JSONObject inner = new JSONObject();
+            inner.put(JSONConstants.ENABLED, user.isEnabled());
+            inner.put(JSONConstants.ID, user.getId());
+            inner.put(JSONConstants.KEY, user.getKey());
+            inner.put(JSONConstants.MOSSO_ID, user.getMossoId());
+            inner.put(JSONConstants.NAST_ID, user.getNastId());
+            //inner.put(JSONConstants.CREATED, user.getCreated());
+            //inner.put(JSONConstants.UPDATED, user.getUpdated());
+            JSONArray baseUrls = new JSONArray();
+            BaseURLRefList baseList = user.getBaseURLRefs();
+            if(baseList.getBaseURLRef() != null){
+                for (BaseURLRef url : baseList.getBaseURLRef()){
+                    JSONObject urlItem = new JSONObject();
+                    urlItem.put(JSONConstants.ID, url.getId());
+                    urlItem.put(JSONConstants.HREF, url.getHref());
+                    urlItem.put(JSONConstants.V1_DEFAULT, url.isV1Default());
+                    baseUrls.add(urlItem);
+                }
+            }
+            inner.put(JSONConstants.BASE_URL_REFS, baseUrls);
+            outer.put(JSONConstants.USER, inner);
+            String jsonText = JSONValue.toJSONString(outer);
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+
         } else {
             try {
                 getMarshaller().marshallToJSON(object, outputStream);
@@ -403,10 +417,8 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     @SuppressWarnings("unchecked")
     private JSONObject getGroups(Groups groups) {
         JSONObject outer = new JSONObject();
-        JSONObject inner = new JSONObject();
         JSONArray list = new JSONArray();
-        outer.put(JSONConstants.GROUPS, inner);
-        inner.put(JSONConstants.GROUP, list);
+        outer.put(JSONConstants.GROUPS, list);
         for (Group group : groups.getGroup()) {
             list.add(getGroupWithoutWrapper(group));
         }
@@ -501,6 +513,25 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             list.add(getEndpointTemplateWithoutWrapper(template));
         }
         return outer;
+    }
+
+    @SuppressWarnings("unchecked")
+    private JSONObject getBaseUrlList(BaseURL url){
+        JSONObject baseURL = new JSONObject();
+        baseURL.put(JSONConstants.ENABLED, url.isEnabled());
+        baseURL.put(JSONConstants.DEFAULT, url.isDefault());
+        if(url.getInternalURL() != null)
+        baseURL.put(JSONConstants.INTERNAL_URL, url.getInternalURL());
+        if(url.getPublicURL() != null)
+            baseURL.put(JSONConstants.PUBLIC_URL, url.getPublicURL());
+        if(url.getRegion() != null)
+            baseURL.put(JSONConstants.REGION, url.getRegion());
+        if(url.getServiceName() != null)
+            baseURL.put(JSONConstants.SERVICE_NAME, url.getServiceName());
+        if(url.getUserType() != null)
+            baseURL.put(JSONConstants.USER_TYPE, url.getUserType().name());
+        baseURL.put(JSONConstants.ID, url.getId());
+        return baseURL;
     }
 
     @SuppressWarnings("unchecked")
