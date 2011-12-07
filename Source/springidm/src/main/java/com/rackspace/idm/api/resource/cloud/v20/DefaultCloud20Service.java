@@ -886,7 +886,13 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             checkXAUTHTOKEN(authToken);
 
-            User user = checkAndGetUser(userId);
+            User user = this.userService.getUserById(userId);
+
+            if (user == null) {
+                String errMsg = String.format("User with id: '%s' was not found", userId);
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
+            }
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                     .createUser(this.userConverterCloudV20.toUser(user)));
@@ -905,9 +911,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = this.userService.getUser(name);
 
             if (user == null) {
-                String errMsg = String.format("User %s not found", name);
+                String errMsg = String.format("User not found: '%s'", name);
                 logger.warn(errMsg);
-                throw new NotFoundException("User not found");
+                throw new NotFoundException(errMsg);
             }
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
@@ -930,7 +936,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("unsupported credential type");
             }
 
-            User user = checkAndGetUser(userId);
+            User user = this.userService.getUserById(userId);
+
+            if (user == null) {
+               String errMsg = "Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: " + userId;
+               logger.warn(errMsg);
+               throw new NotFoundException(errMsg);
+            }
 
             JAXBElement<? extends CredentialType> creds = null;
 
@@ -1256,7 +1268,13 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             checkXAUTHTOKEN(authToken);
 
-            User user = checkAndGetUser(userId);
+            User user = this.userService.getUserById(userId);
+
+            if (user == null) {
+                String errMsg = "No Roles found User with id: " + userId;
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
+            }
 
             List<TenantRole> roles = this.tenantService
                     .getGlobalRolesForUser(user);
@@ -1327,7 +1345,13 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             checkXAUTHTOKEN(authToken);
 
-            User user = checkAndGetUser(userId);
+            User user = this.userService.getUserById(userId);
+
+            if (user == null) {
+                String errMsg = String.format("User not found: '%s'", userId);  
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
+            }
 
             List<TenantRole> roles = this.tenantService
                     .getGlobalRolesForUser(user);
@@ -1527,6 +1551,14 @@ public class DefaultCloud20Service implements Cloud20Service {
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
+            User credUser = this.userService.getUser(creds.getUsername());
+
+            if (credUser == null) {
+                String errMsg = String.format("User: '%s' not found.",creds.getUsername());
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
+            }
+            
 
             User user = checkAndGetUser(userId);
             if (!creds.getUsername().equals(user.getUsername())) {
@@ -1605,7 +1637,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
 
                 if (!belongsTo(belongsTo, roles)) {
-                    String errMsg = String.format("Token doesn't belong to Tenant with Id: '%s'", belongsTo);
+                    String errMsg = String.format("Token doesn't belong to Tenant with Id/Name: '%s'", belongsTo);
                     logger.warn(errMsg);
                     throw new NotFoundException(errMsg);
                 }
@@ -1726,7 +1758,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (sa == null) {
             String errMsg = String.format("Token %s not found", tokenId);
             logger.warn(errMsg);
-            throw new NotFoundException("Token not found");
+            throw new NotFoundException("Token not found.");
         }
 
         return sa;
@@ -1770,7 +1802,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
         if (!authorized) {
-            String errMsg = String.format("Token %s Forbidden from making this call", authToken);
+            String errMsg = "Access is denied";
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
