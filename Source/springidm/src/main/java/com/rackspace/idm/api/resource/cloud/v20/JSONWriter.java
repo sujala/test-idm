@@ -178,7 +178,6 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             }
 
         } else if (object.getDeclaredType().isAssignableFrom(Groups.class)) {
-
             Groups groups = (Groups) object.getValue();
             String jsonText = JSONValue.toJSONString(getGroups(groups));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
@@ -418,10 +417,8 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     @SuppressWarnings("unchecked")
     private JSONObject getGroups(Groups groups) {
         JSONObject outer = new JSONObject();
-        JSONObject inner = new JSONObject();
         JSONArray list = new JSONArray();
-        outer.put(JSONConstants.GROUPS, inner);
-        inner.put(JSONConstants.GROUP, list);
+        outer.put(JSONConstants.GROUPS, list);
         for (Group group : groups.getGroup()) {
             list.add(getGroupWithoutWrapper(group));
         }
