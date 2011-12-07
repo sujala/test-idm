@@ -1,20 +1,18 @@
 package com.rackspace.idm.services;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import junit.framework.Assert;
-
-import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.impl.DefaultEndpointService;
 import com.rackspace.idm.exception.BaseUrlConflictException;
+import junit.framework.Assert;
+import org.easymock.EasyMock;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class EndpointServiceTests {
 
@@ -158,6 +156,9 @@ public class EndpointServiceTests {
     
     @Test
     public void shouldRemoveBaseUrlFromUser() {
+        baseUrls.add(baseUrl);
+        EasyMock.expect(mockEndpointDao.getBaseUrlById(baseUrlId)).andReturn(baseUrl);
+        EasyMock.expect(mockEndpointDao.getBaseUrlsByService(service)).andReturn(baseUrls);
         mockEndpointDao.removeBaseUrlFromUser(baseUrlId, username);
         EasyMock.replay(mockEndpointDao);
         
