@@ -4,6 +4,7 @@ import com.rackspace.idm.api.resource.cloud.v11.CredentialUnmarshaller;
 import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service;
 import com.rackspace.idm.api.resource.cloud.v11.DelegateCloud11Service;
 import com.rackspace.idm.api.resource.cloud.v11.DummyCloud11Service;
+import com.rackspacecloud.docs.auth.api.v1.BaseURL;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import com.rackspacecloud.docs.auth.api.v1.UserCredentials;
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled;
@@ -43,6 +44,8 @@ public class DelegateCloud11ServiceTest {
     private CredentialUnmarshaller credentialUnmarshaller;
     private String jsonBody = "{\"credentials\":{\"username\":\"user\",\"key\":\"key\"}}";
     private javax.ws.rs.core.HttpHeaders httpHeaders = mock(javax.ws.rs.core.HttpHeaders.class);
+    private BaseURL baseUrl;
+    private String url;
 
     @Before
     public void setUp() throws JAXBException {
@@ -59,10 +62,15 @@ public class DelegateCloud11ServiceTest {
         cloudClient = mock(CloudClient.class);
         delegateCloud11Service.setCloudClient(cloudClient);
         marshaller = mock(Marshaller.class);
+        baseUrl = new BaseURL();
+        baseUrl.setDefault(true);
+        baseUrl.setId(1);
         delegateCloud11Service.setMarshaller(marshaller);
-        when(config.getString("cloudAuth11url")).thenReturn("url");
-        when(httpHeaders.getMediaType()).thenReturn(new MediaType("application/json",null));
         request = mock(HttpServletRequest.class);
+        when(OBJ_FACTORY.createBaseURL(baseUrl)).thenReturn(new JAXBElement(QName.valueOf("foo"),BaseURL.class, baseUrl));
+        url = "http://foo.com/";
+        when(config.getString("cloudAuth11url")).thenReturn(url);
+        when(httpHeaders.getMediaType()).thenReturn(new MediaType("application/json",null));
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
     }
 
@@ -121,5 +129,25 @@ public class DelegateCloud11ServiceTest {
         when(OBJ_FACTORY.createUser(user)).thenReturn(new JAXBElement<User>(new QName(""), User.class, user));
         delegateCloud11Service.createUser(null,null,null, user);
         verify(cloudClient, VerificationModeFactory.times(0)).post(anyString(),Matchers.<javax.ws.rs.core.HttpHeaders>anyObject(),anyString());
+    }
+
+    @Test
+    public void addBaseUrl_checksForUseCloudAuthEnable() throws Exception {
+        delegateCloud11Service.addBaseURL(null,null,null);
+        verify(config).getBoolean("useCloudAuth");
+    }
+
+    @Test
+    public void addBaseUrl_whenUseCloudAuthEnabled_callsClient() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        delegateCloud11Service.addBaseURL(null,null,baseUrl);
+        verify(cloudClient).post(url+"baseURLs",null,"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><foo default=\"true\" id=\"1\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\"/>");
+    }
+
+    @Test
+    public void addBaseUrl_whenUseCloudAuthDisabled_doesNotCallClient() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        delegateCloud11Service.addBaseURL(null,null, baseUrl);
+        verify(cloudClient,times(0)).post(url+"baseURLs",null,"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><foo default=\"true\" id=\"1\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\"/>");
     }
 }

@@ -150,11 +150,8 @@ public class Cloud11VersionResource {
 
     @POST
     @Path("baseURLs")
-    public Response addBaseURL(
-            @Context HttpServletRequest request,
-            @Context HttpHeaders httpHeaders,
-            BaseURL baseUrl
-    ) throws IOException {
+    public Response addBaseURL(@Context HttpServletRequest request, @Context HttpHeaders httpHeaders, BaseURL baseUrl)
+            throws IOException, JAXBException {
         return getCloud11Service().addBaseURL(request, httpHeaders, baseUrl).build();
     }
 
