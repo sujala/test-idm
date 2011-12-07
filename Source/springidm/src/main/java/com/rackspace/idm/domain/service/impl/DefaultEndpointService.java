@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.BaseUrlConflictException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,15 +24,15 @@ public class DefaultEndpointService implements EndpointService {
     @Override
     public void addBaseUrl(CloudBaseUrl baseUrl) {
         logger.debug("Adding base url");
-        
+
         CloudBaseUrl exists = this.endpointDao.getBaseUrlById(baseUrl.getBaseUrlId());
-        
+
         if (exists != null) {
             String errMsg = String.format("An Endpoint with Id=%s already exists", baseUrl.getBaseUrlId());
             logger.warn(errMsg);
             throw new BaseUrlConflictException(errMsg);
         }
-        
+
         this.endpointDao.addBaseUrl(baseUrl);
         logger.debug("Done adding base url.");
     }
@@ -39,8 +40,8 @@ public class DefaultEndpointService implements EndpointService {
     @Override
     public void addBaseUrlToUser(int baseUrlId, boolean def, String username) {
         logger.debug("Adding baseurl {} to user {}", baseUrlId, username);
-       this.endpointDao.addBaseUrlToUser(baseUrlId, def, username);
-       logger.debug("Done adding baseurl {} to user {}", baseUrlId, username); 
+        this.endpointDao.addBaseUrlToUser(baseUrlId, def, username);
+        logger.debug("Done adding baseurl {} to user {}", baseUrlId, username);
     }
 
     @Override
@@ -61,8 +62,8 @@ public class DefaultEndpointService implements EndpointService {
         logger.debug("Getting global baseurls");
         List<CloudBaseUrl> baseUrls = endpointDao.getBaseUrls();
         List<CloudBaseUrl> globalBaseUrls = new ArrayList<CloudBaseUrl>();
-        for(CloudBaseUrl baseURL: baseUrls){
-            if(baseURL.getGlobal()){
+        for (CloudBaseUrl baseURL : baseUrls) {
+            if (baseURL.getGlobal()) {
                 globalBaseUrls.add(baseURL);
             }
         }
@@ -74,8 +75,8 @@ public class DefaultEndpointService implements EndpointService {
         logger.debug("Getting default baseurls");
         List<CloudBaseUrl> baseUrls = endpointDao.getBaseUrls();
         List<CloudBaseUrl> defaultBaseUrls = new ArrayList<CloudBaseUrl>();
-        for(CloudBaseUrl baseURL: baseUrls){
-            if(baseURL.getDef()){
+        for (CloudBaseUrl baseURL : baseUrls) {
+            if (baseURL.getDef()) {
                 defaultBaseUrls.add(baseURL);
             }
         }
@@ -87,7 +88,7 @@ public class DefaultEndpointService implements EndpointService {
         logger.debug("Getting baserul {}", baseUrlId);
         return this.endpointDao.getBaseUrlById(baseUrlId);
     }
-    
+
     @Override
     public CloudEndpoint getEndpointForUser(String username, int baseUrlId) {
         logger.debug("Getting endpoint {} for user {}", baseUrlId, username);
@@ -114,7 +115,13 @@ public class DefaultEndpointService implements EndpointService {
     @Override
     public void removeBaseUrlFromUser(int baseUrlId, String username) {
         logger.debug("Removing baseurl {} from user {}", baseUrlId, username);
-        this.endpointDao.removeBaseUrlFromUser(baseUrlId, username);
+        CloudBaseUrl baseUrlById = endpointDao.getBaseUrlById(baseUrlId);
+        String service = baseUrlById.getService();
+        List<CloudBaseUrl> baseUrlsByService = endpointDao.getBaseUrlsByService(service);
+        if(baseUrlsByService.size() < 2){
+            throw new BadRequestException("Cannot delete the only endpoint for the service '"+service+"'.");
+        }
+        endpointDao.removeBaseUrlFromUser(baseUrlId, username);
     }
 
     @Override

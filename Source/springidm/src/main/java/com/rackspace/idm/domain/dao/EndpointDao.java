@@ -1,11 +1,11 @@
 package com.rackspace.idm.domain.dao;
 
-import java.util.List;
-
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.Tenant;
+
+import java.util.List;
 
 public interface EndpointDao {
     void addBaseUrl(CloudBaseUrl baseUrl);
@@ -15,6 +15,8 @@ public interface EndpointDao {
     void deleteBaseUrl(int baseUrlId);
     
     CloudBaseUrl getBaseUrlById(int baseUrlId);
+
+    List<CloudBaseUrl> getBaseUrlsByService(String service);
 
     List<CloudBaseUrl> getBaseUrls();
 

@@ -321,7 +321,6 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (baseUrl == null) {
                 return notFoundExceptionResponse(String.format("BaseUrlId %s not found for user %s", id, userId));
             }
-
             this.endpointService.removeBaseUrlFromUser(id, userId);
 
             return Response.noContent();
