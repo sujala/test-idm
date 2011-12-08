@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 import org.mortbay.jetty.HttpHeaders;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
@@ -48,7 +49,7 @@ public class DefaultCloud11ServiceTest {
     HttpServletRequest request;
     String token = "token";
     private ScopeAccessService scopeAccessService;
-
+    javax.ws.rs.core.HttpHeaders httpHeaders;
 
     @Before
     public void setUp() throws Exception {
@@ -56,6 +57,7 @@ public class DefaultCloud11ServiceTest {
         ldapCloudAdminRepository = mock(LdapCloudAdminRepository.class);
         when(ldapCloudAdminRepository.authenticate("auth", "auth123")).thenReturn(true);
         userService = mock(UserService.class);
+        httpHeaders = mock(javax.ws.rs.core.HttpHeaders.class);
         scopeAccessService = mock(ScopeAccessService.class);
         endpointService = mock(EndpointService.class);
         uriInfo = mock(UriInfo.class);
@@ -401,4 +403,11 @@ public class DefaultCloud11ServiceTest {
         verify(spy).authenticateCloudAdminUser(request);
     }
 
+    @Test
+    public void authAdmin_withPasswordCredentials_withInvalidUser_returns401() throws Exception {
+        when(httpHeaders.getMediaType()).thenReturn(new MediaType());
+        String credentials = "<passwordCredentials password=\"123\" username=\"IValidUser\" xmlns=\"http://docs.rackspacecloud.com/auth/api/v1.1\"/>";
+        Response.ResponseBuilder responseBuilder = spy.adminAuthenticate(request, null,httpHeaders , credentials);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
 }

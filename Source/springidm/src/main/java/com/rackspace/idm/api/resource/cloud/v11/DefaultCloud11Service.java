@@ -186,7 +186,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         try {
             authenticateCloudAdminUser(request);
-            if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
+            if (httpHeaders.getMediaType()!=null && httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
                 return authenticateXML(response, httpHeaders, body, true);
             } else {
                 return authenticateJSON(response, httpHeaders, body, true);
@@ -823,8 +823,8 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
                 user = this.userService.getUser(username);
                 if (user == null) {
-                    String errMsg = String.format("User %s not found", username);
-                    throw new NotFoundException(errMsg);
+                    String errMsg = "User account exists externally, but not in the AUTH database.";
+                    throw new NotAuthorizedException(errMsg);
                 }
                 if (user.isDisabled()) {
                     throw new UserDisabledException("User " + username + " is not enabled.");
