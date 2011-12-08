@@ -272,7 +272,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             //inner.put(JSONConstants.UPDATED, user.getUpdated());
             JSONArray baseUrls = new JSONArray();
             BaseURLRefList baseList = user.getBaseURLRefs();
-            if(baseList.getBaseURLRef() != null){
+            if(baseList != null){
                 for (BaseURLRef url : baseList.getBaseURLRef()){
                     JSONObject urlItem = new JSONObject();
                     urlItem.put(JSONConstants.ID, url.getId());

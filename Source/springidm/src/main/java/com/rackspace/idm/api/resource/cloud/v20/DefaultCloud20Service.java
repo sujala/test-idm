@@ -1319,7 +1319,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
-            User user = this.checkAndGetUser(userId);
+            User user = this.userService.getUserById(userId);
+
+            if (user == null) {
+                String errMsg = String.format("User with id: '%s' was not found.", userId);
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
+            }
 
             Integer mossoId = user.getMossoId();
             if (mossoId == null) {

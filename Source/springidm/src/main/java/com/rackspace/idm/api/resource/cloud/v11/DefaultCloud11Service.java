@@ -417,7 +417,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             User gaUser = userService.getUser(userId);
 
             if (gaUser == null) {
-                String errMsg = String.format("User %s not found", userId);
+                String errMsg = "User not found: " + userId;
                 throw new NotFoundException(errMsg);
             }
 
@@ -561,7 +561,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             User user = userService.getUser(userId);
 
             if (user == null) {
-                String errMsg = String.format("User %s not found", userId);
+                String errMsg = "User not found: " + userId;
                 throw new NotFoundException(errMsg);
             }
 
@@ -606,7 +606,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             User gaUser = userService.getUser(userId);
 
             if (gaUser == null) {
-                String errMsg = String.format("User %s not found", userId);
+                String errMsg = "User not found: " + userId;
                 throw new NotFoundException(errMsg);
             }
 
@@ -714,7 +714,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             if (filteredBaseUrls.size() == 0) {
-                return notFoundExceptionResponse("No matching Urls found");
+                String errMsg = String.format("Service: '%s' not found.",serviceName);
+                return notFoundExceptionResponse(errMsg);
             }
             return Response.ok(OBJ_FACTORY.createBaseURLs(this.endpointConverterCloudV11.toBaseUrls(filteredBaseUrls)));
         } catch (Exception ex) {
