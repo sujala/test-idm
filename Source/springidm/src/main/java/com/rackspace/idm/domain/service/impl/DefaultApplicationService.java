@@ -1,36 +1,19 @@
 package com.rackspace.idm.domain.service.impl;
 
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
-
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.TenantDao;
-import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.Applications;
-import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.DefinedPermission;
-import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.Permission;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.dao.*;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.util.HashHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
+
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DefaultApplicationService implements ApplicationService {
 
@@ -678,8 +661,7 @@ public class DefaultApplicationService implements ApplicationService {
     @Override
     public List<ClientRole> getClientRolesByClientId(String clientId) {
         logger.debug("Getting Client Roles for client: {}", clientId);
-        List<ClientRole> roles = this.clientDao
-            .getClientRolesByClientId(clientId);
+        List<ClientRole> roles = this.clientDao.getClientRolesByClientId(clientId);
         logger.debug("Got {} Client Roles", roles.size());
         return roles;
     }
@@ -695,10 +677,8 @@ public class DefaultApplicationService implements ApplicationService {
     @Override
     public ClientRole getClientRoleByClientIdAndRoleName(String clientId,
         String roleName) {
-        logger
-            .debug("Getting Client Role {} for client {}", roleName, clientId);
-        ClientRole role = this.clientDao.getClientRoleByClientIdAndRoleName(
-            clientId, roleName);
+        logger.debug("Getting Client Role {} for client {}", roleName, clientId);
+        ClientRole role = this.clientDao.getClientRoleByClientIdAndRoleName(clientId, roleName);
         logger.debug("Got Client Role {} for client {}", roleName, clientId);
         return role;
     }

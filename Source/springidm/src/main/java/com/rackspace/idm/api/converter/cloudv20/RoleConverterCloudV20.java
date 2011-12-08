@@ -1,15 +1,14 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import java.util.List;
-
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.TenantRole;
 import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.RoleList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.TenantRole;
+import java.util.List;
 
 @Component
 public class RoleConverterCloudV20 {
@@ -60,10 +59,10 @@ public class RoleConverterCloudV20 {
         }
 
         for (ClientRole role : roles) {
-            Role jaxbRole = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                .createRole();
-            jaxbRole.setDescription(role.getDescription());
+            Role jaxbRole = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole();
             jaxbRole.setId(role.getId());
+            jaxbRole.setName(role.getName());
+            jaxbRole.setDescription(role.getDescription());
             jaxbRole.setServiceId(role.getClientId());
             jaxbRoles.getRole().add(jaxbRole);
         }

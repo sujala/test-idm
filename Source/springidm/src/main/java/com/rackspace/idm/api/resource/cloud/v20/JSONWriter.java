@@ -411,6 +411,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         outer.put(JSONConstants.ID, role.getId());
         outer.put(JSONConstants.DESCRIPTION, role.getDescription());
         outer.put(JSONConstants.NAME, role.getName());
+        //outer.put(JSONConstants.SERVICE_ID, role.getServiceId());
         return outer;
     }
 
