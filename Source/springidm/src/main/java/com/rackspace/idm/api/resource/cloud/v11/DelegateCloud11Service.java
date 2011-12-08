@@ -3,7 +3,6 @@ package com.rackspace.idm.api.resource.cloud.v11;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -15,8 +14,9 @@ import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
-import com.rackspace.idm.exception.CloudAdminAuthorizationException;
+import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
 import com.rackspacecloud.docs.auth.api.v1.*;
+import com.rackspacecloud.docs.auth.api.v1.User;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -37,8 +37,10 @@ public class DelegateCloud11Service implements Cloud11Service {
     private Configuration config;
 
     @Autowired
-    private DefaultCloud11Service defaultCloud11Service;
+    private LdapUserRepository ldapUserRepository;
 
+    @Autowired
+    private DefaultCloud11Service defaultCloud11Service;
     @Autowired
     private DummyCloud11Service dummyCloud11Service;
 
@@ -498,18 +500,14 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder addBaseURLRef(HttpServletRequest request, String userId, HttpHeaders httpHeaders,
                                                   UriInfo uriInfo, BaseURLRef baseUrlRef) throws IOException, JAXBException {
-        Response.ResponseBuilder serviceResponse = getCloud11Service().addBaseURLRef(request, userId, httpHeaders, uriInfo, baseUrlRef);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
 
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if(!userExists(userId) && config.getBoolean("useCloudAuth")){
             String body = this.marshallObjectToString(OBJ_FACTORY.createBaseURLRef(baseUrlRef));
             String path = "users/" + userId + "/baseURLRefs";
             return cloudClient.post(getCloudAuthV11Url().concat(path), httpHeaders, body);
         }
-        return serviceResponse;
+
+        return getCloud11Service().addBaseURLRef(request, userId, httpHeaders, uriInfo, baseUrlRef);
     }
 
     @Override
@@ -534,22 +532,17 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder deleteBaseURLRef(
-            HttpServletRequest request, String userId, String baseURLId,
+    public Response.ResponseBuilder deleteBaseURLRef(HttpServletRequest request, String userId, String baseURLId,
             HttpHeaders httpHeaders) throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud11Service()
-                .deleteBaseURLRef(request, userId, baseURLId, httpHeaders);
+        Response.ResponseBuilder serviceResponse = getCloud11Service().deleteBaseURLRef(request, userId, baseURLId, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
 
         int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND
-                || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String path = "users/" + userId + "/baseURLRefs/" + baseURLId;
-            return cloudClient.delete(getCloudAuthV11Url().concat(path),
-                    httpHeaders);
+            return cloudClient.delete(getCloudAuthV11Url().concat(path), httpHeaders);
         }
         return serviceResponse;
     }
@@ -560,6 +553,14 @@ public class DelegateCloud11Service implements Cloud11Service {
         } else {
             return defaultCloud11Service;
         }
+    }
+
+    boolean userExists(String userId){
+        com.rackspace.idm.domain.entity.User userByUsername = ldapUserRepository.getUserById(userId);
+        if(userByUsername==null){
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -648,6 +649,10 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     public void setDummyCloud11Service(DummyCloud11Service dummyCloud11Service) {
         this.dummyCloud11Service = dummyCloud11Service;
+    }
+
+    public void setLdapUserRepository(LdapUserRepository ldapUserRepository) {
+        this.ldapUserRepository = ldapUserRepository;
     }
 
 }
