@@ -118,7 +118,7 @@ public class DefaultEndpointService implements EndpointService {
         CloudBaseUrl baseUrlById = endpointDao.getBaseUrlById(baseUrlId);
         String service = baseUrlById.getService();
         List<CloudBaseUrl> baseUrlsByService = endpointDao.getBaseUrlsByService(service);
-        if(baseUrlsByService.size() < 2){
+        if(baseUrlById.getDef()==true || baseUrlsByService.size() < 2){
             throw new BadRequestException("Cannot delete the only endpoint for the service '"+service+"'.");
         }
         endpointDao.removeBaseUrlFromUser(baseUrlId, username);
