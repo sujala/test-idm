@@ -300,22 +300,6 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void addEndpoint_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.addEndpoint(null, null, null, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.addEndpoint(null, null, null, null);
-        verify(cloudClient).post(url + "tenants/null/" + "OS-KSCATALOG/endpoints", null, body);
-    }
-
-    @Test
-    public void addEndpoint_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.addEndpoint(null, null, null, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.addEndpoint(null, null, null, null);
-        verify(cloudClient).post(url + "tenants/null/" + "OS-KSCATALOG/endpoints", null, body);
-    }
-
-    @Test
     public void getEndpoint_defaultServiceReturns401_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
         when(defaultCloud20Service.getEndpoint(null, null, null, null)).thenReturn(Response.status(401));
@@ -1000,5 +984,24 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.deleteService(null, null,serviceId);
         verify(cloudClient).delete(url + "OS-KSADM/services/"+serviceId, null);
     }
-    
+
+    @Test
+    public void addEndpoint_checksForUseCloudAuthEnable() throws Exception {
+        delegateCloud20Service.addEndpoint(null,null,tenantId,null);
+        verify(config).getBoolean("useCloudAuth");
+    }
+
+    @Test
+    public void addEndpoint_whenUseCloudAuthEnabled_callsClient() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        delegateCloud20Service.addEndpoint(null, null, tenantId, null);
+        verify(cloudClient).post(eq(url+"tenants/" + tenantId + "/OS-KSCATALOG/endpoints"),Matchers.<HttpHeaders>any(),anyString());
+    }
+
+    @Test
+    public void addEndpoint_whenUseCloudAuthDisabled_doesNotCallClient() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        delegateCloud20Service.addEndpoint(null, null, tenantId, null);
+        verify(cloudClient,times(0)).post(eq(url+"tenants/" + tenantId + "/OS-KSCATALOG/endpoints"),Matchers.<HttpHeaders>any(),anyString());
+    }
 }
