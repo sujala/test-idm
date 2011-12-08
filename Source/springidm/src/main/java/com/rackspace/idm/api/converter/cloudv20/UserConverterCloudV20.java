@@ -1,18 +1,16 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import java.util.List;
-
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.domain.entity.TenantRole;
 import org.openstack.docs.identity.api.v2.User;
 import org.openstack.docs.identity.api.v2.UserForAuthenticateResponse;
 import org.openstack.docs.identity.api.v2.UserList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.domain.entity.TenantRole;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import java.util.List;
 
 @Component
 public class UserConverterCloudV20 {

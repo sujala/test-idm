@@ -68,7 +68,8 @@ public class DefaultUserService implements UserService {
         
         validateUserEmailAddress(user);
         validateUsername(user);
-        validateMossoId(user.getMossoId());
+        if(user.getMossoId() != null)
+            validateMossoId(user.getMossoId());
         setPasswordIfNecessary(user);
         
         user.setEnabled(true);
