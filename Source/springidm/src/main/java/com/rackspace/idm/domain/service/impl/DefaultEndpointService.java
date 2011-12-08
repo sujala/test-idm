@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.BaseUrlConflictException;
+import com.rackspace.idm.exception.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,9 +117,12 @@ public class DefaultEndpointService implements EndpointService {
     public void removeBaseUrlFromUser(int baseUrlId, String username) {
         logger.debug("Removing baseurl {} from user {}", baseUrlId, username);
         CloudBaseUrl baseUrlById = endpointDao.getBaseUrlById(baseUrlId);
+        if(baseUrlById==null){
+            throw new NotFoundException("Base url with id: "+baseUrlId+" not found");
+        }
         String service = baseUrlById.getService();
         List<CloudBaseUrl> baseUrlsByService = endpointDao.getBaseUrlsByService(service);
-        if(baseUrlById.getDef()==true || baseUrlsByService.size() < 2){
+        if(baseUrlById.getDef()!=null && baseUrlById.getDef()==true || baseUrlsByService.size() < 2){
             throw new BadRequestException("Cannot delete the only endpoint for the service '"+service+"'.");
         }
         endpointDao.removeBaseUrlFromUser(baseUrlId, username);
