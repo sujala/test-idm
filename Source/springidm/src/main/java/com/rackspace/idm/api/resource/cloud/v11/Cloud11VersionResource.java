@@ -85,7 +85,7 @@ public class Cloud11VersionResource {
     @GET
     @Path("cloud/auth")
     public Response hack() throws IOException {
-        return Response.status(400).build();
+        return Response.status(Response.Status.BAD_REQUEST).build();
     }
 
     @POST
