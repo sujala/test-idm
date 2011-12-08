@@ -1004,4 +1004,24 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.addEndpoint(null, null, tenantId, null);
         verify(cloudClient,times(0)).post(eq(url+"tenants/" + tenantId + "/OS-KSCATALOG/endpoints"),Matchers.<HttpHeaders>any(),anyString());
     }
+
+    @Test
+    public void listExtensions_checksForUseCloudAuthEnable() throws Exception {
+        delegateCloud20Service.listExtensions(null);
+        verify(config).getBoolean("useCloudAuth");
+    }
+
+    @Test
+    public void getExtensions_whenUseCloudAuthEnabled_callsClient() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        delegateCloud20Service.listExtensions(null);
+        verify(cloudClient).get(url+"extensions",null);
+    }
+
+    @Test
+    public void getExtensions_whenUseCloudAuthDisabled_doesNotCallClient() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        delegateCloud20Service.listExtensions(null);
+        verify(cloudClient,times(0)).get(url+"extensions",null);
+    }
 }

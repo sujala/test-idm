@@ -152,16 +152,14 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias)
-        throws IOException {
+    public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service().getExtension(httpHeaders, alias);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
         int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND ||
-                status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "extensions/" + alias;
             return cloudClient.get(request, httpHeaders);
         }
@@ -169,15 +167,12 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken,
-        String marker, int limit) throws IOException {
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, String marker, int limit) throws IOException {
 
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listUsers(httpHeaders, authToken, marker, limit);
+        Response.ResponseBuilder serviceResponse = getCloud20Service().listUsers(httpHeaders, authToken, marker, limit);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             // TODO: Implement routing to DefaultCloud20Service
