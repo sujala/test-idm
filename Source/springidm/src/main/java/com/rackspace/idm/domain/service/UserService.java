@@ -46,6 +46,8 @@ public interface UserService {
     User getUserBySecureId(String secureId);
 
     User getUser(String customerId, String username);
+
+    User getSoftDeletedUser(String id);
     
     Applications getUserApplications(User user);
     

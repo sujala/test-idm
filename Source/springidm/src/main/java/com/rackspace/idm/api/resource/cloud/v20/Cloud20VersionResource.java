@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
+import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
@@ -600,6 +601,17 @@ public class Cloud20VersionResource {
         throws IOException, JAXBException {
         return getCloud20Service().updateSecretQA(httpHeaders, authToken,
             userId, secrets).build();
+    }
+
+    @DELETE
+    @Path("softDeleted/users/{userId}")
+    public Response deleteSoftDeletedUser(@Context HttpHeaders httpHeaders,
+        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @PathParam("userId") String userId) throws IOException, NotFoundException {
+        if(config.getBoolean("allowSoftDeleteDeletion"))
+            return getCloud20Service().deleteUserFromSoftDeleted(httpHeaders, authToken, userId).build();
+        else
+            throw new NotFoundException("Not Found");
     }
 
     private Cloud20Service getCloud20Service() {

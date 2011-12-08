@@ -1,8 +1,16 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.HashMap;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.api.resource.cloud.CloudClient;
+import com.rackspace.idm.domain.config.JAXBContextResolver;
+import com.rackspace.idm.exception.NotFoundException;
+import org.apache.commons.configuration.Configuration;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
+import org.openstack.docs.identity.api.v2.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
@@ -13,23 +21,9 @@ import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-
-import org.apache.commons.configuration.Configuration;
-import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
-import org.openstack.docs.identity.api.v2.AuthenticationRequest;
-import org.openstack.docs.identity.api.v2.CredentialType;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
-import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
-import org.openstack.docs.identity.api.v2.Role;
-import org.openstack.docs.identity.api.v2.User;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import com.rackspace.idm.api.resource.cloud.CloudClient;
-import com.rackspace.idm.domain.config.JAXBContextResolver;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.HashMap;
 
 /**
  * Created by IntelliJ IDEA.
@@ -552,6 +546,19 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId;
             return cloudClient.delete(request, httpHeaders);
+        }
+        return serviceResponse;
+    }
+
+    @Override
+    public ResponseBuilder deleteUserFromSoftDeleted(HttpHeaders httpHeaders, String authToken, String userId) throws IOException, NotFoundException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service().deleteUserFromSoftDeleted(httpHeaders, authToken, userId);
+        // We have to clone the ResponseBuilder from above because once we build
+        // it below its gone.
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
+        int status = clonedServiceResponse.build().getStatus();
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+            throw new NotFoundException("Not Found");
         }
         return serviceResponse;
     }

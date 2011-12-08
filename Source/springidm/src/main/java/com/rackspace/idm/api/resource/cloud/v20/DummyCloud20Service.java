@@ -156,6 +156,11 @@ public class DummyCloud20Service implements Cloud20Service{
     }
 
     @Override
+    public ResponseBuilder deleteUserFromSoftDeleted(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
     public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken,
         String userId, User user) throws IOException {
         

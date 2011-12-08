@@ -658,6 +658,18 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder deleteUserFromSoftDeleted(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+        try {
+            checkXAUTHTOKEN(authToken);
+            User user = checkAndGetSoftDeletedUser(userId);
+            this.userService.deleteUser(user);
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionResponse(ex);
+        }
+    }
+
+    @Override
     public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType)
             throws IOException {
 
@@ -1789,6 +1801,18 @@ public class DefaultCloud20Service implements Cloud20Service {
             String errMsg = String.format("User '%s' not found.", username);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
+        }
+
+        return user;
+    }
+
+    private User checkAndGetSoftDeletedUser(String id) {
+        User user = this.userService.getSoftDeletedUser(id);
+
+        if (user == null) {
+            String errMsg = String.format("User %s not found", id);
+            logger.warn(errMsg);
+            throw new NotFoundException("User not found");
         }
 
         return user;

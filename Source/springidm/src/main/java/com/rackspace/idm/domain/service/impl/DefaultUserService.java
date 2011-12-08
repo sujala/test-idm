@@ -303,7 +303,14 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-//    
+    @Override
+    public User getSoftDeletedUser(String id) {
+        logger.debug("Getting User: {}", id);
+        User user = userDao.getSoftDeletedUserById(id);
+        logger.debug("Got User: {}", user);
+        return user;
+    }
+//
 //    @Override
 //    public DateTime getUserPasswordExpirationDate(String userName) {
 //
