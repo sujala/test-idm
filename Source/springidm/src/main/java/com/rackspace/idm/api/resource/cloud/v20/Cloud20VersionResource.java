@@ -549,8 +549,7 @@ public class Cloud20VersionResource {
     public Response listEndpoints(@Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantId) throws IOException {
-        return getCloud20Service().listEndpoints(httpHeaders, authToken,
-            tenantId).build();
+        return getCloud20Service().listEndpoints(httpHeaders, authToken, tenantId).build();
     }
 
     @POST
@@ -559,8 +558,7 @@ public class Cloud20VersionResource {
         @Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantId, EndpointTemplate endpoint)
         throws IOException, JAXBException {
-        return getCloud20Service().addEndpoint(httpHeaders, authToken,
-            tenantId, endpoint).build();
+        return getCloud20Service().addEndpoint(httpHeaders, authToken, tenantId, endpoint).build();
     }
 
     @GET
@@ -569,8 +567,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantId,
         @PathParam("endpointId") String endpointId) throws IOException {
-        return getCloud20Service().getEndpoint(httpHeaders, authToken,
-            tenantId, endpointId).build();
+        return getCloud20Service().getEndpoint(httpHeaders, authToken, tenantId, endpointId).build();
     }
 
     @DELETE

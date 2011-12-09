@@ -1,18 +1,17 @@
 package com.rackspace.idm.domain.entity;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
-
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_TENANT)
 public class Tenant implements Auditable{
@@ -115,7 +114,7 @@ public class Tenant implements Auditable{
     
     public void addBaseUrlId(String baseUrlId) {
         List<String> baseUrls = new ArrayList<String>();
-        if (baseUrlIds != null || baseUrlIds.length > 0) {
+        if (baseUrlIds != null) {
             Collections.addAll(baseUrls, baseUrlIds);
         }
         if (!baseUrls.contains(baseUrlId)) {

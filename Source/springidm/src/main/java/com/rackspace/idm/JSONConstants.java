@@ -16,6 +16,7 @@ public class JSONConstants {
     public static final String CREDENTIALS = "credentials";
     public static final String DESCRIPTION = "description";
     public static final String ENABLED = "enabled";
+    public static final String ENDPOINT = "endpoint";
     public static final String ENDPOINT_TEMPLATE = "OS-KSCATALOG:endpointTemplate";
     public static final String ENDPOINT_TEMPLATES = "OS-KSCATALOG:endpointTemplates";
     public static final String ENDPOINTS = "endpoints";

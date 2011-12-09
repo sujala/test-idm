@@ -1071,11 +1071,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             Tenant tenant = checkAndGetTenant(tenantId);
 
             List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
-            for (String id : tenant.getBaseUrlIds()) {
-                Integer baseUrlId = Integer.parseInt(id);
-                baseUrls.add(this.endpointService.getBaseUrlById(baseUrlId));
+            if(tenant.getBaseUrlIds() != null) {
+                for (String id : tenant.getBaseUrlIds()) {
+                    Integer baseUrlId = Integer.parseInt(id);
+                    baseUrls.add(this.endpointService.getBaseUrlById(baseUrlId));
+                }
             }
-
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                     .createEndpoints(this.endpointConverterCloudV20.toEndpointListFromBaseUrls(baseUrls)));
 
