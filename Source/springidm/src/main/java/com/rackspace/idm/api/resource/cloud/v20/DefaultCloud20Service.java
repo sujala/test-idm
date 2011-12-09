@@ -1235,12 +1235,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             checkXAUTHTOKEN(authToken);
 
-            List<Application> clients = this.clientService
-                    .getOpenStackServices();
+            List<Application> clients = this.clientService.getOpenStackServices();
 
-            return Response.ok(OBJ_FACTORIES
-                    .getOpenStackIdentityExtKsadmnV1Factory().createServices(
-                            this.serviceConverterCloudV20.toServiceList(clients)));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory()
+                    .createServices(this.serviceConverterCloudV20.toServiceList(clients)));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);

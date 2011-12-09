@@ -919,12 +919,10 @@ public class DelegateCloud20Service implements Cloud20Service {
     public ResponseBuilder listServices(HttpHeaders httpHeaders,
         String authToken, String marker, Integer limit) throws IOException {
 
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listServices(httpHeaders, authToken, marker, limit);
+        Response.ResponseBuilder serviceResponse = getCloud20Service().listServices(httpHeaders, authToken, marker, limit);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 

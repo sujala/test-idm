@@ -1,14 +1,13 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import java.util.List;
-
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.domain.entity.Application;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.domain.entity.Application;
+import java.util.List;
 
 @Component
 public class ServiceConverterCloudV20 {
@@ -19,10 +18,11 @@ public class ServiceConverterCloudV20 {
     public Service toService(Application client) {
         Service service = OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory().createService();
         
-        service.setDescription(client.getDescription());
         service.setId(client.getClientId());
+        service.setName(client.getName());
         service.setType(client.getOpenStackType());
-        
+        service.setDescription(client.getDescription());
+
         return service;
     }
     

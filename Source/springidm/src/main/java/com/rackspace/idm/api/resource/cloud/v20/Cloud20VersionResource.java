@@ -476,8 +476,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @QueryParam("marker") String marker, @QueryParam("limit") Integer limit)
         throws IOException {
-        return getCloud20Service().listServices(httpHeaders, authToken, marker,
-            limit).build();
+        return getCloud20Service().listServices(httpHeaders, authToken, marker, limit).build();
     }
 
     @POST
