@@ -188,4 +188,17 @@ public class DelegateCloud11ServiceTest {
         delegateCloud11Service.addBaseURLRef(null,userId,null,null,null);
         verify(cloudClient).post(anyString(), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString());
     }
+
+    @Test
+    public void getBaseUrls_useCloudAuthDisabled_callsDefaultService() throws Exception {
+        delegateCloud11Service.getBaseURLs(null,"service",null);
+        verify(defaultCloud11Service).getBaseURLs(null, "service", null);
+    }
+
+    @Test
+    public void getBaseUrls_useCloudAuthEnabled_callsClient() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        delegateCloud11Service.getBaseURLs(null,"service",null);
+        verify(cloudClient).get(eq(url+"baseURLs?serviceName=service"), Matchers.<javax.ws.rs.core.HttpHeaders>any());
+    }
 }
