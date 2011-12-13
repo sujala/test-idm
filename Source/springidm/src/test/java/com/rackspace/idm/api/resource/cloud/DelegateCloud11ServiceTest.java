@@ -209,7 +209,7 @@ public class DelegateCloud11ServiceTest {
     }
 
     @Test
-    public void getBaseUrlRefs_useCloudAuthEnabledAndUserDoentExistsInGA_callsClient() throws Exception {
+    public void getBaseUrlRefs_useCloudAuthEnabledAndUserDoesNotExistsInGA_callsClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
         when(ldapUserRepository.getUserById(userId)).thenReturn(null);
         delegateCloud11Service.getBaseURLRefs(null, userId, null);
@@ -222,6 +222,43 @@ public class DelegateCloud11ServiceTest {
         when(ldapUserRepository.getUserById(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
         delegateCloud11Service.getBaseURLRefs(null, userId, null);
         verify(defaultCloud11Service).getBaseURLRefs(null, userId, null);
+    }
 
+    @Test
+    public void getUserGroups_routingDisabled_callsDefaultService() throws Exception {
+        delegateCloud11Service.getUserGroups(null, userId, null);
+        verify(defaultCloud11Service).getUserGroups(null, userId, null);
+    }
+
+    @Test
+    public void getUserGroups_RoutingFalseAndUserDoesNotExistInGA_callsDefaultService() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        when(ldapUserRepository.getUserById(userId)).thenReturn(null);
+        delegateCloud11Service.getUserGroups(null, userId, null);
+        verify(defaultCloud11Service).getUserGroups(null, userId, null);
+    }
+
+    @Test
+    public void getUserGroups_RoutingFalseAndUserExistsInGA_callsDefaultService() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        when(ldapUserRepository.getUserById(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        delegateCloud11Service.getUserGroups(null, userId, null);
+        verify(defaultCloud11Service).getUserGroups(null, userId, null);
+    }
+
+    @Test
+    public void getUserGroups_RoutingTrueAndUserDoesNotExistsInGA_callsClient() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(ldapUserRepository.getUserById(userId)).thenReturn(null);
+        delegateCloud11Service.getUserGroups(null, userId, null);
+        verify(cloudClient).get(eq(url+"users/"+userId+"/groups"), Matchers.<javax.ws.rs.core.HttpHeaders>any());
+    }
+
+    @Test
+    public void getUserGroups_RoutingTrueAndUserExistsInGA_callsDefaultService() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(ldapUserRepository.getUserById(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        delegateCloud11Service.getUserGroups(null, userId, null);
+        verify(defaultCloud11Service).getUserGroups(null, userId, null);
     }
 }
