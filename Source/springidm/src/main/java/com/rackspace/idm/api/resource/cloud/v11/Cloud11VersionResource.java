@@ -248,21 +248,16 @@ public class Cloud11VersionResource {
 
     @GET
     @Path("users/{userId}/enabled")
-    public Response getUserEnabled(@Context HttpServletRequest request, 
-            @PathParam("userId") String userId,
-            @Context HttpHeaders httpHeaders
-    ) throws IOException {
+    public Response getUserEnabled(@Context HttpServletRequest request, @PathParam("userId") String userId,
+            @Context HttpHeaders httpHeaders) throws IOException {
         userId = Encoder.encode(userId);
         return getCloud11Service().getUserEnabled(request, userId, httpHeaders).build();
     }
 
     @PUT
     @Path("users/{userId}/enabled")
-    public Response setUserEnabled(@Context HttpServletRequest request, 
-            @PathParam("userId") String userId,
-            @Context HttpHeaders httpHeaders,
-            UserWithOnlyEnabled user
-    ) throws IOException, JAXBException {
+    public Response setUserEnabled(@Context HttpServletRequest request, @PathParam("userId") String userId,
+            @Context HttpHeaders httpHeaders, UserWithOnlyEnabled user) throws IOException, JAXBException {
         userId = Encoder.encode(userId);
         return getCloud11Service().setUserEnabled(request, userId, user, httpHeaders).build();
     }

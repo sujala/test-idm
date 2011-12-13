@@ -70,6 +70,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private EndpointConverterCloudV20 endpointConverterCloudV20;
+
     @Autowired
     private EndpointService endpointService;
 
@@ -84,6 +85,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private ServiceConverterCloudV20 serviceConverterCloudV20;
+
     @Autowired
     private TenantConverterCloudV20 tenantConverterCloudV20;
 
@@ -105,6 +107,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private HashMap<String, JAXBElement<Extension>> extensionMap;
 
     private JAXBElement<Extensions> currentExtensions;
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
@@ -115,8 +118,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpoint.getId());
             tenant.addBaseUrlId(String.valueOf(endpoint.getId()));
             this.tenantService.updateTenant(tenant);
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createEndpoint(endpointConverterCloudV20.toEndpoint(baseUrl)));
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint(endpointConverterCloudV20.toEndpoint(baseUrl)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -241,9 +244,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             service.setId(client.getClientId());
             return Response.created(
                     uriInfo.getRequestUriBuilder().path(service.getId()).build())
-                    .entity(
-                            OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory()
-                                    .createService(service));
+                    .entity(OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory().createService(service));
 
         } catch (DuplicateException de) {
             return serviceConflictExceptionResponse(de.getMessage());
@@ -284,8 +285,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo,
-                                   String authToken, org.openstack.docs.identity.api.v2.User user) {
+    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken,
+                                   org.openstack.docs.identity.api.v2.User user) {
 
         try {
             checkXAUTHTOKEN(authToken);
@@ -302,9 +303,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.created(
                     uriInfo.getRequestUriBuilder().path(userDO.getId()).build())
-                    .entity(
-                            OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(
-                                    this.userConverterCloudV20.toUser(userDO)));
+                    .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(userDO)));
 
         } catch (DuplicateException de) {
             return userConflictExceptionResponse(de.getMessage());
@@ -316,16 +315,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders,
-                                             String authToken, String userId, String body) throws IOException {
+    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body) throws IOException {
 
         try {
             checkXAUTHTOKEN(authToken);
 
             JAXBElement<? extends CredentialType> creds = null;
 
-            if (httpHeaders.getMediaType().isCompatible(
-                    MediaType.APPLICATION_XML_TYPE)) {
+            if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
                 creds = getXMLCredentials(body);
             } else {
                 creds = getJSONCredentials(body);
@@ -334,13 +331,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             String username = null;
             String password = null;
             String apiKey = null;
-
             User user = null;
 
-            if (creds.getDeclaredType().isAssignableFrom(
-                    PasswordCredentialsRequiredUsername.class)) {
-                PasswordCredentialsRequiredUsername userCreds = (PasswordCredentialsRequiredUsername) creds
-                        .getValue();
+            if (creds.getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
+                PasswordCredentialsRequiredUsername userCreds = (PasswordCredentialsRequiredUsername) creds.getValue();
                 username = userCreds.getUsername();
                 password = userCreds.getPassword();
 
@@ -363,11 +357,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new BadRequestException(errMsg);
                 }
                 user.setPassword(password);
-                this.userService.updateUser(user, false);
-            } else if (creds.getDeclaredType().isAssignableFrom(
-                    ApiKeyCredentials.class)) {
-                ApiKeyCredentials userCreds = (ApiKeyCredentials) creds
-                        .getValue();
+                userService.updateUser(user, false);
+            } else if (creds.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
+                ApiKeyCredentials userCreds = (ApiKeyCredentials) creds.getValue();
                 username = userCreds.getUsername();
                 apiKey = userCreds.getApiKey();
 
@@ -390,11 +382,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new BadRequestException(errMsg);
                 }
                 user.setApiKey(apiKey);
-                this.userService.updateUser(user, false);
+                userService.updateUser(user, false);
             }
-
             return Response.ok(creds).status(Status.CREATED);
-
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -420,23 +410,16 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     // Core Service Methods
     @Override
-    public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders,
-                                                 AuthenticationRequest authenticationRequest) throws IOException {
+    public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) throws IOException {
 
         try {
             User user = null;
             UserScopeAccess usa = null;
 
-            if (authenticationRequest.getToken() != null
-                    && !StringUtils.isBlank(authenticationRequest.getToken()
-                    .getId())) {
-                ScopeAccess sa = this.scopeAccessService
-                        .getScopeAccessByAccessToken(authenticationRequest
-                                .getToken().getId());
+            if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
+                ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
 
-                if (sa == null
-                        || ((HasAccessToken) sa)
-                        .isAccessTokenExpired(new DateTime())
+                if (sa == null || ((HasAccessToken) sa).isAccessTokenExpired(new DateTime())
                         || !(sa instanceof UserScopeAccess)) {
                     String errMsg = "Token not authenticated";
                     logger.warn(errMsg);
@@ -446,11 +429,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 usa = (UserScopeAccess) sa;
                 user = this.checkAndGetUser(usa.getUserRsId());
 
-            } else if (authenticationRequest.getCredential().getDeclaredType()
-                    .isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
+            } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
 
-                PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest
-                        .getCredential().getValue();
+                PasswordCredentialsRequiredUsername creds =
+                        (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
                 String username = creds.getUsername();
                 String password = creds.getPassword();
 
@@ -468,14 +450,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 user = checkAndGetUserByName(username);
 
-                usa = this.scopeAccessService
-                        .getUserScopeAccessForClientIdByUsernameAndPassword(
-                                username, password, getCloudAuthClientId());
+                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
 
-            } else if (authenticationRequest.getCredential().getDeclaredType()
-                    .isAssignableFrom(ApiKeyCredentials.class)) {
-                ApiKeyCredentials creds = (ApiKeyCredentials) authenticationRequest
-                        .getCredential().getValue();
+            } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
+                ApiKeyCredentials creds = (ApiKeyCredentials) authenticationRequest.getCredential().getValue();
                 String username = creds.getUsername();
                 String key = creds.getApiKey();
 
@@ -493,31 +471,22 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 user = checkAndGetUserByName(username);
 
-                usa = this.scopeAccessService
-                        .getUserScopeAccessForClientIdByUsernameAndApiCredentials(
-                                username, key, getCloudAuthClientId());
+                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
             }
 
-            List<TenantRole> roles = this.tenantService
-                    .getTenantRolesForScopeAccess(usa);
+            List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
 
-            if (!belongsTo(authenticationRequest.getTenantId(), roles)
-                    && !belongsTo(authenticationRequest.getTenantName(), roles)) {
-
+            if (!belongsTo(authenticationRequest.getTenantId(), roles) && !belongsTo(authenticationRequest.getTenantName(), roles)) {
                 String errMsg = "User does not have access to tenant %s";
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
 
-            List<OpenstackEndpoint> endpoints = this.scopeAccessService
-                    .getOpenstackEndpointsForScopeAccess(usa);
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
-            AuthenticateResponse auth = authConverterCloudV20
-                    .toAuthenticationResponse(user, usa, roles, endpoints);
+            AuthenticateResponse auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, endpoints);
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createAccess(auth));
-
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(auth));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -539,9 +508,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new NotFoundException();
                 }
             }
-
             return Response.ok();
-
         } catch (BadRequestException bre) {
             return badRequestExceptionResponse(bre.getMessage());
         } catch (NotAuthorizedException nae) {
@@ -608,7 +575,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenantrole.setTenantIds(new String[]{tenant.getTenantId()});
             this.tenantService.deleteTenantRole(user.getUniqueId(), tenantrole);
             return Response.noContent();
-
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -627,18 +593,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteTenant(HttpHeaders httpHeaders,
-                                        String authToken, String tenantId) {
-
+    public ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String authToken, String tenantId) {
         try {
             checkXAUTHTOKEN(authToken);
-
             Tenant tenant = checkAndGetTenant(tenantId);
-
-            this.tenantService.deleteTenant(tenant.getTenantId());
-
+            tenantService.deleteTenant(tenant.getTenantId());
             return Response.noContent();
-
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -646,11 +606,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
-
         try {
             checkXAUTHTOKEN(authToken);
             User user = checkAndGetUser(userId);
-            this.userService.softDeleteUser(user);
+            userService.softDeleteUser(user);
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -662,7 +621,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             checkXAUTHTOKEN(authToken);
             User user = checkAndGetSoftDeletedUser(userId);
-            this.userService.deleteUser(user);
+            userService.deleteUser(user);
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -693,7 +652,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             user.setApiKey("");
 
-            this.userService.updateUser(user, false);
+            userService.updateUser(user, false);
 
             return Response.noContent();
 
@@ -736,23 +695,22 @@ public class DefaultCloud20Service implements Cloud20Service {
             Tenant tenant = checkAndGetTenant(tenantId);
 
             if (!tenant.containsBaseUrlId(endpointId)) {
-                String errMsg = String.format("Tenant %s does not have endpoint %s", tenantId,  endpointId);
+                String errMsg = String.format("Tenant %s does not have endpoint %s", tenantId, endpointId);
                 logger.warn(errMsg);
                 return notFoundExceptionResponse(errMsg);
             }
 
             CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpointId);
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createEndpoint(this.endpointConverterCloudV20.toEndpoint(baseUrl)));
-
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint(endpointConverterCloudV20.toEndpoint(baseUrl)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,  String authToken, String endpointTemplateId) {
+    public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId) {
 
         try {
             checkXAUTHTOKEN(authToken);
@@ -760,7 +718,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpointTemplateId);
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory()
-                            .createEndpointTemplate(this.endpointConverterCloudV20.toEndpointTemplate(baseUrl)));
+                    .createEndpointTemplate(this.endpointConverterCloudV20.toEndpointTemplate(baseUrl)));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -768,7 +726,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias)  throws IOException {
+    public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) throws IOException {
         if (StringUtils.isBlank(alias)) {
             return badRequestExceptionResponse("Invalid extension alias '" + alias + "'.");
         }
@@ -790,9 +748,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 Extensions exts = currentExtensions.getValue();
 
                 for (Extension e : exts.getExtension()) {
-                    extensionMap.put(e.getAlias().trim().toUpperCase(),
-                            OBJ_FACTORIES.getOpenStackCommonV1Factory()
-                                    .createExtension(e));
+                    extensionMap.put(e.getAlias().trim().toUpperCase(), OBJ_FACTORIES.getOpenStackCommonV1Factory().createExtension(e));
                 }
             } catch (Exception e) {
                 // Return 500 error. Is WEB-IN/extensions.xml malformed?
@@ -805,11 +761,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         return Response.ok(extensionMap.get(normalizedAlias));
-
     }
 
     @Override
-    public ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken,  String roleId) {
+    public ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken, String roleId) {
 
         try {
             checkXAUTHTOKEN(authToken);
@@ -832,8 +787,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             secrets.setAnswer(user.getSecretAnswer());
             secrets.setQuestion(user.getSecretQuestion());
 
-            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory()
-                            .createSecretQA(secrets));
+            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory().createSecretQA(secrets));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -841,14 +795,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getService(HttpHeaders httpHeaders,  String authToken, String serviceId) {
+    public ResponseBuilder getService(HttpHeaders httpHeaders, String authToken, String serviceId) {
 
         try {
             checkXAUTHTOKEN(authToken);
             Application client = checkAndGetApplication(serviceId);
-            return Response.ok(OBJ_FACTORIES
-                    .getOpenStackIdentityExtKsadmnV1Factory()
-                    .createService(this.serviceConverterCloudV20.toService(client)));
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory().createService(serviceConverterCloudV20.toService(client)));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -863,9 +816,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             Tenant tenant = checkAndGetTenant(tenantsId);
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createTenant(this.tenantConverterCloudV20.toTenant(tenant)));
-
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenant(tenantConverterCloudV20.toTenant(tenant)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -928,16 +880,14 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errMsg);
             }
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createUser(this.userConverterCloudV20.toUser(user)));
-
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(user)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public ResponseBuilder getUserCredential(HttpHeaders httpHeaders,  String authToken, String userId, String credentialType)
+    public ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType)
             throws IOException {
 
         try {
@@ -951,9 +901,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = this.userService.getUserById(userId);
 
             if (user == null) {
-               String errMsg = "Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: " + userId;
-               logger.warn(errMsg);
-               throw new NotFoundException(errMsg);
+                String errMsg = "Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: " + userId;
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
             }
 
             JAXBElement<? extends CredentialType> creds = null;
@@ -965,9 +915,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
                 userCreds.setPassword(user.getPassword());
                 userCreds.setUsername(user.getUsername());
-                creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                        .createCredential(userCreds);
-
+                creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredential(userCreds);
             } else if (credentialType.equals(JSONConstants.APIKEY_CREDENTIALS)) {
                 if (StringUtils.isBlank(user.getApiKey())) {
                     throw new NotFoundException("User doesn't have api key credentials");
@@ -993,8 +941,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = checkAndGetUser(userId);
 
-            List<TenantRole> globalRoles = this.tenantService
-                    .getGlobalRolesForUser(user);
+            List<TenantRole> globalRoles = tenantService.getGlobalRolesForUser(user);
 
             TenantRole role = null;
 
@@ -1032,38 +979,30 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = checkAndGetUser(userId);
 
-            CredentialListType creds = OBJ_FACTORIES
-                    .getOpenStackIdentityV2Factory().createCredentialListType();
+            CredentialListType creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredentialListType();
 
             if (!StringUtils.isBlank(user.getPassword())) {
                 PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
                 userCreds.setPassword(user.getPassword());
                 userCreds.setUsername(user.getUsername());
-                creds.getCredential().add(
-                        OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                                .createPasswordCredentials(userCreds));
+                creds.getCredential().add(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createPasswordCredentials(userCreds));
             }
 
             if (!StringUtils.isBlank(user.getApiKey())) {
                 ApiKeyCredentials userCreds = new ApiKeyCredentials();
                 userCreds.setApiKey(user.getApiKey());
                 userCreds.setUsername(user.getUsername());
-                creds.getCredential().add(
-                        OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory()
-                                .createApiKeyCredentials(userCreds));
+                creds.getCredential().add(OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials(userCreds));
             }
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createCredentials(creds));
-
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredentials(creds));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public ResponseBuilder listEndpoints(HttpHeaders httpHeaders,
-                                         String authToken, String tenantId) {
+    public ResponseBuilder listEndpoints(HttpHeaders httpHeaders, String authToken, String tenantId) {
 
         try {
             checkXAUTHTOKEN(authToken);
@@ -1071,7 +1010,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             Tenant tenant = checkAndGetTenant(tenantId);
 
             List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
-            if(tenant.getBaseUrlIds() != null) {
+            if (tenant.getBaseUrlIds() != null) {
                 for (String id : tenant.getBaseUrlIds()) {
                     Integer baseUrlId = Integer.parseInt(id);
                     baseUrls.add(this.endpointService.getBaseUrlById(baseUrlId));
@@ -1086,31 +1025,25 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders,
-                                                 String authToken, String tokenId) throws IOException {
+    public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId) throws IOException {
 
         try {
             checkXAUTHTOKEN(authToken);
 
             ScopeAccess sa = checkAndGetToken(tokenId);
 
-            List<OpenstackEndpoint> endpoints = this.scopeAccessService
-                    .getOpenstackEndpointsForScopeAccess(sa);
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
 
-            EndpointList list = this.endpointConverterCloudV20
-                    .toEndpointList(endpoints);
+            EndpointList list = endpointConverterCloudV20.toEndpointList(endpoints);
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createEndpoints(list));
-
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoints(list));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
-                                                 String authToken, String serviceId) {
+    public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders, String authToken, String serviceId) {
 
         try {
             checkXAUTHTOKEN(authToken);
@@ -1121,15 +1054,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                 baseUrls = this.endpointService.getBaseUrls();
             } else {
                 Application client = checkAndGetApplication(serviceId);
-                baseUrls = this.endpointService.getBaseUrlsByServiceId(client
-                        .getOpenStackType());
+                baseUrls = this.endpointService.getBaseUrlsByServiceId(client.getOpenStackType());
             }
 
-            return Response.ok(OBJ_FACTORIES
-                    .getOpenStackIdentityExtKscatalogV1Factory()
-                    .createEndpointTemplates(
-                            this.endpointConverterCloudV20
-                                    .toEndpointTemplateList(baseUrls)));
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory()
+                            .createEndpointTemplates(endpointConverterCloudV20.toEndpointTemplateList(baseUrls)));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1137,21 +1067,17 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listExtensions(HttpHeaders httpHeaders)
-            throws IOException {
+    public ResponseBuilder listExtensions(HttpHeaders httpHeaders) throws IOException {
         try {
             if (currentExtensions == null) {
                 JAXBContext jaxbContext = JAXBContextResolver.get();
                 Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
-                InputStream is = StringUtils.class
-                        .getResourceAsStream("/extensions.xml");
+                InputStream is = StringUtils.class.getResourceAsStream("/extensions.xml");
                 StreamSource ss = new StreamSource(is);
 
-                currentExtensions = unmarshaller
-                        .unmarshal(ss, Extensions.class);
+                currentExtensions = unmarshaller.unmarshal(ss, Extensions.class);
             }
-
             return Response.ok(currentExtensions);
         } catch (Exception e) {
             // Return 500 error. Is WEB-IN/extensions.xml malformed?
@@ -1160,8 +1086,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken,
-                                     String serviceId, String marker, Integer limit) {
+    public ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken, String serviceId, String marker, Integer limit) {
 
         try {
             checkXAUTHTOKEN(authToken);
@@ -1174,31 +1099,25 @@ public class DefaultCloud20Service implements Cloud20Service {
                 roles = this.clientService.getClientRolesByClientId(serviceId);
             }
 
-            return Response
-                    .ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                            .createRoles(
-                                    this.roleConverterCloudV20
-                                            .toRoleListFromClientRoles(roles)));
-
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListFromClientRoles(roles)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders,
-                                              String authToken, String tenantId, String marker, Integer limit) {
+    public ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit) {
 
         try {
             checkXAUTHTOKEN(authToken);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
-            List<TenantRole> roles = this.tenantService
-                    .getTenantRolesForTenant(tenant.getTenantId());
+            List<TenantRole> roles = this.tenantService.getTenantRolesForTenant(tenant.getTenantId());
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1206,8 +1125,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders,
-                                                    String authToken, String tenantsId, String userId) throws IOException {
+    public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantsId,
+                                                    String userId) throws IOException {
 
         try {
             checkXAUTHTOKEN(authToken);
@@ -1216,12 +1135,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = checkAndGetUser(userId);
 
-            List<TenantRole> roles = this.tenantService
-                    .getTenantRolesForUserOnTenant(user, tenant);
+            List<TenantRole> roles = this.tenantService.getTenantRolesForUserOnTenant(user, tenant);
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
-
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1230,16 +1147,15 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     // KSADM Extension Role Methods
     @Override
-    public ResponseBuilder listServices(HttpHeaders httpHeaders,
-                                        String authToken, String marker, Integer limit) {
+    public ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) {
 
         try {
             checkXAUTHTOKEN(authToken);
 
             List<Application> clients = this.clientService.getOpenStackServices();
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory()
-                    .createServices(this.serviceConverterCloudV20.toServiceList(clients)));
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory().createServices(serviceConverterCloudV20.toServiceList(clients)));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1255,7 +1171,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess access = this.scopeAccessService.getAccessTokenByAuthHeader(authToken);
             if (access == null) { // ToDo: Send an empty list, it's what Cloud does.
                 return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenants(
-                    this.tenantConverterCloudV20.toTenantList(tenants)));
+                        this.tenantConverterCloudV20.toTenantList(tenants)));
                 //throw new NotAuthorizedException("Not authorized");
             }
 
@@ -1265,16 +1181,15 @@ public class DefaultCloud20Service implements Cloud20Service {
                 tenants = this.tenantService.getTenantsForScopeAccessByTenantRoles(sa);
             }
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenants(
-                    this.tenantConverterCloudV20.toTenantList(tenants)));
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenants(tenantConverterCloudV20.toTenantList(tenants)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders,
-                                               String authToken, String userId) throws IOException {
+    public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
 
         try {
             checkXAUTHTOKEN(authToken);
@@ -1287,32 +1202,28 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errMsg);
             }
 
-            List<TenantRole> roles = this.tenantService
-                    .getGlobalRolesForUser(user);
+            List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
-
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public ResponseBuilder listUserGlobalRolesByServiceId(
-            HttpHeaders httpHeaders, String authToken, String userId,
-            String serviceId) throws IOException {
+    public ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders, String authToken, String userId,
+                                                          String serviceId) throws IOException {
         try {
             checkXAUTHTOKEN(authToken);
 
             User user = checkAndGetUser(userId);
 
-            List<TenantRole> roles = this.tenantService.getGlobalRolesForUser(
-                    user, new FilterParam[]{new FilterParam(
-                    FilterParamName.APPLICATION_ID, serviceId)});
+            List<TenantRole> roles =
+                    tenantService.getGlobalRolesForUser(user, new FilterParam[]{new FilterParam(FilterParamName.APPLICATION_ID, serviceId)});
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1320,8 +1231,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders,
-                                          String authToken, String userId) throws IOException {
+    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
         try {
             checkXAUTHTOKEN(authToken);
 
@@ -1347,17 +1257,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             Groups groups = this.userGroupService.getGroups(mossoId);
 
-            return Response.ok(OBJ_FACTORIES
-                    .getRackspaceIdentityExtKsgrpV1Factory().createGroups(groups));
-
+            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroups(groups));
         } catch (Exception e) {
             return exceptionResponse(e);
         }
     }
 
     @Override
-    public ResponseBuilder listUserRoles(HttpHeaders httpHeaders,
-                                         String authToken, String userId, String serviceId) {
+    public ResponseBuilder listUserRoles(HttpHeaders httpHeaders, String authToken, String userId, String serviceId) {
 
         try {
             checkXAUTHTOKEN(authToken);
@@ -1365,17 +1272,15 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = this.userService.getUserById(userId);
 
             if (user == null) {
-                String errMsg = String.format("User not found: '%s'", userId);  
+                String errMsg = String.format("User not found: '%s'", userId);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
 
-            List<TenantRole> roles = this.tenantService
-                    .getGlobalRolesForUser(user);
+            List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createRoles(this.roleConverterCloudV20.toRoleListJaxb(roles)));
-
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1383,34 +1288,30 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     // KSADM Extension User methods
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken,
-                                     String marker, int limit) {
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, String marker, int limit) {
 
         try {
             checkXAUTHTOKEN(authToken);
 
             // TODO write me
             return Response.status(Status.NOT_FOUND);
-
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders,
-                                              String authToken, String tenantId, String marker, Integer limit) {
+    public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit) {
 
         try {
             checkXAUTHTOKEN(authToken);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
-            List<User> users = this.tenantService.getUsersForTenant(tenant
-                    .getTenantId());
+            List<User> users = this.tenantService.getUsersForTenant(tenant.getTenantId());
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createUsers(this.userConverterCloudV20.toUserList(users)));
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users)));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1418,9 +1319,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders,
-                                                      String authToken, String tenantId, String roleId, String marker,
-                                                      Integer limit) {
+    public ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders, String authToken, String tenantId,
+                                                      String roleId, String marker, Integer limit) {
 
         try {
             checkXAUTHTOKEN(authToken);
@@ -1429,8 +1329,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             ClientRole role = checkAndGetClientRole(roleId);
 
-            List<User> users = this.tenantService.getUsersWithTenantRole(
-                    tenant, role);
+            List<User> users = this.tenantService.getUsersWithTenantRole(tenant, role);
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                     .createUsers(this.userConverterCloudV20.toUserList(users)));
@@ -1441,8 +1340,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders,
-                                          String authToken, String userId,
+    public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken, String userId,
                                           org.openstack.docs.identity.api.v2.User user) throws IOException {
 
         try {
@@ -1470,9 +1368,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder updateSecretQA(HttpHeaders httpHeaders,
-                                          String authToken, String userId, SecretQA secrets) throws IOException,
-            JAXBException {
+    public ResponseBuilder updateSecretQA(HttpHeaders httpHeaders, String authToken, String userId, SecretQA secrets)
+            throws IOException, JAXBException {
 
         try {
             checkXAUTHTOKEN(authToken);
@@ -1492,18 +1389,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             this.userService.updateUser(user, false);
 
-            return Response
-                    .ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory()
-                            .createSecretQA(secrets));
-
+            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory().createSecretQA(secrets));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
 
     @Override
-    public ResponseBuilder updateTenant(HttpHeaders httpHeaders,
-                                        String authToken, String tenantId,
+    public ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken, String tenantId,
                                         org.openstack.docs.identity.api.v2.Tenant tenant) throws IOException {
 
         try {
@@ -1518,8 +1411,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             this.tenantService.updateTenant(tenantDO);
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createTenant(this.tenantConverterCloudV20.toTenant(tenantDO)));
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenant(tenantConverterCloudV20.toTenant(tenantDO)));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1527,8 +1420,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder updateUser(HttpHeaders httpHeaders,
-                                      String authToken, String userId,
+    public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId,
                                       org.openstack.docs.identity.api.v2.User user) throws IOException {
 
         try {
@@ -1542,8 +1434,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             this.userService.updateUser(retrievedUser, false);
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createUser(this.userConverterCloudV20.toUser(retrievedUser)));
+            return Response.ok(
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(retrievedUser)));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1571,11 +1463,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             User credUser = this.userService.getUser(creds.getUsername());
 
             if (credUser == null) {
-                String errMsg = String.format("User: '%s' not found.",creds.getUsername());
+                String errMsg = String.format("User: '%s' not found.", creds.getUsername());
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
-            
+
 
             User user = checkAndGetUser(userId);
             if (!creds.getUsername().equals(user.getUsername())) {
@@ -1597,7 +1489,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId,
-            String credentialType, PasswordCredentialsRequiredUsername creds) throws IOException, JAXBException {
+                                                         String credentialType, PasswordCredentialsRequiredUsername creds) throws IOException, JAXBException {
 
         try {
             checkXAUTHTOKEN(authToken);
@@ -1668,13 +1560,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     private Response.ResponseBuilder badRequestExceptionResponse(String message) {
-        BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory() .createBadRequestFault();
+        BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_BAD_REQUEST);
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_BAD_REQUEST).entity(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(
-                        fault));
+                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
     }
 
     Response.ResponseBuilder exceptionResponse(Exception ex) {
@@ -1760,8 +1651,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         Tenant tenant = this.tenantService.getTenant(tenantId);
 
         if (tenant == null) {
-            String errMsg = String.format(
-                    "Tenant with id/name: '%s' was not found.", tenantId);
+            String errMsg = String.format("Tenant with id/name: '%s' was not found.", tenantId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
@@ -1769,8 +1659,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     private ScopeAccess checkAndGetToken(String tokenId) {
-        ScopeAccess sa = this.scopeAccessService
-                .getScopeAccessByAccessToken(tokenId);
+        ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(tokenId);
 
         if (sa == null) {
             String errMsg = String.format("Token %s not found", tokenId);
@@ -1819,14 +1708,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     void checkXAUTHTOKEN(String authToken) {
         if (StringUtils.isBlank(authToken)) {
-            throw new NotAuthorizedException(
-                    "No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
         }
 
         ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
         if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
-            throw new NotAuthorizedException(
-                    "No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
         }
 
         boolean authorized = this.authorizationService.authorizeCloudAdmin(authScopeAccess);
@@ -1881,19 +1768,16 @@ public class DefaultCloud20Service implements Cloud20Service {
         return config.getString("rackspace.customerId");
     }
 
-    private JAXBElement<? extends CredentialType> getJSONCredentials(
-            String jsonBody) {
+    private JAXBElement<? extends CredentialType> getJSONCredentials(String jsonBody) {
 
         JAXBElement<? extends CredentialType> jaxbCreds = null;
 
         CredentialType creds = JSONReaderForCredentialType.checkAndGetCredentialsFromJSONString(jsonBody);
 
         if (creds instanceof ApiKeyCredentials) {
-            jaxbCreds = OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory()
-                    .createApiKeyCredentials((ApiKeyCredentials) creds);
+            jaxbCreds = OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials((ApiKeyCredentials) creds);
         } else if (creds instanceof PasswordCredentialsRequiredUsername) {
-            jaxbCreds = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createPasswordCredentials((PasswordCredentialsRequiredUsername) creds);
+            jaxbCreds = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createPasswordCredentials((PasswordCredentialsRequiredUsername) creds);
         }
 
         return jaxbCreds;
@@ -1905,8 +1789,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             JAXBContext context = JAXBContextResolver.get();
             Unmarshaller unmarshaller = context.createUnmarshaller();
-            cred = (JAXBElement<? extends CredentialType>) unmarshaller
-                    .unmarshal(new StringReader(body));
+            cred = (JAXBElement<? extends CredentialType>) unmarshaller.unmarshal(new StringReader(body));
         } catch (JAXBException e) {
             throw new BadRequestException();
         }
@@ -1919,7 +1802,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_UNAUTHORIZED)
-                .entity( OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUnauthorized(fault));
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUnauthorized(fault));
     }
 
     private Response.ResponseBuilder notFoundExceptionResponse(String message) {
@@ -1954,7 +1837,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_CONFLICT)
-                .entity( OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
     }
 
     Response.ResponseBuilder userDisabledExceptionResponse(String message) {
@@ -1963,7 +1846,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_FORBIDDEN).
-                entity( OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(fault));
+                entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(fault));
     }
 
     public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {

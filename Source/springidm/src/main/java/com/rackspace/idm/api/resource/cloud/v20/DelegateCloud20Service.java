@@ -44,6 +44,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Autowired
     private DummyCloud20Service dummyCloud20Service;
+
     public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
         DelegateCloud20Service.OBJ_FACTORY = OBJ_FACTORY;
     }
@@ -54,23 +55,24 @@ public class DelegateCloud20Service implements Cloud20Service {
     private static org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory OBJ_FACTORY_OS_CATALOG = new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory();
     private static com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory OBJ_FACTORY_RAX_KSKEY = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory();
     private static com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory OBJ_FACOTRY_SECRETQA = new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory();
+
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders,
-        AuthenticationRequest authenticationRequest) throws IOException,
-        JAXBException {
+                                                 AuthenticationRequest authenticationRequest) throws IOException,
+            JAXBException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .authenticate(httpHeaders, authenticationRequest);
+                .authenticate(httpHeaders, authenticationRequest);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String body = marshallObjectToString(OBJ_FACTORY
-                .createAuth(authenticationRequest));
+                    .createAuth(authenticationRequest));
             return cloudClient.post(getCloudAuthV20Url() + "tokens",
-                httpHeaders, body);
+                    httpHeaders, body);
         }
         return serviceResponse;
     }
@@ -95,13 +97,13 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder checkToken(HttpHeaders httpHeaders,
-        String authToken, String tokenId, String belongsTo) throws IOException {
+                                      String authToken, String tokenId, String belongsTo) throws IOException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .checkToken(httpHeaders, authToken, tokenId, belongsTo);
+                .checkToken(httpHeaders, authToken, tokenId, belongsTo);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tokens/" + tokenId;
@@ -117,18 +119,18 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders,
-        String authToken, String tokenId) throws IOException {
+                                                 String authToken, String tokenId) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listEndpointsForToken(httpHeaders, authToken, tokenId);
+                .listEndpointsForToken(httpHeaders, authToken, tokenId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tokens/" + tokenId
-                + "/endpoints";
+                    + "/endpoints";
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
@@ -137,8 +139,8 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listExtensions(HttpHeaders httpHeaders) throws IOException {
-        if(config.getBoolean("useCloudAuth")){
-             String request = getCloudAuthV20Url() + "extensions";
+        if (config.getBoolean("useCloudAuth")) {
+            String request = getCloudAuthV20Url() + "extensions";
             return cloudClient.get(request, httpHeaders);
         }
         Response.ResponseBuilder serviceResponse = getCloud20Service().listExtensions(httpHeaders);
@@ -184,8 +186,8 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders,String authToken, String userId)
-        throws IOException {
+    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId)
+            throws IOException {
         Response.ResponseBuilder serviceResponse = getCloud20Service().listUserGroups(httpHeaders, authToken, userId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -200,14 +202,14 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders,
-        String authToken, String name) throws IOException {
+                                         String authToken, String name) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .getUserByName(httpHeaders, authToken, name);
+                .getUserByName(httpHeaders, authToken, name);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users";
@@ -224,14 +226,14 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getUserById(HttpHeaders httpHeaders,
-        String authToken, String userId) throws IOException {
+                                       String authToken, String userId) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .getUserById(httpHeaders, authToken, userId);
+                .getUserById(httpHeaders, authToken, userId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId;
@@ -257,8 +259,8 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders, String authToken, String userId,
-        String serviceId) throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud20Service().listUserGlobalRolesByServiceId(httpHeaders, authToken, userId,serviceId);
+                                                          String serviceId) throws IOException {
+        Response.ResponseBuilder serviceResponse = getCloud20Service().listUserGlobalRolesByServiceId(httpHeaders, authToken, userId, serviceId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
@@ -292,14 +294,14 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getTenantByName(HttpHeaders httpHeaders,
-        String authToken, String name) throws IOException {
+                                           String authToken, String name) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .getTenantByName(httpHeaders, authToken, name);
+                .getTenantByName(httpHeaders, authToken, name);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tenants";
@@ -315,14 +317,14 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getTenantById(HttpHeaders httpHeaders,
-        String authToken, String tenantsId) throws IOException {
+                                         String authToken, String tenantsId) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .getTenantById(httpHeaders, authToken, tenantsId);
+                .getTenantById(httpHeaders, authToken, tenantsId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantsId;
@@ -333,13 +335,13 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addUserCredential(HttpHeaders httpHeaders,
-        String authToken, String userId, String body) throws IOException {
+                                             String authToken, String userId, String body) throws IOException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .addUserCredential(httpHeaders, authToken, userId, body);
+                .addUserCredential(httpHeaders, authToken, userId, body);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
@@ -356,7 +358,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         String xml = null;
 
         CredentialType creds = JSONReaderForCredentialType
-            .checkAndGetCredentialsFromJSONString(body);
+                .checkAndGetCredentialsFromJSONString(body);
 
         if (creds instanceof PasswordCredentialsRequiredUsername) {
             PasswordCredentialsRequiredUsername userCreds = (PasswordCredentialsRequiredUsername) creds;
@@ -364,7 +366,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         } else if (creds instanceof ApiKeyCredentials) {
             ApiKeyCredentials userCreds = (ApiKeyCredentials) creds;
             jaxbCreds = OBJ_FACTORY_RAX_KSKEY
-                .createApiKeyCredentials(userCreds);
+                    .createApiKeyCredentials(userCreds);
         }
 
         try {
@@ -378,19 +380,19 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listCredentials(HttpHeaders httpHeaders,
-        String authToken, String userId, String marker, Integer limit)
-        throws IOException {
+                                           String authToken, String userId, String marker, Integer limit)
+            throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listCredentials(httpHeaders, authToken, userId, marker, limit);
+                .listCredentials(httpHeaders, authToken, userId, marker, limit);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/OS-KSADM/credentials";
+                    + "/OS-KSADM/credentials";
 
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("marker", marker);
@@ -404,9 +406,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId,
-        String credentialType, PasswordCredentialsRequiredUsername creds) throws JAXBException, IOException {
+                                                         String credentialType, PasswordCredentialsRequiredUsername creds) throws JAXBException, IOException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .updateUserPasswordCredentials(httpHeaders, authToken, userId, credentialType, creds);
+                .updateUserPasswordCredentials(httpHeaders, authToken, userId, credentialType, creds);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
@@ -421,21 +423,21 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateUserApiKeyCredentials(HttpHeaders httpHeaders,
-        String authToken, String userId, String credentialType,
-        ApiKeyCredentials creds) throws JAXBException, IOException {
+                                                       String authToken, String userId, String credentialType,
+                                                       ApiKeyCredentials creds) throws JAXBException, IOException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .updateUserApiKeyCredentials(httpHeaders, authToken, userId,
-                credentialType, creds);
+                .updateUserApiKeyCredentials(httpHeaders, authToken, userId,
+                        credentialType, creds);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/OS-KSADM/credentials/" + credentialType;
+                    + "/OS-KSADM/credentials/" + credentialType;
             String body = marshallObjectToString(OBJ_FACTORY_RAX_KSKEY
-                .createApiKeyCredentials(creds));
+                    .createApiKeyCredentials(creds));
             return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
@@ -443,19 +445,19 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getUserCredential(HttpHeaders httpHeaders,
-        String authToken, String userId, String credentialType)
-        throws IOException {
+                                             String authToken, String userId, String credentialType)
+            throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .getUserCredential(httpHeaders, authToken, userId, credentialType);
+                .getUserCredential(httpHeaders, authToken, userId, credentialType);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/OS-KSADM/credentials/" + credentialType;
+                    + "/OS-KSADM/credentials/" + credentialType;
 
             return cloudClient.get(request, httpHeaders);
         }
@@ -464,19 +466,19 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders,
-        String authToken, String userId, String credentialType)
-        throws IOException {
+                                                String authToken, String userId, String credentialType)
+            throws IOException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .deleteUserCredential(httpHeaders, authToken, userId,
-                credentialType);
+                .deleteUserCredential(httpHeaders, authToken, userId,
+                        credentialType);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/OS-KSADM/credentials/" + credentialType;
+                    + "/OS-KSADM/credentials/" + credentialType;
             return cloudClient.delete(request, httpHeaders);
         }
         return serviceResponse;
@@ -484,17 +486,17 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantId, String userId) throws IOException {
+                                                    String authToken, String tenantId, String userId) throws IOException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listRolesForUserOnTenant(httpHeaders, authToken, tenantId, userId);
+                .listRolesForUserOnTenant(httpHeaders, authToken, tenantId, userId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
-                + "/users/" + userId + "/roles";
+                    + "/users/" + userId + "/roles";
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
@@ -518,14 +520,14 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateUser(HttpHeaders httpHeaders,
-        String authToken, String userId, User user) throws IOException,
-        JAXBException {
+                                      String authToken, String userId, User user) throws IOException,
+            JAXBException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .updateUser(httpHeaders, authToken, userId, user);
+                .updateUser(httpHeaders, authToken, userId, user);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
@@ -614,7 +616,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getUserRole(HttpHeaders httpHeaders,
-        String authToken, String userId, String roleId) throws IOException {
+                                       String authToken, String userId, String roleId) throws IOException {
         Response.ResponseBuilder serviceResponse = getCloud20Service().getUserRole(httpHeaders, authToken, userId, roleId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -629,18 +631,18 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders,
-        String authToken, String userId, String roleId) throws IOException {
+                                          String authToken, String userId, String roleId) throws IOException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .deleteUserRole(httpHeaders, authToken, userId, roleId);
+                .deleteUserRole(httpHeaders, authToken, userId, roleId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/roles/OS-KSADM/" + roleId;
+                    + "/roles/OS-KSADM/" + roleId;
             return cloudClient.delete(request, httpHeaders);
         }
         return serviceResponse;
@@ -648,21 +650,21 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo,
-        String authToken, org.openstack.docs.identity.api.v2.Tenant tenant)
-        throws IOException, JAXBException {
+                                     String authToken, org.openstack.docs.identity.api.v2.Tenant tenant)
+            throws IOException, JAXBException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .addTenant(httpHeaders, uriInfo, authToken, tenant);
+                .addTenant(httpHeaders, uriInfo, authToken, tenant);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "tenants";
             String body = marshallObjectToString(OBJ_FACTORY
-                .createTenant(tenant));
+                    .createTenant(tenant));
             return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
@@ -670,22 +672,22 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantId,
-        org.openstack.docs.identity.api.v2.Tenant tenant) throws IOException,
-        JAXBException {
+                                        String authToken, String tenantId,
+                                        org.openstack.docs.identity.api.v2.Tenant tenant) throws IOException,
+            JAXBException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .updateTenant(httpHeaders, authToken, tenantId, tenant);
+                .updateTenant(httpHeaders, authToken, tenantId, tenant);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "tenants/" + tenantId;
             String body = marshallObjectToString(OBJ_FACTORY
-                .createTenant(tenant));
+                    .createTenant(tenant));
             return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
@@ -693,14 +695,14 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder deleteTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantId) throws IOException {
+                                        String authToken, String tenantId) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .deleteTenant(httpHeaders, authToken, tenantId);
+                .deleteTenant(httpHeaders, authToken, tenantId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
@@ -715,7 +717,7 @@ public class DelegateCloud20Service implements Cloud20Service {
                                               Integer limit) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listRolesForTenant(httpHeaders, authToken, tenantId, marker, limit);
+                .listRolesForTenant(httpHeaders, authToken, tenantId, marker, limit);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
@@ -733,21 +735,21 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantId, String roleId, String marker,
-        Integer limit) throws IOException {
+                                                      String authToken, String tenantId, String roleId, String marker,
+                                                      Integer limit) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listUsersWithRoleForTenant(httpHeaders, authToken, tenantId,
-                roleId, marker, limit);
+                .listUsersWithRoleForTenant(httpHeaders, authToken, tenantId,
+                        roleId, marker, limit);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
-                + "/users";
+                    + "/users";
 
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("roleId", roleId);
@@ -762,20 +764,20 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantId, String marker, Integer limit)
-        throws IOException {
+                                              String authToken, String tenantId, String marker, Integer limit)
+            throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listUsersForTenant(httpHeaders, authToken, tenantId, marker, limit);
+                .listUsersForTenant(httpHeaders, authToken, tenantId, marker, limit);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
-                + "/users";
+                    + "/users";
 
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("marker", marker);
@@ -789,21 +791,21 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantId, String userId, String roleId)
-        throws IOException {
+                                                  String authToken, String tenantId, String userId, String roleId)
+            throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .addRolesToUserOnTenant(httpHeaders, authToken, tenantId, userId,
-                roleId);
+                .addRolesToUserOnTenant(httpHeaders, authToken, tenantId, userId,
+                        roleId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
-                + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
+                    + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
             return cloudClient.put(request, httpHeaders, "");
         }
         return serviceResponse;
@@ -811,21 +813,21 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders,
-        String authToken, String tenantId, String userId, String roleId)
-        throws IOException {
+                                                      String authToken, String tenantId, String userId, String roleId)
+            throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .deleteRoleFromUserOnTenant(httpHeaders, authToken, tenantId,
-                userId, roleId);
+                .deleteRoleFromUserOnTenant(httpHeaders, authToken, tenantId,
+                        userId, roleId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
-                + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
+                    + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
             return cloudClient.delete(request, httpHeaders);
         }
         return serviceResponse;
@@ -833,14 +835,14 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken,
-        String serviceId, String marker, Integer limit) throws IOException {
+                                     String serviceId, String marker, Integer limit) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listRoles(httpHeaders, authToken, serviceId, marker, limit);
+                .listRoles(httpHeaders, authToken, serviceId, marker, limit);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
@@ -859,14 +861,14 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo,
-        String authToken, Role role) throws IOException, JAXBException {
+                                   String authToken, Role role) throws IOException, JAXBException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service().addRole(
-            httpHeaders, uriInfo, authToken, role);
+                httpHeaders, uriInfo, authToken, role);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
@@ -879,14 +881,14 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken,
-        String roleId) throws IOException {
+                                   String roleId) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service().getRole(
-            httpHeaders, authToken, roleId);
+                httpHeaders, authToken, roleId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
@@ -898,14 +900,14 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder deleteRole(HttpHeaders httpHeaders,
-        String authToken, String roleId) throws IOException {
+                                      String authToken, String roleId) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .deleteRole(httpHeaders, authToken, roleId);
+                .deleteRole(httpHeaders, authToken, roleId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
@@ -917,7 +919,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listServices(HttpHeaders httpHeaders,
-        String authToken, String marker, Integer limit) throws IOException {
+                                        String authToken, String marker, Integer limit) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service().listServices(httpHeaders, authToken, marker, limit);
         // We have to clone the ResponseBuilder from above because once we build
@@ -940,20 +942,20 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo,
-        String authToken, Service service) throws IOException, JAXBException {
+                                      String authToken, Service service) throws IOException, JAXBException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .addService(httpHeaders, uriInfo, authToken, service);
+                .addService(httpHeaders, uriInfo, authToken, service);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "OS-KSADM/services";
             String body = marshallObjectToString(OBJ_FACTORY_OS_ADMIN_EXT
-                .createService(service));
+                    .createService(service));
             return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
@@ -961,19 +963,19 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getService(HttpHeaders httpHeaders,
-        String authToken, String serviceId) throws IOException {
+                                      String authToken, String serviceId) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .getService(httpHeaders, authToken, serviceId);
+                .getService(httpHeaders, authToken, serviceId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
 
             String request = getCloudAuthV20Url() + "OS-KSADM/services/"
-                + serviceId;
+                    + serviceId;
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
@@ -981,18 +983,18 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder deleteService(HttpHeaders httpHeaders,
-        String authToken, String serviceId) throws IOException {
+                                         String authToken, String serviceId) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .deleteService(httpHeaders, authToken, serviceId);
+                .deleteService(httpHeaders, authToken, serviceId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "OS-KSADM/services/"
-                + serviceId;
+                    + serviceId;
             return cloudClient.delete(request, httpHeaders);
         }
         return serviceResponse;
@@ -1000,18 +1002,18 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
-        String authToken, String serviceId) throws IOException {
+                                                 String authToken, String serviceId) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listEndpointTemplates(httpHeaders, authToken, serviceId);
+                .listEndpointTemplates(httpHeaders, authToken, serviceId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url()
-                + "OS-KSCATALOG/endpointTemplates";
+                    + "OS-KSCATALOG/endpointTemplates";
 
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("serviceId", serviceId);
@@ -1024,21 +1026,21 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
-        UriInfo uriInfo, String authToken, EndpointTemplate endpoint)
-        throws IOException, JAXBException {
+                                               UriInfo uriInfo, String authToken, EndpointTemplate endpoint)
+            throws IOException, JAXBException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint);
+                .addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url()
-                + "OS-KSCATALOG/endpointTemplates";
+                    + "OS-KSCATALOG/endpointTemplates";
             String body = marshallObjectToString(OBJ_FACTORY_OS_CATALOG
-                .createEndpointTemplate(endpoint));
+                    .createEndpointTemplate(endpoint));
             return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
@@ -1046,18 +1048,18 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
-        String authToken, String endpointTemplateId) throws IOException {
+                                               String authToken, String endpointTemplateId) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .getEndpointTemplate(httpHeaders, authToken, endpointTemplateId);
+                .getEndpointTemplate(httpHeaders, authToken, endpointTemplateId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url()
-                + "OS-KSCATALOG/endpointTemplates/" + endpointTemplateId;
+                    + "OS-KSCATALOG/endpointTemplates/" + endpointTemplateId;
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
@@ -1065,18 +1067,18 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders,
-        String authToken, String endpointTemplateId) throws IOException {
+                                                  String authToken, String endpointTemplateId) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .deleteEndpointTemplate(httpHeaders, authToken, endpointTemplateId);
+                .deleteEndpointTemplate(httpHeaders, authToken, endpointTemplateId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url()
-                + "OS-KSCATALOG/endpointTemplates/" + endpointTemplateId;
+                    + "OS-KSCATALOG/endpointTemplates/" + endpointTemplateId;
             return cloudClient.delete(request, httpHeaders);
         }
         return serviceResponse;
@@ -1084,17 +1086,17 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listEndpoints(HttpHeaders httpHeaders,
-        String authToken, String tenantId) throws IOException {
+                                         String authToken, String tenantId) throws IOException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .listEndpoints(httpHeaders, authToken, tenantId);
+                .listEndpoints(httpHeaders, authToken, tenantId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
-                + "/OS-KSCATALOG/endpoints";
+                    + "/OS-KSCATALOG/endpoints";
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
@@ -1102,9 +1104,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId, EndpointTemplate endpoint)
-        throws IOException, JAXBException {
+            throws IOException, JAXBException {
 
-        if(config.getBoolean("useCloudAuth")){
+        if (config.getBoolean("useCloudAuth")) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/OS-KSCATALOG/endpoints";
             String body = marshallObjectToString(OBJ_FACTORY_OS_CATALOG.createEndpointTemplate(endpoint));
             return cloudClient.post(request, httpHeaders, body);
@@ -1114,18 +1116,18 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getEndpoint(HttpHeaders httpHeaders,
-        String authToken, String endpointId, String tenantId)
-        throws IOException {
+                                       String authToken, String endpointId, String tenantId)
+            throws IOException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .getEndpoint(httpHeaders, authToken, endpointId, tenantId);
+                .getEndpoint(httpHeaders, authToken, endpointId, tenantId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
-                + "/OS-KSCATALOG/endpoints/" + endpointId;
+                    + "/OS-KSCATALOG/endpoints/" + endpointId;
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
@@ -1133,18 +1135,18 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders,
-        String authToken, String endpointId, String tenantId)
-        throws IOException {
+                                          String authToken, String endpointId, String tenantId)
+            throws IOException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .deleteEndpoint(httpHeaders, authToken, endpointId, tenantId);
+                .deleteEndpoint(httpHeaders, authToken, endpointId, tenantId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
-                + "/OS-KSCATALOG/endpoints/" + endpointId;
+                    + "/OS-KSCATALOG/endpoints/" + endpointId;
             return cloudClient.delete(request, httpHeaders);
         }
         return serviceResponse;
@@ -1152,17 +1154,17 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getSecretQA(HttpHeaders httpHeaders,
-        String authToken, String userId) throws IOException {
+                                       String authToken, String userId) throws IOException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .getSecretQA(httpHeaders, authToken, userId);
+                .getSecretQA(httpHeaders, authToken, userId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/RAX-KSQA/secretqa/";
+                    + "/RAX-KSQA/secretqa/";
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
@@ -1170,27 +1172,27 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateSecretQA(HttpHeaders httpHeaders,
-        String authToken, String userId, SecretQA secrets) throws IOException,
-        JAXBException {
+                                          String authToken, String userId, SecretQA secrets) throws IOException,
+            JAXBException {
         Response.ResponseBuilder serviceResponse = getCloud20Service()
-            .updateSecretQA(httpHeaders, authToken, userId, secrets);
+                .updateSecretQA(httpHeaders, authToken, userId, secrets);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
-            .clone();
+                .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users/" + userId
-                + "/RAX-KSQA/secretqa/";
+                    + "/RAX-KSQA/secretqa/";
             String body = marshallObjectToString(OBJ_FACOTRY_SECRETQA
-                .createSecretQA(secrets));
+                    .createSecretQA(secrets));
             return cloudClient.post(request, httpHeaders, body);
         }
         return serviceResponse;
     }
 
     public String appendQueryParams(String request,
-        HashMap<String, Object> params) {
+                                    HashMap<String, Object> params) {
         String result = "";
 
         for (String key : params.keySet()) {
@@ -1228,7 +1230,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     private String marshallObjectToString(Object jaxbObject)
-        throws JAXBException {
+            throws JAXBException {
 
         StringWriter sw = new StringWriter();
 

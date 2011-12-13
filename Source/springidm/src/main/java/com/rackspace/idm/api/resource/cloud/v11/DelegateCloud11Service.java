@@ -286,16 +286,14 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder getUser(HttpServletRequest request,
-                                            String userId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder getUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
         Response.ResponseBuilder serviceResponse = getCloud11Service().getUser(request, userId, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
 
         int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND
-                || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             serviceResponse = cloudClient.get(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
         }
         return serviceResponse;
@@ -333,22 +331,17 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder getUserEnabled(HttpServletRequest request,
-                                                   String userId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder getUserEnabled(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
 
-        Response.ResponseBuilder serviceResponse = getCloud11Service()
-                .getUserEnabled(request, userId, httpHeaders);
+        Response.ResponseBuilder serviceResponse = getCloud11Service().getUserEnabled(request, userId, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
 
         int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND
-                || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String path = "users/" + userId + "/enabled";
-            return cloudClient.get(getCloudAuthV11Url().concat(path),
-                    httpHeaders);
+            return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
         }
         return serviceResponse;
     }
