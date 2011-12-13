@@ -191,14 +191,37 @@ public class DelegateCloud11ServiceTest {
 
     @Test
     public void getBaseUrls_useCloudAuthDisabled_callsDefaultService() throws Exception {
-        delegateCloud11Service.getBaseURLs(null,"service",null);
+        delegateCloud11Service.getBaseURLs(null, "service", null);
         verify(defaultCloud11Service).getBaseURLs(null, "service", null);
     }
 
     @Test
     public void getBaseUrls_useCloudAuthEnabled_callsClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
-        delegateCloud11Service.getBaseURLs(null,"service",null);
-        verify(cloudClient).get(eq(url+"baseURLs?serviceName=service"), Matchers.<javax.ws.rs.core.HttpHeaders>any());
+        delegateCloud11Service.getBaseURLs(null, "service", null);
+        verify(cloudClient).get(eq(url + "baseURLs?serviceName=service"), Matchers.<javax.ws.rs.core.HttpHeaders>any());
+    }
+
+    @Test
+    public void getBaseUrlRefs_useCloudAuthDisabled_callsDefaultService() throws Exception {
+        delegateCloud11Service.getBaseURLRefs(null, userId, null);
+        verify(defaultCloud11Service).getBaseURLRefs(null, userId, null);
+    }
+
+    @Test
+    public void getBaseUrlRefs_useCloudAuthEnabledAndUserDoentExistsInGA_callsClient() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(ldapUserRepository.getUserById(userId)).thenReturn(null);
+        delegateCloud11Service.getBaseURLRefs(null, userId, null);
+        verify(cloudClient).get(eq(url+"users/"+userId+"/baseURLRefs"), Matchers.<javax.ws.rs.core.HttpHeaders>any());
+    }
+
+    @Test
+    public void getBaseUrlRefs_useCloudAuthEnabledAndUserExistsInGA_callsDefaultService() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(ldapUserRepository.getUserById(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        delegateCloud11Service.getBaseURLRefs(null, userId, null);
+        verify(defaultCloud11Service).getBaseURLRefs(null, userId, null);
+
     }
 }

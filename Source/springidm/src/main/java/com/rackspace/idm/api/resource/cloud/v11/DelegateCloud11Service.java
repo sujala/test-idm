@@ -1,8 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.HashMap;
+import com.rackspace.idm.api.resource.cloud.CloudClient;
+import com.rackspace.idm.domain.config.JAXBContextResolver;
+import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
+import com.rackspacecloud.docs.auth.api.v1.*;
+import org.apache.commons.configuration.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -13,16 +17,9 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
-import com.rackspacecloud.docs.auth.api.v1.*;
-import com.rackspacecloud.docs.auth.api.v1.User;
-import org.apache.commons.configuration.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import com.rackspace.idm.api.resource.cloud.CloudClient;
-import com.rackspace.idm.domain.config.JAXBContextResolver;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.HashMap;
 
 @Component
 public class DelegateCloud11Service implements Cloud11Service {
@@ -448,21 +445,12 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder getBaseURLRefs(HttpServletRequest request,
-                                                   String userId, HttpHeaders httpHeaders) throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud11Service()
-                .getBaseURLRefs(request, userId, httpHeaders);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+    public Response.ResponseBuilder getBaseURLRefs(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
+        if(isCloudAuthEnabled() && !userExistsInGA(userId)){
             String path = "users/" + userId + "/baseURLRefs";
             return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
         }
-        return serviceResponse;
+        return getCloud11Service().getBaseURLRefs(request, userId, httpHeaders);
     }
 
     @Override
@@ -479,7 +467,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder addBaseURLRef(HttpServletRequest request, String userId, HttpHeaders httpHeaders,
                                                   UriInfo uriInfo, BaseURLRef baseUrlRef) throws IOException, JAXBException {
 
-        if(!userExists(userId) && isCloudAuthEnabled()){
+        if(!userExistsInGA(userId) && isCloudAuthEnabled()){
             String body = this.marshallObjectToString(OBJ_FACTORY.createBaseURLRef(baseUrlRef));
             String path = "users/" + userId + "/baseURLRefs";
             return cloudClient.post(getCloudAuthV11Url().concat(path), httpHeaders, body);
@@ -489,22 +477,17 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder getBaseURLRef(HttpServletRequest request,
-                                                  String userId, String baseURLId, HttpHeaders httpHeaders)
+    public Response.ResponseBuilder getBaseURLRef(HttpServletRequest request, String userId, String baseURLId, HttpHeaders httpHeaders)
             throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud11Service()
-                .getBaseURLRef(request, userId, baseURLId, httpHeaders);
+        Response.ResponseBuilder serviceResponse = getCloud11Service().getBaseURLRef(request, userId, baseURLId, httpHeaders);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
 
         int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND
-                || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String path = "users/" + userId + "/baseURLRefs/" + baseURLId;
-            return cloudClient.get(getCloudAuthV11Url().concat(path),
-                    httpHeaders);
+            return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
         }
         return serviceResponse;
     }
@@ -533,9 +516,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         }
     }
 
-    boolean userExists(String userId){
-        com.rackspace.idm.domain.entity.User userByUsername = ldapUserRepository.getUserById(userId);
-        if(userByUsername==null){
+    boolean userExistsInGA(String userId){
+        com.rackspace.idm.domain.entity.User userById = ldapUserRepository.getUserById(userId);
+        if(userById==null){
             return false;
         }
         return true;
@@ -571,11 +554,9 @@ public class DelegateCloud11Service implements Cloud11Service {
             }
 
             if (queryString.length() > 0) {
-                result += "?"
-                        + queryString.substring(0, queryString.length() - 1);
+                result += "?" + queryString.substring(0, queryString.length() - 1);
             }
         }
-
         return result;
     }
 
@@ -583,8 +564,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         return config.getString("cloudAuth11url");
     }
 
-    private String marshallObjectToString(Object jaxbObject)
-            throws JAXBException {
+    private String marshallObjectToString(Object jaxbObject)  throws JAXBException {
 
         Marshaller marshaller = JAXBContextResolver.get().createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
@@ -596,9 +576,7 @@ public class DelegateCloud11Service implements Cloud11Service {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-
         return sw.toString();
-
     }
 
     public void setConfig(Configuration config) {
@@ -617,8 +595,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         this.cloudClient = cloudClient;
     }
 
-    public void setDefaultCloud11Service(
-            DefaultCloud11Service defaultCloud11Service) {
+    public void setDefaultCloud11Service(DefaultCloud11Service defaultCloud11Service) {
         this.defaultCloud11Service = defaultCloud11Service;
     }
 
@@ -632,5 +609,4 @@ public class DelegateCloud11Service implements Cloud11Service {
     public void setLdapUserRepository(LdapUserRepository ldapUserRepository) {
         this.ldapUserRepository = ldapUserRepository;
     }
-
 }
