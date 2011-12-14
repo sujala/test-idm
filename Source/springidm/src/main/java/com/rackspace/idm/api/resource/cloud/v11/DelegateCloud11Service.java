@@ -42,7 +42,9 @@ public class DelegateCloud11Service implements Cloud11Service {
     private DummyCloud11Service dummyCloud11Service;
 
     private static com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
-    private static final String cloudAuth11url = "cloudAuth11url";
+    public static final String CLOUD_AUTH_11_URL = "cloudAuth11url";
+    public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
+    public static final String GA_SOURCE_OF_TRUTH = "gaIsSourceOfTruth";
 
     public DelegateCloud11Service() throws JAXBException {
     }
@@ -156,7 +158,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     private boolean isCloudAuthRoutingEnabled() {
-        return config.getBoolean("useCloudAuth");
+        return config.getBoolean(CLOUD_AUTH_ROUTING);
     }
 
     @Override
@@ -449,57 +451,46 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public ResponseBuilder addBaseURL(HttpServletRequest request, HttpHeaders httpHeaders, BaseURL baseUrl) throws JAXBException, IOException {
-        if (isCloudAuthRoutingEnabled()) {
-            String body = marshallObjectToString(OBJ_FACTORY.createBaseURL(baseUrl));
-            return cloudClient.post(getCloudAuthV11Url().concat("baseURLs"), httpHeaders, body);
+        if (!isCloudAuthRoutingEnabled() || isGASourceOfTruth()) {
+            return getCloud11Service().addBaseURL(request, httpHeaders, baseUrl);
         }
-        Response.ResponseBuilder serviceResponse = getCloud11Service().addBaseURL(request, httpHeaders, baseUrl);
-        return serviceResponse;
+        String body = marshallObjectToString(OBJ_FACTORY.createBaseURL(baseUrl));
+        return cloudClient.post(getCloudAuthV11Url().concat("baseURLs"), httpHeaders, body);
+    }
+
+    private boolean isGASourceOfTruth() {
+        return config.getBoolean(GA_SOURCE_OF_TRUTH);
     }
 
     @Override
     public Response.ResponseBuilder addBaseURLRef(HttpServletRequest request, String userId, HttpHeaders httpHeaders,
                                                   UriInfo uriInfo, BaseURLRef baseUrlRef) throws IOException, JAXBException {
-
-        if (!userExistsInGA(userId) && isCloudAuthRoutingEnabled()) {
-            String body = this.marshallObjectToString(OBJ_FACTORY.createBaseURLRef(baseUrlRef));
-            String path = "users/" + userId + "/baseURLRefs";
-            return cloudClient.post(getCloudAuthV11Url().concat(path), httpHeaders, body);
+        if (!isCloudAuthRoutingEnabled() || userExistsInGA(userId)) {
+            return defaultCloud11Service.addBaseURLRef(request, userId, httpHeaders, uriInfo, baseUrlRef);
         }
-
-        return getCloud11Service().addBaseURLRef(request, userId, httpHeaders, uriInfo, baseUrlRef);
+        String body = this.marshallObjectToString(OBJ_FACTORY.createBaseURLRef(baseUrlRef));
+        String path = "users/" + userId + "/baseURLRefs";
+        return cloudClient.post(getCloudAuthV11Url().concat(path), httpHeaders, body);
     }
 
     @Override
     public Response.ResponseBuilder getBaseURLRef(HttpServletRequest request, String userId, String baseURLId, HttpHeaders httpHeaders)
             throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud11Service().getBaseURLRef(request, userId, baseURLId, httpHeaders);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            String path = "users/" + userId + "/baseURLRefs/" + baseURLId;
-            return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
+        if (!isCloudAuthRoutingEnabled() || userExistsInGA(userId)) {
+            return defaultCloud11Service.getBaseURLRef(request, userId, baseURLId, httpHeaders);
         }
-        return serviceResponse;
+        String path = "users/" + userId + "/baseURLRefs/" + baseURLId;
+        return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
     }
 
     @Override
     public Response.ResponseBuilder deleteBaseURLRef(HttpServletRequest request, String userId, String baseURLId,
                                                      HttpHeaders httpHeaders) throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud11Service().deleteBaseURLRef(request, userId, baseURLId, httpHeaders);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            String path = "users/" + userId + "/baseURLRefs/" + baseURLId;
-            return cloudClient.delete(getCloudAuthV11Url().concat(path), httpHeaders);
+        if (!isCloudAuthRoutingEnabled() || userExistsInGA(userId)) {
+            return defaultCloud11Service.deleteBaseURLRef(request, userId, baseURLId, httpHeaders);
         }
-        return serviceResponse;
+        String path = "users/" + userId + "/baseURLRefs/" + baseURLId;
+        return cloudClient.delete(getCloudAuthV11Url().concat(path), httpHeaders);
     }
 
     private Cloud11Service getCloud11Service() {
@@ -546,7 +537,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     private String getCloudAuthV11Url() {
-        return config.getString(cloudAuth11url);
+        return config.getString(CLOUD_AUTH_11_URL);
     }
 
     private String marshallObjectToString(Object jaxbObject) throws JAXBException {
