@@ -332,18 +332,11 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder getUserEnabled(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
-
-        Response.ResponseBuilder serviceResponse = getCloud11Service().getUserEnabled(request, userId, httpHeaders);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
             String path = "users/" + userId + "/enabled";
             return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
         }
-        return serviceResponse;
+        return defaultCloud11Service.getUserEnabled(request, userId, httpHeaders);
     }
 
     @Override

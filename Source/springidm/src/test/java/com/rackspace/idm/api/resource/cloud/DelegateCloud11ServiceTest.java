@@ -430,4 +430,36 @@ public class DelegateCloud11ServiceTest {
         delegateCloud11Service.addBaseURLRef(null, userId, null, null, null);
         verify(defaultCloud11Service).addBaseURLRef(null, userId, null, null, null);
     }
+
+    @Test
+    public void getUserEnabled_RoutingFalseAndUserExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(null);
+        delegateCloud11Service.getUserEnabled(null, userId, null);
+        verify(defaultCloud11Service).getUserEnabled(null,userId,null);
+    }
+
+    @Test
+    public void getUserEnabled_RoutingFalseAndUserExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        delegateCloud11Service.getUserEnabled(null,userId,null);
+        verify(defaultCloud11Service).getUserEnabled(null,userId,null);
+    }
+
+    @Test
+    public void getUserEnabled_RoutingTrueAndUserExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(null);
+        delegateCloud11Service.getUserEnabled(null,userId,null);
+        verify(cloudClient).get(url+"users/"+userId+"/enabled",null);
+    }
+
+    @Test
+    public void getUserEnabled_RoutingTrueAndUserExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        delegateCloud11Service.getUserEnabled(null,userId,null);
+        verify(defaultCloud11Service).getUserEnabled(null,userId,null);
+    }
 }
