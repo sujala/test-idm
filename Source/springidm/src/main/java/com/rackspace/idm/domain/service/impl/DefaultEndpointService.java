@@ -77,7 +77,7 @@ public class DefaultEndpointService implements EndpointService {
         List<CloudBaseUrl> baseUrls = endpointDao.getBaseUrls();
         List<CloudBaseUrl> defaultBaseUrls = new ArrayList<CloudBaseUrl>();
         for (CloudBaseUrl baseURL : baseUrls) {
-            if (baseURL.getDef()) {
+            if (baseURL.getDef()!=null && baseURL.getDef()) {
                 defaultBaseUrls.add(baseURL);
             }
         }

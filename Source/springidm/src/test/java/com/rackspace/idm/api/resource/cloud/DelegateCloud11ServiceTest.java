@@ -237,7 +237,7 @@ public class DelegateCloud11ServiceTest {
     public void addBaseUrlRef_withRoutingOn_callsUserExists() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
         delegateCloud11Service.addBaseURLRef(null, userId, null, null, null);
-        verify(ldapUserRepository).getUserById(userId);
+        verify(ldapUserRepository).getUserByUsername(userId);
     }
 
     @Test
@@ -292,7 +292,7 @@ public class DelegateCloud11ServiceTest {
     @Test
     public void getBaseUrlRefs_useCloudAuthEnabledAndUserExistsInGA_callsDefaultService() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
-        when(ldapUserRepository.getUserById(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
         delegateCloud11Service.getBaseURLRefs(null, userId, null);
         verify(defaultCloud11Service).getBaseURLRefs(null, userId, null);
     }
@@ -330,7 +330,7 @@ public class DelegateCloud11ServiceTest {
     @Test
     public void getUserGroups_RoutingTrueAndUserExistsInGA_callsDefaultService() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
-        when(ldapUserRepository.getUserById(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
         delegateCloud11Service.getUserGroups(null, userId, null);
         verify(defaultCloud11Service).getUserGroups(null, userId, null);
     }
@@ -362,7 +362,7 @@ public class DelegateCloud11ServiceTest {
     @Test
     public void deleteBaseURLRef_RoutingTrueAndUserExistsInGA_callsDefaultService() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
-        when(ldapUserRepository.getUserById(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
         delegateCloud11Service.deleteBaseURLRef(null, userId, null, null);
         verify(defaultCloud11Service).deleteBaseURLRef(null, userId, null, null);
     }
@@ -394,7 +394,7 @@ public class DelegateCloud11ServiceTest {
     @Test
     public void getBaseURLRef_RoutingTrueAndUserExistsInGA_callsDefaultService() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
-        when(ldapUserRepository.getUserById(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
         delegateCloud11Service.getBaseURLRef(null, userId, null, null);
         verify(defaultCloud11Service).getBaseURLRef(null, userId, null, null);
     }
@@ -426,7 +426,7 @@ public class DelegateCloud11ServiceTest {
     @Test
     public void addBaseURLRef_RoutingTrueAndUserExistsInGA_callsDefaultService() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
-        when(ldapUserRepository.getUserById(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
         delegateCloud11Service.addBaseURLRef(null, userId, null, null, null);
         verify(defaultCloud11Service).addBaseURLRef(null, userId, null, null, null);
     }
