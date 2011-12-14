@@ -107,6 +107,46 @@ public class DelegateCloud11ServiceTest {
     }
 
     @Test
+    public void createUser_RoutingFalseAndGAIsNotSourceOfTruth_callsDefaultService() throws Exception {
+        User user = new User();
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        when(OBJ_FACTORY.createUser(user)).thenReturn(new JAXBElement<User>(new QName(""), User.class, user));
+        delegateCloud11Service.createUser(null, null, null, user);
+        verify(defaultCloud11Service).createUser(null,null,null,user);
+    }
+
+    @Test
+    public void createUser_RoutingFalseAndGAIsSourceOfTruth_callsDefaultService() throws Exception {
+        User user = new User();
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        when(OBJ_FACTORY.createUser(user)).thenReturn(new JAXBElement<User>(new QName(""), User.class, user));
+        delegateCloud11Service.createUser(null, null, null, user);
+        verify(defaultCloud11Service).createUser(null,null,null,user);
+    }
+
+    @Test
+    public void createUser_RoutingTrueAndGAIsNotSourceOfTruth_callsDefaultService() throws Exception {
+        User user = new User();
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        when(OBJ_FACTORY.createUser(user)).thenReturn(new JAXBElement<User>(new QName(""), User.class, user));
+        delegateCloud11Service.createUser(null, null, null, user);
+        verify(cloudClient).post(eq(url+"users"),Matchers.<javax.ws.rs.core.HttpHeaders>any(),anyString());
+    }
+
+    @Test
+    public void createUser_RoutingTrueAndGAIsSourceOfTruth_callsDefaultService() throws Exception {
+        User user = new User();
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        when(OBJ_FACTORY.createUser(user)).thenReturn(new JAXBElement<User>(new QName(""), User.class, user));
+        delegateCloud11Service.createUser(null, null, null, user);
+        verify(defaultCloud11Service).createUser(null,null,null,user);
+    }
+
+    @Test
     public void createUser_useCloudAuthFlagSetToTrue_callsConfigGetBoolean() throws Exception {
         User user = new User();
         when(config.getBoolean("useCloudAuth")).thenReturn(true);

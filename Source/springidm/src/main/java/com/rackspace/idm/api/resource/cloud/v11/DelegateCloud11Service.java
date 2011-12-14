@@ -278,14 +278,11 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder createUser(HttpServletRequest request, HttpHeaders httpHeaders, UriInfo uriInfo,
                                                User user) throws IOException, JAXBException {
-
-        if (isCloudAuthRoutingEnabled()) {
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
             return cloudClient.post(getCloudAuthV11Url().concat("users"), httpHeaders, body);
         }
-
-        Response.ResponseBuilder serviceResponse = getCloud11Service().createUser(request, httpHeaders, uriInfo, user);
-        return serviceResponse;
+        return defaultCloud11Service.createUser(request, httpHeaders, uriInfo, user);
     }
 
     @Override
