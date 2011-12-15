@@ -1,25 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v10;
 
-import java.io.IOException;
-import java.util.List;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
-import org.joda.time.Seconds;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
@@ -33,6 +13,24 @@ import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspacecloud.docs.auth.api.v1.Endpoint;
 import com.rackspacecloud.docs.auth.api.v1.Service;
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Cloud Auth 1.0 API Version
@@ -91,10 +89,7 @@ public class Cloud10VersionResource {
         @HeaderParam(HEADER_AUTH_KEY) String key) throws IOException {
 
         Response.ResponseBuilder builder = Response.noContent();
-        builder
-            .header(
-                "Vary",
-                "Accept, Accept-Encoding, X-Auth-Token, X-Auth-Key, X-Storage-User, X-Storage-Pass");
+        builder.header("Vary", "Accept, Accept-Encoding, X-Auth-Token, X-Auth-Key, X-Storage-User, X-Storage-Pass");
 
         if(username==null || username.trim().length() == 0){
             return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity("Bad username or password").build();
@@ -104,44 +99,32 @@ public class Cloud10VersionResource {
 
         if (user == null) {
             if (useCloudAuth()) {
-                return cloudClient.get(getCloudAuthV10Url(), httpHeaders)
-                    .build();
+                return cloudClient.get(getCloudAuthV10Url(), httpHeaders).build();
             } else {
                 String errMsg = "Bad username or password";
-                return builder.status(HttpServletResponse.SC_UNAUTHORIZED)
-                    .entity(errMsg).build();
+                return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(errMsg).build();
             }
         }
 
         try {
-            UserScopeAccess usa = this.scopeAccessService
-                .getUserScopeAccessForClientIdByUsernameAndApiCredentials(
-                    username, key, getCloudAuthClientId());
-            List<CloudEndpoint> endpointlist = this.endpointService
-                .getEndpointsForUser(username);
+            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
+            List<CloudEndpoint> endpointlist = endpointService.getEndpointsForUser(username);
 
-            ServiceCatalog catalog = this.endpointConverterCloudV11
-                .toServiceCatalog(endpointlist);
+            ServiceCatalog catalog = endpointConverterCloudV11.toServiceCatalog(endpointlist);
 
             List<Service> services = catalog.getService();
 
             builder.header(HEADER_AUTH_TOKEN, usa.getAccessTokenString());
 
             for (Service service : services) {
-
                 if (SERVICENAME_CLOUD_FILES.equals(service.getName())) {
                     List<Endpoint> endpoints = service.getEndpoint();
                     for (Endpoint endpoint : endpoints) {
                         // Use single existing endpoint even if it's not default
                         if (endpoints.size() == 1 || endpoint.isV1Default()) {
-
-                            addValuetoHeather(HEADER_STORAGE_URL,
-                                endpoint.getPublicURL(), builder);
-                            builder.header(HEADER_STORAGE_TOKEN,
-                                usa.getAccessTokenString());
-                            addValuetoHeather(HEADER_STORAGE_INTERNAL_URL,
-                                endpoint.getInternalURL(), builder);
-
+                            addValuetoHeather(HEADER_STORAGE_URL, endpoint.getPublicURL(), builder);
+                            builder.header(HEADER_STORAGE_TOKEN, usa.getAccessTokenString());
+                            addValuetoHeather(HEADER_STORAGE_INTERNAL_URL, endpoint.getInternalURL(), builder);
                         }
                     }
                 }
@@ -151,8 +134,7 @@ public class Cloud10VersionResource {
                     for (Endpoint endpoint : endpoints) {
                         // Use single existing endpoint even if it's not default
                         if (endpoints.size() == 1 || endpoint.isV1Default()) {
-                            addValuetoHeather(HEADER_CDN_URL,
-                                endpoint.getPublicURL(), builder);
+                            addValuetoHeather(HEADER_CDN_URL, endpoint.getPublicURL(), builder);
                         }
                     }
                 }
@@ -170,25 +152,17 @@ public class Cloud10VersionResource {
 
             }
 
-            builder.header(
-                CACHE_CONTROL,
-                "s-maxage="
-                    + Seconds.secondsBetween(
-                        new DateTime(usa.getAccessTokenExp()), new DateTime()));
-
+            long secondsLeft = (usa.getAccessTokenExp().getTime() - new Date().getTime()) / DateUtils.MILLIS_PER_SECOND;
+            builder.header(CACHE_CONTROL, "s-maxage=" + secondsLeft);
             return builder.build();
-
         } catch (NotAuthenticatedException nae) {
             String errMsg = "Bad username or password";
-            return builder.status(HttpServletResponse.SC_UNAUTHORIZED)
-                .entity(errMsg).build();
+            return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(errMsg).build();
         } catch (UserDisabledException ude) {
             String errMsg = "Bad username or password";
-            return builder.status(HttpServletResponse.SC_FORBIDDEN)
-                .entity(errMsg).build();
+            return builder.status(HttpServletResponse.SC_FORBIDDEN).entity(errMsg).build();
         } catch (Exception ex) {
-            return builder.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
-                .build();
+            return builder.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).build();
         }
 
     }

@@ -76,9 +76,9 @@ public class CloudClient {
                 responseBuilder = responseBuilder.header(key, header.getValue());
             }
         }
-        if (statusCode == 500) {
+//        if (statusCode == 500) {
             responseBuilder.header("response-source","cloud-auth");
-        }
+//        }
         return responseBuilder;
     }
 

@@ -705,25 +705,20 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public UserScopeAccess getUserScopeAccessForClientIdByUsernameAndApiCredentials(
         String username, String apiKey, String clientId) {
-        logger.debug("Getting User {} ScopeAccess by clientId {}", username,
-            clientId);
-        final UserAuthenticationResult result = this.userDao
-            .authenticateByAPIKey(username, apiKey);
+        logger.debug("Getting User {} ScopeAccess by clientId {}", username, clientId);
+        final UserAuthenticationResult result = userDao.authenticateByAPIKey(username, apiKey);
 
         handleAuthenticationFailure(username, result);
 
-        final UserScopeAccess scopeAccess = checkAndGetUserScopeAccess(
-            clientId, result.getUser());
+        final UserScopeAccess scopeAccess = checkAndGetUserScopeAccess(clientId, result.getUser());
 
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccess.setAccessTokenString(this.generateToken());
-            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(
-                getDefaultCloudAuthTokenExpirationSeconds()).toDate());
-            this.scopeAccessDao.updateScopeAccess(scopeAccess);
+            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            scopeAccessDao.updateScopeAccess(scopeAccess);
         }
 
-        logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess,
-            clientId);
+        logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess, clientId);
         return scopeAccess;
     }
 
