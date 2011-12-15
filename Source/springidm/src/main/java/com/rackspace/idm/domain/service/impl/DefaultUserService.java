@@ -509,6 +509,24 @@ public class DefaultUserService implements UserService {
         logger.debug("SoftDeleted User: {}", user);
     }
 
+    @Override
+    public boolean userExistsById(String userId) {
+        com.rackspace.idm.domain.entity.User userById = userDao.getUserByUsername(userId);
+        if (userById == null) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean userExistsByUsername(String username) {
+        com.rackspace.idm.domain.entity.User userByUsername = userDao.getUserByUsername(username);
+        if (userByUsername == null) {
+            return false;
+        }
+        return true;
+    }
+
     private void setPasswordIfNecessary(User user) {
     	Password password = user.getPasswordObj();
     	

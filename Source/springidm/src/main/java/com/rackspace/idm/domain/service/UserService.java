@@ -68,4 +68,6 @@ public interface UserService {
     //UserAuthenticationResult authenticateRacker(String username, String password);
     
     void softDeleteUser(User user);
+    boolean userExistsById(String userId);
+    boolean userExistsByUsername(String username);
 }

@@ -147,6 +147,37 @@ public class DelegateCloud20ServiceTest {
         verify(cloudClient, times(0)).get(url, null);
     }
 
+    @Test
+    public void listTenants_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listTenants(null,null,null,null);
+        verify(defaultCloud20Service).listTenants(null,null,null,null);
+    }
+
+    @Test
+    public void listTenants_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listTenants(null,null,null,null);
+        verify(defaultCloud20Service).listTenants(null,null,null,null);
+    }
+
+    @Test
+    public void listTenants_RoutingTrueAndGASourceOfTruthFalse_callsClient() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listTenants(null,null,null,null);
+        verify(cloudClient).get(url+"tenants",null);
+    }
+
+    @Test
+    public void listTenants_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listTenants(null,null,null,null);
+        verify(defaultCloud20Service).listTenants(null,null,null,null);
+    }
 
     @Test
     public void listTenants_useCloudAuthIsTrue_callsCloudClient() throws Exception {

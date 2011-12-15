@@ -157,10 +157,6 @@ public class DelegateCloud11Service implements Cloud11Service {
         return getCloud11Service().getBaseURLs(request, serviceName, httpHeaders);
     }
 
-    private boolean isCloudAuthRoutingEnabled() {
-        return config.getBoolean(CLOUD_AUTH_ROUTING);
-    }
-
     @Override
     public Response.ResponseBuilder getBaseURLId(HttpServletRequest request,
                                                  int baseURLId, String serviceName, HttpHeaders httpHeaders)
@@ -448,10 +444,6 @@ public class DelegateCloud11Service implements Cloud11Service {
         return cloudClient.post(getCloudAuthV11Url().concat("baseURLs"), httpHeaders, body);
     }
 
-    private boolean isGASourceOfTruth() {
-        return config.getBoolean(GA_SOURCE_OF_TRUTH);
-    }
-
     @Override
     public Response.ResponseBuilder addBaseURLRef(HttpServletRequest request, String userId, HttpHeaders httpHeaders,
                                                   UriInfo uriInfo, BaseURLRef baseUrlRef) throws IOException, JAXBException {
@@ -499,6 +491,10 @@ public class DelegateCloud11Service implements Cloud11Service {
         return true;
     }
 
+    private boolean isGASourceOfTruth() {
+        return config.getBoolean(GA_SOURCE_OF_TRUTH);
+    }
+
     @Override
     public Response.ResponseBuilder getUserGroups(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
         if (!isCloudAuthRoutingEnabled() || userExistsInGA(userId)) {
@@ -528,6 +524,10 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     private String getCloudAuthV11Url() {
         return config.getString(CLOUD_AUTH_11_URL);
+    }
+
+    private boolean isCloudAuthRoutingEnabled() {
+        return config.getBoolean(CLOUD_AUTH_ROUTING);
     }
 
     private String marshallObjectToString(Object jaxbObject) throws JAXBException {

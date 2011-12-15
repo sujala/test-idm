@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
@@ -40,18 +41,21 @@ public class DelegateCloud20Service implements Cloud20Service {
     private Configuration config;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private DefaultCloud20Service defaultCloud20Service;
 
     @Autowired
     private DummyCloud20Service dummyCloud20Service;
 
-    public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
-        DelegateCloud20Service.OBJ_FACTORY = OBJ_FACTORY;
-    }
+    public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
+    public static final String GA_SOURCE_OF_TRUTH = "gaIsSourceOfTruth";
 
     private static org.openstack.docs.identity.api.v2.ObjectFactory OBJ_FACTORY = new org.openstack.docs.identity.api.v2.ObjectFactory();
 
     private static org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory OBJ_FACTORY_OS_ADMIN_EXT = new org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory();
+
     private static org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory OBJ_FACTORY_OS_CATALOG = new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory();
     private static com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory OBJ_FACTORY_RAX_KSKEY = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory();
     private static com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory OBJ_FACOTRY_SECRETQA = new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory();
@@ -276,10 +280,8 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit)
-            throws IOException {
-
-        if (config.getBoolean("useCloudAuth")) {
+    public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException {
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "tenants";
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("marker", marker);
@@ -287,9 +289,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             request = appendQueryParams(request, params);
             return cloudClient.get(request, httpHeaders);
         }
-
-        Response.ResponseBuilder serviceResponse = getCloud20Service().listTenants(httpHeaders, authToken, marker, limit);
-        return serviceResponse;
+        return defaultCloud20Service.listTenants(httpHeaders, authToken, marker, limit);
     }
 
     @Override
@@ -1191,24 +1191,19 @@ public class DelegateCloud20Service implements Cloud20Service {
         return serviceResponse;
     }
 
-    public String appendQueryParams(String request,
-                                    HashMap<String, Object> params) {
+    public String appendQueryParams(String request, HashMap<String, Object> params) {
         String result = "";
-
         for (String key : params.keySet()) {
             Object value = params.get(key);
-
             if (value != null) {
                 if (result.length() == 0) {
                     result += "?";
                 } else {
                     result += "&";
                 }
-
                 result += key + "=" + value.toString();
             }
         }
-
         return request + result;
     }
 
@@ -1229,17 +1224,19 @@ public class DelegateCloud20Service implements Cloud20Service {
         return cloudAuth20url;
     }
 
-    private String marshallObjectToString(Object jaxbObject)
-            throws JAXBException {
-
+    private String marshallObjectToString(Object jaxbObject) throws JAXBException {
         StringWriter sw = new StringWriter();
-
         Marshaller marshaller = JAXBContextResolver.get().createMarshaller();
-
         marshaller.marshal(jaxbObject, sw);
-
         return sw.toString();
+    }
 
+    private boolean isGASourceOfTruth() {
+        return config.getBoolean(GA_SOURCE_OF_TRUTH);
+    }
+
+    private boolean isCloudAuthRoutingEnabled() {
+        return config.getBoolean(CLOUD_AUTH_ROUTING);
     }
 
     private Cloud20Service getCloud20Service() {
@@ -1252,6 +1249,10 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     public void setDefaultCloud20Service(DefaultCloud20Service defaultCloud20Service) {
         this.defaultCloud20Service = defaultCloud20Service;
+    }
+
+    public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
+        DelegateCloud20Service.OBJ_FACTORY = OBJ_FACTORY;
     }
 
 }
