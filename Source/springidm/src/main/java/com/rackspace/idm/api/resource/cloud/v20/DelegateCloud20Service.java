@@ -61,24 +61,14 @@ public class DelegateCloud20Service implements Cloud20Service {
     private static com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory OBJ_FACOTRY_SECRETQA = new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory();
 
     @Override
-    public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders,
-                                                 AuthenticationRequest authenticationRequest) throws IOException,
-            JAXBException {
+    public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)
+            throws IOException, JAXBException {
 
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-                .authenticate(httpHeaders, authenticationRequest);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            String body = marshallObjectToString(OBJ_FACTORY
-                    .createAuth(authenticationRequest));
-            return cloudClient.post(getCloudAuthV20Url() + "tokens",
-                    httpHeaders, body);
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            String body = marshallObjectToString(OBJ_FACTORY.createAuth(authenticationRequest));
+            return cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
         }
-        return serviceResponse;
+        return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
     }
 
     @Override
