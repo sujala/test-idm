@@ -116,6 +116,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             checkXAUTHTOKEN(authToken);
             Tenant tenant = checkAndGetTenant(tenantId);
             CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpoint.getId());
+            if (baseUrl.getGlobal())
+                throw new BadRequestException("Cannot add a global endpoint to this tenant.");
             tenant.addBaseUrlId(String.valueOf(endpoint.getId()));
             this.tenantService.updateTenant(tenant);
             return Response.ok(
@@ -1009,10 +1011,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
-            List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
+            List<CloudBaseUrl> baseUrls = this.endpointService.getGlobalBaseUrls();
             if (tenant.getBaseUrlIds() != null) {
                 for (String id : tenant.getBaseUrlIds()) {
                     Integer baseUrlId = Integer.parseInt(id);
+                    //ToDo: Do not add if in global list also
                     baseUrls.add(this.endpointService.getBaseUrlById(baseUrlId));
                 }
             }
