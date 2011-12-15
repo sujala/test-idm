@@ -134,6 +134,7 @@ public class DefaultCloud20ServiceTest {
         userOS.setUsername("username");
         cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setBaseUrlId(101);
+        cloudBaseUrl.setGlobal(false);
         application = new Application();
         application.setClientId("clientId");
 
@@ -375,7 +376,7 @@ public class DefaultCloud20ServiceTest {
         verify(tenantService).addTenantRoleToUser(any(User.class), any(TenantRole.class));
     }
 
-    @Ignore //ToDo: Fix for only non-global endpoints
+    @Test
     public void addEndpoint_callsTenantService_updateTenant() throws Exception {
         spy.addEndpoint(null,authToken,tenantId, endpointTemplate);
         verify(tenantService).updateTenant(tenant);
