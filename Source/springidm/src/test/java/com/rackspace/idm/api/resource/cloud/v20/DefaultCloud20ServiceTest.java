@@ -383,6 +383,13 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addEndpoint_callsTenantService_updateTenant_throw400() throws Exception {
+        cloudBaseUrl.setGlobal(true);
+        Response.ResponseBuilder responseBuilder = spy.addEndpoint(null,authToken,tenantId, endpointTemplate);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
     public void addEndpointTemplate_callsEndpointService_addBaseUrl() throws Exception {
         when(endpointConverterCloudV20.toCloudBaseUrl(endpointTemplate)).thenReturn(baseUrl);
         spy.addEndpointTemplate(null,null,authToken,endpointTemplate);
