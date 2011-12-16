@@ -50,16 +50,16 @@ public class DelegateCloud20Service implements Cloud20Service {
     private DummyCloud20Service dummyCloud20Service;
 
     public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
-    public static final String GA_SOURCE_OF_TRUTH = "gaIsSourceOfTruth";
 
+    public static final String GA_SOURCE_OF_TRUTH = "gaIsSourceOfTruth";
     private static org.openstack.docs.identity.api.v2.ObjectFactory OBJ_FACTORY = new org.openstack.docs.identity.api.v2.ObjectFactory();
 
     private static org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory OBJ_FACTORY_OS_ADMIN_EXT = new org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory();
 
     private static org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory OBJ_FACTORY_OS_CATALOG = new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory();
+
     private static com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory OBJ_FACTORY_RAX_KSKEY = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory();
     private static com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory OBJ_FACOTRY_SECRETQA = new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory();
-
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)
             throws IOException, JAXBException {
@@ -190,45 +190,30 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUserByName(HttpHeaders httpHeaders,
-                                         String authToken, String name) throws IOException {
+    public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) throws IOException {
 
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-                .getUserByName(httpHeaders, authToken, name);
+        Response.ResponseBuilder serviceResponse = getCloud20Service().getUserByName(httpHeaders, authToken, name);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
+        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
             String request = getCloudAuthV20Url() + "users";
-
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("name", name);
             request = appendQueryParams(request, params);
-
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
-
     }
 
     @Override
-    public ResponseBuilder getUserById(HttpHeaders httpHeaders,
-                                       String authToken, String userId) throws IOException {
-
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-                .getUserById(httpHeaders, authToken, userId);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+    public ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+        if(isCloudAuthRoutingEnabled() && !userService.userExistsById(userId)){
             String request = getCloudAuthV20Url() + "users/" + userId;
             return cloudClient.get(request, httpHeaders);
         }
-        return serviceResponse;
+        return defaultCloud20Service.getUserById(httpHeaders, authToken, userId);
     }
 
     @Override
@@ -1218,6 +1203,10 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
         DelegateCloud20Service.OBJ_FACTORY = OBJ_FACTORY;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
 }
