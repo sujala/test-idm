@@ -271,6 +271,38 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    public void validateToken_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.validateToken(null,null,null,null);
+        verify(defaultCloud20Service).validateToken(null,null,null,null);
+    }
+
+        @Test
+    public void validateToken_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.validateToken(null,null,null,null);
+        verify(defaultCloud20Service).validateToken(null,null,null,null);
+    }
+
+    @Test
+    public void validateToken_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.validateToken(null,null,"1",null);
+        verify(cloudClient).get(url + "tokens/1" , null);
+    }
+
+    @Test
+    public void validateToken_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.validateToken(null,null,null,null);
+        verify(defaultCloud20Service).validateToken(null,null,null,null);
+    }
+
+    @Test
     public void listTenants_useCloudAuthIsTrue_callsCloudClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
         delegateCloud20Service.listTenants(null, "token", null, null);
@@ -291,21 +323,6 @@ public class DelegateCloud20ServiceTest {
         when(defaultCloud20Service.listTenants(null, "token", null, null)).thenReturn(Response.ok());
         Response.ResponseBuilder responseBuilder = delegateCloud20Service.listTenants(null, "token", null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void validateToken_defaultServiceReturns404_callsClient() throws Exception {
-        when(defaultCloud20Service.validateToken(null, null, null, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.validateToken(null, null, "tokenId", null);
-        verify(cloudClient).get(url + "tokens/tokenId", null);
-    }
-
-    @Test
-    public void validateToken_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.validateToken(null, null, null, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.validateToken(null, null, null, null);
-        verify(cloudClient).get(url + "tokens/" + null, null);
     }
 
     @Test
