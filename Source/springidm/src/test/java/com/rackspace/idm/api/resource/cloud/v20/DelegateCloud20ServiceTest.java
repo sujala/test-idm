@@ -574,22 +574,6 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void listUserGlobalRoles_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listUserGlobalRoles(null, null, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.listUserGlobalRoles(null, null, null);
-        verify(cloudClient).get(url + "users/null/roles", null);
-    }
-
-    @Test
-    public void listUserGlobalRoles_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listUserGlobalRoles(null, null, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.listUserGlobalRoles(null, null, null);
-        verify(cloudClient).get(url + "users/null/roles", null);
-    }
-
-    @Test
     public void listUserGlobalRolesByServiceId_defaultServiceReturns401_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
         when(defaultCloud20Service.listUserGlobalRolesByServiceId(null, null, null, null)).thenReturn(Response.status(401));
@@ -1288,22 +1272,22 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsByUsername(username)).thenReturn(false);
         delegateCloud20Service.getUserByName(null, null, username);
-        verify(defaultCloud20Service).getUserByName(null,null,username);
+        verify(defaultCloud20Service).getUserByName(null, null, username);
     }
 
     @Test
     public void getUserByName_RoutingFalse_UserExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsByUsername(userId)).thenReturn(true);
-        delegateCloud20Service.getUserByName(null,null,username);
-        verify(defaultCloud20Service).getUserByName(null,null,username);
+        delegateCloud20Service.getUserByName(null, null, username);
+        verify(defaultCloud20Service).getUserByName(null, null, username);
     }
 
     @Test
     public void getUserByName_RoutingTrue_UserExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsByUsername(userId)).thenReturn(false);
-        delegateCloud20Service.getUserByName(null,null,username);
+        delegateCloud20Service.getUserByName(null, null, username);
         verify(cloudClient).get(url+"users?name="+username,null);
     }
 
@@ -1311,7 +1295,39 @@ public class DelegateCloud20ServiceTest {
     public void getUserByName_RoutingTrue_UserExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsByUsername(username)).thenReturn(true);
-        delegateCloud20Service.getUserByName(null,null,username);
-        verify(defaultCloud20Service).getUserByName(null,null,username);
+        delegateCloud20Service.getUserByName(null, null, username);
+        verify(defaultCloud20Service).getUserByName(null, null, username);
+    }
+
+    @Test
+    public void listUserGlobalRoles_RoutingFalse_UserExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.listUserGlobalRoles(null,null,userId);
+        verify(defaultCloud20Service).listUserGlobalRoles(null,null,userId);
+    }
+
+    @Test
+    public void listUserGlobalRoles_RoutingFalse_UserExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.listUserGlobalRoles(null,null,userId);
+        verify(defaultCloud20Service).listUserGlobalRoles(null,null,userId);
+    }
+
+    @Test
+    public void listUserGlobalRoles_RoutingTrue_UserExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.listUserGlobalRoles(null,null,userId);
+        verify(cloudClient).get(url+"users/"+userId+"/roles",null);
+    }
+
+    @Test
+    public void listUserGlobalRoles_RoutingTrue_UserExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.listUserGlobalRoles(null,null,userId);
+        verify(defaultCloud20Service).listUserGlobalRoles(null,null,userId);
     }
 }

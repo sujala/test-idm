@@ -107,15 +107,12 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders,
-                                                 String authToken, String tokenId) throws IOException {
+    public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId) throws IOException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
-            String request = getCloudAuthV20Url() + "tokens/" + tokenId
-                    + "/endpoints";
+            String request = getCloudAuthV20Url() + "tokens/" + tokenId + "/endpoints";
             return cloudClient.get(request, httpHeaders);
         }
         return defaultCloud20Service.listEndpointsForToken(httpHeaders, authToken, tokenId);
-
     }
 
     @Override
@@ -174,10 +171,6 @@ public class DelegateCloud20Service implements Cloud20Service {
         return defaultCloud20Service.listUserGroups(httpHeaders, authToken, userId);
     }
 
-    boolean isUserInGAbyId(String userId) {
-        return userService.userExistsById(userId);
-    }
-
     @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) throws IOException {
         if(isCloudAuthRoutingEnabled() && !userService.userExistsByUsername(name)){
@@ -201,17 +194,11 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
-
-        Response.ResponseBuilder serviceResponse = getCloud20Service().listUserGlobalRoles(httpHeaders, authToken, userId);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if(isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)){
             String request = getCloudAuthV20Url() + "users/" + userId + "/roles";
             return cloudClient.get(request, httpHeaders);
         }
-        return serviceResponse;
+        return defaultCloud20Service.listUserGlobalRoles(httpHeaders, authToken, userId);
     }
 
     @Override
@@ -1129,6 +1116,10 @@ public class DelegateCloud20Service implements Cloud20Service {
     private String getCloudAuthV20Url() {
         String cloudAuth20url = config.getString("cloudAuth20url");
         return cloudAuth20url;
+    }
+
+    boolean isUserInGAbyId(String userId) {
+        return userService.userExistsById(userId);
     }
 
     private String marshallObjectToString(Object jaxbObject) throws JAXBException {
