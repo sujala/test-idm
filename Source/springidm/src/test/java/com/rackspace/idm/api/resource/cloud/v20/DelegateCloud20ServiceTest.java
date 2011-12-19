@@ -570,22 +570,6 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void listUsers_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listUsers(null, null, null, 0)).thenReturn(Response.status(401));
-        delegateCloud20Service.listUsers(null, null, null, 0);
-        verify(cloudClient).get(url + "users?limit=0", null);
-    }
-
-    @Test
-    public void listUsers_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listUsers(null, null, null, 0)).thenReturn(Response.status(404));
-        delegateCloud20Service.listUsers(null, null, null, 0);
-        verify(cloudClient).get(url + "users?limit=0", null);
-    }
-
-    @Test
     public void updateUserApiKeyCredentials_defaultServiceReturns404_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
         when(defaultCloud20Service.updateUserApiKeyCredentials(null, null, null, null, null)).thenReturn(Response.status(404));
@@ -1387,5 +1371,37 @@ public class DelegateCloud20ServiceTest {
         when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.updateUserPasswordCredentials(null,null,userId,null,null);
         verify(defaultCloud20Service).updateUserPasswordCredentials(null,null,userId,null,null);
+    }
+
+    @Test
+    public void listUsers_RoutingFalse_gaSourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listUsers(null,null,null,null);
+        verify(defaultCloud20Service).listUsers(null,null,null,null);
+    }
+
+    @Test
+    public void listUsers_RoutingFalse_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listUsers(null,null,null,null);
+        verify(defaultCloud20Service).listUsers(null,null,null,null);
+    }
+
+    @Test
+    public void listUsers_RoutingTrue_gaSourceOfTruthFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listUsers(null,null,null,null);
+        verify(cloudClient).get(url+"users",null);
+    }
+
+    @Test
+    public void listUsers_RoutingTrue_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listUsers(null,null,null,null);
+        verify(defaultCloud20Service).listUsers(null,null,null,null);
     }
 }

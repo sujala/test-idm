@@ -105,8 +105,7 @@ public interface Cloud20Service {
 
 	ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId) throws IOException;
 
-    ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken,
-        String marker, int limit) throws IOException;
+    ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken,  String marker, Integer limit) throws IOException;
 
     ResponseBuilder listUserGroups(HttpHeaders httpHeaders,String authToken, String userId) throws IOException;
 

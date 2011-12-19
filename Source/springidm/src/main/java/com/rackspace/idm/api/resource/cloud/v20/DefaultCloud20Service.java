@@ -1291,7 +1291,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     // KSADM Extension User methods
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, String marker, int limit) {
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) {
 
         try {
             checkXAUTHTOKEN(authToken);

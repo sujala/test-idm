@@ -140,26 +140,17 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, String marker, int limit) throws IOException {
-
-        Response.ResponseBuilder serviceResponse = getCloud20Service().listUsers(httpHeaders, authToken, marker, limit);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException {
+        if(isCloudAuthRoutingEnabled() && !isGASourceOfTruth()){
             // TODO: Implement routing to DefaultCloud20Service
-
             String request = getCloudAuthV20Url() + "users";
-
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("marker", marker);
             params.put("limit", limit);
             request = appendQueryParams(request, params);
-
             return cloudClient.get(request, httpHeaders);
         }
-        return serviceResponse;
+        return defaultCloud20Service.listUsers(httpHeaders, authToken, marker, limit);
     }
 
     @Override
