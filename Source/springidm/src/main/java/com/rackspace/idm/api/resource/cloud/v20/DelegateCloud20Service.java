@@ -325,23 +325,13 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders,
-                                                String authToken, String userId, String credentialType)
+    public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType)
             throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-                .deleteUserCredential(httpHeaders, authToken, userId,
-                        credentialType);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            String request = getCloudAuthV20Url() + "users/" + userId
-                    + "/OS-KSADM/credentials/" + credentialType;
+        if(isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)){
+            String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials/" + credentialType;
             return cloudClient.delete(request, httpHeaders);
         }
-        return serviceResponse;
+        return  defaultCloud20Service.deleteUserCredential(httpHeaders, authToken, userId, credentialType);
     }
 
     @Override
