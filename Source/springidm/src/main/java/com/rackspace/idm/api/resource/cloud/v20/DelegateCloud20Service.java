@@ -518,25 +518,17 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo,
-                                     String authToken, org.openstack.docs.identity.api.v2.Tenant tenant)
+    public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, org.openstack.docs.identity.api.v2.Tenant tenant)
             throws IOException, JAXBException {
 
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-                .addTenant(httpHeaders, uriInfo, authToken, tenant);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {   
 
             String request = getCloudAuthV20Url() + "tenants";
             String body = marshallObjectToString(OBJ_FACTORY
                     .createTenant(tenant));
             return cloudClient.post(request, httpHeaders, body);
         }
-        return serviceResponse;
+        return defaultCloud20Service.addTenant(httpHeaders, uriInfo, authToken, tenant);
     }
 
     @Override
