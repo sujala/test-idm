@@ -138,18 +138,18 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
 
     //This functionality is not implemented in cloud auth
     @Test
-    public void listEndpointTemplates_returns200() throws Exception {
+    public void listEndpointTemplates_returns404() throws Exception {
         String token = getAuthToken("cmarin2", "Password1");
         WebResource resource = resource().path("cloud/v2.0/OS-KSCATALOG/endpointTemplates");
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).get(ClientResponse.class);
-        assertThat("response code", clientResponse.getStatus(), equalTo(200));
+        assertThat("response code", clientResponse.getStatus(), equalTo(404));
     }
 
     //call gets forwarded to cloud and it is not implemented in cloud
     @Test
-    public void listEndpointTemplates_withMissingCredentials_returns401() throws Exception {
+    public void listEndpointTemplates_withMissingCredentials_returns404() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/OS-KSCATALOG/endpointTemplates");
         ClientResponse clientResponse = resource.get(ClientResponse.class);
-        assertThat("response code", clientResponse.getStatus(), equalTo(401));
+        assertThat("response code", clientResponse.getStatus(), equalTo(404));
     }
 }
