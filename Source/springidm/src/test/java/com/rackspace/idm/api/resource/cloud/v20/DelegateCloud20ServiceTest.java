@@ -423,7 +423,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
         delegateCloud20Service.addRole(null, null, null, null);
-        verify(cloudClient).post(eq(url + "OS-KSADM/roles"),Matchers.<HttpHeaders>any(), anyString());
+        verify(cloudClient).post(eq(url + "OS-KSADM/roles"), Matchers.<HttpHeaders>any(), anyString());
     }
 
     @Test
@@ -470,32 +470,32 @@ public class DelegateCloud20ServiceTest {
     public void deleteRole_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.deleteRole(null,null,"1");
-        verify(defaultCloud20Service).deleteRole(null,null,"1");
+        delegateCloud20Service.deleteRole(null, null, "1");
+        verify(defaultCloud20Service).deleteRole(null, null, "1");
     }
 
     @Test
     public void deleteRole_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.deleteRole(null,null,"1");
-        verify(defaultCloud20Service).deleteRole(null,null,"1");
+        delegateCloud20Service.deleteRole(null, null, "1");
+        verify(defaultCloud20Service).deleteRole(null, null, "1");
     }
 
     @Test
     public void deleteRole_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.deleteRole(null,null,"1");
-        verify(cloudClient).delete(url + "OS-KSADM/roles/1",null);
+        delegateCloud20Service.deleteRole(null, null, "1");
+        verify(cloudClient).delete(url + "OS-KSADM/roles/1", null);
     }
 
     @Test
     public void deleteRole_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.deleteRole(null,null,"1");
-        verify(defaultCloud20Service).deleteRole(null,null,"1");
+        delegateCloud20Service.deleteRole(null, null, "1");
+        verify(defaultCloud20Service).deleteRole(null, null, "1");
     }
 
     @Test
@@ -663,22 +663,6 @@ public class DelegateCloud20ServiceTest {
         when(defaultCloud20Service.updateSecretQA(null, null, null, null)).thenReturn(Response.status(404));
         delegateCloud20Service.updateSecretQA(null, null, null, null);
         verify(cloudClient).post(url + "users/null/RAX-KSQA/secretqa/", null, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns13:secretQA xsi:nil=\"true\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>");
-    }
-
-    @Test
-    public void updateUserApiKeyCredentials_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.updateUserApiKeyCredentials(null, null, null, null, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.updateUserApiKeyCredentials(null, null, null, null, null);
-        verify(cloudClient).post(url + "users/null/OS-KSADM/credentials/null", null, bodyApiCredentials);
-    }
-
-    @Test
-    public void updateUserApiKeyCredentials_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.updateUserApiKeyCredentials(null, null, null, null, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.updateUserApiKeyCredentials(null, null, null, null, null);
-        verify(cloudClient).post(url + "users/null/OS-KSADM/credentials/null", null, bodyApiCredentials);
     }
 
     @Test
@@ -1442,7 +1426,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
         delegateCloud20Service.listUsers(null,null,null,null);
-        verify(cloudClient).get(url+"users",null);
+        verify(cloudClient).get(url + "users", null);
     }
 
     @Test
@@ -1451,5 +1435,37 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
         delegateCloud20Service.listUsers(null,null,null,null);
         verify(defaultCloud20Service).listUsers(null,null,null,null);
+    }
+
+    @Test
+    public void updateUserApiKeyCredentials_RoutingFalse_UserExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.updateUserApiKeyCredentials(null,null,userId,"type",null);
+        verify(defaultCloud20Service).updateUserApiKeyCredentials(null,null,userId,"type",null);
+    }
+
+    @Test
+    public void updateUserApiKeyCredentials_RoutingFalse_UserExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.updateUserApiKeyCredentials(null,null,userId,"type",null);
+        verify(defaultCloud20Service).updateUserApiKeyCredentials(null,null,userId,"type",null);
+    }
+
+    @Test
+    public void updateUserApiKeyCredentials_RoutingTrue_UserExistsFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.updateUserApiKeyCredentials(null,null,userId,"type",null);
+        verify(cloudClient).post(eq(url + "users/" + userId + "/OS-KSADM/credentials/type"), Matchers.<HttpHeaders>any(),anyString());
+    }
+
+    @Test
+    public void updateUserApiKeyCredentials_RoutingTrue_UserExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.updateUserApiKeyCredentials(null,null,userId,"type",null);
+        verify(defaultCloud20Service).updateUserApiKeyCredentials(null,null,userId,"type",null);
     }
 }
