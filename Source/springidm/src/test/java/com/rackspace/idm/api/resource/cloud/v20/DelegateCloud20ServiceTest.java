@@ -574,22 +574,6 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void updateUserPasswordCredentials_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.updateUserPasswordCredentials(null, null, null, null, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.updateUserPasswordCredentials(null, null, null, null, null);
-        verify(cloudClient).post(url + "users/null/OS-KSADM/credentials/null", null, bodyPassword);
-    }
-
-    @Test
-    public void updateUserPasswordCredentials_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.updateUserPasswordCredentials(null, null, null, null, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.updateUserPasswordCredentials(null, null, null, null, null);
-        verify(cloudClient).post(url + "users/null/OS-KSADM/credentials/null", null, bodyPassword);
-    }
-
-    @Test
     public void updateUserApiKeyCredentials_defaultServiceReturns404_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
         when(defaultCloud20Service.updateUserApiKeyCredentials(null, null, null, null, null)).thenReturn(Response.status(404));
@@ -1366,7 +1350,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
         delegateCloud20Service.listCredentials(null,null,userId,null,null);
-        verify(cloudClient).get(url+"users/"+userId+"/OS-KSADM/credentials",null);
+        verify(cloudClient).get(url + "users/" + userId + "/OS-KSADM/credentials", null);
     }
 
     @Test
@@ -1375,5 +1359,37 @@ public class DelegateCloud20ServiceTest {
         when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.listCredentials(null,null,userId,null,null);
         verify(defaultCloud20Service).listCredentials(null,null,userId,null,null);
+    }
+
+    @Test
+    public void updateUserPasswordCredentials_RoutingFalse_UserExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.updateUserPasswordCredentials(null,null,userId,null,null);
+        verify(defaultCloud20Service).updateUserPasswordCredentials(null,null,userId,null,null);
+    }
+
+    @Test
+    public void updateUserPasswordCredentials_RoutingFalse_UserExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.updateUserPasswordCredentials(null,null,userId,null,null);
+        verify(defaultCloud20Service).updateUserPasswordCredentials(null,null,userId,null,null);
+    }
+
+    @Test
+    public void updateUserPasswordCredentials_RoutingTrue_UserExistsFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.updateUserPasswordCredentials(null,null,userId,"type",null);
+        verify(cloudClient).post(eq(url+"users/"+userId+"/OS-KSADM/credentials/type"),Matchers.<HttpHeaders>any(),anyString());
+    }
+
+    @Test
+    public void updateUserPasswordCredentials_RoutingTrue_UserExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.updateUserPasswordCredentials(null,null,userId,null,null);
+        verify(defaultCloud20Service).updateUserPasswordCredentials(null,null,userId,null,null);
     }
 }
