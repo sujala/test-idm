@@ -741,66 +741,38 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo,
-                                   String authToken, Role role) throws IOException, JAXBException {
+    public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) throws IOException, JAXBException {
 
-        Response.ResponseBuilder serviceResponse = getCloud20Service().addRole(
-                httpHeaders, uriInfo, authToken, role);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSADM/roles";
             String body = marshallObjectToString(OBJ_FACTORY.createRole(role));
             return cloudClient.post(request, httpHeaders, body);
         }
-        return serviceResponse;
+        return defaultCloud20Service.addRole(httpHeaders, uriInfo, authToken, role);
     }
 
     @Override
-    public ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken,
-                                   String roleId) throws IOException {
+    public ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken, String roleId) throws IOException {
 
-        Response.ResponseBuilder serviceResponse = getCloud20Service().getRole(
-                httpHeaders, authToken, roleId);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-
+    if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSADM/roles/" + roleId;
             return cloudClient.get(request, httpHeaders);
         }
-        return serviceResponse;
+        return defaultCloud20Service.getRole(httpHeaders, authToken, roleId);
     }
 
     @Override
-    public ResponseBuilder deleteRole(HttpHeaders httpHeaders,
-                                      String authToken, String roleId) throws IOException {
+    public ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) throws IOException {
 
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-                .deleteRole(httpHeaders, authToken, roleId);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSADM/roles/" + roleId;
             return cloudClient.delete(request, httpHeaders);
         }
-        return serviceResponse;
+        return defaultCloud20Service.deleteRole(httpHeaders, authToken, roleId);
     }
 
     @Override
-    public ResponseBuilder listServices(HttpHeaders httpHeaders,
-                                        String authToken, String marker, Integer limit) throws IOException {
+    public ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException {
 
         Response.ResponseBuilder serviceResponse = getCloud20Service().listServices(httpHeaders, authToken, marker, limit);
         // We have to clone the ResponseBuilder from above because once we build

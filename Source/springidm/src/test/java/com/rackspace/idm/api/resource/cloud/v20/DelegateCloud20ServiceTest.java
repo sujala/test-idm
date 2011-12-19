@@ -403,6 +403,102 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    public void addRole_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.addRole(null, null, null, null);
+        verify(defaultCloud20Service).addRole(null, null, null, null);
+    }
+
+    @Test
+    public void addRole_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.addRole(null, null, null, null);
+        verify(defaultCloud20Service).addRole(null, null, null, null);
+    }
+
+    @Test
+    public void addRole_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.addRole(null, null, null, null);
+        verify(cloudClient).post(eq(url + "OS-KSADM/roles"),Matchers.<HttpHeaders>any(), anyString());
+    }
+
+    @Test
+    public void addRole_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.addRole(null, null, null, null);
+        verify(defaultCloud20Service).addRole(null, null, null, null);
+    }
+
+    @Test
+    public void getRole_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getRole(null, null, null);
+        verify(defaultCloud20Service).getRole(null, null, null);
+    }
+
+    @Test
+    public void getRole_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getRole(null, null, null);
+        verify(defaultCloud20Service).getRole(null, null, null);
+    }
+
+    @Test
+    public void getRole_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getRole(null, null, "1");
+        verify(cloudClient).get(url + "OS-KSADM/roles/1",null);
+    }
+
+    @Test
+    public void getRole_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getRole(null, null, null);
+        verify(defaultCloud20Service).getRole(null, null, null);
+    }
+
+    @Test
+    public void deleteRole_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteRole(null,null,"1");
+        verify(defaultCloud20Service).deleteRole(null,null,"1");
+    }
+
+    @Test
+    public void deleteRole_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteRole(null,null,"1");
+        verify(defaultCloud20Service).deleteRole(null,null,"1");
+    }
+
+    @Test
+    public void deleteRole_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteRole(null,null,"1");
+        verify(cloudClient).delete(url + "OS-KSADM/roles/1",null);
+    }
+
+    @Test
+    public void deleteRole_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteRole(null,null,"1");
+        verify(defaultCloud20Service).deleteRole(null,null,"1");
+    }
+
+    @Test
     public void listTenants_useCloudAuthIsTrue_callsCloudClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
         delegateCloud20Service.listTenants(null, "token", null, null);
@@ -910,54 +1006,6 @@ public class DelegateCloud20ServiceTest {
         when(defaultCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId)).thenReturn(Response.status(404));
         delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
         verify(cloudClient).delete(url + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId, null);
-    }
-
-    @Test
-    public void addRole_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.addRole(null, null, null, role)).thenReturn(Response.status(401));
-        delegateCloud20Service.addRole(null, null, null, role);
-        verify(cloudClient).post(url + "OS-KSADM/roles", null, bodyRole);
-    }
-
-    @Test
-    public void addRole_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.addRole(null, null, null, role)).thenReturn(Response.status(404));
-        delegateCloud20Service.addRole(null, null, null, role);
-        verify(cloudClient).post(url + "OS-KSADM/roles", null, bodyRole);
-    }
-
-    @Test
-    public void getRole_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.getRole(null, null, roleId)).thenReturn(Response.status(401));
-        delegateCloud20Service.getRole(null, null, roleId);
-        verify(cloudClient).get(url + "OS-KSADM/roles/" + roleId, null);
-    }
-
-    @Test
-    public void getRole_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.getRole(null, null, roleId)).thenReturn(Response.status(404));
-        delegateCloud20Service.getRole(null, null, roleId);
-        verify(cloudClient).get(url + "OS-KSADM/roles/" + roleId, null);
-    }
-
-    @Test
-    public void deleteRole_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteRole(null, null, roleId)).thenReturn(Response.status(401));
-        delegateCloud20Service.deleteRole(null, null, roleId);
-        verify(cloudClient).delete(url + "OS-KSADM/roles/" + roleId, null);
-    }
-
-    @Test
-    public void deleteRole_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteRole(null, null, roleId)).thenReturn(Response.status(404));
-        delegateCloud20Service.deleteRole(null, null, roleId);
-        verify(cloudClient).delete(url + "OS-KSADM/roles/" + roleId, null);
     }
 
     @Test
