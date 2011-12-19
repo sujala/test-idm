@@ -189,20 +189,14 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) throws IOException {
-
-        Response.ResponseBuilder serviceResponse = getCloud20Service().getUserByName(httpHeaders, authToken, name);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if(isCloudAuthRoutingEnabled() && !userService.userExistsByUsername(name)){
             String request = getCloudAuthV20Url() + "users";
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("name", name);
             request = appendQueryParams(request, params);
             return cloudClient.get(request, httpHeaders);
         }
-        return serviceResponse;
+        return defaultCloud20Service.getUserByName(httpHeaders, authToken, name);
     }
 
     @Override
