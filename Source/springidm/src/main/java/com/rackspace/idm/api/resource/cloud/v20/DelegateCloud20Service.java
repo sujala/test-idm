@@ -963,25 +963,14 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
-                                               UriInfo uriInfo, String authToken, EndpointTemplate endpoint)
+    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, EndpointTemplate endpoint)
             throws IOException, JAXBException {
-
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-                .addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            String request = getCloudAuthV20Url()
-                    + "OS-KSCATALOG/endpointTemplates";
-            String body = marshallObjectToString(OBJ_FACTORY_OS_CATALOG
-                    .createEndpointTemplate(endpoint));
+        if(isCloudAuthRoutingEnabled() && !isGASourceOfTruth()){
+            String request = getCloudAuthV20Url() + "OS-KSCATALOG/endpointTemplates";
+            String body = marshallObjectToString(OBJ_FACTORY_OS_CATALOG.createEndpointTemplate(endpoint));
             return cloudClient.post(request, httpHeaders, body);
         }
-        return serviceResponse;
+        return defaultCloud20Service.addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint);
     }
 
     @Override
