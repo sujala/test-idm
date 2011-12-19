@@ -109,31 +109,22 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders,
                                                  String authToken, String tokenId) throws IOException {
-
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-                .listEndpointsForToken(httpHeaders, authToken, tokenId);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "tokens/" + tokenId
                     + "/endpoints";
             return cloudClient.get(request, httpHeaders);
         }
-        return serviceResponse;
+        return defaultCloud20Service.listEndpointsForToken(httpHeaders, authToken, tokenId);
 
     }
 
     @Override
     public ResponseBuilder listExtensions(HttpHeaders httpHeaders) throws IOException {
-        if (config.getBoolean("useCloudAuth")) {
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "extensions";
             return cloudClient.get(request, httpHeaders);
         }
-        Response.ResponseBuilder serviceResponse = getCloud20Service().listExtensions(httpHeaders);
-        return serviceResponse;
+        return defaultCloud20Service.listExtensions(httpHeaders);
     }
 
     @Override
