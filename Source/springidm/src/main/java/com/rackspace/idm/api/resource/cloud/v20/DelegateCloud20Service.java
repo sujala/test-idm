@@ -166,18 +166,16 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId)
-            throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud20Service().listUserGroups(httpHeaders, authToken, userId);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+        if(isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)){
             String request = getCloudAuthV20Url() + "users/" + userId + "/RAX-KSGRP";
             return cloudClient.get(request, httpHeaders);
         }
-        return serviceResponse;
+        return defaultCloud20Service.listUserGroups(httpHeaders, authToken, userId);
+    }
+
+    boolean isUserInGAbyId(String userId) {
+        return userService.userExistsById(userId);
     }
 
     @Override
@@ -200,7 +198,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
-        if(isCloudAuthRoutingEnabled() && !userService.userExistsById(userId)){
+        if(isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)){
             String request = getCloudAuthV20Url() + "users/" + userId;
             return cloudClient.get(request, httpHeaders);
         }
@@ -954,41 +952,27 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders,
-                                               UriInfo uriInfo, String authToken, EndpointTemplate endpoint)
+    public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, EndpointTemplate endpoint)
             throws IOException, JAXBException {
-
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-                .addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            String request = getCloudAuthV20Url()
-                    + "OS-KSCATALOG/endpointTemplates";
-            String body = marshallObjectToString(OBJ_FACTORY_OS_CATALOG
-                    .createEndpointTemplate(endpoint));
+        if(isCloudAuthRoutingEnabled() && !isGASourceOfTruth()){
+            String request = getCloudAuthV20Url() + "OS-KSCATALOG/endpointTemplates";
+            String body = marshallObjectToString(OBJ_FACTORY_OS_CATALOG.createEndpointTemplate(endpoint));
             return cloudClient.post(request, httpHeaders, body);
         }
-        return serviceResponse;
+        return defaultCloud20Service.addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint);
     }
 
     @Override
-    public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
-                                               String authToken, String endpointTemplateId) throws IOException {
+    public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,String authToken, String endpointTemplateId) throws IOException {
 
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-                .getEndpointTemplate(httpHeaders, authToken, endpointTemplateId);
+        Response.ResponseBuilder serviceResponse = getCloud20Service().getEndpointTemplate(httpHeaders, authToken, endpointTemplateId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
         Response.ResponseBuilder clonedServiceResponse = serviceResponse
                 .clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            String request = getCloudAuthV20Url()
-                    + "OS-KSCATALOG/endpointTemplates/" + endpointTemplateId;
+            String request = getCloudAuthV20Url()  + "OS-KSCATALOG/endpointTemplates/" + endpointTemplateId;
             return cloudClient.get(request, httpHeaders);
         }
         return serviceResponse;
