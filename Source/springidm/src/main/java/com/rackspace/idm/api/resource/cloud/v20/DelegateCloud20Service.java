@@ -249,23 +249,15 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders,
-                                             String authToken, String userId, String body) throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-                .addUserCredential(httpHeaders, authToken, userId, body);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body) throws IOException {
+        if(isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)){
             if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
                 body = convertCredentialToXML(body);
             }
             String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials";
             return cloudClient.post(request, httpHeaders, body);
         }
-        return serviceResponse;
+        return defaultCloud20Service.addUserCredential(httpHeaders,authToken,userId,body);
     }
 
     private String convertCredentialToXML(String body) {
