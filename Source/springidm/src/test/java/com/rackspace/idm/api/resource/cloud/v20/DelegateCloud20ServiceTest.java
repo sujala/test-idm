@@ -574,22 +574,6 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void listCredentials_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listCredentials(null, null, null, null, 0)).thenReturn(Response.status(404));
-        delegateCloud20Service.listCredentials(null, null, null, null, 0);
-        verify(cloudClient).get(url + "users/null/OS-KSADM/credentials?limit=0", null);
-    }
-
-    @Test
-    public void listCredentials_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listCredentials(null, null, null, null, 0)).thenReturn(Response.status(401));
-        delegateCloud20Service.listCredentials(null, null, null, null, 0);
-        verify(cloudClient).get(url + "users/null/OS-KSADM/credentials?limit=0", null);
-    }
-
-    @Test
     public void updateUserPasswordCredentials_defaultServiceReturns404_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
         when(defaultCloud20Service.updateUserPasswordCredentials(null, null, null, null, null)).thenReturn(Response.status(404));
@@ -1358,5 +1342,38 @@ public class DelegateCloud20ServiceTest {
         when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.addUserCredential(null,null,userId,null);
         verify(defaultCloud20Service).addUserCredential(null,null,userId,null);
+    }
+
+
+    @Test
+    public void listCredentials_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.listCredentials(null,null,userId,null,null);
+        verify(defaultCloud20Service).listCredentials(null,null,userId,null,null);
+    }
+
+    @Test
+    public void listCredentials_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.listCredentials(null,null,userId,null,null);
+        verify(defaultCloud20Service).listCredentials(null,null,userId,null,null);
+    }
+
+    @Test
+    public void listCredentials_RoutingTrue_userExistsFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.listCredentials(null,null,userId,null,null);
+        verify(cloudClient).get(url+"users/"+userId+"/OS-KSADM/credentials",null);
+    }
+
+    @Test
+    public void listCredentials_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.listCredentials(null,null,userId,null,null);
+        verify(defaultCloud20Service).listCredentials(null,null,userId,null,null);
     }
 }
