@@ -1197,4 +1197,36 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.addEndpointTemplate(null, null, null, null);
         verify(defaultCloud20Service).addEndpointTemplate(null, null, null, null);
     }
+
+    @Test
+    public void listUserGroups_RoutingFalse_UserExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.listUserGroups(null,null,userId);
+        verify(defaultCloud20Service).listUserGroups(null,null,userId);
+    }
+
+    @Test
+    public void listUserGroups_RoutingFalse_UserExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.listUserGroups(null,null,userId);
+        verify(defaultCloud20Service).listUserGroups(null,null,userId);
+    }
+
+    @Test
+    public void listUserGroups_RoutingTrue_UserExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.listUserGroups(null,null,userId);
+        verify(cloudClient).get(url+"users/"+userId+"/RAX-KSGRP",null);
+    }
+
+    @Test
+    public void listUserGroups_RoutingTrue_UserExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.listUserGroups(null,null,userId);
+        verify(defaultCloud20Service).listUserGroups(null,null,userId);
+    }
 }
