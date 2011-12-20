@@ -356,23 +356,14 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder updateUser(HttpHeaders httpHeaders,
-                                      String authToken, String userId, User user) throws IOException,
-            JAXBException {
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-                .updateUser(httpHeaders, authToken, userId, user);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-
+    public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, User user)
+            throws IOException, JAXBException {
+        if(isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)){
             String request = getCloudAuthV20Url() + "users/" + userId;
             String body = marshallObjectToString(OBJ_FACTORY.createUser(user));
             return cloudClient.post(request, httpHeaders, body);
         }
-        return serviceResponse;
+        return defaultCloud20Service.updateUser(httpHeaders, authToken, userId, user);
     }
 
     @Override
