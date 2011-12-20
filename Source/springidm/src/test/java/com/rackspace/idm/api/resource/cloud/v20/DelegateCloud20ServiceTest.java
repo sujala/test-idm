@@ -1043,6 +1043,38 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    public void addEndpoint_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.addEndpoint(null, null, "1", null);
+        verify(defaultCloud20Service).addEndpoint(null, null, "1", null);
+    }
+
+    @Test
+    public void addEndpoint_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.addEndpoint(null, null, "1", null);
+        verify(defaultCloud20Service).addEndpoint(null, null, "1", null);
+    }
+
+    @Test
+    public void addEndpoint_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.addEndpoint(null, null, "1", null);
+        verify(cloudClient).post(eq(url + "tenants/1/OS-KSCATALOG/endpoints"), Matchers.<HttpHeaders>any(), Matchers.anyString());
+    }
+
+    @Test
+    public void addEndpoint_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.addEndpoint(null, null, "1", null);
+        verify(defaultCloud20Service).addEndpoint(null, null, "1", null);
+    }
+
+    @Test
     public void listTenants_useCloudAuthIsTrue_callsCloudClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
         delegateCloud20Service.listTenants(null, "token", null, null);

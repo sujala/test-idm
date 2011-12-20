@@ -752,12 +752,12 @@ public class DelegateCloud20Service implements Cloud20Service {
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId, EndpointTemplate endpoint)
             throws IOException, JAXBException {
 
-        if (config.getBoolean("useCloudAuth")) {
+        if(isCloudAuthRoutingEnabled() && !isGASourceOfTruth()){
             String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/OS-KSCATALOG/endpoints";
             String body = marshallObjectToString(OBJ_FACTORY_OS_CATALOG.createEndpointTemplate(endpoint));
             return cloudClient.post(request, httpHeaders, body);
         }
-        return getCloud20Service().addEndpoint(httpHeaders, authToken, tenantId, endpoint);
+        return defaultCloud20Service.addEndpoint(httpHeaders, authToken, tenantId, endpoint);
     }
 
     @Override
