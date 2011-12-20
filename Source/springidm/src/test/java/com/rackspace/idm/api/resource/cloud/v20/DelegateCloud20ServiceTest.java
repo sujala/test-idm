@@ -691,6 +691,134 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    public void listServices_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listServices(null, null, null, null);
+        verify(defaultCloud20Service).listServices(null, null, null, null);
+    }
+
+    @Test
+    public void listServices_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listServices(null, null, null, null);
+        verify(defaultCloud20Service).listServices(null, null, null, null);
+    }
+
+    @Test
+    public void listServices_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listServices(null, null, null, null);
+        verify(cloudClient).get(url + "OS-KSADM/services", null);
+    }
+
+    @Test
+    public void listServices_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listServices(null, null, null, null);
+        verify(defaultCloud20Service).listServices(null, null, null, null);
+    }
+
+    @Test
+    public void addService_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.addService(null, null, null, null);
+        verify(defaultCloud20Service).addService(null, null, null, null);
+    }
+
+    @Test
+    public void addService_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.addService(null, null, null, null);
+        verify(defaultCloud20Service).addService(null, null, null, null);
+    }
+
+    @Test
+    public void addService_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.addService(null, null, null, null);
+        verify(cloudClient).post(eq(url + "OS-KSADM/services"), Matchers.<HttpHeaders>any(), Matchers.anyString());
+    }
+
+    @Test
+    public void addService_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.addService(null, null, null, null);
+        verify(defaultCloud20Service).addService(null, null, null, null);
+    }
+
+    @Test
+    public void getService_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getService(null, null, "1");
+        verify(defaultCloud20Service).getService(null, null, "1");
+    }
+
+    @Test
+    public void getService_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getService(null, null, "1");
+        verify(defaultCloud20Service).getService(null, null, "1");
+    }
+
+    @Test
+    public void getService_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getService(null, null, "1");
+        verify(cloudClient).get(url + "OS-KSADM/services/1", null);
+    }
+
+    @Test
+    public void getService_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getService(null, null, "1");
+        verify(defaultCloud20Service).getService(null, null, "1");
+    }
+
+    @Test
+    public void deleteService_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteService(null, null, "1");
+        verify(defaultCloud20Service).deleteService(null, null, "1");
+    }
+
+    @Test
+    public void deleteService_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteService(null, null, "1");
+        verify(defaultCloud20Service).deleteService(null, null, "1");;
+    }
+
+    @Test
+    public void deleteService_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteService(null, null, "1");
+        verify(cloudClient).delete(url + "OS-KSADM/services/1", null);
+    }
+
+    @Test
+    public void deleteService_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteService(null, null, "1");
+        verify(defaultCloud20Service).deleteService(null, null, "1");
+    }
+
+    @Test
     public void listTenants_useCloudAuthIsTrue_callsCloudClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
         delegateCloud20Service.listTenants(null, "token", null, null);
@@ -988,73 +1116,6 @@ public class DelegateCloud20ServiceTest {
         when(defaultCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId)).thenReturn(Response.status(404));
         delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
         verify(cloudClient).delete(url + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId, null);
-    }
-
-    @Test
-    public void listServices_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listServices(null, null, null, 0)).thenReturn(Response.status(401));
-        delegateCloud20Service.listServices(null, null, null, 0);
-        verify(cloudClient).get(url + "OS-KSADM/services?limit=0", null);
-    }
-
-    @Test
-    public void listServices_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listServices(null, null, null, 0)).thenReturn(Response.status(404));
-        delegateCloud20Service.listServices(null, null, null, 0);
-        verify(cloudClient).get(url + "OS-KSADM/services?limit=0", null);
-    }
-
-    @Test
-    public void addService_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        service = new Service();
-        when(defaultCloud20Service.addService(null, null, null, service)).thenReturn(Response.status(401));
-        delegateCloud20Service.addService(null, null, null, service);
-        verify(cloudClient).post(url + "OS-KSADM/services", null, bodyService);
-    }
-
-    @Test
-    public void addService_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.addService(null, null, null, service)).thenReturn(Response.status(404));
-        delegateCloud20Service.addService(null, null, null, service);
-        verify(cloudClient).post(url + "OS-KSADM/services", null, bodyService);
-    }
-
-    @Test
-    public void getService_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        service = new Service();
-        when(defaultCloud20Service.getService(null, null, serviceId)).thenReturn(Response.status(401));
-        delegateCloud20Service.getService(null, null, serviceId);
-        verify(cloudClient).get(url + "OS-KSADM/services/" + serviceId, null);
-    }
-
-    @Test
-    public void getService_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.getService(null, null, serviceId)).thenReturn(Response.status(404));
-        delegateCloud20Service.getService(null, null, serviceId);
-        verify(cloudClient).get(url + "OS-KSADM/services/" + serviceId, null);
-    }
-
-    @Test
-    public void deleteService_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        service = new Service();
-        when(defaultCloud20Service.deleteService(null, null, serviceId)).thenReturn(Response.status(401));
-        delegateCloud20Service.deleteService(null, null, serviceId);
-        verify(cloudClient).delete(url + "OS-KSADM/services/" + serviceId, null);
-    }
-
-    @Test
-    public void deleteService_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteService(null, null, serviceId)).thenReturn(Response.status(404));
-        delegateCloud20Service.deleteService(null, null, serviceId);
-        verify(cloudClient).delete(url + "OS-KSADM/services/" + serviceId, null);
     }
 
     @Test
