@@ -819,6 +819,230 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    public void getEndpointTemplate_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getEndpointTemplate(null, null, "1");
+        verify(defaultCloud20Service).getEndpointTemplate(null, null, "1");
+    }
+
+    @Test
+    public void getEndpointTemplate_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getEndpointTemplate(null, null, "1");
+        verify(defaultCloud20Service).getEndpointTemplate(null, null, "1");
+    }
+
+    @Test
+    public void getEndpointTemplate_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getEndpointTemplate(null, null, "1");
+        verify(cloudClient).get(url + "OS-KSCATALOG/endpointTemplates/1", null);
+    }
+
+    @Test
+    public void getEndpointTemplate_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getEndpointTemplate(null, null, "1");
+        verify(defaultCloud20Service).getEndpointTemplate(null, null, "1");
+    }
+
+    @Test
+    public void deleteEndpointTemplate_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteEndpointTemplate(null, null, "1");
+        verify(defaultCloud20Service).deleteEndpointTemplate(null, null, "1");
+    }
+
+    @Test
+    public void deleteEndpointTemplate_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteEndpointTemplate(null, null, "1");
+        verify(defaultCloud20Service).deleteEndpointTemplate(null, null, "1");
+    }
+
+    @Test
+    public void deleteEndpointTemplate_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteEndpointTemplate(null, null, "1");
+        verify(cloudClient).delete(url + "OS-KSCATALOG/endpointTemplates/1", null);
+    }
+
+    @Test
+    public void deleteEndpointTemplate_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteEndpointTemplate(null, null, "1");
+        verify(defaultCloud20Service).deleteEndpointTemplate(null, null, "1");
+    }
+
+    @Test
+    public void listEndpoints_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listEndpoints(null, null , "1");
+        verify(defaultCloud20Service).listEndpoints(null, null, "1");
+    }
+
+    @Test
+    public void listEndpoints_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listEndpoints(null, null, "1");
+        verify(defaultCloud20Service).listEndpoints(null, null, "1");
+    }
+
+    @Test
+    public void listEndpoints_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listEndpoints(null, null, "1");
+        verify(cloudClient).get(url + "tenants/1/OS-KSCATALOG/endpoints", null);
+    }
+
+    @Test
+    public void listEndpoints_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listEndpoints(null, null, "1");
+        verify(defaultCloud20Service).listEndpoints(null, null, "1");
+    }
+
+    @Test
+    public void checkToken_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.checkToken(null, null , "1", null);
+        verify(defaultCloud20Service).checkToken(null, null , "1", null);
+    }
+
+    @Test
+    public void checkToken_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.checkToken(null, null , "1", null);
+        verify(defaultCloud20Service).checkToken(null, null , "1", null);
+    }
+
+    @Test
+    public void checkToken_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.checkToken(null, null , "1", null);
+        verify(cloudClient).get(url + "tokens/1", null);
+    }
+
+    @Test
+    public void checkToken_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.checkToken(null, null, "1", null);
+        verify(defaultCloud20Service).checkToken(null, null, "1", null);
+    }
+
+    @Test
+    public void getExtension_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getExtension(null, null);
+        verify(defaultCloud20Service).getExtension(null, null);
+    }
+
+    @Test
+    public void getExtension_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getExtension(null, null);
+        verify(defaultCloud20Service).getExtension(null, null);
+    }
+
+    @Test
+    public void getExtension_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getExtension(null, "RAX-KSKEY");
+        verify(cloudClient).get(url + "extensions/RAX-KSKEY", null);
+    }
+
+    @Test
+    public void getExtension_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getExtension(null, null);
+        verify(defaultCloud20Service).getExtension(null, null);
+    }
+
+    @Test
+    public void getEndpoint_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getEndpoint(null, null, "1", "2");
+        verify(defaultCloud20Service).getEndpoint(null, null, "1", "2");
+    }
+
+    @Test
+    public void getEndpoint_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getEndpoint(null, null, "1", "2");
+        verify(defaultCloud20Service).getEndpoint(null, null, "1", "2");
+    }
+
+    @Test
+    public void getEndpoint_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getEndpoint(null, null, "1", "2");
+        verify(cloudClient).get(url + "tenants/2/OS-KSCATALOG/endpoints/1", null);
+    }
+
+    @Test
+    public void getEndpoint_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getEndpoint(null, null, "1", "2");
+        verify(defaultCloud20Service).getEndpoint(null, null, "1", "2");
+    }
+
+    @Test
+    public void deleteEndpoint_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteEndpoint(null, null, "1", "2");
+        verify(defaultCloud20Service).deleteEndpoint(null, null, "1", "2");
+    }
+
+    @Test
+    public void deleteEndpoint_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteEndpoint(null, null, "1", "2");
+        verify(defaultCloud20Service).deleteEndpoint(null, null, "1", "2");
+    }
+
+    @Test
+    public void deleteEndpoint_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteEndpoint(null, null, "1", "2");
+        verify(cloudClient).delete(url + "tenants/2/OS-KSCATALOG/endpoints/1", null);
+    }
+
+    @Test
+    public void deleteEndpoint_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteEndpoint(null, null, "1", "2");
+        verify(defaultCloud20Service).deleteEndpoint(null, null, "1", "2");
+    }
+
+    @Test
     public void listTenants_useCloudAuthIsTrue_callsCloudClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
         delegateCloud20Service.listTenants(null, "token", null, null);
@@ -839,118 +1063,6 @@ public class DelegateCloud20ServiceTest {
         when(defaultCloud20Service.listTenants(null, "token", null, null)).thenReturn(Response.ok());
         Response.ResponseBuilder responseBuilder = delegateCloud20Service.listTenants(null, "token", null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void checkTokenToken_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.checkToken(null, null, null, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.checkToken(null, null, null, null);
-        verify(cloudClient).get(url + "tokens/" + null, null);
-    }
-
-    @Test
-    public void checkToken_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.checkToken(null, null, null, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.checkToken(null, null, null, null);
-        verify(cloudClient).get(url + "tokens/" + null, null);
-    }
-
-    @Test
-    public void getExtension_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.getExtension(null, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.getExtension(null, null);
-        verify(cloudClient).get(url + "extensions/" + null, null);
-    }
-
-    @Test
-    public void getExtension_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.getExtension(null, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.getExtension(null, null);
-        verify(cloudClient).get(url + "extensions/" + null, null);
-    }
-
-    @Test
-    public void getEndpointTemplate_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.getEndpointTemplate(null, null, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.getEndpointTemplate(null, null, null);
-        verify(cloudClient).get(url + "OS-KSCATALOG/endpointTemplates/null", null);
-    }
-
-    @Test
-    public void getEndpointTemplate_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.getEndpointTemplate(null, null, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.getEndpointTemplate(null, null, null);
-        verify(cloudClient).get(url + "OS-KSCATALOG/endpointTemplates/null", null);
-    }
-
-    @Test
-    public void deleteEndpointTemplate_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteEndpointTemplate(null, null, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.deleteEndpointTemplate(null, null, null);
-        verify(cloudClient).delete(url + "OS-KSCATALOG/endpointTemplates/null", null);
-    }
-
-    @Test
-    public void deleteEndpointTemplate_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteEndpointTemplate(null, null, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.deleteEndpointTemplate(null, null, null);
-        verify(cloudClient).delete(url + "OS-KSCATALOG/endpointTemplates/null", null);
-    }
-
-    @Test
-    public void listEndpoints_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listEndpoints(null, null, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.listEndpoints(null, null, null);
-        verify(cloudClient).get(url + "tenants/null/" + "OS-KSCATALOG/endpoints", null);
-    }
-
-    @Test
-    public void listEndpoints_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listEndpoints(null, null, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.listEndpoints(null, null, null);
-        verify(cloudClient).get(url + "tenants/null/" + "OS-KSCATALOG/endpoints", null);
-    }
-
-    @Test
-    public void getEndpoint_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.getEndpoint(null, null, null, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.getEndpoint(null, null, null, null);
-        verify(cloudClient).get(url + "tenants/null/" + "OS-KSCATALOG/endpoints/null", null);
-    }
-
-    @Test
-    public void getEndpoint_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.getEndpoint(null, null, null, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.getEndpoint(null, null, null, null);
-        verify(cloudClient).get(url + "tenants/null/" + "OS-KSCATALOG/endpoints/null", null);
-    }
-
-    @Test
-    public void deleteEndpoint_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteEndpoint(null, null, null, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.deleteEndpoint(null, null, null, null);
-        verify(cloudClient).delete(url + "tenants/null/" + "OS-KSCATALOG/endpoints/null", null);
-    }
-
-    @Test
-    public void deleteEndpoint_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteEndpoint(null, null, null, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.deleteEndpoint(null, null, null, null);
-        verify(cloudClient).delete(url + "tenants/null/" + "OS-KSCATALOG/endpoints/null", null);
     }
 
     @Test
