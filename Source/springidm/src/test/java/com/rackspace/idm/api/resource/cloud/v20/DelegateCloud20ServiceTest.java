@@ -666,22 +666,6 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void listRolesForUserOnTenant_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listRolesForUserOnTenant(null, null, null, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.listRolesForUserOnTenant(null, null, null, null);
-        verify(cloudClient).get(url + "tenants/null/users/null/roles", null);
-    }
-
-    @Test
-    public void listRolesForUserOnTenant_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listRolesForUserOnTenant(null, null, null, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.listRolesForUserOnTenant(null, null, null, null);
-        verify(cloudClient).get(url + "tenants/null/users/null/roles", null);
-    }
-
-    @Test
     public void addUser_defaultServiceReturns401_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
         when(defaultCloud20Service.addUser(null, null, null, null)).thenReturn(Response.status(401));
@@ -1458,7 +1442,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
         delegateCloud20Service.getUserCredential(null,null,userId,"type");
-        verify(cloudClient).get(url+"users/"+userId+"/OS-KSADM/credentials/type",null);
+        verify(cloudClient).get(url + "users/" + userId + "/OS-KSADM/credentials/type", null);
     }
 
     @Test
@@ -1473,31 +1457,63 @@ public class DelegateCloud20ServiceTest {
     public void deleteUserCredential_RoutingFalse_UserExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsById(userId)).thenReturn(false);
-        delegateCloud20Service.deleteUserCredential(null,null,userId,"type");
-        verify(defaultCloud20Service).deleteUserCredential(null,null,userId,"type");
+        delegateCloud20Service.deleteUserCredential(null, null, userId, "type");
+        verify(defaultCloud20Service).deleteUserCredential(null, null, userId, "type");
     }
 
     @Test
     public void deleteUserCredential_RoutingFalse_UserExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsById(userId)).thenReturn(true);
-        delegateCloud20Service.deleteUserCredential(null,null,userId,"type");
-        verify(defaultCloud20Service).deleteUserCredential(null,null,userId,"type");
+        delegateCloud20Service.deleteUserCredential(null, null, userId, "type");
+        verify(defaultCloud20Service).deleteUserCredential(null, null, userId, "type");
     }
 
     @Test
     public void deleteUserCredential_RoutingTrue_UserExistsFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
-        delegateCloud20Service.deleteUserCredential(null,null,userId,"type");
-        verify(cloudClient).delete(url+"users/"+userId+"/OS-KSADM/credentials/type",null);
+        delegateCloud20Service.deleteUserCredential(null, null, userId, "type");
+        verify(cloudClient).delete(url + "users/" + userId + "/OS-KSADM/credentials/type", null);
     }
 
     @Test
     public void deleteUserCredential_RoutingTrue_UserExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(true);
-        delegateCloud20Service.deleteUserCredential(null,null,userId,"type");
-        verify(defaultCloud20Service).deleteUserCredential(null,null,userId,"type");
+        delegateCloud20Service.deleteUserCredential(null, null, userId, "type");
+        verify(defaultCloud20Service).deleteUserCredential(null, null, userId, "type");
+    }
+
+    @Test
+    public void listRolesForUserOnTenant_RoutingFalse_UserExistsFalse_callDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.listRolesForUserOnTenant(null,null,tenantId,userId);
+        verify(defaultCloud20Service).listRolesForUserOnTenant(null,null,tenantId,userId);
+    }
+
+    @Test
+    public void listRolesForUserOnTenant_RoutingFalse_UserExistsTrue_callDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.listRolesForUserOnTenant(null,null,tenantId,userId);
+        verify(defaultCloud20Service).listRolesForUserOnTenant(null,null,tenantId,userId);
+    }
+
+    @Test
+    public void listRolesForUserOnTenant_RoutingTrue_UserExistsFalse_callClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.listRolesForUserOnTenant(null,null,tenantId,userId);
+        verify(cloudClient).get(url+"tenants/"+tenantId+"/users/"+userId+"/roles",null);
+    }
+
+    @Test
+    public void listRolesForUserOnTenant_RoutingTrue_UserExistsTrue_callDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.listRolesForUserOnTenant(null,null,tenantId,userId);
+        verify(defaultCloud20Service).listRolesForUserOnTenant(null,null,tenantId,userId);
     }
 }

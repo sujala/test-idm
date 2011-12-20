@@ -335,21 +335,13 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders,
-                                                    String authToken, String tenantId, String userId) throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-                .listRolesForUserOnTenant(httpHeaders, authToken, tenantId, userId);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            String request = getCloudAuthV20Url() + "tenants/" + tenantId
-                    + "/users/" + userId + "/roles";
+    public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId,
+                                                    String userId) throws IOException {
+        if(isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)){
+            String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users/" + userId + "/roles";
             return cloudClient.get(request, httpHeaders);
         }
-        return serviceResponse;
+        return defaultCloud20Service.listRolesForUserOnTenant(httpHeaders, authToken, tenantId, userId);
     }
 
     @Override
