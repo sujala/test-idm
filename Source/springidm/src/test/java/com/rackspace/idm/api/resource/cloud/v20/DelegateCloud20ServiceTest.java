@@ -496,8 +496,6 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
         delegateCloud20Service.deleteRole(null, null, "1");
         verify(defaultCloud20Service).deleteRole(null, null, "1");
-<<<<<<< Updated upstream
-=======
     }
 
     @Test
@@ -530,7 +528,6 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
         delegateCloud20Service.addTenant(null, null, null, null);
         verify(defaultCloud20Service).addTenant(null, null, null, null);
->>>>>>> Stashed changes
     }
 
     @Test
