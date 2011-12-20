@@ -531,6 +531,166 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    public void updateTenant_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.updateTenant(null, null, "1", null);
+        verify(defaultCloud20Service).updateTenant(null, null, "1", null);
+    }
+
+    @Test
+    public void updateTenant_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.updateTenant(null, null, "1", null);
+        verify(defaultCloud20Service).updateTenant(null, null, "1", null);
+    }
+
+    @Test
+    public void updateTenant_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.updateTenant(null, null, "1", null);
+        verify(cloudClient).post(eq(url + "tenants/1"),Matchers.<HttpHeaders>any(), anyString());
+    }
+
+    @Test
+    public void updateTenant_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.updateTenant(null, null, "1", null);
+        verify(defaultCloud20Service).updateTenant(null, null, "1", null);
+    }
+
+    @Test
+    public void listUsersForTenant_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listUsersForTenant(null, null, null, null, null);
+        verify(defaultCloud20Service).listUsersForTenant(null, null, null, null, null);
+    }
+
+    @Test
+    public void listUsersForTenant_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listUsersForTenant(null, null, null, null, null);
+        verify(defaultCloud20Service).listUsersForTenant(null, null, null, null, null);
+    }
+
+    @Test
+    public void listUsersForTenant_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listUsersForTenant(null, null, "1", null, null);
+        verify(cloudClient).get(url + "tenants/1/users", null);
+    }
+
+    @Test
+    public void listUsersForTenant_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listUsersForTenant(null, null, null, null, null);
+        verify(defaultCloud20Service).listUsersForTenant(null, null, null, null, null);
+    }
+
+    @Test
+    public void listUsersWithRoleForTenant_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listUsersWithRoleForTenant(null, null, "1", "2", null, null);
+        verify(defaultCloud20Service).listUsersWithRoleForTenant(null, null, "1", "2", null, null);
+    }
+
+    @Test
+    public void listUsersWithRoleForTenant_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listUsersWithRoleForTenant(null, null, "1", "2", null, null);
+        verify(defaultCloud20Service).listUsersWithRoleForTenant(null, null, "1", "2", null, null);
+    }
+
+    @Test
+    public void listUsersWithRoleForTenant_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listUsersWithRoleForTenant(null, null, "1", "2", null, null);
+        verify(cloudClient).get(url + "tenants/1/users?roleId=2", null);
+    }
+
+    @Test
+    public void listUsersWithRoleForTenant_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listUsersWithRoleForTenant(null, null, "1", "2", null, null);
+        verify(defaultCloud20Service).listUsersWithRoleForTenant(null, null, "1", "2", null, null);
+    }
+
+    @Test
+    public void deleteTenant_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteTenant(null, null, "1");
+        verify(defaultCloud20Service).deleteTenant(null, null, "1");
+    }
+
+    @Test
+    public void deleteTenant_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteTenant(null, null, "1");
+        verify(defaultCloud20Service).deleteTenant(null, null, "1");
+    }
+
+    @Test
+    public void deleteTenant_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteTenant(null, null, "1");
+        verify(cloudClient).delete(url + "tenants/1", null);
+    }
+
+    @Test
+    public void deleteTenant_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteTenant(null, null, "1");
+        verify(defaultCloud20Service).deleteTenant(null, null, "1");
+    }
+
+    @Test
+    public void listRolesForTenant_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listRolesForTenant(null, null, "1", null, null);
+        verify(defaultCloud20Service).listRolesForTenant(null, null, "1", null, null);
+    }
+
+    @Test
+    public void listRolesForTenant_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listRolesForTenant(null, null, "1", null, null);
+        verify(defaultCloud20Service).listRolesForTenant(null, null, "1", null, null);
+    }
+
+    @Test
+    public void listRolesForTenant_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listRolesForTenant(null, null, "1", null, null);
+        verify(cloudClient).get(url + "tenants/1/OS-KSADM/roles", null);
+    }
+
+    @Test
+    public void listRolesForTenant_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listRolesForTenant(null, null, "1", null, null);
+        verify(defaultCloud20Service).listRolesForTenant(null, null, "1", null, null);
+    }
+
+    @Test
     public void listTenants_useCloudAuthIsTrue_callsCloudClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
         delegateCloud20Service.listTenants(null, "token", null, null);
@@ -796,86 +956,6 @@ public class DelegateCloud20ServiceTest {
         when(defaultCloud20Service.deleteUserRole(null, null, userId, roleId)).thenReturn(Response.status(404));
         delegateCloud20Service.deleteUserRole(null, null, userId, roleId);
         verify(cloudClient).delete(url + "users/" + userId + "/roles/OS-KSADM/" + roleId, null);
-    }
-
-    @Test
-    public void updateTenant_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.updateTenant(null, null, tenantId, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.updateTenant(null, null, tenantId, null);
-        verify(cloudClient).post(url + "tenants/" + tenantId, null, bodyTenant);
-    }
-
-    @Test
-    public void updateTenant_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.updateTenant(null, null, tenantId, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.updateTenant(null, null, tenantId, null);
-        verify(cloudClient).post(url + "tenants/" + tenantId, null, bodyTenant);
-    }
-
-    @Test
-    public void deleteTenant_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteTenant(null, null, tenantId)).thenReturn(Response.status(401));
-        delegateCloud20Service.deleteTenant(null, null, tenantId);
-        verify(cloudClient).delete(url + "tenants/" + tenantId, null);
-    }
-
-    @Test
-    public void deleteTenant_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteTenant(null, null, tenantId)).thenReturn(Response.status(404));
-        delegateCloud20Service.deleteTenant(null, null, tenantId);
-        verify(cloudClient).delete(url + "tenants/" + tenantId, null);
-    }
-
-    @Test
-    public void listRolesForTenant_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listRolesForTenant(null, null, tenantId, null, 0)).thenReturn(Response.status(401));
-        delegateCloud20Service.listRolesForTenant(null, null, tenantId, null, 0);
-        verify(cloudClient).get(url + "tenants/" + tenantId + "/OS-KSADM/roles?limit=0", null);
-    }
-
-    @Test
-    public void listRolesForTenant_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listRolesForTenant(null, null, tenantId, null, 0)).thenReturn(Response.status(404));
-        delegateCloud20Service.listRolesForTenant(null, null, tenantId, null, 0);
-        verify(cloudClient).get(url + "tenants/" + tenantId + "/OS-KSADM/roles?limit=0", null);
-    }
-
-    @Test
-    public void listUsersWithRoleForTenant_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listUsersWithRoleForTenant(null, null, tenantId, roleId, null, 0)).thenReturn(Response.status(401));
-        delegateCloud20Service.listUsersWithRoleForTenant(null, null, tenantId, roleId, null, 0);
-        verify(cloudClient).get(url + "tenants/" + tenantId + "/users?limit=0&roleId=" + roleId, null);
-    }
-
-    @Test
-    public void listUsersWithRoleForTenant_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listUsersWithRoleForTenant(null, null, tenantId, roleId, null, 0)).thenReturn(Response.status(404));
-        delegateCloud20Service.listUsersWithRoleForTenant(null, null, tenantId, roleId, null, 0);
-        verify(cloudClient).get(url + "tenants/" + tenantId + "/users?limit=0&roleId=" + roleId, null);
-    }
-
-    @Test
-    public void listUsersForTenant_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listUsersForTenant(null, null, tenantId, null, 0)).thenReturn(Response.status(401));
-        delegateCloud20Service.listUsersForTenant(null, null, tenantId, null, 0);
-        verify(cloudClient).get(url + "tenants/" + tenantId + "/users?limit=0", null);
-    }
-
-    @Test
-    public void listUsersForTenant_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listUsersForTenant(null, null, tenantId, null, 0)).thenReturn(Response.status(404));
-        delegateCloud20Service.listUsersForTenant(null, null, tenantId, null, 0);
-        verify(cloudClient).get(url + "tenants/" + tenantId + "/users?limit=0", null);
     }
 
     @Test
