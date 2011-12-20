@@ -53,4 +53,16 @@ public class DefaultUserServiceTest {
             assertThat("exception message", e.getMessage(), Matchers.equalTo("User with Mosso Account ID: 1 already exists."));
         }
     }
+
+    @Test
+    public void userExistsById_callsUserDao_getUserById() throws Exception {
+        defaultUserService.userExistsById("id");
+        verify(userDao).getUserById("id");
+    }
+
+    @Test
+    public void userExistsByUsername_callsUserDao_getUserByUsername() throws Exception {
+        defaultUserService.userExistsByUsername("id");
+        verify(userDao).getUserByUsername("id");
+    }
 }

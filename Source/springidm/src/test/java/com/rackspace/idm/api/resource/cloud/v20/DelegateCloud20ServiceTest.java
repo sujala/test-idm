@@ -1866,8 +1866,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
         delegateCloud20Service.setUserEnabled(null,null,userId,null);
-        verify(cloudClient).post(url+"users/"+userId+"/enabled",Matchers.<HttpHeaders>any(),anyString());
-
+        verify(cloudClient).put(eq(url+"users/"+userId+"/OS-KSADM/enabled"),Matchers.<HttpHeaders>any(),anyString());
     }
 
     @Test
