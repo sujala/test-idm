@@ -1,32 +1,21 @@
 package com.rackspace.idm.domain.service.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.ws.rs.core.UriInfo;
-
+import com.rackspace.idm.domain.dao.ApplicationDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.util.WadlTrie;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.TenantDao;
-import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
-import com.rackspace.idm.domain.entity.Entity;
-import com.rackspace.idm.domain.entity.HasAccessToken;
-import com.rackspace.idm.domain.entity.Permission;
-import com.rackspace.idm.domain.entity.RackerScopeAccess;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.util.WadlTrie;
+import javax.ws.rs.core.UriInfo;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DefaultAuthorizationService implements AuthorizationService {
 
@@ -127,9 +116,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         if (CLOUD_ADMIN_ROLE == null) {
-            ClientRole role = this.clientDao
-                .getClientRoleByClientIdAndRoleName(getCloudAuthClientId(),
-                    getCloudAuthAdminRole());
+            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthAdminRole());
             CLOUD_ADMIN_ROLE = role;
         }
 
