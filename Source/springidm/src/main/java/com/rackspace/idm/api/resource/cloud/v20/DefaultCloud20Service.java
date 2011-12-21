@@ -1266,29 +1266,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    @Override
-    public ResponseBuilder listUserRoles(HttpHeaders httpHeaders, String authToken, String userId, String serviceId) {
-
-        try {
-            checkXAUTHTOKEN(authToken);
-
-            User user = this.userService.getUserById(userId);
-
-            if (user == null) {
-                String errMsg = String.format("User not found: '%s'", userId);
-                logger.warn(errMsg);
-                throw new NotFoundException(errMsg);
-            }
-
-            List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
-
-            return Response.ok(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
-        } catch (Exception ex) {
-            return exceptionResponse(ex);
-        }
-    }
-
     // KSADM Extension User methods
     @Override
     public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) {

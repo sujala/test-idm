@@ -243,38 +243,6 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void authenticate_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
-        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.authenticate(null, null);
-        verify(defaultCloud20Service).authenticate(null, null);
-    }
-
-    @Test
-    public void authenticate_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
-        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.authenticate(null, null);
-        verify(defaultCloud20Service).authenticate(null, null);
-    }
-
-    @Test
-    public void authenticate_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
-        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.authenticate(null, null);
-        verify(cloudClient).post(eq(url + "tokens"), Matchers.<HttpHeaders>any(), anyString());
-    }
-
-    @Test
-    public void authenticate_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
-        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.authenticate(null, null);
-        verify(defaultCloud20Service).authenticate(null, null);
-    }
-
-    @Test
     public void validateToken_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
@@ -1148,22 +1116,6 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void listUserRoles_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listUserRoles(null, null, userId, roleId)).thenReturn(Response.status(401));
-        delegateCloud20Service.listUserRoles(null, null, userId, roleId);
-        verify(cloudClient).get(url + "users/" + userId + "/OS-KSADM/roles?serviceId=" + roleId, null);
-    }
-
-    @Test
-    public void listUserRoles_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.listUserRoles(null, null, userId, roleId)).thenReturn(Response.status(404));
-        delegateCloud20Service.listUserRoles(null, null, userId, roleId);
-        verify(cloudClient).get(url + "users/" + userId + "/OS-KSADM/roles?serviceId=" + roleId, null);
-    }
-
-    @Test
     public void getUserRole_defaultServiceReturns401_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
         when(defaultCloud20Service.getUserRole(null, null, userId, roleId)).thenReturn(Response.status(401));
@@ -1866,7 +1818,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
         delegateCloud20Service.setUserEnabled(null,null,userId,null);
-        verify(cloudClient).put(eq(url+"users/"+userId+"/OS-KSADM/enabled"),Matchers.<HttpHeaders>any(),anyString());
+        verify(cloudClient).put(eq(url + "users/" + userId + "/OS-KSADM/enabled"), Matchers.<HttpHeaders>any(), anyString());
     }
 
     @Test

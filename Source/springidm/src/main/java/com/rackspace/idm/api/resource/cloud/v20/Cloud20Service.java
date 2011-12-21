@@ -65,8 +65,6 @@ public interface Cloud20Service {
 
 	ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken, String userId, User user) throws IOException, JAXBException;
 
-	ResponseBuilder listUserRoles(HttpHeaders httpHeaders, String authToken, String userId, String serviceId) throws IOException;
-
 	ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) throws IOException;
 
 	ResponseBuilder getUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) throws IOException;

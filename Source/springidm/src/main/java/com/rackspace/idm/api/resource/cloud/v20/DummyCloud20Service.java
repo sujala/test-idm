@@ -168,13 +168,6 @@ public class DummyCloud20Service implements Cloud20Service{
     }
 
     @Override
-    public ResponseBuilder listUserRoles(HttpHeaders httpHeaders, String authToken,
-        String userId, String serviceId) throws IOException {
-        
-        return Response.status(Status.NOT_FOUND);
-    }
-
-    @Override
     public ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId,
         String roleId) throws IOException {
         

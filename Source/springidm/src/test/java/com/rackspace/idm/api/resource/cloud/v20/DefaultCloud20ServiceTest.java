@@ -719,12 +719,6 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUserRoles_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
-        spy.listUserRoles(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
-    }
-
-    @Test
     public void listUsers_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listUsers(null,authToken,null,0);
         verify(spy).checkXAUTHTOKEN(authToken);

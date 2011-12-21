@@ -99,7 +99,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
     //works when forwarding, user id might be different in ga and ca
     @Test
     public void listUserGroups_returns200() throws Exception {
-        String token = getAuthToken("auth", "auth123");
+        String token = getAuthToken("cmarin4", "Password1");
         WebResource resource = resource().path("cloud/v2.0/users/104472/RAX-KSGRP");
         ClientResponse clientResponse = resource.header("X-Auth-Token",token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
