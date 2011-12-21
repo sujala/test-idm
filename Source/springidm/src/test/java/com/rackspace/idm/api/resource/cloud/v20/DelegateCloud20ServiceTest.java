@@ -1098,22 +1098,6 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void deleteUserRole_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteUserRole(null, null, userId, roleId)).thenReturn(Response.status(401));
-        delegateCloud20Service.deleteUserRole(null, null, userId, roleId);
-        verify(cloudClient).delete(url + "users/" + userId + "/roles/OS-KSADM/" + roleId, null);
-    }
-
-    @Test
-    public void deleteUserRole_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteUserRole(null, null, userId, roleId)).thenReturn(Response.status(404));
-        delegateCloud20Service.deleteUserRole(null, null, userId, roleId);
-        verify(cloudClient).delete(url + "users/" + userId + "/roles/OS-KSADM/" + roleId, null);
-    }
-
-    @Test
     public void addRolesToUserOnTenant_defaultServiceReturns401_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
         when(defaultCloud20Service.addRolesToUserOnTenant(null, null, tenantId, userId, roleId)).thenReturn(Response.status(401));
@@ -1857,5 +1841,37 @@ public class DelegateCloud20ServiceTest {
         when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.getUserRole(null,null,userId,roleId);
         verify(defaultCloud20Service).getUserRole(null,null,userId,roleId);
+    }
+
+    @Test
+    public void deleteUserRole_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.deleteUserRole(null,null,userId,roleId);
+        verify(defaultCloud20Service).deleteUserRole(null,null,userId,roleId);
+    }
+
+    @Test
+    public void deleteUserRole_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.deleteUserRole(null,null,userId,roleId);
+        verify(defaultCloud20Service).deleteUserRole(null,null,userId,roleId);
+    }
+
+    @Test
+    public void deleteUserRole_RoutingTrue_userExistsFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.deleteUserRole(null,null,userId,roleId);
+        verify(cloudClient).delete(eq(url+"users/"+userId+"/roles/OS-KSADM/"+roleId),Matchers.<HttpHeaders>any());
+    }
+
+    @Test
+    public void deleteUserRole_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.deleteUserRole(null,null,userId,roleId);
+        verify(defaultCloud20Service).deleteUserRole(null,null,userId,roleId);
     }
 }
