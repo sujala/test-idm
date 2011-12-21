@@ -394,16 +394,11 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud20Service().addUserRole(httpHeaders, authToken, userId, roleId);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if(isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)){
             String request = getCloudAuthV20Url() + "users/" + userId + "/roles/OS-KSADM/" + roleId;
-            return cloudClient.put(request, httpHeaders, "");
+            return cloudClient.put(request, httpHeaders, null);
         }
-        return serviceResponse;
+        return defaultCloud20Service.addUserRole(httpHeaders, authToken, userId, roleId);
     }
 
     @Override
