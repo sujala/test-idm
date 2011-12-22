@@ -1066,22 +1066,6 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void getSecretQA_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.getSecretQA(null, null, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.getSecretQA(null, null, null);
-        verify(cloudClient).get(url + "users/null/RAX-KSQA/secretqa/", null);
-    }
-
-    @Test
-    public void getSecretQA_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.getSecretQA(null, null, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.getSecretQA(null, null, null);
-        verify(cloudClient).get(url + "users/null/RAX-KSQA/secretqa/", null);
-    }
-
-    @Test
     public void updateSecretQA_defaultServiceReturns401_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
         when(defaultCloud20Service.updateSecretQA(null, null, null, null)).thenReturn(Response.status(401));
@@ -1873,5 +1857,37 @@ public class DelegateCloud20ServiceTest {
         when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.deleteUserRole(null,null,userId,roleId);
         verify(defaultCloud20Service).deleteUserRole(null,null,userId,roleId);
+    }
+
+    @Test
+    public void getSecretQA_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.getSecretQA(null,null,userId);
+        verify(defaultCloud20Service).getSecretQA(null,null,userId);
+    }
+
+    @Test
+    public void getSecretQA_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.getSecretQA(null,null,userId);
+        verify(defaultCloud20Service).getSecretQA(null,null,userId);
+    }
+
+    @Test
+    public void getSecretQA_RoutingTrue_userExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.getSecretQA(null,null,userId);
+        verify(cloudClient).get(eq(url+"users/"+ userId+"/RAX-KSQA/secretqa"),Matchers.<HttpHeaders>any());
+    }
+
+    @Test
+    public void getSecretQA_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.getSecretQA(null,null,userId);
+        verify(defaultCloud20Service).getSecretQA(null,null,userId);
     }
 }
