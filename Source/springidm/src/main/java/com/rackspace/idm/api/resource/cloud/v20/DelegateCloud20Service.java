@@ -716,17 +716,12 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateSecretQA(HttpHeaders httpHeaders, String authToken, String userId, SecretQA secrets)
             throws IOException, JAXBException {
-        Response.ResponseBuilder serviceResponse = getCloud20Service().updateSecretQA(httpHeaders, authToken, userId, secrets);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            String request = getCloudAuthV20Url() + "users/" + userId  + "/RAX-KSQA/secretqa/";
+        if(isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)){
+            String request = getCloudAuthV20Url() + "users/" + userId  + "/RAX-KSQA/secretqa";
             String body = marshallObjectToString(OBJ_FACOTRY_SECRETQA.createSecretQA(secrets));
             return cloudClient.post(request, httpHeaders, body);
         }
-        return serviceResponse;
+        return defaultCloud20Service.updateSecretQA(httpHeaders, authToken, userId, secrets);
     }
 
     public String appendQueryParams(String request, HashMap<String, Object> params) {

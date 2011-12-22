@@ -1066,22 +1066,6 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void updateSecretQA_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.updateSecretQA(null, null, null, null)).thenReturn(Response.status(401));
-        delegateCloud20Service.updateSecretQA(null, null, null, null);
-        verify(cloudClient).post(url + "users/null/RAX-KSQA/secretqa/", null, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns13:secretQA xsi:nil=\"true\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>");
-    }
-
-    @Test
-    public void updateSecretQA_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.updateSecretQA(null, null, null, null)).thenReturn(Response.status(404));
-        delegateCloud20Service.updateSecretQA(null, null, null, null);
-        verify(cloudClient).post(url + "users/null/RAX-KSQA/secretqa/", null, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns13:secretQA xsi:nil=\"true\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>");
-    }
-
-    @Test
     public void addRolesToUserOnTenant_defaultServiceReturns401_callsClient() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
         when(defaultCloud20Service.addRolesToUserOnTenant(null, null, tenantId, userId, roleId)).thenReturn(Response.status(401));
@@ -1876,7 +1860,7 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void getSecretQA_RoutingTrue_userExistsFalse_callsDefaultService() throws Exception {
+    public void getSecretQA_RoutingTrue_userExistsFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
         delegateCloud20Service.getSecretQA(null,null,userId);
@@ -1889,5 +1873,37 @@ public class DelegateCloud20ServiceTest {
         when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.getSecretQA(null,null,userId);
         verify(defaultCloud20Service).getSecretQA(null,null,userId);
+    }
+
+    @Test
+    public void updateSecretQA_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.updateSecretQA(null,null,userId, null);
+        verify(defaultCloud20Service).updateSecretQA(null,null,userId,null);
+    }
+
+    @Test
+    public void updateSecretQA_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.updateSecretQA(null,null,userId, null);
+        verify(defaultCloud20Service).updateSecretQA(null,null,userId,null);
+    }
+
+    @Test
+    public void updateSecretQA_RoutingTrue_userExistsFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.updateSecretQA(null,null,userId, null);
+        verify(cloudClient).post(eq(url+"users/"+userId+"/RAX-KSQA/secretqa"),Matchers.<HttpHeaders>any(),anyString());
+    }
+
+    @Test
+    public void updateSecretQA_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.updateSecretQA(null,null,userId, null);
+        verify(defaultCloud20Service).updateSecretQA(null,null,userId,null);
     }
 }
