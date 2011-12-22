@@ -495,25 +495,13 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders,
-                                                  String authToken, String tenantId, String userId, String roleId)
+    public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId)
             throws IOException {
-
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-                .addRolesToUserOnTenant(httpHeaders, authToken, tenantId, userId,
-                        roleId);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-
-            String request = getCloudAuthV20Url() + "tenants/" + tenantId
-                    + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
-            return cloudClient.put(request, httpHeaders, "");
+        if(isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)){
+            String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
+            return cloudClient.put(request, httpHeaders, null);
         }
-        return serviceResponse;
+        return defaultCloud20Service.addRolesToUserOnTenant(httpHeaders, authToken, tenantId, userId, roleId);
     }
 
     @Override
@@ -665,8 +653,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listEndpoints(HttpHeaders httpHeaders, String authToken, String tenantId) throws IOException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
-            String request = getCloudAuthV20Url() + "tenants/" + tenantId
-                    + "/OS-KSCATALOG/endpoints";
+            String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/OS-KSCATALOG/endpoints";
             return cloudClient.get(request, httpHeaders);
         }
         return defaultCloud20Service.listEndpoints(httpHeaders, authToken, tenantId);
