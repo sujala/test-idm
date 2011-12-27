@@ -30,8 +30,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     // need to look into more reliable way of detecting this error.
     private static final String STALE_PASSWORD_MESSAGE = "Password match in history";
 
-    public LdapUserRepository(LdapConnectionPools connPools,
-        Configuration config) {
+    public LdapUserRepository(LdapConnectionPools connPools, Configuration config) {
         super(connPools, config);
     }
 
@@ -843,8 +842,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         User user = null;
         try {
 
-            SearchResultEntry entry = this.getSingleEntry(USERS_BASE_DN,
-                SearchScope.SUB, searchFilter, searchAttributes);
+            SearchResultEntry entry = this.getSingleEntry(USERS_BASE_DN, SearchScope.SUB, searchFilter, searchAttributes);
 
             if (entry != null) {
                 user = getUser(entry);

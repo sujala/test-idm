@@ -47,8 +47,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(
-        ScopeAccess token) {
+    public List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess token) {
         
         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
 
@@ -383,17 +382,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public ScopeAccess getAccessTokenByAuthHeader(String authHeader) {
         logger.debug("Getting access token by auth header {}", authHeader);
-        final String tokenStr = authHeaderHelper
-            .getTokenFromAuthHeader(authHeader);
-        final ScopeAccess scopeAccess = scopeAccessDao
-            .getScopeAccessByAccessToken(tokenStr);
+        final String tokenStr = authHeaderHelper.getTokenFromAuthHeader(authHeader);
+        final ScopeAccess scopeAccess = scopeAccessDao.getScopeAccessByAccessToken(tokenStr);
         logger.debug("Done getting access token by auth header {}", authHeader);
         return scopeAccess;
     }
 
     @Override
-    public ClientScopeAccess getClientScopeAccessForClientId(
-        String clientUniqueId, String clientId) {
+    public ClientScopeAccess getClientScopeAccessForClientId(String clientUniqueId, String clientId) {
         logger.debug("Getting Client ScopeAccess by clientId", clientId);
         final ClientScopeAccess scopeAccess = (ClientScopeAccess) this.scopeAccessDao
             .getDirectScopeAccessForParentByClientId(clientUniqueId, clientId);
@@ -403,8 +399,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public List<ScopeAccess> getDelegateScopeAccessesForParent(
-        String parentUniqueId) {
+    public List<ScopeAccess> getDelegateScopeAccessesForParent(String parentUniqueId) {
         logger.debug("Getting Delegate ScopeAccess by parent {}",
             parentUniqueId);
         List<ScopeAccess> sa = this.scopeAccessDao
@@ -415,8 +410,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public ScopeAccess getDelegateScopeAccessForParentByClientId(
-        String parentUniqueID, String clientId) {
+    public ScopeAccess getDelegateScopeAccessForParentByClientId(String parentUniqueID, String clientId) {
         logger.debug("Getting by clientId {}", clientId);
         ScopeAccess sa = this.scopeAccessDao
             .getDelegateScopeAccessForParentByClientId(parentUniqueID, clientId);

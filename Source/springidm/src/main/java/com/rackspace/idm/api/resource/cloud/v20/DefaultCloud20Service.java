@@ -421,8 +421,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
                 ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
 
-                if (sa == null || ((HasAccessToken) sa).isAccessTokenExpired(new DateTime())
-                        || !(sa instanceof UserScopeAccess)) {
+                if (sa == null || ((HasAccessToken) sa).isAccessTokenExpired(new DateTime()) || !(sa instanceof UserScopeAccess)) {
                     String errMsg = "Token not authenticated";
                     logger.warn(errMsg);
                     throw new NotAuthenticatedException(errMsg);
@@ -433,8 +432,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
 
-                PasswordCredentialsRequiredUsername creds =
-                        (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
+                PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
                 String username = creds.getUsername();
                 String password = creds.getPassword();
 

@@ -8,10 +8,7 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.UserGroupService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.util.NastFacade;
@@ -72,6 +69,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Autowired
     private UserValidator userValidator;
+
+    @Autowired
+    private AuthorizationService authorizationService;
 
     @Autowired
     public DefaultCloud11Service(Configuration config,
@@ -626,6 +626,9 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             authenticateCloudAdminUser(request);
             userValidator.validate(user);
+            if(!user.getId().equals(userId) && !user.getId().equals("")) //ToDO: Move to user validator?
+                throw new BadRequestException("User Id does not match.");
+
             User gaUser = userService.getUser(userId);
 
             if (gaUser == null) {
@@ -1056,9 +1059,12 @@ public class DefaultCloud11Service implements Cloud11Service {
         if (stringStringMap == null) {
             throw new NotAuthorizedException("You are not authorized to access this resource.");
         } else {
-            boolean authenticated = ldapCloudAdminRepository.authenticate(
-                    stringStringMap.get("username"),
-                    stringStringMap.get("password"));
+
+            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
+                    stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
+            boolean authenticated = authorizationService.authorizeCloudAdmin(usa);
+
+            //boolean authenticated = ldapCloudAdminRepository.authenticate(stringStringMap.get("username"), stringStringMap.get("username"));
             if (!authenticated) {
                 throw new NotAuthorizedException("You are not authorized to access this resource.");
             }
@@ -1071,9 +1077,10 @@ public class DefaultCloud11Service implements Cloud11Service {
         if (stringStringMap == null) {
             throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
         } else {
-            boolean authenticated = ldapCloudAdminRepository.authenticate(
-                    stringStringMap.get("username"),
-                    stringStringMap.get("password"));
+            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
+                    stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
+            boolean authenticated = authorizationService.authorizeCloudAdmin(usa);
+            //boolean authenticated = ldapCloudAdminRepository.authenticate(stringStringMap.get("username"), stringStringMap.get("password"));
             if (!authenticated) {
                 throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
             }
