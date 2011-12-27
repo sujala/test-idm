@@ -403,27 +403,12 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder getServiceCatalog(
-            HttpServletRequest request, String userId, HttpHeaders httpHeaders)
-            throws IOException {
-
-        Response.ResponseBuilder serviceResponse = getCloud11Service()
-                .getServiceCatalog(request, userId, httpHeaders);
-
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND
-                || status == HttpServletResponse.SC_UNAUTHORIZED) {
+    public Response.ResponseBuilder getServiceCatalog(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
+        if(isCloudAuthRoutingEnabled() && !isGASourceOfTruth()){
             String path = "users/" + userId + "/serviceCatalog";
-            return cloudClient.get(getCloudAuthV11Url().concat(path),
-                    httpHeaders);
+            return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
         }
-
-        return serviceResponse;
+        return defaultCloud11Service.getServiceCatalog(request, userId, httpHeaders);
     }
 
     @Override

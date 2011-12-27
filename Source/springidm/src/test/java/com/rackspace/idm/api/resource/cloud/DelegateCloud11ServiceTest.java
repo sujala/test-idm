@@ -462,4 +462,36 @@ public class DelegateCloud11ServiceTest {
         delegateCloud11Service.getUserEnabled(null,userId,null);
         verify(defaultCloud11Service).getUserEnabled(null,userId,null);
     }
+
+    @Test
+    public void getServiceCatalog_routingFalse_gaSourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud11Service.getServiceCatalog(null,userId,null);
+        verify(defaultCloud11Service).getServiceCatalog(null,userId,null);
+    }
+
+    @Test
+    public void getServiceCatalog_routingFalse_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud11Service.getServiceCatalog(null,userId,null);
+        verify(defaultCloud11Service).getServiceCatalog(null,userId,null);
+    }
+
+    @Test
+    public void getServiceCatalog_routingTrue_gaSourceOfTruthFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud11Service.getServiceCatalog(null,userId,null);
+        verify(cloudClient).get(url+"users/"+userId+"/serviceCatalog",null);
+    }
+
+    @Test
+    public void getServiceCatalog_routingTrue_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud11Service.getServiceCatalog(null,userId,null);
+        verify(defaultCloud11Service).getServiceCatalog(null,userId,null);
+    }
 }
