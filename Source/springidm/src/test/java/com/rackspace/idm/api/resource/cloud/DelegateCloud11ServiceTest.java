@@ -484,7 +484,7 @@ public class DelegateCloud11ServiceTest {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
         delegateCloud11Service.getServiceCatalog(null,userId,null);
-        verify(cloudClient).get(url+"users/"+userId+"/serviceCatalog",null);
+        verify(cloudClient).get(url + "users/" + userId + "/serviceCatalog", null);
     }
 
     @Test
@@ -493,5 +493,40 @@ public class DelegateCloud11ServiceTest {
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
         delegateCloud11Service.getServiceCatalog(null,userId,null);
         verify(defaultCloud11Service).getServiceCatalog(null,userId,null);
+    }
+
+    @Test
+    public void setUserKey_routingFalse_userExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(null);
+        defaultCloud11Service.setUserKey(null,userId,null,null);
+        verify(defaultCloud11Service).setUserKey(null,userId,null,null);
+    }
+
+    @Test
+    public void setUserKey_routingFalse_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        defaultCloud11Service.setUserKey(null,userId,null,null);
+        verify(defaultCloud11Service).setUserKey(null,userId,null,null);
+    }
+
+    @Test
+    public void setUserKey_routingTrue_userExistsFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(null);
+        UserWithOnlyKey user = new UserWithOnlyKey();
+        user.setKey("key");
+        when(OBJ_FACTORY.createUser(user)).thenReturn(new JAXBElement<User>(QName.valueOf("name"), User.class, null));
+        delegateCloud11Service.setUserKey(null,userId,null, user);
+        verify(cloudClient).put(eq(url+"users/"+userId+"/key"),Matchers.<javax.ws.rs.core.HttpHeaders>any(),anyString());
+    }
+
+    @Test
+    public void setUserKey_routingTrue_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        defaultCloud11Service.setUserKey(null,userId,null,null);
+        verify(defaultCloud11Service).setUserKey(null,userId,null,null);
     }
 }

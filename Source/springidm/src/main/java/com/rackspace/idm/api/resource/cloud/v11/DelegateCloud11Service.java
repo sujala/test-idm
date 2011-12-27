@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v11;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,14 +39,14 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Autowired
     private DefaultCloud11Service defaultCloud11Service;
+
     @Autowired
     private DummyCloud11Service dummyCloud11Service;
-
     private static com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
+
     public static final String CLOUD_AUTH_11_URL = "cloudAuth11url";
     public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
     public static final String GA_SOURCE_OF_TRUTH = "gaIsSourceOfTruth";
-
     public DelegateCloud11Service() throws JAXBException {
     }
 
@@ -380,26 +381,14 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder setUserKey(HttpServletRequest request,
-                                               String userId, HttpHeaders httpHeaders, UserWithOnlyKey user)
+    public Response.ResponseBuilder setUserKey(HttpServletRequest request, String userId, HttpHeaders httpHeaders, UserWithOnlyKey user)
             throws IOException, JAXBException {
-        Response.ResponseBuilder serviceResponse = getCloud11Service()
-                .setUserKey(request, userId, httpHeaders, user);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND
-                || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            String body = this.marshallObjectToString(OBJ_FACTORY
-                    .createUser(user));
+        if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
+            String body = marshallObjectToString(OBJ_FACTORY.createUser(user));
             String path = "users/" + userId + "/key";
-            return cloudClient.put(getCloudAuthV11Url().concat(path),
-                    httpHeaders, body);
+            return cloudClient.put(getCloudAuthV11Url().concat(path), httpHeaders, body);
         }
-        return serviceResponse;
+        return defaultCloud11Service.setUserKey(request, userId, httpHeaders, user);
     }
 
     @Override
