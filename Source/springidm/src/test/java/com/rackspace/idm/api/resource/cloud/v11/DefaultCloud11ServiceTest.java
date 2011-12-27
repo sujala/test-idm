@@ -2,6 +2,9 @@ package com.rackspace.idm.api.resource.cloud.v11;
 
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
@@ -12,6 +15,7 @@ import com.sun.jersey.api.uri.UriBuilderImpl;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mortbay.jetty.HttpHeaders;
 
@@ -35,6 +39,7 @@ import static org.mockito.Mockito.*;
  */
 public class DefaultCloud11ServiceTest {
 
+    AuthorizationService authorizationService;
     DefaultCloud11Service defaultCloud11Service;
     DefaultCloud11Service spy;
     UserConverterCloudV11 userConverterCloudV11;
@@ -50,6 +55,7 @@ public class DefaultCloud11ServiceTest {
     String token = "token";
     private ScopeAccessService scopeAccessService;
     javax.ws.rs.core.HttpHeaders httpHeaders;
+    UserScopeAccess usa = new UserScopeAccess();
 
     @Before
     public void setUp() throws Exception {
@@ -64,6 +70,7 @@ public class DefaultCloud11ServiceTest {
         config = mock(Configuration.class);
         request = mock(HttpServletRequest.class);
         userValidator = mock(UserValidator.class);
+        authorizationService = mock(AuthorizationService.class);
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
         UriBuilderImpl uriBuilder = mock(UriBuilderImpl.class);
         when(uriBuilder.build()).thenReturn(new URI(""));
@@ -77,6 +84,7 @@ public class DefaultCloud11ServiceTest {
         nastFacade = mock(NastFacade.class);
         defaultCloud11Service.setNastFacade(nastFacade);
         defaultCloud11Service.setUserValidator(userValidator);
+        defaultCloud11Service.setAuthorizationService(authorizationService);
         spy = spy(defaultCloud11Service);
     }
 
@@ -234,6 +242,7 @@ public class DefaultCloud11ServiceTest {
     public void createUser_callsNastFacade() throws Exception {
         user.setId("userId");
         user.setMossoId(123);
+        when(authorizationService.authorizeCloudAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         defaultCloud11Service.createUser(request, null, uriInfo, user);
         Mockito.verify(nastFacade).addNastUser(user);
     }
@@ -332,12 +341,14 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void updateUser_callsValidateUser() throws Exception {
+        when(authorizationService.authorizeCloudAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         spy.updateUser(request,null,null,null);
         verify(userValidator).validate(null);
     }
 
     @Test
     public void updateUser_whenValidatorThrowsBadRequestException_returns400() throws Exception {
+        when(authorizationService.authorizeCloudAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         doThrow(new BadRequestException("test exception")).when(userValidator).validate(null);
         Response.ResponseBuilder responseBuilder = spy.updateUser(request, null, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
@@ -405,6 +416,7 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void authAdmin_withPasswordCredentials_withInvalidUser_returns401() throws Exception {
+        when(authorizationService.authorizeCloudAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         when(httpHeaders.getMediaType()).thenReturn(new MediaType());
         String credentials = "<passwordCredentials password=\"123\" username=\"IValidUser\" xmlns=\"http://docs.rackspacecloud.com/auth/api/v1.1\"/>";
         Response.ResponseBuilder responseBuilder = spy.adminAuthenticate(request, null,httpHeaders , credentials);

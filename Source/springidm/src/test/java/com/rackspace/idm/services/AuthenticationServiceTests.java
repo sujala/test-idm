@@ -60,8 +60,7 @@ public class AuthenticationServiceTests {
 		mockUserService = EasyMock.createMock(UserService.class);
 		mockClientService = EasyMock.createMock(ApplicationService.class);
 		mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
-		mockAuthorizationService = EasyMock
-				.createNiceMock(AuthorizationService.class);
+		mockAuthorizationService = EasyMock.createNiceMock(AuthorizationService.class);
 		mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
 		authHeaderHelper = new AuthHeaderHelper();
 		inputValidator = EasyMock.createMock(InputValidator.class);
