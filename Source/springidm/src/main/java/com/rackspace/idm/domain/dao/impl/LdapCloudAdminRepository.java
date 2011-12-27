@@ -1,9 +1,5 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.audit.Audit;
-import com.unboundid.ldap.sdk.BindResult;
-import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.ResultCode;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,11 +8,16 @@ public class LdapCloudAdminRepository extends LdapRepository{
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public LdapCloudAdminRepository(LdapConnectionPools connPools,
-        Configuration config) {
+    public LdapCloudAdminRepository(LdapConnectionPools connPools, Configuration config) {
         super(connPools, config);
     }
 
+    public boolean authenticate(String userName, String password) {
+
+        return false;
+    }
+
+    /*
     public boolean authenticate(String userName, String password) {
         logger.debug("Authenticating cloud admin user {}", userName);
         BindResult result = null;
@@ -46,4 +47,5 @@ public class LdapCloudAdminRepository extends LdapRepository{
         audit.succeed();
         return ResultCode.SUCCESS.equals(result.getResultCode());
     }
+    */
 }

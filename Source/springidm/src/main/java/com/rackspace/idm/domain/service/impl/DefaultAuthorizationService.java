@@ -109,9 +109,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     public boolean authorizeCloudAdmin(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as cloud admin", scopeAccess);
 
-        if (scopeAccess == null
-            || ((HasAccessToken) scopeAccess)
-                .isAccessTokenExpired(new DateTime())) {
+        if (scopeAccess == null || ((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
             return false;
         }
 
@@ -120,8 +118,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
             CLOUD_ADMIN_ROLE = role;
         }
 
-        boolean authorized = this.tenantDao.doesScopeAccessHaveTenantRole(
-            scopeAccess, CLOUD_ADMIN_ROLE);
+        boolean authorized = this.tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, CLOUD_ADMIN_ROLE);
 
         logger.debug("Authorized {} as cloud admin - {}", scopeAccess,
             authorized);
@@ -167,9 +164,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
             permission.setClientId(getIdmClientId());
             permission.setCustomerId(getRackspaceCustomerId());
             permission.setPermissionId(permissionId);
-
-            authorized = this.scopeAccessDao.doesAccessTokenHavePermission(
-                scopeAccess, permission);
+            authorized = this.scopeAccessDao.doesAccessTokenHavePermission(scopeAccess, permission);
         }
         logger.debug("Authorized {} as client - {}", scopeAccess, authorized);
         return authorized;
