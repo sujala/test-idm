@@ -298,16 +298,10 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder deleteUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud11Service().deleteUser(request, userId, httpHeaders);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
             return cloudClient.delete(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
         }
-        return serviceResponse;
+        return defaultCloud11Service.deleteUser(request, userId, httpHeaders);
     }
 
     @Override
