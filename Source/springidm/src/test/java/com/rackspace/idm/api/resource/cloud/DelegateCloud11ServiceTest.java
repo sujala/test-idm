@@ -692,4 +692,36 @@ public class DelegateCloud11ServiceTest {
         delegateCloud11Service.getUser(null,userId,null);
         verify(defaultCloud11Service).getUser(null,userId,null);
     }
+
+    @Test
+    public void getBaseURLId_routingFalse_gaSourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud11Service.getBaseURLId(null, 0,null,null);
+        verify(defaultCloud11Service).getBaseURLId(null, 0,null,null);
+    }
+
+    @Test
+    public void getBaseURLId_routingFalse_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud11Service.getBaseURLId(null, 0,null,null);
+        verify(defaultCloud11Service).getBaseURLId(null, 0,null,null);
+    }
+
+    @Test
+    public void getBaseURLId_routingTrue_gaSourceOfTruthFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud11Service.getBaseURLId(null, 0,null,null);
+        verify(cloudClient).get(url + "baseURLs/" + 0, null);
+    }
+
+    @Test
+    public void getBaseURLId_routingTrue_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud11Service.getBaseURLId(null, 0,null,null);
+        verify(defaultCloud11Service).getBaseURLId(null, 0,null,null);
+    }
 }
