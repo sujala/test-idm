@@ -1,11 +1,7 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.WildcardType;
+import com.rackspacecloud.docs.auth.api.v1.Credentials;
+import org.apache.log4j.Logger;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;
@@ -16,10 +12,12 @@ import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Unmarshaller;
-
-import org.apache.log4j.Logger;
-
-import com.rackspacecloud.docs.auth.api.v1.Credentials;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
 
 @Provider
 @Consumes("application/xml")
@@ -52,10 +50,10 @@ public class CredentialProvider implements MessageBodyReader<JAXBElement<? exten
         Type rawType = ptype.getRawType();
         Type[] args = ptype.getActualTypeArguments();
 
-        if (!(rawType instanceof Class)) return false;
-        if (!((Class<?>) rawType).getCanonicalName().equals("javax.xml.bind.JAXBElement")) return false;
-        if (args.length != 1) return false;
-        if (!(args[0] instanceof WildcardType)) return false;
+        if (!(rawType instanceof Class)) {return false;}
+        if (!((Class<?>) rawType).getCanonicalName().equals("javax.xml.bind.JAXBElement")) {return false;}
+        if (args.length != 1) {return false;}
+        if (!(args[0] instanceof WildcardType)) {return false;}
 
         Type[] upperBounds = ((WildcardType) args[0]).getUpperBounds();
         
