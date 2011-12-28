@@ -726,6 +726,38 @@ public class DelegateCloud11ServiceTest {
     }
 
     @Test
+    public void getUserFromMossoId_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(ldapUserRepository.getUserByMossoId(0)).thenReturn(null);
+        delegateCloud11Service.getUserFromMossoId(null,0,null);
+        verify(defaultCloud11Service).getUserFromMossoId(null,0,null);
+    }
+
+    @Test
+    public void getUserFromMossoId_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(ldapUserRepository.getUserByMossoId(0)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        delegateCloud11Service.getUserFromMossoId(null,0,null);
+        verify(defaultCloud11Service).getUserFromMossoId(null,0,null);
+    }
+
+    @Test
+    public void getUserFromMossoId_RoutingTrue_userExistsFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(ldapUserRepository.getUserByMossoId(0)).thenReturn(null);
+        delegateCloud11Service.getUserFromMossoId(null,0,null);
+        verify(cloudClient).get(eq(url + "mosso/" + 0), Matchers.<javax.ws.rs.core.HttpHeaders>any());
+    }
+
+    @Test
+    public void getUserFromMossoId_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(ldapUserRepository.getUserByMossoId(0)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        delegateCloud11Service.getUserFromMossoId(null,0,null);
+        verify(defaultCloud11Service).getUserFromMossoId(null,0,null);
+    }
+
+    @Test
     public void getBaseURLId_routingFalse_gaSourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);

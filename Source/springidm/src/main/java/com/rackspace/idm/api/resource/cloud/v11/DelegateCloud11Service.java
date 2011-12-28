@@ -120,17 +120,11 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder getUserFromMossoId(HttpServletRequest request, int mossoId, HttpHeaders httpHeaders)
-            throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud11Service().getUserFromMossoId(request, mossoId, httpHeaders);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+    public Response.ResponseBuilder getUserFromMossoId(HttpServletRequest request, int mossoId, HttpHeaders httpHeaders) throws IOException {
+        if(isCloudAuthRoutingEnabled() && !userExistsInGAByMossoId(mossoId)){
             return cloudClient.get(getCloudAuthV11Url().concat("mosso/" + mossoId), httpHeaders);
         }
-        return serviceResponse;
+        return defaultCloud11Service.getUserFromMossoId(request, mossoId, httpHeaders);
     }
 
     @Override
@@ -374,6 +368,14 @@ public class DelegateCloud11Service implements Cloud11Service {
         } else {
             return defaultCloud11Service;
         }
+    }
+
+    boolean userExistsInGAByMossoId(int mossoId){
+        com.rackspace.idm.domain.entity.User userById = ldapUserRepository.getUserByMossoId(mossoId);
+        if (userById == null) {
+            return false;
+        }
+        return true;
     }
 
     boolean userExistsInGAByNastId(String nastId){
