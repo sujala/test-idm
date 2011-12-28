@@ -561,4 +561,39 @@ public class DelegateCloud11ServiceTest {
         defaultCloud11Service.deleteUser(null,userId,null);
         verify(defaultCloud11Service).deleteUser(null,userId,null);
     }
+
+    @Test
+    public void getUserKey_routingFalse_userExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(null);
+        defaultCloud11Service.getUserKey(null,userId,null);
+        verify(defaultCloud11Service).getUserKey(null,userId,null);
+    }
+
+    @Test
+    public void getUserKey_routingFalse_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        defaultCloud11Service.getUserKey(null,userId,null);
+        verify(defaultCloud11Service).getUserKey(null,userId,null);
+    }
+
+    @Test
+    public void getUserKey_routingTrue_userExistsFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(null);
+//        UserWithOnlyKey user = new UserWithOnlyKey();
+//        user.setKey("key");
+//        when(OBJ_FACTORY.createUser(user)).thenReturn(new JAXBElement<User>(QName.valueOf("name"), User.class, null));
+        delegateCloud11Service.getUserKey(null,userId,null);
+        verify(cloudClient).get(eq(url+"users/"+userId+"/key"),Matchers.<javax.ws.rs.core.HttpHeaders>any());
+    }
+
+    @Test
+    public void getUserKey_routingTrue_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        defaultCloud11Service.getUserKey(null,userId,null);
+        verify(defaultCloud11Service).getUserKey(null,userId,null);
+    }
 }
