@@ -116,7 +116,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             checkXAUTHTOKEN(authToken);
             Tenant tenant = checkAndGetTenant(tenantId);
             CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpoint.getId());
-            if (baseUrl.getGlobal()){
+            if (baseUrl.getGlobal()) {
                 throw new BadRequestException("Cannot add a global endpoint to this tenant.");
             }
             tenant.addBaseUrlId(String.valueOf(endpoint.getId()));
@@ -317,77 +317,76 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    void validatePasswordCredentials(PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername) {
+        String username = passwordCredentialsRequiredUsername.getUsername();
+        String password = passwordCredentialsRequiredUsername.getPassword();
+        if (StringUtils.isBlank(username)) {
+            String errMsg = "Expecting username";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+        if (StringUtils.isBlank(password)) {
+            String errMsg = "Expecting password";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+    }
+
+    void validateApiKeyCredentials(ApiKeyCredentials apiKeyCredentials) {
+        String username = apiKeyCredentials.getUsername();
+        String apiKey = apiKeyCredentials.getApiKey();
+        if (StringUtils.isBlank(username)) {
+            String errMsg = "Expecting username";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+        if (StringUtils.isBlank(apiKey)) {
+            String errMsg = "Expecting apiKey";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+    }
+
     @Override
     public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body) throws IOException {
 
         try {
             checkXAUTHTOKEN(authToken);
 
-            JAXBElement<? extends CredentialType> creds = null;
+            JAXBElement<? extends CredentialType> credentials;
 
             if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
-                creds = getXMLCredentials(body);
+                credentials = getXMLCredentials(body);
             } else {
-                creds = getJSONCredentials(body);
+                credentials = getJSONCredentials(body);
             }
 
-            String username = null;
-            String password = null;
-            String apiKey = null;
-            User user = null;
+            User user;
 
-            if (creds.getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
-                PasswordCredentialsRequiredUsername userCreds = (PasswordCredentialsRequiredUsername) creds.getValue();
-                username = userCreds.getUsername();
-                password = userCreds.getPassword();
-
-                if (StringUtils.isBlank(username)) {
-                    String errMsg = "Expecting username";
-                    logger.warn(errMsg);
-                    throw new BadRequestException(errMsg);
-                }
-
-                if (StringUtils.isBlank(password)) {
-                    String errMsg = "Expecting password";
-                    logger.warn(errMsg);
-                    throw new BadRequestException(errMsg);
-                }
-
+            if (credentials.getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
+                PasswordCredentialsRequiredUsername userCredentials = (PasswordCredentialsRequiredUsername) credentials.getValue();
+                validatePasswordCredentials(userCredentials);
                 user = checkAndGetUser(userId);
-                if (!username.equals(user.getUsername())) {
+                if (!userCredentials.getUsername().equals(user.getUsername())) {
                     String errMsg = "User and UserId mis-matched";
                     logger.warn(errMsg);
                     throw new BadRequestException(errMsg);
                 }
-                user.setPassword(password);
+                user.setPassword(userCredentials.getPassword());
                 userService.updateUser(user, false);
-            } else if (creds.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
-                ApiKeyCredentials userCreds = (ApiKeyCredentials) creds.getValue();
-                username = userCreds.getUsername();
-                apiKey = userCreds.getApiKey();
-
-                if (StringUtils.isBlank(username)) {
-                    String errMsg = "Expecting username";
-                    logger.warn(errMsg);
-                    throw new BadRequestException(errMsg);
-                }
-
-                if (StringUtils.isBlank(apiKey)) {
-                    String errMsg = "Expecting apiKey";
-                    logger.warn(errMsg);
-                    throw new BadRequestException(errMsg);
-                }
-
+            } else if (credentials.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
+                ApiKeyCredentials userCredentials = (ApiKeyCredentials) credentials.getValue();
+                validateApiKeyCredentials(userCredentials);
                 user = checkAndGetUser(userId);
-                if (!username.equals(user.getUsername())) {
+                if (!userCredentials.getUsername().equals(user.getUsername())) {
                     String errMsg = "User and UserId mis-matched";
                     logger.warn(errMsg);
                     throw new BadRequestException(errMsg);
                 }
-                user.setApiKey(apiKey);
+                user.setApiKey(userCredentials.getApiKey());
                 userService.updateUser(user, false);
             }
-            return Response.ok(creds).status(Status.CREATED);
+            return Response.ok(credentials).status(Status.CREATED);
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -414,79 +413,42 @@ public class DefaultCloud20Service implements Cloud20Service {
     // Core Service Methods
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) throws IOException {
-
         try {
             User user = null;
             UserScopeAccess usa = null;
-
             if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
                 ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
-
                 if (sa == null || ((HasAccessToken) sa).isAccessTokenExpired(new DateTime()) || !(sa instanceof UserScopeAccess)) {
                     String errMsg = "Token not authenticated";
                     logger.warn(errMsg);
                     throw new NotAuthenticatedException(errMsg);
-
                 }
                 usa = (UserScopeAccess) sa;
                 user = this.checkAndGetUser(usa.getUserRsId());
-
             } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
-
                 PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
+                validatePasswordCredentials(creds);
                 String username = creds.getUsername();
                 String password = creds.getPassword();
-
-                if (StringUtils.isBlank(username)) {
-                    String errMsg = "Expecting username";
-                    logger.warn(errMsg);
-                    throw new BadRequestException(errMsg);
-                }
-
-                if (StringUtils.isBlank(password)) {
-                    String errMsg = "Expecting password";
-                    logger.warn(errMsg);
-                    throw new BadRequestException(errMsg);
-                }
-
                 user = checkAndGetUserByName(username);
-
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
 
             } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
                 ApiKeyCredentials creds = (ApiKeyCredentials) authenticationRequest.getCredential().getValue();
+                validateApiKeyCredentials(creds);
                 String username = creds.getUsername();
                 String key = creds.getApiKey();
-
-                if (StringUtils.isBlank(username)) {
-                    String errMsg = "Expecting username";
-                    logger.warn(errMsg);
-                    throw new BadRequestException(errMsg);
-                }
-
-                if (StringUtils.isBlank(key)) {
-                    String errMsg = "Expecting apiKey";
-                    logger.warn(errMsg);
-                    throw new BadRequestException(errMsg);
-                }
-
                 user = checkAndGetUserByName(username);
-
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
             }
-
             List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
-
             if (!belongsTo(authenticationRequest.getTenantId(), roles) && !belongsTo(authenticationRequest.getTenantName(), roles)) {
                 String errMsg = "User does not have access to tenant %s";
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
-
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
-
             AuthenticateResponse auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, endpoints);
-
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(auth));
         } catch (Exception ex) {
             return exceptionResponse(ex);
