@@ -52,8 +52,11 @@ public class DefaultCloud11Service implements Cloud11Service {
     private final EndpointService endpointService;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ScopeAccessService scopeAccessService;
+    private final LdapCloudAdminRepository ldapCloudAdminRepository;
+
     private final UserConverterCloudV11 userConverterCloudV11;
     private final UserService userService;
+
     private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
 
     @Autowired
@@ -75,7 +78,8 @@ public class DefaultCloud11Service implements Cloud11Service {
                                  ScopeAccessService scopeAccessService, EndpointService endpointService,
                                  UserService userService, AuthConverterCloudV11 authConverterCloudV11,
                                  UserConverterCloudV11 userConverterCloudV11,
-                                 EndpointConverterCloudV11 endpointConverterCloudV11) {
+                                 EndpointConverterCloudV11 endpointConverterCloudV11,
+                                 LdapCloudAdminRepository ldapCloudAdminRepository) {
         this.config = config;
         this.scopeAccessService = scopeAccessService;
         this.endpointService = endpointService;
@@ -83,6 +87,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.authConverterCloudV11 = authConverterCloudV11;
         this.userConverterCloudV11 = userConverterCloudV11;
         this.endpointConverterCloudV11 = endpointConverterCloudV11;
+        this.ldapCloudAdminRepository = ldapCloudAdminRepository;
     }
 
     // Token Methods
