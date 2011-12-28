@@ -307,18 +307,11 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder updateUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders,
                                                User user) throws IOException, JAXBException {
-
-        Response.ResponseBuilder serviceResponse = getCloud11Service().updateUser(request, userId, httpHeaders, user);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
             String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
             return cloudClient.put(getCloudAuthV11Url().concat("users/" + userId), httpHeaders, body);
         }
-        return serviceResponse;
+        return defaultCloud11Service.updateUser(request, userId, httpHeaders, user);
     }
 
     @Override

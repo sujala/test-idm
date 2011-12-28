@@ -627,4 +627,37 @@ public class DelegateCloud11ServiceTest {
         verify(OBJ_FACTORY).createUser(Matchers.<User>any());
     }
 
+    @Test
+    public void updateUser_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(null);
+        delegateCloud11Service.updateUser(null,userId,null,null);
+        verify(defaultCloud11Service).updateUser(null,userId,null,null);
+    }
+
+    @Test
+    public void updateUser_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        delegateCloud11Service.updateUser(null,userId,null,null);
+        verify(defaultCloud11Service).updateUser(null,userId,null,null);
+    }
+
+    @Test
+    public void updateUser_RoutingTrue_userExistsFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(null);
+        User value = new User();
+        when(OBJ_FACTORY.createUser(value)).thenReturn(new JAXBElement<User>(QName.valueOf("name"), User.class, null));
+        delegateCloud11Service.updateUser(null,userId,null,value);
+        verify(cloudClient).put(eq(url + "users/" + userId), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString());
+    }
+
+    @Test
+    public void updateUser_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        delegateCloud11Service.updateUser(null,userId,null,null);
+        verify(defaultCloud11Service).updateUser(null,userId,null,null);
+    }
 }
