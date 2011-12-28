@@ -75,8 +75,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                                  ScopeAccessService scopeAccessService, EndpointService endpointService,
                                  UserService userService, AuthConverterCloudV11 authConverterCloudV11,
                                  UserConverterCloudV11 userConverterCloudV11,
-                                 EndpointConverterCloudV11 endpointConverterCloudV11,
-                                 LdapCloudAdminRepository ldapCloudAdminRepository) {
+                                 EndpointConverterCloudV11 endpointConverterCloudV11) {
         this.config = config;
         this.scopeAccessService = scopeAccessService;
         this.endpointService = endpointService;
@@ -84,7 +83,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.authConverterCloudV11 = authConverterCloudV11;
         this.userConverterCloudV11 = userConverterCloudV11;
         this.endpointConverterCloudV11 = endpointConverterCloudV11;
-        this.ldapCloudAdminRepository = ldapCloudAdminRepository;
     }
 
     // Token Methods
