@@ -52,11 +52,8 @@ public class DefaultCloud11Service implements Cloud11Service {
     private final EndpointService endpointService;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ScopeAccessService scopeAccessService;
-    private final LdapCloudAdminRepository ldapCloudAdminRepository;
-
     private final UserConverterCloudV11 userConverterCloudV11;
     private final UserService userService;
-
     private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
 
     @Autowired
