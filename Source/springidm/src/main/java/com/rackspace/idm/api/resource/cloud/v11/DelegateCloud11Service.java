@@ -171,28 +171,15 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder getEnabledBaseURL(
-            HttpServletRequest request, String serviceName, HttpHeaders httpHeaders)
+    public Response.ResponseBuilder getEnabledBaseURL(HttpServletRequest request, String serviceName, HttpHeaders httpHeaders)
             throws IOException {
-
-        Response.ResponseBuilder serviceResponse = getCloud11Service()
-                .getEnabledBaseURL(request, serviceName, httpHeaders);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND
-                || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        if(isCloudAuthRoutingEnabled() && !isGASourceOfTruth()){
             HashMap<String, String> queryParams = new HashMap<String, String>();
             queryParams.put("serviceName", serviceName);
-            String path = getCloudAuthV11Url().concat(
-                    getPath("baseURLs/enabled", queryParams));
+            String path = getCloudAuthV11Url().concat(getPath("baseURLs/enabled", queryParams));
             return cloudClient.get(path, httpHeaders);
         }
-
-        return serviceResponse;
+        return defaultCloud11Service.getEnabledBaseURL(request, serviceName, httpHeaders);
     }
 
     @Override
