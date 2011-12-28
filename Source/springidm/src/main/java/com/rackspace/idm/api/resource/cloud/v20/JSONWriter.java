@@ -138,20 +138,27 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                 JSONObject templateItem = new JSONObject();
                 templateItem.put(JSONConstants.ID, template.getId());
                 templateItem.put(JSONConstants.ENABLED, template.isEnabled());
-                if(template.getRegion() != null)
+                if(template.getRegion() != null){
                     templateItem.put(JSONConstants.REGION, template.getRegion());
-                if(template.getPublicURL() != null)
+                }
+                if(template.getPublicURL() != null){
                     templateItem.put(JSONConstants.PUBLIC_URL, template.getPublicURL());
-                if(template.getRegion() != null)
+                }
+                if(template.getRegion() != null){
                     templateItem.put(JSONConstants.GLOBAL, template.isGlobal());
-                if(template.getName() != null)
+                }
+                if(template.getName() != null){
                     templateItem.put(JSONConstants.NAME, template.getName());
-                if(template.getAdminURL() != null)
+                }
+                if(template.getAdminURL() != null){
                     templateItem.put(JSONConstants.ADMIN_URL, template.getAdminURL());
-                if(template.getType() != null)
+                }
+                if(template.getType() != null){
                     templateItem.put(JSONConstants.TYPE, template.getType());
-                if(template.getInternalURL() != null)
+                }
+                if(template.getInternalURL() != null){
                     templateItem.put(JSONConstants.INTERNAL_URL, template.getInternalURL());
+                }
                 if(template.getVersion() != null){
                     templateItem.put(JSONConstants.VERSION_ID, template.getVersion().getId());
                     templateItem.put(JSONConstants.VERSION_INFO, template.getVersion().getInfo());
@@ -264,12 +271,15 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             JSONObject inner = new JSONObject();
             inner.put(JSONConstants.ID, user.getId());
             inner.put(JSONConstants.ENABLED, user.isEnabled());
-            if(user.getKey() != null)
+            if(user.getKey() != null){
                 inner.put(JSONConstants.KEY, user.getKey());
-            if(user.getMossoId() != null)
+            }
+            if(user.getMossoId() != null){
                 inner.put(JSONConstants.MOSSO_ID, user.getMossoId());
-            if(user.getNastId() != null)
+            }
+            if(user.getNastId() != null){
                 inner.put(JSONConstants.NAST_ID, user.getNastId());
+            }
             //inner.put(JSONConstants.CREATED, user.getCreated());
             //inner.put(JSONConstants.UPDATED, user.getUpdated());
             JSONArray baseUrls = new JSONArray();
@@ -301,9 +311,9 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     private JSONObject getTokenUser(UserForAuthenticateResponse user){
         JSONObject userInner = new JSONObject();
         userInner.put(JSONConstants.ID, user.getId());
-        if(user.getName() != null)
+        if(user.getName() != null){
             userInner.put(JSONConstants.NAME, user.getName());
-
+        }
         JSONArray roleInner = new JSONArray();
         userInner.put(JSONConstants.ROLES, roleInner);
         RoleList roleList = user.getRoles();
@@ -318,10 +328,12 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         JSONObject userInner = new JSONObject();
         userInner.put(JSONConstants.ID, tenant.getId());
         userInner.put(JSONConstants.ENABLED, tenant.isEnabled());
-        if(tenant.getName() != null)
+        if(tenant.getName() != null){
             userInner.put(JSONConstants.NAME, tenant.getName());
-        if(tenant.getDescription() != null)
+        }
+        if(tenant.getDescription() != null){
             userInner.put(JSONConstants.DESCRIPTION, tenant.getDescription());
+        }
         //userInner.put(JSONConstants.DISPLAY_NAME, tenant.getDisplayName());
         //userInner.put(JSONConstants.CREATED, tenant.getCreated().toString());
         return userInner;
@@ -334,10 +346,12 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             for(ServiceForCatalog service : serviceCatalog.getService()){
                 JSONObject catalogItem = new JSONObject();
                 catalogItem.put(JSONConstants.ENDPOINTS, getEndpointsForCatalog(service.getEndpoint()));
-                if(service.getName() != null)
+                if(service.getName() != null){
                     catalogItem.put(JSONConstants.NAME, service.getName());
-                if(service.getType() != null)
+                }
+                if(service.getType() != null){
                     catalogItem.put(JSONConstants.TYPE, service.getType());
+                }
                 serviceInner.add(catalogItem);
             }
         }
@@ -357,14 +371,18 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         JSONArray endpointList = new JSONArray();
         for(EndpointForService endpoint : endpoints){
             JSONObject endpointItem = new JSONObject();
-            if(endpoint.getTenantId() != null)
+            if(endpoint.getTenantId() != null){
                 endpointItem.put(JSONConstants.TENANT_ID, endpoint.getTenantId());
-            if(endpoint.getPublicURL() != null)
+            }
+            if(endpoint.getPublicURL() != null){
                 endpointItem.put(JSONConstants.PUBLIC_URL, endpoint.getPublicURL());
-            if(endpoint.getInternalURL() != null)
+            }
+            if(endpoint.getInternalURL() != null){
                 endpointItem.put(JSONConstants.INTERNAL_URL, endpoint.getInternalURL());
-            if(endpoint.getRegion() != null)
+            }
+            if(endpoint.getRegion() != null){
                 endpointItem.put(JSONConstants.REGION, endpoint.getRegion());
+            }
             if(endpoint.getVersion() != null){
                 endpointItem.put(JSONConstants.VERSION_INFO, endpoint.getVersion().getInfo());
                 endpointItem.put(JSONConstants.VERSION_LIST, endpoint.getVersion().getList());
@@ -420,12 +438,15 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     private JSONObject getRole(Role role) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, role.getId());
-        if(role.getDescription() != null)
+        if(role.getDescription() != null){
             outer.put(JSONConstants.DESCRIPTION, role.getDescription());
-        if(role.getName() != null)
+        }
+        if(role.getName() != null){
             outer.put(JSONConstants.NAME, role.getName());
-        if(role.getServiceId() != null)
+        }
+        if(role.getServiceId() != null){
             outer.put(JSONConstants.SERVICE_ID, role.getServiceId());
+        }
         return outer;
     }
 
@@ -452,8 +473,9 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, group.getId());
         outer.put(JSONConstants.NAME, group.getName());
-        if(group.getDescription() != null)
+        if(group.getDescription() != null){
             outer.put(JSONConstants.DESCRIPTION, group.getDescription());
+        }
         return outer;
     }
 
@@ -470,8 +492,9 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         outer.put(JSONConstants.ID, service.getId());
         outer.put(JSONConstants.NAME, service.getName());
         outer.put(JSONConstants.TYPE, service.getType());
-        if(service.getDescription() != null)
+        if(service.getDescription() != null){
             outer.put(JSONConstants.DESCRIPTION, service.getDescription());
+        }
         return outer;
     }
 
@@ -489,8 +512,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     @SuppressWarnings("unchecked")
     private JSONObject getEndpointTemplate(EndpointTemplate template) {
         JSONObject outer = new JSONObject();
-        outer.put(JSONConstants.ENDPOINT_TEMPLATE,
-            getEndpointTemplateWithoutWrapper(template));
+        outer.put(JSONConstants.ENDPOINT_TEMPLATE, getEndpointTemplateWithoutWrapper(template));
         return outer;
     }
 
@@ -499,18 +521,24 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         EndpointTemplate template) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, template.getId());
-        if(template.getAdminURL() != null)
+        if(template.getAdminURL() != null){
             outer.put(JSONConstants.ADMIN_URL, template.getAdminURL());
-        if(template.getInternalURL() != null)
+        }
+        if(template.getInternalURL() != null){
             outer.put(JSONConstants.INTERNAL_URL, template.getInternalURL());
-        if(template.getName() != null)
+        }
+        if(template.getName() != null){
             outer.put(JSONConstants.NAME, template.getName());
-        if(template.getPublicURL() != null)
+        }
+        if(template.getPublicURL() != null){
             outer.put(JSONConstants.PUBLIC_URL, template.getPublicURL());
-        if(template.getType() != null)
+        }
+        if(template.getType() != null){
             outer.put(JSONConstants.TYPE, template.getType());
-        if(template.getRegion() != null)
+        }
+        if(template.getRegion() != null){
             outer.put(JSONConstants.REGION, template.getRegion());
+        }
         outer.put(JSONConstants.GLOBAL, template.isGlobal());
         outer.put(JSONConstants.ENABLED, template.isEnabled());
         if (template.getVersion() != null) {
@@ -539,16 +567,21 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         JSONObject baseURL = new JSONObject();
         baseURL.put(JSONConstants.ENABLED, url.isEnabled());
         baseURL.put(JSONConstants.DEFAULT, url.isDefault());
-        if(url.getInternalURL() != null)
+        if(url.getInternalURL() != null){
         baseURL.put(JSONConstants.INTERNAL_URL, url.getInternalURL());
-        if(url.getPublicURL() != null)
+        }
+        if(url.getPublicURL() != null){
             baseURL.put(JSONConstants.PUBLIC_URL, url.getPublicURL());
-        if(url.getRegion() != null)
+        }
+        if(url.getRegion() != null){
             baseURL.put(JSONConstants.REGION, url.getRegion());
-        if(url.getServiceName() != null)
+        }
+        if(url.getServiceName() != null){
             baseURL.put(JSONConstants.SERVICE_NAME, url.getServiceName());
-        if(url.getUserType() != null)
+        }
+        if(url.getUserType() != null){
             baseURL.put(JSONConstants.USER_TYPE, url.getUserType().name());
+        }
         baseURL.put(JSONConstants.ID, url.getId());
         return baseURL;
     }
@@ -576,18 +609,24 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     private JSONObject getEndpoint(Endpoint endpoint){
         JSONObject endpointItem = new JSONObject();
         endpointItem.put(JSONConstants.ID, endpoint.getId());
-        if(endpoint.getRegion() != null)
+        if(endpoint.getRegion() != null){
             endpointItem.put(JSONConstants.REGION, endpoint.getRegion());
-        if(endpoint.getPublicURL() != null)
+        }
+        if(endpoint.getPublicURL() != null){
             endpointItem.put(JSONConstants.PUBLIC_URL, endpoint.getPublicURL());
-        if(endpoint.getName() != null)
+        }
+        if(endpoint.getName() != null){
             endpointItem.put(JSONConstants.NAME, endpoint.getName());
-        if(endpoint.getAdminURL() != null)
+        }
+        if(endpoint.getAdminURL() != null){
             endpointItem.put(JSONConstants.ADMIN_URL, endpoint.getAdminURL());
-        if(endpoint.getType() != null)
+        }
+        if(endpoint.getType() != null){
             endpointItem.put(JSONConstants.TYPE, endpoint.getType());
-        if(endpoint.getInternalURL() != null)
+        }
+        if(endpoint.getInternalURL() != null){
             endpointItem.put(JSONConstants.INTERNAL_URL, endpoint.getInternalURL());
+        }
         if(endpoint.getVersion() != null){
             endpointItem.put(JSONConstants.VERSION_ID, endpoint.getVersion().getId());
             endpointItem.put(JSONConstants.VERSION_INFO, endpoint.getVersion().getInfo());
@@ -626,12 +665,15 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     @SuppressWarnings("unchecked")
     private JSONObject getLinkWithoutWrapper(Link link) {
         JSONObject outer = new JSONObject();
-        if(link.getRel() != null)
+        if(link.getRel() != null){
             outer.put(JSONConstants.REL, link.getRel().toString());
-        if(link.getType() != null)
+        }
+        if(link.getType() != null){
             outer.put(JSONConstants.TYPE, link.getType());
-        if(link.getHref() != null)
+        }
+        if(link.getHref() != null){
             outer.put(JSONConstants.HREF, link.getHref());
+        }
         return outer;
     }
 
