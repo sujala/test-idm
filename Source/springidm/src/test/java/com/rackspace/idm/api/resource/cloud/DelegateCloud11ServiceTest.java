@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.internal.verification.VerificationModeFactory;
@@ -75,6 +76,33 @@ public class DelegateCloud11ServiceTest {
         when(config.getString("cloudAuth11url")).thenReturn(url);
         when(httpHeaders.getMediaType()).thenReturn(new MediaType("application/json", null));
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
+    }
+
+    //TODO remove ignore once code is in place
+    @Ignore
+    @Test
+    public void authenticate_routingTrue_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        delegateCloud11Service.authenticate(null,null,null,null);
+        verify(cloudClient).post(eq(url + "token"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString());
+    }
+
+    //TODO remove ignore once code is in place
+    @Ignore
+    @Test
+    public void authenticate_routingFalse_DoesNotCallClient() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        delegateCloud11Service.authenticate(null,null,null,null);
+        verify(cloudClient,times(0)).post(eq(url+"token"),Matchers.<javax.ws.rs.core.HttpHeaders>any(),anyString());
+    }
+    
+    //TODO remove ignore once code is in place
+    @Ignore
+    @Test
+    public void authenticate_routingFalse_CallsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        delegateCloud11Service.authenticate(null,null,null,null);
+        verify(defaultCloud11Service).authenticate(null,null,null,null);
     }
 
     @Test
@@ -665,23 +693,23 @@ public class DelegateCloud11ServiceTest {
     public void getUser_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(ldapUserRepository.getUserByUsername(userId)).thenReturn(null);
-        delegateCloud11Service.getUser(null,userId,null);
-        verify(defaultCloud11Service).getUser(null,userId,null);
+        delegateCloud11Service.getUser(null, userId, null);
+        verify(defaultCloud11Service).getUser(null, userId, null);
     }
 
     @Test
     public void getUser_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        delegateCloud11Service.getUser(null,userId,null);
-        verify(defaultCloud11Service).getUser(null,userId,null);
+        delegateCloud11Service.getUser(null, userId, null);
+        verify(defaultCloud11Service).getUser(null, userId, null);
     }
 
     @Test
     public void getUser_RoutingTrue_userExistsFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(ldapUserRepository.getUserByUsername(userId)).thenReturn(null);
-        delegateCloud11Service.getUser(null,userId,null);
+        delegateCloud11Service.getUser(null, userId, null);
         verify(cloudClient).get(eq(url + "users/" + userId), Matchers.<javax.ws.rs.core.HttpHeaders>any());
     }
 
@@ -689,31 +717,31 @@ public class DelegateCloud11ServiceTest {
     public void getUser_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        delegateCloud11Service.getUser(null,userId,null);
-        verify(defaultCloud11Service).getUser(null,userId,null);
+        delegateCloud11Service.getUser(null, userId, null);
+        verify(defaultCloud11Service).getUser(null, userId, null);
     }
 
     @Test
     public void getUserFromNastId_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(ldapUserRepository.getUserByNastId(userId)).thenReturn(null);
-        delegateCloud11Service.getUserFromNastId(null,userId,null);
-        verify(defaultCloud11Service).getUserFromNastId(null,userId,null);
+        delegateCloud11Service.getUserFromNastId(null, userId, null);
+        verify(defaultCloud11Service).getUserFromNastId(null, userId, null);
     }
 
     @Test
     public void getUserFromNastId_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(ldapUserRepository.getUserByNastId(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        delegateCloud11Service.getUserFromNastId(null,userId,null);
-        verify(defaultCloud11Service).getUserFromNastId(null,userId,null);
+        delegateCloud11Service.getUserFromNastId(null, userId, null);
+        verify(defaultCloud11Service).getUserFromNastId(null, userId, null);
     }
 
     @Test
     public void getUserFromNastId_RoutingTrue_userExistsFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(ldapUserRepository.getUserByNastId(userId)).thenReturn(null);
-        delegateCloud11Service.getUserFromNastId(null,userId,null);
+        delegateCloud11Service.getUserFromNastId(null, userId, null);
         verify(cloudClient).get(eq(url + "nast/" + userId), Matchers.<javax.ws.rs.core.HttpHeaders>any());
     }
 
@@ -721,31 +749,31 @@ public class DelegateCloud11ServiceTest {
     public void getUserFromNastId_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(ldapUserRepository.getUserByNastId(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        delegateCloud11Service.getUserFromNastId(null,userId,null);
-        verify(defaultCloud11Service).getUserFromNastId(null,userId,null);
+        delegateCloud11Service.getUserFromNastId(null, userId, null);
+        verify(defaultCloud11Service).getUserFromNastId(null, userId, null);
     }
 
     @Test
     public void getUserFromMossoId_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(ldapUserRepository.getUserByMossoId(0)).thenReturn(null);
-        delegateCloud11Service.getUserFromMossoId(null,0,null);
-        verify(defaultCloud11Service).getUserFromMossoId(null,0,null);
+        delegateCloud11Service.getUserFromMossoId(null, 0, null);
+        verify(defaultCloud11Service).getUserFromMossoId(null, 0, null);
     }
 
     @Test
     public void getUserFromMossoId_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(ldapUserRepository.getUserByMossoId(0)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        delegateCloud11Service.getUserFromMossoId(null,0,null);
-        verify(defaultCloud11Service).getUserFromMossoId(null,0,null);
+        delegateCloud11Service.getUserFromMossoId(null, 0, null);
+        verify(defaultCloud11Service).getUserFromMossoId(null, 0, null);
     }
 
     @Test
     public void getUserFromMossoId_RoutingTrue_userExistsFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(ldapUserRepository.getUserByMossoId(0)).thenReturn(null);
-        delegateCloud11Service.getUserFromMossoId(null,0,null);
+        delegateCloud11Service.getUserFromMossoId(null, 0, null);
         verify(cloudClient).get(eq(url + "mosso/" + 0), Matchers.<javax.ws.rs.core.HttpHeaders>any());
     }
 
@@ -753,31 +781,31 @@ public class DelegateCloud11ServiceTest {
     public void getUserFromMossoId_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(ldapUserRepository.getUserByMossoId(0)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        delegateCloud11Service.getUserFromMossoId(null,0,null);
-        verify(defaultCloud11Service).getUserFromMossoId(null,0,null);
+        delegateCloud11Service.getUserFromMossoId(null, 0, null);
+        verify(defaultCloud11Service).getUserFromMossoId(null, 0, null);
     }
 
     @Test
     public void getBaseURLId_routingFalse_gaSourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud11Service.getBaseURLId(null, 0,null,null);
-        verify(defaultCloud11Service).getBaseURLId(null, 0,null,null);
+        delegateCloud11Service.getBaseURLId(null, 0, null, null);
+        verify(defaultCloud11Service).getBaseURLId(null, 0, null, null);
     }
 
     @Test
     public void getBaseURLId_routingFalse_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud11Service.getBaseURLId(null, 0,null,null);
-        verify(defaultCloud11Service).getBaseURLId(null, 0,null,null);
+        delegateCloud11Service.getBaseURLId(null, 0, null, null);
+        verify(defaultCloud11Service).getBaseURLId(null, 0, null, null);
     }
 
     @Test
     public void getBaseURLId_routingTrue_gaSourceOfTruthFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud11Service.getBaseURLId(null, 0,null,null);
+        delegateCloud11Service.getBaseURLId(null, 0, null, null);
         verify(cloudClient).get(url + "baseURLs/" + 0, null);
     }
 
@@ -785,31 +813,31 @@ public class DelegateCloud11ServiceTest {
     public void getBaseURLId_routingTrue_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud11Service.getBaseURLId(null, 0,null,null);
-        verify(defaultCloud11Service).getBaseURLId(null, 0,null,null);
+        delegateCloud11Service.getBaseURLId(null, 0, null, null);
+        verify(defaultCloud11Service).getBaseURLId(null, 0, null, null);
     }
 
     @Test
     public void getEnabledBaseURL_routingFalse_gaSourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud11Service.getEnabledBaseURL(null,null,null);
-        verify(defaultCloud11Service).getEnabledBaseURL(null, null,null);
+        delegateCloud11Service.getEnabledBaseURL(null, null, null);
+        verify(defaultCloud11Service).getEnabledBaseURL(null, null, null);
     }
 
     @Test
     public void getEnabledBaseURL_routingFalse_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud11Service.getEnabledBaseURL(null, null,null);
-        verify(defaultCloud11Service).getEnabledBaseURL(null, null,null);
+        delegateCloud11Service.getEnabledBaseURL(null, null, null);
+        verify(defaultCloud11Service).getEnabledBaseURL(null, null, null);
     }
 
     @Test
     public void getEnabledBaseURL_routingTrue_gaSourceOfTruthFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud11Service.getEnabledBaseURL(null, null,null);
+        delegateCloud11Service.getEnabledBaseURL(null, null, null);
         verify(cloudClient).get(url + "baseURLs/enabled", null);
     }
 
@@ -817,31 +845,31 @@ public class DelegateCloud11ServiceTest {
     public void getEnabledBaseURL_routingTrue_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud11Service.getEnabledBaseURL(null, null,null);
-        verify(defaultCloud11Service).getEnabledBaseURL(null, null,null);
+        delegateCloud11Service.getEnabledBaseURL(null, null, null);
+        verify(defaultCloud11Service).getEnabledBaseURL(null, null, null);
     }
 
     @Test
     public void getBaseURLs_routingFalse_gaSourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud11Service.getBaseURLs(null,null,null);
-        verify(defaultCloud11Service).getBaseURLs(null, null,null);
+        delegateCloud11Service.getBaseURLs(null, null, null);
+        verify(defaultCloud11Service).getBaseURLs(null, null, null);
     }
 
     @Test
     public void getBaseURLs_routingFalse_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud11Service.getBaseURLs(null, null,null);
-        verify(defaultCloud11Service).getBaseURLs(null, null,null);
+        delegateCloud11Service.getBaseURLs(null, null, null);
+        verify(defaultCloud11Service).getBaseURLs(null, null, null);
     }
 
     @Test
     public void getBaseURLs_routingTrue_gaSourceOfTruthFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud11Service.getBaseURLs(null, "serviceFoo",null);
+        delegateCloud11Service.getBaseURLs(null, "serviceFoo", null);
         verify(cloudClient).get(url + "baseURLs?serviceName=serviceFoo", null);
     }
 
@@ -849,7 +877,7 @@ public class DelegateCloud11ServiceTest {
     public void getBaseURLs_routingTrue_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud11Service.getBaseURLs(null, null,null);
-        verify(defaultCloud11Service).getBaseURLs(null, null,null);
+        delegateCloud11Service.getBaseURLs(null, null, null);
+        verify(defaultCloud11Service).getBaseURLs(null, null, null);
     }
 }
