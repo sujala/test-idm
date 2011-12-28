@@ -149,7 +149,7 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder getBaseURLs(HttpServletRequest request, String serviceName, HttpHeaders httpHeaders) throws IOException {
-        if (isCloudAuthRoutingEnabled()) {
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             HashMap<String, String> queryParams = new HashMap<String, String>();
             queryParams.put("serviceName", serviceName);
             String path = getCloudAuthV11Url().concat(getPath("baseURLs", queryParams));
