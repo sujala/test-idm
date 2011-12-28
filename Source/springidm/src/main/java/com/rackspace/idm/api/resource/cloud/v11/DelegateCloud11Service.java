@@ -134,17 +134,11 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder getUserFromNastId(HttpServletRequest request, String nastId, HttpHeaders httpHeaders)
-            throws IOException {
-        Response.ResponseBuilder serviceResponse = getCloud11Service().getUserFromNastId(request, nastId, httpHeaders);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+    public Response.ResponseBuilder getUserFromNastId(HttpServletRequest request, String nastId, HttpHeaders httpHeaders) throws IOException {
+        if(isCloudAuthRoutingEnabled() && !userExistsInGAByNastId(nastId)){
             return cloudClient.get(getCloudAuthV11Url().concat("nast/" + nastId), httpHeaders);
         }
-        return serviceResponse;
+        return defaultCloud11Service.getUserFromNastId(request, nastId, httpHeaders);
     }
 
     @Override
@@ -380,6 +374,14 @@ public class DelegateCloud11Service implements Cloud11Service {
         } else {
             return defaultCloud11Service;
         }
+    }
+
+    boolean userExistsInGAByNastId(String nastId){
+        com.rackspace.idm.domain.entity.User userById = ldapUserRepository.getUserByNastId(nastId);
+        if (userById == null) {
+            return false;
+        }
+        return true;
     }
 
     boolean userExistsInGA(String username) {

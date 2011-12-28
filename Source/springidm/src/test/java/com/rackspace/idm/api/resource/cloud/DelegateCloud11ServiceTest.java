@@ -694,6 +694,38 @@ public class DelegateCloud11ServiceTest {
     }
 
     @Test
+    public void getUserFromNastId_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(ldapUserRepository.getUserByNastId(userId)).thenReturn(null);
+        delegateCloud11Service.getUserFromNastId(null,userId,null);
+        verify(defaultCloud11Service).getUserFromNastId(null,userId,null);
+    }
+
+    @Test
+    public void getUserFromNastId_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(ldapUserRepository.getUserByNastId(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        delegateCloud11Service.getUserFromNastId(null,userId,null);
+        verify(defaultCloud11Service).getUserFromNastId(null,userId,null);
+    }
+
+    @Test
+    public void getUserFromNastId_RoutingTrue_userExistsFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(ldapUserRepository.getUserByNastId(userId)).thenReturn(null);
+        delegateCloud11Service.getUserFromNastId(null,userId,null);
+        verify(cloudClient).get(eq(url + "nast/" + userId), Matchers.<javax.ws.rs.core.HttpHeaders>any());
+    }
+
+    @Test
+    public void getUserFromNastId_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(ldapUserRepository.getUserByNastId(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        delegateCloud11Service.getUserFromNastId(null,userId,null);
+        verify(defaultCloud11Service).getUserFromNastId(null,userId,null);
+    }
+
+    @Test
     public void getBaseURLId_routingFalse_gaSourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
