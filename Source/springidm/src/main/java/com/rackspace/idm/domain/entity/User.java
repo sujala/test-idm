@@ -1,19 +1,17 @@
 package com.rackspace.idm.domain.entity;
 
-import java.util.List;
-import java.util.Locale;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-
+import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.validator.constraints.Length;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.validation.MessageTexts;
-import com.rackspace.idm.validation.RegexPatterns;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import java.util.List;
+import java.util.Locale;
 
 public class User implements Auditable {
     private static final long serialVersionUID = 1347677880811855274L;
@@ -444,32 +442,34 @@ public class User implements Auditable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass()) {return false;}
 
         User user = (User) o;
 
-        if (apiKey != null ? !apiKey.equals(user.apiKey) : user.apiKey != null) return false;
-        if (country != null ? !country.equals(user.country) : user.country != null) return false;
-        if (created != null ? !created.equals(user.created) : user.created != null) return false;
-        if (credential != null ? !credential.equals(user.credential) : user.credential != null) return false;
-        if (customerId != null ? !customerId.equals(user.customerId) : user.customerId != null) return false;
-        if (displayName != null ? !displayName.equals(user.displayName) : user.displayName != null) return false;
-        if (email != null ? !email.equals(user.email) : user.email != null) return false;
-        if (id != null ? !id.equals(user.id) : user.id != null) return false;
-        if (maxLoginFailuresExceded != null ? !maxLoginFailuresExceded.equals(user.maxLoginFailuresExceded) : user.maxLoginFailuresExceded != null)
+        if (apiKey != null ? !apiKey.equals(user.apiKey) : user.apiKey != null) {return false;}
+        if (country != null ? !country.equals(user.country) : user.country != null) {return false;}
+        if (created != null ? !created.equals(user.created) : user.created != null) {return false;}
+        if (credential != null ? !credential.equals(user.credential) : user.credential != null) {return false;}
+        if (customerId != null ? !customerId.equals(user.customerId) : user.customerId != null) {return false;}
+        if (displayName != null ? !displayName.equals(user.displayName) : user.displayName != null) {return false;}
+        if (email != null ? !email.equals(user.email) : user.email != null) {return false;}
+        if (id != null ? !id.equals(user.id) : user.id != null) {return false;}
+        if (maxLoginFailuresExceded != null ? !maxLoginFailuresExceded.equals(user.maxLoginFailuresExceded) : user.maxLoginFailuresExceded != null){
             return false;
-        if (mossoId != null ? !mossoId.equals(user.mossoId) : user.mossoId != null) return false;
-        if (name != null ? !name.equals(user.name) : user.name != null) return false;
-        if (nastId != null ? !nastId.equals(user.nastId) : user.nastId != null) return false;
-        if (personId != null ? !personId.equals(user.personId) : user.personId != null) return false;
-        if (preference != null ? !preference.equals(user.preference) : user.preference != null) return false;
-        if (region != null ? !region.equals(user.region) : user.region != null) return false;
-        if (secureId != null ? !secureId.equals(user.secureId) : user.secureId != null) return false;
-        if (softDeletedTimestamp != null ? !softDeletedTimestamp.equals(user.softDeletedTimestamp) : user.softDeletedTimestamp != null)
+        }
+        if (mossoId != null ? !mossoId.equals(user.mossoId) : user.mossoId != null) {return false;}
+        if (name != null ? !name.equals(user.name) : user.name != null) {return false;}
+        if (nastId != null ? !nastId.equals(user.nastId) : user.nastId != null) {return false;}
+        if (personId != null ? !personId.equals(user.personId) : user.personId != null) {return false;}
+        if (preference != null ? !preference.equals(user.preference) : user.preference != null) {return false;}
+        if (region != null ? !region.equals(user.region) : user.region != null) {return false;}
+        if (secureId != null ? !secureId.equals(user.secureId) : user.secureId != null) {return false;}
+        if (softDeletedTimestamp != null ? !softDeletedTimestamp.equals(user.softDeletedTimestamp) : user.softDeletedTimestamp != null){
             return false;
-        if (uniqueId != null ? !uniqueId.equals(user.uniqueId) : user.uniqueId != null) return false;
-        if (updated != null ? !updated.equals(user.updated) : user.updated != null) return false;
-        if (username != null ? !username.equals(user.username) : user.username != null) return false;
+        }
+        if (uniqueId != null ? !uniqueId.equals(user.uniqueId) : user.uniqueId != null) {return false;}
+        if (updated != null ? !updated.equals(user.updated) : user.updated != null) {return false;}
+        if (username != null ? !username.equals(user.username) : user.username != null) {return false;}
 
         return true;
     }
