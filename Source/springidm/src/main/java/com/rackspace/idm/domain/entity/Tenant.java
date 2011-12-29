@@ -13,49 +13,48 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_TENANT)
-public class Tenant implements Auditable{
+@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_TENANT)
+public class Tenant implements Auditable {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
-    
-    @LDAPField(attribute=LdapRepository.ATTR_ID, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+
+    @LDAPField(attribute = LdapRepository.ATTR_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String tenantId;
-    
-    @LDAPField(attribute=LdapRepository.ATTR_ENABLED, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+
+    @LDAPField(attribute = LdapRepository.ATTR_ENABLED, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private Boolean enabled;
-    
-    @LDAPField(attribute=LdapRepository.ATTR_DESCRIPTION, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+
+    @LDAPField(attribute = LdapRepository.ATTR_DESCRIPTION, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String description;
-    
-    @LDAPField(attribute=LdapRepository.ATTR_NAME, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+
+    @LDAPField(attribute = LdapRepository.ATTR_NAME, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String name;
-    
-    @LDAPField(attribute=LdapRepository.ATTR_TENANT_DISPLAY_NAME, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+
+    @LDAPField(attribute = LdapRepository.ATTR_TENANT_DISPLAY_NAME, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String displayName;
-    
-    @LDAPField(attribute=LdapRepository.ATTR_CREATED_DATE, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+
+    @LDAPField(attribute = LdapRepository.ATTR_CREATED_DATE, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private Date created;
-    
-    @LDAPField(attribute=LdapRepository.ATTR_UPDATED_DATE, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+
+    @LDAPField(attribute = LdapRepository.ATTR_UPDATED_DATE, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private Date updated;
-    
-    @LDAPField(attribute=LdapRepository.ATTR_BASEURL_ID, objectClass=LdapRepository.OBJECTCLASS_TENANT, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+
+    @LDAPField(attribute = LdapRepository.ATTR_BASEURL_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String[] baseUrlIds;
-    
+
     public ReadOnlyEntry getLDAPEntry() {
         return ldapEntry;
     }
-    
+
     public String getUniqueId() {
         if (ldapEntry == null) {
             return null;
-        }
-        else {
+        } else {
             return ldapEntry.getDN();
         }
     }
-    
+
     public String getTenantId() {
         return tenantId;
     }
@@ -87,7 +86,7 @@ public class Tenant implements Auditable{
     public void setName(String name) {
         this.name = name;
     }
-    
+
     public String getDisplayName() {
         return displayName;
     }
@@ -109,9 +108,13 @@ public class Tenant implements Auditable{
     }
 
     public void setBaseUrlIds(String[] baseUrlIds) {
-        this.baseUrlIds = baseUrlIds;
+        if (baseUrlIds != null) {
+            this.baseUrlIds = baseUrlIds.clone();
+        } else {
+            this.baseUrlIds = null;
+        }
     }
-    
+
     public void addBaseUrlId(String baseUrlId) {
         List<String> baseUrls = new ArrayList<String>();
         if (baseUrlIds != null) {
@@ -145,7 +148,7 @@ public class Tenant implements Auditable{
     }
 
     public void copyChanges(Tenant modifiedTenant) {
-        
+
         if (modifiedTenant.getDescription() != null) {
             if (StringUtils.isBlank(modifiedTenant.getDescription())) {
                 setDescription(null);
@@ -153,7 +156,7 @@ public class Tenant implements Auditable{
                 setDescription(modifiedTenant.getDescription());
             }
         }
-        
+
         if (modifiedTenant.getName() != null) {
             if (StringUtils.isBlank(modifiedTenant.getName())) {
                 setDescription(null);
@@ -161,7 +164,7 @@ public class Tenant implements Auditable{
                 setDescription(modifiedTenant.getName());
             }
         }
-        
+
         if (modifiedTenant.isEnabled() != null) {
             setEnabled(modifiedTenant.isEnabled());
         }

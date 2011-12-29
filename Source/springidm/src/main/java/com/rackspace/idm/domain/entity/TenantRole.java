@@ -1,10 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
@@ -12,13 +7,18 @@ import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_TENANT_ROLE)
 public class TenantRole implements Auditable {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
-    
-    @LDAPField(attribute=LdapRepository.ATTR_ROLE_RS_ID, objectClass=LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+
+    @LDAPField(attribute = LdapRepository.ATTR_ROLE_RS_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String roleRsId;
 
     @LDAPField(attribute = LdapRepository.ATTR_TENANT_RS_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
@@ -26,14 +26,14 @@ public class TenantRole implements Auditable {
 
     @LDAPField(attribute = LdapRepository.ATTR_CLIENT_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String clientId;
-    
+
     @LDAPField(attribute = LdapRepository.ATTR_USER_RS_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String userId;
 
     public ReadOnlyEntry getLDAPEntry() {
         return ldapEntry;
     }
-    
+
     private String name;
     private String description;
 
@@ -90,7 +90,11 @@ public class TenantRole implements Auditable {
     }
 
     public void setTenantIds(String[] tenantIds) {
-        this.tenantIds = tenantIds;
+        if (tenantIds != null) {
+            this.tenantIds = tenantIds.clone();
+        } else {
+            this.tenantIds = null;
+        }
     }
 
     public void addTenantId(String tenantId) {
@@ -130,7 +134,7 @@ public class TenantRole implements Auditable {
         final int prime = 31;
         int result = 1;
         result = prime * result
-            + ((clientId == null) ? 0 : clientId.hashCode());
+                + ((clientId == null) ? 0 : clientId.hashCode());
         result = prime * result + ((roleRsId == null) ? 0 : roleRsId.hashCode());
         result = prime * result + Arrays.hashCode(tenantIds);
         return result;
