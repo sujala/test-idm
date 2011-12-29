@@ -481,7 +481,7 @@ public abstract class LdapRepository {
     }
 
     protected static class LdapSearchBuilder {
-        List<Filter> filters;
+        private List<Filter> filters;
 
         public LdapSearchBuilder() {
             filters = new ArrayList<Filter>();

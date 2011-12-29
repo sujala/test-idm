@@ -8,7 +8,7 @@ import org.springframework.jmx.export.annotation.ManagedResource;
 
 @ManagedResource
 public class LoggerMBean {
-	Logger l = Logger.getLogger("com.rackspace.idm");
+	private Logger l = Logger.getLogger("com.rackspace.idm");
 
 	@ManagedAttribute
 	public String getLogLevel() {
