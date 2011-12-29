@@ -48,7 +48,7 @@ public class ParentResource {
     }
     
 	protected class FilterBuilder {
-		List<FilterParam> filters = new ArrayList<FilterParam> ();
+		private List<FilterParam> filters = new ArrayList<FilterParam> ();
 		
 		public void addFilter(FilterParamName paramName, String value) {
 			if (!StringUtils.isBlank(value)) {
