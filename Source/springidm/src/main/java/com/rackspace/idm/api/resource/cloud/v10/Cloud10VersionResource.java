@@ -16,6 +16,7 @@ import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -97,14 +98,19 @@ public class Cloud10VersionResource {
 
         User user = this.userService.getUser(username);
 
-        if (user == null) {
-            if (useCloudAuth()) {
-                return cloudClient.get(getCloudAuthV10Url(), httpHeaders).build();
-            } else {
-                String errMsg = "Bad username or password";
-                return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(errMsg).build();
+        if(useCloudAuth()) {
+            Response cloudResponse = cloudClient.get(getCloudAuthV10Url(), httpHeaders).build();
+            if (cloudResponse.getStatus() == 204 && user != null) {
+                String token = cloudResponse.getMetadata().getFirst("X-Auth-Token").toString();
+                scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token,
+                        new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+                return cloudResponse;
+            }else if (user == null) {
+                return cloudResponse;
             }
         }
+        if (user == null)
+            return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity("Bad username or password").build();
 
         try {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
@@ -188,5 +194,11 @@ public class Cloud10VersionResource {
         if (value != null && !StringUtils.isEmpty(value)) {
             builder.header(headerName, value);
         }
+
+
+    }
+
+    private int getDefaultCloudAuthTokenExpirationSeconds() {
+        return config.getInt("token.cloudAuthExpirationSeconds");
     }
 }

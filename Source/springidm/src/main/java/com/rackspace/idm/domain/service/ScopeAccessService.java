@@ -1,19 +1,9 @@
 package com.rackspace.idm.domain.service;
 
-import java.util.List;
+import com.rackspace.idm.domain.entity.*;
 
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
-import com.rackspace.idm.domain.entity.DelegatedPermission;
-import com.rackspace.idm.domain.entity.GrantedPermission;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
-import com.rackspace.idm.domain.entity.Permission;
-import com.rackspace.idm.domain.entity.RackerScopeAccess;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
+import java.util.Date;
+import java.util.List;
 
 public interface ScopeAccessService {
 
@@ -65,6 +55,8 @@ public interface ScopeAccessService {
     ScopeAccess getScopeAccessByRefreshToken(String refreshToken);
 
     ScopeAccess getDirectScopeAccessForParentByClientId(String parentUniqueID, String clientId);
+
+    void updateUserScopeAccessTokenForClientIdByUser(User user, String clientId, String token, Date expires);
 
     UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId);
     

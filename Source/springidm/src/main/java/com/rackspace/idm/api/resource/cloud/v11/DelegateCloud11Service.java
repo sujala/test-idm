@@ -1,9 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
 import com.rackspace.idm.api.resource.cloud.CloudClient;
+import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +17,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
+import javax.xml.bind.*;
+import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.Date;
 import java.util.HashMap;
 
 @Component
@@ -27,6 +30,12 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Autowired
     private CloudClient cloudClient;
+
+    @Autowired
+    private CloudUserExtractor cloudUserExtractor;
+
+    @Autowired
+    private ScopeAccessService scopeAccessService;
 
     @Autowired
     private CredentialUnmarshaller credentialUnmarshaller;
@@ -73,24 +82,69 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder authenticate(HttpServletRequest request, HttpServletResponse response,
                                                  HttpHeaders httpHeaders, String body) throws IOException, JAXBException {
 
-        Response.ResponseBuilder serviceResponse = getCloud11Service().authenticate(request, response, httpHeaders, body);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            if (!httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
-                body = marshallObjectToString(credentialUnmarshaller.unmarshallCredentialsFromJSON(body));
-            }
-            return cloudClient.post(getCloudAuthV11Url().concat("auth"), httpHeaders, body);
+         //Get "user" from LDAP
+        JAXBElement<? extends Credentials> cred = extractCredentials(httpHeaders, body);
+        com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByCredentialType(cred);
+
+         //Get Cloud Auth response
+        String xmlBody = body;
+        if (!httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
+            xmlBody = marshallObjectToString(cred);
         }
-        return serviceResponse;
+        Response.ResponseBuilder serviceResponse = cloudClient.post(getCloudAuthV11Url().concat("auth"), httpHeaders, xmlBody);
+        Response dummyResponse = serviceResponse.clone().build();
+         //If SUCCESS and "user" is not null, store token to "user" and return cloud response
+        int status = dummyResponse.getStatus();
+        if (status == HttpServletResponse.SC_OK && user != null) {
+            AuthData authResult = getAuthFromResponse(dummyResponse.getEntity().toString());
+            if(authResult != null) {
+                String token = authResult.getToken().getId();
+                Date expires = authResult.getToken().getExpires().toGregorianCalendar().getTime();
+                scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token, expires);
+            }
+            return serviceResponse;
+        }else if(user == null){ //If "user" is null return cloud response
+            return serviceResponse;
+        }
+        else { //If we get this far, return Default Service Response
+            return getCloud11Service().authenticate(request, response, httpHeaders, body);
+        }
     }
 
     @Override
     public Response.ResponseBuilder adminAuthenticate(HttpServletRequest request, HttpServletResponse response,
                                                       HttpHeaders httpHeaders, String body) throws IOException, JAXBException {
 
+        //Get "user" from LDAP
+        JAXBElement<? extends Credentials> cred = extractCredentials(httpHeaders, body);
+
+        com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByCredentialType(cred);
+
+         //Get Cloud Auth response
+        String xmlBody = body;
+        if (!httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
+            xmlBody = marshallObjectToString(cred);
+        }
+        Response.ResponseBuilder serviceResponse = cloudClient.post(getCloudAuthV11Url().concat("auth-admin"), httpHeaders, xmlBody);
+        Response dummyResponse = serviceResponse.clone().build();
+         //If SUCCESS and "user" is not null, store token to "user" and return cloud response
+        int status = dummyResponse.getStatus();
+        if (status == HttpServletResponse.SC_OK && user != null) {
+            AuthData authResult = getAuthFromResponse(dummyResponse.getEntity().toString());
+            if(authResult != null) {
+                String token = authResult.getToken().getId();
+                Date expires = authResult.getToken().getExpires().toGregorianCalendar().getTime();
+                scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token, expires);
+            }
+            return serviceResponse;
+        }else if(user == null){ //If "user" is null return cloud response
+            return serviceResponse;
+        }
+        else { //If we get this far, return Default Service Response
+            return getCloud11Service().adminAuthenticate(request, response, httpHeaders, body);
+        }
+
+        /*
         Response.ResponseBuilder serviceResponse = getCloud11Service().adminAuthenticate(request, response, httpHeaders, body);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -103,6 +157,7 @@ public class DelegateCloud11Service implements Cloud11Service {
             return cloudClient.post(getCloudAuthV11Url().concat("auth-admin"), httpHeaders, body);
         }
         return serviceResponse;
+        */
     }
 
     @Override
@@ -433,6 +488,18 @@ public class DelegateCloud11Service implements Cloud11Service {
         return config.getBoolean(CLOUD_AUTH_ROUTING);
     }
 
+    private AuthData getAuthFromResponse(String entity) {
+        try {
+            JAXBContext jc = JAXBContext.newInstance(AuthData.class);
+            Unmarshaller unmarshaller = jc.createUnmarshaller();
+            StreamSource xml = new StreamSource(new StringReader(entity));
+            JAXBElement ob = unmarshaller.unmarshal(xml, AuthData.class);
+            return (AuthData)ob.getValue();
+        } catch(Exception ex) {
+            return null;
+        }
+    }
+
     private String marshallObjectToString(Object jaxbObject) throws JAXBException {
 
         Marshaller marshaller = JAXBContextResolver.get().createMarshaller();
@@ -478,4 +545,41 @@ public class DelegateCloud11Service implements Cloud11Service {
     public void setLdapUserRepository(LdapUserRepository ldapUserRepository) {
         this.ldapUserRepository = ldapUserRepository;
     }
+
+    public void setCloudUserExtractor(CloudUserExtractor cloudUserExtractor) {
+        this.cloudUserExtractor = cloudUserExtractor;
+    }
+
+    public void setScopeAccessService(ScopeAccessService scopeAccessService) {
+        this.scopeAccessService = scopeAccessService;
+    }
+
+    private JAXBElement<? extends Credentials> extractCredentials(HttpHeaders httpHeaders, String body) {
+        if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
+                return extractXMLCredentials(body);
+            } else {
+                return extractJSONCredentials(body);
+            }
+    }
+
+    private JAXBElement<? extends Credentials> extractJSONCredentials(String body) {
+        return credentialUnmarshaller.unmarshallCredentialsFromJSON(body);
+    }
+    private JAXBElement<? extends Credentials> extractXMLCredentials(String body) {
+        JAXBElement<? extends Credentials> cred = null;
+        try {
+            JAXBContext context = JAXBContextResolver.get();
+            Unmarshaller unmarshaller = context.createUnmarshaller();
+            cred = (JAXBElement<? extends Credentials>) unmarshaller.unmarshal(new StringReader(body));
+        } catch (JAXBException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return cred;
+    }
+
+    private String getCloudAuthClientId() {
+        return config.getString("cloudAuth.clientId");
+    }
+        
 }

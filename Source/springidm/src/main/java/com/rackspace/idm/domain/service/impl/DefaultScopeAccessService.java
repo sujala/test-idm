@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -135,8 +136,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             throw new IllegalArgumentException(errMsg);
         }
         logger.info("Adding scopeAccess {}", scopeAccess);
-        ScopeAccess newScopeAccess = this.scopeAccessDao.addScopeAccess(
-            parentUniqueId, scopeAccess);
+        ScopeAccess newScopeAccess = this.scopeAccessDao.addScopeAccess(parentUniqueId, scopeAccess);
         logger.info("Added scopeAccess {}", scopeAccess);
         return newScopeAccess;
     }
@@ -147,30 +147,24 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         Boolean authenticated = false;
 
         // check token is valid and not expired
-        final ScopeAccess scopeAccess = this.scopeAccessDao
-            .getScopeAccessByAccessToken(accessTokenStr);
+        final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByAccessToken(accessTokenStr);
         if (scopeAccess instanceof HasAccessToken) {
-            if (!((HasAccessToken) scopeAccess)
-                .isAccessTokenExpired(new DateTime())) {
+            if (!((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
                 authenticated = true;
                 MDC.put(Audit.WHO, scopeAccess.getAuditContext());
             }
         }
 
-        logger
-            .debug("Authorized Token: {} : {}", accessTokenStr, authenticated);
+        logger.debug("Authorized Token: {} : {}", accessTokenStr, authenticated);
         return authenticated;
     }
 
     @Override
     public DelegatedPermission delegatePermission(String scopeAccessUniqueId,
         DelegatedPermission permission) {
-        logger.info("Delegating Permssion {} to {}", permission,
-            scopeAccessUniqueId);
-        DelegatedPermission perm = this.scopeAccessDao.delegatePermission(
-            scopeAccessUniqueId, permission);
-        logger.info("Delegated Permssion {} to {}", permission,
-            scopeAccessUniqueId);
+        logger.info("Delegating Permssion {} to {}", permission, scopeAccessUniqueId);
+        DelegatedPermission perm = this.scopeAccessDao.delegatePermission(scopeAccessUniqueId, permission);
+        logger.info("Delegated Permssion {} to {}", permission, scopeAccessUniqueId);
         return perm;
     }
 
@@ -189,8 +183,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public void deleteDelegatedToken(User user, String tokenString) {
 
-        List<DelegatedClientScopeAccess> scopeAccessList = this
-            .getDelegatedUserScopeAccessForUsername(user.getUsername());
+        List<DelegatedClientScopeAccess> scopeAccessList = this.getDelegatedUserScopeAccessForUsername(user.getUsername());
 
         if (scopeAccessList != null && scopeAccessList.size() == 0) {
             String errMsg = String.format(
@@ -313,8 +306,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public void expireAccessToken(String tokenString) {
         logger.debug("Expiring access token {}", tokenString);
-        final ScopeAccess scopeAccess = this.scopeAccessDao
-            .getScopeAccessByAccessToken(tokenString);
+        final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByAccessToken(tokenString);
         if (scopeAccess == null) {
             return;
         }
@@ -333,8 +325,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         if (client == null) {
             return;
         }
-        List<ScopeAccess> saList = this.scopeAccessDao
-            .getScopeAccessesByParent(client.getUniqueId());
+        List<ScopeAccess> saList = this.scopeAccessDao.getScopeAccessesByParent(client.getUniqueId());
 
         for (ScopeAccess sa : saList) {
             if (sa instanceof HasAccessToken) {
@@ -714,6 +705,17 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess, clientId);
         return scopeAccess;
+    }
+
+    @Override
+    public void updateUserScopeAccessTokenForClientIdByUser(User user, String clientId, String token, Date expires) {
+        final UserScopeAccess scopeAccess = checkAndGetUserScopeAccess(clientId, user);
+        if(scopeAccess != null) {
+            scopeAccess.setAccessTokenString(token);
+            scopeAccess.setAccessTokenExp(expires);
+            scopeAccessDao.updateScopeAccess(scopeAccess);
+            logger.debug("Updated ScopeAccess {} by clientId {}", scopeAccess, clientId);
+        }
     }
 
     @Override
