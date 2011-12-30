@@ -52,14 +52,16 @@ public class DelegateCloud20Service implements Cloud20Service {
     public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
 
     public static final String GA_SOURCE_OF_TRUTH = "gaIsSourceOfTruth";
-    private static org.openstack.docs.identity.api.v2.ObjectFactory OBJ_FACTORY = new org.openstack.docs.identity.api.v2.ObjectFactory();
 
-    private static org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory OBJ_FACTORY_OS_ADMIN_EXT = new org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory();
+    private org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = new org.openstack.docs.identity.api.v2.ObjectFactory();
 
-    private static org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory OBJ_FACTORY_OS_CATALOG = new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory();
+    private org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory objectFactory_OS_ADMN = new org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory();
 
-    private static com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory OBJ_FACTORY_RAX_KSKEY = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory();
-    private static com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory OBJ_FACOTRY_SECRETQA = new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory();
+    private org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory objectFactory_OS_CATALOG = new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory();
+
+    private com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory objectFactory_RAX_KSKEY = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory();
+
+    private com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory objectFactory_SECRETQA = new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory();
 
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)
@@ -70,7 +72,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
         int status = clonedServiceResponse.build().getStatus();
         if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            String body = marshallObjectToString(OBJ_FACTORY.createAuth(authenticationRequest));
+            String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
             return cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
         }
         return serviceResponse;
@@ -254,10 +256,10 @@ public class DelegateCloud20Service implements Cloud20Service {
 
         if (creds instanceof PasswordCredentialsRequiredUsername) {
             PasswordCredentialsRequiredUsername userCreds = (PasswordCredentialsRequiredUsername) creds;
-            jaxbCreds = OBJ_FACTORY.createPasswordCredentials(userCreds);
+            jaxbCreds = objectFactory.createPasswordCredentials(userCreds);
         } else if (creds instanceof ApiKeyCredentials) {
             ApiKeyCredentials userCreds = (ApiKeyCredentials) creds;
-            jaxbCreds = OBJ_FACTORY_RAX_KSKEY
+            jaxbCreds = objectFactory_RAX_KSKEY
                     .createApiKeyCredentials(userCreds);
         }
 
@@ -290,7 +292,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             throws JAXBException, IOException {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials/" + credentialType;
-            String body = marshallObjectToString(OBJ_FACTORY.createPasswordCredentials(creds));
+            String body = marshallObjectToString(objectFactory.createPasswordCredentials(creds));
             return cloudClient.post(request, httpHeaders, body);
         }
         return defaultCloud20Service.updateUserPasswordCredentials(httpHeaders, authToken, userId, credentialType, creds);
@@ -301,7 +303,7 @@ public class DelegateCloud20Service implements Cloud20Service {
                                                        ApiKeyCredentials creds) throws JAXBException, IOException {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials/" + credentialType;
-            String body = marshallObjectToString(OBJ_FACTORY_RAX_KSKEY.createApiKeyCredentials(creds));
+            String body = marshallObjectToString(objectFactory_RAX_KSKEY.createApiKeyCredentials(creds));
             return cloudClient.post(request, httpHeaders, body);
         }
         return defaultCloud20Service.updateUserApiKeyCredentials(httpHeaders, authToken, userId, credentialType, creds);
@@ -342,7 +344,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             throws IOException, JAXBException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "users";
-            String body = marshallObjectToString(OBJ_FACTORY.createUser(user));
+            String body = marshallObjectToString(objectFactory.createUser(user));
             return cloudClient.post(request, httpHeaders, body);
         }
         return defaultCloud20Service.addUser(httpHeaders, uriInfo, authToken, user);
@@ -353,7 +355,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             throws IOException, JAXBException {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId;
-            String body = marshallObjectToString(OBJ_FACTORY.createUser(user));
+            String body = marshallObjectToString(objectFactory.createUser(user));
             return cloudClient.post(request, httpHeaders, body);
         }
         return defaultCloud20Service.updateUser(httpHeaders, authToken, userId, user);
@@ -386,7 +388,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             throws IOException, JAXBException {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/enabled";
-            String body = marshallObjectToString(OBJ_FACTORY.createUser(user));
+            String body = marshallObjectToString(objectFactory.createUser(user));
             return cloudClient.put(request, httpHeaders, body);
         }
         return defaultCloud20Service.setUserEnabled(httpHeaders, authToken, userId, user);
@@ -424,7 +426,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             throws IOException, JAXBException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "tenants";
-            String body = marshallObjectToString(OBJ_FACTORY.createTenant(tenant));
+            String body = marshallObjectToString(objectFactory.createTenant(tenant));
             return cloudClient.post(request, httpHeaders, body);
         }
         return defaultCloud20Service.addTenant(httpHeaders, uriInfo, authToken, tenant);
@@ -435,7 +437,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             throws IOException, JAXBException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId;
-            String body = marshallObjectToString(OBJ_FACTORY
+            String body = marshallObjectToString(objectFactory
                     .createTenant(tenant));
             return cloudClient.post(request, httpHeaders, body);
         }
@@ -544,7 +546,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) throws IOException, JAXBException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSADM/roles";
-            String body = marshallObjectToString(OBJ_FACTORY.createRole(role));
+            String body = marshallObjectToString(objectFactory.createRole(role));
             return cloudClient.post(request, httpHeaders, body);
         }
         return defaultCloud20Service.addRole(httpHeaders, uriInfo, authToken, role);
@@ -585,7 +587,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     public ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Service service) throws IOException, JAXBException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSADM/services";
-            String body = marshallObjectToString(OBJ_FACTORY_OS_ADMIN_EXT.createService(service));
+            String body = marshallObjectToString(objectFactory_OS_ADMN.createService(service));
             return cloudClient.post(request, httpHeaders, body);
         }
         return defaultCloud20Service.addService(httpHeaders, uriInfo, authToken, service);
@@ -626,7 +628,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             throws IOException, JAXBException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSCATALOG/endpointTemplates";
-            String body = marshallObjectToString(OBJ_FACTORY_OS_CATALOG.createEndpointTemplate(endpoint));
+            String body = marshallObjectToString(objectFactory_OS_CATALOG.createEndpointTemplate(endpoint));
             return cloudClient.post(request, httpHeaders, body);
         }
         return defaultCloud20Service.addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint);
@@ -664,7 +666,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             throws IOException, JAXBException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/OS-KSCATALOG/endpoints";
-            String body = marshallObjectToString(OBJ_FACTORY_OS_CATALOG.createEndpointTemplate(endpoint));
+            String body = marshallObjectToString(objectFactory_OS_CATALOG.createEndpointTemplate(endpoint));
             return cloudClient.post(request, httpHeaders, body);
         }
         return defaultCloud20Service.addEndpoint(httpHeaders, authToken, tenantId, endpoint);
@@ -705,7 +707,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             throws IOException, JAXBException {
         if(isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)){
             String request = getCloudAuthV20Url() + "users/" + userId  + "/RAX-KSQA/secretqa";
-            String body = marshallObjectToString(OBJ_FACOTRY_SECRETQA.createSecretQA(secrets));
+            String body = marshallObjectToString(objectFactory_SECRETQA.createSecretQA(secrets));
             return cloudClient.post(request, httpHeaders, body);
         }
         return defaultCloud20Service.updateSecretQA(httpHeaders, authToken, userId, secrets);
@@ -775,8 +777,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         this.defaultCloud20Service = defaultCloud20Service;
     }
 
-    public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
-        DelegateCloud20Service.OBJ_FACTORY = OBJ_FACTORY;
+    public void setObjectFactory(ObjectFactory OBJ_FACTORY) {
+        this.objectFactory = OBJ_FACTORY;
     }
 
     public void setUserService(UserService userService) {
