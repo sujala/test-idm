@@ -1,13 +1,19 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.MossoCredentials;
 import com.rackspacecloud.docs.auth.api.v1.NastCredentials;
 import com.rackspacecloud.docs.auth.api.v1.UserCredentials;
+import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.xml.bind.JAXBElement;
 import java.io.IOException;
@@ -29,11 +35,34 @@ public class CloudUserExtractor {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private ScopeAccessService scopeAccessService;
+
     public CloudUserExtractor(){}
     
     public CloudUserExtractor(CloudExceptionResponse cloudExceptionResponse, UserService userService) {
         this.cloudExceptionResponse = cloudExceptionResponse;
         this.userService = userService;
+    }
+
+    public User getUserByV20CredentialType(AuthenticationRequest authenticationRequest) throws IOException {
+        try {
+            User user = null;
+            UserScopeAccess usa = null;
+            if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
+                usa = (UserScopeAccess)scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
+                user = userService.getUser(usa.getUsername());
+            } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
+                PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
+                user = userService.getUser(creds.getUsername());
+            } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
+                ApiKeyCredentials creds = (ApiKeyCredentials) authenticationRequest.getCredential().getValue();
+                user = userService.getUser(creds.getUsername());
+            }
+            return user;
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     public User getUserByCredentialType(JAXBElement<? extends Credentials> credentials) throws IOException {

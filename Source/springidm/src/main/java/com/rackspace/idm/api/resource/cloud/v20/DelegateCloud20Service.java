@@ -3,7 +3,9 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
+import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
@@ -19,11 +21,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
+import javax.xml.bind.*;
+import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.Date;
 import java.util.HashMap;
 
 /**
@@ -44,10 +47,16 @@ public class DelegateCloud20Service implements Cloud20Service {
     private UserService userService;
 
     @Autowired
+    private ScopeAccessService scopeAccessService;
+
+    @Autowired
     private DefaultCloud20Service defaultCloud20Service;
 
     @Autowired
     private DummyCloud20Service dummyCloud20Service;
+
+    @Autowired
+    private CloudUserExtractor cloudUserExtractor;
 
     public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
 
@@ -66,6 +75,33 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)
             throws IOException, JAXBException {
+
+        //Get "user" from LDAP
+        com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByV20CredentialType(authenticationRequest);
+        
+         //Get Cloud Auth response
+        String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
+        Response.ResponseBuilder serviceResponse = cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
+        Response dummyResponse = serviceResponse.clone().build();
+         //If SUCCESS and "user" is not null, store token to "user" and return cloud response
+        int status = dummyResponse.getStatus();
+        if (status == HttpServletResponse.SC_OK && user != null) {
+
+            AuthenticateResponse authenticateResponse = getAuthFromResponse(dummyResponse.getEntity().toString());
+            if(authenticateResponse != null) {
+                String token = authenticateResponse.getToken().getId();
+                Date expires = authenticateResponse.getToken().getExpires().toGregorianCalendar().getTime();
+                scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token, expires);
+            }
+            return serviceResponse;
+        }else if(user == null){ //If "user" is null return cloud response
+            return serviceResponse;
+        }
+        else { //If we get this far, return Default Service Response
+            return cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
+        }
+
+        /*
         Response.ResponseBuilder serviceResponse = getCloud20Service().authenticate(httpHeaders, authenticationRequest);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
@@ -76,6 +112,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             return cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
         }
         return serviceResponse;
+        */
     }
 
     @Override
@@ -729,6 +766,18 @@ public class DelegateCloud20Service implements Cloud20Service {
         return request + result;
     }
 
+    private AuthenticateResponse getAuthFromResponse(String entity) {
+        try {
+            JAXBContext jc = JAXBContext.newInstance(AuthenticateResponse.class);
+            Unmarshaller unmarshaller = jc.createUnmarshaller();
+            StreamSource xml = new StreamSource(new StringReader(entity));
+            JAXBElement ob = unmarshaller.unmarshal(xml, AuthenticateResponse.class);
+            return (AuthenticateResponse)ob.getValue();
+        } catch(Exception ex) {
+            return null;
+        }
+    }
+    
     public void setCloudClient(CloudClient cloudClient) {
         this.cloudClient = cloudClient;
     }
@@ -773,6 +822,14 @@ public class DelegateCloud20Service implements Cloud20Service {
         }
     }
 
+    public void setCloudUserExtractor(CloudUserExtractor cloudUserExtractor) {
+        this.cloudUserExtractor = cloudUserExtractor;
+    }
+
+    public void setScopeAccessService(ScopeAccessService scopeAccessService) {
+        this.scopeAccessService = scopeAccessService;
+    }
+
     public void setDefaultCloud20Service(DefaultCloud20Service defaultCloud20Service) {
         this.defaultCloud20Service = defaultCloud20Service;
     }
@@ -785,4 +842,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         this.userService = userService;
     }
 
+    private String getCloudAuthClientId() {
+        return config.getString("cloudAuth.clientId");
+    }
 }
