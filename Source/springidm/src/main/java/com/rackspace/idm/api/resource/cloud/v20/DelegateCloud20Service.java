@@ -238,11 +238,12 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body) throws IOException {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
+            String xmlBody = body;
             if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
-                body = convertCredentialToXML(body);
+                xmlBody = convertCredentialToXML(body);
             }
             String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials";
-            return cloudClient.post(request, httpHeaders, body);
+            return cloudClient.post(request, httpHeaders, xmlBody);
         }
         return defaultCloud20Service.addUserCredential(httpHeaders, authToken, userId, body);
     }
@@ -742,8 +743,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     private String getCloudAuthV20Url() {
-        String cloudAuth20url = config.getString("cloudAuth20url");
-        return cloudAuth20url;
+        return config.getString("cloudAuth20url");
     }
 
     boolean isUserInGAbyId(String userId) {
@@ -777,8 +777,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         this.defaultCloud20Service = defaultCloud20Service;
     }
 
-    public void setObjectFactory(ObjectFactory OBJ_FACTORY) {
-        this.objectFactory = OBJ_FACTORY;
+    public void setObjectFactory(ObjectFactory objectFactory) {
+        this.objectFactory = objectFactory;
     }
 
     public void setUserService(UserService userService) {
