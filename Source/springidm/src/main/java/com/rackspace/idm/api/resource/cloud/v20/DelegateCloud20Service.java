@@ -98,7 +98,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             return serviceResponse;
         }
         else { //If we get this far, return Default Service Response
-            return cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
+            return getCloud20Service().authenticate(httpHeaders, authenticationRequest);
         }
 
         /*
