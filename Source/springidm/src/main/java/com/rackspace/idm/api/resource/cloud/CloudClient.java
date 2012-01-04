@@ -83,6 +83,8 @@ public class CloudClient {
     }
 
     private BasicHttpEntity getHttpEntity(String body) {
+        if (body == null)
+            return null;
         BasicHttpEntity entity = new BasicHttpEntity();
         ByteArrayInputStream bs = new ByteArrayInputStream(body.getBytes());
         entity.setContent(bs);

@@ -957,9 +957,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    public void setCloudExceptionResponse(CloudExceptionResponse cloudExceptionResponse) {
-        this.cloudExceptionResponse = cloudExceptionResponse;
-    }
 
     public void setNastFacade(NastFacade nastFacade) {
         this.nastFacade = nastFacade;
