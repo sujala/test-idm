@@ -23,7 +23,7 @@ import java.lang.reflect.WildcardType;
 @Consumes("application/xml")
 public class CredentialProvider implements MessageBodyReader<JAXBElement<? extends Credentials>> {
     static final Logger LOG = Logger.getLogger(CredentialProvider.class);
-    static JAXBContext jaxbContext;
+    private static JAXBContext jaxbContext;
 
     static {
         try {

@@ -981,217 +981,224 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return new UserAuthenticationResult(user, isAuthenticated);
     }
 
-    List<Modification> getModifications(User uOld, User uNew,
-        boolean isSelfUpdate) throws GeneralSecurityException,
-        InvalidCipherTextException {
+    List<Modification> getModifications(User uOld, User uNew, boolean isSelfUpdate) throws GeneralSecurityException, InvalidCipherTextException {
         CryptHelper cryptHelper = CryptHelper.getInstance();
         List<Modification> mods = new ArrayList<Modification>();
 
-        DateTime currentTime = new DateTime();
-        if (uNew.getPasswordObj().isNew()) {
-            if (isSelfUpdate) {
-                Password oldPwd = uOld.getPasswordObj();
-                int secsSinceLastChange = Seconds.secondsBetween(
-                    oldPwd.getLastUpdated(), currentTime).getSeconds();
-                if (oldPwd.wasSelfUpdated()
-                    && secsSinceLastChange < DateTimeConstants.SECONDS_PER_DAY) {
-                    throw new PasswordSelfUpdateTooSoonException();
-                }
-            }
-
-            mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_PASSWORD_SELF_UPDATED, Boolean.toString(isSelfUpdate)));
-            mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_PASSWORD_UPDATED_TIMESTAMP, StaticUtils
-                    .encodeGeneralizedTime(currentTime.toDate())));
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD,
-                uNew.getPasswordObj().getValue()));
-            mods.add(new Modification(ModificationType.REPLACE,
-                ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(uNew.getPasswordObj()
-                    .getValue())));
-        }
-
-        if (uNew.getCustomerId() != null) {
-            if (StringUtils.isBlank(uNew.getCustomerId())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_RACKSPACE_CUSTOMER_NUMBER));
-            } else if (!StringUtils.equals(uOld.getCustomerId(),
-                uNew.getCustomerId())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_RACKSPACE_CUSTOMER_NUMBER, uNew.getCustomerId()));
-            }
-        }
-
-        if (uNew.getCountry() != null) {
-            if (StringUtils.isBlank(uNew.getCountry())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_C));
-            } else if (!StringUtils
-                .equals(uOld.getCountry(), uNew.getCountry())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_C,
-                    uNew.getCountry()));
-            }
-        }
-
-        if (uNew.getDisplayName() != null) {
-            if (StringUtils.isBlank(uNew.getDisplayName())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_DISPLAY_NAME));
-            } else if (!StringUtils.equals(uOld.getDisplayName(),
-                uNew.getDisplayName())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_DISPLAY_NAME, cryptHelper.encrypt(uNew
-                        .getDisplayName())));
-            }
-        }
-
-        if (uNew.getSecureId() != null) {
-            if (StringUtils.isBlank(uNew.getSecureId())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_SECURE_ID));
-            } else if (!StringUtils.equals(uOld.getSecureId(),
-                uNew.getSecureId())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_SECURE_ID, uNew.getSecureId()));
-            }
-        }
-
-        if (uNew.getFirstname() != null) {
-            if (StringUtils.isBlank(uNew.getFirstname())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_GIVEN_NAME));
-            } else if (!StringUtils.equals(uOld.getFirstname(),
-                uNew.getFirstname())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_GIVEN_NAME, cryptHelper.encrypt(uNew.getFirstname())));
-            }
-        }
-
-        if (uNew.getEmail() != null) {
-            if (StringUtils.isBlank(uNew.getEmail())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_MAIL));
-            } else if (!StringUtils.equals(uOld.getEmail(), uNew.getEmail())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_MAIL,
-                    cryptHelper.encrypt(uNew.getEmail())));
-            }
-        }
-
-        if (uNew.getMiddlename() != null) {
-            if (StringUtils.isBlank(uNew.getMiddlename())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_MIDDLE_NAME));
-            } else if (!StringUtils.equals(uOld.getMiddlename(),
-                uNew.getMiddlename())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_MIDDLE_NAME, uNew.getMiddlename()));
-            }
-        }
-
-        if (uNew.getApiKey() != null && !StringUtils.isEmpty(uNew.getApiKey())) {
-            if (StringUtils.isBlank(uNew.getApiKey())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_RACKSPACE_API_KEY));
-            } else if (!StringUtils.equals(uOld.getApiKey(), uNew.getApiKey())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_RACKSPACE_API_KEY, cryptHelper.encrypt(uNew
-                        .getApiKey())));
-            }
-        }
-
-        if (uNew.getSecretAnswer() != null) {
-            if (StringUtils.isBlank(uNew.getSecretAnswer())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_PASSWORD_SECRET_A));
-            } else if (!StringUtils.equals(uOld.getSecretAnswer(),
-                uNew.getSecretAnswer())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_PASSWORD_SECRET_A, cryptHelper.encrypt(uNew
-                        .getSecretAnswer())));
-            }
-        }
-
-        if (uNew.getSecretQuestion() != null) {
-            if (StringUtils.isBlank(uNew.getSecretQuestion())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_PASSWORD_SECRET_Q));
-            } else if (!StringUtils.equals(uOld.getSecretQuestion(),
-                uNew.getSecretQuestion())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(uNew
-                        .getSecretQuestion())));
-            }
-        }
-
-        if (uNew.getLastname() != null) {
-            if (StringUtils.isBlank(uNew.getLastname())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_SN));
-            } else if (!StringUtils.equals(uOld.getLastname(),
-                uNew.getLastname())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_SN,
-                    cryptHelper.encrypt(uNew.getLastname())));
-            }
-        }
-
-        if (uNew.getRegion() != null) {
-            if (StringUtils.isBlank(uNew.getRegion())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_RACKSPACE_REGION));
-            } else if (!uNew.getRegion().equals(uOld.getRegion())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_RACKSPACE_REGION, uNew.getRegion()));
-            }
-        }
-
-        if (uNew.getPersonId() != null) {
-            if (StringUtils.isBlank(uNew.getPersonId())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_RACKSPACE_PERSON_NUMBER));
-            } else if (!uNew.getPersonId().equals(uOld.getPersonId())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_RACKSPACE_PERSON_NUMBER, uNew.getPersonId()));
-            }
-        }
-
-        if (uNew.getLocale() != null
-            && !uNew.getPreferredLang().equals(uOld.getPreferredLang())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_LANG, uNew
-                .getPreferredLang().toString()));
-        }
-
-        if (uNew.getTimeZoneObj() != null
-            && !uNew.getTimeZone().equals(uOld.getTimeZone())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_TIME_ZONE,
-                uNew.getTimeZone()));
-        }
-
-        if (uNew.isEnabled() != null && uNew.isEnabled() != uOld.isEnabled()) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED,
-                String.valueOf(uNew.isEnabled())));
-        }
-
-        if (uNew.getNastId() != null) {
-            if (StringUtils.isBlank(uNew.getNastId())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_NAST_ID));
-            } else if (!uNew.getNastId().equals(uOld.getNastId())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_NAST_ID, uNew.getNastId()));
-            }
-        }
-
-        // To delete the attribute MossoId a negative value for the mossoId
-        // is sent in.
-        if (uNew.getMossoId() != null) {
-            if (uNew.getMossoId() < 0) {
-                mods.add(new Modification(ModificationType.DELETE,
-                    ATTR_MOSSO_ID));
-            } else if (!uNew.getMossoId().equals(uOld.getMossoId())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_MOSSO_ID, String.valueOf(uNew.getMossoId())));
-            }
-        }
+        checkForPasswordModification(uOld, uNew, isSelfUpdate, cryptHelper, mods);
+        checkForCustomerIdModfication(uOld, uNew, mods);
+        checkForCountryModification(uOld, uNew, mods);
+        checkForDisplayNameModification(uOld, uNew, cryptHelper, mods);
+        checkForSecureIdModification(uOld, uNew, mods);
+        checkForFirstNameModification(uOld, uNew, cryptHelper, mods);
+        checkForEmailModification(uOld, uNew, cryptHelper, mods);
+        checkForMiddleNameModification(uOld, uNew, mods);
+        checkForApiKeyModification(uOld, uNew, cryptHelper, mods);
+        checkForSecretAnswerModification(uOld, uNew, cryptHelper, mods);
+        checkForSecretQuestionModification(uOld, uNew, cryptHelper, mods);
+        checkForLastNameModification(uOld, uNew, cryptHelper, mods);
+        checkForRegionModification(uOld, uNew, mods);
+        checkForPersonIdModification(uOld, uNew, mods);
+        checkForLocaleModification(uOld, uNew, mods);
+        checkForTimeZoneModification(uOld, uNew, mods);
+        checkForEnabledStatusModification(uOld, uNew, mods);
+        checkForNastIdModification(uOld, uNew, mods);
+        checkForMossoIdModification(uOld, uNew, mods);
 
         getLogger().debug("Found {} mods.", mods.size());
 
         return mods;
+    }
+
+    private void checkForMossoIdModification(User uOld, User uNew, List<Modification> mods) {
+        // To delete the attribute MossoId a negative value for the mossoId
+        // is sent in.
+        if (uNew.getMossoId() != null) {
+            if (uNew.getMossoId() < 0) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_MOSSO_ID));
+            } else if (!uNew.getMossoId().equals(uOld.getMossoId())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_MOSSO_ID, String.valueOf(uNew.getMossoId())));
+            }
+        }
+    }
+
+    private void checkForNastIdModification(User uOld, User uNew, List<Modification> mods) {
+        if (uNew.getNastId() != null) {
+            if (StringUtils.isBlank(uNew.getNastId())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_NAST_ID));
+            } else if (!uNew.getNastId().equals(uOld.getNastId())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_NAST_ID, uNew.getNastId()));
+            }
+        }
+    }
+
+    private void checkForEnabledStatusModification(User uOld, User uNew, List<Modification> mods) {
+        if (uNew.isEnabled() != null && uNew.isEnabled() != uOld.isEnabled()) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(uNew.isEnabled())));
+        }
+    }
+
+    private void checkForTimeZoneModification(User uOld, User uNew, List<Modification> mods) {
+        if (uNew.getTimeZoneObj() != null && !uNew.getTimeZone().equals(uOld.getTimeZone())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_TIME_ZONE, uNew.getTimeZone()));
+        }
+    }
+
+    private void checkForLocaleModification(User uOld, User uNew, List<Modification> mods) {
+        if (uNew.getLocale() != null && !uNew.getPreferredLang().equals(uOld.getPreferredLang())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_LANG, uNew.getPreferredLang().toString()));
+        }
+    }
+
+    private void checkForPersonIdModification(User uOld, User uNew, List<Modification> mods) {
+        if (uNew.getPersonId() != null) {
+            if (StringUtils.isBlank(uNew.getPersonId())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_PERSON_NUMBER));
+            } else if (!uNew.getPersonId().equals(uOld.getPersonId())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_PERSON_NUMBER, uNew.getPersonId()));
+            }
+        }
+    }
+
+    private void checkForRegionModification(User uOld, User uNew, List<Modification> mods) {
+        if (uNew.getRegion() != null) {
+            if (StringUtils.isBlank(uNew.getRegion())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_REGION));
+            } else if (!uNew.getRegion().equals(uOld.getRegion())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_REGION, uNew.getRegion()));
+            }
+        }
+    }
+
+    private void checkForLastNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+        if (uNew.getLastname() != null) {
+            if (StringUtils.isBlank(uNew.getLastname())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_SN));
+            } else if (!StringUtils.equals(uOld.getLastname(), uNew.getLastname())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_SN, cryptHelper.encrypt(uNew.getLastname())));
+            }
+        }
+    }
+
+    private void checkForSecretQuestionModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+        if (uNew.getSecretQuestion() != null) {
+            if (StringUtils.isBlank(uNew.getSecretQuestion())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_Q));
+            } else if (!StringUtils.equals(uOld.getSecretQuestion(), uNew.getSecretQuestion())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(uNew.getSecretQuestion())));
+            }
+        }
+    }
+
+    private void checkForSecretAnswerModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+        if (uNew.getSecretAnswer() != null) {
+            if (StringUtils.isBlank(uNew.getSecretAnswer())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_A));
+            } else if (!StringUtils.equals(uOld.getSecretAnswer(), uNew.getSecretAnswer())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_A, cryptHelper.encrypt(uNew.getSecretAnswer())));
+            }
+        }
+    }
+
+    private void checkForApiKeyModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+        if (uNew.getApiKey() != null && !StringUtils.isEmpty(uNew.getApiKey())) {
+            if (StringUtils.isBlank(uNew.getApiKey())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_API_KEY));
+            } else if (!StringUtils.equals(uOld.getApiKey(), uNew.getApiKey())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_API_KEY, cryptHelper.encrypt(uNew.getApiKey())));
+            }
+        }
+    }
+
+    private void checkForMiddleNameModification(User uOld, User uNew, List<Modification> mods) {
+        if (uNew.getMiddlename() != null) {
+            if (StringUtils.isBlank(uNew.getMiddlename())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_MIDDLE_NAME));
+            } else if (!StringUtils.equals(uOld.getMiddlename(),
+                uNew.getMiddlename())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_MIDDLE_NAME, uNew.getMiddlename()));
+            }
+        }
+    }
+
+    private void checkForEmailModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+        if (uNew.getEmail() != null) {
+            if (StringUtils.isBlank(uNew.getEmail())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_MAIL));
+            } else if (!StringUtils.equals(uOld.getEmail(), uNew.getEmail())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_MAIL, cryptHelper.encrypt(uNew.getEmail())));
+            }
+        }
+    }
+
+    private void checkForFirstNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+        if (uNew.getFirstname() != null) {
+            if (StringUtils.isBlank(uNew.getFirstname())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_GIVEN_NAME));
+            } else if (!StringUtils.equals(uOld.getFirstname(), uNew.getFirstname())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_GIVEN_NAME, cryptHelper.encrypt(uNew.getFirstname())));
+            }
+        }
+    }
+
+    private void checkForSecureIdModification(User uOld, User uNew, List<Modification> mods) {
+        if (uNew.getSecureId() != null) {
+            if (StringUtils.isBlank(uNew.getSecureId())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_SECURE_ID));
+            } else if (!StringUtils.equals(uOld.getSecureId(), uNew.getSecureId())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_SECURE_ID, uNew.getSecureId()));
+            }
+        }
+    }
+
+    private void checkForDisplayNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+        if (uNew.getDisplayName() != null) {
+            if (StringUtils.isBlank(uNew.getDisplayName())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_DISPLAY_NAME));
+            } else if (!StringUtils.equals(uOld.getDisplayName(),
+                uNew.getDisplayName())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_DISPLAY_NAME, cryptHelper.encrypt(uNew.getDisplayName())));
+            }
+        }
+    }
+
+    private void checkForCountryModification(User uOld, User uNew, List<Modification> mods) {
+        if (uNew.getCountry() != null) {
+            if (StringUtils.isBlank(uNew.getCountry())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_C));
+            } else if (!StringUtils.equals(uOld.getCountry(), uNew.getCountry())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_C, uNew.getCountry()));
+            }
+        }
+    }
+
+    private void checkForCustomerIdModfication(User uOld, User uNew, List<Modification> mods) {
+        if (uNew.getCustomerId() != null) {
+            if (StringUtils.isBlank(uNew.getCustomerId())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_CUSTOMER_NUMBER));
+            } else if (!StringUtils.equals(uOld.getCustomerId(),
+                uNew.getCustomerId())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_CUSTOMER_NUMBER, uNew.getCustomerId()));
+            }
+        }
+    }
+
+    private void checkForPasswordModification(User uOld, User uNew, boolean isSelfUpdate, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+        DateTime currentTime = new DateTime();
+        if (uNew.getPasswordObj().isNew()) {
+            if (isSelfUpdate) {
+                Password oldPwd = uOld.getPasswordObj();
+                int secsSinceLastChange = Seconds.secondsBetween(oldPwd.getLastUpdated(), currentTime).getSeconds();
+                if (oldPwd.wasSelfUpdated()  && secsSinceLastChange < DateTimeConstants.SECONDS_PER_DAY) {
+                    throw new PasswordSelfUpdateTooSoonException();
+                }
+            }
+
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SELF_UPDATED, Boolean.toString(isSelfUpdate)));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_UPDATED_TIMESTAMP, StaticUtils.encodeGeneralizedTime(currentTime.toDate())));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD, uNew.getPasswordObj().getValue()));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(uNew.getPasswordObj().getValue())));
+        }
     }
 
     @Override

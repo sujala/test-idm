@@ -31,6 +31,7 @@ import static org.mockito.Mockito.*;
  * Time: 9:19 PM
  */
 public class DelegateCloud11ServiceTest {
+    com.rackspace.idm.domain.entity.User idmUser;
     DelegateCloud11Service delegateCloud11Service;
     DefaultCloud11Service defaultCloud11Service;
     DummyCloud11Service dummyCloud11Service = new DummyCloud11Service();
@@ -46,16 +47,22 @@ public class DelegateCloud11ServiceTest {
     private String url;
     private String userId = "userId";
     private LdapUserRepository ldapUserRepository;
+    private CloudUserExtractor cloudUserExtractor;
+
+    private Response.ResponseBuilder okResponse;
+    private Response.ResponseBuilder notFoundResponse;
 
     @Before
     public void setUp() throws JAXBException {
+        idmUser = mock(com.rackspace.idm.domain.entity.User.class);
         delegateCloud11Service = new DelegateCloud11Service();
         defaultCloud11Service = mock(DefaultCloud11Service.class);
         credentialUnmarshaller = mock(CredentialUnmarshaller.class);
-
+        cloudUserExtractor = mock(CloudUserExtractor.class);
         delegateCloud11Service.setCredentialUnmarshaller(credentialUnmarshaller);
         delegateCloud11Service.setDefaultCloud11Service(defaultCloud11Service);
         delegateCloud11Service.setDummyCloud11Service(dummyCloud11Service);
+        delegateCloud11Service.setCloudUserExtractor(cloudUserExtractor);
         OBJ_FACTORY = mock(com.rackspacecloud.docs.auth.api.v1.ObjectFactory.class);
         DelegateCloud11Service.setOBJ_FACTORY(OBJ_FACTORY);
         config = mock(Configuration.class);
@@ -76,6 +83,9 @@ public class DelegateCloud11ServiceTest {
         when(config.getString("cloudAuth11url")).thenReturn(url);
         when(httpHeaders.getMediaType()).thenReturn(new MediaType("application/json", null));
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
+
+        okResponse = Response.ok();
+        notFoundResponse = Response.status(404);
     }
 
     //TODO remove ignore once code is in place
@@ -108,8 +118,10 @@ public class DelegateCloud11ServiceTest {
     @Test
     public void authenticate_withJsonBody_callsCredentialUnmarshaller() throws Exception {
         JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
+        when(cloudUserExtractor.getUserByCredentialType(jaxbElement)).thenReturn(null);
         when(defaultCloud11Service.authenticate(null, null, httpHeaders, jsonBody)).thenReturn(Response.status(404));
         when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
+        when(cloudClient.post(eq(url + "auth"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(notFoundResponse);
         delegateCloud11Service.authenticate(null, null, httpHeaders, jsonBody);
         verify(credentialUnmarshaller).unmarshallCredentialsFromJSON(jsonBody);
     }
@@ -119,6 +131,7 @@ public class DelegateCloud11ServiceTest {
         JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
         when(defaultCloud11Service.adminAuthenticate(null, null, httpHeaders, jsonBody)).thenReturn(Response.status(404));
         when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
+        when(cloudClient.post(eq(url + "auth-admin"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(notFoundResponse);
         delegateCloud11Service.adminAuthenticate(null, null, httpHeaders, jsonBody);
         verify(credentialUnmarshaller).unmarshallCredentialsFromJSON(jsonBody);
     }

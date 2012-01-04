@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
+import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
@@ -56,11 +57,15 @@ public class DefaultCloud11ServiceTest {
     private ScopeAccessService scopeAccessService;
     javax.ws.rs.core.HttpHeaders httpHeaders;
     UserScopeAccess usa = new UserScopeAccess();
+    CloudExceptionResponse cloudExceptionResponse;
+    private Response.ResponseBuilder okResponse;
+    private Response.ResponseBuilder notFoundResponse;
 
     @Before
     public void setUp() throws Exception {
         userConverterCloudV11 = mock(UserConverterCloudV11.class);
         ldapCloudAdminRepository = mock(LdapCloudAdminRepository.class);
+        cloudExceptionResponse = new CloudExceptionResponse();
         when(ldapCloudAdminRepository.authenticate("auth", "auth123")).thenReturn(true);
         userService = mock(UserService.class);
         httpHeaders = mock(javax.ws.rs.core.HttpHeaders.class);
@@ -80,7 +85,7 @@ public class DefaultCloud11ServiceTest {
         user1.setId("userId");
         when(userConverterCloudV11.toUserDO(user)).thenReturn(user1);
         when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
-        defaultCloud11Service = new DefaultCloud11Service(config, scopeAccessService, endpointService, userService, null, userConverterCloudV11, null, ldapCloudAdminRepository);
+        defaultCloud11Service = new DefaultCloud11Service(config, scopeAccessService, endpointService, userService, null, userConverterCloudV11, null, ldapCloudAdminRepository, cloudExceptionResponse);
         nastFacade = mock(NastFacade.class);
         defaultCloud11Service.setNastFacade(nastFacade);
         defaultCloud11Service.setUserValidator(userValidator);
@@ -88,18 +93,13 @@ public class DefaultCloud11ServiceTest {
         spy = spy(defaultCloud11Service);
     }
 
-    @Test
-    public void usernameConflictExceptionResponse_returns409() throws Exception {
-        Response.ResponseBuilder builder = defaultCloud11Service.usernameConflictExceptionResponse("foo");
-        assertThat("response code", builder.build().getStatus(), equalTo(409));
-    }
+
 
     @Test
     public void authenticateResponse_withNastCredentials_withEmptyUsername_returns400() throws Exception {
         NastCredentials nastCredentials = new NastCredentials();
         nastCredentials.setNastId("");
-        JAXBElement<NastCredentials> credentials =
-                new JAXBElement<NastCredentials>(QName.valueOf("foo"), NastCredentials.class, nastCredentials);
+        JAXBElement<NastCredentials> credentials = new JAXBElement<NastCredentials>(QName.valueOf("foo"), NastCredentials.class, nastCredentials);
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }

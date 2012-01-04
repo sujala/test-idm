@@ -1,37 +1,32 @@
 package com.rackspace.idm.domain.entity;
 
-import java.util.Arrays;
-
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
-import com.unboundid.ldap.sdk.persist.FilterUsage;
-import com.unboundid.ldap.sdk.persist.LDAPEntryField;
-import com.unboundid.ldap.sdk.persist.LDAPField;
-import com.unboundid.ldap.sdk.persist.LDAPGetter;
-import com.unboundid.ldap.sdk.persist.LDAPObject;
+import com.unboundid.ldap.sdk.persist.*;
 
-@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_DELEGATEDPERMISSION,requestAllAttributes=true)
+import java.util.Arrays;
+
+@LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_DELEGATEDPERMISSION, requestAllAttributes = true)
 public class DelegatedPermission extends Permission implements Auditable {
-    
+
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
     @LDAPField(attribute = LdapRepository.ATTR_RESOURCE_GROUP, objectClass = LdapRepository.OBJECTCLASS_DELEGATEDPERMISSION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String[] resourceGroups;
-    
+
     public DelegatedPermission() {}
-    
+
     @Override
-    @LDAPGetter(attribute=LdapRepository.ATTR_NAME, inRDN=true, filterUsage = FilterUsage.ALWAYS_ALLOWED)
+    @LDAPGetter(attribute = LdapRepository.ATTR_NAME, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     public String getPermissionId() {
         return super.getPermissionId();
     }
-    
+
     @Override
     public String getUniqueId() {
         if (ldapEntry == null) {
             return null;
-        }
-        else {
+        } else {
             return ldapEntry.getDN();
         }
     }
@@ -41,7 +36,11 @@ public class DelegatedPermission extends Permission implements Auditable {
     }
 
     public void setResourceGroups(String[] resourceGroups) {
-        this.resourceGroups = resourceGroups;
+        if (resourceGroups != null) {
+            this.resourceGroups = resourceGroups.clone();
+        } else {
+            this.resourceGroups = null;
+        }
     }
 
     @Override
@@ -49,7 +48,7 @@ public class DelegatedPermission extends Permission implements Auditable {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result
-            + ((ldapEntry == null) ? 0 : ldapEntry.hashCode());
+                + ((ldapEntry == null) ? 0 : ldapEntry.hashCode());
         result = prime * result + Arrays.hashCode(resourceGroups);
         return result;
     }
@@ -78,7 +77,7 @@ public class DelegatedPermission extends Permission implements Auditable {
         }
         return true;
     }
-    
+
     public void copyChanges(DelegatedPermission modified) {
         if (modified.getResourceGroups() != null) {
             setResourceGroups(modified.getResourceGroups());

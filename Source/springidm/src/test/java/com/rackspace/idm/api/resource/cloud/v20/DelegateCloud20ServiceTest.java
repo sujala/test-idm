@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.api.resource.cloud.CloudClient;
+import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.domain.service.UserService;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
@@ -36,6 +37,7 @@ public class DelegateCloud20ServiceTest {
     DefaultCloud20Service defaultCloud20Service = mock(DefaultCloud20Service.class);
     UserService userService = mock(UserService.class);
     CloudClient cloudClient = mock(CloudClient.class);
+    CloudUserExtractor cloudUserExtractor = mock(CloudUserExtractor.class);
     HttpHeaders httpHeaders = mock(HttpHeaders.class);
     Marshaller marshaller = mock(Marshaller.class);
     private final Configuration config = mock(Configuration.class);
@@ -65,6 +67,7 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.setCloudClient(cloudClient);
         delegateCloud20Service.setDefaultCloud20Service(defaultCloud20Service);
         delegateCloud20Service.setUserService(userService);
+        delegateCloud20Service.setCloudUserExtractor(cloudUserExtractor);
         when(config.getString("cloudAuth20url")).thenReturn(url);
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(disabled);
         delegateCloud20Service.setConfig(config);

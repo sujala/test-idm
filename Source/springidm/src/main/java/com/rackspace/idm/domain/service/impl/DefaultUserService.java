@@ -561,4 +561,5 @@ public class DefaultUserService implements UserService {
     private boolean isPasswordRulesEnforced() {
         return config.getBoolean("password.rules.enforced", true);
     }
+
 }

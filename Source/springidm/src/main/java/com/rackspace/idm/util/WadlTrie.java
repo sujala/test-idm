@@ -21,7 +21,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class WadlTrie {
 
-    Logger logger = LoggerFactory.getLogger(this.getClass());
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private class Tree {
         private final Map<Object, Tree> children = new HashMap<Object, Tree>();
@@ -133,10 +133,10 @@ public class WadlTrie {
     }
 
     // the primary data structure
-    Tree        trie  = new Tree("root", null);
+    private Tree trie  = new Tree("root", null);
 
     // used only during wadl parsing
-    Deque<Tree> stack = new ArrayDeque<Tree>();
+    private Deque<Tree> stack = new ArrayDeque<Tree>();
     {
         stack.addFirst(trie);
     }

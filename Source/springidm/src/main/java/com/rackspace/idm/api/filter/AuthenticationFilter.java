@@ -29,11 +29,10 @@ import com.sun.jersey.spi.container.ContainerRequestFilter;
 public class AuthenticationFilter implements ContainerRequestFilter,
         ApplicationContextAware {
     private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
-    private final Logger logger = LoggerFactory
-            .getLogger(AuthenticationFilter.class);
+    private final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
 
     @Context
-    HttpServletRequest req;
+    private HttpServletRequest req;
 
     private ApplicationContext springCtx;
     private ScopeAccessService scopeAccessService;

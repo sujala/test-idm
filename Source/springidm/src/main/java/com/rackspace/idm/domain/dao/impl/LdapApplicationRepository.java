@@ -559,14 +559,11 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         getLogger().debug("Updating client group {}", group);
 
         if (group == null || StringUtils.isBlank(group.getUniqueId())) {
-            getLogger().error(
-                    "ClientGroup instance is null or its uniqueId is blank.");
-            throw new IllegalArgumentException(
-                    "Bad parameter: The Client instance is null or its uniqueId is blank.");
+            getLogger().error("ClientGroup instance is null or its uniqueId is blank.");
+            throw new IllegalArgumentException("Bad parameter: The Client instance is null or its uniqueId is blank.");
         }
 
-        ClientGroup oldGroup = this.getClientGroupByUniqueId(group
-                .getUniqueId());
+        ClientGroup oldGroup = this.getClientGroupByUniqueId(group.getUniqueId());
 
         if (group.getType().equalsIgnoreCase(oldGroup.getType())) {
             return;
@@ -577,8 +574,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         if (group.getType() != null && StringUtils.isBlank(group.getType())) {
             mods.add(new Modification(ModificationType.DELETE, ATTR_GROUP_TYPE));
         } else {
-            mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_GROUP_TYPE, group.getType()));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_GROUP_TYPE, group.getType()));
         }
 
         Audit audit = Audit.log(group).modify(mods);
@@ -607,8 +603,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             final SearchResult searchResult = conn.search(APPLICATIONS_BASE_DN,
                     SearchScope.SUB, filter);
 
-            final List<SearchResultEntry> entries = searchResult
-                    .getSearchEntries();
+            final List<SearchResultEntry> entries = searchResult.getSearchEntries();
 
             for (SearchResultEntry entry : entries) {
                 clients.add(getClient(entry));
@@ -628,12 +623,10 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     private Attribute[] getAddAttributesForClientGroup(ClientGroup group) {
         List<Attribute> atts = new ArrayList<Attribute>();
 
-        atts.add(new Attribute(ATTR_OBJECT_CLASS,
-                ATTR_CLIENT_GROUP_OBJECT_CLASS_VALUES));
+        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_CLIENT_GROUP_OBJECT_CLASS_VALUES));
 
         if (!StringUtils.isBlank(group.getCustomerId())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, group
-                    .getCustomerId()));
+            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, group.getCustomerId()));
         }
         if (!StringUtils.isBlank(group.getClientId())) {
             atts.add(new Attribute(ATTR_CLIENT_ID, group.getClientId()));
@@ -655,16 +648,14 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         CryptHelper cryptHelper = CryptHelper.getInstance();
         List<Attribute> atts = new ArrayList<Attribute>();
 
-        atts.add(new Attribute(ATTR_OBJECT_CLASS,
-                ATTR_CLIENT_OBJECT_CLASS_VALUES));
+        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_CLIENT_OBJECT_CLASS_VALUES));
 
         if (!StringUtils.isBlank(client.getClientId())) {
             atts.add(new Attribute(ATTR_CLIENT_ID, client.getClientId()));
         }
 
         if (!StringUtils.isBlank(client.getOpenStackType())) {
-            atts.add(new Attribute(ATTR_OPENSTACK_TYPE, client
-                    .getOpenStackType()));
+            atts.add(new Attribute(ATTR_OPENSTACK_TYPE, client.getOpenStackType()));
         }
 
         if (!StringUtils.isBlank(client.getName())) {
@@ -672,19 +663,16 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
 
         if (!StringUtils.isBlank(client.getRCN())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, client
-                    .getRCN()));
+            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, client.getRCN()));
         }
 
         if (!StringUtils.isBlank(client.getClientSecretObj().getValue())) {
             atts.add(new Attribute(ATTR_CLIENT_SECRET, client.getClientSecret()));
-            atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper
-                    .encrypt(client.getClientSecret())));
+            atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(client.getClientSecret())));
         }
 
         if (client.isEnabled() != null) {
-            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(client
-                    .isEnabled())));
+            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(client.isEnabled())));
         }
 
         if (!StringUtils.isBlank(client.getTitle())) {
@@ -704,8 +692,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
-        getLogger().debug("Found {} attributes for client {}.",
-                attributes.length, client);
+        getLogger().debug("Found {} attributes for client {}.", attributes.length, client);
         return attributes;
     }
 
@@ -716,8 +703,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         client.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
 
         try {
-            String ecryptedPwd = cryptHelper.decrypt(resultEntry
-                    .getAttributeValueBytes(ATTR_CLEAR_PASSWORD));
+            String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD));
             ClientSecret secret = ClientSecret.existingInstance(ecryptedPwd);
             client.setClientSecretObj(secret);
         } catch (GeneralSecurityException e) {
@@ -730,11 +716,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         client.setName(resultEntry.getAttributeValue(ATTR_NAME));
 
-        client.setRCN(resultEntry
-                .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
+        client.setRCN(resultEntry.getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
 
-        client.setOpenStackType(resultEntry
-                .getAttributeValue(ATTR_OPENSTACK_TYPE));
+        client.setOpenStackType(resultEntry.getAttributeValue(ATTR_OPENSTACK_TYPE));
 
         client.setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
 
@@ -752,35 +736,30 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         clientGroup.setUniqueId(resultEntry.getDN());
         clientGroup.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
         clientGroup.setName(resultEntry.getAttributeValue(ATTR_NAME));
-        clientGroup.setCustomerId(resultEntry
-                .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
+        clientGroup.setCustomerId(resultEntry.getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
         clientGroup.setType(resultEntry.getAttributeValue(ATTR_GROUP_TYPE));
         getLogger().debug("Materialized client group {}.", clientGroup);
 
         return clientGroup;
     }
 
-    private Applications getMultipleClients(Filter searchFilter, int offset,
-                                            int limit) {
+    private Applications getMultipleClients(Filter searchFilter, int offset, int limit) {
 
         offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
         limit = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
-        limit = limit > this.getLdapPagingLimitMax() ? this
-                .getLdapPagingLimitMax() : limit;
+        limit = limit > this.getLdapPagingLimitMax() ? this.getLdapPagingLimitMax() : limit;
 
         int contentCount = 0;
 
         List<Application> clientList = new ArrayList<Application>();
 
-        List<SearchResultEntry> entries = this.getMultipleEntries(
-                APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, ATTR_NAME);
+        List<SearchResultEntry> entries = this.getMultipleEntries(APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, ATTR_NAME);
 
         contentCount = entries.size();
 
         if (offset < contentCount) {
 
-            int toIndex = offset + limit > contentCount ? contentCount : offset
-                    + limit;
+            int toIndex = offset + limit > contentCount ? contentCount : offset + limit;
             int fromIndex = offset;
 
             List<SearchResultEntry> subList = entries.subList(fromIndex,
@@ -805,8 +784,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     private Application getSingleClient(Filter searchFilter) {
         Application client = null;
-        SearchResultEntry entry = this.getSingleEntry(APPLICATIONS_BASE_DN,
-                SearchScope.SUB, searchFilter);
+        SearchResultEntry entry = this.getSingleEntry(APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter);
 
         if (entry != null) {
             client = getClient(entry);
@@ -819,8 +797,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     private Application getSingleSoftDeletedClient(Filter searchFilter) {
         Application client = null;
-        SearchResultEntry entry = this.getSingleEntry(SOFT_DELETED_APPLICATIONS_BASE_DN,
-                SearchScope.SUB, searchFilter);
+        SearchResultEntry entry = this.getSingleEntry(SOFT_DELETED_APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter);
 
         if (entry != null) {
             client = getClient(entry);
@@ -835,66 +812,79 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         CryptHelper cryptHelper = CryptHelper.getInstance();
         List<Modification> mods = new ArrayList<Modification>();
 
-        if (cNew.getRCN() != null && !cNew.getRCN().equals(cOld.getRCN())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_CUSTOMER_NUMBER, cNew.getRCN()));
-        }
+        checkForRCNModification(cOld, cNew, mods);
+        checkForClientSecretModification(cNew, cryptHelper, mods);
+        checkForEnabledStatusModification(cOld, cNew, mods);
+        checkForTitleModification(cOld, cNew, mods);
+        checkForDescriptionModification(cOld, cNew, mods);
+        checkForScopeModification(cOld, cNew, mods);
+        checkForCallBackUrlModification(cOld, cNew, mods);
 
+        getLogger().debug("Found {} modifications.", mods.size());
+
+        return mods;
+    }
+
+    private void checkForCallBackUrlModification(Application cOld, Application cNew, List<Modification> mods) {
+        if (cNew.getCallBackUrl() != null) {
+            if (StringUtils.isBlank(cNew.getCallBackUrl())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_CALLBACK_URL));
+            } else if (!StringUtils.equals(cOld.getCallBackUrl(), cNew.getCallBackUrl())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_CALLBACK_URL, cNew.getCallBackUrl()));
+            }
+        }
+    }
+
+    private void checkForScopeModification(Application cOld, Application cNew, List<Modification> mods) {
+        if (cNew.getScope() != null) {
+            if (StringUtils.isBlank(cNew.getScope())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_TOKEN_SCOPE));
+            } else if (!StringUtils.equals(cOld.getScope(), cNew.getScope())) {
+                mods.add(new Modification(ModificationType.REPLACE,
+                        ATTR_TOKEN_SCOPE, cNew.getScope()));
+            }
+        }
+    }
+
+    private void checkForDescriptionModification(Application cOld, Application cNew, List<Modification> mods) {
+        if (cNew.getDescription() != null) {
+            if (StringUtils.isBlank(cNew.getDescription())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_DESCRIPTION));
+            } else if (!StringUtils.equals(cOld.getDescription(), cNew.getDescription())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_DESCRIPTION, cNew.getDescription()));
+            }
+        }
+    }
+
+    private void checkForTitleModification(Application cOld, Application cNew, List<Modification> mods) {
+        if (cNew.getTitle() != null) {
+            if (StringUtils.isBlank(cNew.getTitle())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_TITLE));
+            } else if (!StringUtils.equals(cOld.getTitle(), cNew.getTitle())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_TITLE, cNew.getTitle()));
+            }
+        }
+    }
+
+    private void checkForEnabledStatusModification(Application cOld, Application cNew, List<Modification> mods) {
+        if (cNew.isEnabled() != null && !cNew.isEnabled().equals(cOld.isEnabled())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(cNew.isEnabled())));
+        }
+    }
+
+    private void checkForClientSecretModification(Application cNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         if (cNew.getClientSecretObj().isNew()) {
             mods.add(new Modification(ModificationType.REPLACE,
                     ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
             mods.add(new Modification(ModificationType.REPLACE,
                     ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(cNew.getClientSecretObj().getValue())));
         }
+    }
 
-        if (cNew.isEnabled() != null && !cNew.isEnabled().equals(cOld.isEnabled())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED,
-                    String.valueOf(cNew.isEnabled())));
+    private void checkForRCNModification(Application cOld, Application cNew, List<Modification> mods) {
+        if (cNew.getRCN() != null && !cNew.getRCN().equals(cOld.getRCN())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_RACKSPACE_CUSTOMER_NUMBER, cNew.getRCN()));
         }
-
-        if (cNew.getTitle() != null) {
-            if (StringUtils.isBlank(cNew.getTitle())) {
-                mods.add(new Modification(ModificationType.DELETE, ATTR_TITLE));
-            } else if (!StringUtils.equals(cOld.getTitle(), cNew.getTitle())) {
-                mods.add(new Modification(ModificationType.REPLACE, ATTR_TITLE,
-                        cNew.getTitle()));
-            }
-        }
-
-        if (cNew.getDescription() != null) {
-            if (StringUtils.isBlank(cNew.getDescription())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                        ATTR_DESCRIPTION));
-            } else if (!StringUtils.equals(cOld.getDescription(),
-                    cNew.getDescription())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                        ATTR_DESCRIPTION, cNew.getDescription()));
-            }
-        }
-
-        if (cNew.getScope() != null) {
-            if (StringUtils.isBlank(cNew.getScope())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                        ATTR_TOKEN_SCOPE));
-            } else if (!StringUtils.equals(cOld.getScope(), cNew.getScope())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                        ATTR_TOKEN_SCOPE, cNew.getScope()));
-            }
-        }
-
-        if (cNew.getCallBackUrl() != null) {
-            if (StringUtils.isBlank(cNew.getCallBackUrl())) {
-                mods.add(new Modification(ModificationType.DELETE,
-                        ATTR_CALLBACK_URL));
-            } else if (!StringUtils.equals(cOld.getCallBackUrl(),
-                    cNew.getCallBackUrl())) {
-                mods.add(new Modification(ModificationType.REPLACE,
-                        ATTR_CALLBACK_URL, cNew.getCallBackUrl()));
-            }
-        }
-
-        getLogger().debug("Found {} modifications.", mods.size());
-
-        return mods;
     }
 
     @Override

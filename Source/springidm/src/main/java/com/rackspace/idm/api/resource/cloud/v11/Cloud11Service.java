@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
-import java.io.IOException;
+import com.rackspacecloud.docs.auth.api.v1.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -8,12 +8,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBException;
-
-import com.rackspacecloud.docs.auth.api.v1.BaseURL;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
-import com.rackspacecloud.docs.auth.api.v1.User;
-import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled;
-import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey;
+import java.io.IOException;
 
 public interface Cloud11Service {
 
@@ -52,5 +47,5 @@ public interface Cloud11Service {
     // Migration Methods
     Response.ResponseBuilder migrate(HttpServletRequest request, String user, HttpHeaders httpHeaders, String body) throws IOException;
     Response.ResponseBuilder unmigrate(HttpServletRequest request, String user, HttpHeaders httpHeaders, String body) throws IOException;
-    Response.ResponseBuilder all(HttpServletRequest request, HttpHeaders httpHeaders, String body) throws IOException;  
+    Response.ResponseBuilder all(HttpServletRequest request, HttpHeaders httpHeaders, String body) throws IOException; 
 }
