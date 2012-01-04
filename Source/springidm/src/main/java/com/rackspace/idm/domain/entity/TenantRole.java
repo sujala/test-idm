@@ -93,10 +93,11 @@ public class TenantRole implements Auditable {
         if (tenantIds == null) {
             this.tenantIds = null;
         } else {
-            this.tenantIds = new String[tenantIds.length];
+            String[] copy = new String[tenantIds.length];
             for(int i = 0; i < tenantIds.length; i++){
-                this.tenantIds[i] = tenantIds[i];
+                copy[i] = tenantIds[i];
             }
+           this.tenantIds = copy;
         }
     }
 

@@ -39,10 +39,11 @@ public class DelegatedPermission extends Permission implements Auditable {
        if (resourceGroups == null) {
             this.resourceGroups = null;
         } else {
-            this.resourceGroups = new String[resourceGroups.length];
+            String[] copy = new String[resourceGroups.length];
             for(int i = 0; i < resourceGroups.length; i++){
-                this.resourceGroups[i] = resourceGroups[i];
+                copy[i] = resourceGroups[i];
             }
+           this.resourceGroups = copy;
         }
     }
 
