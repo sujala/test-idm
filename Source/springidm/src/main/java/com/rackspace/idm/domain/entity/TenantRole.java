@@ -90,10 +90,13 @@ public class TenantRole implements Auditable {
     }
 
     public void setTenantIds(String[] tenantIds) {
-        if (tenantIds != null) {
-            this.tenantIds = tenantIds.clone();
-        } else {
+        if (tenantIds == null) {
             this.tenantIds = null;
+        } else {
+            this.tenantIds = new String[tenantIds.length];
+            for(int i = 0; i < tenantIds.length; i++){
+                this.tenantIds[i] = tenantIds[i];
+            }
         }
     }
 

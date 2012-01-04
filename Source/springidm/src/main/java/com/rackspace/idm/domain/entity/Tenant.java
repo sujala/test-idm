@@ -108,10 +108,13 @@ public class Tenant implements Auditable {
     }
 
     public void setBaseUrlIds(String[] baseUrlIds) {
-        if (baseUrlIds != null) {
-            this.baseUrlIds = baseUrlIds.clone();
-        } else {
+        if (baseUrlIds == null) {
             this.baseUrlIds = null;
+        } else {
+            this.baseUrlIds = new String[baseUrlIds.length];
+            for(int i = 0; i < baseUrlIds.length; i++){
+                this.baseUrlIds[i] = baseUrlIds[i];
+            }
         }
     }
 
