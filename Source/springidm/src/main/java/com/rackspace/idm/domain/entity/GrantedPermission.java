@@ -40,15 +40,7 @@ public class GrantedPermission extends Permission implements Auditable {
     }
 
     public void setResourceGroups(String[] resourceGroups) {
-        if (resourceGroups == null) {
-            this.resourceGroups = null;
-        } else {
-            String[] copy = new String[resourceGroups.length];
-            for(int i = 0; i < resourceGroups.length; i++){
-                copy[i] = resourceGroups[i];
-            }
-           this.resourceGroups = copy;
-        }
+        this.resourceGroups = resourceGroups;
     }
 
     @Override
