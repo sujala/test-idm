@@ -30,7 +30,7 @@ public class EndpointConverterCloudV11 {
         baseUrl.setInternalURL(url.getInternalUrl());
         baseUrl.setPublicURL(url.getPublicUrl());
         baseUrl.setRegion(url.getRegion());
-        baseUrl.setServiceName(url.getService());
+        baseUrl.setServiceName(url.getServiceName());
         if (url.getBaseUrlType() != null) {
             baseUrl.setUserType(Enum.valueOf(UserType.class, url
                     .getBaseUrlType().toUpperCase()));
@@ -52,7 +52,7 @@ public class EndpointConverterCloudV11 {
         url.setInternalUrl(baseURL.getInternalURL());
         url.setPublicUrl(baseURL.getPublicURL());
         url.setRegion(baseURL.getRegion());
-        url.setService(baseURL.getServiceName());
+        url.setServiceName(baseURL.getServiceName());
         url.setEnabled(baseURL.isEnabled());
         return url;
     }

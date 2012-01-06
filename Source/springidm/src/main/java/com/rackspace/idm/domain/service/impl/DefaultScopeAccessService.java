@@ -65,8 +65,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         // First get the tenantRoles for the token
-        List<TenantRole> roles = this.tenantDao
-            .getTenantRolesByParent(parentUniqueId);
+        List<TenantRole> roles = this.tenantDao.getTenantRolesByParent(parentUniqueId);
 
         if (roles == null || roles.size() == 0) { 
             return endpoints;
@@ -87,8 +86,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         // Third get the endppoints for each tenant
         for (Tenant tenant : tenants) {
-            OpenstackEndpoint endpoint = this.endpointDao
-                .getOpenstackEndpointsForTenant(tenant);
+            OpenstackEndpoint endpoint = this.endpointDao.getOpenstackEndpointsForTenant(tenant);
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
                 endpoints.add(endpoint);
             }
@@ -724,13 +722,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.debug("Getting User {} ScopeAccess by clientId {}", username,
             clientId);
 
-        final UserAuthenticationResult result = this.userDao.authenticate(
-            username, password);
+        final UserAuthenticationResult result = this.userDao.authenticate(username, password);
 
         handleAuthenticationFailure(username, result);
 
-        final UserScopeAccess scopeAccess = checkAndGetUserScopeAccess(
-            clientId, result.getUser());
+        final UserScopeAccess scopeAccess = checkAndGetUserScopeAccess(clientId, result.getUser());
 
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
 

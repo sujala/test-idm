@@ -690,7 +690,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(String.format("BaseUrlId %s not found", baseURLId));
             }
 
-            if (serviceName != null && !serviceName.equals(baseUrl.getService())) {
+            if (serviceName != null && !serviceName.equals(baseUrl.getServiceName())) {
                 throw new NotFoundException(String.format("BaseUrlId %s not found", baseURLId));
             }
 
@@ -714,7 +714,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
             for (CloudBaseUrl url : baseUrls) {
-                String service = url.getService();
+                String service = url.getServiceName();
                 if (service != null && service.equals(serviceName)) {
                     filteredBaseUrls.add(url);
                 }

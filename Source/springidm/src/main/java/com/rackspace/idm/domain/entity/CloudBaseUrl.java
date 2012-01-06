@@ -17,7 +17,7 @@ public class CloudBaseUrl implements Auditable {
     
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
-    private String service = null;
+    private String serviceName = null;
     
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
@@ -28,7 +28,7 @@ public class CloudBaseUrl implements Auditable {
     private Boolean enabled = null;
     
     private String openstackType = null;
-    private String name = null;
+    //private String name = null;
     private Boolean global = null;
     
     private String versionId = null;
@@ -67,12 +67,12 @@ public class CloudBaseUrl implements Auditable {
         this.region = region;
     }
     
-    public String getService() {
-        return service;
+    public String getServiceName() {
+        return serviceName;
     }
     
-    public void setService(String service) {
-        this.service = service;
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
     }
     
     public String getPublicUrl() {
@@ -123,14 +123,6 @@ public class CloudBaseUrl implements Auditable {
         this.openstackType = openstackType;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public Boolean getGlobal() {
         return global;
     }
@@ -178,13 +170,12 @@ public class CloudBaseUrl implements Auditable {
         result = prime * result + ((global == null) ? 0 : global.hashCode());
         result = prime * result
             + ((internalUrl == null) ? 0 : internalUrl.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result
             + ((openstackType == null) ? 0 : openstackType.hashCode());
         result = prime * result
             + ((publicUrl == null) ? 0 : publicUrl.hashCode());
         result = prime * result + ((region == null) ? 0 : region.hashCode());
-        result = prime * result + ((service == null) ? 0 : service.hashCode());
+        result = prime * result + ((serviceName == null) ? 0 : serviceName.hashCode());
         result = prime * result
             + ((uniqueId == null) ? 0 : uniqueId.hashCode());
         result = prime * result
@@ -257,13 +248,6 @@ public class CloudBaseUrl implements Auditable {
         } else if (!internalUrl.equals(other.internalUrl)) {
             return false;
         }
-        if (name == null) {
-            if (other.name != null) {
-                return false;
-            }
-        } else if (!name.equals(other.name)) {
-            return false;
-        }
         if (openstackType == null) {
             if (other.openstackType != null) {
                 return false;
@@ -285,11 +269,11 @@ public class CloudBaseUrl implements Auditable {
         } else if (!region.equals(other.region)) {
             return false;
         }
-        if (service == null) {
-            if (other.service != null) {
+        if (serviceName == null) {
+            if (other.serviceName != null) {
                 return false;
             }
-        } else if (!service.equals(other.service)) {
+        } else if (!serviceName.equals(other.serviceName)) {
             return false;
         }
         if (uniqueId == null) {

@@ -54,7 +54,7 @@ public class EndpointConverterCloudV20 {
                 endpoint.setAdminURL(baseUrl.getAdminUrl());
                 endpoint.setId(baseUrl.getBaseUrlId());
                 endpoint.setInternalURL(baseUrl.getInternalUrl());
-                endpoint.setName(baseUrl.getName());
+                endpoint.setName(baseUrl.getServiceName());
                 endpoint.setPublicURL(baseUrl.getPublicUrl());
                 endpoint.setRegion(baseUrl.getRegion());
                 endpoint.setType(baseUrl.getOpenstackType());
@@ -85,7 +85,7 @@ public class EndpointConverterCloudV20 {
             endpoint.setAdminURL(baseUrl.getAdminUrl());
             endpoint.setId(baseUrl.getBaseUrlId());
             endpoint.setInternalURL(baseUrl.getInternalUrl());
-            endpoint.setName(baseUrl.getName());
+            endpoint.setName(baseUrl.getServiceName());
             endpoint.setPublicURL(baseUrl.getPublicUrl());
             endpoint.setRegion(baseUrl.getRegion());
             endpoint.setType(baseUrl.getOpenstackType());
@@ -111,7 +111,7 @@ public class EndpointConverterCloudV20 {
         template.setGlobal(baseUrl.getGlobal());
         template.setId(baseUrl.getBaseUrlId());
         template.setInternalURL(baseUrl.getInternalUrl());
-        template.setName(baseUrl.getName());
+        template.setName(baseUrl.getServiceName());
         template.setPublicURL(baseUrl.getPublicUrl());
         template.setRegion(baseUrl.getRegion());
         template.setType(baseUrl.getOpenstackType());
@@ -149,7 +149,7 @@ public class EndpointConverterCloudV20 {
         endpoint.setAdminURL(baseUrl.getAdminUrl());
         endpoint.setId(baseUrl.getBaseUrlId());
         endpoint.setInternalURL(baseUrl.getInternalUrl());
-        endpoint.setName(baseUrl.getName());
+        endpoint.setName(baseUrl.getServiceName());
         endpoint.setPublicURL(baseUrl.getPublicUrl());
         endpoint.setRegion(baseUrl.getRegion());
         endpoint.setType(baseUrl.getOpenstackType());
@@ -166,7 +166,7 @@ public class EndpointConverterCloudV20 {
         baseUrl.setEnabled(template.isEnabled());
         baseUrl.setGlobal(template.isGlobal());
         baseUrl.setInternalUrl(template.getInternalURL());
-        baseUrl.setName(template.getName());
+        baseUrl.setServiceName(template.getName());
         baseUrl.setOpenstackType(template.getType());
         baseUrl.setPublicUrl(template.getPublicURL());
         baseUrl.setRegion(template.getRegion());

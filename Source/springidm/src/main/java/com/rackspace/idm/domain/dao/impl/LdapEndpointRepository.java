@@ -55,16 +55,18 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
             atts.add(new Attribute(ATTR_PUBLIC_URL, baseUrl.getPublicUrl()));
         }
 
-        if (!StringUtils.isBlank(baseUrl.getName())) {
-            atts.add(new Attribute(ATTR_NAME, baseUrl.getName()));
-        }
+        // Renamed to ServiceName below since both were sharing
+        //if (!StringUtils.isBlank(baseUrl.getName())) {
+        //    atts.add(new Attribute(ATTR_NAME, baseUrl.getName()));
+        //}
 
         if (!StringUtils.isBlank(baseUrl.getRegion())) {
             atts.add(new Attribute(ATTR_REGION, baseUrl.getRegion()));
         }
 
-        if (!StringUtils.isBlank(baseUrl.getService())) {
-            atts.add(new Attribute(ATTR_SERVICE, baseUrl.getService()));
+        // Renamed to ServiceName since both above Name were sharing with Service
+        if (!StringUtils.isBlank(baseUrl.getServiceName())) {
+            atts.add(new Attribute(ATTR_SERVICE, baseUrl.getServiceName()));
         }
 
         if (baseUrl.getDef() != null) {
@@ -424,9 +426,9 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         baseUrl.setInternalUrl(resultEntry.getAttributeValue(ATTR_INTERNAL_URL));
         baseUrl.setPublicUrl(resultEntry.getAttributeValue(ATTR_PUBLIC_URL));
         baseUrl.setRegion(resultEntry.getAttributeValue(ATTR_REGION));
-        baseUrl.setService(resultEntry.getAttributeValue(ATTR_SERVICE));
+        baseUrl.setServiceName(resultEntry.getAttributeValue(ATTR_SERVICE));
         baseUrl.setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
-        baseUrl.setName(resultEntry.getAttributeValue(ATTR_NAME));
+        //baseUrl.setName(resultEntry.getAttributeValue(ATTR_NAME));
         baseUrl.setOpenstackType(resultEntry.getAttributeValue(ATTR_OPENSTACK_TYPE));
         baseUrl.setVersionId(resultEntry.getAttributeValue(ATTR_VERSION_ID));
         baseUrl.setVersionInfo(resultEntry.getAttributeValue(ATTR_VERSION_INFO));

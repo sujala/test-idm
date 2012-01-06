@@ -44,13 +44,13 @@ public class CloudAuthServiceCatalogHelper {
             throw new IllegalArgumentException(
                 "endPoint's urlBase can not be null");
         }
-        if (endPoint.getBaseUrl().getService() == null) {
+        if (endPoint.getBaseUrl().getServiceName() == null) {
             throw new IllegalArgumentException(
                 "endPoint's urlBase's service can not be null");
         }
 
         Service currentService;
-        String serviceName = endPoint.getBaseUrl().getService();
+        String serviceName = endPoint.getBaseUrl().getServiceName();
 
         currentService = getService(serviceName);
 

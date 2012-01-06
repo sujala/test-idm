@@ -54,7 +54,7 @@ public class EndpointServiceTests {
         baseUrl.setInternalUrl(internalUrl);
         baseUrl.setPublicUrl(publicUrl);
         baseUrl.setRegion(region);
-        baseUrl.setService(service);
+        baseUrl.setServiceName(service);
         
         baseUrls = new ArrayList<CloudBaseUrl>();
         baseUrls.add(baseUrl);

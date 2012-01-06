@@ -30,11 +30,11 @@ public class DefaultEndpointServiceTest {
         endpointDao = mock(EndpointDao.class);
         defaultEndpointService = new DefaultEndpointService(endpointDao);
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setService(service);
+        cloudBaseUrl.setServiceName(service);
         CloudBaseUrl cloudBaseUrl2 = new CloudBaseUrl();
-        cloudBaseUrl.setService(service);
+        cloudBaseUrl.setServiceName(service);
         CloudBaseUrl cloudBaseUrl3 = new CloudBaseUrl();
-        cloudBaseUrl.setService("service");
+        cloudBaseUrl.setServiceName("service");
         when(endpointDao.getBaseUrlById(baseUrlId)).thenReturn(cloudBaseUrl);
         List<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
         cloudBaseUrls.add(cloudBaseUrl);

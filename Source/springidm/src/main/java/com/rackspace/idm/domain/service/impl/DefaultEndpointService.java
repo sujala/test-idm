@@ -120,7 +120,7 @@ public class DefaultEndpointService implements EndpointService {
         if(baseUrlById==null){
             throw new NotFoundException("Base url with id: "+baseUrlId+" not found");
         }
-        String service = baseUrlById.getService();
+        String service = baseUrlById.getServiceName();
         List<CloudBaseUrl> baseUrlsByService = endpointDao.getBaseUrlsByService(service);
         if(baseUrlById.getDef()!=null && baseUrlById.getDef()==true || baseUrlsByService.size() < 2){
             throw new BadRequestException("Cannot delete the only endpoint for the service '"+service+"'.");
