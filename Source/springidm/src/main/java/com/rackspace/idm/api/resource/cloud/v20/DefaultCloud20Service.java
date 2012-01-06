@@ -1481,6 +1481,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (sa instanceof UserScopeAccess) {
                 UserScopeAccess usa = (UserScopeAccess) sa;
                 User user = this.userService.getUserById(usa.getUserRsId());
+                if(user == null){
+                    throw new NotFoundException("User not found");
+                }
                 List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(usa);
                 if (roles != null && roles.size() > 0) {
                     access.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
