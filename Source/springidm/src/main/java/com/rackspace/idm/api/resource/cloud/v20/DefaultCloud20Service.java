@@ -448,6 +448,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errMsg);
             }
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+
+            // Remove Admin URLs if non admin token
+            if(!this.authorizationService.authorizeCloudAdmin(usa)){
+                stripEndpoints(endpoints);
+            }
+
             AuthenticateResponse auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, endpoints);
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(auth));
         } catch (Exception ex) {
@@ -1665,6 +1671,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             String errMsg = "Access is denied";
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
+        }
+    }
+
+    private void stripEndpoints(List<OpenstackEndpoint> endpoints){
+        for(int i=0; i < endpoints.size(); i++){
+            for(CloudBaseUrl baseUrl : endpoints.get(i).getBaseUrls()){
+                baseUrl.setAdminUrl(null);
+            }
         }
     }
 
