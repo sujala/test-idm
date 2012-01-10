@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
@@ -178,7 +179,7 @@ public class DefaultCloud20ServiceTest {
     public void updateUserPasswordCredentials_withValidCredentials_callsUserService_updateUserMethod() throws Exception {
         PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername();
         creds.setUsername(userId);
-        creds.setPassword("foo");
+        creds.setPassword("ABCdef123");
         spy.updateUserPasswordCredentials(null, authToken, userId, null, creds);
         verify(userService).updateUser(user, false);
     }
@@ -778,4 +779,28 @@ public class DefaultCloud20ServiceTest {
         verify(spy).checkXAUTHTOKEN(authToken);
     }
 
+    @Test
+    public void validatePassword_ValidPassword_succeeds() throws Exception {
+        defaultCloud20Service.validatePassword("Ab345678");
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validatePassword_LessThan8CharactersLong_throwsException() throws Exception {
+        defaultCloud20Service.validatePassword("123");
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validatePassword_DoesNotContainUpperCaseLetter_throwsException() throws Exception {
+        defaultCloud20Service.validatePassword("ab345678");
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validatePassword_DoesNotContainLowerCaseLetter_throwsException() throws Exception {
+        defaultCloud20Service.validatePassword("AB345678");
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validatePassword_DoesNotContainNumericCharacter_throwsException() throws Exception {
+        defaultCloud20Service.validatePassword("Abcdefghik");
+    }
 }

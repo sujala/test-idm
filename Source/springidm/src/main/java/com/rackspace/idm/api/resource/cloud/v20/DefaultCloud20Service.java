@@ -332,6 +332,29 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    void validatePassword(String password) {
+        if(password.length()<8){
+            String errMsg = "Password must be at least 8 characters in length";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+        if(!password.matches(".*[A-Z].*")){
+            String errMsg = "Password must contain at least one uppercase letter";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+        if(!password.matches(".*[a-z].*")){
+            String errMsg = "Password must contain at least one lowercase letter";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+        if(!password.matches(".*[0-9].*")){
+            String errMsg = "Password must contain at least one numeric character";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+    }
+
     void validateApiKeyCredentials(ApiKeyCredentials apiKeyCredentials) {
         String username = apiKeyCredentials.getUsername();
         String apiKey = apiKeyCredentials.getApiKey();
@@ -366,6 +389,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (credentials.getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
                 PasswordCredentialsRequiredUsername userCredentials = (PasswordCredentialsRequiredUsername) credentials.getValue();
                 validatePasswordCredentials(userCredentials);
+                validatePassword(userCredentials.getPassword());
                 user = checkAndGetUser(userId);
                 if (!userCredentials.getUsername().equals(user.getUsername())) {
                     String errMsg = "User and UserId mis-matched";
@@ -1441,18 +1465,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             checkXAUTHTOKEN(authToken);
 
-            if (StringUtils.isBlank(creds.getPassword())) {
-                String errMsg = "Expecting password";
-                logger.warn(errMsg);
-                throw new BadRequestException(errMsg);
-            }
-
-            if (StringUtils.isBlank(creds.getUsername())) {
-                String errMsg = "Expecting username";
-                logger.warn(errMsg);
-                throw new BadRequestException(errMsg);
-            }
-
+            validatePasswordCredentials(creds);
+            validatePassword(creds.getPassword());
             User user = checkAndGetUser(userId);
             if (!creds.getUsername().equals(user.getUsername())) {
                 String errMsg = "User and UserId mis-matched";
