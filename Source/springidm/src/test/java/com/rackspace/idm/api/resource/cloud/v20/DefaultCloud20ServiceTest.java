@@ -142,7 +142,7 @@ public class DefaultCloud20ServiceTest {
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new ObjectFactory());
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(new org.openstack.docs.identity.api.v2.ObjectFactory());
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
-        when(authorizationService.authorizeCloudAdmin(scopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
         when(endpointService.getBaseUrlById(101)).thenReturn(cloudBaseUrl);
         when(clientService.getById(role.getServiceId())).thenReturn(application);
         when(clientService.getById("clientId")).thenReturn(application);
@@ -154,7 +154,8 @@ public class DefaultCloud20ServiceTest {
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(user);
 
         spy = spy(defaultCloud20Service);
-        doNothing().when(spy).checkXAUTHTOKEN(authToken);
+        doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), any(String.class));
+        doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), eq(tenantId));
     }
 
     @Test
@@ -475,307 +476,307 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addEndpoint_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.addEndpoint(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void addEndpointTemplate_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.addEndpointTemplate(null,null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void addRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.addRole(null,null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void addRoleToUserOnTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.addRolesToUserOnTenant(null,authToken,null,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void addService_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.addService(null,null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void addTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.addTenant(null,null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void addUser_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.addUser(null,null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void addUserCredential_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.addUserCredential(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void addUserRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.addUserRole(null,authToken,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void checkToken_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.checkToken(null,authToken,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void deleteEndpoint_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.deleteEndpoint(null,authToken,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void deleteEndpointTemplate_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.deleteEndpointTemplate(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void deleteRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.deleteRole(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void deleteRoleFromUserOnTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
-        spy.deleteRoleFromUserOnTenant(null,authToken,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        spy.deleteRoleFromUserOnTenant(null,authToken,tenantId,null,null);
+        verify(spy).checkXAUTHTOKEN(authToken, true, tenantId);
     }
 
     @Test
     public void deleteService_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.deleteService(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void deleteTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.deleteTenant(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void deleteUser_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.deleteUser(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void deleteUserCredential_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.deleteUserCredential(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void deleteUserRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.deleteUserRole(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void getEndpoint_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.getEndpoint(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void getEndpointTemplate_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.getEndpointTemplate(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void getRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.getRole(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void getSecretQA_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.getSecretQA(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void getService_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.getService(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void getTenantById_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.getTenantById(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void getTenantByName_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.getTenantByName(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void getUserById_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.getUserById(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void getUserByName_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.getUserByName(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void getUserCredential_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.getUserCredential(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void getUserRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.getUserRole(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void listCredentials_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listCredentials(null,authToken,null,null,0);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void listEndpoints_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listEndpoints(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, false, null);
     }
 
     @Test
     public void listEndpointsForToken_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listEndpointsForToken(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void listEndpointTemplates_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listEndpointTemplates(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void listRoles_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listRoles(null,authToken,null,null,0);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void listRolesForTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listRolesForTenant(null,authToken,null,null,0);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void listRolesForUserOnTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listRolesForUserOnTenant(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void listServices_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listServices(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void listUserGlobalRoles_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listUserGlobalRoles(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void listUserGlobalROlesByServiceId_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listUserGlobalRolesByServiceId(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void listUserGroups_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listUserGroups(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void listUsers_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listUsers(null,authToken,null,0);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void listUsersForTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listUsersForTenant(null,authToken,null,null,0);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void listUsersWithRoleForTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listUsersWithRoleForTenant(null,authToken,null,null,null,0);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void setUserEnabled_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.setUserEnabled(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void updateSecretQA_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.updateSecretQA(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void updateTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.updateTenant(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void updateUser_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.updateUser(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void updateUserApiKeyCredentials_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.updateUserApiKeyCredentials(null,authToken,null,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void updateUserPasswordCredentials_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.updateUserPasswordCredentials(null,authToken,null,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
     public void validateToken_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.validateToken(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
 }

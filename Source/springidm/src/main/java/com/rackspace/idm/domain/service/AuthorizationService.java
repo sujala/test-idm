@@ -1,10 +1,10 @@
 package com.rackspace.idm.domain.service;
 
-import javax.ws.rs.core.UriInfo;
-
 import com.rackspace.idm.domain.entity.Entity;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.exception.ForbiddenException;
+
+import javax.ws.rs.core.UriInfo;
 
 public interface AuthorizationService {
     
@@ -44,5 +44,8 @@ public interface AuthorizationService {
 
     void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token);
 
-    boolean authorizeCloudAdmin(ScopeAccess scopeAccess);
+    boolean authorizeCloudIdentityAdmin(ScopeAccess scopeAccess);
+
+    boolean authorizeCloudUserAdmin(ScopeAccess scopeAccess);
+
 }

@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.slf4j.Logger;
@@ -102,8 +103,7 @@ public class DefaultTenantService implements TenantService {
         logger.info("Getting Tenants for Parent");
         List<Tenant> tenants = new ArrayList<Tenant>();
         List<String> tenantIds = new ArrayList<String>();
-        List<TenantRole> tenantRoles = this.tenantDao
-            .getTenantRolesByParent(parentUniqueId);
+        List<TenantRole> tenantRoles = this.tenantDao.getTenantRolesByParent(parentUniqueId);
         for (TenantRole role : tenantRoles) {
             if (role.getTenantIds() != null && role.getTenantIds().length > 0) {
                 for (String tenantId : role.getTenantIds()) {
@@ -141,14 +141,12 @@ public class DefaultTenantService implements TenantService {
         // Adding a tenantRole has multiple paths depending on whether
         // the user already has that role on not.
         logger.info("Adding Tenant Role {}", role);
-        TenantRole existingRole = this.tenantDao.getTenantRoleForParentById(
-            parentUniqueId, role.getRoleRsId());
+        TenantRole existingRole = this.tenantDao.getTenantRoleForParentById(parentUniqueId, role.getRoleRsId());
         if (existingRole == null) {
             // if the user does not have the role then just add the
             // tenant role normally.
             this.tenantDao.addTenantRoleToParent(parentUniqueId, role);
-        } else if (existingRole.getTenantIds() == null
-            || existingRole.getTenantIds().length == 0) {
+        } else if (existingRole.getTenantIds() == null || existingRole.getTenantIds().length == 0) {
             // If the user already has the global role then do nothing
         } else {
             // If the new role is not global then add the new tenant
@@ -157,6 +155,10 @@ public class DefaultTenantService implements TenantService {
             // make it a global role.
             if (role.getTenantIds() != null && role.getTenantIds().length > 0) {
                 for (String tenantId : role.getTenantIds()) {
+                    for(String existingId : existingRole.getTenantIds()){
+                        if(existingId.equals(tenantId))  //If role is existing then throw error
+                            throw new  ClientConflictException("Tenant Role already exists");
+                    }
                     existingRole.addTenantId(tenantId);
                 }
             } else {
@@ -282,27 +284,21 @@ public class DefaultTenantService implements TenantService {
                 "User cannont be null and must have uniqueID");
         }
 
-        Application client = this.clientDao.getClientByClientId(role
-            .getClientId());
+        Application client = this.clientDao.getClientByClientId(role.getClientId());
         if (client == null) {
-            String errMsg = String.format("Client %s not found",
-                role.getClientId());
+            String errMsg = String.format("Client %s not found", role.getClientId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
-        ClientRole cRole = this.clientDao.getClientRoleByClientIdAndRoleName(
-            role.getClientId(), role.getName());
+        ClientRole cRole = this.clientDao.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
         if (cRole == null) {
-            String errMsg = String.format("ClientRole %s not found",
-                role.getName());
+            String errMsg = String.format("ClientRole %s not found", role.getName());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
-        UserScopeAccess sa = (UserScopeAccess) this.scopeAccessDao
-            .getDirectScopeAccessForParentByClientId(user.getUniqueId(),
-                role.getClientId());
+        UserScopeAccess sa = (UserScopeAccess) this.scopeAccessDao.getDirectScopeAccessForParentByClientId(user.getUniqueId(), role.getClientId());
 
         if (sa == null) {
             sa = new UserScopeAccess();
@@ -311,8 +307,7 @@ public class DefaultTenantService implements TenantService {
             sa.setUsername(user.getUsername());
             sa.setUserRCN(user.getCustomerId());
             sa.setUserRsId(user.getId());
-            sa = (UserScopeAccess) this.scopeAccessDao.addDirectScopeAccess(
-                user.getUniqueId(), sa);
+            sa = (UserScopeAccess) this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), sa);
         }
 
         addTenantRole(sa.getUniqueId(), role);
@@ -327,34 +322,27 @@ public class DefaultTenantService implements TenantService {
                 "Client cannont be null and must have uniqueID");
         }
 
-        Application owner = this.clientDao.getClientByClientId(role
-            .getClientId());
+        Application owner = this.clientDao.getClientByClientId(role.getClientId());
         if (owner == null) {
-            String errMsg = String.format("Client %s not found",
-                role.getClientId());
+            String errMsg = String.format("Client %s not found", role.getClientId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
-        ClientRole cRole = this.clientDao.getClientRoleByClientIdAndRoleName(
-            role.getClientId(), role.getName());
+        ClientRole cRole = this.clientDao.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
         if (cRole == null) {
-            String errMsg = String.format("ClientRole %s not found",
-                role.getName());
+            String errMsg = String.format("ClientRole %s not found", role.getName());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
 
-        ScopeAccess sa = this.scopeAccessDao
-            .getDirectScopeAccessForParentByClientId(client.getUniqueId(),
-                role.getClientId());
+        ScopeAccess sa = this.scopeAccessDao.getDirectScopeAccessForParentByClientId(client.getUniqueId(), role.getClientId());
 
         if (sa == null) {
             sa = new ScopeAccess();
             sa.setClientId(owner.getClientId());
             sa.setClientRCN(owner.getRCN());
-            sa = this.scopeAccessDao.addDirectScopeAccess(client.getUniqueId(),
-                sa);
+            sa = this.scopeAccessDao.addDirectScopeAccess(client.getUniqueId(), sa);
         }
 
         addTenantRole(sa.getUniqueId(), role);
