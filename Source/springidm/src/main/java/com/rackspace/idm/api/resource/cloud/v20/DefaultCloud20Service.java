@@ -1164,9 +1164,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             ScopeAccess access = this.scopeAccessService.getAccessTokenByAuthHeader(authToken);
             if (access == null) { // ToDo: Send an empty list, it's what Cloud does.
-                return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenants(
-                        this.tenantConverterCloudV20.toTenantList(tenants)));
-                //throw new NotAuthorizedException("Not authorized");
+                //return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenants(
+                //        this.tenantConverterCloudV20.toTenantList(tenants)));
+                throw new NotAuthorizedException("Access is denied");
             }
 
             ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
