@@ -597,7 +597,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void deleteUser_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.deleteUser(null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).checkXAUTHTOKEN(authToken, false, null);
     }
 
     @Test

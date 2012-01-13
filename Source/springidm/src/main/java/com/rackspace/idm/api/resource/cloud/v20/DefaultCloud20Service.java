@@ -603,7 +603,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
         try {
-            checkXAUTHTOKEN(authToken, true, null);
+            checkXAUTHTOKEN(authToken, false, null);
             User user = checkAndGetUser(userId);
             userService.softDeleteUser(user);
             return Response.noContent();
