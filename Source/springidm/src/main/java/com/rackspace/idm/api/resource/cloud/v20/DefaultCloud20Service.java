@@ -339,23 +339,20 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     void validatePassword(String password) {
+        String errMsg = "Password must be at least 8 characters in length, must contain at least one uppercase letter, one lowercase letter and one numeric character.";
         if(password.length()<8){
-            String errMsg = "Password must be at least 8 characters in length";
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
         if(!password.matches(".*[A-Z].*")){
-            String errMsg = "Password must contain at least one uppercase letter";
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
         if(!password.matches(".*[a-z].*")){
-            String errMsg = "Password must contain at least one lowercase letter";
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
         if(!password.matches(".*[0-9].*")){
-            String errMsg = "Password must contain at least one numeric character";
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
