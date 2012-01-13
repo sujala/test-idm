@@ -68,6 +68,7 @@ public class DefaultCloud20ServiceTest {
     private org.openstack.docs.identity.api.v2.User userOS;
     private CloudBaseUrl cloudBaseUrl;
     private Application application;
+    private String roleId = "roleId";
 
     @Before
     public void setUp() throws Exception {
@@ -183,6 +184,29 @@ public class DefaultCloud20ServiceTest {
         creds.setPassword("ABCdef123");
         spy.updateUserPasswordCredentials(null, authToken, userId, null, creds);
         verify(userService).updateUser(user, false);
+    }
+    
+    @Test
+    public void addUser_callsCheckXAUTHTOKEN_withFlagSetToFalse() throws Exception {
+        spy.addUser(null,null,authToken,userOS);
+        verify(spy).checkXAUTHTOKEN(authToken, false, null);
+    }
+
+    @Test
+    public void addUser_callsAddUserRole_whenCallerHasIdentityAdminRole() throws Exception {
+        when(clientService.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(clientRole);
+        when(authorizationService.authorizeCloudIdentityAdmin(null)).thenReturn(true);
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn(clientRole.getId());
+        spy.addUser(null,null,authToken,userOS);
+        verify(spy).addUserRole(null,authToken,user.getId(), clientRole.getId());
+    }
+
+    @Test
+    public void addUser_callsClientServiceGetClientRoleByClientIdAndName_whenCallerHasIdentityAdminRole() throws Exception {
+        when(authorizationService.authorizeCloudIdentityAdmin(null)).thenReturn(true);
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn("roleId");
+        spy.addUser(null,null,authToken,userOS);
+        verify(clientService).getClientRoleByClientIdAndRoleName(anyString(),anyString());
     }
 
     @Test
@@ -513,7 +537,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addUser_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.addUser(null,null,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).checkXAUTHTOKEN(authToken, false, null);
     }
 
     @Test
@@ -525,7 +549,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addUserRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.addUserRole(null,authToken,authToken,null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).checkXAUTHTOKEN(authToken, false, null);
     }
 
     @Test

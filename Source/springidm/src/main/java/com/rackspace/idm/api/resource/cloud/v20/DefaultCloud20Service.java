@@ -292,7 +292,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                                    org.openstack.docs.identity.api.v2.User user) {
 
         try {
-            checkXAUTHTOKEN(authToken, true, null);
+            checkXAUTHTOKEN(authToken, false, null);
 
             if (StringUtils.isBlank(user.getUsername())) {
                 String errorMsg = "Expecting username";
@@ -303,6 +303,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             User userDO = this.userConverterCloudV20.toUserDO(user);
 
             this.userService.addUser(userDO);
+
+            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            if(authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)){
+                ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
+                this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
+            }
 
             return Response.created(
                     uriInfo.getRequestUriBuilder().path(userDO.getId()).build())
@@ -420,7 +426,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) {
 
         try {
-            checkXAUTHTOKEN(authToken, true, null);
+            checkXAUTHTOKEN(authToken, false, null);
             User user = checkAndGetUser(userId);
             ClientRole cRole = checkAndGetClientRole(roleId);
             TenantRole role = new TenantRole();
@@ -1751,6 +1757,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     private String getCloudAuthClientId() {
         return config.getString("cloudAuth.clientId");
+    }
+
+    private String getCloudAuthUserAdminRole() {
+        return config.getString("cloudAuth.userAdminRole");
     }
 
     private String getRackspaceCustomerId() {
