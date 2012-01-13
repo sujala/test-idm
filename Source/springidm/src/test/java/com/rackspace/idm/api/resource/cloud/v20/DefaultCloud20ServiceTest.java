@@ -483,14 +483,14 @@ public class DefaultCloud20ServiceTest {
         verify(userGroupService).getGroups(user.getMossoId());
     }
 
-    @Ignore
+    @Test
     public void listTenants_invalidToken_returns401() throws Exception {
         when(scopeAccessService.getAccessTokenByAuthHeader("bad")).thenReturn(null);
         when(tenantConverterCloudV20.toTenantList(org.mockito.Matchers.<List<Tenant>>any())).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.listTenants(null, "bad", null, 1);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
     }
-    @Test
+    @Ignore
     public void listTenants_invalidToken_returnsEmptyList() throws Exception {
         when(scopeAccessService.getAccessTokenByAuthHeader("bad")).thenReturn(null);
         when(tenantConverterCloudV20.toTenantList(org.mockito.Matchers.<List<Tenant>>any())).thenReturn(null);
