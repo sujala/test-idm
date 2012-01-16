@@ -783,7 +783,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void updateUser_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.updateUser(null,authToken,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).checkXAUTHTOKEN(authToken, false, null);
     }
 
     @Test

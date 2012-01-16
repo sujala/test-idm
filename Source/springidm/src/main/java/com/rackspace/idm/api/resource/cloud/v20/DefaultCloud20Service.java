@@ -1398,7 +1398,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                                       org.openstack.docs.identity.api.v2.User user) throws IOException {
 
         try {
-            checkXAUTHTOKEN(authToken, true, null);
+            checkXAUTHTOKEN(authToken, false, null);
 
             User retrievedUser = checkAndGetUser(userId);
 
