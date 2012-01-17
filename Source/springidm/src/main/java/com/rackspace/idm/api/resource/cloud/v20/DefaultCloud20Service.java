@@ -193,7 +193,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
 
         try {
-            checkXAUTHTOKEN(authToken, true, tenantId);
+            checkXAUTHTOKEN(authToken, false, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 

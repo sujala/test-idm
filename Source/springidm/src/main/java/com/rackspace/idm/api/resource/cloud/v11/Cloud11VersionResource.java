@@ -122,7 +122,7 @@ public class Cloud11VersionResource {
 
     @GET
     @Path("baseURLs")
-    public Response getBaseURLs(@Context HttpServletRequest request, 
+    public Response getBaseURLs(@Context HttpServletRequest request,
             @QueryParam("serviceName") String serviceName,
             @Context HttpHeaders httpHeaders
     ) throws IOException {
