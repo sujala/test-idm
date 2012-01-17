@@ -134,6 +134,7 @@ public class DefaultCloud20ServiceTest {
         userOS = new org.openstack.docs.identity.api.v2.User();
         userOS.setId("userName");
         userOS.setUsername("username");
+        userOS.setEmail("foo@bar.com");
         cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setBaseUrlId(101);
         cloudBaseUrl.setGlobal(false);
@@ -784,6 +785,114 @@ public class DefaultCloud20ServiceTest {
     public void updateUser_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.updateUser(null,authToken,null,null);
         verify(spy).checkXAUTHTOKEN(authToken, false, null);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUser_missingUsername_throwsBadRequestException() throws Exception {
+        defaultCloud20Service.validateUser(new org.openstack.docs.identity.api.v2.User());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUser_missingEmail_throwsBadRequestException() throws Exception {
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        defaultCloud20Service.validateUser(user1);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUser_withInvalidEmail_throwsBadRequestException() throws Exception {
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        user1.setEmail("foo");
+        defaultCloud20Service.validateUser(user1);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUser_withInvalidEmail2_throwsBadRequestException() throws Exception {
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        user1.setEmail("foo@");
+        defaultCloud20Service.validateUser(user1);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUser_withInvalidEmail3_throwsBadRequestException() throws Exception {
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        user1.setEmail("foo.com");
+        defaultCloud20Service.validateUser(user1);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUser_withInvalidEmail4_throwsBadRequestException() throws Exception {
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        user1.setEmail("foo@.com");
+        defaultCloud20Service.validateUser(user1);
+    }
+
+    @Test
+    public void validateUser_withValidEmail_succeeds() throws Exception {
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        user1.setEmail("foo@bar.com");
+        defaultCloud20Service.validateUser(user1);
+    }
+
+    @Test
+    public void validateUser_withValidEmail2_succeeds() throws Exception {
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        user1.setEmail("racker@rackspace.com");
+        defaultCloud20Service.validateUser(user1);
+    }
+
+    @Test
+    public void validateUser_withValidEmail3_succeeds() throws Exception {
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        user1.setEmail("john.smith@rackspace.com");
+        defaultCloud20Service.validateUser(user1);
+    }
+
+    @Test
+    public void validateUser_withValidEmail4_succeeds() throws Exception {
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        user1.setEmail("john.\"elGuapo\".smith@rackspace.com");
+        defaultCloud20Service.validateUser(user1);
+    }
+
+    @Test
+    public void validateUser_withValidEmail5_succeeds() throws Exception {
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        user1.setEmail("1@rackspace.com");
+        defaultCloud20Service.validateUser(user1);
+    }
+
+    @Test
+    public void validateUser_withValidEmail6_succeeds() throws Exception {
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        user1.setEmail("1@1.net");
+        defaultCloud20Service.validateUser(user1);
+    }
+
+    @Test
+    public void validateUser_withValidEmail7_succeeds() throws Exception {
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        user1.setEmail("1@1.rackspace.com");
+        defaultCloud20Service.validateUser(user1);
+    }
+
+    @Test
+    public void validateUser_withValidEmail8_succeeds() throws Exception {
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        user1.setEmail("R_a_c_K_e_r_4000@rackspace.com");
+        defaultCloud20Service.validateUser(user1);
     }
 
     @Test

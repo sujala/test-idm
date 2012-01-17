@@ -294,11 +294,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             checkXAUTHTOKEN(authToken, false, null);
 
-            if (StringUtils.isBlank(user.getUsername())) {
-                String errorMsg = "Expecting username";
-                logger.warn(errorMsg);
-                throw new BadRequestException(errorMsg);
-            }
+            validateUser(user);
 
             User userDO = this.userConverterCloudV20.toUserDO(user);
 
@@ -321,6 +317,26 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
+    }
+
+    void validateUser(org.openstack.docs.identity.api.v2.User user) {
+        if (StringUtils.isBlank(user.getUsername())) {
+            String errorMsg = "Expecting username";
+            logger.warn(errorMsg);
+            throw new BadRequestException(errorMsg);
+        }
+        String email = user.getEmail();
+        if(StringUtils.isBlank(email)){
+            String errorMsg = "Expecting valid email address";
+            logger.warn(errorMsg);
+            throw new BadRequestException(errorMsg);
+        }
+        if(!email.matches("[a-zA-Z0-9_\\.\"]+@[a-zA-Z0-9_\\.]+\\.[a-zA-Z]+")){
+            String errorMsg = "Expecting valid email address";
+            logger.warn(errorMsg);
+            throw new BadRequestException(errorMsg);
+        }
+
     }
 
     void validatePasswordCredentials(PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername) {
