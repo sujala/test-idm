@@ -99,6 +99,7 @@ public abstract class LdapRepository {
     public static final String ATTR_DEF = "def";
     public static final String ATTR_DESCRIPTION = "description";
     public static final String ATTR_DISPLAY_NAME = "rsDisplayName";
+    public static final String ATTR_DOMAIN_ID = "rsDomainId";
     public static final String ATTR_ENABLED = "enabled";
     public static final String ATTR_ENDPOINT = "endpoint";
     public static final String ATTR_EXPIRATION = "expiration";

@@ -757,8 +757,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (user.isEnabled() != null) {
-            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(user
-                .isEnabled())));
+            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(user.isEnabled())));
         }
 
         if (!StringUtils.isBlank(user.getNastId())) {
@@ -767,6 +766,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         if (user.getMossoId() != null && user.getMossoId().intValue() > 0) {
             atts.add(new Attribute(ATTR_MOSSO_ID, user.getMossoId().toString()));
+        }
+
+        if(!StringUtils.isBlank(user.getDomainId())){
+            atts.add(new Attribute(ATTR_DOMAIN_ID, user.getDomainId()));
         }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);

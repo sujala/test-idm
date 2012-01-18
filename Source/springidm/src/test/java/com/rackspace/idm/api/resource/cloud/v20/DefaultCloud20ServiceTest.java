@@ -5,6 +5,7 @@ import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
@@ -13,6 +14,9 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.unboundid.ldap.sdk.Attribute;
+import com.unboundid.ldap.sdk.Control;
+import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -327,6 +331,12 @@ public class DefaultCloud20ServiceTest {
     public void addUser_callsUserService_addUserMethod() throws Exception {
         spy.addUser(null,null,authToken, userOS);
         verify(userService).addUser(user);
+    }
+
+    @Test
+    public void addUser_callsSetDomainId() throws Exception {
+        spy.addUser(null,null,authToken, userOS);
+        verify(spy).setDomainId(any(ScopeAccess.class), any(User.class));
     }
 
     @Test
@@ -936,5 +946,26 @@ public class DefaultCloud20ServiceTest {
     @Test(expected = BadRequestException.class)
     public void validatePassword_DoesNotContainNumericCharacter_throwsException() throws Exception {
         defaultCloud20Service.validatePassword("Abcdefghik");
+    }
+
+    @Test
+    public void setDomainId_callsAuthorizationService_authorizeCloudUserAdmin() throws Exception {
+        ScopeAccess scopeAccessByAccessToken = new ScopeAccess();
+        User userDO = new User();
+        defaultCloud20Service.setDomainId(scopeAccessByAccessToken, userDO);
+        verify(authorizationService).authorizeCloudUserAdmin(scopeAccessByAccessToken);
+    }
+
+    @Test
+    public void setDomainId_callerIsUserAdmin_callsUserService() throws Exception {
+        User userDO = new User();
+        userDO.setUsername("dude");
+        Attribute[] attributes = {new Attribute(LdapRepository.ATTR_UID,"dude")};
+        ScopeAccess scopeAccessByAccessToken = mock(ScopeAccess.class);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)).thenReturn(true);
+        when(userService.getUser("dude")).thenReturn(userDO);
+        when(scopeAccessByAccessToken.getLDAPEntry()).thenReturn(new SearchResultEntry("", attributes,new Control[]{}));
+        defaultCloud20Service.setDomainId(scopeAccessByAccessToken, userDO);
+        verify(userService).getUser("dude");
     }
 }

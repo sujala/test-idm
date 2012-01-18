@@ -8,6 +8,7 @@ import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
+import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.Tenant;
@@ -296,11 +297,15 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             validateUser(user);
 
+            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+
             User userDO = this.userConverterCloudV20.toUserDO(user);
 
-            this.userService.addUser(userDO);
+            setDomainId(scopeAccessByAccessToken, userDO);
 
-            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+
+            userService.addUser(userDO);
+
             if(authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)){
                 ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
                 this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
@@ -316,6 +321,25 @@ public class DefaultCloud20Service implements Cloud20Service {
             return userConflictExceptionResponse(due.getMessage());
         } catch (Exception ex) {
             return exceptionResponse(ex);
+        }
+    }
+
+    void setDomainId(ScopeAccess scopeAccessByAccessToken, User userDO) {
+        if(authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)){
+            //is userAdmin
+            String uid = scopeAccessByAccessToken.getLDAPEntry().getAttributeValue(LdapRepository.ATTR_UID);
+            User caller = userService.getUser(uid);
+            String domainId = caller.getDomainId();
+            if(domainId == null){
+                userDO.setDomainId(caller.getId());
+            }
+            else{
+                userDO.setDomainId(domainId);
+            }
+        }
+        else {
+            //is admin or service user
+            userDO.setDomainId(userDO.getId());
         }
     }
 

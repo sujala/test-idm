@@ -54,7 +54,9 @@ public class User implements Auditable {
     private Boolean enabled = null;
 
     private List<TenantRole> roles = null;
-    
+
+    private String domainId = null;
+
     public User() {
         // Needed by JAX-RS
     }
@@ -91,7 +93,7 @@ public class User implements Auditable {
         this.apiKey = apiKey;
         this.personId = personId;
     }
-    
+
     public String getUniqueId() {
         return uniqueId;
     }
@@ -101,7 +103,7 @@ public class User implements Auditable {
             this.uniqueId = uniqueId;
         }
     }
-    
+
     public String getId() {
         return id;
     }
@@ -125,7 +127,7 @@ public class User implements Auditable {
     public void setCustomerId(String customerId) {
         this.customerId = customerId;
     }
-    
+
     public String getSecureId() {
         return secureId;
     }
@@ -166,7 +168,7 @@ public class User implements Auditable {
             this.displayName = displayName;
         }
     }
-    
+
     public Boolean isEnabled() {
         return enabled;
     }
@@ -174,11 +176,11 @@ public class User implements Auditable {
     public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
     }
-    
+
     public Boolean isMaxLoginFailuresExceded() {
         return maxLoginFailuresExceded;
     }
-    
+
     public void setMaxLoginFailuresExceded(Boolean maxLoginFailuresExceded) {
         this.maxLoginFailuresExceded = maxLoginFailuresExceded;
     }
@@ -202,7 +204,7 @@ public class User implements Auditable {
     public boolean hasEmptyPassword() {
      	return getPasswordObj() == null || StringUtils.isBlank(getPasswordObj().getValue());
     }
-    
+
     public Password getPasswordObj() {
         return credential.getPassword();
     }
@@ -331,7 +333,7 @@ public class User implements Auditable {
             this.personId = personId;
         }
     }
-    
+
     public String getNastId() {
         return nastId;
     }
@@ -363,7 +365,7 @@ public class User implements Auditable {
     public void setSoftDeletedTimestamp(DateTime softDeletedTimestamp) {
         this.softDeletedTimestamp = softDeletedTimestamp;
     }
-    
+
     public DateTime getUpdated() {
         return updated;
     }
@@ -371,7 +373,7 @@ public class User implements Auditable {
     public void setUpdated(DateTime updated) {
         this.updated = updated;
     }
-    
+
     public boolean isDisabled() {
     	return this.enabled == null ? true : !this.enabled;
     }
@@ -393,11 +395,11 @@ public class User implements Auditable {
     	if (modifiedUser.getCustomerId() != null) {
     		setCustomerId(modifiedUser.getCustomerId());
     	}
-    	
+
     	if (modifiedUser.isEnabled() != null) {
     		setEnabled(modifiedUser.isEnabled());
     	}
-    	
+
         if (modifiedUser.getPersonId() != null) {
             setPersonId(modifiedUser.getPersonId());
         }
@@ -505,8 +507,8 @@ public class User implements Auditable {
     }
 
     public static class Builder {
-        private User user = null;
 
+        private User user = null;
         public Builder() {
             user = new User();
         }
@@ -581,8 +583,8 @@ public class User implements Auditable {
 
             return user;
         }
+
     }
-    
     @Override
     public String getAuditContext() {
         String format = "username=%s, customer=%s";
@@ -596,4 +598,12 @@ public class User implements Auditable {
 	public void setRoles(List<TenantRole> roles) {
 		this.roles = roles;
 	}
+
+    public String getDomainId() {
+        return domainId;
+    }
+
+    public void setDomainId(String domainId) {
+        this.domainId = domainId;
+    }
 }
