@@ -34,6 +34,8 @@ public interface UserService {
     List<String> getRackerRoles(String rackerId);
 
     User getUser(String username);
+
+    User getUserByAuthToken(String authToken);
     
     User getUserById(String id);
     

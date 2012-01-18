@@ -306,7 +306,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             userService.addUser(userDO);
 
-            if(authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)){
+            if (authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
                 ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
                 this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
             }
@@ -324,20 +324,21 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    User getUser(ScopeAccess scopeAccessByAccessToken) {
+        String uid = scopeAccessByAccessToken.getLDAPEntry().getAttributeValue(LdapRepository.ATTR_UID);
+        return userService.getUser(uid);
+    }
+
     void setDomainId(ScopeAccess scopeAccessByAccessToken, User userDO) {
-        if(authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)){
+        if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
             //is userAdmin
-            String uid = scopeAccessByAccessToken.getLDAPEntry().getAttributeValue(LdapRepository.ATTR_UID);
-            User caller = userService.getUser(uid);
-            String domainId = caller.getDomainId();
-            if(domainId == null){
+            User caller = getUser(scopeAccessByAccessToken);
+            if (caller.getDomainId() == null) {
                 userDO.setDomainId(caller.getId());
+            } else {
+                userDO.setDomainId(caller.getDomainId());
             }
-            else{
-                userDO.setDomainId(domainId);
-            }
-        }
-        else {
+        } else {
             //is admin or service user
             userDO.setDomainId(userDO.getId());
         }
@@ -350,12 +351,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new BadRequestException(errorMsg);
         }
         String email = user.getEmail();
-        if(StringUtils.isBlank(email)){
+        if (StringUtils.isBlank(email)) {
             String errorMsg = "Expecting valid email address";
             logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
         }
-        if(!email.matches("[a-zA-Z0-9_\\.\"]+@[a-zA-Z0-9_\\.]+\\.[a-zA-Z]+")){
+        if (!email.matches("[a-zA-Z0-9_\\.\"]+@[a-zA-Z0-9_\\.]+\\.[a-zA-Z]+")) {
             String errorMsg = "Expecting valid email address";
             logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
@@ -380,19 +381,19 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     void validatePassword(String password) {
         String errMsg = "Password must be at least 8 characters in length, must contain at least one uppercase letter, one lowercase letter and one numeric character.";
-        if(password.length()<8){
+        if (password.length() < 8) {
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
-        if(!password.matches(".*[A-Z].*")){
+        if (!password.matches(".*[A-Z].*")) {
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
-        if(!password.matches(".*[a-z].*")){
+        if (!password.matches(".*[a-z].*")) {
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
-        if(!password.matches(".*[0-9].*")){
+        if (!password.matches(".*[0-9].*")) {
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
@@ -517,7 +518,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
             // Remove Admin URLs if non admin token
-            if(!this.authorizationService.authorizeCloudIdentityAdmin(usa)){
+            if (!this.authorizationService.authorizeCloudIdentityAdmin(usa)) {
                 stripEndpoints(endpoints);
             }
 
@@ -645,6 +646,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             checkXAUTHTOKEN(authToken, false, null);
             User user = checkAndGetUser(userId);
+            //is same domain?
+            User caller = userService.getUserByAuthToken(authToken);
+            verifyDomain(user, caller);
+
             userService.softDeleteUser(user);
             return Response.noContent();
         } catch (Exception ex) {
@@ -1441,6 +1446,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             checkXAUTHTOKEN(authToken, false, null);
 
             User retrievedUser = checkAndGetUser(userId);
+            User caller = userService.getUserByAuthToken(authToken);
+            verifyDomain(retrievedUser, caller);
+
 
             User userDO = this.userConverterCloudV20.toUserDO(user);
 
@@ -1453,6 +1461,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
+        }
+    }
+
+    void verifyDomain(User retrievedUser, User caller) {
+        if (caller.getDomainId() == null || !caller.getDomainId().equals(retrievedUser.getDomainId())) {
+            throw new ForbiddenException("Access is denied");
         }
     }
 
@@ -1544,7 +1558,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (sa instanceof UserScopeAccess) {
                 UserScopeAccess usa = (UserScopeAccess) sa;
                 User user = this.userService.getUserById(usa.getUserRsId());
-                if(user == null){
+                if (user == null) {
                     throw new NotFoundException("User not found");
                 }
                 List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(usa);
@@ -1729,14 +1743,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         authorized = this.authorizationService.authorizeCloudIdentityAdmin(authScopeAccess);
 
-        if(!identityOnly && !authorized) { // Check for User Admin Access
+        if (!identityOnly && !authorized) { // Check for User Admin Access
             authorized = this.authorizationService.authorizeCloudUserAdmin(authScopeAccess);
-            if(authorized && tenantId != null) { // Check tenant access
+            if (authorized && tenantId != null) { // Check tenant access
                 authorized = false; // until matched in the loop below
                 List<Tenant> adminTenants = this.tenantService.getTenantsForScopeAccessByTenantRoles(authScopeAccess);
-                for (Tenant tenant : adminTenants){
-                    if(tenant.getTenantId().equals(tenantId))
-                        authorized = true;
+                for (Tenant tenant : adminTenants) {
+                    if (tenant.getTenantId().equals(tenantId)) { authorized = true; }
                 }
             }
         }
@@ -1748,9 +1761,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    private void stripEndpoints(List<OpenstackEndpoint> endpoints){
-        for(int i=0; i < endpoints.size(); i++){
-            for(CloudBaseUrl baseUrl : endpoints.get(i).getBaseUrls()){
+    private void stripEndpoints(List<OpenstackEndpoint> endpoints) {
+        for (int i = 0; i < endpoints.size(); i++) {
+            for (CloudBaseUrl baseUrl : endpoints.get(i).getBaseUrls()) {
                 baseUrl.setAdminUrl(null);
             }
         }

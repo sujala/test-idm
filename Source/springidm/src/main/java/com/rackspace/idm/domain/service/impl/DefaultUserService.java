@@ -3,17 +3,16 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.PasswordComplexityService;
-import com.rackspace.idm.domain.service.TokenService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.HashHelper;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -35,6 +34,9 @@ public class DefaultUserService implements UserService {
     private final ScopeAccessDao scopeAccessDao;
     
     private final UserDao userDao;
+
+    @Autowired
+    private ScopeAccessService scopeAccessService;
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
     	ScopeAccessDao scopeAccessDao,
@@ -258,6 +260,15 @@ public class DefaultUserService implements UserService {
         User user = userDao.getUserByUsername(username);
         logger.debug("Got User: {}", user);
         return user;
+    }
+
+    public User getUserByAuthToken(String authToken){
+        if(authToken==null){
+            return null;
+        }
+        ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+        String uid = scopeAccessByAccessToken.getLDAPEntry().getAttributeValue(LdapRepository.ATTR_UID);
+        return getUser(uid);
     }
 
     
