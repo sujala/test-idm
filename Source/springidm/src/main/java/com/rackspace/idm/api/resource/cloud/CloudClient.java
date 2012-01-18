@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.*;
+import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.protocol.RequestAcceptEncoding;
 import org.apache.http.client.protocol.ResponseContentEncoding;
 import org.apache.http.entity.BasicHttpEntity;
@@ -13,6 +14,8 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Set;
 
 /**
@@ -74,6 +77,12 @@ public class CloudClient {
         } catch (IOException e) {
             responseBody = e.getMessage();
         }
+
+        // Catch 301 - MOVED_PERMANENTLY
+        if(statusCode == 301){
+            return handleRedirect(response);
+        }
+
         Response.ResponseBuilder responseBuilder = Response.status(statusCode).entity(responseBody);
         for (Header header : response.getAllHeaders()) {
             String key = header.getName();
@@ -81,10 +90,31 @@ public class CloudClient {
                 responseBuilder = responseBuilder.header(key, header.getValue());
             }
         }
-//        if (statusCode == 500) {
+//      if (statusCode == 500) {
             responseBuilder.header("response-source","cloud-auth");
-//        }
+//      }
         return responseBuilder;
+    }
+
+    private Response.ResponseBuilder handleRedirect(HttpResponse response){
+        try{
+            String uri = "";
+            for (Header header : response.getAllHeaders()) {
+                String key = header.getName();
+                if (key.equalsIgnoreCase("location")) {
+                    uri = header.getValue();
+                }
+            }
+            Response.ResponseBuilder builder = Response.seeOther(new URI(uri)).status(Response.Status.MOVED_PERMANENTLY);
+            // Add headers from original request
+            //for (Header header : request.getAllHeaders()) {
+            //    String key = header.getName();
+            //    builder = builder.header(key, header.getValue());
+            //}
+            return builder;
+        }catch(URISyntaxException ex){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 
     private BasicHttpEntity getHttpEntity(String body) {
